@@ -861,4 +861,275 @@ public class AuthServiceTests : IDisposable
     }
 
     #endregion
+
+    #region VerifySteamAuthAsync Tests
+
+    [Fact]
+    public async Task VerifySteamAuthAsync_WithValidTicket_ReturnsAuthResponse()
+    {
+        // Arrange
+        var steamId = "76561198012345678";
+        var accountId = Guid.NewGuid();
+        var account = new AccountResponse
+        {
+            AccountId = accountId,
+            Email = "steam_345678@oauth.local",
+            DisplayName = "Steam_345678"
+        };
+
+        // Mock OAuth service to return valid Steam ID
+        _mockOAuthService.Setup(o => o.ValidateSteamTicketAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(steamId);
+
+        // Mock OAuth service to return/create account
+        _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
+            Provider.Discord, // Note: Uses Discord enum with "steam" provider override
+            It.IsAny<Services.OAuthUserInfo>(),
+            It.IsAny<CancellationToken>(),
+            "steam"))
+            .ReturnsAsync(account);
+
+        // Mock token service
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
+            It.IsAny<AccountResponse>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("test-access-token", Guid.NewGuid()));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken())
+            .Returns("test-refresh-token");
+
+        // Use a config with MockProviders = false to test real flow
+        var realConfig = new AuthServiceConfiguration
+        {
+            JwtExpirationMinutes = 60,
+            MockProviders = false,
+            SteamApiKey = "test-steam-api-key",
+            SteamAppId = "123456"
+        };
+
+        var service = new AuthService(
+            _mockAccountClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            realConfig,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object,
+            _mockEventConsumer.Object);
+
+        var request = new SteamVerifyRequest { Ticket = "valid-steam-ticket-hex" };
+
+        // Act
+        var (status, response) = await service.VerifySteamAuthAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(accountId, response.AccountId);
+        Assert.Equal("test-access-token", response.AccessToken);
+        Assert.Equal("test-refresh-token", response.RefreshToken);
+    }
+
+    [Fact]
+    public async Task VerifySteamAuthAsync_WithMockMode_UsesMockSteamId()
+    {
+        // Arrange - default configuration has MockProviders = true
+        var mockSteamInfo = new Services.OAuthUserInfo
+        {
+            ProviderId = "mock-steam-id-12345",
+            DisplayName = "Steam_12345"
+        };
+
+        var account = new AccountResponse
+        {
+            AccountId = Guid.NewGuid(),
+            DisplayName = "Steam_12345"
+        };
+
+        _mockOAuthService.Setup(o => o.GetMockSteamUserInfoAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockSteamInfo);
+
+        _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
+            Provider.Discord,
+            It.IsAny<Services.OAuthUserInfo>(),
+            It.IsAny<CancellationToken>(),
+            "steam"))
+            .ReturnsAsync(account);
+
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
+            It.IsAny<AccountResponse>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("mock-token", Guid.NewGuid()));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken())
+            .Returns("mock-refresh");
+
+        var service = CreateAuthService();
+        var request = new SteamVerifyRequest { Ticket = "any-ticket" };
+
+        // Act
+        var (status, response) = await service.VerifySteamAuthAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify mock info was used (not real Steam API)
+        _mockOAuthService.Verify(o => o.GetMockSteamUserInfoAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockOAuthService.Verify(o => o.ValidateSteamTicketAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task VerifySteamAuthAsync_WithMissingConfig_ReturnsInternalServerError()
+    {
+        // Arrange - config without Steam API key
+        var configWithoutSteam = new AuthServiceConfiguration
+        {
+            JwtExpirationMinutes = 60,
+            MockProviders = false,
+            SteamApiKey = null,
+            SteamAppId = "123456"
+        };
+
+        var service = new AuthService(
+            _mockAccountClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            configWithoutSteam,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object,
+            _mockEventConsumer.Object);
+
+        var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
+
+        // Act
+        var (status, response) = await service.VerifySteamAuthAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task VerifySteamAuthAsync_WithInvalidTicket_ReturnsUnauthorized()
+    {
+        // Arrange
+        _mockOAuthService.Setup(o => o.ValidateSteamTicketAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var realConfig = new AuthServiceConfiguration
+        {
+            JwtExpirationMinutes = 60,
+            MockProviders = false,
+            SteamApiKey = "test-key",
+            SteamAppId = "123456"
+        };
+
+        var service = new AuthService(
+            _mockAccountClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            realConfig,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object,
+            _mockEventConsumer.Object);
+
+        var request = new SteamVerifyRequest { Ticket = "invalid-ticket" };
+
+        // Act
+        var (status, response) = await service.VerifySteamAuthAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task VerifySteamAuthAsync_WithAccountCreationFailure_ReturnsInternalServerError()
+    {
+        // Arrange
+        var steamId = "76561198012345678";
+
+        _mockOAuthService.Setup(o => o.ValidateSteamTicketAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(steamId);
+
+        // Account creation fails
+        _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
+            Provider.Discord,
+            It.IsAny<Services.OAuthUserInfo>(),
+            It.IsAny<CancellationToken>(),
+            "steam"))
+            .ReturnsAsync((AccountResponse?)null);
+
+        var realConfig = new AuthServiceConfiguration
+        {
+            JwtExpirationMinutes = 60,
+            MockProviders = false,
+            SteamApiKey = "test-key",
+            SteamAppId = "123456"
+        };
+
+        var service = new AuthService(
+            _mockAccountClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            realConfig,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object,
+            _mockEventConsumer.Object);
+
+        var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
+
+        // Act
+        var (status, response) = await service.VerifySteamAuthAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            It.Is<string>(topic => topic.Contains("error")),
+            It.IsAny<object>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task VerifySteamAuthAsync_WithWhitespaceTicket_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var request = new SteamVerifyRequest { Ticket = "   " };
+
+        // Act
+        var (status, response) = await service.VerifySteamAuthAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
 }

@@ -278,34 +278,6 @@ components:
     # ==========================================================================
     # Subscribed Events (from other services)
     # ==========================================================================
-
-    CharacterDeletedEvent:
-      type: object
-      additionalProperties: false
-      description: Event received when a character is deleted (from lib-character)
-      required:
-        - eventId
-        - timestamp
-        - characterId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event was published
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the deleted character
-        realmId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Realm the character belonged to (if available)
-        deletionReason:
-          type: string
-          nullable: true
-          description: Reason for deletion (e.g., compression, admin action)
+    # NOTE: CharacterDeletedEvent is defined in character-events.yaml via x-lifecycle
+    # and generated to CharacterLifecycleEvents.cs. Do NOT redefine here.
+    # The x-event-subscriptions above references it by name only.

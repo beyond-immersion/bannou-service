@@ -144,6 +144,9 @@ public partial class EncounterModel
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? Context { get; set; } = default!;
 
+    /// <summary>
+    /// Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("outcome")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -206,6 +209,9 @@ public partial class EncounterPerspectiveModel
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Primary emotional response to the encounter
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emotionalImpact")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -543,6 +549,9 @@ public partial class RecordEncounterRequest
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? Context { get; set; } = default!;
 
+    /// <summary>
+    /// Outcome of the encounter being recorded
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("outcome")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -587,6 +596,9 @@ public partial class PerspectiveInput
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Character's emotional response to the encounter
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emotionalImpact")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1138,6 +1150,9 @@ public partial class SeedEncounterTypesResponse
 public partial class EncounterResponse
 {
 
+    /// <summary>
+    /// The shared encounter record
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounter")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1298,6 +1313,9 @@ public partial class BatchSentimentResponse
 public partial class PerspectiveResponse
 {
 
+    /// <summary>
+    /// The character's perspective on the encounter
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perspective")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]

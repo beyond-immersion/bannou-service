@@ -13146,6 +13146,236 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EncounterRecordedEvent">
+            <summary>
+            Published when a new encounter is recorded between characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.EncounterId">
+            <summary>
+            ID of the recorded encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.EncounterTypeCode">
+            <summary>
+            Type code of the encounter (e.g., COMBAT, TRADE)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.Outcome">
+            <summary>
+            Outcome of the encounter (POSITIVE, NEGATIVE, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.RealmId">
+            <summary>
+            Realm where the encounter occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.LocationId">
+            <summary>
+            Specific location of the encounter (if provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.ParticipantIds">
+            <summary>
+            All character IDs involved in the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.Context">
+            <summary>
+            Context description of the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterRecordedEvent.EncounterTimestamp">
+            <summary>
+            In-game time when the encounter occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent">
+            <summary>
+            Published when a character's memory of an encounter fades below threshold
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.EncounterId">
+            <summary>
+            ID of the encounter whose memory faded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.CharacterId">
+            <summary>
+            ID of the character whose memory faded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.PerspectiveId">
+            <summary>
+            ID of the perspective that faded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.PreviousStrength">
+            <summary>
+            Memory strength before decay
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.NewStrength">
+            <summary>
+            Memory strength after decay
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryFadedEvent.FadeThreshold">
+            <summary>
+            The threshold below which memories are considered faded
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent">
+            <summary>
+            Published when a character's memory of an encounter is strengthened
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent.EncounterId">
+            <summary>
+            ID of the encounter whose memory was refreshed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent.CharacterId">
+            <summary>
+            ID of the character whose memory was refreshed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent.PerspectiveId">
+            <summary>
+            ID of the perspective that was refreshed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent.PreviousStrength">
+            <summary>
+            Memory strength before refresh
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterMemoryRefreshedEvent.NewStrength">
+            <summary>
+            Memory strength after refresh
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent">
+            <summary>
+            Published when a character's perspective on an encounter is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.EncounterId">
+            <summary>
+            ID of the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.CharacterId">
+            <summary>
+            ID of the character whose perspective changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.PerspectiveId">
+            <summary>
+            ID of the updated perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.PreviousEmotionalImpact">
+            <summary>
+            Previous emotional impact (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.NewEmotionalImpact">
+            <summary>
+            New emotional impact (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.PreviousSentimentShift">
+            <summary>
+            Previous sentiment shift (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterPerspectiveUpdatedEvent.NewSentimentShift">
+            <summary>
+            New sentiment shift (if changed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EncounterDeletedEvent">
+            <summary>
+            Published when an encounter is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.EncounterId">
+            <summary>
+            ID of the deleted encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.ParticipantIds">
+            <summary>
+            Character IDs that were involved in the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.PerspectivesDeleted">
+            <summary>
+            Number of perspectives deleted with the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.DeletedByCharacterCleanup">
+            <summary>
+            True if deleted as part of character deletion cleanup
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.CleanupCharacterId">
+            <summary>
+            Character ID that triggered the cleanup (if applicable)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent">
             <summary>
             Published when a character's participation in a historical event is recorded
@@ -27493,6 +27723,1497 @@
         <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.ZeroRefSince">
             <summary>
             When refCount first reached zero (null if refCount &gt; 0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient">
+            <summary>
+            Client interface for the CharacterEncounter service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.CreateEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create new encounter type
+            </summary>
+            <remarks>
+            Creates a new encounter type code for game-specific encounter categories.
+            <br/>Built-in types (COMBAT, TRADE, etc.) cannot be created via this endpoint.
+            </remarks>
+            <returns>Encounter type created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.GetEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.GetEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get encounter type by code
+            </summary>
+            <remarks>
+            Retrieve an encounter type by its unique code.
+            </remarks>
+            <returns>Encounter type retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.ListEncounterTypesAsync(BeyondImmersion.BannouService.CharacterEncounter.ListEncounterTypesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all encounter types
+            </summary>
+            <remarks>
+            Retrieve all encounter types including built-in and custom types.
+            </remarks>
+            <returns>Encounter types retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.UpdateEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update encounter type
+            </summary>
+            <remarks>
+            Update an existing encounter type. Built-in types can only have their
+            <br/>description and defaultEmotionalImpact updated.
+            </remarks>
+            <returns>Encounter type updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.DeleteEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete encounter type
+            </summary>
+            <remarks>
+            Delete a custom encounter type. Built-in types cannot be deleted.
+            <br/>Types with existing encounters cannot be deleted.
+            </remarks>
+            <returns>Encounter type deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.SeedEncounterTypesAsync(BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Seed default encounter types
+            </summary>
+            <remarks>
+            Idempotent operation to seed built-in encounter types. Called automatically
+            <br/>at service startup, but can be invoked manually to restore defaults.
+            </remarks>
+            <returns>Seed operation completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.RecordEncounterAsync(BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record new encounter with perspectives
+            </summary>
+            <remarks>
+            Records a new encounter between two or more characters. Creates the shared
+            <br/>encounter record and individual perspectives for each participant.
+            <br/>
+            <br/>Perspectives can be provided in the request or will be auto-generated with
+            <br/>default values if not specified.
+            </remarks>
+            <returns>Encounter recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.QueryByCharacterAsync(BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get character's encounters (paginated)
+            </summary>
+            <remarks>
+            Retrieves all encounters for a character with optional filtering.
+            <br/>Memory decay is applied lazily on access.
+            </remarks>
+            <returns>Encounters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.QueryBetweenAsync(BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get encounters between two characters
+            </summary>
+            <remarks>
+            Retrieves all encounters between two specific characters.
+            <br/>Useful for relationship history and dialogue context.
+            </remarks>
+            <returns>Encounters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.QueryByLocationAsync(BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Recent encounters at location
+            </summary>
+            <remarks>
+            Retrieves recent encounters at a specific location.
+            <br/>Useful for scene context and area history.
+            </remarks>
+            <returns>Encounters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.HasMetAsync(BeyondImmersion.BannouService.CharacterEncounter.HasMetRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Quick check if two characters have met
+            </summary>
+            <remarks>
+            Fast boolean check for whether two characters have any recorded encounters.
+            <br/>Does not apply memory decay or return encounter details.
+            </remarks>
+            <returns>Check completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.GetSentimentAsync(BeyondImmersion.BannouService.CharacterEncounter.GetSentimentRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Aggregate sentiment toward another character
+            </summary>
+            <remarks>
+            Calculates the aggregate sentiment a character has toward another based
+            <br/>on all their encounters. Memory strength is factored into the calculation.
+            </remarks>
+            <returns>Sentiment calculated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.BatchGetSentimentAsync(BeyondImmersion.BannouService.CharacterEncounter.BatchGetSentimentRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk sentiment for multiple targets
+            </summary>
+            <remarks>
+            Calculates sentiment toward multiple target characters in a single call.
+            <br/>Efficient for behavior system queries that check multiple NPCs.
+            </remarks>
+            <returns>Sentiments calculated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.GetPerspectiveAsync(BeyondImmersion.BannouService.CharacterEncounter.GetPerspectiveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get character's view of encounter
+            </summary>
+            <remarks>
+            Retrieves a specific character's perspective on an encounter.
+            <br/>Includes emotional impact, sentiment shift, and memory strength.
+            </remarks>
+            <returns>Perspective retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.UpdatePerspectiveAsync(BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update perspective (reflection)
+            </summary>
+            <remarks>
+            Updates a character's perspective on an encounter. Used when a character
+            <br/>reflects on past events or gains new information about an encounter.
+            </remarks>
+            <returns>Perspective updated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.RefreshMemoryAsync(BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Strengthen memory (referenced)
+            </summary>
+            <remarks>
+            Strengthens a character's memory of an encounter. Called when the encounter
+            <br/>is referenced in dialogue, thought, or action. Counteracts memory decay.
+            </remarks>
+            <returns>Memory refreshed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.DeleteEncounterAsync(BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete encounter and perspectives
+            </summary>
+            <remarks>
+            Deletes an encounter record and all associated perspectives.
+            <br/>This is a hard delete and cannot be undone.
+            </remarks>
+            <returns>Encounter deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.DeleteByCharacterAsync(BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all encounters for a character
+            </summary>
+            <remarks>
+            Deletes all encounter records and perspectives involving a specific character.
+            <br/>Used during character deletion or compression. This is a hard delete.
+            </remarks>
+            <returns>Encounters deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient.DecayMemoriesAsync(BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Trigger memory decay (maintenance)
+            </summary>
+            <remarks>
+            Manually triggers memory decay processing for all or specific characters.
+            <br/>Normally decay is applied lazily on access, but this can be used for
+            <br/>maintenance or testing purposes.
+            </remarks>
+            <returns>Decay processing completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient">
+            <summary>
+            Client implementation for the CharacterEncounter service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.CreateEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create new encounter type
+            </summary>
+            <remarks>
+            Creates a new encounter type code for game-specific encounter categories.
+            <br/>Built-in types (COMBAT, TRADE, etc.) cannot be created via this endpoint.
+            </remarks>
+            <returns>Encounter type created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.GetEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.GetEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get encounter type by code
+            </summary>
+            <remarks>
+            Retrieve an encounter type by its unique code.
+            </remarks>
+            <returns>Encounter type retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ListEncounterTypesAsync(BeyondImmersion.BannouService.CharacterEncounter.ListEncounterTypesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all encounter types
+            </summary>
+            <remarks>
+            Retrieve all encounter types including built-in and custom types.
+            </remarks>
+            <returns>Encounter types retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.UpdateEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update encounter type
+            </summary>
+            <remarks>
+            Update an existing encounter type. Built-in types can only have their
+            <br/>description and defaultEmotionalImpact updated.
+            </remarks>
+            <returns>Encounter type updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.DeleteEncounterTypeAsync(BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete encounter type
+            </summary>
+            <remarks>
+            Delete a custom encounter type. Built-in types cannot be deleted.
+            <br/>Types with existing encounters cannot be deleted.
+            </remarks>
+            <returns>Encounter type deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.SeedEncounterTypesAsync(BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Seed default encounter types
+            </summary>
+            <remarks>
+            Idempotent operation to seed built-in encounter types. Called automatically
+            <br/>at service startup, but can be invoked manually to restore defaults.
+            </remarks>
+            <returns>Seed operation completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.RecordEncounterAsync(BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record new encounter with perspectives
+            </summary>
+            <remarks>
+            Records a new encounter between two or more characters. Creates the shared
+            <br/>encounter record and individual perspectives for each participant.
+            <br/>
+            <br/>Perspectives can be provided in the request or will be auto-generated with
+            <br/>default values if not specified.
+            </remarks>
+            <returns>Encounter recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.QueryByCharacterAsync(BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get character's encounters (paginated)
+            </summary>
+            <remarks>
+            Retrieves all encounters for a character with optional filtering.
+            <br/>Memory decay is applied lazily on access.
+            </remarks>
+            <returns>Encounters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.QueryBetweenAsync(BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get encounters between two characters
+            </summary>
+            <remarks>
+            Retrieves all encounters between two specific characters.
+            <br/>Useful for relationship history and dialogue context.
+            </remarks>
+            <returns>Encounters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.QueryByLocationAsync(BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Recent encounters at location
+            </summary>
+            <remarks>
+            Retrieves recent encounters at a specific location.
+            <br/>Useful for scene context and area history.
+            </remarks>
+            <returns>Encounters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.HasMetAsync(BeyondImmersion.BannouService.CharacterEncounter.HasMetRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Quick check if two characters have met
+            </summary>
+            <remarks>
+            Fast boolean check for whether two characters have any recorded encounters.
+            <br/>Does not apply memory decay or return encounter details.
+            </remarks>
+            <returns>Check completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.GetSentimentAsync(BeyondImmersion.BannouService.CharacterEncounter.GetSentimentRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Aggregate sentiment toward another character
+            </summary>
+            <remarks>
+            Calculates the aggregate sentiment a character has toward another based
+            <br/>on all their encounters. Memory strength is factored into the calculation.
+            </remarks>
+            <returns>Sentiment calculated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.BatchGetSentimentAsync(BeyondImmersion.BannouService.CharacterEncounter.BatchGetSentimentRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk sentiment for multiple targets
+            </summary>
+            <remarks>
+            Calculates sentiment toward multiple target characters in a single call.
+            <br/>Efficient for behavior system queries that check multiple NPCs.
+            </remarks>
+            <returns>Sentiments calculated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.GetPerspectiveAsync(BeyondImmersion.BannouService.CharacterEncounter.GetPerspectiveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get character's view of encounter
+            </summary>
+            <remarks>
+            Retrieves a specific character's perspective on an encounter.
+            <br/>Includes emotional impact, sentiment shift, and memory strength.
+            </remarks>
+            <returns>Perspective retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.UpdatePerspectiveAsync(BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update perspective (reflection)
+            </summary>
+            <remarks>
+            Updates a character's perspective on an encounter. Used when a character
+            <br/>reflects on past events or gains new information about an encounter.
+            </remarks>
+            <returns>Perspective updated</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.RefreshMemoryAsync(BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Strengthen memory (referenced)
+            </summary>
+            <remarks>
+            Strengthens a character's memory of an encounter. Called when the encounter
+            <br/>is referenced in dialogue, thought, or action. Counteracts memory decay.
+            </remarks>
+            <returns>Memory refreshed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.DeleteEncounterAsync(BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete encounter and perspectives
+            </summary>
+            <remarks>
+            Deletes an encounter record and all associated perspectives.
+            <br/>This is a hard delete and cannot be undone.
+            </remarks>
+            <returns>Encounter deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.DeleteByCharacterAsync(BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all encounters for a character
+            </summary>
+            <remarks>
+            Deletes all encounter records and perspectives involving a specific character.
+            <br/>Used during character deletion or compression. This is a hard delete.
+            </remarks>
+            <returns>Encounters deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.DecayMemoriesAsync(BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Trigger memory decay (maintenance)
+            </summary>
+            <remarks>
+            Manually triggers memory decay processing for all or specific characters.
+            <br/>Normally decay is applied lazily on access, but this can be used for
+            <br/>maintenance or testing purposes.
+            </remarks>
+            <returns>Decay processing completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterEncounter.CharacterEncounterClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterOutcome">
+            <summary>
+            Overall outcome of an encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EmotionalImpact">
+            <summary>
+            How the encounter emotionally affected the character
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel">
+            <summary>
+            Core encounter record representing a memorable interaction
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.EncounterId">
+            <summary>
+            Unique identifier for this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.Timestamp">
+            <summary>
+            In-game time when the encounter occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.RealmId">
+            <summary>
+            Realm where the encounter took place
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.LocationId">
+            <summary>
+            Specific location within the realm (optional)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.EncounterTypeCode">
+            <summary>
+            Type code for this encounter (e.g., COMBAT, TRADE)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.Context">
+            <summary>
+            What triggered or contextualized the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.Outcome">
+            <summary>
+            Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.ParticipantIds">
+            <summary>
+            All character IDs involved in the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.Metadata">
+            <summary>
+            Additional encounter-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterModel.CreatedAt">
+            <summary>
+            System timestamp when record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel">
+            <summary>
+            A character's individual perspective on an encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.PerspectiveId">
+            <summary>
+            Unique identifier for this perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.EncounterId">
+            <summary>
+            Reference to the shared encounter record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.CharacterId">
+            <summary>
+            Character holding this perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.EmotionalImpact">
+            <summary>
+            Primary emotional response to the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.SentimentShift">
+            <summary>
+            Opinion change toward other participants (-1.0 to +1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.MemoryStrength">
+            <summary>
+            How strongly remembered (0.0-1.0, decays over time)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.RememberedAs">
+            <summary>
+            Short description from this character's POV
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.LastDecayedAt">
+            <summary>
+            When memory decay was last applied
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.CreatedAt">
+            <summary>
+            System timestamp when record was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterPerspectiveModel.UpdatedAt">
+            <summary>
+            Last modification timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel">
+            <summary>
+            Configurable encounter type definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.TypeId">
+            <summary>
+            Unique identifier for this type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.Code">
+            <summary>
+            Unique code (e.g., COMBAT, TRADE, HEALING)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.Name">
+            <summary>
+            Display name for the encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.Description">
+            <summary>
+            Description of this encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.IsBuiltIn">
+            <summary>
+            True for system types, false for custom
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.DefaultEmotionalImpact">
+            <summary>
+            Suggested emotional response for this type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.SortOrder">
+            <summary>
+            Display ordering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.IsActive">
+            <summary>
+            Soft-delete flag
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeModel.CreatedAt">
+            <summary>
+            System timestamp when type was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest">
+            <summary>
+            Request to create a new encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest.Code">
+            <summary>
+            Unique code for the encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest.Name">
+            <summary>
+            Display name for the encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest.Description">
+            <summary>
+            Description of this encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest.DefaultEmotionalImpact">
+            <summary>
+            Suggested emotional response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.CreateEncounterTypeRequest.SortOrder">
+            <summary>
+            Display ordering (lower = first)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.GetEncounterTypeRequest">
+            <summary>
+            Request to retrieve an encounter type by code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.GetEncounterTypeRequest.Code">
+            <summary>
+            Unique code of the encounter type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.ListEncounterTypesRequest">
+            <summary>
+            Request to list encounter types with optional filtering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.ListEncounterTypesRequest.IncludeInactive">
+            <summary>
+            Include soft-deleted types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.ListEncounterTypesRequest.BuiltInOnly">
+            <summary>
+            Only return built-in types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.ListEncounterTypesRequest.CustomOnly">
+            <summary>
+            Only return custom types
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest">
+            <summary>
+            Request to update an encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest.Code">
+            <summary>
+            Code of the type to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest.Name">
+            <summary>
+            New display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest.DefaultEmotionalImpact">
+            <summary>
+            New suggested emotional response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdateEncounterTypeRequest.SortOrder">
+            <summary>
+            New display ordering
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterTypeRequest">
+            <summary>
+            Request to delete an encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterTypeRequest.Code">
+            <summary>
+            Code of the type to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesRequest">
+            <summary>
+            Request to seed default encounter types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesRequest.ForceReset">
+            <summary>
+            Reset built-in types to defaults even if they exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest">
+            <summary>
+            Request to record a new encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.Timestamp">
+            <summary>
+            In-game time of the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.RealmId">
+            <summary>
+            Realm where the encounter occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.LocationId">
+            <summary>
+            Specific location (optional)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.EncounterTypeCode">
+            <summary>
+            Type code (must be an active type)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.Context">
+            <summary>
+            What triggered the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.Outcome">
+            <summary>
+            Outcome of the encounter being recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.ParticipantIds">
+            <summary>
+            Character IDs involved (minimum 2)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.Perspectives">
+            <summary>
+            Optional perspectives (auto-generated if not provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RecordEncounterRequest.Metadata">
+            <summary>
+            Additional encounter data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveInput">
+            <summary>
+            Input for a single participant's perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveInput.CharacterId">
+            <summary>
+            Character this perspective belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveInput.EmotionalImpact">
+            <summary>
+            Character's emotional response to the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveInput.SentimentShift">
+            <summary>
+            Opinion change toward other participants
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveInput.MemoryStrength">
+            <summary>
+            Initial memory strength
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveInput.RememberedAs">
+            <summary>
+            How this character remembers the encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest">
+            <summary>
+            Request to query encounters by character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.CharacterId">
+            <summary>
+            Character to query encounters for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.EncounterTypeCode">
+            <summary>
+            Filter by encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.Outcome">
+            <summary>
+            Filter by outcome
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.MinimumMemoryStrength">
+            <summary>
+            Filter by minimum memory strength
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.FromTimestamp">
+            <summary>
+            Filter encounters after this time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.ToTimestamp">
+            <summary>
+            Filter encounters before this time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.Page">
+            <summary>
+            Page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByCharacterRequest.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest">
+            <summary>
+            Request to query encounters between two characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest.CharacterIdA">
+            <summary>
+            First character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest.CharacterIdB">
+            <summary>
+            Second character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest.EncounterTypeCode">
+            <summary>
+            Filter by encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest.MinimumMemoryStrength">
+            <summary>
+            Filter by minimum memory strength (for either character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest.Page">
+            <summary>
+            Page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryBetweenRequest.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest">
+            <summary>
+            Request to query recent encounters at a location
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest.LocationId">
+            <summary>
+            Location to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest.EncounterTypeCode">
+            <summary>
+            Filter by encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest.FromTimestamp">
+            <summary>
+            Filter encounters after this time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest.Page">
+            <summary>
+            Page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.QueryByLocationRequest.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.HasMetRequest">
+            <summary>
+            Request to check if two characters have met
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.HasMetRequest.CharacterIdA">
+            <summary>
+            First character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.HasMetRequest.CharacterIdB">
+            <summary>
+            Second character
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.GetSentimentRequest">
+            <summary>
+            Request to get aggregate sentiment toward another character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.GetSentimentRequest.CharacterId">
+            <summary>
+            Character whose sentiment to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.GetSentimentRequest.TargetCharacterId">
+            <summary>
+            Target character to measure sentiment toward
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.BatchGetSentimentRequest">
+            <summary>
+            Request to get sentiment toward multiple characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.BatchGetSentimentRequest.CharacterId">
+            <summary>
+            Character whose sentiment to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.BatchGetSentimentRequest.TargetCharacterIds">
+            <summary>
+            Target characters to measure sentiment toward
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.GetPerspectiveRequest">
+            <summary>
+            Request to get a character's perspective on an encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.GetPerspectiveRequest.EncounterId">
+            <summary>
+            Encounter to get perspective for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.GetPerspectiveRequest.CharacterId">
+            <summary>
+            Character whose perspective to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest">
+            <summary>
+            Request to update a character's perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest.EncounterId">
+            <summary>
+            Encounter to update perspective for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest.CharacterId">
+            <summary>
+            Character whose perspective to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest.EmotionalImpact">
+            <summary>
+            New emotional impact
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest.SentimentShift">
+            <summary>
+            New sentiment shift
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.UpdatePerspectiveRequest.RememberedAs">
+            <summary>
+            New memory description
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest">
+            <summary>
+            Request to refresh memory strength
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest.EncounterId">
+            <summary>
+            Encounter to refresh memory for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest.CharacterId">
+            <summary>
+            Character whose memory to refresh
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest.StrengthBoost">
+            <summary>
+            Amount to boost memory strength (capped at 1.0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterRequest">
+            <summary>
+            Request to delete an encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterRequest.EncounterId">
+            <summary>
+            Encounter to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterRequest">
+            <summary>
+            Request to delete all encounters for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterRequest.CharacterId">
+            <summary>
+            Character to delete encounters for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesRequest">
+            <summary>
+            Request to trigger memory decay processing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesRequest.CharacterId">
+            <summary>
+            Specific character to process (null for all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesRequest.DryRun">
+            <summary>
+            Preview changes without applying
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse">
+            <summary>
+            Response containing an encounter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.TypeId">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.Code">
+            <summary>
+            Unique code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.Name">
+            <summary>
+            Display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.Description">
+            <summary>
+            Description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.IsBuiltIn">
+            <summary>
+            Whether this is a built-in type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.DefaultEmotionalImpact">
+            <summary>
+            Suggested emotional response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.SortOrder">
+            <summary>
+            Display ordering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.IsActive">
+            <summary>
+            Whether the type is active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeResponse.CreatedAt">
+            <summary>
+            When the type was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeListResponse">
+            <summary>
+            Response containing a list of encounter types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeListResponse.Types">
+            <summary>
+            List of encounter types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterTypeListResponse.TotalCount">
+            <summary>
+            Total number of types
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesResponse">
+            <summary>
+            Response from seed operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesResponse.Created">
+            <summary>
+            Number of types created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesResponse.Updated">
+            <summary>
+            Number of types updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SeedEncounterTypesResponse.Skipped">
+            <summary>
+            Number of types skipped
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterResponse">
+            <summary>
+            Response containing an encounter with perspectives
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterResponse.Encounter">
+            <summary>
+            The shared encounter record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterResponse.Perspectives">
+            <summary>
+            All perspectives on this encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.EncounterListResponse">
+            <summary>
+            Paginated list of encounters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterListResponse.Encounters">
+            <summary>
+            List of encounters with perspectives
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterListResponse.TotalCount">
+            <summary>
+            Total matching encounters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterListResponse.Page">
+            <summary>
+            Current page (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterListResponse.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterListResponse.HasNextPage">
+            <summary>
+            Whether more results exist
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.EncounterListResponse.HasPreviousPage">
+            <summary>
+            Whether previous results exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.HasMetResponse">
+            <summary>
+            Response for has-met check
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.HasMetResponse.HasMet">
+            <summary>
+            Whether the characters have any recorded encounters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.HasMetResponse.EncounterCount">
+            <summary>
+            Total number of encounters between them
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.SentimentResponse">
+            <summary>
+            Response containing aggregate sentiment
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SentimentResponse.CharacterId">
+            <summary>
+            Character whose sentiment was queried
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SentimentResponse.TargetCharacterId">
+            <summary>
+            Target of the sentiment
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SentimentResponse.Sentiment">
+            <summary>
+            Aggregate sentiment (-1.0 = hostile, +1.0 = friendly)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SentimentResponse.EncounterCount">
+            <summary>
+            Number of encounters factored in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.SentimentResponse.DominantEmotion">
+            <summary>
+            Most common emotional impact across encounters
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.BatchSentimentResponse">
+            <summary>
+            Response containing sentiment toward multiple targets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.BatchSentimentResponse.CharacterId">
+            <summary>
+            Character whose sentiment was queried
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.BatchSentimentResponse.Sentiments">
+            <summary>
+            Sentiment toward each target
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveResponse">
+            <summary>
+            Response containing a perspective
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.PerspectiveResponse.Perspective">
+            <summary>
+            The character's perspective on the encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterResponse">
+            <summary>
+            Response from delete operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterResponse.EncounterId">
+            <summary>
+            Deleted encounter ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterResponse.PerspectivesDeleted">
+            <summary>
+            Number of perspectives deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterResponse">
+            <summary>
+            Response from delete-by-character operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterResponse.CharacterId">
+            <summary>
+            Character whose data was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterResponse.EncountersDeleted">
+            <summary>
+            Number of encounters deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DeleteByCharacterResponse.PerspectivesDeleted">
+            <summary>
+            Number of perspectives deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesResponse">
+            <summary>
+            Response from decay processing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesResponse.PerspectivesProcessed">
+            <summary>
+            Number of perspectives processed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesResponse.MemoriesFaded">
+            <summary>
+            Number of memories that fell below threshold
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterEncounter.DecayMemoriesResponse.DryRun">
+            <summary>
+            Whether this was a preview run
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient">
@@ -57140,6 +58861,11 @@
             Gets the Character service client.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterEncounter">
+            <summary>
+            Gets the CharacterEncounter service client.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterHistory">
             <summary>
             Gets the CharacterHistory service client.
@@ -57321,7 +59047,7 @@
             Session context is read from ServiceRequestContext (AsyncLocal storage).
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
             <summary>
             Creates a new ServiceNavigator with all service client dependencies.
             </summary>
@@ -57363,6 +59089,9 @@
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Character">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.CharacterEncounter">
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.CharacterHistory">

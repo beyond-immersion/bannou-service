@@ -369,51 +369,6 @@ public partial class EncounterDeletedEvent
 
 }
 
-/// <summary>
-/// Event received when a character is deleted (from lib-character)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CharacterDeletedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the deleted character
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm the character belonged to (if available)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deletion (e.g., compression, admin action)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletionReason")]
-    public string? DeletionReason { get; set; } = default!;
-
-}
-
 
 
 #pragma warning restore  108

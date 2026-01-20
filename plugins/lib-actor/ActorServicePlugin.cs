@@ -77,6 +77,7 @@ public class ActorServicePlugin : BaseBannouPlugin
         // Register behavior execution infrastructure
         services.AddSingleton<IBehaviorDocumentCache, BehaviorDocumentCache>();
         services.AddSingleton<IPersonalityCache, PersonalityCache>();
+        services.AddSingleton<IEncounterCache, EncounterCache>();
         services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
 
         // Register actor runtime components as singletons (shared across service instances)

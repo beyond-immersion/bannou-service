@@ -638,7 +638,9 @@ components:
           nullable: true
           description: What triggered or contextualized the encounter
         outcome:
-          $ref: '#/components/schemas/EncounterOutcome'
+          allOf:
+          - $ref: '#/components/schemas/EncounterOutcome'
+          description: Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)
         participantIds:
           type: array
           items:
@@ -681,7 +683,9 @@ components:
           format: uuid
           description: Character holding this perspective
         emotionalImpact:
-          $ref: '#/components/schemas/EmotionalImpact'
+          allOf:
+          - $ref: '#/components/schemas/EmotionalImpact'
+          description: Primary emotional response to the encounter
         sentimentShift:
           type: number
           format: float
@@ -920,7 +924,9 @@ components:
           nullable: true
           description: What triggered the encounter
         outcome:
-          $ref: '#/components/schemas/EncounterOutcome'
+          allOf:
+          - $ref: '#/components/schemas/EncounterOutcome'
+          description: Outcome of the encounter being recorded
         participantIds:
           type: array
           items:
@@ -953,7 +959,9 @@ components:
           format: uuid
           description: Character this perspective belongs to
         emotionalImpact:
-          $ref: '#/components/schemas/EmotionalImpact'
+          allOf:
+          - $ref: '#/components/schemas/EmotionalImpact'
+          description: Character's emotional response to the encounter
         sentimentShift:
           type: number
           format: float
@@ -1367,7 +1375,9 @@ components:
       - perspectives
       properties:
         encounter:
-          $ref: '#/components/schemas/EncounterModel'
+          allOf:
+          - $ref: '#/components/schemas/EncounterModel'
+          description: The shared encounter record
         perspectives:
           type: array
           items:
@@ -1478,7 +1488,9 @@ components:
       - perspective
       properties:
         perspective:
-          $ref: '#/components/schemas/EncounterPerspectiveModel'
+          allOf:
+          - $ref: '#/components/schemas/EncounterPerspectiveModel'
+          description: The character's perspective on the encounter
 
     DeleteEncounterResponse:
       type: object

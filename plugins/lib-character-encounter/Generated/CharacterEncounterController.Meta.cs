@@ -1005,7 +1005,12 @@ public partial class CharacterEncounterController
                     "description": "What triggered the encounter"
                 },
                 "outcome": {
-                    "$ref": "#/$defs/EncounterOutcome"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterOutcome"
+                        }
+                    ],
+                    "description": "Outcome of the encounter being recorded"
                 },
                 "participantIds": {
                     "type": "array",
@@ -1058,7 +1063,12 @@ public partial class CharacterEncounterController
                     "description": "Character this perspective belongs to"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Character's emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -1119,7 +1129,12 @@ public partial class CharacterEncounterController
             ],
             "properties": {
                 "encounter": {
-                    "$ref": "#/$defs/EncounterModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterModel"
+                        }
+                    ],
+                    "description": "The shared encounter record"
                 },
                 "perspectives": {
                     "type": "array",
@@ -1176,7 +1191,12 @@ public partial class CharacterEncounterController
                     "description": "What triggered or contextualized the encounter"
                 },
                 "outcome": {
-                    "$ref": "#/$defs/EncounterOutcome"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterOutcome"
+                        }
+                    ],
+                    "description": "Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)"
                 },
                 "participantIds": {
                     "type": "array",
@@ -1240,7 +1260,12 @@ public partial class CharacterEncounterController
                     "description": "Character holding this perspective"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -1491,7 +1516,12 @@ public partial class CharacterEncounterController
             ],
             "properties": {
                 "encounter": {
-                    "$ref": "#/$defs/EncounterModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterModel"
+                        }
+                    ],
+                    "description": "The shared encounter record"
                 },
                 "perspectives": {
                     "type": "array",
@@ -1548,7 +1578,12 @@ public partial class CharacterEncounterController
                     "description": "What triggered or contextualized the encounter"
                 },
                 "outcome": {
-                    "$ref": "#/$defs/EncounterOutcome"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterOutcome"
+                        }
+                    ],
+                    "description": "Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)"
                 },
                 "participantIds": {
                     "type": "array",
@@ -1612,7 +1647,12 @@ public partial class CharacterEncounterController
                     "description": "Character holding this perspective"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -1841,7 +1881,12 @@ public partial class CharacterEncounterController
             ],
             "properties": {
                 "encounter": {
-                    "$ref": "#/$defs/EncounterModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterModel"
+                        }
+                    ],
+                    "description": "The shared encounter record"
                 },
                 "perspectives": {
                     "type": "array",
@@ -1898,7 +1943,12 @@ public partial class CharacterEncounterController
                     "description": "What triggered or contextualized the encounter"
                 },
                 "outcome": {
-                    "$ref": "#/$defs/EncounterOutcome"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterOutcome"
+                        }
+                    ],
+                    "description": "Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)"
                 },
                 "participantIds": {
                     "type": "array",
@@ -1962,7 +2012,12 @@ public partial class CharacterEncounterController
                     "description": "Character holding this perspective"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -2183,7 +2238,12 @@ public partial class CharacterEncounterController
             ],
             "properties": {
                 "encounter": {
-                    "$ref": "#/$defs/EncounterModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterModel"
+                        }
+                    ],
+                    "description": "The shared encounter record"
                 },
                 "perspectives": {
                     "type": "array",
@@ -2240,7 +2300,12 @@ public partial class CharacterEncounterController
                     "description": "What triggered or contextualized the encounter"
                 },
                 "outcome": {
-                    "$ref": "#/$defs/EncounterOutcome"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterOutcome"
+                        }
+                    ],
+                    "description": "Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)"
                 },
                 "participantIds": {
                     "type": "array",
@@ -2304,7 +2369,12 @@ public partial class CharacterEncounterController
                     "description": "Character holding this perspective"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -2908,7 +2978,12 @@ public partial class CharacterEncounterController
             ],
             "properties": {
                 "perspective": {
-                    "$ref": "#/$defs/EncounterPerspectiveModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterPerspectiveModel"
+                        }
+                    ],
+                    "description": "The character's perspective on the encounter"
                 }
             }
         },
@@ -2941,7 +3016,12 @@ public partial class CharacterEncounterController
                     "description": "Character holding this perspective"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -3138,7 +3218,12 @@ public partial class CharacterEncounterController
             ],
             "properties": {
                 "perspective": {
-                    "$ref": "#/$defs/EncounterPerspectiveModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterPerspectiveModel"
+                        }
+                    ],
+                    "description": "The character's perspective on the encounter"
                 }
             }
         },
@@ -3171,7 +3256,12 @@ public partial class CharacterEncounterController
                     "description": "Character holding this perspective"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -3341,7 +3431,12 @@ public partial class CharacterEncounterController
             ],
             "properties": {
                 "perspective": {
-                    "$ref": "#/$defs/EncounterPerspectiveModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterPerspectiveModel"
+                        }
+                    ],
+                    "description": "The character's perspective on the encounter"
                 }
             }
         },
@@ -3374,7 +3469,12 @@ public partial class CharacterEncounterController
                     "description": "Character holding this perspective"
                 },
                 "emotionalImpact": {
-                    "$ref": "#/$defs/EmotionalImpact"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
                 },
                 "sentimentShift": {
                     "type": "number",
