@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;

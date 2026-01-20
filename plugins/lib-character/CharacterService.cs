@@ -5,7 +5,6 @@ using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;

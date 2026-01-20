@@ -1,7 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
