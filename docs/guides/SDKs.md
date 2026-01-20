@@ -4,6 +4,8 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 
 ## SDK Summary
 
+### .NET SDKs
+
 | Package | Purpose | Target |
 |---------|---------|--------|
 | `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, ApiException, base events) | All SDKs, server plugins |
@@ -18,9 +20,40 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 | `BeyondImmersion.Bannou.MusicTheory` | Core music theory primitives | Music generation, theory calculations |
 | `BeyondImmersion.Bannou.MusicStoryteller` | Narrative-driven composition | Emotional music generation |
 
+### TypeScript SDK
+
+| Package | Purpose | Target |
+|---------|---------|--------|
+| `@beyondimmersion/bannou-core` | Shared types (ApiResponse, BannouJson, base events) | All TypeScript SDKs |
+| `@beyondimmersion/bannou-client` | WebSocket client with typed proxies | Browser and Node.js clients |
+
+### Unreal Engine Helpers
+
+| Artifact | Purpose | Target |
+|----------|---------|--------|
+| `BannouProtocol.h` | Binary protocol constants, flags, response codes | UE4/UE5 WebSocket integration |
+| `BannouTypes.h` | All request/response USTRUCT definitions (549 types) | UE4/UE5 JSON serialization |
+| `BannouEnums.h` | All UENUM definitions | UE4/UE5 type safety |
+| `BannouEndpoints.h` | Endpoint constants and registry (217 endpoints) | UE4/UE5 API discovery |
+| `BannouEvents.h` | Event name constants (32 event types) | UE4/UE5 event handling |
+
 ## Decision Guide
 
 ```
+What platform are you targeting?
+├─ .NET (C#, Unity, Stride, Godot .NET)
+│  └─ See .NET SDK decision tree below
+│
+├─ Browser or Node.js (JavaScript/TypeScript)
+│  └─ Use @beyondimmersion/bannou-client
+│     └─ For Node.js, also install: npm install ws
+│
+└─ Unreal Engine (C++)
+   └─ Use generated helper headers in sdks/unreal/Generated/
+      └─ See UNREAL-INTEGRATION.md for integration guide
+
+.NET SDK Decision Tree:
+
 Are you building a game client?
 ├─ Yes → Use BeyondImmersion.Bannou.Client
 │        └─ Need voice chat? → Also add BeyondImmersion.Bannou.Client.Voice
@@ -840,6 +873,119 @@ Use MusicStoryteller SDK when you need:
 
 ---
 
+## TypeScript SDK
+
+**Packages**: `@beyondimmersion/bannou-core`, `@beyondimmersion/bannou-client`
+
+TypeScript client SDK for browser and Node.js environments.
+
+### Features
+
+- **Binary WebSocket Protocol**: 31-byte request / 16-byte response headers with big-endian encoding
+- **Typed Service Proxies**: Generated `AuthProxy`, `CharacterProxy`, etc. for compile-time safety (33 proxies, 214 endpoints)
+- **Event Subscriptions**: Type-safe handlers for 32 server-push events
+- **Capability Manifest**: Dynamic API discovery based on authentication state
+- **Dual Environment**: Works in browser (native WebSocket) and Node.js (ws package)
+
+### Installation
+
+```bash
+npm install @beyondimmersion/bannou-core @beyondimmersion/bannou-client
+
+# For Node.js, also install:
+npm install ws
+```
+
+### Quick Start
+
+```typescript
+import { BannouClient } from '@beyondimmersion/bannou-client';
+
+const client = new BannouClient();
+await client.connectAsync('wss://bannou.example.com/connect', accessToken);
+
+// Use typed service proxies
+const response = await client.auth.loginAsync({
+  email: 'player@example.com',
+  password: 'password'
+});
+
+// Subscribe to events
+client.onEvent('game_session.chat_received', (event) => {
+  console.log(`Chat: ${event.message}`);
+});
+```
+
+### When to Use
+
+Use the TypeScript SDK when you're building:
+- Web-based game clients
+- Electron desktop applications
+- Node.js game servers or bots
+- Browser-based admin tools
+
+**See also**: [TypeScript SDK Guide](TYPESCRIPT-SDK.md) for detailed integration instructions.
+
+---
+
+## Unreal Engine Helpers
+
+**Location**: `sdks/unreal/Generated/`
+
+Helper artifacts for integrating Bannou services into Unreal Engine 4 and 5 projects.
+
+### Generated Files
+
+| File | Purpose |
+|------|---------|
+| `BannouProtocol.h` | Binary protocol constants, message flags, response codes, byte order utilities |
+| `BannouTypes.h` | 549 USTRUCT definitions for all request/response models |
+| `BannouEnums.h` | All UENUM definitions for type-safe enums |
+| `BannouEndpoints.h` | 217 endpoint constants with method, path, and type metadata |
+| `BannouEvents.h` | 32 event name constants for server-push events |
+
+### Why Helpers Instead of Full SDK?
+
+Unreal Engine developers have diverse networking requirements. Rather than impose a specific architecture, Bannou provides:
+- Type definitions you can use with your preferred networking approach
+- Protocol constants for implementing the binary WebSocket protocol
+- Comprehensive documentation for manual integration
+
+This gives you full control while eliminating the tedious work of defining 549 structs manually.
+
+### Quick Start
+
+1. Copy headers to your project:
+   ```bash
+   cp sdks/unreal/Generated/*.h YourProject/Source/YourProject/Bannou/
+   ```
+
+2. Include in your code:
+   ```cpp
+   #include "Bannou/BannouTypes.h"
+   #include "Bannou/BannouEndpoints.h"
+
+   // Create request
+   Bannou::FLoginRequest Request;
+   Request.Email = TEXT("player@example.com");
+   Request.Password = TEXT("password");
+
+   // Serialize to JSON
+   FString Json;
+   FJsonObjectConverter::UStructToJsonObjectString(Request, Json);
+   ```
+
+### When to Use
+
+Use the Unreal helpers when you're building:
+- Unreal Engine 4 or 5 game clients
+- Blueprint-based game logic (all types have UPROPERTY macros)
+- Custom networking solutions for UE projects
+
+**See also**: [Unreal Integration Guide](UNREAL-INTEGRATION.md) for detailed integration instructions.
+
+---
+
 ## Common Patterns
 
 ### WebSocket Connection Modes
@@ -891,6 +1037,7 @@ If you're **developing or extending** the Bannou SDKs themselves (not just consu
 
 ## Further Reading
 
+### .NET SDKs
 - [Core SDK README](../../sdks/core/README.md) - Shared types documentation
 - [Client SDK README](../../sdks/client/README.md) - Full client SDK documentation
 - [Server SDK README](../../sdks/server/README.md) - Full server SDK documentation
@@ -903,4 +1050,16 @@ If you're **developing or extending** the Bannou SDKs themselves (not just consu
 - [MusicTheory SDK README](../../sdks/music-theory/README.md) - Music theory primitives
 - [MusicStoryteller SDK README](../../sdks/music-storyteller/README.md) - Narrative composition
 - [Music System Guide](MUSIC_SYSTEM.md) - Comprehensive music system documentation
-- [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) - Binary protocol details
+
+### TypeScript SDK
+- [TypeScript SDK README](../../sdks/typescript/README.md) - Package overview
+- [TypeScript SDK Guide](TYPESCRIPT-SDK.md) - Detailed integration guide
+
+### Unreal Engine
+- [Unreal Integration Guide](UNREAL-INTEGRATION.md) - C++ integration guide
+- [Unreal Integration Guide (detailed)](../../sdks/unreal/Docs/INTEGRATION_GUIDE.md) - Complete walkthrough
+- [Unreal Protocol Reference](../../sdks/unreal/Docs/PROTOCOL_REFERENCE.md) - Binary protocol details
+- [Unreal Examples](../../sdks/unreal/Docs/EXAMPLES.md) - Full code examples
+
+### Protocol
+- [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) - Binary protocol specification
