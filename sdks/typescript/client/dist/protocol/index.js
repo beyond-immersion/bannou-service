@@ -181,7 +181,9 @@ function writeGuid(view, offset, guid) {
 function readGuid(view, offset) {
   const hexParts = [];
   for (let i = 0; i < 16; i++) {
-    hexParts.push(view.getUint8(offset + i).toString(16).padStart(2, "0"));
+    hexParts.push(
+      view.getUint8(offset + i).toString(16).padStart(2, "0")
+    );
   }
   const hex = hexParts.join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;

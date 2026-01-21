@@ -819,13 +819,7 @@ export class BannouClient implements IBannouClient {
         // The early handler stays active until setupMessageHandler removes it.
         const earlyMessages: Buffer[] = [];
         const earlyMessageHandler = (data: Buffer): void => {
-          console.error(
-            `[DEBUG] createWebSocket earlyMessageHandler: received message, length=${data.length}`
-          );
           earlyMessages.push(data);
-          console.error(
-            `[DEBUG] createWebSocket earlyMessageHandler: earlyMessages.length now ${earlyMessages.length}`
-          );
         };
         ws.on('message', earlyMessageHandler);
 
@@ -840,13 +834,9 @@ export class BannouClient implements IBannouClient {
         ws.on('open', () => {
           // Don't remove early handler here - setupMessageHandler will handle the transition
           // This prevents a gap where messages could be lost
-          console.error(
-            `[DEBUG] createWebSocket: 'open' event fired, earlyMessages.length=${earlyMessages.length}`
-          );
           resolve(ws);
         });
         ws.on('error', (err: Error) => {
-          console.error(`[DEBUG] createWebSocket: 'error' event fired: ${err.message}`);
           reject(err);
         });
       });
@@ -864,32 +854,20 @@ export class BannouClient implements IBannouClient {
         let bytes: Uint8Array;
         if (data instanceof ArrayBuffer) {
           bytes = new Uint8Array(data);
-          console.error(`[DEBUG] handleMessage: ArrayBuffer, length=${data.byteLength}`);
         } else {
           // Node.js Buffer: create Uint8Array with correct offset and length
-          console.error(
-            `[DEBUG] handleMessage: Buffer, length=${data.length}, byteOffset=${data.byteOffset}, buffer.byteLength=${data.buffer.byteLength}`
-          );
           bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
         }
 
         // Check minimum size
         if (bytes.length < RESPONSE_HEADER_SIZE) {
-          console.error(`[DEBUG] handleMessage: too short, bytes.length=${bytes.length}`);
           return;
         }
 
-        console.error(
-          `[DEBUG] handleMessage: parsing ${bytes.length} bytes, first 4 bytes: ${bytes[0].toString(16)} ${bytes[1].toString(16)} ${bytes[2].toString(16)} ${bytes[3].toString(16)}`
-        );
         const message = parse(bytes);
-        console.error(
-          `[DEBUG] handleMessage: parsed, flags=${message.flags.toString(16)}, responseCode=${message.responseCode}, payload.length=${message.payload.length}`
-        );
         this.handleReceivedMessage(message);
-      } catch (err) {
-        // Log malformed messages for debugging
-        console.error(`[DEBUG] handleMessage ERROR: ${err}`);
+      } catch {
+        // Silently ignore malformed messages
       }
     };
 
@@ -1012,9 +990,6 @@ export class BannouClient implements IBannouClient {
   }
 
   private handleReceivedMessage(message: BinaryMessage): void {
-    console.error(
-      `[DEBUG] handleReceivedMessage: flags=${message.flags.toString(16)}, isResponse=${isResponse(message)}, isEvent=${(message.flags & MessageFlags.Event) !== 0}`
-    );
     if (isResponse(message)) {
       // Complete pending request
       const pending = this.pendingRequests.get(message.messageId.toString());
@@ -1024,37 +999,26 @@ export class BannouClient implements IBannouClient {
       }
     } else if ((message.flags & MessageFlags.Event) !== 0) {
       // Server-pushed event
-      console.error(`[DEBUG] handleReceivedMessage: calling handleEventMessage`);
       this.handleEventMessage(message);
-    } else {
-      console.error(`[DEBUG] handleReceivedMessage: not response, not event - ignoring`);
     }
   }
 
   private handleEventMessage(message: BinaryMessage): void {
-    console.error(`[DEBUG] handleEventMessage: payload.length=${message.payload.length}`);
     if (message.payload.length === 0) {
-      console.error(`[DEBUG] handleEventMessage: empty payload, returning`);
       return;
     }
 
     try {
       const payloadJson = new TextDecoder().decode(message.payload);
-      console.error(
-        `[DEBUG] handleEventMessage: payloadJson first 200 chars: ${payloadJson.substring(0, 200)}`
-      );
       const parsed = JSON.parse(payloadJson) as { eventName?: string };
 
       const eventName = parsed.eventName;
-      console.error(`[DEBUG] handleEventMessage: eventName=${eventName}`);
       if (!eventName) {
-        console.error(`[DEBUG] handleEventMessage: no eventName, returning`);
         return;
       }
 
       // Handle capability manifest specially
       if (eventName === 'connect.capability_manifest') {
-        console.error(`[DEBUG] handleEventMessage: calling handleCapabilityManifest`);
         this.handleCapabilityManifest(payloadJson);
       }
 
@@ -1074,56 +1038,40 @@ export class BannouClient implements IBannouClient {
           }
         }
       }
-    } catch (err) {
-      // Log parse errors for debugging
-      console.error(`[DEBUG] handleEventMessage ERROR: ${err}`);
+    } catch {
+      // Silently ignore parse errors
     }
   }
 
   private handleCapabilityManifest(json: string): void {
-    console.error(`[DEBUG] handleCapabilityManifest: json.length=${json.length}`);
     try {
       const manifest = JSON.parse(json) as {
         sessionId?: string;
         availableAPIs?: Array<{ endpointKey?: string; serviceGuid?: string }>;
       };
 
-      console.error(
-        `[DEBUG] handleCapabilityManifest: sessionId=${manifest.sessionId}, availableAPIs count=${manifest.availableAPIs?.length ?? 'undefined'}`
-      );
-
       // Extract session ID
       if (manifest.sessionId) {
         this._sessionId = manifest.sessionId;
-        console.error(`[DEBUG] handleCapabilityManifest: set _sessionId to ${this._sessionId}`);
       }
 
       // Extract available APIs
       if (Array.isArray(manifest.availableAPIs)) {
-        let count = 0;
         for (const api of manifest.availableAPIs) {
           if (api.endpointKey && api.serviceGuid) {
             this.apiMappings.set(api.endpointKey, api.serviceGuid);
             this.connectionState?.addServiceMapping(api.endpointKey, api.serviceGuid);
-            count++;
           }
         }
-        console.error(
-          `[DEBUG] handleCapabilityManifest: added ${count} API mappings, total now ${this.apiMappings.size}`
-        );
       }
 
       // Signal that capabilities are received
       if (this.capabilityManifestResolver) {
-        console.error(`[DEBUG] handleCapabilityManifest: resolving capabilityManifestResolver`);
         this.capabilityManifestResolver(true);
         this.capabilityManifestResolver = null;
-      } else {
-        console.error(`[DEBUG] handleCapabilityManifest: no capabilityManifestResolver set`);
       }
-    } catch (err) {
-      // Log manifest parse errors for debugging
-      console.error(`[DEBUG] handleCapabilityManifest ERROR: ${err}`);
+    } catch {
+      // Silently ignore manifest parse errors
     }
   }
 
