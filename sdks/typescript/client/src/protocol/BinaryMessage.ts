@@ -199,7 +199,8 @@ function parseRequest(view: DataView, bytes: Uint8Array): BinaryMessage {
 function parseResponse(view: DataView, bytes: Uint8Array): BinaryMessage {
   if (bytes.length < RESPONSE_HEADER_SIZE) {
     throw new Error(
-      `Response message too short. Expected at least ${RESPONSE_HEADER_SIZE} bytes, got ${bytes.length}`
+      `Response message too short. Expected at least ` +
+        `${RESPONSE_HEADER_SIZE} bytes, got ${bytes.length}`
     );
   }
 

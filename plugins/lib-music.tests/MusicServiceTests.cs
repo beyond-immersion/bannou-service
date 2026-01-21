@@ -568,23 +568,7 @@ public class StyleTests
     public void StyleLoader_LoadFromYaml_ParsesCorrectly()
     {
         // Arrange
-        var yaml = @"
-id: test-style
-name: Test Style
-category: test
-defaultTempo: 120
-defaultMeter: 4/4
-modeDistribution:
-  major: 0.5
-  minor: 0.3
-  dorian: 0.2
-intervalPreferences:
-  stepWeight: 0.5
-  thirdWeight: 0.3
-  leapWeight: 0.15
-  largeLeapWeight: 0.05
-";
-
+        var yaml = TestFixtures.Load("style_loader_test");
         var loader = new SdkStyleLoader();
 
         // Act

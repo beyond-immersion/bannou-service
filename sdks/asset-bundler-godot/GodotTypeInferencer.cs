@@ -217,8 +217,8 @@ public sealed class GodotTypeInferencer : IAssetTypeInferencer
     public static bool IsRuntimeLoadable(string extension)
     {
         return RuntimeModelExtensions.Contains(extension) ||
-               RuntimeTextureExtensions.Contains(extension) ||
-               RuntimeAudioExtensions.Contains(extension);
+            RuntimeTextureExtensions.Contains(extension) ||
+            RuntimeAudioExtensions.Contains(extension);
     }
 
     /// <summary>
@@ -229,7 +229,7 @@ public sealed class GodotTypeInferencer : IAssetTypeInferencer
     public static bool RequiresConversion(string extension)
     {
         return ConvertibleModelExtensions.Contains(extension) ||
-               ConvertibleTextureExtensions.Contains(extension) ||
-               ConvertibleAudioExtensions.Contains(extension);
+            ConvertibleTextureExtensions.Contains(extension) ||
+            ConvertibleAudioExtensions.Contains(extension);
     }
 }

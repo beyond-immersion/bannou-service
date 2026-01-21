@@ -152,14 +152,14 @@ public sealed class Form
         /// <summary>12-bar blues</summary>
         public static Form Blues12Bar => new("12-Bar Blues",
             [Section.A, Section.A, Section.A, Section.A,
-             Section.B, Section.B, Section.A, Section.A,
-             Section.C, Section.B, Section.A, Section.A], 1);
+                Section.B, Section.B, Section.A, Section.A,
+                Section.C, Section.B, Section.A, Section.A], 1);
 
         /// <summary>Pop song structure</summary>
         public static Form PopSong => new("Pop Song",
             [Section.Intro, Section.Verse, Section.Chorus,
-             Section.Verse, Section.Chorus, Section.Bridge,
-             Section.Chorus, Section.Outro], 8);
+                Section.Verse, Section.Chorus, Section.Bridge,
+                Section.Chorus, Section.Outro], 8);
     }
 
     /// <summary>

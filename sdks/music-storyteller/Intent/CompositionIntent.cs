@@ -159,8 +159,8 @@ public sealed record CompositionIntent
             EnergyLevel = phase.EmotionalTarget.Energy,
             AllowSyncopation = phase.MusicalCharacter.RhythmicActivity > 0.6,
             EndOnStable = phase.HarmonicCharacter == HarmonicCharacter.Stable ||
-                          phase.HarmonicCharacter == HarmonicCharacter.Resolving ||
-                          phase.HarmonicCharacter == HarmonicCharacter.Peaceful
+                phase.HarmonicCharacter == HarmonicCharacter.Resolving ||
+                phase.HarmonicCharacter == HarmonicCharacter.Peaceful
         };
     }
 

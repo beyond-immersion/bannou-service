@@ -235,7 +235,7 @@ public sealed class ActionSelection
             };
         }
         else if (phase.HarmonicCharacter == HarmonicCharacter.Building ||
-                 phase.HarmonicCharacter == HarmonicCharacter.Climactic)
+            phase.HarmonicCharacter == HarmonicCharacter.Climactic)
         {
             criteria = criteria with
             {

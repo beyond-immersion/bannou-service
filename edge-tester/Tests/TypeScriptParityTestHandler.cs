@@ -61,9 +61,9 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             new ServiceTest(TestTsRelationshipTypeCreateAndReadParity, "TS Parity - RelationshipType Create & Read", "Parity",
                 "Verify relationship type create and read produce identical results"),
 
-            // Auth parity tests
-            new ServiceTest(TestTsAuthValidateParity, "TS Parity - Auth Validate", "Parity",
-                "Verify both SDKs can validate tokens identically"),
+            // Note: Auth validate test removed - /auth/validate requires JWT in HTTP header,
+            // but WebSocket messages don't have HTTP headers. WebSocket clients are already
+            // authenticated by virtue of being connected, so this endpoint doesn't apply.
 
             // Game Session parity tests
             new ServiceTest(TestTsGameSessionListParity, "TS Parity - Game Session List", "Parity",
@@ -73,9 +73,8 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             new ServiceTest(TestTsLocationCreateAndReadParity, "TS Parity - Location Create & Read", "Parity",
                 "Verify location create and read produce identical results"),
 
-            // Permission parity tests
-            new ServiceTest(TestTsPermissionCapabilitiesParity, "TS Parity - Permission Capabilities", "Parity",
-                "Verify permission capabilities endpoint parity"),
+            // Note: Permission capabilities test removed - /permission/capabilities has x-permissions: []
+            // which means it's intentionally not exposed to WebSocket clients (internal only).
         ];
     }
 
@@ -682,7 +681,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
                     name = $"Parity Character {uniqueCode}",
                     realmId,
                     speciesId,
-                    age = 25,
+                    birthDate = DateTime.UtcNow.AddYears(-25).ToString("O"),
                     gender = "male"
                 },
                 timeout: TimeSpan.FromSeconds(10));
@@ -791,6 +790,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
                     entity1Type = "character",
                     entity2Id,
                     entity2Type = "character",
+                    startedAt = DateTime.UtcNow.ToString("O"),
                     metadata = new { notes = "parity test relationship" }
                 },
                 timeout: TimeSpan.FromSeconds(10));

@@ -172,8 +172,8 @@ public sealed class ExpectationTracker
 
         // Combine with weights
         return schematicWeight * schematicProb +
-               veridicalWeight * veridicalProb +
-               dynamicWeight * dynamicProb;
+            veridicalWeight * veridicalProb +
+            dynamicWeight * dynamicProb;
     }
 
     /// <summary>

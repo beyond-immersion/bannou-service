@@ -162,7 +162,8 @@ export class ApiResponse<T> {
 
     const error = this.error;
     throw new Error(
-      `${error?.errorName ?? 'Error'}: ${error?.message ?? 'Request failed'} (code: ${error?.responseCode ?? -1})`
+      `${error?.errorName ?? 'Error'}: ${error?.message ?? 'Request failed'} ` +
+        `(code: ${error?.responseCode ?? -1})`
     );
   }
 }

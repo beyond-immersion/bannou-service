@@ -64,21 +64,60 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
 
         process.Start();
 
-        var runner = new TypeScriptTestRunner(process);
-
-        // Wait for ready signal
-        var readyLine = await runner._stdout.ReadLineAsync(cancellationToken)
-            ?? throw new InvalidOperationException("Harness did not send ready signal");
-
-        var ready = JsonSerializer.Deserialize<ReadyResponse>(readyLine, runner._jsonOptions)
-            ?? throw new InvalidOperationException("Invalid ready response from harness");
-
-        if (!ready.Ready)
+        TypeScriptTestRunner? runner = null;
+        try
         {
-            throw new InvalidOperationException("Harness reported not ready");
-        }
+            runner = new TypeScriptTestRunner(process);
 
-        return runner;
+            // Wait for ready signal with timeout
+            using var readyCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            readyCts.CancelAfter(TimeSpan.FromSeconds(10));
+
+            try
+            {
+                var readyLine = await runner._stdout.ReadLineAsync(readyCts.Token);
+
+                if (readyLine == null)
+                {
+                    // Check stderr for error message
+                    var stderr = await process.StandardError.ReadToEndAsync(cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(stderr))
+                    {
+                        throw new InvalidOperationException($"Harness failed to start. stderr: {stderr}");
+                    }
+                    throw new InvalidOperationException("Harness did not send ready signal (no output)");
+                }
+
+                var ready = JsonSerializer.Deserialize<ReadyResponse>(readyLine, runner._jsonOptions)
+                    ?? throw new InvalidOperationException($"Invalid ready response from harness: {readyLine}");
+
+                if (!ready.Ready)
+                {
+                    throw new InvalidOperationException("Harness reported not ready");
+                }
+
+                var result = runner;
+                runner = null; // Transfer ownership
+                return result;
+            }
+            catch (OperationCanceledException) when (readyCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                // Timeout waiting for ready signal - check stderr
+                var stderr = await process.StandardError.ReadToEndAsync(CancellationToken.None);
+                if (!string.IsNullOrWhiteSpace(stderr))
+                {
+                    throw new InvalidOperationException($"Harness timed out. stderr: {stderr}");
+                }
+                throw new InvalidOperationException("Harness timed out waiting for ready signal");
+            }
+        }
+        finally
+        {
+            if (runner != null)
+            {
+                await runner.DisposeAsync();
+            }
+        }
     }
 
     /// <summary>

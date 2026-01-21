@@ -31,4 +31,11 @@
     <ProjectReference Include="../../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Copy YAML test fixtures to output directory -->
+    <None Include="fixtures\**\*.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

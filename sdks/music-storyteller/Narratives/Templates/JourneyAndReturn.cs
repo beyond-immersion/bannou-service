@@ -17,7 +17,7 @@ public static class JourneyAndReturn
         Id = "journey_and_return",
         Name = "Journey and Return",
         Description = "A classic arc of leaving home, adventuring, and returning transformed. " +
-                      "Inspired by Celtic music traditions and the hero's journey.",
+            "Inspired by Celtic music traditions and the hero's journey.",
         Imagery =
         [
             "Morning mist over green hills, a familiar hearth",

@@ -46,7 +46,7 @@ public sealed class StrideBuildException : Exception
             var errorLines = standardOutput
                 .Split('\n')
                 .Where(line => line.Contains("error", StringComparison.OrdinalIgnoreCase) ||
-                              line.Contains("failed", StringComparison.OrdinalIgnoreCase))
+                    line.Contains("failed", StringComparison.OrdinalIgnoreCase))
                 .Take(10)
                 .ToArray();
 

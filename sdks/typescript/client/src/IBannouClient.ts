@@ -147,8 +147,9 @@ export interface IBannouClient {
   ): Promise<boolean>;
 
   /**
-   * Connects in internal mode using a service token (or network-trust if token is null) without JWT login.
-   * @param connectUrl - Full WebSocket URL to the Connect service (internal node)
+   * Connects in internal mode using a service token (or network-trust if token
+   * is null) without JWT login.
+   * @param connectUrl - Full WebSocket URL to the Connect service (internal)
    * @param serviceToken - Optional X-Service-Token for internal auth mode
    * @returns True if connection successful
    */

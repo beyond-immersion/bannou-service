@@ -42,9 +42,9 @@ public static class TensionCalculator
         double voiceLeadingRoughness)
     {
         return Weights.Dissonance * dissonance +
-               Weights.Hierarchical * hierarchicalTension +
-               Weights.TonalDistance * tonalDistance +
-               Weights.VoiceLeading * voiceLeadingRoughness;
+            Weights.Hierarchical * hierarchicalTension +
+            Weights.TonalDistance * tonalDistance +
+            Weights.VoiceLeading * voiceLeadingRoughness;
     }
 
     /// <summary>
