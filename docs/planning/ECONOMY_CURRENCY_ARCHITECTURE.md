@@ -1821,7 +1821,1195 @@ Laverna: "Oh good, a wealthy target just arrived"
 
 ---
 
-## Part 10: Summary
+## Part 10: Foreign Trade, Exchange Rates, and Taxation
+
+### 10.1 Design Philosophy: Three-Tier Usage
+
+The trade and taxation system must serve three different usage patterns:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Tier 1: Divine/System Oversight                                  │
+│ God actors or system processes with full visibility              │
+│ Use: Full analytics, automatic interventions                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Same APIs
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Tier 2: NPC Governance                                           │
+│ Economist NPCs, customs officials, merchant guild leaders        │
+│ Behaviors encode economic knowledge, imperfect information       │
+│ Use: Query what they can "see", make bounded-rational decisions │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Same APIs
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Tier 3: External Management                                      │
+│ Game server handles all decisions outside Bannou                 │
+│ Use: "Where's money flowing weakest?" - just give me data       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Principle**: The plugin provides primitives and data. It doesn't enforce game-specific rules. Games decide how to use the APIs.
+
+### 10.2 Trade Routes
+
+Trade routes are **data constructs** describing paths between locations. The plugin doesn't pathfind - games define routes and the plugin stores them.
+
+#### Trade Route Schema
+
+```yaml
+# Schema: trade-route
+TradeRoute:
+  id: uuid
+
+  # Identification
+  name: string
+  code: string                    # "silk_road", "northern_passage"
+  description: string
+
+  # Ownership (optional - for personal/guild routes)
+  ownerId: uuid                   # null for system routes
+  ownerType: enum                 # system | character | guild | faction
+
+  # Scope
+  realmId: uuid                   # Primary realm (for queries)
+  crossesRealms: boolean          # Does this route cross realm boundaries?
+
+  # Status
+  status: enum                    # active | closed | dangerous | seasonal
+
+  # Metadata (game-provided)
+  tags: [string]                  # "maritime", "mountain", "safe"
+  seasonalAvailability: object    # { winter: false, summer: true }
+
+  createdAt: timestamp
+  modifiedAt: timestamp
+
+# Schema: trade-route-leg
+TradeRouteLeg:
+  routeId: uuid
+  legIndex: integer               # Order in route (0, 1, 2...)
+
+  # Endpoints
+  fromLocationId: uuid
+  toLocationId: uuid
+
+  # Travel metadata (game-provided)
+  estimatedDuration: duration     # How long this leg takes
+  distance: decimal               # In game units
+  terrainType: string             # "road", "sea", "mountain", "river"
+  riskLevel: decimal              # 0-1, base chance of incident
+
+  # Border crossing (if applicable)
+  crossesBorder: boolean
+  fromRealmId: uuid
+  toRealmId: uuid
+  borderType: enum                # none | internal | external
+                                  # internal = within parent realm
+                                  # external = between separate realms
+
+  # Customs/checkpoint
+  hasCheckpoint: boolean
+  checkpointLocationId: uuid      # Where tariffs are assessed
+
+# Aggregated route summary (computed)
+TradeRouteSummary:
+  routeId: uuid
+  totalLegs: integer
+  totalDistance: decimal
+  totalEstimatedDuration: duration
+  borderCrossings: integer
+  internalBorderCrossings: integer
+  externalBorderCrossings: integer
+  riskProfile: object             # { low: 3, medium: 1, high: 0 } legs by risk
+```
+
+#### Trade Route API
+
+```yaml
+# Route Management
+/trade/route/create:
+  access: authenticated
+  request:
+    name: string
+    code: string
+    ownerId?: uuid
+    ownerType: system | character | guild | faction
+    realmId: uuid
+    legs: [
+      {
+        fromLocationId: uuid
+        toLocationId: uuid
+        estimatedDuration: duration
+        distance: decimal
+        terrainType: string
+        riskLevel: decimal
+      }
+    ]
+  response: { route, summary }
+
+/trade/route/get:
+  access: user
+  request:
+    routeId: uuid
+  response: { route, legs[], summary }
+
+/trade/route/query:
+  access: user
+  request:
+    fromLocationId?: uuid        # Routes starting here
+    toLocationId?: uuid          # Routes ending here
+    passingThrough?: uuid        # Routes passing through
+    realmId?: uuid
+    ownerId?: uuid
+    ownerType?: enum
+    tags?: [string]
+    maxLegs?: integer
+    maxDuration?: duration
+  response: { routes[], summaries[] }
+
+/trade/route/update:
+  access: authenticated          # Must own route or be admin
+  request:
+    routeId: uuid
+    status?: enum
+    legs?: array                 # Replace all legs
+  response: { route, summary }
+
+/trade/route/delete:
+  access: authenticated
+  request:
+    routeId: uuid
+  response: { deleted: boolean }
+
+# Route Analysis
+/trade/route/estimate-cost:
+  access: user
+  request:
+    routeId: uuid
+    goods: [
+      { templateId: uuid, quantity: integer }
+    ]
+    currencyId: uuid             # For tariff calculation
+    currencyAmount: decimal      # Currency being transported
+  response:
+    totalTariffs: decimal
+    tariffBreakdown: [
+      {
+        legIndex: integer
+        borderType: string
+        importTariff: decimal
+        exportTariff: decimal
+        currencyExchangeLoss: decimal
+      }
+    ]
+    riskAssessment: object
+    estimatedDuration: duration
+```
+
+### 10.3 Shipments (Declarative Lifecycle)
+
+Shipments track goods/currency moving along routes. The plugin **does not automatically progress shipments** - the game server calls APIs to indicate what happened.
+
+This is like `lib-scene`'s instantiate pattern: the plugin records state, the game drives events.
+
+#### Shipment Schema
+
+```yaml
+# Schema: shipment
+Shipment:
+  id: uuid
+
+  # Route
+  routeId: uuid
+  currentLegIndex: integer        # Which leg we're on (or completed)
+
+  # Ownership
+  ownerId: uuid
+  ownerType: enum                 # character | guild | caravan_company
+
+  # Carrier (who's physically moving it)
+  carrierId: uuid                 # Character doing the transport
+  carrierType: enum               # character | npc | vehicle
+
+  # Contents
+  goods: [
+    {
+      itemInstanceId: uuid
+      templateId: uuid            # Denormalized for queries
+      quantity: integer
+      declared: boolean           # Was this declared at customs?
+    }
+  ]
+  currencies: [
+    {
+      currencyId: uuid
+      amount: decimal
+      declared: boolean
+    }
+  ]
+
+  # Status
+  status: enum
+    - preparing                   # Being loaded
+    - in_transit                  # On the move
+    - at_checkpoint               # Waiting at border
+    - arrived                     # Reached destination
+    - lost                        # Destroyed, stolen, etc.
+    - seized                      # Confiscated at border
+
+  # Tracking
+  departedAt: timestamp
+  currentLocationId: uuid         # Where it is now
+  estimatedArrivalAt: timestamp
+  arrivedAt: timestamp
+
+  # Incident tracking
+  incidents: [
+    {
+      legIndex: integer
+      incidentType: string        # "bandit_attack", "storm", "customs_inspection"
+      outcome: string
+      losses: object              # What was lost/damaged
+      timestamp: timestamp
+    }
+  ]
+
+  createdAt: timestamp
+  modifiedAt: timestamp
+
+# Schema: shipment-tariff-record
+ShipmentTariffRecord:
+  shipmentId: uuid
+  legIndex: integer
+  borderCrossingId: uuid
+
+  # What was assessed
+  assessedGoods: [
+    { templateId, quantity, tariffRate, tariffAmount }
+  ]
+  assessedCurrency: [
+    { currencyId, amount, exchangeRate, exchangeFee }
+  ]
+
+  totalTariffDue: decimal
+  tariffCurrencyId: uuid
+
+  # What actually happened
+  collectionMethod: enum          # auto | manual | evaded | partial
+  amountCollected: decimal
+  collectedAt: timestamp
+
+  # For evasion/smuggling
+  undeclaredGoods: [
+    { templateId, quantity, detected: boolean }
+  ]
+  undeclaredCurrency: [
+    { currencyId, amount, detected: boolean }
+  ]
+  smugglingDetected: boolean
+  smugglingPenalty: decimal
+```
+
+#### Shipment API (Game-Driven)
+
+```yaml
+# Lifecycle APIs - Game server calls these to indicate what happened
+
+/trade/shipment/create:
+  access: authenticated
+  request:
+    routeId: uuid
+    ownerId: uuid
+    ownerType: enum
+    carrierId: uuid
+    carrierType: enum
+    goods: [{ itemInstanceId, declared }]
+    currencies: [{ currencyId, amount, declared }]
+  response: { shipment }
+  notes: |
+    Items are NOT automatically moved to escrow. Game decides whether
+    to call /inventory/transfer to move items to shipment container.
+
+/trade/shipment/depart:
+  access: authenticated
+  request:
+    shipmentId: uuid
+  response: { shipment }
+  emits: shipment.departed
+  notes: |
+    Game calls this when carrier actually leaves origin.
+    Sets status to in_transit, records departedAt.
+
+/trade/shipment/complete-leg:
+  access: authenticated
+  request:
+    shipmentId: uuid
+    legIndex: integer
+    incidents?: [{ incidentType, outcome, losses }]
+  response: { shipment }
+  emits: shipment.leg_completed
+  notes: |
+    Game calls this when carrier completes a leg.
+    If leg has border crossing, emits border_crossing event.
+
+/trade/shipment/border-crossing:
+  access: authenticated
+  request:
+    shipmentId: uuid
+    legIndex: integer
+
+    # Customs declaration
+    declaredGoods: [{ templateId, quantity }]
+    declaredCurrency: [{ currencyId, amount }]
+
+    # What's actually being carried (game knows the truth)
+    actualGoods: [{ templateId, quantity, hidden: boolean }]
+    actualCurrency: [{ currencyId, amount, hidden: boolean }]
+
+    # Crossing type
+    crossingType: enum            # legal | illegal | attempted_smuggle
+
+    # Detection (game determines this based on inspections, skills, etc.)
+    inspectionOccurred: boolean
+    smugglingDetected: boolean
+
+    # Tariff handling
+    tariffCollection: enum        # auto | manual | evaded | exempt
+  response:
+    shipment: object
+    tariffRecord: object
+    estimatedTariff: decimal      # What WOULD have been owed
+    actualTariffCollected: decimal
+    seizures: array               # Any confiscated goods
+  emits: shipment.border_crossed
+  notes: |
+    This is the key event for border economics.
+    - crossingType: legal means proper checkpoint
+    - crossingType: illegal means snuck across
+    - crossingType: attempted_smuggle means legal crossing but hiding goods
+
+    Game provides both declared and actual - plugin records discrepancy.
+    Plugin calculates what tariff SHOULD be (estimatedTariff).
+    tariffCollection determines what happens:
+    - auto: Plugin debits carrier wallet automatically
+    - manual: Plugin records debt, game handles collection
+    - evaded: No collection, but recorded for analytics/consequences
+    - exempt: Diplomatic immunity, guild privileges, etc.
+
+/trade/shipment/arrive:
+  access: authenticated
+  request:
+    shipmentId: uuid
+    actualGoods: [{ templateId, quantity }]  # What actually arrived
+    actualCurrency: [{ currencyId, amount }]
+  response: { shipment }
+  emits: shipment.arrived
+  notes: |
+    Game calls when shipment reaches destination.
+    actualGoods may differ from original if losses occurred.
+    Items are NOT automatically transferred - game decides.
+
+/trade/shipment/lost:
+  access: authenticated
+  request:
+    shipmentId: uuid
+    reason: string                # "bandits", "shipwreck", "confiscated"
+    recoverable: boolean
+    lostGoods: [{ templateId, quantity }]
+    lostCurrency: [{ currencyId, amount }]
+  response: { shipment }
+  emits: shipment.lost
+```
+
+#### Shipment Events
+
+```yaml
+shipment.departed:
+  shipmentId: uuid
+  routeId: uuid
+  ownerId: uuid
+  carrierId: uuid
+  originLocationId: uuid
+  destinationLocationId: uuid
+  declaredValue: decimal          # Total declared value
+
+shipment.leg_completed:
+  shipmentId: uuid
+  legIndex: integer
+  fromLocationId: uuid
+  toLocationId: uuid
+  incidents: array
+
+shipment.border_crossed:
+  shipmentId: uuid
+  legIndex: integer
+  borderType: internal | external
+  fromRealmId: uuid
+  toRealmId: uuid
+  checkpointLocationId: uuid
+
+  # Tariff info (useful for all consumers)
+  estimatedTariff: decimal
+  actualTariffCollected: decimal
+  tariffCollection: auto | manual | evaded | exempt
+
+  # Smuggling info (if applicable)
+  crossingType: legal | illegal | attempted_smuggle
+  smugglingDetected: boolean
+  undeclaredValue: decimal        # Value of hidden goods/currency
+
+  # For games that want to react
+  carrierCaughtSmuggling: boolean
+
+shipment.arrived:
+  shipmentId: uuid
+  routeId: uuid
+  destinationLocationId: uuid
+  totalDuration: duration
+  totalTariffsPaid: decimal
+  incidentCount: integer
+  lossPercentage: decimal         # What % was lost in transit
+
+shipment.lost:
+  shipmentId: uuid
+  reason: string
+  lostValue: decimal
+  recoverable: boolean
+```
+
+### 10.4 Borders and Tariffs
+
+#### Realm Hierarchy and Border Types
+
+```yaml
+# Border types based on realm relationship
+BorderType:
+  none:           # Same realm, no crossing
+  internal:       # Crossing between territories within a parent realm
+                  # e.g., Duchy A to Duchy B, both in Kingdom X
+                  # Typically no/low tariffs, same currency
+  external:       # Crossing between separate realms
+                  # e.g., Kingdom X to Kingdom Y
+                  # Full tariffs, currency exchange
+
+# The realm hierarchy determines this automatically
+# Parent realm contains child realms
+# Crossing between siblings under same parent = internal
+# Crossing between realms with no common parent = external
+```
+
+#### Tariff Definition Schema
+
+```yaml
+# Schema: tariff-policy
+TariffPolicy:
+  id: uuid
+
+  # Where this policy applies
+  realmId: uuid                   # The realm setting this policy
+
+  # Scope
+  scope: enum
+    - realm_wide                  # All borders of this realm
+    - specific_border             # One specific border crossing
+    - category                    # Specific goods categories
+
+  borderLocationId: uuid          # For specific_border scope
+
+  # Direction
+  direction: enum                 # import | export | both
+
+  # Rates
+  defaultRate: decimal            # e.g., 0.05 = 5%
+
+  # Category-specific rates
+  categoryRates: [
+    {
+      category: string            # "weapons", "food", "luxury"
+      rate: decimal
+    }
+  ]
+
+  # Item-specific rates (overrides category)
+  itemRates: [
+    {
+      templateId: uuid
+      rate: decimal
+    }
+  ]
+
+  # Currency tariffs (for transporting money)
+  currencyRate: decimal           # Rate on currency itself
+
+  # Exemptions
+  exemptions: [
+    {
+      entityType: string          # "guild:merchants", "faction:diplomats"
+      entityId: uuid
+      exemptionType: full | partial
+      partialRate: decimal        # If partial
+    }
+  ]
+
+  # Status
+  status: enum                    # active | suspended | wartime
+  effectiveFrom: timestamp
+  effectiveUntil: timestamp       # null = indefinite
+
+  createdAt: timestamp
+
+# Schema: tariff-calculation (for queries)
+TariffCalculation:
+  goods: [
+    {
+      templateId: uuid
+      quantity: integer
+      unitValue: decimal
+      applicableRate: decimal
+      tariffAmount: decimal
+      exemptionApplied: string    # null or exemption reason
+    }
+  ]
+  currencies: [
+    {
+      currencyId: uuid
+      amount: decimal
+      applicableRate: decimal
+      tariffAmount: decimal
+    }
+  ]
+  totalTariff: decimal
+  tariffCurrencyId: uuid
+```
+
+#### Tariff API
+
+```yaml
+# Policy Management
+/trade/tariff/policy/create:
+  access: admin
+  request: { realmId, scope, direction, rates... }
+  response: { policy }
+
+/trade/tariff/policy/list:
+  access: user
+  request:
+    realmId: uuid
+    includeExpired: boolean
+  response: { policies[] }
+
+/trade/tariff/policy/update:
+  access: admin
+  request:
+    policyId: uuid
+    rates?: object
+    exemptions?: array
+    status?: enum
+  response: { policy }
+
+# Calculation (query only - doesn't collect)
+/trade/tariff/calculate:
+  access: user
+  request:
+    fromRealmId: uuid
+    toRealmId: uuid
+    fromLocationId?: uuid         # For location-specific rates
+    toLocationId?: uuid
+    goods: [{ templateId, quantity, unitValue? }]
+    currencies: [{ currencyId, amount }]
+    entityId?: uuid               # For exemption checking
+    entityType?: string
+  response: { calculation }
+  notes: |
+    This is a pure calculation - it doesn't record or collect anything.
+    Used for:
+    - Tier 3 games that just want data
+    - NPC merchants estimating costs
+    - UI showing "this will cost X in tariffs"
+
+# Collection (actually moves currency)
+/trade/tariff/collect:
+  access: authenticated
+  request:
+    shipmentId: uuid
+    tariffRecordId: uuid
+    walletId: uuid                # Who pays
+    amount: decimal               # Can be partial payment
+  response: { transaction, remainingDue }
+  notes: |
+    For games using auto collection (Option A), this is called
+    automatically during border_crossing.
+    For manual collection (Option B/C), game calls this explicitly.
+```
+
+### 10.5 Exchange Rates and Universal Value
+
+#### Universal Value Concept
+
+Currencies can optionally have a **universal value** - an intrinsic worth that can change. Exchange rates can then be computed dynamically from universal values plus modifiers.
+
+```yaml
+# Schema: currency-universal-value
+CurrencyUniversalValue:
+  currencyId: uuid
+
+  # The value
+  universalValue: decimal         # Relative worth (1.0 = baseline)
+
+  # Tracking
+  previousValue: decimal
+  changedAt: timestamp
+  changeReason: string            # "inflation", "gold_discovery", "war_ended"
+  changedBy: string               # "admin", "economic_event", "market_algorithm"
+
+# Example values:
+# Eldoria Gold: 1.0 (baseline)
+# Arcane Crystals: 2.5 (rare, valuable)
+# Copper Bits: 0.01 (low-value currency)
+# War Scrip: 0.3 (wartime currency, unstable)
+```
+
+#### Exchange Rate Schema
+
+```yaml
+# Schema: exchange-rate
+ExchangeRate:
+  id: uuid
+
+  # Currency pair
+  fromCurrencyId: uuid
+  toCurrencyId: uuid
+
+  # Scope (rates can vary by location)
+  scope: enum                     # global | realm | location
+  scopeId: uuid                   # null for global
+
+  # The rate
+  rate: decimal                   # 1 fromCurrency = rate toCurrency
+  inverseRate: decimal            # Computed: 1 toCurrency = inverseRate fromCurrency
+
+  # How determined
+  rateType: enum                  # manual | computed
+
+  # For computed rates
+  baseRate: decimal               # From universal values
+  modifiers: [
+    {
+      modifierType: string        # "tariff", "war", "festival", "shortage"
+      modifierValue: decimal      # Multiplier (1.1 = +10%)
+      source: string              # Where this modifier comes from
+      expiresAt: timestamp        # null = permanent until removed
+    }
+  ]
+
+  # Spread (for currency exchange businesses)
+  buySpread: decimal              # Rate when buying fromCurrency (slightly worse)
+  sellSpread: decimal             # Rate when selling fromCurrency
+
+  effectiveAt: timestamp
+  expiresAt: timestamp
+
+# Computed rate formula:
+# rate = (fromCurrency.universalValue / toCurrency.universalValue) * product(modifiers)
+```
+
+#### Exchange Rate API
+
+```yaml
+# Manual rate setting (simple games)
+/currency/exchange-rate/set:
+  access: admin
+  request:
+    fromCurrencyId: uuid
+    toCurrencyId: uuid
+    scope: global | realm | location
+    scopeId: uuid
+    rate: decimal
+    buySpread?: decimal           # Default 1.0 (no spread)
+    sellSpread?: decimal
+  response: { exchangeRate }
+
+# Query rate
+/currency/exchange-rate/get:
+  access: user
+  request:
+    fromCurrencyId: uuid
+    toCurrencyId: uuid
+    scope: global | realm | location
+    scopeId: uuid
+  response:
+    rate: decimal
+    rateType: manual | computed
+    modifiers: array
+    buyRate: decimal              # Rate with buy spread
+    sellRate: decimal             # Rate with sell spread
+
+# Universal value management
+/currency/universal-value/set:
+  access: admin
+  request:
+    currencyId: uuid
+    value: decimal
+    reason: string
+  response: { universalValue }
+  emits: currency.universal_value.changed
+  notes: |
+    Triggers recalculation of all computed rates involving this currency.
+
+/currency/universal-value/get:
+  access: user
+  request:
+    currencyId: uuid
+  response: { universalValue }
+
+/currency/universal-value/history:
+  access: user
+  request:
+    currencyId: uuid
+    limit: integer
+  response: { history[] }
+
+# Modifier management
+/currency/exchange-modifier/add:
+  access: admin
+  request:
+    fromCurrencyId: uuid
+    toCurrencyId: uuid
+    scope: global | realm | location
+    scopeId: uuid
+    modifierType: string
+    modifierValue: decimal
+    expiresAt?: timestamp
+  response: { exchangeRate }      # Updated rate with new modifier
+  emits: currency.exchange_rate.changed
+
+/currency/exchange-modifier/remove:
+  access: admin
+  request:
+    fromCurrencyId: uuid
+    toCurrencyId: uuid
+    scope: global | realm | location
+    scopeId: uuid
+    modifierType: string
+  response: { exchangeRate }
+  emits: currency.exchange_rate.changed
+
+# Perform exchange
+/currency/exchange:
+  access: authenticated
+  request:
+    fromWalletId: uuid
+    toWalletId: uuid              # Can be same wallet
+    fromCurrencyId: uuid
+    toCurrencyId: uuid
+    fromAmount: decimal
+    locationId?: uuid             # For location-specific rates
+  response:
+    transaction: object
+    fromDebited: decimal
+    toCredited: decimal
+    rateUsed: decimal
+    feesCharged: decimal
+  notes: |
+    Actually performs the exchange, debiting one currency and crediting another.
+```
+
+#### Exchange Rate Events
+
+```yaml
+currency.universal_value.changed:
+  currencyId: uuid
+  previousValue: decimal
+  newValue: decimal
+  percentChange: decimal
+  reason: string
+  # Useful for: NPC merchants adjusting prices, economic gods noticing trends
+
+currency.exchange_rate.changed:
+  fromCurrencyId: uuid
+  toCurrencyId: uuid
+  scope: string
+  scopeId: uuid
+  previousRate: decimal
+  newRate: decimal
+  changeType: manual | modifier_added | modifier_removed | universal_value_change
+```
+
+### 10.6 Contraband and Illegal Crossings
+
+The system explicitly supports smuggling and illegal activity, enabling rich gameplay without prescribing outcomes.
+
+#### How It Works
+
+1. **Game tracks what's actually being carried** (full truth)
+2. **Carrier declares subset at customs** (what they claim)
+3. **Game determines if inspection occurs** (skills, bribes, random checks)
+4. **Game reports outcome to plugin** (detected or not)
+5. **Plugin records everything for analytics** (smuggling rates, contraband value)
+
+```yaml
+# The border_crossing API accepts both declared and actual:
+border_crossing:
+  declaredGoods: [...]            # What carrier says they have
+  actualGoods: [...]              # What they actually have
+  crossingType: legal | illegal | attempted_smuggle
+  inspectionOccurred: boolean
+  smugglingDetected: boolean
+
+# Plugin calculates:
+# - What tariff SHOULD have been (on actual goods)
+# - What tariff WAS declared (on declared goods)
+# - Discrepancy = smuggled value
+
+# Plugin records but doesn't enforce consequences
+# Game decides: fine, arrest, confiscation, bribe acceptance, etc.
+```
+
+#### Contraband Categories
+
+Games can define what's contraband where:
+
+```yaml
+# Schema: contraband-definition
+ContrabandDefinition:
+  id: uuid
+  realmId: uuid                   # Where this is contraband
+
+  # What's forbidden
+  type: enum                      # item_category | item_template | currency
+  targetId: uuid                  # Template ID or currency ID
+  targetCategory: string          # "weapons", "drugs", "religious_artifacts"
+
+  # Severity
+  severity: enum                  # restricted | prohibited | capital_offense
+
+  # Consequences (advisory - game enforces)
+  suggestedFine: decimal
+  suggestedPenalty: string        # "confiscation", "imprisonment", "execution"
+
+  effectiveFrom: timestamp
+  effectiveUntil: timestamp
+
+# Query API
+/trade/contraband/check:
+  access: user
+  request:
+    realmId: uuid
+    goods: [{ templateId, quantity }]
+    currencies: [{ currencyId, amount }]
+  response:
+    violations: [
+      {
+        type: string
+        targetId: uuid
+        severity: string
+        suggestedFine: decimal
+      }
+    ]
+    hasContraband: boolean
+    totalContrabandValue: decimal
+```
+
+### 10.7 Taxation Systems
+
+Taxes are systematic sinks. The plugin provides infrastructure; games decide policy.
+
+#### Tax Types
+
+| Type | Trigger | Collected By | Example |
+|------|---------|--------------|---------|
+| **Transaction Tax** | Every trade/auction | Automatic or manual | 5% auction house cut |
+| **Import/Export** | Border crossing | Via tariff system | 10% on foreign goods |
+| **Property Tax** | Ownership over time | Periodic assessment | 100g/week for housing |
+| **Income Tax** | Currency gains | Faucet events | 5% on quest rewards |
+| **Wealth Tax** | Total holdings | Periodic assessment | 0.1% of net worth annually |
+| **Sales Tax** | NPC vendor purchases | Point of sale | 8% on vendor buys |
+
+#### Tax Collection Patterns
+
+```yaml
+# Pattern A: Automatic (simple games)
+# Plugin automatically debits taxes during relevant events
+TaxPolicy:
+  realmId: uuid
+  taxType: transaction | income | sales
+  rate: decimal
+  collectionMode: automatic
+
+# When transaction occurs:
+# 1. Plugin calculates tax
+# 2. Plugin debits tax from transactor
+# 3. Tax goes to: void | realm_treasury | faction
+
+# Pattern B: Assessed (complex games)
+# Plugin calculates, game/NPCs collect
+TaxPolicy:
+  taxType: property | wealth
+  rate: decimal
+  collectionMode: assessed
+  assessmentFrequency: weekly | monthly | yearly
+
+# Plugin emits tax.assessment.due events
+# Game/NPC tax collectors pursue collection
+# Non-payment creates tax debt record
+
+# Pattern C: Advisory (Arcadia-style)
+# Plugin provides calculation APIs only
+# Game handles everything
+TaxPolicy:
+  collectionMode: advisory
+
+# Plugin provides:
+# - /tax/calculate endpoint
+# - Tax debt tracking
+# - Analytics on tax collection rates
+# Game handles actual collection (or evasion)
+```
+
+#### Tax Schema
+
+```yaml
+# Schema: tax-policy
+TaxPolicy:
+  id: uuid
+  realmId: uuid
+
+  taxType: enum                   # transaction | income | property | wealth | sales | custom
+  name: string                    # "Eldoria Sales Tax"
+
+  # Rate
+  baseRate: decimal
+  progressiveBrackets: [          # Optional for progressive taxation
+    { threshold: 1000, rate: 0.05 },
+    { threshold: 10000, rate: 0.08 },
+    { threshold: 100000, rate: 0.12 }
+  ]
+
+  # Exemptions
+  exemptions: [
+    { entityType: string, entityId: uuid, reason: string }
+  ]
+
+  # Collection
+  collectionMode: enum            # automatic | assessed | advisory
+  collectionTarget: enum          # void | realm_treasury | faction_id
+  collectionTargetId: uuid        # For faction
+
+  # For assessed taxes
+  assessmentFrequency: duration
+  gracePeriod: duration           # Time to pay before penalties
+  latePenaltyRate: decimal        # Additional rate for late payment
+
+  status: active | suspended
+  effectiveFrom: timestamp
+  effectiveUntil: timestamp
+
+# Schema: tax-assessment
+TaxAssessment:
+  id: uuid
+  policyId: uuid
+
+  # Who owes
+  taxpayerId: uuid
+  taxpayerType: enum
+
+  # Assessment
+  assessedValue: decimal          # What the tax is based on
+  taxDue: decimal
+  dueDate: timestamp
+
+  # Payment tracking
+  status: enum                    # pending | partial | paid | overdue | defaulted
+  amountPaid: decimal
+  paidAt: timestamp
+
+  # Penalties
+  penaltiesAccrued: decimal
+
+  createdAt: timestamp
+
+# Schema: tax-debt
+TaxDebt:
+  taxpayerId: uuid
+  taxpayerType: enum
+  realmId: uuid
+
+  totalOwed: decimal
+  oldestDueDate: timestamp
+  assessmentIds: [uuid]
+
+  # Consequences (advisory)
+  suggestedConsequences: [string] # "property_seizure", "arrest_warrant"
+```
+
+#### Tax API
+
+```yaml
+# Policy Management
+/tax/policy/create:
+  access: admin
+  request: { realmId, taxType, rate, collectionMode... }
+  response: { policy }
+
+/tax/policy/list:
+  access: user
+  request: { realmId }
+  response: { policies[] }
+
+# Calculation (doesn't collect)
+/tax/calculate:
+  access: user
+  request:
+    policyId: uuid
+    taxpayerId: uuid
+    taxpayerType: enum
+    baseValue: decimal            # What to tax
+  response:
+    taxDue: decimal
+    effectiveRate: decimal
+    bracketApplied: string
+    exemptionApplied: string
+
+# Assessment (for assessed taxes)
+/tax/assess:
+  access: admin
+  request:
+    policyId: uuid
+    taxpayerId: uuid
+    taxpayerType: enum
+    assessedValue: decimal
+    dueDate: timestamp
+  response: { assessment }
+  emits: tax.assessment.created
+
+# Payment
+/tax/pay:
+  access: authenticated
+  request:
+    assessmentId: uuid
+    walletId: uuid
+    amount: decimal               # Can be partial
+  response: { assessment, transaction, remainingDue }
+  emits: tax.payment.received
+
+# Debt queries
+/tax/debt/get:
+  access: user
+  request:
+    taxpayerId: uuid
+    taxpayerType: enum
+    realmId?: uuid
+  response: { debt, assessments[] }
+
+/tax/debt/list-delinquent:
+  access: admin
+  request:
+    realmId: uuid
+    minOwed?: decimal
+    minDaysOverdue?: integer
+  response: { debts[] }
+```
+
+#### Tax Events
+
+```yaml
+tax.assessment.created:
+  assessmentId: uuid
+  policyId: uuid
+  taxpayerId: uuid
+  taxDue: decimal
+  dueDate: timestamp
+
+tax.assessment.overdue:
+  assessmentId: uuid
+  taxpayerId: uuid
+  daysOverdue: integer
+  totalOwed: decimal
+  penaltiesAccrued: decimal
+
+tax.payment.received:
+  assessmentId: uuid
+  taxpayerId: uuid
+  amountPaid: decimal
+  remainingDue: decimal
+
+tax.debt.defaulted:
+  taxpayerId: uuid
+  realmId: uuid
+  totalDefaulted: decimal
+  suggestedConsequences: [string]
+```
+
+### 10.8 Integration Examples
+
+#### Simple Game: Auto-Everything
+
+```yaml
+# Configuration for a simple game
+TariffPolicy:
+  collectionMode: auto
+
+TaxPolicy:
+  collectionMode: automatic
+  collectionTarget: void          # Just a sink
+
+ExchangeRate:
+  rateType: manual                # Admin sets rates directly
+
+# Game flow:
+# 1. Shipment crosses border
+# 2. Plugin auto-debits tariff
+# 3. Done - game doesn't need to handle
+```
+
+#### Complex Game: NPC Tax Collectors
+
+```yaml
+# Configuration for NPC-governed economy
+TaxPolicy:
+  collectionMode: assessed
+  assessmentFrequency: monthly
+
+# Game flow:
+# 1. Plugin emits tax.assessment.created monthly
+# 2. Tax Collector NPC receives event
+# 3. NPC GOAP: goal = collect_taxes
+# 4. NPC visits taxpayers, calls /tax/pay on their behalf
+# 5. Some taxpayers evade - NPC tracks, reports to authorities
+# 6. Authorities may issue arrest warrants (game logic)
+```
+
+#### Arcadia: Full Control
+
+```yaml
+# Arcadia uses advisory mode for everything
+TariffPolicy:
+  collectionMode: advisory        # Plugin calculates, NPCs collect (or don't)
+
+TaxPolicy:
+  collectionMode: advisory        # Same
+
+ExchangeRate:
+  rateType: computed
+  # But individual merchants ignore this and set their own prices
+  # The "rate" is just a reference point
+
+# Game flow:
+# 1. Player approaches border with goods
+# 2. Game calls /trade/tariff/calculate
+# 3. Customs officer NPC decides: collect, negotiate, accept bribe, let slide
+# 4. Game calls /trade/shipment/border-crossing with actual outcome
+# 5. Plugin records everything for analytics
+# 6. Economic gods observe smuggling rates, may intervene narratively
+```
+
+---
+
+## Part 11: Summary
 
 ### What We're Building
 
@@ -1833,6 +3021,9 @@ Laverna: "Oh good, a wealthy target just arrived"
 | **lib-economy** | Monitoring, NPC AI, analytics | Design complete |
 | **Economic Deities** | God Actors that maintain velocity via narrative events | Design complete |
 | **Analytics Extensions** | Velocity tracking at currency/realm/location granularity | Design complete |
+| **Trade Routes** | Route definitions, shipment lifecycle, border crossings | Design complete |
+| **Tariffs/Taxes** | Configurable collection modes, contraband support | Design complete |
+| **Exchange Rates** | Universal values, computed rates, location-scoped | Design complete |
 
 ### Key Architectural Decisions
 
@@ -1843,6 +3034,11 @@ Laverna: "Oh good, a wealthy target just arrived"
 5. **Faucet/Sink discipline** (inflation control)
 6. **Divine economic intervention** (velocity control via narrative events)
 7. **Redistribution over creation** (most interventions move currency, not create/destroy)
+8. **Three-tier usage pattern** (divine oversight / NPC governance / external management)
+9. **Declarative shipment lifecycle** (game drives events, plugin records state)
+10. **Configurable collection modes** (auto / assessed / advisory for all taxes/tariffs)
+11. **Universal value anchoring** (computed exchange rates from intrinsic currency worth)
+12. **Explicit contraband support** (declared vs actual, detection as game logic)
 
 ### Quest System Requirements
 
@@ -1867,6 +3063,25 @@ Laverna: "Oh good, a wealthy target just arrived"
 - Spillover effects are natural and desirable
 - Intentional stagnation supported for narrative purposes
 - Multiple specialized gods per realm create emergent dynamics
+
+### Foreign Trade Strategy
+
+- Trade routes as data constructs (game defines, plugin stores)
+- Shipment lifecycle is declarative (game calls APIs, plugin records)
+- Realm hierarchy affects border types (internal vs external)
+- Tariffs configurable at realm and location level
+- Exchange rates from universal values + modifiers (or manual)
+- Contraband/smuggling explicitly supported (declared vs actual)
+- Three collection modes: auto (simple), assessed (NPC), advisory (full control)
+
+### Taxation Strategy
+
+- Multiple tax types: transaction, income, property, wealth, sales
+- Same three collection modes as tariffs
+- Tax debts tracked for NPC/player collection gameplay
+- Progressive brackets supported
+- Exemptions for diplomatic/guild privileges
+- Events enable tax collector NPCs and consequences for evasion
 
 ---
 

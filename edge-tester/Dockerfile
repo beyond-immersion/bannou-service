@@ -31,9 +31,10 @@ COPY sdks/typescript ./sdks/typescript
 COPY edge-tester/TypeScript ./edge-tester/TypeScript
 
 # Install dependencies and build the harness
-# npm install will resolve file: references to the local SDK packages
+# Use --install-links to copy file: dependencies instead of symlinking them
+# This ensures the packages are self-contained after Docker COPY
 WORKDIR /app/edge-tester/TypeScript
-RUN npm install && npm run build
+RUN npm install --install-links && npm run build
 
 # Runtime image based on ASP.NET Core runtime (needed for bannou-service dependencies)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime

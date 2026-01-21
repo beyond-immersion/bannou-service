@@ -59,9 +59,12 @@ export function readUInt64(view: DataView, offset: number): bigint {
  * Writes a GUID in consistent network byte order.
  * Uses RFC 4122 standard byte ordering for cross-platform compatibility.
  *
- * RFC 4122 specifies that the time fields (first 8 bytes) use network byte order.
- * .NET's Guid.ToByteArray() returns little-endian for time fields, so we need
- * to reverse bytes 0-3, 4-5, 6-7 when writing. Bytes 8-15 remain as-is.
+ * CRITICAL: The GUID string is already in RFC 4122 display format (big-endian),
+ * so we write the parsed bytes directly WITHOUT reversal.
+ *
+ * This differs from C# which uses Guid.ToByteArray() that returns little-endian
+ * for time fields, requiring reversal. TypeScript parses the string directly
+ * which is already big-endian.
  *
  * @param view - DataView to write to
  * @param offset - Byte offset to start writing
@@ -75,30 +78,12 @@ export function writeGuid(view: DataView, offset: number, guid: string): void {
     throw new Error(`Invalid GUID format: ${guid}`);
   }
 
-  // Parse each hex pair as bytes
-  const bytes = new Uint8Array(16);
+  // Parse each hex pair as bytes and write directly.
+  // The GUID string is already in RFC 4122 big-endian display format,
+  // so NO byte reversal is needed (unlike C# which reverses from little-endian).
   for (let i = 0; i < 16; i++) {
-    bytes[i] = parseInt(cleanGuid.slice(i * 2, i * 2 + 2), 16);
-  }
-
-  // RFC 4122 network byte order transformation:
-  // Time-low (4 bytes, indices 0-3) - reverse
-  view.setUint8(offset + 0, bytes[3]);
-  view.setUint8(offset + 1, bytes[2]);
-  view.setUint8(offset + 2, bytes[1]);
-  view.setUint8(offset + 3, bytes[0]);
-
-  // Time-mid (2 bytes, indices 4-5) - reverse
-  view.setUint8(offset + 4, bytes[5]);
-  view.setUint8(offset + 5, bytes[4]);
-
-  // Time-high-and-version (2 bytes, indices 6-7) - reverse
-  view.setUint8(offset + 6, bytes[7]);
-  view.setUint8(offset + 7, bytes[6]);
-
-  // Clock-seq-and-reserved + clock-seq-low + node (8 bytes, indices 8-15) - keep as-is
-  for (let i = 8; i < 16; i++) {
-    view.setUint8(offset + i, bytes[i]);
+    const byte = parseInt(cleanGuid.slice(i * 2, i * 2 + 2), 16);
+    view.setUint8(offset + i, byte);
   }
 }
 
@@ -106,37 +91,26 @@ export function writeGuid(view: DataView, offset: number, guid: string): void {
  * Reads a GUID from consistent network byte order.
  * Uses RFC 4122 standard byte ordering for cross-platform compatibility.
  *
+ * CRITICAL: Bytes are read directly without reversal because they're stored
+ * in RFC 4122 big-endian format, which matches the GUID string display format.
+ *
  * @param view - DataView to read from
  * @param offset - Byte offset to start reading
  * @returns GUID string in standard format (lowercase)
  */
 export function readGuid(view: DataView, offset: number): string {
-  const bytes = new Uint8Array(16);
-
-  // Reverse the RFC 4122 transformation:
-  // Time-low (4 bytes) - reverse back
-  bytes[0] = view.getUint8(offset + 3);
-  bytes[1] = view.getUint8(offset + 2);
-  bytes[2] = view.getUint8(offset + 1);
-  bytes[3] = view.getUint8(offset + 0);
-
-  // Time-mid (2 bytes) - reverse back
-  bytes[4] = view.getUint8(offset + 5);
-  bytes[5] = view.getUint8(offset + 4);
-
-  // Time-high-and-version (2 bytes) - reverse back
-  bytes[6] = view.getUint8(offset + 7);
-  bytes[7] = view.getUint8(offset + 6);
-
-  // Clock-seq and node (8 bytes) - keep as-is
-  for (let i = 8; i < 16; i++) {
-    bytes[i] = view.getUint8(offset + i);
+  // Read bytes directly - they're already in RFC 4122 big-endian format
+  // which matches the GUID string display format (no reversal needed)
+  const hexParts: string[] = [];
+  for (let i = 0; i < 16; i++) {
+    hexParts.push(
+      view
+        .getUint8(offset + i)
+        .toString(16)
+        .padStart(2, '0')
+    );
   }
-
-  // Format as GUID string
-  const hex = Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  const hex = hexParts.join('');
 
   return (
     `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-` +

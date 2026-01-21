@@ -115,11 +115,7 @@ async function handleConnectWithToken(command) {
         await client.disconnectAsync();
     }
     client = new BannouClient();
-    const success = await client.connectWithTokenAsync(
-      command.url,
-      command.accessToken,
-      command.refreshToken,
-    );
+    const success = await client.connectWithTokenAsync(command.url, command.accessToken, command.refreshToken);
     if (success) {
         respondSuccess({
             sessionId: client.sessionId,
@@ -138,12 +134,7 @@ async function handleRegisterAndConnect(command) {
         await client.disconnectAsync();
     }
     client = new BannouClient();
-    const success = await client.registerAndConnectAsync(
-      command.url,
-      command.username,
-      command.email,
-      command.password,
-    );
+    const success = await client.registerAndConnectAsync(command.url, command.username, command.email, command.password);
     if (success) {
         respondSuccess({
             sessionId: client.sessionId,
@@ -164,22 +155,12 @@ async function handleInvoke(command) {
         respondError('Not connected');
         return;
     }
-    const response = await client.invokeAsync(
-      command.method,
-      command.path,
-      command.request,
-      command.channel,
-      command.timeout,
-    );
+    const response = await client.invokeAsync(command.method, command.path, command.request, command.channel, command.timeout);
     if (response.isSuccess) {
         respondSuccess(response.result);
     }
     else {
-        respondError(
-          response.error?.message ?? 'Unknown error',
-          response.error?.responseCode,
-          response.error?.errorName ?? undefined,
-        );
+        respondError(response.error?.message ?? 'Unknown error', response.error?.responseCode, response.error?.errorName ?? undefined);
     }
 }
 /**

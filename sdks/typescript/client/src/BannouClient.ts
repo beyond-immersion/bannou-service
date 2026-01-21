@@ -811,9 +811,44 @@ export class BannouClient implements IBannouClient {
         }
 
         const ws = new WS(url, { headers }) as import('ws').WebSocket;
+        console.error(`[DEBUG] createWebSocket: created WebSocket to ${url}`);
 
-        ws.on('open', () => resolve(ws));
-        ws.on('error', (err: Error) => reject(err));
+        // CRITICAL: Set up message buffering BEFORE 'open' fires to avoid race condition.
+        // The server may send capability manifest immediately after accepting connection,
+        // so we must buffer messages until setupMessageHandler() takes over.
+        // The early handler stays active until setupMessageHandler removes it.
+        const earlyMessages: Buffer[] = [];
+        const earlyMessageHandler = (data: Buffer): void => {
+          console.error(
+            `[DEBUG] createWebSocket earlyMessageHandler: received message, length=${data.length}`
+          );
+          earlyMessages.push(data);
+          console.error(
+            `[DEBUG] createWebSocket earlyMessageHandler: earlyMessages.length now ${earlyMessages.length}`
+          );
+        };
+        ws.on('message', earlyMessageHandler);
+
+        // Store references so setupMessageHandler can access them
+        const wsWithEarly = ws as import('ws').WebSocket & {
+          _earlyMessages?: Buffer[];
+          _earlyMessageHandler?: (data: Buffer) => void;
+        };
+        wsWithEarly._earlyMessages = earlyMessages;
+        wsWithEarly._earlyMessageHandler = earlyMessageHandler;
+
+        ws.on('open', () => {
+          // Don't remove early handler here - setupMessageHandler will handle the transition
+          // This prevents a gap where messages could be lost
+          console.error(
+            `[DEBUG] createWebSocket: 'open' event fired, earlyMessages.length=${earlyMessages.length}`
+          );
+          resolve(ws);
+        });
+        ws.on('error', (err: Error) => {
+          console.error(`[DEBUG] createWebSocket: 'error' event fired: ${err.message}`);
+          reject(err);
+        });
       });
     }
   }
@@ -823,17 +858,38 @@ export class BannouClient implements IBannouClient {
 
     const handleMessage = (data: ArrayBuffer | Buffer): void => {
       try {
-        const bytes = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer);
+        // Handle both ArrayBuffer and Node.js Buffer correctly
+        // Node.js Buffers can be views into larger pooled ArrayBuffers,
+        // so we must account for byteOffset when converting
+        let bytes: Uint8Array;
+        if (data instanceof ArrayBuffer) {
+          bytes = new Uint8Array(data);
+          console.error(`[DEBUG] handleMessage: ArrayBuffer, length=${data.byteLength}`);
+        } else {
+          // Node.js Buffer: create Uint8Array with correct offset and length
+          console.error(
+            `[DEBUG] handleMessage: Buffer, length=${data.length}, byteOffset=${data.byteOffset}, buffer.byteLength=${data.buffer.byteLength}`
+          );
+          bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        }
 
         // Check minimum size
         if (bytes.length < RESPONSE_HEADER_SIZE) {
+          console.error(`[DEBUG] handleMessage: too short, bytes.length=${bytes.length}`);
           return;
         }
 
+        console.error(
+          `[DEBUG] handleMessage: parsing ${bytes.length} bytes, first 4 bytes: ${bytes[0].toString(16)} ${bytes[1].toString(16)} ${bytes[2].toString(16)} ${bytes[3].toString(16)}`
+        );
         const message = parse(bytes);
+        console.error(
+          `[DEBUG] handleMessage: parsed, flags=${message.flags.toString(16)}, responseCode=${message.responseCode}, payload.length=${message.payload.length}`
+        );
         this.handleReceivedMessage(message);
-      } catch {
-        // Ignore malformed messages
+      } catch (err) {
+        // Log malformed messages for debugging
+        console.error(`[DEBUG] handleMessage ERROR: ${err}`);
       }
     };
 
@@ -886,7 +942,10 @@ export class BannouClient implements IBannouClient {
       this.errorCallback?.(err);
     };
 
-    if ('addEventListener' in this.webSocket) {
+    // Check for browser environment the same way we do in createWebSocket
+    const isBrowser = typeof window !== 'undefined' && typeof window.WebSocket !== 'undefined';
+
+    if (isBrowser) {
       // Browser WebSocket
       const browserWs = this.webSocket as WebSocket;
       browserWs.addEventListener('message', (event: MessageEvent) => {
@@ -903,7 +962,44 @@ export class BannouClient implements IBannouClient {
     } else {
       // Node.js 'ws' WebSocket
       const nodeWs = this.webSocket as import('ws').WebSocket;
+      console.error(`[DEBUG] setupMessageHandler: Node.js WebSocket detected`);
+
+      // Remove the early message handler now that we're setting up the real handler.
+      // The early handler was set up in createWebSocket to buffer messages that arrive
+      // between 'open' firing and setupMessageHandler being called.
+      const wsWithEarly = nodeWs as import('ws').WebSocket & {
+        _earlyMessages?: Buffer[];
+        _earlyMessageHandler?: (data: Buffer) => void;
+      };
+      const earlyHandler = wsWithEarly._earlyMessageHandler;
+      console.error(`[DEBUG] setupMessageHandler: earlyHandler exists=${!!earlyHandler}`);
+      if (earlyHandler) {
+        nodeWs.off('message', earlyHandler);
+        wsWithEarly._earlyMessageHandler = undefined;
+      }
+
+      // Process any messages that arrived before setupMessageHandler was called
+      // (fixes race condition where server sends capability manifest immediately)
+      const earlyMessages = wsWithEarly._earlyMessages;
+      console.error(
+        `[DEBUG] setupMessageHandler: earlyMessages count=${earlyMessages?.length ?? 0}`
+      );
+      if (earlyMessages && earlyMessages.length > 0) {
+        console.error(
+          `[DEBUG] setupMessageHandler: processing ${earlyMessages.length} early messages`
+        );
+        for (const data of earlyMessages) {
+          console.error(
+            `[DEBUG] setupMessageHandler: processing early message, length=${data.length}`
+          );
+          handleMessage(data);
+        }
+      }
+      // Clear the early messages reference
+      wsWithEarly._earlyMessages = undefined;
+
       nodeWs.on('message', (data: Buffer) => {
+        console.error(`[DEBUG] setupMessageHandler: received live message, length=${data.length}`);
         handleMessage(data);
       });
       nodeWs.on('close', (code: number, reason: Buffer) => {
@@ -916,6 +1012,9 @@ export class BannouClient implements IBannouClient {
   }
 
   private handleReceivedMessage(message: BinaryMessage): void {
+    console.error(
+      `[DEBUG] handleReceivedMessage: flags=${message.flags.toString(16)}, isResponse=${isResponse(message)}, isEvent=${(message.flags & MessageFlags.Event) !== 0}`
+    );
     if (isResponse(message)) {
       // Complete pending request
       const pending = this.pendingRequests.get(message.messageId.toString());
@@ -925,26 +1024,37 @@ export class BannouClient implements IBannouClient {
       }
     } else if ((message.flags & MessageFlags.Event) !== 0) {
       // Server-pushed event
+      console.error(`[DEBUG] handleReceivedMessage: calling handleEventMessage`);
       this.handleEventMessage(message);
+    } else {
+      console.error(`[DEBUG] handleReceivedMessage: not response, not event - ignoring`);
     }
   }
 
   private handleEventMessage(message: BinaryMessage): void {
+    console.error(`[DEBUG] handleEventMessage: payload.length=${message.payload.length}`);
     if (message.payload.length === 0) {
+      console.error(`[DEBUG] handleEventMessage: empty payload, returning`);
       return;
     }
 
     try {
       const payloadJson = new TextDecoder().decode(message.payload);
+      console.error(
+        `[DEBUG] handleEventMessage: payloadJson first 200 chars: ${payloadJson.substring(0, 200)}`
+      );
       const parsed = JSON.parse(payloadJson) as { eventName?: string };
 
       const eventName = parsed.eventName;
+      console.error(`[DEBUG] handleEventMessage: eventName=${eventName}`);
       if (!eventName) {
+        console.error(`[DEBUG] handleEventMessage: no eventName, returning`);
         return;
       }
 
       // Handle capability manifest specially
       if (eventName === 'connect.capability_manifest') {
+        console.error(`[DEBUG] handleEventMessage: calling handleCapabilityManifest`);
         this.handleCapabilityManifest(payloadJson);
       }
 
@@ -964,40 +1074,56 @@ export class BannouClient implements IBannouClient {
           }
         }
       }
-    } catch {
-      // Ignore parse errors
+    } catch (err) {
+      // Log parse errors for debugging
+      console.error(`[DEBUG] handleEventMessage ERROR: ${err}`);
     }
   }
 
   private handleCapabilityManifest(json: string): void {
+    console.error(`[DEBUG] handleCapabilityManifest: json.length=${json.length}`);
     try {
       const manifest = JSON.parse(json) as {
         sessionId?: string;
         availableAPIs?: Array<{ endpointKey?: string; serviceGuid?: string }>;
       };
 
+      console.error(
+        `[DEBUG] handleCapabilityManifest: sessionId=${manifest.sessionId}, availableAPIs count=${manifest.availableAPIs?.length ?? 'undefined'}`
+      );
+
       // Extract session ID
       if (manifest.sessionId) {
         this._sessionId = manifest.sessionId;
+        console.error(`[DEBUG] handleCapabilityManifest: set _sessionId to ${this._sessionId}`);
       }
 
       // Extract available APIs
       if (Array.isArray(manifest.availableAPIs)) {
+        let count = 0;
         for (const api of manifest.availableAPIs) {
           if (api.endpointKey && api.serviceGuid) {
             this.apiMappings.set(api.endpointKey, api.serviceGuid);
             this.connectionState?.addServiceMapping(api.endpointKey, api.serviceGuid);
+            count++;
           }
         }
+        console.error(
+          `[DEBUG] handleCapabilityManifest: added ${count} API mappings, total now ${this.apiMappings.size}`
+        );
       }
 
       // Signal that capabilities are received
       if (this.capabilityManifestResolver) {
+        console.error(`[DEBUG] handleCapabilityManifest: resolving capabilityManifestResolver`);
         this.capabilityManifestResolver(true);
         this.capabilityManifestResolver = null;
+      } else {
+        console.error(`[DEBUG] handleCapabilityManifest: no capabilityManifestResolver set`);
       }
-    } catch {
-      // Ignore manifest parse errors
+    } catch (err) {
+      // Log manifest parse errors for debugging
+      console.error(`[DEBUG] handleCapabilityManifest ERROR: ${err}`);
     }
   }
 

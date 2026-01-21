@@ -175,36 +175,17 @@ function writeGuid(view, offset, guid) {
   if (cleanGuid.length !== 32) {
     throw new Error(`Invalid GUID format: ${guid}`);
   }
-  const bytes = new Uint8Array(16);
   for (let i = 0; i < 16; i++) {
-    bytes[i] = parseInt(cleanGuid.slice(i * 2, i * 2 + 2), 16);
-  }
-  view.setUint8(offset + 0, bytes[3]);
-  view.setUint8(offset + 1, bytes[2]);
-  view.setUint8(offset + 2, bytes[1]);
-  view.setUint8(offset + 3, bytes[0]);
-  view.setUint8(offset + 4, bytes[5]);
-  view.setUint8(offset + 5, bytes[4]);
-  view.setUint8(offset + 6, bytes[7]);
-  view.setUint8(offset + 7, bytes[6]);
-  for (let i = 8; i < 16; i++) {
-    view.setUint8(offset + i, bytes[i]);
+    const byte = parseInt(cleanGuid.slice(i * 2, i * 2 + 2), 16);
+    view.setUint8(offset + i, byte);
   }
 }
 function readGuid(view, offset) {
-  const bytes = new Uint8Array(16);
-  bytes[0] = view.getUint8(offset + 3);
-  bytes[1] = view.getUint8(offset + 2);
-  bytes[2] = view.getUint8(offset + 1);
-  bytes[3] = view.getUint8(offset + 0);
-  bytes[4] = view.getUint8(offset + 5);
-  bytes[5] = view.getUint8(offset + 4);
-  bytes[6] = view.getUint8(offset + 7);
-  bytes[7] = view.getUint8(offset + 6);
-  for (let i = 8; i < 16; i++) {
-    bytes[i] = view.getUint8(offset + i);
+  const hexParts = [];
+  for (let i = 0; i < 16; i++) {
+    hexParts.push(view.getUint8(offset + i).toString(16).padStart(2, "0"));
   }
-  const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hex = hexParts.join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 var EMPTY_GUID = "00000000-0000-0000-0000-000000000000";

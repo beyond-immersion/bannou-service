@@ -13,7 +13,9 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
     private readonly Process _process;
     private readonly StreamWriter _stdin;
     private readonly StreamReader _stdout;
+    private readonly StreamReader _stderr;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly Task _stderrTask;
     private bool _disposed;
 
     private TypeScriptTestRunner(Process process)
@@ -21,12 +23,33 @@ public sealed class TypeScriptTestRunner : IAsyncDisposable
         _process = process;
         _stdin = process.StandardInput;
         _stdout = process.StandardOutput;
+        _stderr = process.StandardError;
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             WriteIndented = false,
         };
+
+        // Start background task to read and output stderr
+        _stderrTask = Task.Run(async () =>
+        {
+            try
+            {
+                while (!_disposed && !_process.HasExited)
+                {
+                    var line = await _stderr.ReadLineAsync();
+                    if (line != null)
+                    {
+                        Console.WriteLine($"   [TS DEBUG] {line}");
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore errors when process exits
+            }
+        });
     }
 
     /// <summary>

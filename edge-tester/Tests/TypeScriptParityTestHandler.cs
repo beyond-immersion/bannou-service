@@ -91,10 +91,11 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
         var tsHelper = await TypeScriptParityHelper.CreateAsync();
         var httpUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}".Replace("/auth/login", "");
 
+        // Use admin credentials to match the C# adminClient's permissions
         var connected = await tsHelper.ConnectAsync(
             httpUrl,
-            Program.Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername not set"),
-            Program.Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword not set"));
+            Program.Configuration.GetAdminUsername(),
+            Program.Configuration.GetAdminPassword());
 
         if (!connected)
         {

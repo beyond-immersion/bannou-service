@@ -317,36 +317,17 @@ function writeGuid(view, offset, guid) {
   if (cleanGuid.length !== 32) {
     throw new Error(`Invalid GUID format: ${guid}`);
   }
-  const bytes = new Uint8Array(16);
   for (let i = 0; i < 16; i++) {
-    bytes[i] = parseInt(cleanGuid.slice(i * 2, i * 2 + 2), 16);
-  }
-  view.setUint8(offset + 0, bytes[3]);
-  view.setUint8(offset + 1, bytes[2]);
-  view.setUint8(offset + 2, bytes[1]);
-  view.setUint8(offset + 3, bytes[0]);
-  view.setUint8(offset + 4, bytes[5]);
-  view.setUint8(offset + 5, bytes[4]);
-  view.setUint8(offset + 6, bytes[7]);
-  view.setUint8(offset + 7, bytes[6]);
-  for (let i = 8; i < 16; i++) {
-    view.setUint8(offset + i, bytes[i]);
+    const byte = parseInt(cleanGuid.slice(i * 2, i * 2 + 2), 16);
+    view.setUint8(offset + i, byte);
   }
 }
 function readGuid(view, offset) {
-  const bytes = new Uint8Array(16);
-  bytes[0] = view.getUint8(offset + 3);
-  bytes[1] = view.getUint8(offset + 2);
-  bytes[2] = view.getUint8(offset + 1);
-  bytes[3] = view.getUint8(offset + 0);
-  bytes[4] = view.getUint8(offset + 5);
-  bytes[5] = view.getUint8(offset + 4);
-  bytes[6] = view.getUint8(offset + 7);
-  bytes[7] = view.getUint8(offset + 6);
-  for (let i = 8; i < 16; i++) {
-    bytes[i] = view.getUint8(offset + i);
+  const hexParts = [];
+  for (let i = 0; i < 16; i++) {
+    hexParts.push(view.getUint8(offset + i).toString(16).padStart(2, "0"));
   }
-  const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hex = hexParts.join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 var EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
@@ -1071,8 +1052,25 @@ var BannouClient = class {
           headers["X-Service-Token"] = this.serviceToken;
         }
         const ws = new WS(url, { headers });
-        ws.on("open", () => resolve(ws));
-        ws.on("error", (err) => reject(err));
+        console.error(`[DEBUG] createWebSocket: created WebSocket to ${url}`);
+        const earlyMessages = [];
+        const earlyMessageHandler = (data) => {
+          console.error(`[DEBUG] createWebSocket earlyMessageHandler: received message, length=${data.length}`);
+          earlyMessages.push(data);
+          console.error(`[DEBUG] createWebSocket earlyMessageHandler: earlyMessages.length now ${earlyMessages.length}`);
+        };
+        ws.on("message", earlyMessageHandler);
+        const wsWithEarly = ws;
+        wsWithEarly._earlyMessages = earlyMessages;
+        wsWithEarly._earlyMessageHandler = earlyMessageHandler;
+        ws.on("open", () => {
+          console.error(`[DEBUG] createWebSocket: 'open' event fired, earlyMessages.length=${earlyMessages.length}`);
+          resolve(ws);
+        });
+        ws.on("error", (err) => {
+          console.error(`[DEBUG] createWebSocket: 'error' event fired: ${err.message}`);
+          reject(err);
+        });
       });
     }
   }
@@ -1080,13 +1078,24 @@ var BannouClient = class {
     if (!this.webSocket) return;
     const handleMessage = (data) => {
       try {
-        const bytes = new Uint8Array(data instanceof ArrayBuffer ? data : data.buffer);
+        let bytes;
+        if (data instanceof ArrayBuffer) {
+          bytes = new Uint8Array(data);
+          console.error(`[DEBUG] handleMessage: ArrayBuffer, length=${data.byteLength}`);
+        } else {
+          console.error(`[DEBUG] handleMessage: Buffer, length=${data.length}, byteOffset=${data.byteOffset}, buffer.byteLength=${data.buffer.byteLength}`);
+          bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        }
         if (bytes.length < RESPONSE_HEADER_SIZE) {
+          console.error(`[DEBUG] handleMessage: too short, bytes.length=${bytes.length}`);
           return;
         }
+        console.error(`[DEBUG] handleMessage: parsing ${bytes.length} bytes, first 4 bytes: ${bytes[0].toString(16)} ${bytes[1].toString(16)} ${bytes[2].toString(16)} ${bytes[3].toString(16)}`);
         const message = parse(bytes);
+        console.error(`[DEBUG] handleMessage: parsed, flags=${message.flags.toString(16)}, responseCode=${message.responseCode}, payload.length=${message.payload.length}`);
         this.handleReceivedMessage(message);
-      } catch {
+      } catch (err) {
+        console.error(`[DEBUG] handleMessage ERROR: ${err}`);
       }
     };
     const handleClose = (code, reason) => {
@@ -1128,7 +1137,8 @@ var BannouClient = class {
       const err = error instanceof Error ? error : new Error("WebSocket error");
       this.errorCallback?.(err);
     };
-    if ("addEventListener" in this.webSocket) {
+    const isBrowser = typeof window !== "undefined" && typeof window.WebSocket !== "undefined";
+    if (isBrowser) {
       const browserWs = this.webSocket;
       browserWs.addEventListener("message", (event) => {
         if (event.data instanceof ArrayBuffer) {
@@ -1143,7 +1153,26 @@ var BannouClient = class {
       });
     } else {
       const nodeWs = this.webSocket;
+      console.error(`[DEBUG] setupMessageHandler: Node.js WebSocket detected`);
+      const wsWithEarly = nodeWs;
+      const earlyHandler = wsWithEarly._earlyMessageHandler;
+      console.error(`[DEBUG] setupMessageHandler: earlyHandler exists=${!!earlyHandler}`);
+      if (earlyHandler) {
+        nodeWs.off("message", earlyHandler);
+        wsWithEarly._earlyMessageHandler = void 0;
+      }
+      const earlyMessages = wsWithEarly._earlyMessages;
+      console.error(`[DEBUG] setupMessageHandler: earlyMessages count=${earlyMessages?.length ?? 0}`);
+      if (earlyMessages && earlyMessages.length > 0) {
+        console.error(`[DEBUG] setupMessageHandler: processing ${earlyMessages.length} early messages`);
+        for (const data of earlyMessages) {
+          console.error(`[DEBUG] setupMessageHandler: processing early message, length=${data.length}`);
+          handleMessage(data);
+        }
+      }
+      wsWithEarly._earlyMessages = void 0;
       nodeWs.on("message", (data) => {
+        console.error(`[DEBUG] setupMessageHandler: received live message, length=${data.length}`);
         handleMessage(data);
       });
       nodeWs.on("close", (code, reason) => {
@@ -1155,6 +1184,7 @@ var BannouClient = class {
     }
   }
   handleReceivedMessage(message) {
+    console.error(`[DEBUG] handleReceivedMessage: flags=${message.flags.toString(16)}, isResponse=${isResponse2(message)}, isEvent=${(message.flags & MessageFlags.Event) !== 0}`);
     if (isResponse2(message)) {
       const pending = this.pendingRequests.get(message.messageId.toString());
       if (pending) {
@@ -1162,21 +1192,30 @@ var BannouClient = class {
         pending.resolve(message);
       }
     } else if ((message.flags & MessageFlags.Event) !== 0) {
+      console.error(`[DEBUG] handleReceivedMessage: calling handleEventMessage`);
       this.handleEventMessage(message);
+    } else {
+      console.error(`[DEBUG] handleReceivedMessage: not response, not event - ignoring`);
     }
   }
   handleEventMessage(message) {
+    console.error(`[DEBUG] handleEventMessage: payload.length=${message.payload.length}`);
     if (message.payload.length === 0) {
+      console.error(`[DEBUG] handleEventMessage: empty payload, returning`);
       return;
     }
     try {
       const payloadJson = new TextDecoder().decode(message.payload);
+      console.error(`[DEBUG] handleEventMessage: payloadJson first 200 chars: ${payloadJson.substring(0, 200)}`);
       const parsed = JSON.parse(payloadJson);
       const eventName = parsed.eventName;
+      console.error(`[DEBUG] handleEventMessage: eventName=${eventName}`);
       if (!eventName) {
+        console.error(`[DEBUG] handleEventMessage: no eventName, returning`);
         return;
       }
       if (eventName === "connect.capability_manifest") {
+        console.error(`[DEBUG] handleEventMessage: calling handleCapabilityManifest`);
         this.handleCapabilityManifest(payloadJson);
       }
       if (eventName === "connect.disconnect_notification") {
@@ -1192,28 +1231,39 @@ var BannouClient = class {
           }
         }
       }
-    } catch {
+    } catch (err) {
+      console.error(`[DEBUG] handleEventMessage ERROR: ${err}`);
     }
   }
   handleCapabilityManifest(json) {
+    console.error(`[DEBUG] handleCapabilityManifest: json.length=${json.length}`);
     try {
       const manifest = JSON.parse(json);
+      console.error(`[DEBUG] handleCapabilityManifest: sessionId=${manifest.sessionId}, availableAPIs count=${manifest.availableAPIs?.length ?? "undefined"}`);
       if (manifest.sessionId) {
         this._sessionId = manifest.sessionId;
+        console.error(`[DEBUG] handleCapabilityManifest: set _sessionId to ${this._sessionId}`);
       }
       if (Array.isArray(manifest.availableAPIs)) {
+        let count = 0;
         for (const api of manifest.availableAPIs) {
           if (api.endpointKey && api.serviceGuid) {
             this.apiMappings.set(api.endpointKey, api.serviceGuid);
             this.connectionState?.addServiceMapping(api.endpointKey, api.serviceGuid);
+            count++;
           }
         }
+        console.error(`[DEBUG] handleCapabilityManifest: added ${count} API mappings, total now ${this.apiMappings.size}`);
       }
       if (this.capabilityManifestResolver) {
+        console.error(`[DEBUG] handleCapabilityManifest: resolving capabilityManifestResolver`);
         this.capabilityManifestResolver(true);
         this.capabilityManifestResolver = null;
+      } else {
+        console.error(`[DEBUG] handleCapabilityManifest: no capabilityManifestResolver set`);
       }
-    } catch {
+    } catch (err) {
+      console.error(`[DEBUG] handleCapabilityManifest ERROR: ${err}`);
     }
   }
   handleDisconnectNotification(json) {

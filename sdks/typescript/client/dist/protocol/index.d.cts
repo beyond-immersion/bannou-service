@@ -175,9 +175,12 @@ declare function readUInt64(view: DataView, offset: number): bigint;
  * Writes a GUID in consistent network byte order.
  * Uses RFC 4122 standard byte ordering for cross-platform compatibility.
  *
- * RFC 4122 specifies that the time fields (first 8 bytes) use network byte order.
- * .NET's Guid.ToByteArray() returns little-endian for time fields, so we need
- * to reverse bytes 0-3, 4-5, 6-7 when writing. Bytes 8-15 remain as-is.
+ * CRITICAL: The GUID string is already in RFC 4122 display format (big-endian),
+ * so we write the parsed bytes directly WITHOUT reversal.
+ *
+ * This differs from C# which uses Guid.ToByteArray() that returns little-endian
+ * for time fields, requiring reversal. TypeScript parses the string directly
+ * which is already big-endian.
  *
  * @param view - DataView to write to
  * @param offset - Byte offset to start writing
@@ -187,6 +190,9 @@ declare function writeGuid(view: DataView, offset: number, guid: string): void;
 /**
  * Reads a GUID from consistent network byte order.
  * Uses RFC 4122 standard byte ordering for cross-platform compatibility.
+ *
+ * CRITICAL: Bytes are read directly without reversal because they're stored
+ * in RFC 4122 big-endian format, which matches the GUID string display format.
  *
  * @param view - DataView to read from
  * @param offset - Byte offset to start reading
