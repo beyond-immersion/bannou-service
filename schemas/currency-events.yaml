@@ -1,0 +1,925 @@
+openapi: 3.0.3
+info:
+  title: Currency Service Events
+  description: |
+    Event models for Currency service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **Event Categories**:
+    - Balance events: credited, debited, transferred
+    - Autogain events: calculated
+    - Cap events: earn_cap.reached, wallet_cap.reached
+    - Expiration events: expired
+    - Exchange rate events: exchange_rate.updated
+    - Lifecycle events (auto-generated): definition.created/updated, wallet.created/frozen/unfrozen/closed
+    - Hold events: hold.created, hold.captured, hold.released, hold.expired
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []
+  x-event-publications:
+    # Balance events
+    - topic: currency.credited
+      event: CurrencyCreditedEvent
+      description: Published when currency is credited to a wallet
+    - topic: currency.debited
+      event: CurrencyDebitedEvent
+      description: Published when currency is debited from a wallet
+    - topic: currency.transferred
+      event: CurrencyTransferredEvent
+      description: Published when currency is transferred between wallets
+
+    # Autogain events
+    - topic: currency.autogain.calculated
+      event: CurrencyAutogainCalculatedEvent
+      description: Published when autogain is calculated (lazy or task mode)
+
+    # Cap events
+    - topic: currency.earn_cap.reached
+      event: CurrencyEarnCapReachedEvent
+      description: Published when a credit is limited by earn cap
+    - topic: currency.wallet_cap.reached
+      event: CurrencyWalletCapReachedEvent
+      description: Published when a credit hits the wallet cap
+
+    # Expiration events
+    - topic: currency.expired
+      event: CurrencyExpiredEvent
+      description: Published when currency expires
+
+    # Exchange rate events
+    - topic: currency.exchange_rate.updated
+      event: CurrencyExchangeRateUpdatedEvent
+      description: Published when an exchange rate is updated
+
+    # Lifecycle events (auto-generated from x-lifecycle)
+    - topic: currency-definition.created
+      event: CurrencyDefinitionCreatedEvent
+      description: Published when a new currency definition is created
+    - topic: currency-definition.updated
+      event: CurrencyDefinitionUpdatedEvent
+      description: Published when a currency definition is updated
+
+    - topic: currency-wallet.created
+      event: CurrencyWalletCreatedEvent
+      description: Published when a new wallet is created
+    - topic: currency-wallet.frozen
+      event: CurrencyWalletFrozenEvent
+      description: Published when a wallet is frozen
+    - topic: currency-wallet.unfrozen
+      event: CurrencyWalletUnfrozenEvent
+      description: Published when a wallet is unfrozen
+    - topic: currency-wallet.closed
+      event: CurrencyWalletClosedEvent
+      description: Published when a wallet is permanently closed
+
+    # Authorization hold events
+    - topic: currency.hold.created
+      event: CurrencyHoldCreatedEvent
+      description: Published when an authorization hold is created
+    - topic: currency.hold.captured
+      event: CurrencyHoldCapturedEvent
+      description: Published when a hold is captured (funds debited)
+    - topic: currency.hold.released
+      event: CurrencyHoldReleasedEvent
+      description: Published when a hold is released (funds available again)
+    - topic: currency.hold.expired
+      event: CurrencyHoldExpiredEvent
+      description: Published when a hold expires (auto-release)
+
+# Lifecycle events auto-generated from this definition
+x-lifecycle:
+  CurrencyDefinition:
+    model:
+      definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the currency definition" }
+      code: { type: string, required: true, description: "Unique currency code" }
+      name: { type: string, required: true, description: "Human-readable currency name" }
+      scope: { type: string, required: true, description: "Currency scope (global, realm_specific, multi_realm)" }
+      precision: { type: string, required: true, description: "Currency precision type" }
+      isActive: { type: boolean, required: true, description: "Whether the definition is active" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
+      modifiedAt: { type: string, format: date-time, nullable: true, description: "When the definition was last modified" }
+
+  CurrencyWallet:
+    model:
+      walletId: { type: string, format: uuid, primary: true, required: true, description: "Unique wallet identifier" }
+      ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
+      ownerType: { type: string, required: true, description: "Owner entity type" }
+      realmId: { type: string, format: uuid, nullable: true, description: "Realm ID for realm-scoped wallets" }
+      status: { type: string, required: true, description: "Wallet status (active, frozen, closed)" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the wallet was created" }
+
+paths: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Balance Events
+    # =========================================================================
+
+    CurrencyCreditedEvent:
+      type: object
+      description: Event published when currency is credited to a wallet
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - transactionId
+      - walletId
+      - ownerId
+      - ownerType
+      - currencyDefinitionId
+      - currencyCode
+      - amount
+      - transactionType
+      - newBalance
+      - earnCapApplied
+      - walletCapApplied
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction record ID
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet that was credited
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        ownerType:
+          type: string
+          description: Wallet owner type
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        amount:
+          type: number
+          format: double
+          description: Amount credited
+        transactionType:
+          type: string
+          description: Transaction type (faucet classification)
+        newBalance:
+          type: number
+          format: double
+          description: Balance after credit
+        referenceType:
+          type: string
+          nullable: true
+          description: What triggered this credit
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        earnCapApplied:
+          type: boolean
+          description: Whether earn cap limited the credit
+        walletCapApplied:
+          type: boolean
+          description: Whether wallet cap was applied
+
+    CurrencyDebitedEvent:
+      type: object
+      description: Event published when currency is debited from a wallet
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - transactionId
+      - walletId
+      - ownerId
+      - ownerType
+      - currencyDefinitionId
+      - currencyCode
+      - amount
+      - transactionType
+      - newBalance
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction record ID
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet that was debited
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        ownerType:
+          type: string
+          description: Wallet owner type
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        amount:
+          type: number
+          format: double
+          description: Amount debited
+        transactionType:
+          type: string
+          description: Transaction type (sink classification)
+        newBalance:
+          type: number
+          format: double
+          description: Balance after debit
+        referenceType:
+          type: string
+          nullable: true
+          description: What triggered this debit
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+
+    CurrencyTransferredEvent:
+      type: object
+      description: Event published when currency is transferred between wallets
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - transactionId
+      - sourceWalletId
+      - sourceOwnerId
+      - sourceOwnerType
+      - targetWalletId
+      - targetOwnerId
+      - targetOwnerType
+      - currencyDefinitionId
+      - currencyCode
+      - amount
+      - transactionType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction record ID
+        sourceWalletId:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        sourceOwnerId:
+          type: string
+          format: uuid
+          description: Source wallet owner ID
+        sourceOwnerType:
+          type: string
+          description: Source wallet owner type
+        targetWalletId:
+          type: string
+          format: uuid
+          description: Target wallet ID
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: Target wallet owner ID
+        targetOwnerType:
+          type: string
+          description: Target wallet owner type
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        amount:
+          type: number
+          format: double
+          description: Amount transferred
+        transactionType:
+          type: string
+          description: Transaction type (transfer, trade, gift)
+
+    # =========================================================================
+    # Autogain Events
+    # =========================================================================
+
+    CurrencyAutogainCalculatedEvent:
+      type: object
+      description: Event published when autogain is calculated for a balance
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      - ownerType
+      - currencyDefinitionId
+      - currencyCode
+      - previousBalance
+      - periodsApplied
+      - amountGained
+      - newBalance
+      - autogainMode
+      - calculatedAt
+      - periodsFrom
+      - periodsTo
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet with autogain
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        ownerType:
+          type: string
+          description: Wallet owner type
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        previousBalance:
+          type: number
+          format: double
+          description: Balance before autogain
+        periodsApplied:
+          type: integer
+          description: Number of autogain periods applied
+        amountGained:
+          type: number
+          format: double
+          description: Total amount gained
+        newBalance:
+          type: number
+          format: double
+          description: Balance after autogain
+        autogainMode:
+          type: string
+          description: Autogain mode (simple or compound)
+        calculatedAt:
+          type: string
+          format: date-time
+          description: When calculation was performed
+        periodsFrom:
+          type: string
+          format: date-time
+          description: Start of calculation period
+        periodsTo:
+          type: string
+          format: date-time
+          description: End of calculation period
+
+    # =========================================================================
+    # Cap Events
+    # =========================================================================
+
+    CurrencyEarnCapReachedEvent:
+      type: object
+      description: Event published when a credit is limited by earn cap
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      - currencyDefinitionId
+      - currencyCode
+      - capType
+      - capAmount
+      - attemptedAmount
+      - limitedAmount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        walletId:
+          type: string
+          format: uuid
+          description: Affected wallet
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        capType:
+          type: string
+          description: Cap type (daily or weekly)
+        capAmount:
+          type: number
+          format: double
+          description: The cap limit
+        attemptedAmount:
+          type: number
+          format: double
+          description: Amount that was attempted
+        limitedAmount:
+          type: number
+          format: double
+          description: Amount actually credited after limiting
+
+    CurrencyWalletCapReachedEvent:
+      type: object
+      description: Event published when a credit hits the wallet cap
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      - currencyDefinitionId
+      - currencyCode
+      - capAmount
+      - overflowBehavior
+      - amountLost
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        walletId:
+          type: string
+          format: uuid
+          description: Affected wallet
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        capAmount:
+          type: number
+          format: double
+          description: The wallet cap
+        overflowBehavior:
+          type: string
+          description: How overflow was handled (reject, cap_and_lose, cap_and_return)
+        amountLost:
+          type: number
+          format: double
+          description: Amount lost due to cap (0 if rejected)
+
+    # =========================================================================
+    # Expiration Events
+    # =========================================================================
+
+    CurrencyExpiredEvent:
+      type: object
+      description: Event published when currency expires
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - transactionId
+      - walletId
+      - ownerId
+      - currencyDefinitionId
+      - currencyCode
+      - amountExpired
+      - expirationPolicy
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        transactionId:
+          type: string
+          format: uuid
+          description: Expiration transaction ID
+        walletId:
+          type: string
+          format: uuid
+          description: Affected wallet
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        amountExpired:
+          type: number
+          format: double
+          description: Amount that expired
+        expirationPolicy:
+          type: string
+          description: Expiration policy type
+
+    # =========================================================================
+    # Exchange Rate Events
+    # =========================================================================
+
+    CurrencyExchangeRateUpdatedEvent:
+      type: object
+      description: Event published when a currency exchange rate is updated
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - currencyDefinitionId
+      - currencyCode
+      - previousRate
+      - newRate
+      - baseCurrencyCode
+      - updatedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency whose rate changed
+        currencyCode:
+          type: string
+          description: Currency code
+        previousRate:
+          type: number
+          format: double
+          description: Previous exchange rate to base
+        newRate:
+          type: number
+          format: double
+          description: New exchange rate to base
+        baseCurrencyCode:
+          type: string
+          description: Base currency code
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the rate was updated
+
+    # =========================================================================
+    # Authorization Hold Events
+    # =========================================================================
+
+    CurrencyHoldCreatedEvent:
+      type: object
+      description: Event published when an authorization hold is created
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - holdId
+      - walletId
+      - ownerId
+      - currencyDefinitionId
+      - amount
+      - expiresAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        holdId:
+          type: string
+          format: uuid
+          description: Hold identifier
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet with held funds
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency held
+        amount:
+          type: number
+          format: double
+          description: Amount reserved
+        expiresAt:
+          type: string
+          format: date-time
+          description: When hold auto-releases
+        referenceType:
+          type: string
+          nullable: true
+          description: Reference type
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference ID
+
+    CurrencyHoldCapturedEvent:
+      type: object
+      description: Event published when a hold is captured
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - holdId
+      - walletId
+      - ownerId
+      - currencyDefinitionId
+      - holdAmount
+      - capturedAmount
+      - amountReleased
+      - transactionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        holdId:
+          type: string
+          format: uuid
+          description: Hold identifier
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet debited
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency debited
+        holdAmount:
+          type: number
+          format: double
+          description: Original hold amount
+        capturedAmount:
+          type: number
+          format: double
+          description: Amount actually debited
+        amountReleased:
+          type: number
+          format: double
+          description: Difference released back
+        transactionId:
+          type: string
+          format: uuid
+          description: Debit transaction ID
+
+    CurrencyHoldReleasedEvent:
+      type: object
+      description: Event published when a hold is released
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - holdId
+      - walletId
+      - ownerId
+      - currencyDefinitionId
+      - amount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        holdId:
+          type: string
+          format: uuid
+          description: Hold identifier
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet with released funds
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency released
+        amount:
+          type: number
+          format: double
+          description: Amount made available again
+
+    CurrencyHoldExpiredEvent:
+      type: object
+      description: Event published when a hold expires (auto-release)
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - holdId
+      - walletId
+      - ownerId
+      - currencyDefinitionId
+      - amount
+      - originalExpiresAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        holdId:
+          type: string
+          format: uuid
+          description: Hold identifier
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet with expired hold
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency released
+        amount:
+          type: number
+          format: double
+          description: Amount released
+        originalExpiresAt:
+          type: string
+          format: date-time
+          description: When the hold was set to expire
+
+    # =========================================================================
+    # Wallet Lifecycle Events (custom, not auto-generated)
+    # =========================================================================
+
+    CurrencyWalletFrozenEvent:
+      type: object
+      description: Event published when a wallet is frozen
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        walletId:
+          type: string
+          format: uuid
+          description: Frozen wallet ID
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        reason:
+          type: string
+          description: Reason for freezing
+
+    CurrencyWalletUnfrozenEvent:
+      type: object
+      description: Event published when a wallet is unfrozen
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        walletId:
+          type: string
+          format: uuid
+          description: Unfrozen wallet ID
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+
+    CurrencyWalletClosedEvent:
+      type: object
+      description: Event published when a wallet is permanently closed
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - walletId
+      - ownerId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        walletId:
+          type: string
+          format: uuid
+          description: Closed wallet ID
+        ownerId:
+          type: string
+          format: uuid
+          description: Wallet owner ID
+        balancesTransferredTo:
+          type: string
+          format: uuid
+          nullable: true
+          description: Wallet that received remaining balances

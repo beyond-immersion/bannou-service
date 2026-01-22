@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: Currency Service Configuration
+  description: |
+    Configuration schema for Currency service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    defaultAllowNegative:
+      type: boolean
+      env: CURRENCY_DEFAULT_ALLOW_NEGATIVE
+      default: false
+      description: Default for currencies that do not specify allowNegative
+    defaultPrecision:
+      type: string
+      env: CURRENCY_DEFAULT_PRECISION
+      default: decimal_2
+      description: Default precision for currencies that do not specify (integer, decimal_2, decimal_4, decimal_8, decimal_full, big_integer)
+    autogainProcessingMode:
+      type: string
+      env: CURRENCY_AUTOGAIN_PROCESSING_MODE
+      default: lazy
+      description: How autogain is calculated (lazy = on-demand at query time, task = background processing)
+    autogainTaskIntervalMs:
+      type: integer
+      env: CURRENCY_AUTOGAIN_TASK_INTERVAL_MS
+      default: 60000
+      description: For task mode - how often to process autogain in milliseconds
+    autogainBatchSize:
+      type: integer
+      env: CURRENCY_AUTOGAIN_BATCH_SIZE
+      default: 1000
+      description: For task mode - batch size per processing cycle
+    transactionRetentionDays:
+      type: integer
+      env: CURRENCY_TRANSACTION_RETENTION_DAYS
+      default: 365
+      description: How many days to retain detailed transaction history
+    idempotencyTtlSeconds:
+      type: integer
+      env: CURRENCY_IDEMPOTENCY_TTL_SECONDS
+      default: 3600
+      description: How long to cache idempotency keys in seconds
+    holdMaxDurationDays:
+      type: integer
+      env: CURRENCY_HOLD_MAX_DURATION_DAYS
+      default: 7
+      description: Maximum duration for authorization holds in days

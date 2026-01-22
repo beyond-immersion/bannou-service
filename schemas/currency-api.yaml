@@ -1,0 +1,3285 @@
+openapi: 3.0.0
+info:
+  title: Currency Service API
+  version: 1.0.0
+  description: |
+    Multi-currency management service for game economies.
+
+    lib-currency provides foundational currency management with per-currency configuration,
+    polymorphic wallet ownership, event-sourced transactions, autogain (energy/interest),
+    base currency conversion, earn caps, wallet caps, and escrow integration.
+
+    **What lib-currency Does NOT Do**:
+    - Escrow agreement management (lib-escrow handles agreements, lib-currency handles debit/credit)
+    - Inventory slot management for physical currency (game responsibility)
+    - Complex location-based exchange rates (lib-economy/lib-market)
+    - Taxation (lib-economy)
+    - Trade/auction mechanics (lib-market)
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Currency Definition (4 endpoints)
+  # ===========================================================================
+
+  /currency/definition/create:
+    post:
+      operationId: createCurrencyDefinition
+      tags:
+      - Currency Definition
+      summary: Create a new currency definition
+      description: |
+        Creates a new currency type with its behavior rules. Code, precision, and scope
+        are immutable after creation. Only one base currency per scope is allowed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCurrencyDefinitionRequest'
+      responses:
+        '200':
+          description: Currency definition created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyDefinitionResponse'
+        '400':
+          description: Invalid request (validation error)
+        '409':
+          description: Code already exists or base currency already set for scope
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /currency/definition/get:
+    post:
+      operationId: getCurrencyDefinition
+      tags:
+      - Currency Definition
+      summary: Get currency definition by ID or code
+      description: |
+        Retrieves a currency definition by its unique ID or code.
+        At least one of definitionId or code must be provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCurrencyDefinitionRequest'
+      responses:
+        '200':
+          description: Currency definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyDefinitionResponse'
+        '400':
+          description: Neither definitionId nor code provided
+        '404':
+          description: Currency definition not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/definition/list:
+    post:
+      operationId: listCurrencyDefinitions
+      tags:
+      - Currency Definition
+      summary: List currency definitions with filters
+      description: |
+        Lists currency definitions with optional filtering by realm, scope,
+        active status, and base currency flag.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCurrencyDefinitionsRequest'
+      responses:
+        '200':
+          description: Currency definitions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCurrencyDefinitionsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/definition/update:
+    post:
+      operationId: updateCurrencyDefinition
+      tags:
+      - Currency Definition
+      summary: Update mutable fields of a currency definition
+      description: |
+        Updates mutable fields of a currency definition. Code, precision, and scope
+        are immutable after creation and cannot be changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCurrencyDefinitionRequest'
+      responses:
+        '200':
+          description: Currency definition updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyDefinitionResponse'
+        '400':
+          description: Attempted to change immutable field
+        '404':
+          description: Currency definition not found
+      x-permissions:
+      - role: admin
+        states: {}
+
+  # ===========================================================================
+  # Wallet (6 endpoints)
+  # ===========================================================================
+
+  /currency/wallet/create:
+    post:
+      operationId: createWallet
+      tags:
+      - Wallet
+      summary: Create a new wallet for an owner
+      description: |
+        Creates a new wallet for a polymorphic owner (account, character, NPC, guild, etc.).
+        Each owner+ownerType+realm combination can have at most one wallet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+      responses:
+        '200':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '409':
+          description: Wallet already exists for this owner/realm
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/wallet/get:
+    post:
+      operationId: getWallet
+      tags:
+      - Wallet
+      summary: Get wallet by ID or owner
+      description: |
+        Retrieves a wallet by its ID, or by owner+ownerType+realm combination.
+        Returns the wallet with all non-zero balances.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetWalletRequest'
+      responses:
+        '200':
+          description: Wallet retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletWithBalancesResponse'
+        '404':
+          description: Wallet not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/wallet/get-or-create:
+    post:
+      operationId: getOrCreateWallet
+      tags:
+      - Wallet
+      summary: Get existing wallet or create if not exists
+      description: |
+        Retrieves a wallet if it exists, otherwise creates a new one.
+        Upsert pattern for convenience.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrCreateWalletRequest'
+      responses:
+        '200':
+          description: Wallet retrieved or created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrCreateWalletResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/wallet/freeze:
+    post:
+      operationId: freezeWallet
+      tags:
+      - Wallet
+      summary: Freeze a wallet to prevent transactions
+      description: |
+        Freezes a wallet, preventing all transactions. The reason is recorded
+        for audit purposes. Frozen wallets can still be queried.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreezeWalletRequest'
+      responses:
+        '200':
+          description: Wallet frozen successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '404':
+          description: Wallet not found
+        '409':
+          description: Wallet already frozen
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /currency/wallet/unfreeze:
+    post:
+      operationId: unfreezeWallet
+      tags:
+      - Wallet
+      summary: Unfreeze a frozen wallet
+      description: Restores a frozen wallet to active status, allowing transactions again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnfreezeWalletRequest'
+      responses:
+        '200':
+          description: Wallet unfrozen successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '404':
+          description: Wallet not found
+        '400':
+          description: Wallet is not frozen
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /currency/wallet/close:
+    post:
+      operationId: closeWallet
+      tags:
+      - Wallet
+      summary: Permanently close a wallet
+      description: |
+        Permanently closes a wallet and transfers any remaining balances to a
+        destination wallet. Closed wallets cannot be reopened.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseWalletRequest'
+      responses:
+        '200':
+          description: Wallet closed and balances transferred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloseWalletResponse'
+        '404':
+          description: Wallet or destination wallet not found
+        '400':
+          description: Wallet already closed
+      x-permissions:
+      - role: admin
+        states: {}
+
+  # ===========================================================================
+  # Balance (6 endpoints)
+  # ===========================================================================
+
+  /currency/balance/get:
+    post:
+      operationId: getBalance
+      tags:
+      - Balance
+      summary: Get balance for a specific currency in a wallet
+      description: |
+        Retrieves the current balance for a specific currency in a wallet.
+        In lazy autogain mode, this may trigger autogain calculation and emit events.
+        Returns earn cap info and autogain info when applicable.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBalanceRequest'
+      responses:
+        '200':
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBalanceResponse'
+        '404':
+          description: Wallet or currency not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/balance/batch-get:
+    post:
+      operationId: batchGetBalances
+      tags:
+      - Balance
+      summary: Get multiple balances in one call
+      description: |
+        Retrieves balances for multiple wallet+currency combinations.
+        Autogain is applied where applicable.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetBalancesRequest'
+      responses:
+        '200':
+          description: Balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGetBalancesResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/credit:
+    post:
+      operationId: creditCurrency
+      tags:
+      - Balance
+      summary: Credit currency to a wallet (faucet operation)
+      description: |
+        Credits currency to a wallet. This is a faucet operation (currency enters the system).
+        Enforces earn caps, wallet caps, and global supply caps. Requires idempotency key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditCurrencyRequest'
+      responses:
+        '200':
+          description: Currency credited successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCurrencyResponse'
+        '400':
+          description: Invalid transaction type or amount
+        '404':
+          description: Wallet or currency not found
+        '409':
+          description: Idempotency key already used
+        '422':
+          description: Earn cap or supply cap exceeded
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/debit:
+    post:
+      operationId: debitCurrency
+      tags:
+      - Balance
+      summary: Debit currency from a wallet (sink operation)
+      description: |
+        Debits currency from a wallet. This is a sink operation (currency exits the system).
+        Checks for sufficient funds unless negative balance is allowed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitCurrencyRequest'
+      responses:
+        '200':
+          description: Currency debited successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebitCurrencyResponse'
+        '400':
+          description: Invalid transaction type or amount
+        '404':
+          description: Wallet or currency not found
+        '422':
+          description: Insufficient funds
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/transfer:
+    post:
+      operationId: transferCurrency
+      tags:
+      - Balance
+      summary: Transfer currency between wallets
+      description: |
+        Transfers currency from one wallet to another. Validates transferability,
+        realm compatibility, and sufficient funds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCurrencyRequest'
+      responses:
+        '200':
+          description: Transfer completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferCurrencyResponse'
+        '400':
+          description: Invalid request or currency not transferable
+        '404':
+          description: Wallet or currency not found
+        '422':
+          description: Insufficient funds or cross-realm not allowed
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/batch-credit:
+    post:
+      operationId: batchCreditCurrency
+      tags:
+      - Balance
+      summary: Credit multiple wallets in one call
+      description: |
+        Credits currency to multiple wallets in one call. Each operation is independent;
+        failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchCreditRequest'
+      responses:
+        '200':
+          description: Batch credit processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchCreditResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Conversion (4 endpoints)
+  # ===========================================================================
+
+  /currency/convert/calculate:
+    post:
+      operationId: calculateConversion
+      tags:
+      - Conversion
+      summary: Calculate conversion without executing
+      description: |
+        Previews a currency conversion calculation without executing it.
+        Uses base currency exchange rates to compute the effective rate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateConversionRequest'
+      responses:
+        '200':
+          description: Conversion calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateConversionResponse'
+        '404':
+          description: Currency not found
+        '422':
+          description: No base currency or missing exchange rate
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/convert/execute:
+    post:
+      operationId: executeConversion
+      tags:
+      - Conversion
+      summary: Execute currency conversion in a wallet
+      description: |
+        Executes a currency conversion within a single wallet. Debits the source
+        currency and credits the target currency at the computed exchange rate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteConversionRequest'
+      responses:
+        '200':
+          description: Conversion executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteConversionResponse'
+        '404':
+          description: Wallet or currency not found
+        '422':
+          description: Insufficient funds or missing exchange rate
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/exchange-rate/get:
+    post:
+      operationId: getExchangeRate
+      tags:
+      - Conversion
+      summary: Get exchange rate between two currencies
+      description: |
+        Retrieves the exchange rate between two currencies using the base currency
+        as an intermediary.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetExchangeRateRequest'
+      responses:
+        '200':
+          description: Exchange rate retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetExchangeRateResponse'
+        '404':
+          description: Currency not found
+        '422':
+          description: No base currency or missing exchange rate
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/exchange-rate/update:
+    post:
+      operationId: updateExchangeRate
+      tags:
+      - Conversion
+      summary: Update a currency's exchange rate to base
+      description: |
+        Updates the exchange rate of a currency relative to the base currency.
+        Cannot set rate on the base currency itself.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExchangeRateRequest'
+      responses:
+        '200':
+          description: Exchange rate updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateExchangeRateResponse'
+        '400':
+          description: Cannot set rate on base currency
+        '404':
+          description: Currency not found
+      x-permissions:
+      - role: admin
+        states: {}
+
+  # ===========================================================================
+  # Transaction History (3 endpoints)
+  # ===========================================================================
+
+  /currency/transaction/get:
+    post:
+      operationId: getTransaction
+      tags:
+      - Transaction History
+      summary: Get a transaction by ID
+      description: Retrieves a single transaction record by its unique ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTransactionRequest'
+      responses:
+        '200':
+          description: Transaction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '404':
+          description: Transaction not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/transaction/history:
+    post:
+      operationId: getTransactionHistory
+      tags:
+      - Transaction History
+      summary: Get paginated transaction history for a wallet
+      description: |
+        Retrieves transaction history for a wallet with optional filters
+        by currency, transaction type, and date range.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTransactionHistoryRequest'
+      responses:
+        '200':
+          description: Transaction history retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTransactionHistoryResponse'
+        '404':
+          description: Wallet not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/transaction/by-reference:
+    post:
+      operationId: getTransactionsByReference
+      tags:
+      - Transaction History
+      summary: Get transactions by reference type and ID
+      description: |
+        Retrieves all transactions linked to a specific reference (quest, auction,
+        escrow, etc.).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTransactionsByReferenceRequest'
+      responses:
+        '200':
+          description: Transactions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTransactionsByReferenceResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Analytics (2 endpoints)
+  # ===========================================================================
+
+  /currency/stats/global-supply:
+    post:
+      operationId: getGlobalSupply
+      tags:
+      - Analytics
+      summary: Get global supply statistics for a currency
+      description: |
+        Returns aggregate supply statistics including total supply, circulation,
+        escrow amounts, and lifetime mint/burn totals.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetGlobalSupplyRequest'
+      responses:
+        '200':
+          description: Supply statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGlobalSupplyResponse'
+        '404':
+          description: Currency not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /currency/stats/wallet-distribution:
+    post:
+      operationId: getWalletDistribution
+      tags:
+      - Analytics
+      summary: Get wealth distribution statistics
+      description: |
+        Returns wealth distribution statistics including percentiles and
+        Gini coefficient for a specific currency.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetWalletDistributionRequest'
+      responses:
+        '200':
+          description: Distribution statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetWalletDistributionResponse'
+        '404':
+          description: Currency not found
+      x-permissions:
+      - role: admin
+        states: {}
+
+  # ===========================================================================
+  # Escrow Integration (3 endpoints)
+  # ===========================================================================
+
+  /currency/escrow/deposit:
+    post:
+      operationId: escrowDeposit
+      tags:
+      - Escrow Integration
+      summary: Debit wallet for escrow deposit
+      description: |
+        Called by lib-escrow when a party deposits currency into an escrow agreement.
+        Immediately debits the wallet (no lock tracking needed - escrow owns the funds).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscrowDepositRequest'
+      responses:
+        '200':
+          description: Escrow deposit processed (wallet debited)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscrowDepositResponse'
+        '404':
+          description: Wallet or currency not found
+        '422':
+          description: Insufficient funds or wallet frozen
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/escrow/release:
+    post:
+      operationId: escrowRelease
+      tags:
+      - Escrow Integration
+      summary: Credit recipient on escrow completion
+      description: |
+        Called by lib-escrow when an escrow agreement completes successfully.
+        Credits the recipient wallet with the released funds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscrowReleaseRequest'
+      responses:
+        '200':
+          description: Escrow release processed (recipient credited)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscrowReleaseResponse'
+        '404':
+          description: Wallet or currency not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/escrow/refund:
+    post:
+      operationId: escrowRefund
+      tags:
+      - Escrow Integration
+      summary: Credit depositor on escrow refund
+      description: |
+        Called by lib-escrow when an escrow agreement is cancelled or refunded.
+        Credits the original depositor wallet with the refunded funds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscrowRefundRequest'
+      responses:
+        '200':
+          description: Escrow refund processed (depositor credited)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscrowRefundResponse'
+        '404':
+          description: Wallet or currency not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Authorization Holds (4 endpoints)
+  # ===========================================================================
+
+  /currency/hold/create:
+    post:
+      operationId: createHold
+      tags:
+      - Authorization Hold
+      summary: Create an authorization hold (reserve funds)
+      description: |
+        Creates an authorization hold that reserves funds without debiting.
+        The held amount reduces the effective balance but does not leave the wallet.
+        Used for pre-auth scenarios (dining, gas, hotels) where final amount may differ.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHoldRequest'
+      responses:
+        '200':
+          description: Hold created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldResponse'
+        '404':
+          description: Wallet or currency not found
+        '422':
+          description: Insufficient effective balance for hold
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/hold/capture:
+    post:
+      operationId: captureHold
+      tags:
+      - Authorization Hold
+      summary: Capture held funds (debit final amount)
+      description: |
+        Captures an active hold by debiting the final amount (which may be less than
+        or equal to the held amount). Any difference is released back to available balance.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaptureHoldRequest'
+      responses:
+        '200':
+          description: Hold captured successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptureHoldResponse'
+        '400':
+          description: Hold is not in active status or capture amount exceeds hold
+        '404':
+          description: Hold not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/hold/release:
+    post:
+      operationId: releaseHold
+      tags:
+      - Authorization Hold
+      summary: Release held funds (make available again)
+      description: |
+        Releases an active hold, making all held funds available again.
+        No debit occurs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseHoldRequest'
+      responses:
+        '200':
+          description: Hold released successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldResponse'
+        '400':
+          description: Hold is not in active status
+        '404':
+          description: Hold not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /currency/hold/get:
+    post:
+      operationId: getHold
+      tags:
+      - Authorization Hold
+      summary: Get hold status and details
+      description: Retrieves the current status and details of an authorization hold.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetHoldRequest'
+      responses:
+        '200':
+          description: Hold retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldResponse'
+        '404':
+          description: Hold not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    CurrencyScope:
+      type: string
+      description: Scope of currency availability across realms
+      enum:
+      - global
+      - realm_specific
+      - multi_realm
+
+    CurrencyPrecision:
+      type: string
+      description: How the currency handles decimal values (immutable after creation)
+      enum:
+      - integer
+      - decimal_2
+      - decimal_4
+      - decimal_8
+      - decimal_full
+      - big_integer
+
+    WalletOwnerType:
+      type: string
+      description: Type of entity that owns a wallet
+      enum:
+      - account
+      - character
+      - npc
+      - guild
+      - faction
+      - location
+      - system
+
+    WalletStatus:
+      type: string
+      description: Current status of a wallet
+      enum:
+      - active
+      - frozen
+      - closed
+
+    CapOverflowBehavior:
+      type: string
+      description: What happens when a credit would exceed the wallet cap
+      enum:
+      - reject
+      - cap_and_lose
+      - cap_and_return
+
+    AutogainMode:
+      type: string
+      description: How autogain (energy/interest) is calculated
+      enum:
+      - simple
+      - compound
+
+    ExpirationPolicy:
+      type: string
+      description: How currency expiration is determined
+      enum:
+      - fixed_date
+      - duration_from_earn
+      - end_of_season
+
+    ItemLinkageMode:
+      type: string
+      description: How currency is linked to inventory items
+      enum:
+      - none
+      - visual_only
+      - reference_only
+
+    TransactionType:
+      type: string
+      description: Classification of the currency transaction
+      enum:
+      # Faucets (currency enters system)
+      - mint
+      - quest_reward
+      - loot_drop
+      - vendor_sale
+      - autogain
+      - refund
+      - conversion_credit
+      # Sinks (currency exits system)
+      - burn
+      - vendor_purchase
+      - fee
+      - expiration
+      - cap_overflow
+      - conversion_debit
+      # Transfers (currency moves between wallets)
+      - transfer
+      - trade
+      - gift
+      - escrow_deposit
+      - escrow_release
+      - escrow_refund
+
+    AutogainProcessingMode:
+      type: string
+      description: How autogain processing is triggered
+      enum:
+      - lazy
+      - task
+
+    HoldStatus:
+      type: string
+      description: Current status of an authorization hold
+      enum:
+      - active
+      - captured
+      - released
+      - expired
+
+    # =========================================================================
+    # Currency Definition Models
+    # =========================================================================
+
+    CreateCurrencyDefinitionRequest:
+      type: object
+      description: Request to create a new currency definition
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - scope
+      - precision
+      properties:
+        code:
+          type: string
+          maxLength: 32
+          pattern: "^[a-z][a-z0-9_]{1,31}$"
+          description: Unique code for this currency (immutable after creation)
+        name:
+          type: string
+          maxLength: 100
+          description: Human-readable currency name
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Detailed description of this currency
+        scope:
+          $ref: '#/components/schemas/CurrencyScope'
+          description: Realm availability scope (immutable after creation)
+        realmsAvailable:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Realm IDs where this currency is available (for realm_specific or multi_realm)
+        precision:
+          $ref: '#/components/schemas/CurrencyPrecision'
+          description: Decimal precision for this currency (immutable after creation)
+        transferable:
+          type: boolean
+          default: true
+          description: Whether this currency can be transferred between wallets
+        tradeable:
+          type: boolean
+          default: true
+          description: Whether this currency can be used in trades/auctions
+        allowNegative:
+          type: boolean
+          nullable: true
+          description: Whether wallets can have negative balance (null uses plugin default)
+        perWalletCap:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum amount a single wallet can hold (null for no cap)
+        capOverflowBehavior:
+          $ref: '#/components/schemas/CapOverflowBehavior'
+          description: What happens when credit exceeds wallet cap
+        globalSupplyCap:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum total supply across all wallets (null for unlimited)
+        dailyEarnCap:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum amount earnable per day (null for unlimited)
+        weeklyEarnCap:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum amount earnable per week (null for unlimited)
+        earnCapResetTime:
+          type: string
+          nullable: true
+          description: When earn caps reset (UTC time string, e.g. '00:00:00')
+        autogainEnabled:
+          type: boolean
+          default: false
+          description: Whether passive autogain is enabled
+        autogainMode:
+          $ref: '#/components/schemas/AutogainMode'
+          description: How autogain is calculated (simple flat or compound percentage)
+        autogainAmount:
+          type: number
+          format: double
+          nullable: true
+          description: Autogain amount per interval (flat for simple, rate for compound)
+        autogainInterval:
+          type: string
+          nullable: true
+          description: ISO 8601 duration between autogain applications (e.g. PT5M, PT1H)
+        autogainCap:
+          type: number
+          format: double
+          nullable: true
+          description: Stop autogain when balance reaches this amount (null for no cap)
+        expires:
+          type: boolean
+          default: false
+          description: Whether this currency can expire
+        expirationPolicy:
+          $ref: '#/components/schemas/ExpirationPolicy'
+          nullable: true
+          description: How expiration is determined
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fixed expiration date (for fixed_date policy)
+        expirationDuration:
+          type: string
+          nullable: true
+          description: Duration until expiration after earning (for duration_from_earn policy)
+        seasonId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Season ID for end_of_season expiration policy
+        linkedToItem:
+          type: boolean
+          default: false
+          description: Whether this currency is represented by an inventory item
+        linkedItemTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Item template ID if linked to inventory
+        linkageMode:
+          $ref: '#/components/schemas/ItemLinkageMode'
+          description: How the item linkage works
+        isBaseCurrency:
+          type: boolean
+          default: false
+          description: Whether this is the base currency for its scope
+        exchangeRateToBase:
+          type: number
+          format: double
+          nullable: true
+          description: Exchange rate relative to base currency (null for base itself)
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Asset ID for currency icon
+        displayFormat:
+          type: string
+          nullable: true
+          description: Format string for display (e.g. '{amount} gold', '${amount}')
+
+    GetCurrencyDefinitionRequest:
+      type: object
+      description: Request to get a currency definition
+      additionalProperties: false
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Definition ID (provide this or code)
+        code:
+          type: string
+          nullable: true
+          description: Currency code (provide this or definitionId)
+
+    ListCurrencyDefinitionsRequest:
+      type: object
+      description: Request to list currency definitions
+      additionalProperties: false
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm availability
+        scope:
+          $ref: '#/components/schemas/CurrencyScope'
+          nullable: true
+          description: Filter by scope
+        includeInactive:
+          type: boolean
+          default: false
+          description: Include inactive definitions
+        isBaseCurrency:
+          type: boolean
+          nullable: true
+          description: Filter by base currency flag
+
+    UpdateCurrencyDefinitionRequest:
+      type: object
+      description: Request to update mutable fields of a currency definition
+      additionalProperties: false
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to update
+        name:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: New currency name
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: New description
+        transferable:
+          type: boolean
+          nullable: true
+          description: New transferable flag
+        tradeable:
+          type: boolean
+          nullable: true
+          description: New tradeable flag
+        allowNegative:
+          type: boolean
+          nullable: true
+          description: New allowNegative flag
+        perWalletCap:
+          type: number
+          format: double
+          nullable: true
+          description: New wallet cap
+        capOverflowBehavior:
+          $ref: '#/components/schemas/CapOverflowBehavior'
+          nullable: true
+          description: New overflow behavior
+        dailyEarnCap:
+          type: number
+          format: double
+          nullable: true
+          description: New daily earn cap
+        weeklyEarnCap:
+          type: number
+          format: double
+          nullable: true
+          description: New weekly earn cap
+        autogainEnabled:
+          type: boolean
+          nullable: true
+          description: Enable/disable autogain
+        autogainMode:
+          $ref: '#/components/schemas/AutogainMode'
+          nullable: true
+          description: New autogain mode
+        autogainAmount:
+          type: number
+          format: double
+          nullable: true
+          description: New autogain amount
+        autogainInterval:
+          type: string
+          nullable: true
+          description: New autogain interval
+        autogainCap:
+          type: number
+          format: double
+          nullable: true
+          description: New autogain cap
+        exchangeRateToBase:
+          type: number
+          format: double
+          nullable: true
+          description: New exchange rate to base
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: New icon asset ID
+        displayFormat:
+          type: string
+          nullable: true
+          description: New display format
+        isActive:
+          type: boolean
+          nullable: true
+          description: Active status
+
+    CurrencyDefinitionResponse:
+      type: object
+      description: Currency definition details
+      additionalProperties: false
+      required:
+      - definitionId
+      - code
+      - name
+      - scope
+      - precision
+      - transferable
+      - tradeable
+      - autogainEnabled
+      - expires
+      - linkedToItem
+      - isBaseCurrency
+      - isActive
+      - createdAt
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Unique definition identifier
+        code:
+          type: string
+          description: Unique currency code
+        name:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          nullable: true
+          description: Detailed description
+        scope:
+          $ref: '#/components/schemas/CurrencyScope'
+          description: Realm availability scope
+        realmsAvailable:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Available realm IDs
+        precision:
+          $ref: '#/components/schemas/CurrencyPrecision'
+          description: Decimal precision
+        transferable:
+          type: boolean
+          description: Whether transferable between wallets
+        tradeable:
+          type: boolean
+          description: Whether usable in trades
+        allowNegative:
+          type: boolean
+          nullable: true
+          description: Whether negative balance allowed (null uses plugin default)
+        perWalletCap:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum per-wallet balance
+        capOverflowBehavior:
+          $ref: '#/components/schemas/CapOverflowBehavior'
+          nullable: true
+          description: Overflow behavior when cap exceeded
+        globalSupplyCap:
+          type: number
+          format: double
+          nullable: true
+          description: Global supply cap
+        dailyEarnCap:
+          type: number
+          format: double
+          nullable: true
+          description: Daily earn cap
+        weeklyEarnCap:
+          type: number
+          format: double
+          nullable: true
+          description: Weekly earn cap
+        earnCapResetTime:
+          type: string
+          nullable: true
+          description: Earn cap reset time
+        autogainEnabled:
+          type: boolean
+          description: Whether autogain is enabled
+        autogainMode:
+          $ref: '#/components/schemas/AutogainMode'
+          nullable: true
+          description: Autogain calculation mode
+        autogainAmount:
+          type: number
+          format: double
+          nullable: true
+          description: Autogain amount per interval
+        autogainInterval:
+          type: string
+          nullable: true
+          description: Autogain interval duration
+        autogainCap:
+          type: number
+          format: double
+          nullable: true
+          description: Autogain balance cap
+        expires:
+          type: boolean
+          description: Whether currency can expire
+        expirationPolicy:
+          $ref: '#/components/schemas/ExpirationPolicy'
+          nullable: true
+          description: Expiration policy
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fixed expiration date
+        expirationDuration:
+          type: string
+          nullable: true
+          description: Expiration duration
+        seasonId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Season ID for expiration
+        linkedToItem:
+          type: boolean
+          description: Whether linked to inventory item
+        linkedItemTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Linked item template ID
+        linkageMode:
+          $ref: '#/components/schemas/ItemLinkageMode'
+          nullable: true
+          description: Item linkage mode
+        isBaseCurrency:
+          type: boolean
+          description: Whether this is the base currency
+        exchangeRateToBase:
+          type: number
+          format: double
+          nullable: true
+          description: Exchange rate to base currency
+        exchangeRateUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When exchange rate was last updated
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Icon asset ID
+        displayFormat:
+          type: string
+          nullable: true
+          description: Display format string
+        isActive:
+          type: boolean
+          description: Whether definition is active
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification timestamp
+
+    ListCurrencyDefinitionsResponse:
+      type: object
+      description: List of currency definitions
+      additionalProperties: false
+      required:
+      - definitions
+      properties:
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyDefinitionResponse'
+          description: Currency definitions matching filter
+
+    # =========================================================================
+    # Wallet Models
+    # =========================================================================
+
+    CreateWalletRequest:
+      type: object
+      description: Request to create a new wallet
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/WalletOwnerType'
+          description: Type of owner entity
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID for realm-scoped wallets (null for global)
+
+    GetWalletRequest:
+      type: object
+      description: Request to get a wallet
+      additionalProperties: false
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Wallet ID (provide this or ownerId+ownerType)
+        ownerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Owner ID (requires ownerType)
+        ownerType:
+          $ref: '#/components/schemas/WalletOwnerType'
+          nullable: true
+          description: Owner type (requires ownerId)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID (required if using ownerId lookup)
+
+    GetOrCreateWalletRequest:
+      type: object
+      description: Request to get or create a wallet
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/WalletOwnerType'
+          description: Type of owner entity
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID for realm-scoped wallets
+
+    FreezeWalletRequest:
+      type: object
+      description: Request to freeze a wallet
+      additionalProperties: false
+      required:
+      - walletId
+      - reason
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet ID to freeze
+        reason:
+          type: string
+          maxLength: 500
+          description: Reason for freezing
+
+    UnfreezeWalletRequest:
+      type: object
+      description: Request to unfreeze a wallet
+      additionalProperties: false
+      required:
+      - walletId
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet ID to unfreeze
+
+    CloseWalletRequest:
+      type: object
+      description: Request to close a wallet and transfer remaining balances
+      additionalProperties: false
+      required:
+      - walletId
+      - transferRemainingTo
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet ID to close
+        transferRemainingTo:
+          type: string
+          format: uuid
+          description: Destination wallet for remaining balances
+
+    WalletResponse:
+      type: object
+      description: Wallet details
+      additionalProperties: false
+      required:
+      - walletId
+      - ownerId
+      - ownerType
+      - status
+      - createdAt
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Unique wallet identifier
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/WalletOwnerType'
+          description: Owner type
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID
+        status:
+          $ref: '#/components/schemas/WalletStatus'
+          description: Current wallet status
+        frozenReason:
+          type: string
+          nullable: true
+          description: Reason wallet was frozen
+        frozenAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When wallet was frozen
+        frozenBy:
+          type: string
+          nullable: true
+          description: Who froze the wallet
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        lastActivityAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last transaction timestamp
+
+    WalletWithBalancesResponse:
+      type: object
+      description: Wallet with all non-zero balances
+      additionalProperties: false
+      required:
+      - wallet
+      - balances
+      properties:
+        wallet:
+          $ref: '#/components/schemas/WalletResponse'
+          description: Wallet details
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/BalanceSummary'
+          description: All non-zero balances in this wallet
+
+    GetOrCreateWalletResponse:
+      type: object
+      description: Result of get-or-create operation
+      additionalProperties: false
+      required:
+      - wallet
+      - balances
+      - created
+      properties:
+        wallet:
+          $ref: '#/components/schemas/WalletResponse'
+          description: Wallet details
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/BalanceSummary'
+          description: All non-zero balances
+        created:
+          type: boolean
+          description: Whether a new wallet was created
+
+    CloseWalletResponse:
+      type: object
+      description: Result of wallet close operation
+      additionalProperties: false
+      required:
+      - wallet
+      - transferredBalances
+      properties:
+        wallet:
+          $ref: '#/components/schemas/WalletResponse'
+          description: Closed wallet details
+        transferredBalances:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferredBalance'
+          description: Balances transferred to destination wallet
+
+    TransferredBalance:
+      type: object
+      description: A balance that was transferred during wallet close
+      additionalProperties: false
+      required:
+      - currencyDefinitionId
+      - amount
+      properties:
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        amount:
+          type: number
+          format: double
+          description: Amount transferred
+
+    BalanceSummary:
+      type: object
+      description: Summary of a balance in a wallet
+      additionalProperties: false
+      required:
+      - currencyDefinitionId
+      - currencyCode
+      - amount
+      - lockedAmount
+      - effectiveAmount
+      properties:
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code for convenience
+        amount:
+          type: number
+          format: double
+          description: Total balance amount
+        lockedAmount:
+          type: number
+          format: double
+          description: Amount reserved by authorization holds
+        effectiveAmount:
+          type: number
+          format: double
+          description: Available balance (amount - lockedAmount)
+
+    # =========================================================================
+    # Balance Models
+    # =========================================================================
+
+    GetBalanceRequest:
+      type: object
+      description: Request to get a specific currency balance
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+
+    GetBalanceResponse:
+      type: object
+      description: Detailed balance information
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - lockedAmount
+      - effectiveAmount
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          description: Currency code
+        amount:
+          type: number
+          format: double
+          description: Total balance
+        lockedAmount:
+          type: number
+          format: double
+          description: Amount in authorization holds
+        effectiveAmount:
+          type: number
+          format: double
+          description: Available balance (amount - lockedAmount)
+        earnCapInfo:
+          $ref: '#/components/schemas/EarnCapInfo'
+          nullable: true
+          description: Earn cap status (null if no caps configured)
+        autogainInfo:
+          $ref: '#/components/schemas/AutogainInfo'
+          nullable: true
+          description: Autogain status (null if autogain not enabled)
+
+    EarnCapInfo:
+      type: object
+      description: Current earn cap status for a balance
+      additionalProperties: false
+      required:
+      - dailyEarned
+      - dailyRemaining
+      - dailyResetsAt
+      - weeklyEarned
+      - weeklyRemaining
+      - weeklyResetsAt
+      properties:
+        dailyEarned:
+          type: number
+          format: double
+          description: Amount earned today
+        dailyRemaining:
+          type: number
+          format: double
+          description: Remaining daily earn allowance
+        dailyResetsAt:
+          type: string
+          format: date-time
+          description: When daily counter resets
+        weeklyEarned:
+          type: number
+          format: double
+          description: Amount earned this week
+        weeklyRemaining:
+          type: number
+          format: double
+          description: Remaining weekly earn allowance
+        weeklyResetsAt:
+          type: string
+          format: date-time
+          description: When weekly counter resets
+
+    AutogainInfo:
+      type: object
+      description: Autogain status for a balance
+      additionalProperties: false
+      required:
+      - lastCalculatedAt
+      - nextGainAt
+      - nextGainAmount
+      - mode
+      properties:
+        lastCalculatedAt:
+          type: string
+          format: date-time
+          description: When autogain was last calculated
+        nextGainAt:
+          type: string
+          format: date-time
+          description: When the next autogain will apply
+        nextGainAmount:
+          type: number
+          format: double
+          description: Estimated next gain amount
+        mode:
+          $ref: '#/components/schemas/AutogainMode'
+          description: Current autogain mode
+
+    BatchGetBalancesRequest:
+      type: object
+      description: Request to get multiple balances
+      additionalProperties: false
+      required:
+      - queries
+      properties:
+        queries:
+          type: array
+          items:
+            $ref: '#/components/schemas/BalanceQuery'
+          minItems: 1
+          maxItems: 100
+          description: Balance queries to execute
+
+    BalanceQuery:
+      type: object
+      description: A single balance query
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+
+    BatchGetBalancesResponse:
+      type: object
+      description: Results of batch balance queries
+      additionalProperties: false
+      required:
+      - balances
+      properties:
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchBalanceResult'
+          description: Balance results (same order as queries)
+
+    BatchBalanceResult:
+      type: object
+      description: Result of a single balance query in a batch
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - lockedAmount
+      - effectiveAmount
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        amount:
+          type: number
+          format: double
+          description: Total balance
+        lockedAmount:
+          type: number
+          format: double
+          description: Amount in holds
+        effectiveAmount:
+          type: number
+          format: double
+          description: Available balance
+
+    CreditCurrencyRequest:
+      type: object
+      description: Request to credit currency to a wallet
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      - idempotencyKey
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Target wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to credit
+        amount:
+          type: number
+          format: double
+          description: Amount to credit (must be positive)
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Must be a faucet type (mint, quest_reward, loot_drop, etc.)
+        referenceType:
+          type: string
+          nullable: true
+          description: What triggered this transaction (quest, admin, etc.)
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Unique key to prevent duplicate processing
+        bypassEarnCap:
+          type: boolean
+          default: false
+          description: Skip earn cap enforcement (admin use)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Free-form transaction metadata
+
+    CreditCurrencyResponse:
+      type: object
+      description: Result of credit operation
+      additionalProperties: false
+      required:
+      - transaction
+      - newBalance
+      - earnCapApplied
+      - walletCapApplied
+      properties:
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Created transaction record
+        newBalance:
+          type: number
+          format: double
+          description: Balance after credit
+        earnCapApplied:
+          type: boolean
+          description: Whether earn cap limited the credit
+        earnCapAmountLimited:
+          type: number
+          format: double
+          nullable: true
+          description: Amount reduced by earn cap
+        walletCapApplied:
+          type: boolean
+          description: Whether wallet cap limited the credit
+        walletCapAmountLost:
+          type: number
+          format: double
+          nullable: true
+          description: Amount lost due to wallet cap (cap_and_lose behavior)
+
+    DebitCurrencyRequest:
+      type: object
+      description: Request to debit currency from a wallet
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      - idempotencyKey
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to debit
+        amount:
+          type: number
+          format: double
+          description: Amount to debit (must be positive)
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Must be a sink type (burn, vendor_purchase, fee, etc.)
+        referenceType:
+          type: string
+          nullable: true
+          description: What triggered this transaction
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Unique key to prevent duplicate processing
+        allowNegative:
+          type: boolean
+          nullable: true
+          description: Override negative balance allowance for this transaction
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Free-form transaction metadata
+
+    DebitCurrencyResponse:
+      type: object
+      description: Result of debit operation
+      additionalProperties: false
+      required:
+      - transaction
+      - newBalance
+      properties:
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Created transaction record
+        newBalance:
+          type: number
+          format: double
+          description: Balance after debit
+
+    TransferCurrencyRequest:
+      type: object
+      description: Request to transfer currency between wallets
+      additionalProperties: false
+      required:
+      - sourceWalletId
+      - targetWalletId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      - idempotencyKey
+      properties:
+        sourceWalletId:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        targetWalletId:
+          type: string
+          format: uuid
+          description: Target wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to transfer
+        amount:
+          type: number
+          format: double
+          description: Amount to transfer (must be positive)
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Must be a transfer type (transfer, trade, gift)
+        referenceType:
+          type: string
+          nullable: true
+          description: What triggered this transfer
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Unique key to prevent duplicate processing
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Free-form transaction metadata
+
+    TransferCurrencyResponse:
+      type: object
+      description: Result of transfer operation
+      additionalProperties: false
+      required:
+      - transaction
+      - sourceNewBalance
+      - targetNewBalance
+      - targetCapApplied
+      properties:
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Created transaction record
+        sourceNewBalance:
+          type: number
+          format: double
+          description: Source wallet balance after transfer
+        targetNewBalance:
+          type: number
+          format: double
+          description: Target wallet balance after transfer
+        targetCapApplied:
+          type: boolean
+          description: Whether target wallet cap was applied
+        targetCapAmountLost:
+          type: number
+          format: double
+          nullable: true
+          description: Amount lost due to target wallet cap
+
+    BatchCreditRequest:
+      type: object
+      description: Request to credit multiple wallets
+      additionalProperties: false
+      required:
+      - operations
+      - idempotencyKey
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchCreditOperation'
+          minItems: 1
+          maxItems: 100
+          description: Credit operations to execute
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Unique key covering the entire batch
+
+    BatchCreditOperation:
+      type: object
+      description: A single credit operation in a batch
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Target wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to credit
+        amount:
+          type: number
+          format: double
+          description: Amount to credit
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Faucet transaction type
+        referenceType:
+          type: string
+          nullable: true
+          description: Reference type
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference ID
+
+    BatchCreditResponse:
+      type: object
+      description: Results of batch credit operations
+      additionalProperties: false
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchCreditResult'
+          description: Results for each operation
+
+    BatchCreditResult:
+      type: object
+      description: Result of a single credit in a batch
+      additionalProperties: false
+      required:
+      - index
+      - success
+      properties:
+        index:
+          type: integer
+          description: Index in the operations array
+        success:
+          type: boolean
+          description: Whether the operation succeeded
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          nullable: true
+          description: Transaction record if successful
+        error:
+          type: string
+          nullable: true
+          description: Error code if failed
+
+    # =========================================================================
+    # Transaction Record Model
+    # =========================================================================
+
+    CurrencyTransactionRecord:
+      type: object
+      description: Immutable record of a currency transaction
+      additionalProperties: false
+      required:
+      - transactionId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      - idempotencyKey
+      - timestamp
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        sourceWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source wallet (null for faucets)
+        targetWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target wallet (null for sinks)
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition ID
+        amount:
+          type: number
+          format: double
+          description: Transaction amount (always positive)
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Transaction classification
+        referenceType:
+          type: string
+          nullable: true
+          description: What triggered this transaction
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        escrowId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated escrow ID
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+        timestamp:
+          type: string
+          format: date-time
+          description: When transaction occurred
+        sourceBalanceBefore:
+          type: number
+          format: double
+          nullable: true
+          description: Source balance before transaction
+        sourceBalanceAfter:
+          type: number
+          format: double
+          nullable: true
+          description: Source balance after transaction
+        targetBalanceBefore:
+          type: number
+          format: double
+          nullable: true
+          description: Target balance before transaction
+        targetBalanceAfter:
+          type: number
+          format: double
+          nullable: true
+          description: Target balance after transaction
+        autogainPeriodsApplied:
+          type: integer
+          nullable: true
+          description: Number of autogain periods applied
+        overflowAmountLost:
+          type: number
+          format: double
+          nullable: true
+          description: Amount lost to cap overflow
+        earnCapAmountLimited:
+          type: number
+          format: double
+          nullable: true
+          description: Amount limited by earn cap
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Free-form metadata
+
+    # =========================================================================
+    # Conversion Models
+    # =========================================================================
+
+    CalculateConversionRequest:
+      type: object
+      description: Request to preview a currency conversion
+      additionalProperties: false
+      required:
+      - fromCurrencyId
+      - toCurrencyId
+      - fromAmount
+      properties:
+        fromCurrencyId:
+          type: string
+          format: uuid
+          description: Source currency definition ID
+        toCurrencyId:
+          type: string
+          format: uuid
+          description: Target currency definition ID
+        fromAmount:
+          type: number
+          format: double
+          description: Amount to convert
+
+    CalculateConversionResponse:
+      type: object
+      description: Conversion preview result
+      additionalProperties: false
+      required:
+      - toAmount
+      - effectiveRate
+      - baseCurrency
+      properties:
+        toAmount:
+          type: number
+          format: double
+          description: Amount that would be received
+        effectiveRate:
+          type: number
+          format: double
+          description: Effective conversion rate applied
+        conversionPath:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversionStep'
+          description: Steps in the conversion
+        baseCurrency:
+          type: string
+          description: Base currency used for conversion
+
+    ConversionStep:
+      type: object
+      description: A step in the conversion path
+      additionalProperties: false
+      required:
+      - from
+      - to
+      - rate
+      properties:
+        from:
+          type: string
+          description: Source currency code
+        to:
+          type: string
+          description: Target currency code
+        rate:
+          type: number
+          format: double
+          description: Rate applied in this step
+
+    ExecuteConversionRequest:
+      type: object
+      description: Request to execute a currency conversion
+      additionalProperties: false
+      required:
+      - walletId
+      - fromCurrencyId
+      - toCurrencyId
+      - fromAmount
+      - idempotencyKey
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet to perform conversion in
+        fromCurrencyId:
+          type: string
+          format: uuid
+          description: Currency to debit
+        toCurrencyId:
+          type: string
+          format: uuid
+          description: Currency to credit
+        fromAmount:
+          type: number
+          format: double
+          description: Amount to convert
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Unique key for idempotency
+
+    ExecuteConversionResponse:
+      type: object
+      description: Result of conversion execution
+      additionalProperties: false
+      required:
+      - debitTransaction
+      - creditTransaction
+      - fromDebited
+      - toCredited
+      - effectiveRate
+      properties:
+        debitTransaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Debit transaction (conversion_debit)
+        creditTransaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Credit transaction (conversion_credit)
+        fromDebited:
+          type: number
+          format: double
+          description: Amount debited
+        toCredited:
+          type: number
+          format: double
+          description: Amount credited
+        effectiveRate:
+          type: number
+          format: double
+          description: Rate applied
+
+    GetExchangeRateRequest:
+      type: object
+      description: Request to get exchange rate between currencies
+      additionalProperties: false
+      required:
+      - fromCurrencyId
+      - toCurrencyId
+      properties:
+        fromCurrencyId:
+          type: string
+          format: uuid
+          description: Source currency ID
+        toCurrencyId:
+          type: string
+          format: uuid
+          description: Target currency ID
+
+    GetExchangeRateResponse:
+      type: object
+      description: Exchange rate information
+      additionalProperties: false
+      required:
+      - rate
+      - inverseRate
+      - baseCurrency
+      - fromCurrencyRateToBase
+      - toCurrencyRateToBase
+      properties:
+        rate:
+          type: number
+          format: double
+          description: Conversion rate (from -> to)
+        inverseRate:
+          type: number
+          format: double
+          description: Inverse rate (to -> from)
+        baseCurrency:
+          type: string
+          description: Base currency code
+        fromCurrencyRateToBase:
+          type: number
+          format: double
+          description: Source currency rate to base
+        toCurrencyRateToBase:
+          type: number
+          format: double
+          description: Target currency rate to base
+
+    UpdateExchangeRateRequest:
+      type: object
+      description: Request to update exchange rate
+      additionalProperties: false
+      required:
+      - currencyDefinitionId
+      - exchangeRateToBase
+      properties:
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to update
+        exchangeRateToBase:
+          type: number
+          format: double
+          description: New exchange rate to base currency
+
+    UpdateExchangeRateResponse:
+      type: object
+      description: Result of exchange rate update
+      additionalProperties: false
+      required:
+      - definition
+      - previousRate
+      properties:
+        definition:
+          $ref: '#/components/schemas/CurrencyDefinitionResponse'
+          description: Updated currency definition
+        previousRate:
+          type: number
+          format: double
+          description: Previous exchange rate
+
+    # =========================================================================
+    # Transaction History Models
+    # =========================================================================
+
+    GetTransactionRequest:
+      type: object
+      description: Request to get a transaction by ID
+      additionalProperties: false
+      required:
+      - transactionId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction ID
+
+    TransactionResponse:
+      type: object
+      description: Transaction details
+      additionalProperties: false
+      required:
+      - transaction
+      properties:
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Transaction record
+
+    GetTransactionHistoryRequest:
+      type: object
+      description: Request to get transaction history
+      additionalProperties: false
+      required:
+      - walletId
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet to query
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by currency
+        transactionTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionType'
+          nullable: true
+          description: Filter by transaction types
+        fromDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Start of date range
+        toDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: End of date range
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Results per page
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Result offset
+
+    GetTransactionHistoryResponse:
+      type: object
+      description: Paginated transaction history
+      additionalProperties: false
+      required:
+      - transactions
+      - totalCount
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Transaction records
+        totalCount:
+          type: integer
+          description: Total matching transactions
+
+    GetTransactionsByReferenceRequest:
+      type: object
+      description: Request to get transactions by reference
+      additionalProperties: false
+      required:
+      - referenceType
+      - referenceId
+      properties:
+        referenceType:
+          type: string
+          description: Reference type
+        referenceId:
+          type: string
+          format: uuid
+          description: Reference ID
+
+    GetTransactionsByReferenceResponse:
+      type: object
+      description: Transactions for a reference
+      additionalProperties: false
+      required:
+      - transactions
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Matching transactions
+
+    # =========================================================================
+    # Analytics Models
+    # =========================================================================
+
+    GetGlobalSupplyRequest:
+      type: object
+      description: Request to get global supply stats
+      additionalProperties: false
+      required:
+      - currencyDefinitionId
+      properties:
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to query
+
+    GetGlobalSupplyResponse:
+      type: object
+      description: Global supply statistics
+      additionalProperties: false
+      required:
+      - totalSupply
+      - inCirculation
+      - inEscrow
+      - totalMinted
+      - totalBurned
+      properties:
+        totalSupply:
+          type: number
+          format: double
+          description: Sum of all positive balances
+        inCirculation:
+          type: number
+          format: double
+          description: Total in wallets
+        inEscrow:
+          type: number
+          format: double
+          description: Locked in escrow
+        totalMinted:
+          type: number
+          format: double
+          description: All-time faucet total
+        totalBurned:
+          type: number
+          format: double
+          description: All-time sink total
+        supplyCap:
+          type: number
+          format: double
+          nullable: true
+          description: Global supply cap (null if none)
+        supplyCapRemaining:
+          type: number
+          format: double
+          nullable: true
+          description: Remaining supply before cap
+
+    GetWalletDistributionRequest:
+      type: object
+      description: Request to get wealth distribution stats
+      additionalProperties: false
+      required:
+      - currencyDefinitionId
+      properties:
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to analyze
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+
+    GetWalletDistributionResponse:
+      type: object
+      description: Wealth distribution statistics
+      additionalProperties: false
+      required:
+      - totalWallets
+      - walletsWithBalance
+      - averageBalance
+      - medianBalance
+      - percentiles
+      - giniCoefficient
+      properties:
+        totalWallets:
+          type: integer
+          description: Total wallets holding this currency
+        walletsWithBalance:
+          type: integer
+          description: Wallets with non-zero balance
+        averageBalance:
+          type: number
+          format: double
+          description: Mean balance
+        medianBalance:
+          type: number
+          format: double
+          description: Median balance
+        percentiles:
+          $ref: '#/components/schemas/DistributionPercentiles'
+          description: Balance percentiles
+        giniCoefficient:
+          type: number
+          format: double
+          description: Gini coefficient (0=equal, 1=one has all)
+
+    DistributionPercentiles:
+      type: object
+      description: Balance distribution percentiles
+      additionalProperties: false
+      required:
+      - p10
+      - p25
+      - p50
+      - p75
+      - p90
+      - p99
+      properties:
+        p10:
+          type: number
+          format: double
+          description: 10th percentile balance
+        p25:
+          type: number
+          format: double
+          description: 25th percentile balance
+        p50:
+          type: number
+          format: double
+          description: 50th percentile (median)
+        p75:
+          type: number
+          format: double
+          description: 75th percentile balance
+        p90:
+          type: number
+          format: double
+          description: 90th percentile balance
+        p99:
+          type: number
+          format: double
+          description: 99th percentile balance
+
+    # =========================================================================
+    # Escrow Integration Models
+    # =========================================================================
+
+    EscrowDepositRequest:
+      type: object
+      description: Request from lib-escrow to debit wallet for deposit
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - escrowId
+      - idempotencyKey
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet to debit
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to debit
+        amount:
+          type: number
+          format: double
+          description: Amount to debit for escrow
+        escrowId:
+          type: string
+          format: uuid
+          description: Associated escrow agreement ID
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Idempotency key
+
+    EscrowDepositResponse:
+      type: object
+      description: Result of escrow deposit (wallet debit)
+      additionalProperties: false
+      required:
+      - transaction
+      - newBalance
+      properties:
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Debit transaction record
+        newBalance:
+          type: number
+          format: double
+          description: Wallet balance after debit
+
+    EscrowReleaseRequest:
+      type: object
+      description: Request from lib-escrow to credit recipient on completion
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - escrowId
+      - idempotencyKey
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Recipient wallet to credit
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to credit
+        amount:
+          type: number
+          format: double
+          description: Amount to credit
+        escrowId:
+          type: string
+          format: uuid
+          description: Associated escrow agreement ID
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Idempotency key
+
+    EscrowReleaseResponse:
+      type: object
+      description: Result of escrow release (recipient credit)
+      additionalProperties: false
+      required:
+      - transaction
+      - newBalance
+      properties:
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Credit transaction record
+        newBalance:
+          type: number
+          format: double
+          description: Recipient balance after credit
+
+    EscrowRefundRequest:
+      type: object
+      description: Request from lib-escrow to credit depositor on refund
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - escrowId
+      - idempotencyKey
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Depositor wallet to credit
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to credit
+        amount:
+          type: number
+          format: double
+          description: Amount to refund
+        escrowId:
+          type: string
+          format: uuid
+          description: Associated escrow agreement ID
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Idempotency key
+
+    EscrowRefundResponse:
+      type: object
+      description: Result of escrow refund (depositor credit)
+      additionalProperties: false
+      required:
+      - transaction
+      - newBalance
+      properties:
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Credit transaction record
+        newBalance:
+          type: number
+          format: double
+          description: Depositor balance after credit
+
+    # =========================================================================
+    # Authorization Hold Models
+    # =========================================================================
+
+    CreateHoldRequest:
+      type: object
+      description: Request to create an authorization hold
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - expiresAt
+      - idempotencyKey
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet to hold funds in
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to hold
+        amount:
+          type: number
+          format: double
+          description: Amount to reserve
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the hold auto-releases
+        referenceType:
+          type: string
+          nullable: true
+          description: Reference type (e.g. dining, hotel, gas)
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Idempotency key
+
+    CaptureHoldRequest:
+      type: object
+      description: Request to capture (finalize) a hold
+      additionalProperties: false
+      required:
+      - holdId
+      - captureAmount
+      - idempotencyKey
+      properties:
+        holdId:
+          type: string
+          format: uuid
+          description: Hold ID to capture
+        captureAmount:
+          type: number
+          format: double
+          description: Final amount to debit (may be less than hold amount)
+        idempotencyKey:
+          type: string
+          maxLength: 128
+          description: Idempotency key
+
+    CaptureHoldResponse:
+      type: object
+      description: Result of hold capture
+      additionalProperties: false
+      required:
+      - hold
+      - transaction
+      - newBalance
+      - amountReleased
+      properties:
+        hold:
+          $ref: '#/components/schemas/HoldRecord'
+          description: Updated hold record
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          description: Debit transaction
+        newBalance:
+          type: number
+          format: double
+          description: Balance after capture
+        amountReleased:
+          type: number
+          format: double
+          description: Difference between hold and capture (released back)
+
+    ReleaseHoldRequest:
+      type: object
+      description: Request to release a hold
+      additionalProperties: false
+      required:
+      - holdId
+      properties:
+        holdId:
+          type: string
+          format: uuid
+          description: Hold ID to release
+
+    GetHoldRequest:
+      type: object
+      description: Request to get hold details
+      additionalProperties: false
+      required:
+      - holdId
+      properties:
+        holdId:
+          type: string
+          format: uuid
+          description: Hold ID
+
+    HoldResponse:
+      type: object
+      description: Hold details
+      additionalProperties: false
+      required:
+      - hold
+      properties:
+        hold:
+          $ref: '#/components/schemas/HoldRecord'
+          description: Hold record
+
+    HoldRecord:
+      type: object
+      description: Authorization hold record
+      additionalProperties: false
+      required:
+      - holdId
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - status
+      - createdAt
+      - expiresAt
+      properties:
+        holdId:
+          type: string
+          format: uuid
+          description: Unique hold identifier
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet with held funds
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency held
+        amount:
+          type: number
+          format: double
+          description: Amount reserved
+        status:
+          $ref: '#/components/schemas/HoldStatus'
+          description: Current hold status
+        createdAt:
+          type: string
+          format: date-time
+          description: When hold was created
+        expiresAt:
+          type: string
+          format: date-time
+          description: When hold auto-releases
+        referenceType:
+          type: string
+          nullable: true
+          description: Reference type
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference ID
+        capturedAmount:
+          type: number
+          format: double
+          nullable: true
+          description: Amount actually captured (may differ from held amount)
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When hold was captured/released/expired

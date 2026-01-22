@@ -27,6 +27,7 @@ public partial class BannouClient
     private CharacterPersonalityProxy? _characterPersonality;
     private ConnectProxy? _connect;
     private ContractProxy? _contract;
+    private CurrencyProxy? _currency;
     private DocumentationProxy? _documentation;
     private GameServiceProxy? _gameService;
     private GameSessionProxy? _gameSession;
@@ -128,6 +129,12 @@ public partial class BannouClient
     /// </summary>
     public ContractProxy Contract =>
         _contract ??= new ContractProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Currency Service API operations.
+    /// </summary>
+    public CurrencyProxy Currency =>
+        _currency ??= new CurrencyProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Documentation API operations.

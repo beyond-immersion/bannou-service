@@ -402,3 +402,50 @@ x-state-stores:
     prefix: contract
     service: Contract
     purpose: Contract templates, instances, breaches, and indexes
+
+  # ============================================================================
+  # Currency Stores
+  # ============================================================================
+
+  currency-balance-cache:
+    backend: redis
+    prefix: "currency:balance"
+    service: Currency
+    purpose: Real-time balance lookups (cached, refreshed on access)
+
+  currency-idempotency:
+    backend: redis
+    prefix: "currency:idemp"
+    service: Currency
+    purpose: Idempotency key deduplication
+
+  currency-holds-cache:
+    backend: redis
+    prefix: "currency:hold"
+    service: Currency
+    purpose: Authorization hold state for pre-auth scenarios
+
+  currency-definitions:
+    backend: mysql
+    service: Currency
+    purpose: Currency type definitions and behavior rules
+
+  currency-wallets:
+    backend: mysql
+    service: Currency
+    purpose: Wallet ownership and status
+
+  currency-balances:
+    backend: mysql
+    service: Currency
+    purpose: Currency balance records per wallet
+
+  currency-transactions:
+    backend: mysql
+    service: Currency
+    purpose: Immutable transaction history
+
+  currency-holds:
+    backend: mysql
+    service: Currency
+    purpose: Authorization hold records

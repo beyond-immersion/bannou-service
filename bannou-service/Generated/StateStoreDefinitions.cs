@@ -81,6 +81,24 @@ public static class StateStoreDefinitions
     /// <summary>Contract templates, instances, breaches, and indexes</summary>
     public const string Contract = "contract-statestore";
 
+    // Currency Service
+    /// <summary>Real-time balance lookups (cached, refreshed on access)</summary>
+    public const string CurrencyBalanceCache = "currency-balance-cache";
+    /// <summary>Currency balance records per wallet</summary>
+    public const string CurrencyBalances = "currency-balances";
+    /// <summary>Currency type definitions and behavior rules</summary>
+    public const string CurrencyDefinitions = "currency-definitions";
+    /// <summary>Authorization hold records</summary>
+    public const string CurrencyHolds = "currency-holds";
+    /// <summary>Authorization hold state for pre-auth scenarios</summary>
+    public const string CurrencyHoldsCache = "currency-holds-cache";
+    /// <summary>Idempotency key deduplication</summary>
+    public const string CurrencyIdempotency = "currency-idempotency";
+    /// <summary>Immutable transaction history</summary>
+    public const string CurrencyTransactions = "currency-transactions";
+    /// <summary>Wallet ownership and status</summary>
+    public const string CurrencyWallets = "currency-wallets";
+
     // Documentation Service
     /// <summary>Documentation content and metadata</summary>
     public const string Documentation = "documentation-statestore";
@@ -225,6 +243,14 @@ public static class StateStoreDefinitions
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
             [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract" },
+            [CurrencyBalanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:balance" },
+            [CurrencyBalances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_balances" },
+            [CurrencyDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_definitions" },
+            [CurrencyHolds] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_holds" },
+            [CurrencyHoldsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:hold" },
+            [CurrencyIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:idemp" },
+            [CurrencyTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_transactions" },
+            [CurrencyWallets] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_wallets" },
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
@@ -292,6 +318,14 @@ public static class StateStoreDefinitions
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql"),
             [Connect] = new StoreMetadata("Connect", "WebSocket session state", "redis"),
             [Contract] = new StoreMetadata("Contract", "Contract templates, instances, breaches, and indexes", "redis"),
+            [CurrencyBalanceCache] = new StoreMetadata("Currency", "Real-time balance lookups (cached, refreshed on access)", "redis"),
+            [CurrencyBalances] = new StoreMetadata("Currency", "Currency balance records per wallet", "mysql"),
+            [CurrencyDefinitions] = new StoreMetadata("Currency", "Currency type definitions and behavior rules", "mysql"),
+            [CurrencyHolds] = new StoreMetadata("Currency", "Authorization hold records", "mysql"),
+            [CurrencyHoldsCache] = new StoreMetadata("Currency", "Authorization hold state for pre-auth scenarios", "redis"),
+            [CurrencyIdempotency] = new StoreMetadata("Currency", "Idempotency key deduplication", "redis"),
+            [CurrencyTransactions] = new StoreMetadata("Currency", "Immutable transaction history", "mysql"),
+            [CurrencyWallets] = new StoreMetadata("Currency", "Wallet ownership and status", "mysql"),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),

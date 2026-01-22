@@ -30,6 +30,14 @@ This document lists all state store components used in Bannou.
 | `character-statestore` | MySQL | Character | Persistent character data |
 | `connect-statestore` | Redis | Connect | WebSocket session state |
 | `contract-statestore` | Redis | Contract | Contract templates, instances, breaches, and indexes |
+| `currency-balance-cache` | Redis | Currency | Real-time balance lookups (cached, refreshed on access) |
+| `currency-balances` | MySQL | Currency | Currency balance records per wallet |
+| `currency-definitions` | MySQL | Currency | Currency type definitions and behavior rules |
+| `currency-holds` | MySQL | Currency | Authorization hold records |
+| `currency-holds-cache` | Redis | Currency | Authorization hold state for pre-auth scenarios |
+| `currency-idempotency` | Redis | Currency | Idempotency key deduplication |
+| `currency-transactions` | MySQL | Currency | Immutable transaction history |
+| `currency-wallets` | MySQL | Currency | Wallet ownership and status |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
@@ -65,7 +73,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 55 stores (35 Redis, 20 MySQL)
+**Total**: 63 stores (38 Redis, 25 MySQL)
 
 ## Naming Conventions
 
