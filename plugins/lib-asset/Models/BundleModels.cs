@@ -151,7 +151,7 @@ public sealed class BundleMetadata
             MetadataVersion = MetadataVersion,
             Name = Name,
             Description = Description,
-            Owner = Owner ?? string.Empty,
+            Owner = Owner,
             Realm = Realm,
             Tags = Tags,
             Status = LifecycleStatus switch

@@ -1098,7 +1098,7 @@ public partial class MatchmakingService : IMatchmakingService
                     Timestamp = DateTimeOffset.UtcNow,
                     MatchId = match.MatchId,
                     GameSessionId = sessionResponse.SessionId,
-                    ReservationToken = reservation?.Token ?? string.Empty,
+                    ReservationToken = reservation?.Token,
                     JoinDeadlineSeconds = _configuration.DefaultJoinDeadlineSeconds
                 }, cancellationToken);
 
