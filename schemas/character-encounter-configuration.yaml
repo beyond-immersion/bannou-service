@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: Character Encounter Service Configuration
+  description: |
+    Configuration schema for Character Encounter service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    ServerSalt:
+      type: string
+      description: Server salt for GUID generation. Must be shared across all instances for encounter GUIDs to work correctly. Change in production.
+      env: CHARACTER_ENCOUNTER_SERVER_SALT
+      default: "bannou-dev-encounter-salt-change-in-production"
+    MemoryDecayEnabled:
+      type: boolean
+      description: Enable time-based memory decay for encounter perspectives
+      env: CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED
+      default: true
+    MemoryDecayMode:
+      type: string
+      description: Memory decay mode - 'lazy' applies decay on access, 'scheduled' uses background processing
+      env: CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE
+      default: "lazy"
+    MemoryDecayIntervalHours:
+      type: integer
+      description: Hours between decay checks (used for calculating decay amount)
+      env: CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS
+      default: 24
+    MemoryDecayRate:
+      type: number
+      description: Memory strength reduction per decay interval (0.0-1.0)
+      env: CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE
+      default: 0.05
+    MemoryFadeThreshold:
+      type: number
+      description: Memory strength below which encounters are considered forgotten (0.0-1.0)
+      env: CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD
+      default: 0.1
+    MaxEncountersPerCharacter:
+      type: integer
+      description: Maximum encounters stored per character before oldest are pruned
+      env: CHARACTER_ENCOUNTER_MAX_PER_CHARACTER
+      default: 1000
+    MaxEncountersPerPair:
+      type: integer
+      description: Maximum encounters stored per character pair before oldest are pruned
+      env: CHARACTER_ENCOUNTER_MAX_PER_PAIR
+      default: 100
+    DefaultPageSize:
+      type: integer
+      description: Default page size for query results
+      env: CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE
+      default: 20
+    MaxPageSize:
+      type: integer
+      description: Maximum allowed page size for query results
+      env: CHARACTER_ENCOUNTER_MAX_PAGE_SIZE
+      default: 100
+    MaxBatchSize:
+      type: integer
+      description: Maximum items in bulk operations (batch-get, etc.)
+      env: CHARACTER_ENCOUNTER_MAX_BATCH_SIZE
+      default: 100
+    DefaultMemoryStrength:
+      type: number
+      description: Default initial memory strength for new perspectives (0.0-1.0)
+      env: CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH
+      default: 1.0
+    MemoryRefreshBoost:
+      type: number
+      description: Default memory strength boost when refreshing (0.0-1.0)
+      env: CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST
+      default: 0.2
+    SeedBuiltInTypesOnStartup:
+      type: boolean
+      description: Automatically seed built-in encounter types on service startup
+      env: CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP
+      default: true

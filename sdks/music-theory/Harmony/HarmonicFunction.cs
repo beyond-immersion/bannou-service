@@ -186,7 +186,7 @@ public static class HarmonicFunctionAnalyzer
         }
 
         var isMajorKey = key.Mode == ModeType.Major || key.Mode == ModeType.Mixolydian ||
-                         key.Mode == ModeType.Lydian;
+            key.Mode == ModeType.Lydian;
 
         return isMajorKey
             ? HarmonicFunction.Major.ForDegree(degree.Value)

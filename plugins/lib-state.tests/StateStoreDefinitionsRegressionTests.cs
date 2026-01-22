@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.State.Services;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.State.Tests;
 

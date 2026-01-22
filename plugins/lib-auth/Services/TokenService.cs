@@ -1,10 +1,8 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;

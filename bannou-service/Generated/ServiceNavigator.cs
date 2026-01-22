@@ -15,6 +15,7 @@ using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Connect;
@@ -64,6 +65,7 @@ public sealed class ServiceNavigator : IServiceNavigator
     private readonly IAuthClient _auth;
     private readonly IBehaviorClient _behavior;
     private readonly ICharacterClient _character;
+    private readonly ICharacterEncounterClient _characterEncounter;
     private readonly ICharacterHistoryClient _characterHistory;
     private readonly ICharacterPersonalityClient _characterPersonality;
     private readonly IConnectClient _connect;
@@ -104,6 +106,7 @@ public sealed class ServiceNavigator : IServiceNavigator
         IAuthClient auth,
         IBehaviorClient behavior,
         ICharacterClient character,
+        ICharacterEncounterClient characterEncounter,
         ICharacterHistoryClient characterHistory,
         ICharacterPersonalityClient characterPersonality,
         IConnectClient connect,
@@ -140,6 +143,7 @@ public sealed class ServiceNavigator : IServiceNavigator
         _auth = auth;
         _behavior = behavior;
         _character = character;
+        _characterEncounter = characterEncounter;
         _characterHistory = characterHistory;
         _characterPersonality = characterPersonality;
         _connect = connect;
@@ -235,6 +239,9 @@ public sealed class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public ICharacterClient Character => _character;
+
+    /// <inheritdoc />
+    public ICharacterEncounterClient CharacterEncounter => _characterEncounter;
 
     /// <inheritdoc />
     public ICharacterHistoryClient CharacterHistory => _characterHistory;

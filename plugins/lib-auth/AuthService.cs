@@ -6,11 +6,9 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Subscription;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -1099,9 +1097,10 @@ public partial class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, ProvidersResponse?)> ListProvidersAsync(CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, ProvidersResponse?)> ListProvidersAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Listing available authentication providers");
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must use await
 
         var providers = new List<ProviderInfo>();
 
@@ -1155,10 +1154,10 @@ public partial class AuthService : IAuthService
 
         _logger.LogInformation("Returning {ProviderCount} available authentication provider(s)", providers.Count);
 
-        return Task.FromResult<(StatusCodes, ProvidersResponse?)>((StatusCodes.OK, new ProvidersResponse
+        return (StatusCodes.OK, new ProvidersResponse
         {
             Providers = providers
-        }));
+        });
     }
 
     #region Private Helper Methods

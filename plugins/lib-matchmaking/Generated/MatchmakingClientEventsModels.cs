@@ -11,6 +11,11 @@
 //     2. Run: scripts/generate-all-services.sh
 //     3. Implement business logic in the service class (e.g., *Service.cs)
 //
+//     RELATED FILES:
+//     - Request/Response models: bannou-service/Generated/Models/{Service}Models.cs
+//     - Event models: bannou-service/Generated/Events/{Service}EventsModels.cs
+//     - Lifecycle events: bannou-service/Generated/Events/{Service}LifecycleEvents.cs
+//
 //     See: docs/reference/tenets/FOUNDATION.md (T1: Schema-First, T2: Code Generation)
 // </auto-generated>
 //----------------------
@@ -241,10 +246,10 @@ public partial class MatchConfirmedEvent : BaseClientEvent
     public System.Guid GameSessionId { get; set; } = default!;
 
     /// <summary>
-    /// Token to claim reservation when joining session
+    /// Token to claim reservation when joining session (null when reservation not required)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reservationToken")]
-    public string ReservationToken { get; set; } = default!;
+    public string? ReservationToken { get; set; } = default!;
 
     /// <summary>
     /// Seconds to join before reservation expires

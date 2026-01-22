@@ -11,6 +11,11 @@
 //     2. Run: scripts/generate-all-services.sh
 //     3. Implement business logic in the service class (e.g., *Service.cs)
 //
+//     RELATED FILES:
+//     - Request/Response models: bannou-service/Generated/Models/{Service}Models.cs
+//     - Event models: bannou-service/Generated/Events/{Service}EventsModels.cs
+//     - Lifecycle events: bannou-service/Generated/Events/{Service}LifecycleEvents.cs
+//
 //     See: docs/reference/tenets/FOUNDATION.md (T1: Schema-First, T2: Code Generation)
 // </auto-generated>
 //----------------------

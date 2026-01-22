@@ -17,6 +17,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Auth](#auth) | 4.0.0 | 13 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 10 | Character management service for Arcadia game world. |
+| [Character Encounter](#character-encounter) | 1.0.0 | 19 | Character encounter tracking service for memorable interacti... |
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
@@ -343,6 +344,58 @@ Character management service for Arcadia game world.
 | `POST` | `/character/get` | Get character by ID | user |
 | `POST` | `/character/list` | List characters with filtering | user |
 | `POST` | `/character/update` | Update character | admin |
+
+---
+
+## Character Encounter {#character-encounter}
+
+**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml`
+
+Character encounter tracking service for memorable interactions between characters.
+
+### Admin
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-encounter/decay-memories` | Trigger memory decay (maintenance) | admin |
+| `POST` | `/character-encounter/delete` | Delete encounter and perspectives | admin |
+| `POST` | `/character-encounter/delete-by-character` | Delete all encounters for a character | admin |
+
+### Encounter Type Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-encounter/type/create` | Create new encounter type | admin |
+| `POST` | `/character-encounter/type/delete` | Delete encounter type | admin |
+| `POST` | `/character-encounter/type/get` | Get encounter type by code | user |
+| `POST` | `/character-encounter/type/list` | List all encounter types | user |
+| `POST` | `/character-encounter/type/seed` | Seed default encounter types | admin |
+| `POST` | `/character-encounter/type/update` | Update encounter type | admin |
+
+### Perspectives
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-encounter/get-perspective` | Get character's view of encounter | user |
+| `POST` | `/character-encounter/refresh-memory` | Strengthen memory (referenced) | authenticated |
+| `POST` | `/character-encounter/update-perspective` | Update perspective (reflection) | authenticated |
+
+### Queries
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-encounter/batch-get` | Bulk sentiment for multiple targets | authenticated |
+| `POST` | `/character-encounter/get-sentiment` | Aggregate sentiment toward another character | user |
+| `POST` | `/character-encounter/has-met` | Quick check if two characters have met | user |
+| `POST` | `/character-encounter/query/between` | Get encounters between two characters | user |
+| `POST` | `/character-encounter/query/by-character` | Get character's encounters (paginated) | user |
+| `POST` | `/character-encounter/query/by-location` | Recent encounters at location | user |
+
+### Recording
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-encounter/record` | Record new encounter with perspectives | authenticated |
 
 ---
 
@@ -1288,8 +1341,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 34
-- **Total endpoints**: 406
+- **Total services**: 35
+- **Total endpoints**: 425
 
 ---
 

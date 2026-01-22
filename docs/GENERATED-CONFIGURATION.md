@@ -20,19 +20,20 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | bool | `true` | Automatically sync achievements to platforms when unlocked |
 | `ACHIEVEMENT_DEFINITION_STORE_NAME` | string | `achievement-definition` | Name of the state store for achievement definitions (MySQL r... |
-| `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (stub - not implemented) |
-| `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (stub - not implemented) |
+| `ACHIEVEMENT_MOCK_PLATFORM_SYNC` | bool | `false` | Enable mock mode for platform sync (returns success without ... |
+| `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (optional - not implemented) |
+| `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (optional - not implemente... |
 | `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
 | `ACHIEVEMENT_PROGRESS_STORE_NAME` | string | `achievement-progress` | Name of the state store for progress tracking (Redis for hot... |
 | `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | double | `5.0` | Threshold percentage below which an achievement is considere... |
 | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | int | `60` | How often to recalculate achievement rarity percentages |
-| `ACHIEVEMENT_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for achievement sync |
-| `ACHIEVEMENT_STEAM_APP_ID` | string | **REQUIRED** | Steam App ID for achievement mapping |
+| `ACHIEVEMENT_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for achievement sync (optional - Steam syn... |
+| `ACHIEVEMENT_STEAM_APP_ID` | string | **REQUIRED** | Steam App ID for achievement mapping (optional - Steam sync ... |
 | `ACHIEVEMENT_SYNC_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed platform syncs |
 | `ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS` | int | `60` | Delay between sync retry attempts in seconds |
 | `ACHIEVEMENT_UNLOCK_STORE_NAME` | string | `achievement-unlock` | Name of the state store for unlock records (MySQL for persis... |
-| `ACHIEVEMENT_XBOX_CLIENT_ID` | string | **REQUIRED** | Xbox Live client ID (stub - not implemented) |
-| `ACHIEVEMENT_XBOX_CLIENT_SECRET` | string | **REQUIRED** | Xbox Live client secret (stub - not implemented) |
+| `ACHIEVEMENT_XBOX_CLIENT_ID` | string | **REQUIRED** | Xbox Live client ID (optional - not implemented) |
+| `ACHIEVEMENT_XBOX_CLIENT_SECRET` | string | **REQUIRED** | Xbox Live client secret (optional - not implemented) |
 
 ### Actor
 
@@ -228,6 +229,25 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size when not specified |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
 | `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
+
+### Character Encounter
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH` | double | `1.0` | Default initial memory strength for new perspectives (0.0-1.... |
+| `CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for query results |
+| `CHARACTER_ENCOUNTER_MAX_BATCH_SIZE` | int | `100` | Maximum items in bulk operations (batch-get, etc.) |
+| `CHARACTER_ENCOUNTER_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for query results |
+| `CHARACTER_ENCOUNTER_MAX_PER_CHARACTER` | int | `1000` | Maximum encounters stored per character before oldest are pr... |
+| `CHARACTER_ENCOUNTER_MAX_PER_PAIR` | int | `100` | Maximum encounters stored per character pair before oldest a... |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | bool | `true` | Enable time-based memory decay for encounter perspectives |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS` | int | `24` | Hours between decay checks (used for calculating decay amoun... |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` | string | `lazy` | Memory decay mode - 'lazy' applies decay on access, 'schedul... |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE` | double | `0.05` | Memory strength reduction per decay interval (0.0-1.0) |
+| `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | double | `0.1` | Memory strength below which encounters are considered forgot... |
+| `CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST` | double | `0.2` | Default memory strength boost when refreshing (0.0-1.0) |
+| `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | bool | `true` | Automatically seed built-in encounter types on service start... |
+| `CHARACTER_ENCOUNTER_SERVER_SALT` | string | `bannou-dev-encounter-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 
 ### Connect
 
@@ -430,7 +450,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
-| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging. No de... |
 | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
 | `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
@@ -554,9 +573,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 425
-- **Required (no default)**: 40
-- **Optional (has default)**: 385
+- **Total properties**: 439
+- **Required (no default)**: 39
+- **Optional (has default)**: 400
 
 ## Environment Variable Naming Convention
 

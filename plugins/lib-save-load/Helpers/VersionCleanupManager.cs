@@ -1,6 +1,5 @@
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;

@@ -262,8 +262,8 @@ public sealed class CompositionState
     public bool IsResolutionExpected()
     {
         return Harmonic.ExpectingCadence ||
-               Listener.ExpectedResolution ||
-               Emotional.Tension > 0.7;
+            Listener.ExpectedResolution ||
+            Emotional.Tension > 0.7;
     }
 
     /// <summary>

@@ -17,7 +17,7 @@ public static class TensionAndRelease
         Id = "tension_and_release",
         Name = "Tension and Release",
         Description = "The fundamental dramatic arc of music. Builds tension through a climax, " +
-                      "then releases into peaceful resolution. Works for any genre.",
+            "then releases into peaceful resolution. Works for any genre.",
         Imagery =
         [
             "Calm waters, a quiet beginning",

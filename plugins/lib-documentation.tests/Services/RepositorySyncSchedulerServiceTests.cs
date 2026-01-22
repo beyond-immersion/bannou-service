@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Documentation.Models;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -428,9 +428,9 @@ public sealed class BundleMetadataResult
     public string? Description { get; init; }
 
     /// <summary>
-    /// Owner identifier.
+    /// Owner identifier (null for system-owned bundles).
     /// </summary>
-    public required string Owner { get; init; }
+    public string? Owner { get; init; }
 
     /// <summary>
     /// Target realm.

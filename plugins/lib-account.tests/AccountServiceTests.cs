@@ -134,8 +134,8 @@ public class AccountServiceTests
         // Create real configuration instance with test values
         var configuration = new AccountServiceConfiguration
         {
-            AdminEmails = adminEmails ?? string.Empty,
-            AdminEmailDomain = adminEmailDomain ?? string.Empty
+            AdminEmails = adminEmails,
+            AdminEmailDomain = adminEmailDomain
         };
 
         return new AccountService(

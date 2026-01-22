@@ -110,6 +110,16 @@ This document lists all events defined in Bannou's event schemas.
 | `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
 | `GoapPlanGeneratedEvent` | Custom | `goap-plan-generated` | Event published when the GOAP planner generates a ... |
 
+### Character Encounter
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `EncounterDeletedEvent` | Lifecycle (Deleted) | `encounter.deleted` | Published when an encounter is deleted |
+| `EncounterMemoryFadedEvent` | Custom | `encounter-memory-faded` | Published when a character's memory of an encounte... |
+| `EncounterMemoryRefreshedEvent` | Custom | `encounter-memory-refreshed` | Published when a character's memory of an encounte... |
+| `EncounterPerspectiveUpdatedEvent` | Lifecycle (Updated) | `encounter-perspective.updated` | Published when a character's perspective on an enc... |
+| `EncounterRecordedEvent` | Custom | `encounter-recorded` | Published when a new encounter is recorded between... |
+
 ### Character History
 
 | Event | Type | Likely Topic | Description |

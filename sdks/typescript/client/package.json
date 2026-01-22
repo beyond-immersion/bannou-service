@@ -1,0 +1,81 @@
+{
+  "name": "@beyondimmersion/bannou-client",
+  "version": "0.1.0",
+  "description": "TypeScript client SDK for Bannou services",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./protocol": {
+      "import": {
+        "types": "./dist/protocol/index.d.ts",
+        "default": "./dist/protocol/index.js"
+      },
+      "require": {
+        "types": "./dist/protocol/index.d.cts",
+        "default": "./dist/protocol/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "generate:types": "bash scripts/generate-types.sh",
+    "generate:proxies": "python3 ../../../scripts/generate-client-proxies-ts.py",
+    "generate:events": "python3 ../../../scripts/generate-client-event-registry-ts.py",
+    "generate": "npm run generate:types && npm run generate:proxies && npm run generate:events",
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@beyondimmersion/bannou-core": "^0.1.0"
+  },
+  "peerDependencies": {
+    "ws": "^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ws": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.0",
+    "openapi-typescript": "^7.10.1",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^3.0.0"
+  },
+  "keywords": [
+    "bannou",
+    "sdk",
+    "client",
+    "websocket",
+    "game"
+  ],
+  "author": "Beyond Immersion",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beyondimmersion/bannou.git",
+    "directory": "sdks/typescript/client"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

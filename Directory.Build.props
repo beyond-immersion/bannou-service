@@ -9,9 +9,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <!-- Suppress Moq-specific nullable inference warnings in test projects (T22 compliant) -->
+  <!-- Suppress Moq-specific nullable inference warnings in test projects (QUALITY TENETS compliant) -->
   <!-- These are caused by Moq's generic type inference and cannot be fixed in our code. -->
-  <!-- See: docs/reference/tenets/QUALITY.md (T22) -->
+  <!-- See: docs/reference/tenets/QUALITY.md -->
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.tests'))">
     <!--
       CS8620: Argument of type 'Task<T?>' cannot be used for parameter of type 'Task<T>'

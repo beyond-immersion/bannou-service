@@ -31,6 +31,7 @@ public class ActorRunner : IActorRunner
     private readonly IStateStore<ActorStateSnapshot> _stateStore;
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IPersonalityCache _personalityCache;
+    private readonly IEncounterCache _encounterCache;
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
 
@@ -136,6 +137,7 @@ public class ActorRunner : IActorRunner
         IStateStore<ActorStateSnapshot> stateStore,
         IBehaviorDocumentCache behaviorCache,
         IPersonalityCache personalityCache,
+        IEncounterCache encounterCache,
         IDocumentExecutor executor,
         IExpressionEvaluator expressionEvaluator,
         ILogger<ActorRunner> logger,
@@ -151,6 +153,7 @@ public class ActorRunner : IActorRunner
         _stateStore = stateStore;
         _behaviorCache = behaviorCache;
         _personalityCache = personalityCache;
+        _encounterCache = encounterCache;
         _executor = executor;
         _expressionEvaluator = expressionEvaluator;
         _logger = logger;
@@ -729,7 +732,7 @@ public class ActorRunner : IActorRunner
             scope.SetValue("encounter", null);
         }
 
-        // Load personality, combat preferences, and backstory for character-based actors
+        // Load personality, combat preferences, backstory, and encounters for character-based actors
         if (CharacterId.HasValue)
         {
             var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
@@ -740,6 +743,10 @@ public class ActorRunner : IActorRunner
 
             var backstory = await _personalityCache.GetBackstoryOrLoadAsync(CharacterId.Value, ct);
             scope.RegisterProvider(new BackstoryProvider(backstory));
+
+            // Load encounter data for the character
+            var encounters = await _encounterCache.GetEncountersOrLoadAsync(CharacterId.Value, ct);
+            scope.RegisterProvider(new EncountersProvider(encounters));
         }
         else
         {
@@ -747,6 +754,7 @@ public class ActorRunner : IActorRunner
             scope.RegisterProvider(new PersonalityProvider(null));
             scope.RegisterProvider(new CombatPreferencesProvider(null));
             scope.RegisterProvider(new BackstoryProvider(null));
+            scope.RegisterProvider(new EncountersProvider(null));
         }
 
         return scope;

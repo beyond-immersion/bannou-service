@@ -20,9 +20,9 @@ public class TensionCalculatorTests
     public void Weights_SumToApproximatelyOne()
     {
         var sum = TensionCalculator.Weights.Dissonance +
-                  TensionCalculator.Weights.Hierarchical +
-                  TensionCalculator.Weights.TonalDistance +
-                  TensionCalculator.Weights.VoiceLeading;
+            TensionCalculator.Weights.Hierarchical +
+            TensionCalculator.Weights.TonalDistance +
+            TensionCalculator.Weights.VoiceLeading;
 
         // Weights from Navarro 2020 sum to ~1.043
         Assert.True(sum > 0.9 && sum < 1.1, $"Weights sum ({sum}) should be near 1.0");

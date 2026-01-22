@@ -24,6 +24,7 @@ This document lists all state store components used in Bannou.
 | `analytics-summary` | Redis | Analytics | Entity statistics summaries |
 | `asset-statestore` | Redis | Asset | Asset upload tracking and bundle state |
 | `auth-statestore` | Redis | Auth | Session and token state (ephemeral) |
+| `character-encounter-statestore` | MySQL | CharacterEncounter | Encounter records and participant perspectives |
 | `character-history-statestore` | MySQL | CharacterHistory | Character historical events and backstory |
 | `character-personality-statestore` | MySQL | CharacterPersonality | Character personality traits and combat preferences |
 | `character-statestore` | MySQL | Character | Persistent character data |
@@ -63,7 +64,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 53 stores (34 Redis, 19 MySQL)
+**Total**: 54 stores (34 Redis, 20 MySQL)
 
 ## Naming Conventions
 

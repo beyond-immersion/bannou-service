@@ -3634,7 +3634,6 @@ public partial class AssetController
                 "bundleType",
                 "version",
                 "metadataVersion",
-                "owner",
                 "realm",
                 "status",
                 "assetCount",
@@ -3669,7 +3668,8 @@ public partial class AssetController
                 },
                 "owner": {
                     "type": "string",
-                    "description": "Owner account ID or service name"
+                    "nullable": true,
+                    "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
                     "$ref": "#/$defs/Realm",
@@ -3722,7 +3722,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
         "Realm": {
             "type": "string",
@@ -3929,7 +3929,6 @@ public partial class AssetController
                 "bundleType",
                 "version",
                 "metadataVersion",
-                "owner",
                 "realm",
                 "status",
                 "assetCount",
@@ -3964,7 +3963,8 @@ public partial class AssetController
                 },
                 "owner": {
                     "type": "string",
-                    "description": "Owner account ID or service name"
+                    "nullable": true,
+                    "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
                     "$ref": "#/$defs/Realm",

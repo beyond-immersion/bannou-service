@@ -1,12 +1,17 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.Protected;
+using System.Net;
+using System.Text;
 using System.Web;
 using Xunit;
 
@@ -25,10 +30,13 @@ public class OAuthProviderServiceTests : IDisposable
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IAccountClient> _mockAccountClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<HttpMessageHandler> _mockHttpHandler;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OAuthProviderService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly OAuthProviderService _service;
+    private readonly List<HttpClient> _createdHttpClients = new();
+    private readonly List<HttpResponseMessage> _createdResponses = new();
 
     public OAuthProviderServiceTests()
     {
@@ -39,6 +47,7 @@ public class OAuthProviderServiceTests : IDisposable
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockAccountClient = new Mock<IAccountClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockHttpHandler = new Mock<HttpMessageHandler>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OAuthProviderService>>();
 
@@ -86,7 +95,176 @@ public class OAuthProviderServiceTests : IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
+
+        foreach (var client in _createdHttpClients)
+        {
+            client.Dispose();
+        }
+        _createdHttpClients.Clear();
+
+        foreach (var response in _createdResponses)
+        {
+            response.Dispose();
+        }
+        _createdResponses.Clear();
+
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Creates an HttpClient with a mocked handler that returns the specified response.
+    /// </summary>
+    private HttpClient CreateMockedHttpClient(HttpStatusCode statusCode, string? content = null)
+    {
+        var response = new HttpResponseMessage(statusCode);
+        _createdResponses.Add(response);
+
+        if (content != null)
+        {
+            response.Content = new StringContent(content, Encoding.UTF8, "application/json");
+        }
+
+        _mockHttpHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(response);
+
+        var httpClient = new HttpClient(_mockHttpHandler.Object);
+        _createdHttpClients.Add(httpClient);
+        return httpClient;
+    }
+
+    /// <summary>
+    /// Creates an HttpClient that throws when SendAsync is called.
+    /// </summary>
+    private HttpClient CreateThrowingHttpClient(Exception exception)
+    {
+        _mockHttpHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(exception);
+
+        var httpClient = new HttpClient(_mockHttpHandler.Object);
+        _createdHttpClients.Add(httpClient);
+        return httpClient;
+    }
+
+    /// <summary>
+    /// Creates an OAuthProviderService with the specified HttpClient for testing.
+    /// </summary>
+    private OAuthProviderService CreateServiceWithMockedHttp(HttpClient httpClient, AuthServiceConfiguration? configOverride = null)
+    {
+        var mockFactory = new Mock<IHttpClientFactory>();
+        mockFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        return new OAuthProviderService(
+            _mockStateStoreFactory.Object,
+            _mockAccountClient.Object,
+            mockFactory.Object,
+            configOverride ?? _configuration,
+            _mockMessageBus.Object,
+            _mockLogger.Object);
+    }
+
+    /// <summary>
+    /// Helper class providing Steam Web API response templates for testing.
+    /// </summary>
+    private static class SteamTestResponses
+    {
+        /// <summary>
+        /// Returns a successful Steam ticket validation response.
+        /// </summary>
+        public static string Success(string steamId = "76561198012345678") => $$"""
+            {
+                "response": {
+                    "params": {
+                        "result": "OK",
+                        "steamid": "{{steamId}}",
+                        "ownersteamid": "{{steamId}}",
+                        "vacbanned": false,
+                        "publisherbanned": false
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a response for a VAC-banned user.
+        /// </summary>
+        public static string VacBanned(string steamId = "76561198012345678") => $$"""
+            {
+                "response": {
+                    "params": {
+                        "result": "OK",
+                        "steamid": "{{steamId}}",
+                        "ownersteamid": "{{steamId}}",
+                        "vacbanned": true,
+                        "publisherbanned": false
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a response for a publisher-banned user.
+        /// </summary>
+        public static string PublisherBanned(string steamId = "76561198012345678") => $$"""
+            {
+                "response": {
+                    "params": {
+                        "result": "OK",
+                        "steamid": "{{steamId}}",
+                        "ownersteamid": "{{steamId}}",
+                        "vacbanned": false,
+                        "publisherbanned": true
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a Steam API error response.
+        /// </summary>
+        public static string ApiError(int errorCode, string errorDesc) => $$"""
+            {
+                "response": {
+                    "error": {
+                        "errorcode": {{errorCode}},
+                        "errordesc": "{{errorDesc}}"
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a response with an invalid (non-"OK") result.
+        /// </summary>
+        public static string InvalidResult() => """
+            {
+                "response": {
+                    "params": {
+                        "result": "FAIL",
+                        "steamid": "",
+                        "ownersteamid": "",
+                        "vacbanned": false,
+                        "publisherbanned": false
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns an empty/malformed response.
+        /// </summary>
+        public static string MalformedResponse() => """
+            {
+                "response": {}
+            }
+            """;
     }
 
     #region Constructor Tests
@@ -370,6 +548,214 @@ public class OAuthProviderServiceTests : IDisposable
         _mockAccountClient.Verify(c => c.CreateAccountAsync(
             It.Is<CreateAccountRequest>(r => r.Email == "new@example.com"),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region ValidateSteamTicketAsync Tests
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithValidTicket_ReturnsSteamId()
+    {
+        // Arrange
+        var expectedSteamId = "76561198012345678";
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.Success(expectedSteamId));
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("valid-ticket-hex");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(expectedSteamId, result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithVacBannedUser_ReturnsNull()
+    {
+        // Arrange
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.VacBanned());
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("vac-banned-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithPublisherBannedUser_ReturnsNull()
+    {
+        // Arrange
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.PublisherBanned());
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("publisher-banned-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithSteamApiError_ReturnsNull()
+    {
+        // Arrange
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.ApiError(102, "Ticket for other app"));
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("wrong-app-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithInvalidResult_ReturnsNull()
+    {
+        // Arrange
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.InvalidResult());
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("invalid-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithHttpFailure_ReturnsNull()
+    {
+        // Arrange
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.InternalServerError, "Steam API unavailable");
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("some-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithNetworkException_ReturnsNullAndPublishesError()
+    {
+        // Arrange
+        var httpClient = CreateThrowingHttpClient(new HttpRequestException("Connection refused"));
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("some-ticket");
+
+        // Assert
+        Assert.Null(result);
+
+        // Verify error event was published
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "auth",
+            "ValidateSteamTicket",
+            "HttpRequestException",
+            It.Is<string>(msg => msg.Contains("Connection refused")),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithMissingSteamApiKey_ReturnsNull()
+    {
+        // Arrange
+        var configWithoutKey = new AuthServiceConfiguration
+        {
+            SteamApiKey = null,
+            SteamAppId = "123456"
+        };
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.Success());
+        var service = CreateServiceWithMockedHttp(httpClient, configWithoutKey);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("some-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithMissingSteamAppId_ReturnsNull()
+    {
+        // Arrange
+        var configWithoutAppId = new AuthServiceConfiguration
+        {
+            SteamApiKey = "test-api-key",
+            SteamAppId = null
+        };
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.Success());
+        var service = CreateServiceWithMockedHttp(httpClient, configWithoutAppId);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("some-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_WithMalformedResponse_ReturnsNull()
+    {
+        // Arrange
+        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK, SteamTestResponses.MalformedResponse());
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        var result = await service.ValidateSteamTicketAsync("some-ticket");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ValidateSteamTicketAsync_ShouldCallCorrectSteamUrl()
+    {
+        // Arrange
+        HttpRequestMessage? capturedRequest = null;
+        var response = new HttpResponseMessage(HttpStatusCode.OK);
+        _createdResponses.Add(response);
+        response.Content = new StringContent(SteamTestResponses.Success(), Encoding.UTF8, "application/json");
+
+        _mockHttpHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) => capturedRequest = req)
+            .ReturnsAsync(response);
+
+        var httpClient = new HttpClient(_mockHttpHandler.Object);
+        _createdHttpClients.Add(httpClient);
+        var service = CreateServiceWithMockedHttp(httpClient);
+
+        // Act
+        await service.ValidateSteamTicketAsync("test-ticket-hex");
+
+        // Assert
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(HttpMethod.Get, capturedRequest.Method);
+
+        var requestUrl = capturedRequest.RequestUri?.ToString();
+        Assert.NotNull(requestUrl);
+        Assert.Contains("partner.steam-api.com", requestUrl);
+        Assert.Contains("ISteamUserAuth/AuthenticateUserTicket", requestUrl);
+        Assert.Contains("key=test-steam-api-key", requestUrl);
+        Assert.Contains("appid=123456", requestUrl);
+        Assert.Contains("ticket=test-ticket-hex", requestUrl);
     }
 
     #endregion

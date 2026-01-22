@@ -1044,6 +1044,11 @@ public class Program
         foreach (ServiceTest serviceTest in metaEndpointTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load TypeScript SDK parity tests
+        var tsParityTestHandler = new TypeScriptParityTestHandler();
+        foreach (ServiceTest serviceTest in tsParityTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load split-service routing tests (MUST BE LAST - modifies deployment topology)
         // These tests deploy a multi-node configuration and validate dynamic routing
         var splitRoutingTestHandler = new SplitServiceRoutingTestHandler();

@@ -198,20 +198,20 @@ Type: !ColorTextureType
 
         var csproj = $"""
             <Project Sdk="Microsoft.NET.Sdk">
-              <PropertyGroup>
-                <TargetFramework>net10.0-windows</TargetFramework>
-                <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-                <OutputType>WinExe</OutputType>
-                <RootNamespace>{projectName}</RootNamespace>
-                <OutputPath>Bin\Windows\Debug\</OutputPath>
-                <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-                <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
-              </PropertyGroup>
+                <PropertyGroup>
+                    <TargetFramework>net10.0-windows</TargetFramework>
+                    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+                    <OutputType>WinExe</OutputType>
+                    <RootNamespace>{projectName}</RootNamespace>
+                    <OutputPath>Bin\Windows\Debug\</OutputPath>
+                    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+                    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+                </PropertyGroup>
 
-              <ItemGroup>
-                <PackageReference Include="Stride.Core.Assets.CompilerApp" Version="{strideVersion}" IncludeAssets="build;buildTransitive" />
-                <PackageReference Include="Stride.Engine" Version="{strideVersion}" />
-              </ItemGroup>
+                <ItemGroup>
+                    <PackageReference Include="Stride.Core.Assets.CompilerApp" Version="{strideVersion}" IncludeAssets="build;buildTransitive" />
+                    <PackageReference Include="Stride.Engine" Version="{strideVersion}" />
+                </ItemGroup>
             </Project>
             """;
 

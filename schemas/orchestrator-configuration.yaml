@@ -121,8 +121,3 @@ x-service-configuration:
       description: Redis connection string for orchestrator state.
       env: ORCHESTRATOR_REDIS_CONNECTION_STRING
       default: "bannou-redis:6379"
-    RabbitMqConnectionString:
-      type: string
-      description: RabbitMQ connection string for orchestrator messaging. No default - credentials vary by environment.
-      env: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
-      example: "amqp://guest:guest@rabbitmq:5672"

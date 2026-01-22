@@ -18,7 +18,7 @@ public static class SimpleArc
         Id = "simple_arc",
         Name = "Simple Arc",
         Description = "A straightforward three-part structure for short pieces. " +
-                      "Establishes, develops, and resolves without complex dramatic turns.",
+            "Establishes, develops, and resolves without complex dramatic turns.",
         Imagery =
         [
             "A clear statement, setting the scene",

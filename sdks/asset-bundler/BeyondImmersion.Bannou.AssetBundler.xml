@@ -376,7 +376,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Owner">
             <summary>
-            Owner identifier.
+            Owner identifier (null for system-owned bundles).
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Realm">

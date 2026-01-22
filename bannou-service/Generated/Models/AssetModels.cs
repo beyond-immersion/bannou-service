@@ -11,6 +11,11 @@
 //     2. Run: scripts/generate-all-services.sh
 //     3. Implement business logic in the service class (e.g., *Service.cs)
 //
+//     RELATED FILES:
+//     - Request/Response models: bannou-service/Generated/Models/{Service}Models.cs
+//     - Event models: bannou-service/Generated/Events/{Service}EventsModels.cs
+//     - Lifecycle events: bannou-service/Generated/Events/{Service}LifecycleEvents.cs
+//
 //     See: docs/reference/tenets/FOUNDATION.md (T1: Schema-First, T2: Code Generation)
 // </auto-generated>
 //----------------------
@@ -2055,12 +2060,10 @@ public partial class BundleInfo
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Owner account ID or service name
+    /// Owner account ID or service name (null for system-owned bundles)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    public string? Owner { get; set; } = default!;
 
     /// <summary>
     /// Game realm this bundle belongs to

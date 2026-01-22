@@ -300,3 +300,21 @@ dotnet_style_prefer_compound_assignment = true:suggestion
 dotnet_style_prefer_simplified_interpolation = true:suggestion
 dotnet_style_namespace_match_folder = true:suggestion
 indent_style = space
+
+# TypeScript/JavaScript files
+[*.{ts,tsx,js,jsx,mjs,cjs}]
+indent_size = 2
+indent_style = space
+tab_width = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+max_line_length = 100
+
+# TypeScript Generated files - same settings, just noted for clarity
+[**/Generated/**/*.ts]
+indent_size = 2
+indent_style = space
+end_of_line = lf
+insert_final_newline = true

@@ -10,7 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Test infrastructure packages needed for validators -->
+    <!--
+      Shared test infrastructure packages.
+
+      xunit: Flows transitively to test projects for compile-time types.
+      Moq: Used by test-utilities (ServiceConstructorValidator, etc.) - test projects
+           also need direct Moq reference for Castle.Core runtime dependency to copy.
+
+      Microsoft.NET.Test.Sdk must be direct in each test project (MSBuild props don't flow).
+    -->
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="Moq" Version="4.20.72" />
   </ItemGroup>

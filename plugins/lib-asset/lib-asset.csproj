@@ -8,14 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
-    <ProjectReference Include="../lib-state/lib-state.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <!-- MinIO S3-compatible storage provider -->
     <PackageReference Include="Minio" Version="7.0.0" />
     <!-- AWS SDK for presigned URLs (MinIO SDK has bug with Content-Type signing) -->

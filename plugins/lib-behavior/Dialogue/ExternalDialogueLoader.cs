@@ -259,17 +259,35 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
         var localizations = raw.Localizations ?? new Dictionary<string, string>();
 
         // Convert and sort overrides by priority (highest first)
-        var overrides = (raw.Overrides ?? [])
-            .Select(o => new DialogueOverride
+        // Validate external YAML data - Condition and Text are required fields
+        var overrides = new List<DialogueOverride>();
+        foreach (var o in raw.Overrides ?? [])
+        {
+            if (string.IsNullOrEmpty(o.Condition))
             {
-                Condition = o.Condition ?? string.Empty,
-                Text = o.Text ?? string.Empty,
+                throw new InvalidDataException(
+                    $"Dialogue override in '{filePath}' has null or empty Condition. " +
+                    "All overrides must specify a condition expression.");
+            }
+
+            if (string.IsNullOrEmpty(o.Text))
+            {
+                throw new InvalidDataException(
+                    $"Dialogue override in '{filePath}' has null or empty Text for condition '{o.Condition}'. " +
+                    "All overrides must specify text content.");
+            }
+
+            overrides.Add(new DialogueOverride
+            {
+                Condition = o.Condition,
+                Text = o.Text,
                 Priority = o.Priority,
                 Locale = o.Locale,
                 Metadata = o.Metadata
-            })
-            .OrderByDescending(o => o.Priority)
-            .ToList();
+            });
+        }
+
+        overrides = overrides.OrderByDescending(o => o.Priority).ToList();
 
         // Get file modification time
         var lastModified = File.GetLastWriteTimeUtc(filePath);

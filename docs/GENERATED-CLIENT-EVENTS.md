@@ -438,7 +438,7 @@ Sent to all match participants when all players have accepted.
 | `gameSessionId` | ID of the created game session |
 | `joinDeadlineSeconds` | Seconds to join before reservation expires |
 | `matchId` | Match identifier |
-| `reservationToken` | Token to claim reservation when joining session |
+| `reservationToken` | Token to claim reservation when joining session (n |
 
 ### `MatchDeclinedEvent`
 

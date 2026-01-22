@@ -14,38 +14,6 @@ using System.Collections.Concurrent;
 namespace BeyondImmersion.BannouService.State.Services;
 
 /// <summary>
-/// Configuration for a single state store.
-/// </summary>
-public class StoreConfiguration
-{
-    /// <summary>
-    /// Backend type for this store.
-    /// </summary>
-    public StateBackend Backend { get; set; } = StateBackend.Redis;
-
-    /// <summary>
-    /// Key prefix for namespacing (Redis only).
-    /// </summary>
-    public string? KeyPrefix { get; set; }
-
-    /// <summary>
-    /// Default TTL in seconds (Redis only).
-    /// </summary>
-    public int? DefaultTtlSeconds { get; set; }
-
-    /// <summary>
-    /// Table name (MySQL only, defaults to store name).
-    /// </summary>
-    public string? TableName { get; set; }
-
-    /// <summary>
-    /// Enable full-text search via RedisSearch (Redis 8+ only).
-    /// When enabled, documents are stored as JSON for field-level indexing.
-    /// </summary>
-    public bool EnableSearch { get; set; }
-}
-
-/// <summary>
 /// Configuration for the state store factory.
 /// </summary>
 public class StateStoreFactoryConfiguration

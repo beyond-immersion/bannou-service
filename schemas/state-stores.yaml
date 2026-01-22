@@ -281,6 +281,11 @@ x-state-stores:
     service: CharacterPersonality
     purpose: Character personality traits and combat preferences
 
+  character-encounter-statestore:
+    backend: mysql
+    service: CharacterEncounter
+    purpose: Encounter records and participant perspectives
+
   game-session-statestore:
     backend: mysql
     service: GameSession

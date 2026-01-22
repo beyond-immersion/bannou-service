@@ -305,9 +305,11 @@ validate-compose-services:
 
 # Regenerate all services, SDK, and documentation
 generate:
-	@echo "🔧 Generating everything: projects, service files, client SDK, documentation"
+	@echo "🔧 Generating everything: projects, service files, client SDKs, documentation"
 	scripts/generate-all-services.sh
 	scripts/generate-client-sdk.sh
+	@$(MAKE) generate-sdk-ts
+	@$(MAKE) generate-unreal-sdk
 	scripts/generate-docs.sh
 	@echo "✅ All generations completed"
 
@@ -386,6 +388,10 @@ fix:
 	@$(MAKE) fix-format
 	@$(MAKE) fix-endings
 	@$(MAKE) fix-config
+	@if [ -f "sdks/typescript/package.json" ]; then \
+		echo "🔧 Formatting TypeScript SDK..."; \
+		cd sdks/typescript && npm install --silent && npm run format; \
+	fi
 	@echo "✅ All formatting tasks complete"
 
 # Alias for fix (common convention)
@@ -1053,3 +1059,104 @@ tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:
 	git tag $(tagname) -a -m '$(msg)'
 	git push origin $(tagname)
+
+# =============================================================================
+# TYPESCRIPT SDK
+# =============================================================================
+# TypeScript client SDK for browser and Node.js environments.
+# Location: sdks/typescript/
+# =============================================================================
+
+TS_SDK_DIR := sdks/typescript
+
+generate-sdk-ts: generate-client-schema ## Generate TypeScript SDK types, proxies, and event registry from schemas
+	@echo "🔧 Generating TypeScript SDK code..."
+	@if [ ! -d "$(TS_SDK_DIR)/client/node_modules/openapi-typescript" ]; then \
+		echo "📦 Installing TypeScript SDK dependencies..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	cd $(TS_SDK_DIR)/client && npm run generate
+	@echo "✅ TypeScript SDK code generation completed"
+
+format-sdk-ts: ## Format TypeScript SDK code with Prettier
+	@echo "🔧 Formatting TypeScript SDK..."
+	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
+		echo "📦 Installing root dependencies..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	cd $(TS_SDK_DIR) && npm run format
+	@echo "✅ TypeScript SDK formatting completed"
+
+build-sdk-ts: generate-sdk-ts format-sdk-ts ## Build TypeScript SDK packages
+	@echo "🔧 Building TypeScript SDK..."
+	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
+		echo "📦 Installing root dependencies..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	@if [ ! -d "$(TS_SDK_DIR)/core/node_modules" ]; then \
+		echo "📦 Installing core dependencies..."; \
+		cd $(TS_SDK_DIR)/core && npm install; \
+	fi
+	@if [ ! -d "$(TS_SDK_DIR)/client/node_modules" ]; then \
+		echo "📦 Installing client dependencies..."; \
+		cd $(TS_SDK_DIR)/client && npm install; \
+	fi
+	cd $(TS_SDK_DIR)/core && npm run build
+	cd $(TS_SDK_DIR)/client && npm run build
+	@echo "✅ TypeScript SDK build completed"
+
+test-sdk-ts: build-sdk-ts ## Run TypeScript SDK tests
+	@echo "🧪 Running TypeScript SDK tests..."
+	cd $(TS_SDK_DIR)/client && npm test
+	@echo "✅ TypeScript SDK tests completed"
+
+clean-sdk-ts: ## Clean TypeScript SDK build artifacts
+	@echo "🧹 Cleaning TypeScript SDK..."
+	rm -rf $(TS_SDK_DIR)/core/dist $(TS_SDK_DIR)/core/node_modules
+	rm -rf $(TS_SDK_DIR)/client/dist $(TS_SDK_DIR)/client/node_modules
+	rm -rf $(TS_SDK_DIR)/client/src/Generated/types/*.ts
+	rm -rf $(TS_SDK_DIR)/client/src/Generated/proxies/*.ts
+	rm -rf $(TS_SDK_DIR)/client/src/Generated/events/*.ts
+	rm -rf $(TS_SDK_DIR)/node_modules
+	@echo "✅ TypeScript SDK cleaned"
+
+typecheck-sdk-ts: ## Type-check TypeScript SDK without building
+	@echo "🔍 Type-checking TypeScript SDK..."
+	cd $(TS_SDK_DIR)/core && npm run typecheck
+	cd $(TS_SDK_DIR)/client && npm run typecheck
+	@echo "✅ TypeScript SDK type-check completed"
+
+check-sdk-ts: ## Check TypeScript SDK formatting (for CI)
+	@echo "🔍 Checking TypeScript SDK formatting..."
+	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
+		echo "📦 Installing root dependencies..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	cd $(TS_SDK_DIR) && npm run format:check
+	@echo "✅ TypeScript SDK formatting check passed"
+
+# =============================================================================
+# UNREAL ENGINE SDK
+# =============================================================================
+# Unreal Engine helper files for integrating with Bannou services.
+# Location: sdks/unreal/
+# Generated: Protocol headers, type definitions, endpoint registry
+# =============================================================================
+
+UE_SDK_DIR := sdks/unreal
+
+generate-client-schema: ## Generate consolidated client-facing OpenAPI schema
+	@echo "🔧 Generating consolidated client schema..."
+	python3 scripts/generate-client-schema.py
+	@echo "✅ Client schema generation completed"
+
+generate-unreal-sdk: generate-client-schema ## Generate Unreal Engine SDK helper headers
+	@echo "🔧 Generating Unreal Engine SDK..."
+	python3 scripts/generate-unreal-sdk.py
+	@echo "✅ Unreal Engine SDK generation completed"
+
+clean-unreal-sdk: ## Clean Unreal SDK generated files
+	@echo "🧹 Cleaning Unreal SDK..."
+	rm -rf $(UE_SDK_DIR)/Generated/*.h
+	rm -rf schemas/Generated/bannou-client-api.*
+	@echo "✅ Unreal SDK cleaned"

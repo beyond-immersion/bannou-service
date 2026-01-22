@@ -20,6 +20,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IPersonalityCache _personalityCache;
+    private readonly IEncounterCache _encounterCache;
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
 
@@ -34,6 +35,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="stateStoreFactory">State store factory for actor persistence.</param>
     /// <param name="behaviorCache">Behavior document cache for loading ABML.</param>
     /// <param name="personalityCache">Personality cache for character traits.</param>
+    /// <param name="encounterCache">Encounter cache for character encounter data.</param>
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     public ActorRunnerFactory(
@@ -45,6 +47,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         IStateStoreFactory stateStoreFactory,
         IBehaviorDocumentCache behaviorCache,
         IPersonalityCache personalityCache,
+        IEncounterCache encounterCache,
         IDocumentExecutorFactory executorFactory,
         IExpressionEvaluator expressionEvaluator)
     {
@@ -56,6 +59,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _stateStoreFactory = stateStoreFactory;
         _behaviorCache = behaviorCache;
         _personalityCache = personalityCache;
+        _encounterCache = encounterCache;
         _executorFactory = executorFactory;
         _expressionEvaluator = expressionEvaluator;
     }
@@ -95,6 +99,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
             stateStore,
             _behaviorCache,
             _personalityCache,
+            _encounterCache,
             executor,
             _expressionEvaluator,
             logger,

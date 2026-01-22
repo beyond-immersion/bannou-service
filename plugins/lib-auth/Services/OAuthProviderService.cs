@@ -1,10 +1,9 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Text.Json;

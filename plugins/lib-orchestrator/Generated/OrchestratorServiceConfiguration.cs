@@ -155,11 +155,4 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string RedisConnectionString { get; set; } = "bannou-redis:6379";
 
-    /// <summary>
-    /// RabbitMQ connection string for orchestrator messaging. No default - credentials vary by environment.
-    /// Environment variable: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
-    /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string RabbitMqConnectionString { get; set; } = string.Empty;
-
 }

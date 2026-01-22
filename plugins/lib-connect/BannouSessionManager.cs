@@ -1,7 +1,6 @@
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect;

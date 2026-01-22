@@ -17,6 +17,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Auth Service API](#auth) | `client.Auth` | 12 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for Arcadia game world. |
+| [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
@@ -360,6 +361,58 @@ Character management service for Arcadia game world.
 | `UpdateCharacterAsync` | `UpdateCharacterRequest` | `CharacterResponse` | Update character |
 | `DeleteCharacterEventAsync` | `DeleteCharacterRequest` | *(fire-and-forget)* | Delete character (permanent removal) |
 | `ListCharactersAsync` | `ListCharactersRequest` | `CharacterListResponse` | List characters with filtering |
+
+---
+
+## Bannou Character Encounter Service API {#character-encounter}
+
+**Proxy**: `client.CharacterEncounter` | **Version**: 1.0.0
+
+Character encounter tracking service for memorable interactions between characters.
+
+### Admin
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DeleteEncounterAsync` | `DeleteEncounterRequest` | `DeleteEncounterResponse` | Delete encounter and perspectives |
+| `DeleteBycharacterAsync` | `DeleteByCharacterRequest` | `DeleteByCharacterResponse` | Delete all encounters for a character |
+| `DecaymemoriesAsync` | `DecayMemoriesRequest` | `DecayMemoriesResponse` | Trigger memory decay (maintenance) |
+
+### Encounter Type Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateEncountertypeAsync` | `CreateEncounterTypeRequest` | `EncounterTypeResponse` | Create new encounter type |
+| `GetEncountertypeAsync` | `GetEncounterTypeRequest` | `EncounterTypeResponse` | Get encounter type by code |
+| `ListEncountertypesAsync` | `ListEncounterTypesRequest` | `EncounterTypeListResponse` | List all encounter types |
+| `UpdateEncountertypeAsync` | `UpdateEncounterTypeRequest` | `EncounterTypeResponse` | Update encounter type |
+| `DeleteEncountertypeEventAsync` | `DeleteEncounterTypeRequest` | *(fire-and-forget)* | Delete encounter type |
+| `SeedencountertypesAsync` | `SeedEncounterTypesRequest` | `SeedEncounterTypesResponse` | Seed default encounter types |
+
+### Perspectives
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetPerspectiveAsync` | `GetPerspectiveRequest` | `PerspectiveResponse` | Get character's view of encounter |
+| `UpdatePerspectiveAsync` | `UpdatePerspectiveRequest` | `PerspectiveResponse` | Update perspective (reflection) |
+| `RefreshmemoryAsync` | `RefreshMemoryRequest` | `PerspectiveResponse` | Strengthen memory (referenced) |
+
+### Queries
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `QuerybycharacterAsync` | `QueryByCharacterRequest` | `EncounterListResponse` | Get character's encounters (paginated) |
+| `QuerybetweenAsync` | `QueryBetweenRequest` | `EncounterListResponse` | Get encounters between two characters |
+| `QuerybylocationAsync` | `QueryByLocationRequest` | `EncounterListResponse` | Recent encounters at location |
+| `HasmetAsync` | `HasMetRequest` | `HasMetResponse` | Quick check if two characters have met |
+| `GetSentimentAsync` | `GetSentimentRequest` | `SentimentResponse` | Aggregate sentiment toward another character |
+| `BatchgetsentimentAsync` | `BatchGetSentimentRequest` | `BatchSentimentResponse` | Bulk sentiment for multiple targets |
+
+### Recording
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RecordencounterAsync` | `RecordEncounterRequest` | `EncounterResponse` | Record new encounter with perspectives |
 
 ---
 
@@ -1288,8 +1341,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 34
-- **Total methods**: 400
+- **Total services**: 35
+- **Total methods**: 419
 
 ---
 

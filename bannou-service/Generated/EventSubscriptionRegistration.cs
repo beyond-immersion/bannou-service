@@ -52,6 +52,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<AccountUpdatedEvent>("account.updated");
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
 
+        // From character-encounter-events.yaml
+        EventSubscriptionRegistry.Register<CharacterDeletedEvent>("character.deleted");
+
         // From connect-events.yaml
         EventSubscriptionRegistry.Register<SessionInvalidatedEvent>("session.invalidated");
         EventSubscriptionRegistry.Register<ServiceErrorEvent>("service.error");

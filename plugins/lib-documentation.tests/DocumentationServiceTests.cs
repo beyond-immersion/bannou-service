@@ -5,7 +5,6 @@ using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
