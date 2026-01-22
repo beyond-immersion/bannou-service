@@ -1602,7 +1602,10 @@ public partial class ContractService : IContractService
             TerminationNoticePeriod = terms.TerminationNoticePeriod,
             BreachThreshold = terms.BreachThreshold,
             GracePeriodForCure = terms.GracePeriodForCure,
-            CustomTerms = terms.CustomTerms
+            // CustomTerms is object? in generated model; deserialize to dictionary if present
+            CustomTerms = terms.CustomTerms is System.Text.Json.JsonElement je
+                ? BannouJson.Deserialize<Dictionary<string, object>>(je.GetRawText())
+                : terms.CustomTerms as Dictionary<string, object>
         };
     }
 
@@ -1647,7 +1650,7 @@ public partial class ContractService : IContractService
             Endpoint = api.Endpoint,
             PayloadTemplate = api.PayloadTemplate,
             Description = api.Description,
-            ExecutionMode = api.ExecutionMode?.ToString() ?? "sync"
+            ExecutionMode = api.ExecutionMode.ToString()
         };
     }
 

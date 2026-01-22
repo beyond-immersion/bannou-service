@@ -24,6 +24,21 @@
 
 using BeyondImmersion.Bannou.Core;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -72,13 +87,13 @@ public partial class ContractTemplateCreatedEvent : BaseServiceEvent
     /// Detailed description of this contract type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Realm ID if template is realm-specific
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
     /// Minimum number of parties required
@@ -124,7 +139,7 @@ public partial class ContractTemplateCreatedEvent : BaseServiceEvent
     /// Timestamp when the template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -171,13 +186,13 @@ public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
     /// Detailed description of this contract type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Realm ID if template is realm-specific
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
     /// Minimum number of parties required
@@ -223,7 +238,7 @@ public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
     /// Timestamp when the template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -278,13 +293,13 @@ public partial class ContractTemplateDeletedEvent : BaseServiceEvent
     /// Detailed description of this contract type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Realm ID if template is realm-specific
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
     /// Minimum number of parties required
@@ -330,7 +345,7 @@ public partial class ContractTemplateDeletedEvent : BaseServiceEvent
     /// Timestamp when the template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")
@@ -391,31 +406,31 @@ public partial class ContractInstanceCreatedEvent : BaseServiceEvent
     /// When contract was proposed to parties
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("proposedAt")]
-    public System.DateTimeOffset ProposedAt { get; set; } = default!;
+    public System.DateTimeOffset? ProposedAt { get; set; } = default!;
 
     /// <summary>
     /// When all parties consented
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("acceptedAt")]
-    public System.DateTimeOffset AcceptedAt { get; set; } = default!;
+    public System.DateTimeOffset? AcceptedAt { get; set; } = default!;
 
     /// <summary>
     /// When contract became active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectiveFrom")]
-    public System.DateTimeOffset EffectiveFrom { get; set; } = default!;
+    public System.DateTimeOffset? EffectiveFrom { get; set; } = default!;
 
     /// <summary>
     /// When contract expires
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
-    public System.DateTimeOffset EffectiveUntil { get; set; } = default!;
+    public System.DateTimeOffset? EffectiveUntil { get; set; } = default!;
 
     /// <summary>
     /// When contract was terminated early
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("terminatedAt")]
-    public System.DateTimeOffset TerminatedAt { get; set; } = default!;
+    public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the instance was created
@@ -429,7 +444,7 @@ public partial class ContractInstanceCreatedEvent : BaseServiceEvent
     /// Timestamp when the instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -484,31 +499,31 @@ public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
     /// When contract was proposed to parties
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("proposedAt")]
-    public System.DateTimeOffset ProposedAt { get; set; } = default!;
+    public System.DateTimeOffset? ProposedAt { get; set; } = default!;
 
     /// <summary>
     /// When all parties consented
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("acceptedAt")]
-    public System.DateTimeOffset AcceptedAt { get; set; } = default!;
+    public System.DateTimeOffset? AcceptedAt { get; set; } = default!;
 
     /// <summary>
     /// When contract became active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectiveFrom")]
-    public System.DateTimeOffset EffectiveFrom { get; set; } = default!;
+    public System.DateTimeOffset? EffectiveFrom { get; set; } = default!;
 
     /// <summary>
     /// When contract expires
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
-    public System.DateTimeOffset EffectiveUntil { get; set; } = default!;
+    public System.DateTimeOffset? EffectiveUntil { get; set; } = default!;
 
     /// <summary>
     /// When contract was terminated early
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("terminatedAt")]
-    public System.DateTimeOffset TerminatedAt { get; set; } = default!;
+    public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the instance was created
@@ -522,7 +537,7 @@ public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
     /// Timestamp when the instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -585,31 +600,31 @@ public partial class ContractInstanceDeletedEvent : BaseServiceEvent
     /// When contract was proposed to parties
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("proposedAt")]
-    public System.DateTimeOffset ProposedAt { get; set; } = default!;
+    public System.DateTimeOffset? ProposedAt { get; set; } = default!;
 
     /// <summary>
     /// When all parties consented
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("acceptedAt")]
-    public System.DateTimeOffset AcceptedAt { get; set; } = default!;
+    public System.DateTimeOffset? AcceptedAt { get; set; } = default!;
 
     /// <summary>
     /// When contract became active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectiveFrom")]
-    public System.DateTimeOffset EffectiveFrom { get; set; } = default!;
+    public System.DateTimeOffset? EffectiveFrom { get; set; } = default!;
 
     /// <summary>
     /// When contract expires
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
-    public System.DateTimeOffset EffectiveUntil { get; set; } = default!;
+    public System.DateTimeOffset? EffectiveUntil { get; set; } = default!;
 
     /// <summary>
     /// When contract was terminated early
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("terminatedAt")]
-    public System.DateTimeOffset TerminatedAt { get; set; } = default!;
+    public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the instance was created
@@ -623,7 +638,7 @@ public partial class ContractInstanceDeletedEvent : BaseServiceEvent
     /// Timestamp when the instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

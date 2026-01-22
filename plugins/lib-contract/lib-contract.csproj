@@ -18,9 +18,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Add plugin-to-plugin references here as needed -->
-    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
-    <ProjectReference Include="../lib-state/lib-state.csproj" />
+    <!-- Infrastructure libs (lib-state, lib-messaging, lib-mesh) are accessed via DI from bannou-service -->
+    <!-- DO NOT add ProjectReferences to infrastructure libs - use injected interfaces instead -->
   </ItemGroup>
 
   <ItemGroup>

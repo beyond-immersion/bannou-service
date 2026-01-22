@@ -43,10 +43,12 @@ components:
           description: "Human-readable template name"
         description: &id004
           type: string
+          nullable: true
           description: "Detailed description of this contract type"
         realmId: &id005
           type: string
           format: uuid
+          nullable: true
           description: "Realm ID if template is realm-specific"
         minParties: &id006
           type: integer
@@ -70,6 +72,7 @@ components:
         updatedAt: &id012
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the template was last updated"
     ContractTemplateUpdatedEvent:
       allOf:
@@ -190,22 +193,27 @@ components:
         proposedAt: &id017
           type: string
           format: date-time
+          nullable: true
           description: "When contract was proposed to parties"
         acceptedAt: &id018
           type: string
           format: date-time
+          nullable: true
           description: "When all parties consented"
         effectiveFrom: &id019
           type: string
           format: date-time
+          nullable: true
           description: "When contract became active"
         effectiveUntil: &id020
           type: string
           format: date-time
+          nullable: true
           description: "When contract expires"
         terminatedAt: &id021
           type: string
           format: date-time
+          nullable: true
           description: "When contract was terminated early"
         createdAt: &id022
           type: string
@@ -214,6 +222,7 @@ components:
         updatedAt: &id023
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the instance was last updated"
     ContractInstanceUpdatedEvent:
       allOf:
