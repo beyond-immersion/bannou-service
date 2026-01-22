@@ -172,6 +172,7 @@ This document lists all events defined in Bannou's event schemas.
 | `ContractMilestoneFailedEvent` | Custom | `contract-milestone-failed` | Event published when a milestone fails |
 | `ContractPreboundApiExecutedEvent` | Custom | `contract-prebound-api-executed` | Event published when a prebound API is executed |
 | `ContractPreboundApiFailedEvent` | Custom | `contract-prebound-api-failed` | Event published when a prebound API call fails |
+| `ContractPreboundApiValidationFailedEvent` | Custom | `contract-prebound-api-validation-failed` | Event published when a prebound API response fails... |
 | `ContractProposedEvent` | Custom | `contract-proposed` | Event published when a contract is proposed to par... |
 | `ContractTerminatedEvent` | Custom | `contract-terminated` | Event published when contract is terminated early |
 
