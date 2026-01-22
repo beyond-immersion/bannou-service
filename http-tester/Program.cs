@@ -712,6 +712,7 @@ public class Program
             new AuthTestHandler(),
             new CharacterTestHandler(),
             new ConnectTestHandler(),
+            new ContractTestHandler(),
             new PeerRoutingTestHandler(),
             new DocumentationTestHandler(),
             new GameSessionTestHandler(),

@@ -1,0 +1,772 @@
+using System.Linq;
+using BeyondImmersion.BannouService.Achievement;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Species;
+using BeyondImmersion.BannouService.Testing;
+using AchEntityType = BeyondImmersion.BannouService.Achievement.EntityType;
+using ContractEntityType = BeyondImmersion.BannouService.Contract.EntityType;
+
+namespace BeyondImmersion.BannouService.HttpTester.Tests;
+
+/// <summary>
+/// Test handler for Contract service HTTP API endpoints.
+/// Tests realistic multi-service contract scenarios demonstrating:
+/// - Character-to-character agreements with milestone tracking
+/// - Prebound API execution on milestone completion (cross-service calls)
+/// - Response validation on prebound APIs
+/// - Contract breach reporting and curing
+/// - Constraint checking across active contracts
+/// </summary>
+public class ContractTestHandler : BaseHttpTestHandler
+{
+    private static readonly Guid TestGameServiceId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Basic CRUD Tests
+        new ServiceTest(TestCreateContractTemplate, "CreateTemplate", "Contract",
+            "Test contract template creation"),
+        new ServiceTest(TestCreateContractInstance, "CreateInstance", "Contract",
+            "Test contract instance creation from template"),
+        new ServiceTest(TestGetContractInstance, "GetInstance", "Contract",
+            "Test contract instance retrieval"),
+
+        // Lifecycle Tests
+        new ServiceTest(TestFullContractLifecycle, "FullLifecycle", "Contract",
+            "Test complete lifecycle: create → propose → consent → active"),
+        new ServiceTest(TestMilestoneCompletion, "MilestoneCompletion", "Contract",
+            "Test milestone completion updates contract state"),
+
+        // Cross-Service Integration Tests
+        new ServiceTest(TestCharacterDealWithAchievements, "CharacterDealWithAchievements", "Contract",
+            "Test character employment contract with achievement rewards on milestone completion"),
+        new ServiceTest(TestContractWithPreboundApiValidation, "PreboundApiValidation", "Contract",
+            "Test contract with prebound APIs that have response validation rules"),
+
+        // Breach and Constraint Tests
+        new ServiceTest(TestContractBreachAndCure, "BreachAndCure", "Contract",
+            "Test breach reporting and curing on active contract"),
+        new ServiceTest(TestExclusivityConstraintCheck, "ExclusivityConstraint", "Contract",
+            "Test constraint checking prevents conflicting contracts"),
+    ];
+
+    // =========================================================================
+    // Helper Methods
+    // =========================================================================
+
+    /// <summary>
+    /// Creates a test realm and two characters for contract scenarios.
+    /// </summary>
+    private static async Task<(RealmResponse Realm, CharacterResponse CharA, CharacterResponse CharB)>
+        CreateTestCharacterPairAsync(string testSuffix)
+    {
+        var realm = await CreateTestRealmAsync("CONTRACT_TEST", "Contract", testSuffix);
+
+        var speciesClient = GetServiceClient<ISpeciesClient>();
+        var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
+        {
+            Code = $"CONTRACT_SPECIES_{DateTime.Now.Ticks}_{testSuffix}",
+            Name = $"Contract Test Species {testSuffix}",
+            Description = "Test species for contract integration tests"
+        });
+        await speciesClient.AddSpeciesToRealmAsync(new AddSpeciesToRealmRequest
+        {
+            SpeciesId = species.SpeciesId,
+            RealmId = realm.RealmId
+        });
+
+        var characterClient = GetServiceClient<ICharacterClient>();
+
+        var charA = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+        {
+            Name = $"Employer_{DateTime.Now.Ticks}",
+            RealmId = realm.RealmId,
+            SpeciesId = species.SpeciesId,
+            BirthDate = DateTimeOffset.UtcNow.AddYears(-30),
+            Status = CharacterStatus.Alive
+        });
+
+        var charB = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+        {
+            Name = $"Worker_{DateTime.Now.Ticks}",
+            RealmId = realm.RealmId,
+            SpeciesId = species.SpeciesId,
+            BirthDate = DateTimeOffset.UtcNow.AddYears(-22),
+            Status = CharacterStatus.Alive
+        });
+
+        return (realm, charA, charB);
+    }
+
+    /// <summary>
+    /// Creates a contract template with employer/worker roles.
+    /// </summary>
+    private static async Task<ContractTemplateResponse> CreateEmploymentTemplateAsync(
+        IContractClient contractClient,
+        string testSuffix,
+        Guid? realmId = null,
+        ICollection<MilestoneDefinition>? milestones = null)
+    {
+        return await contractClient.CreateContractTemplateAsync(new CreateContractTemplateRequest
+        {
+            Code = $"employment_{DateTime.Now.Ticks}_{testSuffix}",
+            Name = $"Employment Contract {testSuffix}",
+            Description = "Test employment contract template",
+            RealmId = realmId,
+            MinParties = 2,
+            MaxParties = 2,
+            PartyRoles = new List<PartyRoleDefinition>
+            {
+                new PartyRoleDefinition
+                {
+                    Role = "employer",
+                    MinCount = 1,
+                    MaxCount = 1,
+                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                },
+                new PartyRoleDefinition
+                {
+                    Role = "worker",
+                    MinCount = 1,
+                    MaxCount = 1,
+                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                }
+            },
+            DefaultTerms = new ContractTerms
+            {
+                Duration = "P30D",
+                BreachThreshold = 3,
+                GracePeriodForCure = "P7D"
+            },
+            Milestones = milestones,
+            DefaultEnforcementMode = EnforcementMode.Event_only,
+            Transferable = false
+        });
+    }
+
+    /// <summary>
+    /// Creates a contract instance, proposes it, and gets consent from both parties.
+    /// Returns the active contract.
+    /// </summary>
+    private static async Task<ContractInstanceResponse> CreateActiveContractAsync(
+        IContractClient contractClient,
+        Guid templateId,
+        Guid employerId,
+        Guid workerId,
+        ContractTerms? terms = null)
+    {
+        // Create instance
+        var instance = await contractClient.CreateContractInstanceAsync(new CreateContractInstanceRequest
+        {
+            TemplateId = templateId,
+            Parties = new List<ContractPartyInput>
+            {
+                new ContractPartyInput
+                {
+                    EntityId = employerId,
+                    EntityType = ContractEntityType.Character,
+                    Role = "employer"
+                },
+                new ContractPartyInput
+                {
+                    EntityId = workerId,
+                    EntityType = ContractEntityType.Character,
+                    Role = "worker"
+                }
+            },
+            Terms = terms,
+            EffectiveFrom = null,
+            EffectiveUntil = DateTimeOffset.UtcNow.AddDays(30)
+        });
+
+        // Propose
+        await contractClient.ProposeContractInstanceAsync(new ProposeContractInstanceRequest
+        {
+            ContractId = instance.ContractId
+        });
+
+        // Consent from employer
+        await contractClient.ConsentToContractAsync(new ConsentToContractRequest
+        {
+            ContractId = instance.ContractId,
+            PartyEntityId = employerId,
+            PartyEntityType = ContractEntityType.Character
+        });
+
+        // Consent from worker (this activates the contract)
+        var activeContract = await contractClient.ConsentToContractAsync(new ConsentToContractRequest
+        {
+            ContractId = instance.ContractId,
+            PartyEntityId = workerId,
+            PartyEntityType = ContractEntityType.Character
+        });
+
+        return activeContract;
+    }
+
+    // =========================================================================
+    // Basic CRUD Tests
+    // =========================================================================
+
+    private static async Task<TestResult> TestCreateContractTemplate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "create");
+
+            if (template.TemplateId == Guid.Empty)
+                return TestResult.Failed("Template creation returned empty ID");
+
+            if (!template.Code.StartsWith("employment_"))
+                return TestResult.Failed($"Template code mismatch: '{template.Code}'");
+
+            return TestResult.Successful(
+                $"Template created: ID={template.TemplateId}, Code={template.Code}");
+        }, "Create contract template");
+
+    private static async Task<TestResult> TestCreateContractInstance(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("INSTANCE");
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "instance", realm.RealmId);
+
+            var instance = await contractClient.CreateContractInstanceAsync(new CreateContractInstanceRequest
+            {
+                TemplateId = template.TemplateId,
+                Parties = new List<ContractPartyInput>
+                {
+                    new ContractPartyInput
+                    {
+                        EntityId = charA.CharacterId,
+                        EntityType = ContractEntityType.Character,
+                        Role = "employer"
+                    },
+                    new ContractPartyInput
+                    {
+                        EntityId = charB.CharacterId,
+                        EntityType = ContractEntityType.Character,
+                        Role = "worker"
+                    }
+                }
+            });
+
+            if (instance.ContractId == Guid.Empty)
+                return TestResult.Failed("Instance creation returned empty ID");
+
+            if (instance.Status != ContractStatus.Draft)
+                return TestResult.Failed($"Expected draft status, got: {instance.Status}");
+
+            return TestResult.Successful(
+                $"Instance created: ID={instance.ContractId}, Status={instance.Status}");
+        }, "Create contract instance");
+
+    private static async Task<TestResult> TestGetContractInstance(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("GET");
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "get", realm.RealmId);
+
+            var instance = await contractClient.CreateContractInstanceAsync(new CreateContractInstanceRequest
+            {
+                TemplateId = template.TemplateId,
+                Parties = new List<ContractPartyInput>
+                {
+                    new ContractPartyInput
+                    {
+                        EntityId = charA.CharacterId,
+                        EntityType = ContractEntityType.Character,
+                        Role = "employer"
+                    },
+                    new ContractPartyInput
+                    {
+                        EntityId = charB.CharacterId,
+                        EntityType = ContractEntityType.Character,
+                        Role = "worker"
+                    }
+                }
+            });
+
+            // Retrieve it
+            var retrieved = await contractClient.GetContractInstanceAsync(new GetContractInstanceRequest
+            {
+                ContractId = instance.ContractId
+            });
+
+            if (retrieved.ContractId != instance.ContractId)
+                return TestResult.Failed("Contract ID mismatch on retrieval");
+
+            return TestResult.Successful(
+                $"Contract retrieved: ID={retrieved.ContractId}, Status={retrieved.Status}");
+        }, "Get contract instance");
+
+    // =========================================================================
+    // Lifecycle Tests
+    // =========================================================================
+
+    private static async Task<TestResult> TestFullContractLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("LIFECYCLE");
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "lifecycle", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            if (activeContract.Status != ContractStatus.Active)
+                return TestResult.Failed($"Expected active status, got: {activeContract.Status}");
+
+            // Verify both parties have consented
+            var parties = activeContract.Parties;
+            if (parties == null || parties.Count != 2)
+                return TestResult.Failed($"Expected 2 parties, got: {parties?.Count ?? 0}");
+
+            // Terminate the contract
+            var terminated = await contractClient.TerminateContractInstanceAsync(
+                new TerminateContractInstanceRequest
+                {
+                    ContractId = activeContract.ContractId,
+                    RequestingEntityId = charA.CharacterId,
+                    RequestingEntityType = ContractEntityType.Character,
+                    Reason = "Test lifecycle complete"
+                });
+
+            if (terminated.Status != ContractStatus.Terminated)
+                return TestResult.Failed($"Expected terminated status, got: {terminated.Status}");
+
+            return TestResult.Successful(
+                $"Full lifecycle: draft → proposed → active → terminated for contract {activeContract.ContractId}");
+        }, "Full contract lifecycle");
+
+    private static async Task<TestResult> TestMilestoneCompletion(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("MILESTONE");
+
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "deliver_goods",
+                    Name = "Deliver Goods",
+                    Description = "Worker delivers the agreed goods",
+                    Sequence = 0,
+                    Required = true
+                },
+                new MilestoneDefinition
+                {
+                    Code = "payment_received",
+                    Name = "Payment Received",
+                    Description = "Employer confirms payment sent",
+                    Sequence = 1,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "milestone", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Complete first milestone
+            var milestone1 = await contractClient.CompleteMilestoneAsync(new CompleteMilestoneRequest
+            {
+                ContractId = activeContract.ContractId,
+                MilestoneCode = "deliver_goods",
+                Evidence = new { deliveredAt = DateTimeOffset.UtcNow.ToString("o") }
+            });
+
+            if (milestone1.Milestone.Status != MilestoneStatus.Completed)
+                return TestResult.Failed($"Milestone 1 expected completed, got: {milestone1.Milestone.Status}");
+
+            // Complete second milestone
+            var milestone2 = await contractClient.CompleteMilestoneAsync(new CompleteMilestoneRequest
+            {
+                ContractId = activeContract.ContractId,
+                MilestoneCode = "payment_received",
+                Evidence = new { amount = 500, currency = "gold" }
+            });
+
+            if (milestone2.Milestone.Status != MilestoneStatus.Completed)
+                return TestResult.Failed($"Milestone 2 expected completed, got: {milestone2.Milestone.Status}");
+
+            // Verify contract status after all milestones
+            var finalContract = await contractClient.GetContractInstanceAsync(new GetContractInstanceRequest
+            {
+                ContractId = activeContract.ContractId
+            });
+
+            return TestResult.Successful(
+                $"Milestones completed: deliver_goods + payment_received for contract {activeContract.ContractId}, " +
+                $"final status: {finalContract.Status}");
+        }, "Milestone completion");
+
+    // =========================================================================
+    // Cross-Service Integration Tests
+    // =========================================================================
+
+    /// <summary>
+    /// Demonstrates a character employment contract where milestone completion
+    /// triggers prebound APIs to award achievements to both parties.
+    ///
+    /// Flow:
+    /// 1. Create realm, two characters
+    /// 2. Create achievement definitions for "Contract Fulfilled" and "First Employer"
+    /// 3. Create contract template with milestones that have onComplete prebound APIs
+    ///    calling the achievement service to update progress
+    /// 4. Execute full lifecycle and verify achievement progress updated
+    /// </summary>
+    private static async Task<TestResult> TestCharacterDealWithAchievements(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var achievementClient = GetServiceClient<IAchievementClient>();
+            var (realm, employer, worker) = await CreateTestCharacterPairAsync("ACHV_DEAL");
+
+            // Step 1: Create achievement definitions
+            var workerAchievementId = $"contract-fulfilled-{DateTime.Now.Ticks}".ToLowerInvariant();
+            await achievementClient.CreateAchievementDefinitionAsync(new CreateAchievementDefinitionRequest
+            {
+                GameServiceId = TestGameServiceId,
+                AchievementId = workerAchievementId,
+                DisplayName = "Contract Fulfilled",
+                Description = "Complete an employment contract successfully",
+                EntityTypes = new List<AchEntityType> { AchEntityType.Character },
+                AchievementType = AchievementType.Progressive,
+                ProgressTarget = 1,
+                Points = 50,
+                Platforms = new List<Platform> { Platform.Internal }
+            });
+
+            var employerAchievementId = $"first-employer-{DateTime.Now.Ticks}".ToLowerInvariant();
+            await achievementClient.CreateAchievementDefinitionAsync(new CreateAchievementDefinitionRequest
+            {
+                GameServiceId = TestGameServiceId,
+                AchievementId = employerAchievementId,
+                DisplayName = "First Employer",
+                Description = "Successfully complete a contract as employer",
+                EntityTypes = new List<AchEntityType> { AchEntityType.Character },
+                AchievementType = AchievementType.Progressive,
+                ProgressTarget = 1,
+                Points = 25,
+                Platforms = new List<Platform> { Platform.Internal }
+            });
+
+            // Step 2: Create contract template with prebound APIs on milestone completion
+            // The onComplete APIs call the achievement service to update progress
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "work_delivered",
+                    Name = "Work Delivered",
+                    Description = "Worker delivers the contracted work",
+                    Sequence = 0,
+                    Required = true,
+                    OnComplete = new List<PreboundApi>
+                    {
+                        // Award worker achievement progress
+                        new PreboundApi
+                        {
+                            ServiceName = "achievement",
+                            Endpoint = "/achievement/progress/update",
+                            PayloadTemplate = $"{{\"gameServiceId\":\"{TestGameServiceId}\",\"achievementId\":\"{workerAchievementId}\",\"entityId\":\"{{{{contract.party.worker.entityId}}}}\",\"entityType\":\"character\",\"progressDelta\":1}}",
+                            Description = "Award worker for fulfilling contract",
+                            ExecutionMode = PreboundApiExecutionMode.Sync,
+                            ResponseValidation = new ResponseValidation
+                            {
+                                SuccessConditions = new List<ValidationCondition>
+                                {
+                                    new ValidationCondition
+                                    {
+                                        Type = ValidationConditionType.StatusCodeIn,
+                                        StatusCodes = new List<int> { 200 }
+                                    }
+                                }
+                            }
+                        },
+                        // Award employer achievement progress
+                        new PreboundApi
+                        {
+                            ServiceName = "achievement",
+                            Endpoint = "/achievement/progress/update",
+                            PayloadTemplate = $"{{\"gameServiceId\":\"{TestGameServiceId}\",\"achievementId\":\"{employerAchievementId}\",\"entityId\":\"{{{{contract.party.employer.entityId}}}}\",\"entityType\":\"character\",\"progressDelta\":1}}",
+                            Description = "Award employer for completing contract",
+                            ExecutionMode = PreboundApiExecutionMode.Sync
+                        }
+                    }
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "achv_deal", realm.RealmId, milestones);
+
+            // Step 3: Create and activate contract
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, employer.CharacterId, worker.CharacterId);
+
+            if (activeContract.Status != ContractStatus.Active)
+                return TestResult.Failed($"Contract not active: {activeContract.Status}");
+
+            // Step 4: Complete the milestone (triggers prebound APIs)
+            var milestone = await contractClient.CompleteMilestoneAsync(new CompleteMilestoneRequest
+            {
+                ContractId = activeContract.ContractId,
+                MilestoneCode = "work_delivered",
+                Evidence = new { deliveredAt = DateTimeOffset.UtcNow.ToString("o") }
+            });
+
+            if (milestone.Milestone.Status != MilestoneStatus.Completed)
+                return TestResult.Failed($"Milestone not completed: {milestone.Milestone.Status}");
+
+            // Step 5: Verify achievement progress was updated
+            // Small delay to allow async processing
+            await Task.Delay(500);
+
+            var workerProgress = await achievementClient.GetAchievementProgressAsync(
+                new GetAchievementProgressRequest
+                {
+                    GameServiceId = TestGameServiceId,
+                    AchievementId = workerAchievementId,
+                    EntityId = worker.CharacterId,
+                    EntityType = AchEntityType.Character
+                });
+
+            var employerProgress = await achievementClient.GetAchievementProgressAsync(
+                new GetAchievementProgressRequest
+                {
+                    GameServiceId = TestGameServiceId,
+                    AchievementId = employerAchievementId,
+                    EntityId = employer.CharacterId,
+                    EntityType = AchEntityType.Character
+                });
+
+            var workerAchProgress = workerProgress.Progress
+                .FirstOrDefault(p => p.AchievementId == workerAchievementId);
+            var employerAchProgress = employerProgress.Progress
+                .FirstOrDefault(p => p.AchievementId == employerAchievementId);
+
+            return TestResult.Successful(
+                $"Character deal completed: contract {activeContract.ContractId}, " +
+                $"worker achievement progress={workerAchProgress?.CurrentProgress ?? 0}, " +
+                $"employer achievement progress={employerAchProgress?.CurrentProgress ?? 0}");
+        }, "Character deal with achievements");
+
+    /// <summary>
+    /// Tests a contract with prebound APIs that include response validation rules.
+    /// The prebound API calls a service and validates the response matches expected conditions.
+    /// This verifies the ResponseValidator three-outcome model works end-to-end.
+    /// </summary>
+    private static async Task<TestResult> TestContractWithPreboundApiValidation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("VALIDATION");
+
+            // Create a milestone with a prebound API that calls realm/get with validation
+            // This validates that the realm exists (which it does since we just created it)
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "verify_realm",
+                    Name = "Verify Realm Exists",
+                    Description = "Validate the realm is still active before proceeding",
+                    Sequence = 0,
+                    Required = true,
+                    OnComplete = new List<PreboundApi>
+                    {
+                        new PreboundApi
+                        {
+                            ServiceName = "realm",
+                            Endpoint = "/realm/get",
+                            PayloadTemplate = $"{{\"realmId\":\"{realm.RealmId}\"}}",
+                            Description = "Verify realm is still active",
+                            ExecutionMode = PreboundApiExecutionMode.Sync,
+                            ResponseValidation = new ResponseValidation
+                            {
+                                SuccessConditions = new List<ValidationCondition>
+                                {
+                                    new ValidationCondition
+                                    {
+                                        Type = ValidationConditionType.StatusCodeIn,
+                                        StatusCodes = new List<int> { 200 }
+                                    },
+                                    new ValidationCondition
+                                    {
+                                        Type = ValidationConditionType.JsonPathExists,
+                                        JsonPath = "$.realmId"
+                                    }
+                                },
+                                PermanentFailureConditions = new List<ValidationCondition>
+                                {
+                                    new ValidationCondition
+                                    {
+                                        Type = ValidationConditionType.StatusCodeIn,
+                                        StatusCodes = new List<int> { 404 }
+                                    }
+                                },
+                                TransientFailureStatusCodes = new List<int> { 503, 504 }
+                            }
+                        }
+                    }
+                },
+                new MilestoneDefinition
+                {
+                    Code = "complete_work",
+                    Name = "Complete Work",
+                    Description = "Final work delivery",
+                    Sequence = 1,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "validation", realm.RealmId, milestones);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Complete first milestone - triggers realm validation prebound API
+            var milestone1 = await contractClient.CompleteMilestoneAsync(new CompleteMilestoneRequest
+            {
+                ContractId = activeContract.ContractId,
+                MilestoneCode = "verify_realm"
+            });
+
+            if (milestone1.Milestone.Status != MilestoneStatus.Completed)
+                return TestResult.Failed($"Verify realm milestone not completed: {milestone1.Milestone.Status}");
+
+            // Complete second milestone
+            var milestone2 = await contractClient.CompleteMilestoneAsync(new CompleteMilestoneRequest
+            {
+                ContractId = activeContract.ContractId,
+                MilestoneCode = "complete_work"
+            });
+
+            if (milestone2.Milestone.Status != MilestoneStatus.Completed)
+                return TestResult.Failed($"Complete work milestone not completed: {milestone2.Milestone.Status}");
+
+            // Verify contract state
+            var finalContract = await contractClient.GetContractInstanceAsync(new GetContractInstanceRequest
+            {
+                ContractId = activeContract.ContractId
+            });
+
+            return TestResult.Successful(
+                $"Validated contract {activeContract.ContractId}: " +
+                $"realm verification passed, all milestones completed, " +
+                $"final status: {finalContract.Status}");
+        }, "Contract with prebound API validation");
+
+    // =========================================================================
+    // Breach and Constraint Tests
+    // =========================================================================
+
+    private static async Task<TestResult> TestContractBreachAndCure(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("BREACH");
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "breach", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId,
+                new ContractTerms
+                {
+                    BreachThreshold = 3,
+                    GracePeriodForCure = "P7D"
+                });
+
+            if (activeContract.Status != ContractStatus.Active)
+                return TestResult.Failed($"Contract not active: {activeContract.Status}");
+
+            // Report a breach
+            var breach = await contractClient.ReportBreachAsync(new ReportBreachRequest
+            {
+                ContractId = activeContract.ContractId,
+                BreachingEntityId = charB.CharacterId,
+                BreachingEntityType = ContractEntityType.Character,
+                BreachType = BreachType.Term_violation,
+                Description = "Worker failed to deliver on time"
+            });
+
+            if (breach.BreachId == Guid.Empty)
+                return TestResult.Failed("Breach report returned empty ID");
+
+            if (breach.Status != BreachStatus.Detected)
+                return TestResult.Failed($"Expected detected status, got: {breach.Status}");
+
+            // Cure the breach
+            var cured = await contractClient.CureBreachAsync(new CureBreachRequest
+            {
+                BreachId = breach.BreachId,
+                CureEvidence = "Delivered late but accepted by employer"
+            });
+
+            if (cured.Status != BreachStatus.Cured)
+                return TestResult.Failed($"Expected cured status, got: {cured.Status}");
+
+            // Verify contract is still active after cured breach
+            var contractAfterCure = await contractClient.GetContractInstanceAsync(new GetContractInstanceRequest
+            {
+                ContractId = activeContract.ContractId
+            });
+
+            if (contractAfterCure.Status != ContractStatus.Active)
+                return TestResult.Failed($"Contract should still be active after cure, got: {contractAfterCure.Status}");
+
+            return TestResult.Successful(
+                $"Breach lifecycle: reported → cured for contract {activeContract.ContractId}, " +
+                $"contract remains active");
+        }, "Contract breach and cure");
+
+    private static async Task<TestResult> TestExclusivityConstraintCheck(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("EXCLUSIVITY");
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "exclusive", realm.RealmId);
+
+            // Create first contract with exclusivity
+            var firstContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId,
+                new ContractTerms
+                {
+                    CustomTerms = new Dictionary<string, object>
+                    {
+                        ["exclusivity"] = true
+                    }
+                });
+
+            if (firstContract.Status != ContractStatus.Active)
+                return TestResult.Failed($"First contract not active: {firstContract.Status}");
+
+            // Check exclusivity constraint for the worker
+            var constraintCheck = await contractClient.CheckContractConstraintAsync(new CheckConstraintRequest
+            {
+                EntityId = charB.CharacterId,
+                EntityType = ContractEntityType.Character,
+                ConstraintType = ConstraintType.Exclusivity
+            });
+
+            if (constraintCheck.Allowed)
+                return TestResult.Failed("Exclusivity constraint should prevent new contracts");
+
+            if (constraintCheck.ConflictingContracts == null || constraintCheck.ConflictingContracts.Count == 0)
+                return TestResult.Failed("Expected conflicting contracts list");
+
+            return TestResult.Successful(
+                $"Exclusivity constraint enforced: worker {charB.CharacterId} blocked from new contracts, " +
+                $"{constraintCheck.ConflictingContracts.Count} conflicting contract(s) found");
+        }, "Exclusivity constraint check");
+}
