@@ -21,6 +21,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
+| [Contract](#contract) | 1.0.0 | 22 | Binding agreements between entities with milestone-based pro... |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
@@ -494,6 +495,66 @@ Real-time communication and WebSocket connection management for Bannou services.
 |--------|------|---------|--------|
 | `GET` | `/connect` | Establish WebSocket connection | authenticated |
 | `POST` | `/connect` | Establish WebSocket connection (POST variant) | authenticated |
+
+---
+
+## Contract {#contract}
+
+**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml`
+
+Binding agreements between entities with milestone-based progression.
+
+### Breaches
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/breach/cure` | Mark breach as cured (system/admin action) | developer |
+| `POST` | `/contract/breach/get` | Get breach details | user |
+| `POST` | `/contract/breach/report` | Report a contract breach | user |
+
+### Constraints
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/check-constraint` | Check if entity can take action given contracts | user |
+| `POST` | `/contract/query-active` | Query active contracts for entity | user |
+
+### Instances
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/instance/consent` | Party consents to contract | user |
+| `POST` | `/contract/instance/create` | Create contract instance from template | user |
+| `POST` | `/contract/instance/get` | Get instance by ID | user |
+| `POST` | `/contract/instance/get-status` | Get current status and milestone progress | user |
+| `POST` | `/contract/instance/propose` | Propose contract to parties (starts consent flow) | user |
+| `POST` | `/contract/instance/query` | Query instances by party, template, status | user |
+| `POST` | `/contract/instance/terminate` | Request early termination | user |
+
+### Metadata
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/metadata/get` | Get game metadata | user |
+| `POST` | `/contract/metadata/update` | Update game metadata on instance | developer |
+
+### Milestones
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/milestone/complete` | External system reports milestone completed | developer |
+| `POST` | `/contract/milestone/fail` | External system reports milestone failed | developer |
+| `POST` | `/contract/milestone/get` | Get milestone details and status | user |
+
+### Templates
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/template/create` | Create a contract template | admin |
+| `POST` | `/contract/template/delete` | Soft-delete template | admin |
+| `POST` | `/contract/template/get` | Get template by ID or code | user |
+| `POST` | `/contract/template/list` | List templates with filters | user |
+| `POST` | `/contract/template/update` | Update template (not instances) | admin |
 
 ---
 
@@ -1341,8 +1402,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 35
-- **Total endpoints**: 425
+- **Total services**: 36
+- **Total endpoints**: 447
 
 ---
 

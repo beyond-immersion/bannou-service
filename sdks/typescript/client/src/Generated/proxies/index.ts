@@ -16,6 +16,7 @@ export { CharacterHistoryProxy } from './CharacterHistoryProxy.js';
 export { CharacterPersonalityProxy } from './CharacterPersonalityProxy.js';
 export { ClientCapabilitiesProxy } from './ClientCapabilitiesProxy.js';
 export { CompileProxy } from './CompileProxy.js';
+export { ContractProxy } from './ContractProxy.js';
 export { DocumentationProxy } from './DocumentationProxy.js';
 export { GameServiceProxy } from './GameServiceProxy.js';
 export { GoapProxy } from './GoapProxy.js';

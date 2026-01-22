@@ -21,6 +21,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
+| [Contract Service API](#contract) | `client.Contract` | 22 | Binding agreements between entities with milestone-based pro... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for Arcadia and other games. |
@@ -510,6 +511,66 @@ Real-time communication and WebSocket connection management for Bannou services.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `ConnectwebsocketpostEventAsync` | `ConnectRequest` | *(fire-and-forget)* | Establish WebSocket connection (POST variant) |
+
+---
+
+## Contract Service API {#contract}
+
+**Proxy**: `client.Contract` | **Version**: 1.0.0
+
+Binding agreements between entities with milestone-based progression.
+
+### Breaches
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportbreachAsync` | `ReportBreachRequest` | `BreachResponse` | Report a contract breach |
+| `CurebreachAsync` | `CureBreachRequest` | `BreachResponse` | Mark breach as cured (system/admin action) |
+| `GetBreachAsync` | `GetBreachRequest` | `BreachResponse` | Get breach details |
+
+### Constraints
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CheckcontractconstraintAsync` | `CheckConstraintRequest` | `CheckConstraintResponse` | Check if entity can take action given contracts |
+| `QueryactivecontractsAsync` | `QueryActiveContractsRequest` | `QueryActiveContractsResponse` | Query active contracts for entity |
+
+### Instances
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateContractinstanceAsync` | `CreateContractInstanceRequest` | `ContractInstanceResponse` | Create contract instance from template |
+| `ProposecontractinstanceAsync` | `ProposeContractInstanceRequest` | `ContractInstanceResponse` | Propose contract to parties (starts consent flow) |
+| `ConsenttocontractAsync` | `ConsentToContractRequest` | `ContractInstanceResponse` | Party consents to contract |
+| `GetContractinstanceAsync` | `GetContractInstanceRequest` | `ContractInstanceResponse` | Get instance by ID |
+| `QuerycontractinstancesAsync` | `QueryContractInstancesRequest` | `QueryContractInstancesResponse` | Query instances by party, template, status |
+| `TerminatecontractinstanceAsync` | `TerminateContractInstanceRequest` | `ContractInstanceResponse` | Request early termination |
+| `GetContractinstancestatusAsync` | `GetContractInstanceStatusRequest` | `ContractInstanceStatusResponse` | Get current status and milestone progress |
+
+### Metadata
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `UpdateContractmetadataAsync` | `UpdateContractMetadataRequest` | `ContractMetadataResponse` | Update game metadata on instance |
+| `GetContractmetadataAsync` | `GetContractMetadataRequest` | `ContractMetadataResponse` | Get game metadata |
+
+### Milestones
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CompletemilestoneAsync` | `CompleteMilestoneRequest` | `MilestoneResponse` | External system reports milestone completed |
+| `FailmilestoneAsync` | `FailMilestoneRequest` | `MilestoneResponse` | External system reports milestone failed |
+| `GetMilestoneAsync` | `GetMilestoneRequest` | `MilestoneResponse` | Get milestone details and status |
+
+### Templates
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateContracttemplateAsync` | `CreateContractTemplateRequest` | `ContractTemplateResponse` | Create a contract template |
+| `GetContracttemplateAsync` | `GetContractTemplateRequest` | `ContractTemplateResponse` | Get template by ID or code |
+| `ListContracttemplatesAsync` | `ListContractTemplatesRequest` | `ListContractTemplatesResponse` | List templates with filters |
+| `UpdateContracttemplateAsync` | `UpdateContractTemplateRequest` | `ContractTemplateResponse` | Update template (not instances) |
+| `DeleteContracttemplateEventAsync` | `DeleteContractTemplateRequest` | *(fire-and-forget)* | Soft-delete template |
 
 ---
 
@@ -1341,8 +1402,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 35
-- **Total methods**: 419
+- **Total services**: 36
+- **Total methods**: 441
 
 ---
 

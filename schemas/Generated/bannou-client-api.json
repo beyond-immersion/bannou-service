@@ -3107,6 +3107,803 @@
         }
       }
     },
+    "/contract/template/get": {
+      "post": {
+        "operationId": "getContractTemplate",
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Get template by ID or code",
+        "description": "Retrieves a contract template by its unique ID or code.\nAt least one of templateId or code must be provided.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetContractTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Template retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither templateId nor code provided"
+          },
+          "404": {
+            "description": "Template not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/template/list": {
+      "post": {
+        "operationId": "listContractTemplates",
+        "tags": [
+          "Templates"
+        ],
+        "summary": "List templates with filters",
+        "description": "Lists contract templates with optional filtering by realm, active status,\nand search term.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListContractTemplatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Templates retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListContractTemplatesResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/instance/create": {
+      "post": {
+        "operationId": "createContractInstance",
+        "tags": [
+          "Instances"
+        ],
+        "summary": "Create contract instance from template",
+        "description": "Creates a new contract instance from a template. The instance starts\nin 'draft' status and must be proposed to parties before activation.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContractInstanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Instance created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractInstanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (missing required parties, invalid terms)"
+          },
+          "404": {
+            "description": "Template not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/instance/propose": {
+      "post": {
+        "operationId": "proposeContractInstance",
+        "tags": [
+          "Instances"
+        ],
+        "summary": "Propose contract to parties (starts consent flow)",
+        "description": "Moves a draft contract to 'proposed' status and notifies parties.\nParties must consent before the contract becomes active.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeContractInstanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contract proposed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractInstanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contract not in draft status"
+          },
+          "404": {
+            "description": "Contract not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/instance/consent": {
+      "post": {
+        "operationId": "consentToContract",
+        "tags": [
+          "Instances"
+        ],
+        "summary": "Party consents to contract",
+        "description": "Records a party's consent to a proposed contract. When all required\nparties consent, the contract moves to 'accepted' then 'active' status.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentToContractRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Consent recorded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractInstanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Party not part of this contract or already consented"
+          },
+          "404": {
+            "description": "Contract not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/instance/get": {
+      "post": {
+        "operationId": "getContractInstance",
+        "tags": [
+          "Instances"
+        ],
+        "summary": "Get instance by ID",
+        "description": "Retrieves a contract instance by its unique ID.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetContractInstanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Instance retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractInstanceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Instance not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/instance/query": {
+      "post": {
+        "operationId": "queryContractInstances",
+        "tags": [
+          "Instances"
+        ],
+        "summary": "Query instances by party, template, status",
+        "description": "Queries contract instances with various filters. At least one filter\nmust be provided.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryContractInstancesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Instances retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryContractInstancesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No filter criteria provided"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/instance/terminate": {
+      "post": {
+        "operationId": "terminateContractInstance",
+        "tags": [
+          "Instances"
+        ],
+        "summary": "Request early termination",
+        "description": "Requests early termination of an active contract. Depending on the\ncontract's termination policy, this may require mutual consent or\nincur penalties.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TerminateContractInstanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Termination processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractInstanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contract cannot be terminated (policy violation)"
+          },
+          "404": {
+            "description": "Contract not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/instance/get-status": {
+      "post": {
+        "operationId": "getContractInstanceStatus",
+        "tags": [
+          "Instances"
+        ],
+        "summary": "Get current status and milestone progress",
+        "description": "Gets the current status of a contract including milestone progress,\npending consents, and any active breaches.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetContractInstanceStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractInstanceStatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/milestone/complete": {
+      "post": {
+        "operationId": "completeMilestone",
+        "tags": [
+          "Milestones"
+        ],
+        "summary": "External system reports milestone completed",
+        "description": "Called by external systems to report that a milestone's conditions\nhave been met. Triggers onComplete prebound APIs and may advance\ncontract status.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteMilestoneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Milestone completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilestoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Milestone not in valid state for completion"
+          },
+          "404": {
+            "description": "Contract or milestone not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/milestone/fail": {
+      "post": {
+        "operationId": "failMilestone",
+        "tags": [
+          "Milestones"
+        ],
+        "summary": "External system reports milestone failed",
+        "description": "Called by external systems to report that a milestone has failed\n(e.g., deadline passed, conditions cannot be met). Triggers onExpire\nprebound APIs and may record a breach.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FailMilestoneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Milestone failure recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilestoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Milestone not in valid state for failure"
+          },
+          "404": {
+            "description": "Contract or milestone not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/milestone/get": {
+      "post": {
+        "operationId": "getMilestone",
+        "tags": [
+          "Milestones"
+        ],
+        "summary": "Get milestone details and status",
+        "description": "Gets the current state of a specific milestone.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetMilestoneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Milestone retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilestoneResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract or milestone not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/breach/report": {
+      "post": {
+        "operationId": "reportBreach",
+        "tags": [
+          "Breaches"
+        ],
+        "summary": "Report a contract breach",
+        "description": "Reports a breach of contract terms. This can be called by parties\nor external systems. The breach enters a grace period for cure\nif configured.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportBreachRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Breach reported successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreachResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid breach report"
+          },
+          "404": {
+            "description": "Contract not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/breach/cure": {
+      "post": {
+        "operationId": "cureBreach",
+        "tags": [
+          "Breaches"
+        ],
+        "summary": "Mark breach as cured (system/admin action)",
+        "description": "Marks a breach as cured within the grace period. This prevents\nconsequences from being applied. Called by systems that verify\nthe breach has been remedied.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CureBreachRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Breach cured successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreachResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Breach not in curable state"
+          },
+          "404": {
+            "description": "Breach not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/breach/get": {
+      "post": {
+        "operationId": "getBreach",
+        "tags": [
+          "Breaches"
+        ],
+        "summary": "Get breach details",
+        "description": "Retrieves details of a specific breach record.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBreachRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Breach retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreachResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Breach not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/metadata/update": {
+      "post": {
+        "operationId": "updateContractMetadata",
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "Update game metadata on instance",
+        "description": "Updates game-specific metadata on a contract instance without\ntouching contract state. Used by higher-level systems (quests, etc.)\nto store additional context.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContractMetadataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metadata updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractMetadataResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/metadata/get": {
+      "post": {
+        "operationId": "getContractMetadata",
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "Get game metadata",
+        "description": "Retrieves game-specific metadata from a contract instance.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetContractMetadataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metadata retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractMetadataResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found"
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/check-constraint": {
+      "post": {
+        "operationId": "checkContractConstraint",
+        "tags": [
+          "Constraints"
+        ],
+        "summary": "Check if entity can take action given contracts",
+        "description": "Checks whether an entity's proposed action would violate any\nactive contract constraints (exclusivity, non-compete, territory, etc.).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckConstraintRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Constraint check completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckConstraintResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/contract/query-active": {
+      "post": {
+        "operationId": "queryActiveContracts",
+        "tags": [
+          "Constraints"
+        ],
+        "summary": "Query active contracts for entity",
+        "description": "Returns all active contracts where the specified entity is a party.\nUseful for displaying current obligations in UI.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryActiveContractsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Active contracts retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryActiveContractsResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ]
+      }
+    },
     "/documentation/query": {
       "post": {
         "operationId": "queryDocumentation",
@@ -10721,6 +11518,129 @@
           }
         }
       },
+      "BreachResponse": {
+        "type": "object",
+        "description": "Breach record details",
+        "additionalProperties": false,
+        "required": [
+          "breachId",
+          "contractId",
+          "breachingEntityId",
+          "breachingEntityType",
+          "breachType",
+          "status",
+          "detectedAt"
+        ],
+        "properties": {
+          "breachId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique breach identifier"
+          },
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract that was breached"
+          },
+          "breachingEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity that breached"
+          },
+          "breachingEntityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Type of breaching entity"
+          },
+          "breachType": {
+            "$ref": "#/components/schemas/BreachType",
+            "description": "Type of breach"
+          },
+          "breachedTermOrMilestone": {
+            "type": "string",
+            "nullable": true,
+            "description": "What was breached"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Breach description"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BreachStatus",
+            "description": "Current status"
+          },
+          "detectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When breach was detected"
+          },
+          "cureDeadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deadline to cure breach"
+          },
+          "curedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When breach was cured"
+          },
+          "consequencesAppliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When consequences were applied"
+          }
+        }
+      },
+      "BreachStatus": {
+        "type": "string",
+        "description": "Current status of a breach record",
+        "enum": [
+          "detected",
+          "cure_period",
+          "cured",
+          "consequences_applied",
+          "disputed",
+          "forgiven"
+        ]
+      },
+      "BreachSummary": {
+        "type": "object",
+        "description": "Brief breach information",
+        "additionalProperties": false,
+        "required": [
+          "breachId",
+          "breachType",
+          "status"
+        ],
+        "properties": {
+          "breachId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Breach ID"
+          },
+          "breachType": {
+            "$ref": "#/components/schemas/BreachType",
+            "description": "Type of breach"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BreachStatus",
+            "description": "Current status"
+          }
+        }
+      },
+      "BreachType": {
+        "type": "string",
+        "description": "Type of contract breach",
+        "enum": [
+          "term_violation",
+          "milestone_missed",
+          "unauthorized_action",
+          "non_payment"
+        ]
+      },
       "BulkGetAssetsRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -11524,6 +12444,64 @@
           }
         }
       },
+      "CheckConstraintRequest": {
+        "type": "object",
+        "description": "Request to check constraint",
+        "additionalProperties": false,
+        "required": [
+          "entityId",
+          "entityType",
+          "constraintType"
+        ],
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity to check"
+          },
+          "entityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Entity type"
+          },
+          "constraintType": {
+            "$ref": "#/components/schemas/ConstraintType",
+            "description": "Type of constraint to check"
+          },
+          "proposedAction": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "What the entity wants to do"
+          }
+        }
+      },
+      "CheckConstraintResponse": {
+        "type": "object",
+        "description": "Constraint check result",
+        "additionalProperties": false,
+        "required": [
+          "allowed"
+        ],
+        "properties": {
+          "allowed": {
+            "type": "boolean",
+            "description": "Whether action is allowed"
+          },
+          "conflictingContracts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractSummary"
+            },
+            "nullable": true,
+            "description": "Contracts that would be violated"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Explanation if not allowed"
+          }
+        }
+      },
       "CheckoutRequest": {
         "type": "object",
         "description": "Request to checkout a scene for editing",
@@ -12028,6 +13006,18 @@
           }
         }
       },
+      "ComparisonOperator": {
+        "type": "string",
+        "description": "Comparison operators for numeric conditions",
+        "enum": [
+          "eq",
+          "ne",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
       "CompilationOptions": {
         "description": "Options controlling the ABML compilation process including optimizations and caching",
         "type": "object",
@@ -12203,6 +13193,32 @@
           }
         }
       },
+      "CompleteMilestoneRequest": {
+        "type": "object",
+        "description": "Request to complete a milestone",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "milestoneCode"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          },
+          "milestoneCode": {
+            "type": "string",
+            "description": "Milestone to complete"
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Evidence of completion"
+          }
+        }
+      },
       "CompleteUploadRequest": {
         "description": "Request to finalize an upload and trigger asset processing",
         "type": "object",
@@ -12310,6 +13326,52 @@
           }
         }
       },
+      "ConsentStatus": {
+        "type": "string",
+        "description": "Party's consent status",
+        "enum": [
+          "pending",
+          "consented",
+          "declined",
+          "implicit"
+        ]
+      },
+      "ConsentToContractRequest": {
+        "type": "object",
+        "description": "Request to consent to a contract",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "partyEntityId",
+          "partyEntityType"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract to consent to"
+          },
+          "partyEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity ID of consenting party"
+          },
+          "partyEntityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Entity type of consenting party"
+          }
+        }
+      },
+      "ConstraintType": {
+        "type": "string",
+        "description": "Type of constraint to check",
+        "enum": [
+          "exclusivity",
+          "non_compete",
+          "territory",
+          "time_commitment"
+        ]
+      },
       "ContactRequest": {
         "description": "User-submitted contact form data",
         "type": "object",
@@ -12381,6 +13443,462 @@
         "type": "object",
         "description": "Schema defining required context variables for behavior execution",
         "additionalProperties": true
+      },
+      "ContractInstanceResponse": {
+        "type": "object",
+        "description": "Contract instance details",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "templateId",
+          "status",
+          "parties",
+          "createdAt"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique contract identifier"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Source template ID"
+          },
+          "templateCode": {
+            "type": "string",
+            "description": "Source template code"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContractStatus",
+            "description": "Current contract status"
+          },
+          "parties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractPartyResponse"
+            },
+            "description": "Contract parties"
+          },
+          "terms": {
+            "$ref": "#/components/schemas/ContractTerms",
+            "nullable": true,
+            "description": "Contract terms"
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MilestoneInstanceResponse"
+            },
+            "nullable": true,
+            "description": "Milestone progress"
+          },
+          "currentMilestoneIndex": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Index of current milestone"
+          },
+          "escrowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true,
+            "description": "Related escrow IDs"
+          },
+          "proposedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When contract was proposed"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When all parties consented"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When contract became active"
+          },
+          "effectiveUntil": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When contract expires"
+          },
+          "terminatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When contract was terminated"
+          },
+          "gameMetadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Game-specific metadata"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "ContractInstanceStatusResponse": {
+        "type": "object",
+        "description": "Contract status summary",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "status",
+          "milestoneProgress"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContractStatus",
+            "description": "Current status"
+          },
+          "milestoneProgress": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MilestoneProgressSummary"
+            },
+            "description": "Milestone progress summary"
+          },
+          "pendingConsents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingConsentSummary"
+            },
+            "nullable": true,
+            "description": "Parties who haven't consented"
+          },
+          "activeBreaches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BreachSummary"
+            },
+            "nullable": true,
+            "description": "Active breach records"
+          },
+          "daysUntilExpiration": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Days until natural expiration"
+          }
+        }
+      },
+      "ContractMetadataResponse": {
+        "type": "object",
+        "description": "Contract metadata",
+        "additionalProperties": false,
+        "required": [
+          "contractId"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          },
+          "instanceData": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Instance-level metadata"
+          },
+          "runtimeState": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Runtime state metadata"
+          }
+        }
+      },
+      "ContractPartyInput": {
+        "type": "object",
+        "description": "Party input for contract creation",
+        "additionalProperties": false,
+        "required": [
+          "entityId",
+          "entityType",
+          "role"
+        ],
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity ID"
+          },
+          "entityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Entity type"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role from template"
+          }
+        }
+      },
+      "ContractPartyResponse": {
+        "type": "object",
+        "description": "Contract party details",
+        "additionalProperties": false,
+        "required": [
+          "entityId",
+          "entityType",
+          "role",
+          "consentStatus"
+        ],
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity ID"
+          },
+          "entityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Entity type"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role in contract"
+          },
+          "consentStatus": {
+            "$ref": "#/components/schemas/ConsentStatus",
+            "description": "Consent status"
+          },
+          "consentedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When consent was given"
+          }
+        }
+      },
+      "ContractStatus": {
+        "type": "string",
+        "description": "Current status of a contract instance",
+        "enum": [
+          "draft",
+          "proposed",
+          "pending",
+          "active",
+          "fulfilled",
+          "expired",
+          "terminated",
+          "breached",
+          "suspended",
+          "disputed",
+          "declined"
+        ]
+      },
+      "ContractSummary": {
+        "type": "object",
+        "description": "Brief contract information",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "templateCode",
+          "status",
+          "role"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract ID"
+          },
+          "templateCode": {
+            "type": "string",
+            "description": "Template code"
+          },
+          "templateName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Template name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContractStatus",
+            "description": "Current status"
+          },
+          "role": {
+            "type": "string",
+            "description": "Entity's role in contract"
+          },
+          "effectiveUntil": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When contract expires"
+          }
+        }
+      },
+      "ContractTemplateResponse": {
+        "type": "object",
+        "description": "Contract template details",
+        "additionalProperties": false,
+        "required": [
+          "templateId",
+          "code",
+          "name",
+          "minParties",
+          "maxParties",
+          "partyRoles",
+          "defaultEnforcementMode",
+          "isActive",
+          "createdAt"
+        ],
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique template identifier"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique template code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detailed description"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Realm ID if realm-specific"
+          },
+          "minParties": {
+            "type": "integer",
+            "description": "Minimum parties required"
+          },
+          "maxParties": {
+            "type": "integer",
+            "description": "Maximum parties allowed"
+          },
+          "partyRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyRoleDefinition"
+            },
+            "description": "Party role definitions"
+          },
+          "defaultTerms": {
+            "$ref": "#/components/schemas/ContractTerms",
+            "nullable": true,
+            "description": "Default contract terms"
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MilestoneDefinition"
+            },
+            "nullable": true,
+            "description": "Milestone definitions"
+          },
+          "defaultEnforcementMode": {
+            "$ref": "#/components/schemas/EnforcementMode",
+            "description": "Default enforcement mode"
+          },
+          "transferable": {
+            "type": "boolean",
+            "description": "Whether contracts can be transferred"
+          },
+          "gameMetadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Game-specific metadata"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether template is active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "ContractTerms": {
+        "type": "object",
+        "description": "Configurable contract terms",
+        "additionalProperties": false,
+        "properties": {
+          "duration": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contract duration (ISO 8601 duration, null for perpetual)"
+          },
+          "paymentSchedule": {
+            "$ref": "#/components/schemas/PaymentSchedule",
+            "nullable": true,
+            "description": "When payments occur"
+          },
+          "paymentFrequency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Recurring payment frequency (ISO 8601 duration)"
+          },
+          "terminationPolicy": {
+            "$ref": "#/components/schemas/TerminationPolicy",
+            "nullable": true,
+            "description": "How contract can be terminated"
+          },
+          "terminationNoticePeriod": {
+            "type": "string",
+            "nullable": true,
+            "description": "Required notice for termination (ISO 8601 duration)"
+          },
+          "breachThreshold": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Breaches before auto-termination (0 for no auto)"
+          },
+          "gracePeriodForCure": {
+            "type": "string",
+            "nullable": true,
+            "description": "Time to cure breach (ISO 8601 duration)"
+          },
+          "customTerms": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Game-specific custom terms"
+          }
+        }
       },
       "Coordinates": {
         "type": "object",
@@ -12793,6 +14311,62 @@
           }
         }
       },
+      "CreateContractInstanceRequest": {
+        "type": "object",
+        "description": "Request to create a contract instance",
+        "additionalProperties": false,
+        "required": [
+          "templateId",
+          "parties"
+        ],
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Template to create instance from"
+          },
+          "parties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractPartyInput"
+            },
+            "minItems": 2,
+            "description": "Parties to this contract"
+          },
+          "terms": {
+            "$ref": "#/components/schemas/ContractTerms",
+            "nullable": true,
+            "description": "Terms overriding template defaults"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When contract becomes active (null for immediate)"
+          },
+          "effectiveUntil": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When contract expires (null for perpetual)"
+          },
+          "escrowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true,
+            "description": "Related escrow IDs"
+          },
+          "gameMetadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Instance-level game metadata"
+          }
+        }
+      },
       "CreateDefinitionRequest": {
         "type": "object",
         "description": "Request to create a map definition",
@@ -13119,6 +14693,27 @@
               "type": "string"
             },
             "description": "Custom key-value metadata for the slot"
+          }
+        }
+      },
+      "CureBreachRequest": {
+        "type": "object",
+        "description": "Request to cure a breach",
+        "additionalProperties": false,
+        "required": [
+          "breachId"
+        ],
+        "properties": {
+          "breachId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Breach to cure"
+          },
+          "cureEvidence": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true,
+            "description": "Evidence of cure"
           }
         }
       },
@@ -14315,6 +15910,16 @@
           }
         }
       },
+      "EnforcementMode": {
+        "type": "string",
+        "description": "How contract breaches are handled",
+        "enum": [
+          "advisory",
+          "event_only",
+          "consequence_based",
+          "community"
+        ]
+      },
       "EnrichedCharacterResponse": {
         "description": "Character data with optional enriched fields.\nFields are only populated if the corresponding include flag was set in the request.\n",
         "type": "object",
@@ -14569,6 +16174,32 @@
             "type": "integer",
             "format": "int64",
             "description": "Archive size"
+          }
+        }
+      },
+      "FailMilestoneRequest": {
+        "type": "object",
+        "description": "Request to fail a milestone",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "milestoneCode"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          },
+          "milestoneCode": {
+            "type": "string",
+            "description": "Milestone that failed"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true,
+            "description": "Reason for failure"
           }
         }
       },
@@ -15356,6 +16987,21 @@
           }
         }
       },
+      "GetBreachRequest": {
+        "type": "object",
+        "description": "Request to get breach details",
+        "additionalProperties": false,
+        "required": [
+          "breachId"
+        ],
+        "properties": {
+          "breachId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Breach ID"
+          }
+        }
+      },
       "GetBundleRequest": {
         "description": "Request to retrieve bundle metadata and download URL",
         "type": "object",
@@ -15517,6 +17163,69 @@
             "type": "string",
             "format": "uuid",
             "description": "ID of the character to get combat preferences for"
+          }
+        }
+      },
+      "GetContractInstanceRequest": {
+        "type": "object",
+        "description": "Request to get a contract instance",
+        "additionalProperties": false,
+        "required": [
+          "contractId"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          }
+        }
+      },
+      "GetContractInstanceStatusRequest": {
+        "type": "object",
+        "description": "Request to get contract status",
+        "additionalProperties": false,
+        "required": [
+          "contractId"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          }
+        }
+      },
+      "GetContractMetadataRequest": {
+        "type": "object",
+        "description": "Request to get contract metadata",
+        "additionalProperties": false,
+        "required": [
+          "contractId"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          }
+        }
+      },
+      "GetContractTemplateRequest": {
+        "type": "object",
+        "description": "Request to get a contract template",
+        "additionalProperties": false,
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Template ID (provide this or code)"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Template code (provide this or templateId)"
           }
         }
       },
@@ -15996,6 +17705,26 @@
             "type": "string",
             "format": "uuid",
             "description": "ID of the ticket to query"
+          }
+        }
+      },
+      "GetMilestoneRequest": {
+        "type": "object",
+        "description": "Request to get milestone details",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "milestoneCode"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          },
+          "milestoneCode": {
+            "type": "string",
+            "description": "Milestone code"
           }
         }
       },
@@ -17857,6 +19586,78 @@
           }
         }
       },
+      "ListContractTemplatesRequest": {
+        "type": "object",
+        "description": "Request to list contract templates",
+        "additionalProperties": false,
+        "properties": {
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Filter by realm (null includes cross-realm templates)"
+          },
+          "isActive": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Filter by active status"
+          },
+          "searchTerm": {
+            "type": "string",
+            "nullable": true,
+            "description": "Search in name and description"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "Page number (1-based)"
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Results per page"
+          }
+        }
+      },
+      "ListContractTemplatesResponse": {
+        "type": "object",
+        "description": "Paginated list of contract templates",
+        "additionalProperties": false,
+        "required": [
+          "templates",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractTemplateResponse"
+            },
+            "description": "List of templates"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total matching templates"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Results per page"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether more results exist"
+          }
+        }
+      },
       "ListDefinitionsRequest": {
         "type": "object",
         "description": "Request to list map definitions",
@@ -19572,6 +21373,14 @@
           }
         }
       },
+      "MetadataType": {
+        "type": "string",
+        "description": "Type of metadata to update",
+        "enum": [
+          "instance_data",
+          "runtime_state"
+        ]
+      },
       "MidiEvent": {
         "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent",
         "description": "A single MIDI event",
@@ -19836,6 +21645,167 @@
             "description": "Non-fatal migration warnings"
           }
         }
+      },
+      "MilestoneDefinition": {
+        "type": "object",
+        "description": "Milestone definition in a template",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "sequence",
+          "required"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Unique milestone code within template"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Human-readable name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true,
+            "description": "What this milestone represents"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Order in the contract flow"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether milestone must be completed"
+          },
+          "deadline": {
+            "type": "string",
+            "nullable": true,
+            "description": "Relative deadline (ISO 8601 duration)"
+          },
+          "onComplete": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreboundApi"
+            },
+            "nullable": true,
+            "description": "APIs to call on completion"
+          },
+          "onExpire": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreboundApi"
+            },
+            "nullable": true,
+            "description": "APIs to call if deadline passes"
+          }
+        }
+      },
+      "MilestoneInstanceResponse": {
+        "type": "object",
+        "description": "Milestone instance status",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "sequence",
+          "required",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Milestone code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Milestone name"
+          },
+          "sequence": {
+            "type": "integer",
+            "description": "Order in flow"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether required"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MilestoneStatus",
+            "description": "Current status"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When completed"
+          },
+          "failedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When failed"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Absolute deadline"
+          }
+        }
+      },
+      "MilestoneProgressSummary": {
+        "type": "object",
+        "description": "Brief milestone progress",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Milestone code"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MilestoneStatus",
+            "description": "Current status"
+          }
+        }
+      },
+      "MilestoneResponse": {
+        "type": "object",
+        "description": "Milestone details",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "milestone"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          },
+          "milestone": {
+            "$ref": "#/components/schemas/MilestoneInstanceResponse",
+            "description": "Milestone details"
+          }
+        }
+      },
+      "MilestoneStatus": {
+        "type": "string",
+        "description": "Current status of a milestone",
+        "enum": [
+          "pending",
+          "active",
+          "completed",
+          "failed",
+          "skipped"
+        ]
       },
       "ModeDistribution": {
         "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution",
@@ -20455,6 +22425,41 @@
           }
         }
       },
+      "PartyRoleDefinition": {
+        "type": "object",
+        "description": "Definition of a party role in a contract template",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "minCount",
+          "maxCount"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Role identifier (employer, employee, buyer, seller, etc.)"
+          },
+          "minCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Minimum entities required in this role"
+          },
+          "maxCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum entities allowed in this role"
+          },
+          "allowedEntityTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityType"
+            },
+            "nullable": true,
+            "description": "Which entity types can fill this role (null for any)"
+          }
+        }
+      },
       "PartySkillAggregation": {
         "type": "string",
         "description": "Method for aggregating party member skills",
@@ -20523,6 +22528,40 @@
             "format": "date-time",
             "nullable": true,
             "description": "When the past life ended"
+          }
+        }
+      },
+      "PaymentSchedule": {
+        "type": "string",
+        "description": "When payments occur",
+        "enum": [
+          "one_time",
+          "recurring",
+          "milestone_based"
+        ]
+      },
+      "PendingConsentSummary": {
+        "type": "object",
+        "description": "Summary of pending consent",
+        "additionalProperties": false,
+        "required": [
+          "entityId",
+          "entityType",
+          "role"
+        ],
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity ID"
+          },
+          "entityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Entity type"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role in contract"
           }
         }
       },
@@ -20822,6 +22861,50 @@
           }
         }
       },
+      "PreboundApi": {
+        "type": "object",
+        "description": "Pre-configured API call to execute on contract events",
+        "additionalProperties": false,
+        "required": [
+          "serviceName",
+          "endpoint",
+          "payloadTemplate"
+        ],
+        "properties": {
+          "serviceName": {
+            "type": "string",
+            "description": "Target service name"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Target endpoint path"
+          },
+          "payloadTemplate": {
+            "type": "string",
+            "description": "JSON payload with variable placeholders"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description"
+          },
+          "executionMode": {
+            "type": "string",
+            "enum": [
+              "sync",
+              "async",
+              "fire_and_forget"
+            ],
+            "default": "sync",
+            "description": "How to execute the API call"
+          },
+          "responseValidation": {
+            "$ref": "#/components/schemas/ResponseValidation",
+            "nullable": true,
+            "description": "Optional validation rules for the response"
+          }
+        }
+      },
       "PreferredRange": {
         "type": "string",
         "description": "Preferred engagement distance. Influences positioning and\nability selection in combat.\n",
@@ -20918,6 +23001,21 @@
           }
         }
       },
+      "ProposeContractInstanceRequest": {
+        "type": "object",
+        "description": "Request to propose a contract to parties",
+        "additionalProperties": false,
+        "required": [
+          "contractId"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance to propose"
+          }
+        }
+      },
       "Provider": {
         "type": "string",
         "enum": [
@@ -21010,6 +23108,51 @@
             "type": "number",
             "format": "double",
             "description": "W component (scalar)"
+          }
+        }
+      },
+      "QueryActiveContractsRequest": {
+        "type": "object",
+        "description": "Request to query active contracts",
+        "additionalProperties": false,
+        "required": [
+          "entityId",
+          "entityType"
+        ],
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity to query"
+          },
+          "entityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Entity type"
+          },
+          "templateCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Filter by template codes"
+          }
+        }
+      },
+      "QueryActiveContractsResponse": {
+        "type": "object",
+        "description": "Active contracts for entity",
+        "additionalProperties": false,
+        "required": [
+          "contracts"
+        ],
+        "properties": {
+          "contracts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractSummary"
+            },
+            "description": "Active contracts"
           }
         }
       },
@@ -21430,6 +23573,87 @@
             "maximum": 100,
             "default": 20,
             "description": "Results per page"
+          }
+        }
+      },
+      "QueryContractInstancesRequest": {
+        "type": "object",
+        "description": "Request to query contract instances",
+        "additionalProperties": false,
+        "properties": {
+          "partyEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Filter by party entity ID"
+          },
+          "partyEntityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "nullable": true,
+            "description": "Filter by party entity type"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Filter by template"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractStatus"
+            },
+            "nullable": true,
+            "description": "Filter by statuses"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "Page number (1-based)"
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Results per page"
+          }
+        }
+      },
+      "QueryContractInstancesResponse": {
+        "type": "object",
+        "description": "Paginated list of contract instances",
+        "additionalProperties": false,
+        "required": [
+          "contracts",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "properties": {
+          "contracts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractInstanceResponse"
+            },
+            "description": "List of contracts"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total matching contracts"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Results per page"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether more results exist"
           }
         }
       },
@@ -22950,6 +25174,48 @@
           }
         }
       },
+      "ReportBreachRequest": {
+        "type": "object",
+        "description": "Request to report a breach",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "breachingEntityId",
+          "breachingEntityType",
+          "breachType"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract that was breached"
+          },
+          "breachingEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity that breached"
+          },
+          "breachingEntityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Type of breaching entity"
+          },
+          "breachType": {
+            "$ref": "#/components/schemas/BreachType",
+            "description": "Type of breach"
+          },
+          "breachedTermOrMilestone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Code of breached term or milestone"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true,
+            "description": "Breach description"
+          }
+        }
+      },
       "RepositoryBindingInfo": {
         "description": "Detailed repository binding configuration and status",
         "type": "object",
@@ -23320,6 +25586,34 @@
           "depth": {
             "type": "integer",
             "description": "Depth level of this reference"
+          }
+        }
+      },
+      "ResponseValidation": {
+        "type": "object",
+        "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+        "additionalProperties": false,
+        "properties": {
+          "successConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationCondition"
+            },
+            "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+          },
+          "permanentFailureConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationCondition"
+            },
+            "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+          },
+          "transientFailureStatusCodes": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
           }
         }
       },
@@ -25515,6 +27809,38 @@
           }
         }
       },
+      "TerminateContractInstanceRequest": {
+        "type": "object",
+        "description": "Request to terminate a contract",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "requestingEntityId",
+          "requestingEntityType"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract to terminate"
+          },
+          "requestingEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity requesting termination"
+          },
+          "requestingEntityType": {
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Type of requesting entity"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true,
+            "description": "Reason for termination"
+          }
+        }
+      },
       "TerminateSessionRequest": {
         "type": "object",
         "description": "Request to terminate a specific session",
@@ -25529,6 +27855,16 @@
             "description": "ID of the session to terminate"
           }
         }
+      },
+      "TerminationPolicy": {
+        "type": "string",
+        "description": "How the contract can be terminated",
+        "enum": [
+          "mutual_consent",
+          "unilateral_with_notice",
+          "unilateral_immediate",
+          "non_terminable"
+        ]
       },
       "ThemeConfig": {
         "description": "Visual theme configuration including colors, fonts, and navigation",
@@ -26062,6 +28398,32 @@
             "type": "string",
             "format": "date-time",
             "description": "When the update occurred"
+          }
+        }
+      },
+      "UpdateContractMetadataRequest": {
+        "type": "object",
+        "description": "Request to update contract metadata",
+        "additionalProperties": false,
+        "required": [
+          "contractId",
+          "metadataType",
+          "data"
+        ],
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contract instance ID"
+          },
+          "metadataType": {
+            "$ref": "#/components/schemas/MetadataType",
+            "description": "Which metadata to update"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Metadata to set or merge"
           }
         }
       },
@@ -26677,6 +29039,60 @@
             "description": "Seconds until expiration"
           }
         }
+      },
+      "ValidationCondition": {
+        "type": "object",
+        "description": "A single condition to check against an API response",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationConditionType"
+              }
+            ],
+            "description": "The type of validation condition to check"
+          },
+          "jsonPath": {
+            "type": "string",
+            "nullable": true,
+            "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+          },
+          "expectedValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/ComparisonOperator",
+            "nullable": true,
+            "description": "Comparison operator for numeric comparisons"
+          },
+          "statusCodes": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "HTTP status codes for statusCodeIn condition"
+          }
+        }
+      },
+      "ValidationConditionType": {
+        "type": "string",
+        "description": "Type of validation condition",
+        "enum": [
+          "statusCodeIn",
+          "jsonPathEquals",
+          "jsonPathNotEquals",
+          "jsonPathExists",
+          "jsonPathNotExists",
+          "jsonPathGreaterThan",
+          "jsonPathLessThan",
+          "jsonPathContains"
+        ]
       },
       "ValidationError": {
         "description": "Detailed validation error with type, location, and message information",
@@ -27321,6 +29737,10 @@
     {
       "name": "Bannou Website",
       "description": "Public-facing website service for registration, information, and account management."
+    },
+    {
+      "name": "Contract",
+      "description": "Binding agreements between entities with milestone-based progression."
     },
     {
       "name": "Music Theory Engine",

@@ -274,6 +274,19 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL for client reconnection. Defaults to wss://{BA... |
 
+### Contract
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS` | int | `7` | Default number of days for parties to consent before proposa... |
+| `CONTRACT_DEFAULT_ENFORCEMENT_MODE` | string | `event_only` | Default enforcement mode for contracts (advisory, event_only... |
+| `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | int | `100` | Maximum active contracts per entity (0 for unlimited) |
+| `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | int | `50` | Maximum number of milestones allowed in a template |
+| `CONTRACT_MAX_PARTIES_PER_CONTRACT` | int | `20` | Maximum number of parties allowed in a single contract |
+| `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | int | `10` | Maximum number of prebound APIs per milestone |
+| `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
+| `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
+
 ### Documentation
 
 | Environment Variable | Type | Default | Description |
@@ -573,9 +586,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 439
+- **Total properties**: 447
 - **Required (no default)**: 39
-- **Optional (has default)**: 400
+- **Optional (has default)**: 408
 
 ## Environment Variable Naming Convention
 

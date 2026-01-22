@@ -2,6 +2,7 @@
 
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Utilities;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Contract;

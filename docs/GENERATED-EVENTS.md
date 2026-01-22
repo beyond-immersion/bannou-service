@@ -157,6 +157,24 @@ This document lists all events defined in Bannou's event schemas.
 | `SystemErrorEvent` | Error | `system.error` | Generic error notification sent to client. |
 | `SystemNotificationEvent` | Custom | `system-notification` | Generic notification event for system-level messag... |
 
+### Contract
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ContractAcceptedEvent` | Custom | `contract-accepted` | Event published when all required parties consent |
+| `ContractActivatedEvent` | Custom | `contract-activated` | Event published when contract becomes active |
+| `ContractBreachCuredEvent` | Custom | `contract-breach-cured` | Event published when a breach is cured |
+| `ContractBreachDetectedEvent` | Custom | `contract-breach-detected` | Event published when a breach is recorded |
+| `ContractConsentReceivedEvent` | Custom | `contract-consent-received` | Event published when one party consents |
+| `ContractExpiredEvent` | Expiration | `contract.expired` | Event published when contract reaches natural expi... |
+| `ContractFulfilledEvent` | Custom | `contract-fulfilled` | Event published when all required milestones compl... |
+| `ContractMilestoneCompletedEvent` | Custom | `contract-milestone-completed` | Event published when a milestone is completed |
+| `ContractMilestoneFailedEvent` | Custom | `contract-milestone-failed` | Event published when a milestone fails |
+| `ContractPreboundApiExecutedEvent` | Custom | `contract-prebound-api-executed` | Event published when a prebound API is executed |
+| `ContractPreboundApiFailedEvent` | Custom | `contract-prebound-api-failed` | Event published when a prebound API call fails |
+| `ContractProposedEvent` | Custom | `contract-proposed` | Event published when a contract is proposed to par... |
+| `ContractTerminatedEvent` | Custom | `contract-terminated` | Event published when contract is terminated early |
+
 ### Documentation
 
 | Event | Type | Likely Topic | Description |

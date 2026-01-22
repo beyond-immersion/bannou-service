@@ -1561,6 +1561,407 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/contract/template/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get template by ID or code
+     * @description Retrieves a contract template by its unique ID or code.
+     *     At least one of templateId or code must be provided.
+     */
+    post: operations['getContractTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/template/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List templates with filters
+     * @description Lists contract templates with optional filtering by realm, active status,
+     *     and search term.
+     */
+    post: operations['listContractTemplates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create contract instance from template
+     * @description Creates a new contract instance from a template. The instance starts
+     *     in 'draft' status and must be proposed to parties before activation.
+     */
+    post: operations['createContractInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/propose': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Propose contract to parties (starts consent flow)
+     * @description Moves a draft contract to 'proposed' status and notifies parties.
+     *     Parties must consent before the contract becomes active.
+     */
+    post: operations['proposeContractInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/consent': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Party consents to contract
+     * @description Records a party's consent to a proposed contract. When all required
+     *     parties consent, the contract moves to 'accepted' then 'active' status.
+     */
+    post: operations['consentToContract'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get instance by ID
+     * @description Retrieves a contract instance by its unique ID.
+     */
+    post: operations['getContractInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/query': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Query instances by party, template, status
+     * @description Queries contract instances with various filters. At least one filter
+     *     must be provided.
+     */
+    post: operations['queryContractInstances'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/terminate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Request early termination
+     * @description Requests early termination of an active contract. Depending on the
+     *     contract's termination policy, this may require mutual consent or
+     *     incur penalties.
+     */
+    post: operations['terminateContractInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/get-status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current status and milestone progress
+     * @description Gets the current status of a contract including milestone progress,
+     *     pending consents, and any active breaches.
+     */
+    post: operations['getContractInstanceStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/milestone/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * External system reports milestone completed
+     * @description Called by external systems to report that a milestone's conditions
+     *     have been met. Triggers onComplete prebound APIs and may advance
+     *     contract status.
+     */
+    post: operations['completeMilestone'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/milestone/fail': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * External system reports milestone failed
+     * @description Called by external systems to report that a milestone has failed
+     *     (e.g., deadline passed, conditions cannot be met). Triggers onExpire
+     *     prebound APIs and may record a breach.
+     */
+    post: operations['failMilestone'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/milestone/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get milestone details and status
+     * @description Gets the current state of a specific milestone.
+     */
+    post: operations['getMilestone'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/breach/report': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Report a contract breach
+     * @description Reports a breach of contract terms. This can be called by parties
+     *     or external systems. The breach enters a grace period for cure
+     *     if configured.
+     */
+    post: operations['reportBreach'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/breach/cure': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mark breach as cured (system/admin action)
+     * @description Marks a breach as cured within the grace period. This prevents
+     *     consequences from being applied. Called by systems that verify
+     *     the breach has been remedied.
+     */
+    post: operations['cureBreach'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/breach/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get breach details
+     * @description Retrieves details of a specific breach record.
+     */
+    post: operations['getBreach'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/metadata/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update game metadata on instance
+     * @description Updates game-specific metadata on a contract instance without
+     *     touching contract state. Used by higher-level systems (quests, etc.)
+     *     to store additional context.
+     */
+    post: operations['updateContractMetadata'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/metadata/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get game metadata
+     * @description Retrieves game-specific metadata from a contract instance.
+     */
+    post: operations['getContractMetadata'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/check-constraint': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check if entity can take action given contracts
+     * @description Checks whether an entity's proposed action would violate any
+     *     active contract constraints (exclusivity, non-compete, territory, etc.).
+     */
+    post: operations['checkContractConstraint'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/query-active': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Query active contracts for entity
+     * @description Returns all active contracts where the specified entity is a party.
+     *     Useful for displaying current obligations in UI.
+     */
+    post: operations['queryActiveContracts'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/documentation/query': {
     parameters: {
       query?: never;
@@ -5438,6 +5839,82 @@ export interface components {
       /** @description Maximum corner (highest x, y, z values) */
       max: components['schemas']['Position3D'];
     };
+    /** @description Breach record details */
+    BreachResponse: {
+      /**
+       * Format: uuid
+       * @description Unique breach identifier
+       */
+      breachId: string;
+      /**
+       * Format: uuid
+       * @description Contract that was breached
+       */
+      contractId: string;
+      /**
+       * Format: uuid
+       * @description Entity that breached
+       */
+      breachingEntityId: string;
+      /** @description Type of breaching entity */
+      breachingEntityType: components['schemas']['EntityType'];
+      /** @description Type of breach */
+      breachType: components['schemas']['BreachType'];
+      /** @description What was breached */
+      breachedTermOrMilestone?: string | null;
+      /** @description Breach description */
+      description?: string | null;
+      /** @description Current status */
+      status: components['schemas']['BreachStatus'];
+      /**
+       * Format: date-time
+       * @description When breach was detected
+       */
+      detectedAt: string;
+      /**
+       * Format: date-time
+       * @description Deadline to cure breach
+       */
+      cureDeadline?: string | null;
+      /**
+       * Format: date-time
+       * @description When breach was cured
+       */
+      curedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description When consequences were applied
+       */
+      consequencesAppliedAt?: string | null;
+    };
+    /**
+     * @description Current status of a breach record
+     * @enum {string}
+     */
+    BreachStatus:
+      | 'detected'
+      | 'cure_period'
+      | 'cured'
+      | 'consequences_applied'
+      | 'disputed'
+      | 'forgiven';
+    /** @description Brief breach information */
+    BreachSummary: {
+      /**
+       * Format: uuid
+       * @description Breach ID
+       */
+      breachId: string;
+      /** @description Type of breach */
+      breachType: components['schemas']['BreachType'];
+      /** @description Current status */
+      status: components['schemas']['BreachStatus'];
+    };
+    /**
+     * @description Type of contract breach
+     * @enum {string}
+     */
+    BreachType: 'term_violation' | 'milestone_missed' | 'unauthorized_action' | 'non_payment';
     /** @description Request to retrieve metadata for multiple assets */
     BulkGetAssetsRequest: {
       /** @description Asset IDs to retrieve (max 100) */
@@ -5880,6 +6357,31 @@ export interface components {
        */
       targetPlayerId?: string | null;
     };
+    /** @description Request to check constraint */
+    CheckConstraintRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to check
+       */
+      entityId: string;
+      /** @description Entity type */
+      entityType: components['schemas']['EntityType'];
+      /** @description Type of constraint to check */
+      constraintType: components['schemas']['ConstraintType'];
+      /** @description What the entity wants to do */
+      proposedAction?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Constraint check result */
+    CheckConstraintResponse: {
+      /** @description Whether action is allowed */
+      allowed: boolean;
+      /** @description Contracts that would be violated */
+      conflictingContracts?: components['schemas']['ContractSummary'][] | null;
+      /** @description Explanation if not allowed */
+      reason?: string | null;
+    };
     /** @description Request to checkout a scene for editing */
     CheckoutRequest: {
       /**
@@ -6146,6 +6648,11 @@ export interface components {
       /** @description Committed scene with updated metadata */
       scene?: components['schemas']['Scene'];
     };
+    /**
+     * @description Comparison operators for numeric conditions
+     * @enum {string}
+     */
+    ComparisonOperator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte';
     /** @description Options controlling the ABML compilation process including optimizations and caching */
     CompilationOptions: {
       /**
@@ -6262,6 +6769,20 @@ export interface components {
       /** @description Metadata for behavior execution including performance hints and resource requirements */
       executionMetadata?: components['schemas']['ExecutionMetadata'];
     };
+    /** @description Request to complete a milestone */
+    CompleteMilestoneRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Milestone to complete */
+      milestoneCode: string;
+      /** @description Evidence of completion */
+      evidence?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to finalize an upload and trigger asset processing */
     CompleteUploadRequest: {
       /**
@@ -6306,6 +6827,31 @@ export interface components {
       /** @description Content hash of asset in this bundle */
       contentHash: string;
     };
+    /**
+     * @description Party's consent status
+     * @enum {string}
+     */
+    ConsentStatus: 'pending' | 'consented' | 'declined' | 'implicit';
+    /** @description Request to consent to a contract */
+    ConsentToContractRequest: {
+      /**
+       * Format: uuid
+       * @description Contract to consent to
+       */
+      contractId: string;
+      /**
+       * Format: uuid
+       * @description Entity ID of consenting party
+       */
+      partyEntityId: string;
+      /** @description Entity type of consenting party */
+      partyEntityType: components['schemas']['EntityType'];
+    };
+    /**
+     * @description Type of constraint to check
+     * @enum {string}
+     */
+    ConstraintType: 'exclusivity' | 'non_compete' | 'territory' | 'time_commitment';
     /** @description User-submitted contact form data */
     ContactRequest: {
       /**
@@ -6342,6 +6888,244 @@ export interface components {
     /** @description Schema defining required context variables for behavior execution */
     ContextSchemaData: {
       [key: string]: unknown;
+    };
+    /** @description Contract instance details */
+    ContractInstanceResponse: {
+      /**
+       * Format: uuid
+       * @description Unique contract identifier
+       */
+      contractId: string;
+      /**
+       * Format: uuid
+       * @description Source template ID
+       */
+      templateId: string;
+      /** @description Source template code */
+      templateCode?: string;
+      /** @description Current contract status */
+      status: components['schemas']['ContractStatus'];
+      /** @description Contract parties */
+      parties: components['schemas']['ContractPartyResponse'][];
+      /** @description Contract terms */
+      terms?: components['schemas']['ContractTerms'];
+      /** @description Milestone progress */
+      milestones?: components['schemas']['MilestoneInstanceResponse'][] | null;
+      /** @description Index of current milestone */
+      currentMilestoneIndex?: number | null;
+      /** @description Related escrow IDs */
+      escrowIds?: string[] | null;
+      /**
+       * Format: date-time
+       * @description When contract was proposed
+       */
+      proposedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description When all parties consented
+       */
+      acceptedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description When contract became active
+       */
+      effectiveFrom?: string | null;
+      /**
+       * Format: date-time
+       * @description When contract expires
+       */
+      effectiveUntil?: string | null;
+      /**
+       * Format: date-time
+       * @description When contract was terminated
+       */
+      terminatedAt?: string | null;
+      /** @description Game-specific metadata */
+      gameMetadata?: {
+        [key: string]: unknown;
+      } | null;
+      /**
+       * Format: date-time
+       * @description Creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Last update timestamp
+       */
+      updatedAt?: string | null;
+    };
+    /** @description Contract status summary */
+    ContractInstanceStatusResponse: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Current status */
+      status: components['schemas']['ContractStatus'];
+      /** @description Milestone progress summary */
+      milestoneProgress: components['schemas']['MilestoneProgressSummary'][];
+      /** @description Parties who haven't consented */
+      pendingConsents?: components['schemas']['PendingConsentSummary'][] | null;
+      /** @description Active breach records */
+      activeBreaches?: components['schemas']['BreachSummary'][] | null;
+      /** @description Days until natural expiration */
+      daysUntilExpiration?: number | null;
+    };
+    /** @description Contract metadata */
+    ContractMetadataResponse: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Instance-level metadata */
+      instanceData?: {
+        [key: string]: unknown;
+      } | null;
+      /** @description Runtime state metadata */
+      runtimeState?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Party input for contract creation */
+    ContractPartyInput: {
+      /**
+       * Format: uuid
+       * @description Entity ID
+       */
+      entityId: string;
+      /** @description Entity type */
+      entityType: components['schemas']['EntityType'];
+      /** @description Role from template */
+      role: string;
+    };
+    /** @description Contract party details */
+    ContractPartyResponse: {
+      /**
+       * Format: uuid
+       * @description Entity ID
+       */
+      entityId: string;
+      /** @description Entity type */
+      entityType: components['schemas']['EntityType'];
+      /** @description Role in contract */
+      role: string;
+      /** @description Consent status */
+      consentStatus: components['schemas']['ConsentStatus'];
+      /**
+       * Format: date-time
+       * @description When consent was given
+       */
+      consentedAt?: string | null;
+    };
+    /**
+     * @description Current status of a contract instance
+     * @enum {string}
+     */
+    ContractStatus:
+      | 'draft'
+      | 'proposed'
+      | 'pending'
+      | 'active'
+      | 'fulfilled'
+      | 'expired'
+      | 'terminated'
+      | 'breached'
+      | 'suspended'
+      | 'disputed'
+      | 'declined';
+    /** @description Brief contract information */
+    ContractSummary: {
+      /**
+       * Format: uuid
+       * @description Contract ID
+       */
+      contractId: string;
+      /** @description Template code */
+      templateCode: string;
+      /** @description Template name */
+      templateName?: string | null;
+      /** @description Current status */
+      status: components['schemas']['ContractStatus'];
+      /** @description Entity's role in contract */
+      role: string;
+      /**
+       * Format: date-time
+       * @description When contract expires
+       */
+      effectiveUntil?: string | null;
+    };
+    /** @description Contract template details */
+    ContractTemplateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique template identifier
+       */
+      templateId: string;
+      /** @description Unique template code */
+      code: string;
+      /** @description Human-readable name */
+      name: string;
+      /** @description Detailed description */
+      description?: string | null;
+      /**
+       * Format: uuid
+       * @description Realm ID if realm-specific
+       */
+      realmId?: string | null;
+      /** @description Minimum parties required */
+      minParties: number;
+      /** @description Maximum parties allowed */
+      maxParties: number;
+      /** @description Party role definitions */
+      partyRoles: components['schemas']['PartyRoleDefinition'][];
+      /** @description Default contract terms */
+      defaultTerms?: components['schemas']['ContractTerms'];
+      /** @description Milestone definitions */
+      milestones?: components['schemas']['MilestoneDefinition'][] | null;
+      /** @description Default enforcement mode */
+      defaultEnforcementMode: components['schemas']['EnforcementMode'];
+      /** @description Whether contracts can be transferred */
+      transferable?: boolean;
+      /** @description Game-specific metadata */
+      gameMetadata?: {
+        [key: string]: unknown;
+      } | null;
+      /** @description Whether template is active */
+      isActive: boolean;
+      /**
+       * Format: date-time
+       * @description Creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Last update timestamp
+       */
+      updatedAt?: string | null;
+    };
+    /** @description Configurable contract terms */
+    ContractTerms: {
+      /** @description Contract duration (ISO 8601 duration, null for perpetual) */
+      duration?: string | null;
+      /** @description When payments occur */
+      paymentSchedule?: components['schemas']['PaymentSchedule'];
+      /** @description Recurring payment frequency (ISO 8601 duration) */
+      paymentFrequency?: string | null;
+      /** @description How contract can be terminated */
+      terminationPolicy?: components['schemas']['TerminationPolicy'];
+      /** @description Required notice for termination (ISO 8601 duration) */
+      terminationNoticePeriod?: string | null;
+      /** @description Breaches before auto-termination (0 for no auto) */
+      breachThreshold?: number | null;
+      /** @description Time to cure breach (ISO 8601 duration) */
+      gracePeriodForCure?: string | null;
+      /** @description Game-specific custom terms */
+      customTerms?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description 3D spatial coordinates representing a position in the game world */
     Coordinates: {
@@ -6560,6 +7344,34 @@ export interface components {
        */
       estimatedSize: number;
     };
+    /** @description Request to create a contract instance */
+    CreateContractInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Template to create instance from
+       */
+      templateId: string;
+      /** @description Parties to this contract */
+      parties: components['schemas']['ContractPartyInput'][];
+      /** @description Terms overriding template defaults */
+      terms?: components['schemas']['ContractTerms'];
+      /**
+       * Format: date-time
+       * @description When contract becomes active (null for immediate)
+       */
+      effectiveFrom?: string | null;
+      /**
+       * Format: date-time
+       * @description When contract expires (null for perpetual)
+       */
+      effectiveUntil?: string | null;
+      /** @description Related escrow IDs */
+      escrowIds?: string[] | null;
+      /** @description Instance-level game metadata */
+      gameMetadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to create a map definition */
     CreateDefinitionRequest: {
       /** @description Human-readable name */
@@ -6735,6 +7547,16 @@ export interface components {
       metadata?: {
         [key: string]: string;
       } | null;
+    };
+    /** @description Request to cure a breach */
+    CureBreachRequest: {
+      /**
+       * Format: uuid
+       * @description Breach to cure
+       */
+      breachId: string;
+      /** @description Evidence of cure */
+      cureEvidence?: string | null;
     };
     /** @description Custom affordance definition for novel scenarios */
     CustomAffordance: {
@@ -7329,6 +8151,11 @@ export interface components {
       durationMs?: number | null;
     };
     /**
+     * @description How contract breaches are handled
+     * @enum {string}
+     */
+    EnforcementMode: 'advisory' | 'event_only' | 'consequence_based' | 'community';
+    /**
      * @description Character data with optional enriched fields.
      *     Fields are only populated if the corresponding include flag was set in the request.
      */
@@ -7481,6 +8308,18 @@ export interface components {
        * @description Archive size
        */
       sizeBytes: number;
+    };
+    /** @description Request to fail a milestone */
+    FailMilestoneRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Milestone that failed */
+      milestoneCode: string;
+      /** @description Reason for failure */
+      reason?: string | null;
     };
     /** @description Reference to a family member */
     FamilyMember: {
@@ -7863,6 +8702,14 @@ export interface components {
        */
       minimumStrength?: number | null;
     };
+    /** @description Request to get breach details */
+    GetBreachRequest: {
+      /**
+       * Format: uuid
+       * @description Breach ID
+       */
+      breachId: string;
+    };
     /** @description Request to retrieve bundle metadata and download URL */
     GetBundleRequest: {
       /** @description Bundle identifier to retrieve */
@@ -7948,6 +8795,40 @@ export interface components {
        * @description ID of the character to get combat preferences for
        */
       characterId: string;
+    };
+    /** @description Request to get a contract instance */
+    GetContractInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+    };
+    /** @description Request to get contract status */
+    GetContractInstanceStatusRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+    };
+    /** @description Request to get contract metadata */
+    GetContractMetadataRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+    };
+    /** @description Request to get a contract template */
+    GetContractTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Template ID (provide this or code)
+       */
+      templateId?: string | null;
+      /** @description Template code (provide this or templateId) */
+      code?: string | null;
     };
     /** @description Request to get a map definition */
     GetDefinitionRequest: {
@@ -8224,6 +9105,16 @@ export interface components {
        * @description ID of the ticket to query
        */
       ticketId: string;
+    };
+    /** @description Request to get milestone details */
+    GetMilestoneRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Milestone code */
+      milestoneCode: string;
     };
     /** @description Request payload for getting a character's event participation */
     GetParticipationRequest: {
@@ -9213,6 +10104,41 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to list contract templates */
+    ListContractTemplatesRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by realm (null includes cross-realm templates)
+       */
+      realmId?: string | null;
+      /** @description Filter by active status */
+      isActive?: boolean | null;
+      /** @description Search in name and description */
+      searchTerm?: string | null;
+      /**
+       * @description Page number (1-based)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Paginated list of contract templates */
+    ListContractTemplatesResponse: {
+      /** @description List of templates */
+      templates: components['schemas']['ContractTemplateResponse'][];
+      /** @description Total matching templates */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Results per page */
+      pageSize: number;
+      /** @description Whether more results exist */
+      hasNextPage?: boolean;
+    };
     /** @description Request to list map definitions */
     ListDefinitionsRequest: {
       /** @description Filter by name (partial match) */
@@ -10165,6 +11091,11 @@ export interface components {
        */
       averageNoteDuration?: number | null;
     };
+    /**
+     * @description Type of metadata to update
+     * @enum {string}
+     */
+    MetadataType: 'instance_data' | 'runtime_state';
     /** @description A single MIDI event */
     MidiEvent: {
       /** @description Absolute tick position */
@@ -10267,6 +11198,75 @@ export interface components {
       /** @description Non-fatal migration warnings */
       warnings?: string[];
     };
+    /** @description Milestone definition in a template */
+    MilestoneDefinition: {
+      /** @description Unique milestone code within template */
+      code: string;
+      /** @description Human-readable name */
+      name: string;
+      /** @description What this milestone represents */
+      description?: string | null;
+      /** @description Order in the contract flow */
+      sequence: number;
+      /** @description Whether milestone must be completed */
+      required: boolean;
+      /** @description Relative deadline (ISO 8601 duration) */
+      deadline?: string | null;
+      /** @description APIs to call on completion */
+      onComplete?: components['schemas']['PreboundApi'][] | null;
+      /** @description APIs to call if deadline passes */
+      onExpire?: components['schemas']['PreboundApi'][] | null;
+    };
+    /** @description Milestone instance status */
+    MilestoneInstanceResponse: {
+      /** @description Milestone code */
+      code: string;
+      /** @description Milestone name */
+      name: string;
+      /** @description Order in flow */
+      sequence: number;
+      /** @description Whether required */
+      required: boolean;
+      /** @description Current status */
+      status: components['schemas']['MilestoneStatus'];
+      /**
+       * Format: date-time
+       * @description When completed
+       */
+      completedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description When failed
+       */
+      failedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description Absolute deadline
+       */
+      deadline?: string | null;
+    };
+    /** @description Brief milestone progress */
+    MilestoneProgressSummary: {
+      /** @description Milestone code */
+      code: string;
+      /** @description Current status */
+      status: components['schemas']['MilestoneStatus'];
+    };
+    /** @description Milestone details */
+    MilestoneResponse: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Milestone details */
+      milestone: components['schemas']['MilestoneInstanceResponse'];
+    };
+    /**
+     * @description Current status of a milestone
+     * @enum {string}
+     */
+    MilestoneStatus: 'pending' | 'active' | 'completed' | 'failed' | 'skipped';
     /** @description Probability distribution over musical modes */
     ModeDistribution: {
       /**
@@ -10608,6 +11608,17 @@ export interface components {
       /** @description Pre-fetched skill rating (optional, will be looked up if not provided) */
       skillRating?: number | null;
     };
+    /** @description Definition of a party role in a contract template */
+    PartyRoleDefinition: {
+      /** @description Role identifier (employer, employee, buyer, seller, etc.) */
+      role: string;
+      /** @description Minimum entities required in this role */
+      minCount: number;
+      /** @description Maximum entities allowed in this role */
+      maxCount: number;
+      /** @description Which entity types can fill this role (null for any) */
+      allowedEntityTypes?: components['schemas']['EntityType'][] | null;
+    };
     /**
      * @description Method for aggregating party member skills
      * @enum {string}
@@ -10645,6 +11656,23 @@ export interface components {
        * @description When the past life ended
        */
       deathDate?: string | null;
+    };
+    /**
+     * @description When payments occur
+     * @enum {string}
+     */
+    PaymentSchedule: 'one_time' | 'recurring' | 'milestone_based';
+    /** @description Summary of pending consent */
+    PendingConsentSummary: {
+      /**
+       * Format: uuid
+       * @description Entity ID
+       */
+      entityId: string;
+      /** @description Entity type */
+      entityType: components['schemas']['EntityType'];
+      /** @description Role in contract */
+      role: string;
     };
     /**
      * @description Data representing a perception event for an actor.
@@ -10800,6 +11828,25 @@ export interface components {
        */
       z: number;
     };
+    /** @description Pre-configured API call to execute on contract events */
+    PreboundApi: {
+      /** @description Target service name */
+      serviceName: string;
+      /** @description Target endpoint path */
+      endpoint: string;
+      /** @description JSON payload with variable placeholders */
+      payloadTemplate: string;
+      /** @description Human-readable description */
+      description?: string | null;
+      /**
+       * @description How to execute the API call
+       * @default sync
+       * @enum {string}
+       */
+      executionMode: 'sync' | 'async' | 'fire_and_forget';
+      /** @description Optional validation rules for the response */
+      responseValidation?: components['schemas']['ResponseValidation'];
+    };
     /**
      * @description Preferred engagement distance. Influences positioning and
      *     ability selection in combat.
@@ -10837,6 +11884,14 @@ export interface components {
       versionNumber: number;
       /** @description Display name for promoted version */
       displayName?: string | null;
+    };
+    /** @description Request to propose a contract to parties */
+    ProposeContractInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance to propose
+       */
+      contractId: string;
     };
     /**
      * @description OAuth provider type
@@ -10894,6 +11949,23 @@ export interface components {
        * @description W component (scalar)
        */
       w: number;
+    };
+    /** @description Request to query active contracts */
+    QueryActiveContractsRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to query
+       */
+      entityId: string;
+      /** @description Entity type */
+      entityType: components['schemas']['EntityType'];
+      /** @description Filter by template codes */
+      templateCodes?: string[] | null;
+    };
+    /** @description Active contracts for entity */
+    QueryActiveContractsResponse: {
+      /** @description Active contracts */
+      contracts: components['schemas']['ContractSummary'][];
     };
     /** @description Request to query encounters between two characters */
     QueryBetweenRequest: {
@@ -11111,6 +12183,46 @@ export interface components {
        * @default 20
        */
       pageSize: number;
+    };
+    /** @description Request to query contract instances */
+    QueryContractInstancesRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by party entity ID
+       */
+      partyEntityId?: string | null;
+      /** @description Filter by party entity type */
+      partyEntityType?: components['schemas']['EntityType'];
+      /**
+       * Format: uuid
+       * @description Filter by template
+       */
+      templateId?: string | null;
+      /** @description Filter by statuses */
+      statuses?: components['schemas']['ContractStatus'][] | null;
+      /**
+       * @description Page number (1-based)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Paginated list of contract instances */
+    QueryContractInstancesResponse: {
+      /** @description List of contracts */
+      contracts: components['schemas']['ContractInstanceResponse'][];
+      /** @description Total matching contracts */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Results per page */
+      pageSize: number;
+      /** @description Whether more results exist */
+      hasNextPage?: boolean;
     };
     /** @description Request to search documentation using natural language queries */
     QueryDocumentationRequest: {
@@ -11918,6 +13030,27 @@ export interface components {
       /** @description New slot name */
       newSlotName: string;
     };
+    /** @description Request to report a breach */
+    ReportBreachRequest: {
+      /**
+       * Format: uuid
+       * @description Contract that was breached
+       */
+      contractId: string;
+      /**
+       * Format: uuid
+       * @description Entity that breached
+       */
+      breachingEntityId: string;
+      /** @description Type of breaching entity */
+      breachingEntityType: components['schemas']['EntityType'];
+      /** @description Type of breach */
+      breachType: components['schemas']['BreachType'];
+      /** @description Code of breached term or milestone */
+      breachedTermOrMilestone?: string | null;
+      /** @description Breach description */
+      description?: string | null;
+    };
     /** @description Detailed repository binding configuration and status */
     RepositoryBindingInfo: {
       /**
@@ -12110,6 +13243,28 @@ export interface components {
       scene: components['schemas']['Scene'];
       /** @description Depth level of this reference */
       depth?: number;
+    };
+    /**
+     * @description Validation rules for API responses with three-outcome model.
+     *     Used by lib-contract to validate clause conditions without
+     *     understanding the specific API semantics.
+     */
+    ResponseValidation: {
+      /**
+       * @description Conditions that must ALL pass for success.
+       *     If any fail, checks permanent failure conditions.
+       */
+      successConditions?: components['schemas']['ValidationCondition'][];
+      /**
+       * @description Conditions that indicate permanent failure (clause violated).
+       *     Checked when success conditions fail.
+       */
+      permanentFailureConditions?: components['schemas']['ValidationCondition'][];
+      /**
+       * @description HTTP status codes that indicate transient failure (retry later).
+       *     Default: [408, 429, 502, 503, 504]
+       */
+      transientFailureStatusCodes?: number[];
     };
     /** @description Request to restore a soft-deleted bundle */
     RestoreBundleRequest: {
@@ -13277,6 +14432,23 @@ export interface components {
       /** @description Maximum tempo */
       max: number;
     };
+    /** @description Request to terminate a contract */
+    TerminateContractInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Contract to terminate
+       */
+      contractId: string;
+      /**
+       * Format: uuid
+       * @description Entity requesting termination
+       */
+      requestingEntityId: string;
+      /** @description Type of requesting entity */
+      requestingEntityType: components['schemas']['EntityType'];
+      /** @description Reason for termination */
+      reason?: string | null;
+    };
     /** @description Request to terminate a specific session */
     TerminateSessionRequest: {
       /**
@@ -13285,6 +14457,15 @@ export interface components {
        */
       sessionId: string;
     };
+    /**
+     * @description How the contract can be terminated
+     * @enum {string}
+     */
+    TerminationPolicy:
+      | 'mutual_consent'
+      | 'unilateral_with_notice'
+      | 'unilateral_immediate'
+      | 'non_terminable';
     /** @description Visual theme configuration including colors, fonts, and navigation */
     ThemeConfig: {
       /** @description Name of the active theme */
@@ -13536,6 +14717,20 @@ export interface components {
        * @description When the update occurred
        */
       updatedAt?: string;
+    };
+    /** @description Request to update contract metadata */
+    UpdateContractMetadataRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Which metadata to update */
+      metadataType: components['schemas']['MetadataType'];
+      /** @description Metadata to set or merge */
+      data: {
+        [key: string]: unknown;
+      };
     };
     /** @description Request to update a map definition */
     UpdateDefinitionRequest: {
@@ -13820,6 +15015,39 @@ export interface components {
       /** @description Seconds until expiration */
       remainingTime?: number;
     };
+    /** @description A single condition to check against an API response */
+    ValidationCondition: {
+      /** @description The type of validation condition to check */
+      type: components['schemas']['ValidationConditionType'];
+      /**
+       * @description JsonPath expression to extract value from response.
+       *     Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
+       *     Example: "$.balance", "$.items[0].status"
+       */
+      jsonPath?: string | null;
+      /**
+       * @description Expected value for comparison conditions.
+       *     Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+       */
+      expectedValue?: string | null;
+      /** @description Comparison operator for numeric comparisons */
+      operator?: components['schemas']['ComparisonOperator'];
+      /** @description HTTP status codes for statusCodeIn condition */
+      statusCodes?: number[];
+    };
+    /**
+     * @description Type of validation condition
+     * @enum {string}
+     */
+    ValidationConditionType:
+      | 'statusCodeIn'
+      | 'jsonPathEquals'
+      | 'jsonPathNotEquals'
+      | 'jsonPathExists'
+      | 'jsonPathNotExists'
+      | 'jsonPathGreaterThan'
+      | 'jsonPathLessThan'
+      | 'jsonPathContains';
     /** @description Detailed validation error with type, location, and message information */
     ValidationError: {
       /**
@@ -16351,6 +17579,637 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  getContractTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetContractTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractTemplateResponse'];
+        };
+      };
+      /** @description Neither templateId nor code provided */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listContractTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListContractTemplatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Templates retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListContractTemplatesResponse'];
+        };
+      };
+    };
+  };
+  createContractInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateContractInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Instance created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractInstanceResponse'];
+        };
+      };
+      /** @description Invalid request (missing required parties, invalid terms) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  proposeContractInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProposeContractInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Contract proposed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractInstanceResponse'];
+        };
+      };
+      /** @description Contract not in draft status */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  consentToContract: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConsentToContractRequest'];
+      };
+    };
+    responses: {
+      /** @description Consent recorded successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractInstanceResponse'];
+        };
+      };
+      /** @description Party not part of this contract or already consented */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getContractInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetContractInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Instance retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractInstanceResponse'];
+        };
+      };
+      /** @description Instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  queryContractInstances: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryContractInstancesRequest'];
+      };
+    };
+    responses: {
+      /** @description Instances retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QueryContractInstancesResponse'];
+        };
+      };
+      /** @description No filter criteria provided */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  terminateContractInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TerminateContractInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Termination processed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractInstanceResponse'];
+        };
+      };
+      /** @description Contract cannot be terminated (policy violation) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getContractInstanceStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetContractInstanceStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Status retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractInstanceStatusResponse'];
+        };
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  completeMilestone: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CompleteMilestoneRequest'];
+      };
+    };
+    responses: {
+      /** @description Milestone completed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneResponse'];
+        };
+      };
+      /** @description Milestone not in valid state for completion */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract or milestone not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  failMilestone: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FailMilestoneRequest'];
+      };
+    };
+    responses: {
+      /** @description Milestone failure recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneResponse'];
+        };
+      };
+      /** @description Milestone not in valid state for failure */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract or milestone not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getMilestone: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetMilestoneRequest'];
+      };
+    };
+    responses: {
+      /** @description Milestone retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneResponse'];
+        };
+      };
+      /** @description Contract or milestone not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  reportBreach: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReportBreachRequest'];
+      };
+    };
+    responses: {
+      /** @description Breach reported successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BreachResponse'];
+        };
+      };
+      /** @description Invalid breach report */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  cureBreach: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CureBreachRequest'];
+      };
+    };
+    responses: {
+      /** @description Breach cured successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BreachResponse'];
+        };
+      };
+      /** @description Breach not in curable state */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Breach not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getBreach: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBreachRequest'];
+      };
+    };
+    responses: {
+      /** @description Breach retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BreachResponse'];
+        };
+      };
+      /** @description Breach not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  updateContractMetadata: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateContractMetadataRequest'];
+      };
+    };
+    responses: {
+      /** @description Metadata updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractMetadataResponse'];
+        };
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getContractMetadata: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetContractMetadataRequest'];
+      };
+    };
+    responses: {
+      /** @description Metadata retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContractMetadataResponse'];
+        };
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  checkContractConstraint: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckConstraintRequest'];
+      };
+    };
+    responses: {
+      /** @description Constraint check completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckConstraintResponse'];
+        };
+      };
+    };
+  };
+  queryActiveContracts: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryActiveContractsRequest'];
+      };
+    };
+    responses: {
+      /** @description Active contracts retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QueryActiveContractsResponse'];
+        };
       };
     };
   };
