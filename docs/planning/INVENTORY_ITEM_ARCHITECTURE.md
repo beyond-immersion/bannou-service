@@ -1,7 +1,7 @@
 # Inventory and Item System Architecture Planning
 
 > **Created**: 2026-01-22
-> **Status**: RESEARCH IN PROGRESS
+> **Status**: RESEARCH COMPLETE - Ready for Review
 > **Purpose**: Comprehensive architecture design for lib-inventory/lib-item
 > **Related**: ECONOMY_CURRENCY_ARCHITECTURE.md (see lib-currency for economic context)
 
@@ -64,27 +64,216 @@ Different games use fundamentally different inventory paradigms:
 
 ## Part 2: External Research (Web Search Results)
 
-*This section will be populated with findings from research agents...*
+*Research completed 2026-01-22 via parallel web search agents.*
 
 ### 2.1 Game Inventory Systems
 
-[PENDING: Research agent findings on game inventory implementations]
+**Industry Survey Results:**
+
+| Game | Inventory Model | Key Insight |
+|------|-----------------|-------------|
+| **World of Warcraft** | Slot-based, DB-driven | Normalized schema with template/instance pattern, DB2 compression for efficiency |
+| **EVE Online** | Enterprise-scale | 60M+ queries/day, AMD EPYC 7742 (2TB RAM, 128 cores), Redis service discovery |
+| **RuneScape** | 28-slot constraint | Intentionally limited - economic driver (bank trips, market activity) |
+| **Minecraft** | Stack-based | 64 items/stack max, ender chest cross-dimension storage |
+| **Skyrim/Fallout** | Weight-based | Base 300 lbs + stamina bonus, encumbrance penalties |
+| **Diablo II/Tarkov** | Grid-based | Items have width×height, tetris-style placement, rotation support |
+| **Factorio** | Hand-crafting discouraged | Personal inventory for logistics only, automation is the goal |
+
+**Database Schema Patterns:**
+
+```sql
+-- Template Pattern (most games use this)
+Items_Template (id, name, weight, max_durability, max_stack_size, attack_power)
+Character_Inventory (id, character_id, template_id, quantity, current_durability, slot_position)
+
+-- Hybrid Approach (stackable + unique)
+Item_Stack (inventory_id, template_id, quantity)  -- For fungible items
+Item_Instance (uuid, owner_id, template_id, durability, modifiers)  -- For unique items
+```
+
+**Key Design Recommendations:**
+- **Stacking**: Batch multiple identical items into single database row with quantity
+- **Unique IDs**: Assign UUID only when item needs individual tracking (trade, durability)
+- **Containers**: Support nesting with recursive queries and depth limits
+- **Performance**: Redis cache for active players, lazy-load nested contents
 
 ### 2.2 Fluid and Gas Systems
 
-[PENDING: Research agent findings on fluid/gas handling]
+**Game Implementation Survey:**
+
+| Game | Fluid Model | Storage Pattern | Physics Simulation |
+|------|-------------|-----------------|-------------------|
+| **Oxygen Not Included** | Packet-based | 1 packet/pipe tile | Basic pressure (density-based floating) |
+| **Factorio** | Percentage equilibration | Connected tanks equalize | Pump pressure for flow direction |
+| **Satisfactory** | Linear storage | 1.327 m³/meter pipe | None (flow rate limits only) |
+| **Space Engineers** | Dual: bulk + bottles | Large tanks continuous, bottles discrete | Simple fill/consume |
+| **Stationeers** | Molar physics | Pascals = (moles × temp) | Full PVT simulation with phase changes |
+| **Minecraft** | Block state | Depth 0-7 per block | Flow spreading (7 blocks max) |
+
+**Architectural Approaches:**
+
+1. **Continuous Decimals** (Factorio, Satisfactory): Store float/decimal quantities
+   - Pro: Simple model, direct physical representation
+   - Con: Precision issues, harder to discretize
+
+2. **Packet-Based** (Oxygen Not Included): Discrete units in pipes
+   - Pro: Deterministic, prevents mixing
+   - Con: Limited throughput, more overhead
+
+3. **Molar/Physics** (Stationeers): Track moles + temperature → derive pressure
+   - Pro: Rich simulation, phase transitions
+   - Con: Computational overhead, steep learning curve
+
+**Recommendation for Bannou:**
+- **Short-term**: Continuous quantities as decimal in existing item system (simple)
+- **Long-term**: Separate lib-fluid only if games need pressure/flow simulation
+- **Bridge**: Barrel pattern (discrete items containing fluid) for transport to standard inventory
 
 ### 2.3 Item Data Modeling Best Practices
 
-[PENDING: Research agent findings on backend item schemas]
+**Backend Knowledge Distribution:**
+
+| Backend MUST Know | Backend Should NOT Compute |
+|-------------------|---------------------------|
+| Item identifiers & ownership | Display presentation (icons, colors) |
+| Inventory counts (prevent cheating) | Animation states, visual effects |
+| Restricted properties (damage, rarity) | Client-side physics |
+| Audit trail (fraud detection) | Localized descriptions |
+
+**Recommended Hybrid Schema:**
+
+```json
+{
+  "baseProperties": {        // Typed, indexed, queryable
+    "name": "string",
+    "rarity": "enum",
+    "weight": "decimal",
+    "maxStackSize": "int",
+    "isDeprecated": "boolean"
+  },
+  "customProperties": {      // JSON blob, validated but flexible
+    "$schema": "uri",        // Reference to game-specific schema
+    "stats": {...},
+    "effects": {...}
+  }
+}
+```
+
+**Schema Evolution Best Practices:**
+
+1. **Deprecation Phase**: Mark `deprecated: true`, keep code working
+2. **Migration Window**: Serve both old/new formats (2-3 updates)
+3. **Legacy Support**: Backend still returns deprecated if owned
+4. **Removal**: Delete after 3-6 months notice, migrate to "Legacy Item" collection
+
+**Query Optimization:**
+- Always filter by `gameId` early (partition data)
+- Composite indexes: `(ownerId, gameId, itemType)`, `(rarity, itemType, gameId)`
+- Full-text index on `name` and `description`
+- Redis Sorted Sets for hot item lookups and leaderboards
 
 ### 2.4 ECS Approaches
 
-[PENDING: Research agent findings on ECS item systems]
+**ECS for Items: Core Principles**
+
+Instead of deep class hierarchies (Weapon → Sword → EnchantedSword), compose items from components:
+
+```
+Common Item Components:
+├── Stackable       (maxStack, currentCount)
+├── Equippable      (slot type, bonuses)
+├── Consumable      (effect, uses remaining)
+├── Container       (can hold items, capacity)
+├── Valuable        (gold worth, rarity)
+├── Durable         (current/max durability)
+├── Enchanted       (magic effects)
+├── Physical        (weight, dimensions, material)
+└── Temporal        (creation time, expiration)
+```
+
+**Framework Implementations:**
+
+| Framework | Approach | Best For |
+|-----------|----------|----------|
+| **Unity DOTS** | Archetype-based, Job System | AAA performance (Overwatch 2, Fortnite physics) |
+| **Bevy ECS** (Rust) | Sparse sets, relationship support | Indie, data-oriented design |
+| **Flecs** (C/C++) | First-class relationships | Complex entity graphs |
+| **Unreal** | Component-based (not pure ECS) | Traditional OOP with composition |
+
+**Storage Architecture Comparison:**
+
+| Characteristic | Archetype (Dense) | Sparse Set |
+|----------------|-------------------|------------|
+| Add/Remove Components | Expensive | Cheap (O(1)) |
+| Iteration Performance | Excellent (cache-friendly) | Good |
+| Memory Usage | Efficient | Can be wasteful |
+| Backend Database | Pre-defined schemas | Dynamic tables |
+
+**Backend ECS Pattern:**
+
+```sql
+-- Items table (entities)
+CREATE TABLE Items (id UUID PRIMARY KEY, archetype_code VARCHAR(50));
+
+-- Components stored separately (sparse)
+CREATE TABLE ComponentData (
+  item_id UUID,
+  component_name VARCHAR(50),
+  data JSON,
+  UNIQUE(item_id, component_name)
+);
+CREATE INDEX idx_component_query ON ComponentData(component_name, item_id);
+```
+
+**Recommendation for Bannou**: Archetype approach fits better because:
+- Items rarely change component composition after creation
+- Inventory queries are frequent (UI updates)
+- Server doesn't modify item structure at runtime
 
 ### 2.5 Commercial BaaS Platforms
 
-[PENDING: Research agent findings on PlayFab, GameSparks, etc.]
+**Platform Architecture Comparison:**
+
+| Platform | Schema Model | Stacking | Custom Data | Limitation |
+|----------|--------------|----------|-------------|------------|
+| **PlayFab** | Catalog + DisplayProperties | Stack-based (StackId) | JSON blob | 10k items/inventory, properties only at creation |
+| **Beamable** | Federated + InventoryUpdateBuilder | Instance-based | Dict<string,string> | String-only properties |
+| **Unity Economy** | Resource-based (currencies + items) | Virtual containers | custom_data JSON | Schema-defined queries |
+| **Nakama/Hiro** | Gameplay-first | Category-based limits | string + numeric props | Separate property types |
+| **AccelByte** | Slot + Quantity | Multiple storage types | customAttributes + serverCustomAttributes | No composition support |
+
+**Common Design Patterns:**
+
+1. **Catalog-Driven**: All platforms require catalog definition before instantiation
+2. **Stack Model**: Most use stack-based stacking to reduce database rows
+3. **JSON Custom Data**: Universal pattern for game-specific properties
+4. **Event Publishing**: All publish inventory change events
+
+**Platform Limitations Discovered:**
+
+| Platform | Critical Gap |
+|----------|--------------|
+| PlayFab | Properties can only be set on NEW stacks; update requires separate call |
+| GameSparks | NO runtime creation - virtual goods must be pre-configured (legacy) |
+| Beamable | String-only properties, no server-only layer |
+| Nakama | Dual property types (string + numeric) create complexity |
+| AccelByte | No composition/containers support |
+
+**What NO Platform Supports Well:**
+- True polymorphism (interface-based item hierarchies)
+- Nested objects in properties
+- Cross-game trading/inventory sharing
+- ACID transactions across services
+- Event ordering guarantees
+- Automatic schema validation
+
+**Opportunities for Bannou Differentiation:**
+1. First-class polymorphism with item interfaces
+2. Automatic schema validation with constraints
+3. True cross-game inventory (account-level storage)
+4. Composition support (items containing items)
+5. Event ordering with distributed ledger option
 
 ---
 
@@ -1123,9 +1312,50 @@ container-store:
 
 ## Appendix A: Research References
 
-*Web search findings from research agents:*
+*Web search findings from research agents (2026-01-22):*
 
-[TO BE POPULATED when research completes]
+### Game Inventory Systems
+- [Inventory Systems in Games - Out of Games](https://outof.games/news/6699-inventory-systems-in-games-lost-in-the-grid/)
+- [Database Structure Guide - OwnedCore](https://www.ownedcore.com/forums/world-of-warcraft/world-of-warcraft-emulator-servers/wow-emu-guides-tutorials/59936-database-structure-guide.html/)
+- [DB2 - wowdev](https://wowdev.wiki/DB2)
+- [EVE Online Architecture - High Scalability](https://highscalability.com/eve-online-architecture/)
+- [A History of EVE Database Server Hardware](https://www.eveonline.com/news/view/a-history-of-eve-database-server-hardware)
+- [RuneScape Inventory Wiki](https://runescape.fandom.com/wiki/Inventory)
+- [Skyrim Carry Weight - UESP Wiki](https://en.uesp.net/wiki/Skyrim_talk:Carry_Weight)
+
+### Fluid and Gas Systems
+- [Oxygen Not Included Wiki - Fluid Mechanics](https://oxygennotincluded.wiki.gg/wiki/Fluid_Mechanics)
+- [Factorio Wiki - Fluid System](https://wiki.factorio.com/Fluid_system)
+- [Factorio Blog - Fluids 2.0](https://factorio.com/blog/post/fff-416)
+- [Satisfactory Wiki - Pipelines](https://satisfactory.wiki.gg/wiki/Pipelines)
+- [Space Engineers Wiki - Hydrogen Tank](https://spaceengineers.wiki.gg/wiki/Hydrogen_Tank)
+- [Stationeers Wiki - Pressure/Volume/Temperature](https://stationeers-wiki.com/Pressure,_Volume,_Quantity,_and_Temperature)
+- [Minecraft Wiki - Fluid](https://minecraft.wiki/w/Fluid)
+
+### Item Data Modeling
+- [Steam Inventory Schema Documentation](https://partner.steamgames.com/doc/features/inventory/schema)
+- [PlayFab Catalog Overview](https://learn.microsoft.com/en-us/gaming/playfab/economy-monetization/economy-v2/catalog/catalog-overview)
+- [Beamable Managed Inventory Service](https://beamable.com/blog/introducing-beamables-managed-inventory-service)
+- [Evolveum Schema Deprecation](https://docs.evolveum.com/midpoint/devel/design/schema-cleanup-4.8/deprecated-items/)
+- [Zalando RESTful API Guidelines](https://opensource.zalando.com/restful-api-guidelines/)
+
+### ECS Approaches
+- [Entity Component System - Wikipedia](https://en.wikipedia.org/wiki/Entity_component_system)
+- [ECS FAQ - SanderMertens/ecs-faq](https://github.com/SanderMertens/ecs-faq)
+- [Unity DOTS/ECS](https://unity.com/ecs)
+- [Bevy ECS Getting Started](https://bevy.org/learn/quick-start/getting-started/ecs/)
+- [Flecs Inventory System Example](https://github.com/SanderMertens/flecs)
+- [Building an ECS - Storage in Pictures](https://ajmmertens.medium.com/building-an-ecs-storage-in-pictures-642b8bfd6e04)
+- [Archetypal vs Sparse Set ECS Performance](https://diglib.eg.org/bitstreams/766b72a4-70ae-4e8e-935b-949d589ed962/download)
+
+### Commercial BaaS Platforms
+- [PlayFab Inventory APIs](https://learn.microsoft.com/en-us/gaming/playfab/economy-monetization/economy-v2/inventory/)
+- [PlayFab Inventory Stacks](https://learn.microsoft.com/en-us/gaming/playfab/features/economy-v2/inventory/stacks)
+- [Beamable Inventory Documentation](https://docs.beamable.com/docs/inventory-feature-overview)
+- [Unity Gaming Services Economy](https://docs.unity.com/ugs/en-us/manual/economy/manual)
+- [Nakama/Hiro Inventory System](https://heroiclabs.com/docs/hiro/concepts/inventory/)
+- [AccelByte Inventory Management](https://docs.accelbyte.io/gaming-services/services/storage/inventory/)
+- [Cross-Platform Game Development - AccelByte](https://accelbyte.io/blog/cross-platform-game-development-demystified)
 
 ---
 
@@ -1247,5 +1477,6 @@ player_backpack:
 
 ---
 
-*Document Status: DRAFT - Research integration pending*
+*Document Status: RESEARCH COMPLETE - Ready for review and decision-making*
 *Last Updated: 2026-01-22*
+*Research Sources: 5 parallel web search agents covering game systems, fluid mechanics, data modeling, ECS patterns, and commercial BaaS platforms*
