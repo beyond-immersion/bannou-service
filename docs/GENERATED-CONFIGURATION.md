@@ -287,6 +287,19 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
 | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
 
+### Currency
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CURRENCY_AUTOGAIN_BATCH_SIZE` | int | `1000` | For task mode - batch size per processing cycle |
+| `CURRENCY_AUTOGAIN_PROCESSING_MODE` | string | `lazy` | How autogain is calculated (lazy = on-demand at query time, ... |
+| `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | int | `60000` | For task mode - how often to process autogain in millisecond... |
+| `CURRENCY_DEFAULT_ALLOW_NEGATIVE` | bool | `false` | Default for currencies that do not specify allowNegative |
+| `CURRENCY_DEFAULT_PRECISION` | string | `decimal_2` | Default precision for currencies that do not specify (intege... |
+| `CURRENCY_HOLD_MAX_DURATION_DAYS` | int | `7` | Maximum duration for authorization holds in days |
+| `CURRENCY_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | How long to cache idempotency keys in seconds |
+| `CURRENCY_TRANSACTION_RETENTION_DAYS` | int | `365` | How many days to retain detailed transaction history |
+
 ### Documentation
 
 | Environment Variable | Type | Default | Description |
@@ -586,9 +599,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 447
+- **Total properties**: 455
 - **Required (no default)**: 39
-- **Optional (has default)**: 408
+- **Optional (has default)**: 416
 
 ## Environment Variable Naming Convention
 

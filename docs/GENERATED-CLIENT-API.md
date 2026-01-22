@@ -22,6 +22,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 22 | Binding agreements between entities with milestone-based pro... |
+| [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for Arcadia and other games. |
@@ -571,6 +572,86 @@ Binding agreements between entities with milestone-based progression.
 | `ListContracttemplatesAsync` | `ListContractTemplatesRequest` | `ListContractTemplatesResponse` | List templates with filters |
 | `UpdateContracttemplateAsync` | `UpdateContractTemplateRequest` | `ContractTemplateResponse` | Update template (not instances) |
 | `DeleteContracttemplateEventAsync` | `DeleteContractTemplateRequest` | *(fire-and-forget)* | Soft-delete template |
+
+---
+
+## Currency Service API {#currency}
+
+**Proxy**: `client.Currency` | **Version**: 1.0.0
+
+Multi-currency management service for game economies.
+
+### Analytics
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetGlobalsupplyAsync` | `GetGlobalSupplyRequest` | `GetGlobalSupplyResponse` | Get global supply statistics for a currency |
+| `GetWalletdistributionAsync` | `GetWalletDistributionRequest` | `GetWalletDistributionResponse` | Get wealth distribution statistics |
+
+### Authorization Hold
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateHoldAsync` | `CreateHoldRequest` | `HoldResponse` | Create an authorization hold (reserve funds) |
+| `CaptureholdAsync` | `CaptureHoldRequest` | `CaptureHoldResponse` | Capture held funds (debit final amount) |
+| `ReleaseholdAsync` | `ReleaseHoldRequest` | `HoldResponse` | Release held funds (make available again) |
+| `GetHoldAsync` | `GetHoldRequest` | `HoldResponse` | Get hold status and details |
+
+### Balance
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetBalanceAsync` | `GetBalanceRequest` | `GetBalanceResponse` | Get balance for a specific currency in a wallet |
+| `BatchgetbalancesAsync` | `BatchGetBalancesRequest` | `BatchGetBalancesResponse` | Get multiple balances in one call |
+| `CreditcurrencyAsync` | `CreditCurrencyRequest` | `CreditCurrencyResponse` | Credit currency to a wallet (faucet operation) |
+| `DebitcurrencyAsync` | `DebitCurrencyRequest` | `DebitCurrencyResponse` | Debit currency from a wallet (sink operation) |
+| `TransfercurrencyAsync` | `TransferCurrencyRequest` | `TransferCurrencyResponse` | Transfer currency between wallets |
+| `BatchcreditcurrencyAsync` | `BatchCreditRequest` | `BatchCreditResponse` | Credit multiple wallets in one call |
+
+### Conversion
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CalculateconversionAsync` | `CalculateConversionRequest` | `CalculateConversionResponse` | Calculate conversion without executing |
+| `ExecuteconversionAsync` | `ExecuteConversionRequest` | `ExecuteConversionResponse` | Execute currency conversion in a wallet |
+| `GetExchangerateAsync` | `GetExchangeRateRequest` | `GetExchangeRateResponse` | Get exchange rate between two currencies |
+| `UpdateExchangerateAsync` | `UpdateExchangeRateRequest` | `UpdateExchangeRateResponse` | Update a currency's exchange rate to base |
+
+### Currency Definition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateCurrencydefinitionAsync` | `CreateCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Create a new currency definition |
+| `GetCurrencydefinitionAsync` | `GetCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Get currency definition by ID or code |
+| `ListCurrencydefinitionsAsync` | `ListCurrencyDefinitionsRequest` | `ListCurrencyDefinitionsResponse` | List currency definitions with filters |
+| `UpdateCurrencydefinitionAsync` | `UpdateCurrencyDefinitionRequest` | `CurrencyDefinitionResponse` | Update mutable fields of a currency definition |
+
+### Escrow Integration
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EscrowdepositAsync` | `EscrowDepositRequest` | `EscrowDepositResponse` | Debit wallet for escrow deposit |
+| `EscrowreleaseAsync` | `EscrowReleaseRequest` | `EscrowReleaseResponse` | Credit recipient on escrow completion |
+| `EscrowrefundAsync` | `EscrowRefundRequest` | `EscrowRefundResponse` | Credit depositor on escrow refund |
+
+### Transaction History
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetTransactionAsync` | `GetTransactionRequest` | `TransactionResponse` | Get a transaction by ID |
+| `GetTransactionhistoryAsync` | `GetTransactionHistoryRequest` | `GetTransactionHistoryResponse` | Get paginated transaction history for a wallet |
+| `GetTransactionsbyreferenceAsync` | `GetTransactionsByReferenceRequest` | `GetTransactionsByReferenceResponse` | Get transactions by reference type and ID |
+
+### Wallet
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateWalletAsync` | `CreateWalletRequest` | `WalletResponse` | Create a new wallet for an owner |
+| `GetWalletAsync` | `GetWalletRequest` | `WalletWithBalancesResponse` | Get wallet by ID or owner |
+| `GetOrcreatewalletAsync` | `GetOrCreateWalletRequest` | `GetOrCreateWalletResponse` | Get existing wallet or create if not exists |
+| `FreezewalletAsync` | `FreezeWalletRequest` | `WalletResponse` | Freeze a wallet to prevent transactions |
+| `UnfreezewalletAsync` | `UnfreezeWalletRequest` | `WalletResponse` | Unfreeze a frozen wallet |
+| `ClosewalletAsync` | `CloseWalletRequest` | `CloseWalletResponse` | Permanently close a wallet |
 
 ---
 
@@ -1402,8 +1483,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 36
-- **Total methods**: 441
+- **Total services**: 37
+- **Total methods**: 473
 
 ---
 

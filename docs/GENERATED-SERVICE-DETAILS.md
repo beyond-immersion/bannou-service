@@ -22,6 +22,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract](#contract) | 1.0.0 | 22 | Binding agreements between entities with milestone-based pro... |
+| [Currency](#currency) | 1.0.0 | 32 | Multi-currency management service for game economies. |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
@@ -555,6 +556,86 @@ Binding agreements between entities with milestone-based progression.
 | `POST` | `/contract/template/get` | Get template by ID or code | user |
 | `POST` | `/contract/template/list` | List templates with filters | user |
 | `POST` | `/contract/template/update` | Update template (not instances) | admin |
+
+---
+
+## Currency {#currency}
+
+**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml`
+
+Multi-currency management service for game economies.
+
+### Analytics
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/stats/global-supply` | Get global supply statistics for a currency | user |
+| `POST` | `/currency/stats/wallet-distribution` | Get wealth distribution statistics | admin |
+
+### Authorization Hold
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/hold/capture` | Capture held funds (debit final amount) | developer |
+| `POST` | `/currency/hold/create` | Create an authorization hold (reserve funds) | developer |
+| `POST` | `/currency/hold/get` | Get hold status and details | developer |
+| `POST` | `/currency/hold/release` | Release held funds (make available again) | developer |
+
+### Balance
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/balance/batch-get` | Get multiple balances in one call | user |
+| `POST` | `/currency/balance/get` | Get balance for a specific currency in a wallet | user |
+| `POST` | `/currency/batch-credit` | Credit multiple wallets in one call | developer |
+| `POST` | `/currency/credit` | Credit currency to a wallet (faucet operation) | developer |
+| `POST` | `/currency/debit` | Debit currency from a wallet (sink operation) | developer |
+| `POST` | `/currency/transfer` | Transfer currency between wallets | developer |
+
+### Conversion
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/convert/calculate` | Calculate conversion without executing | user |
+| `POST` | `/currency/convert/execute` | Execute currency conversion in a wallet | developer |
+| `POST` | `/currency/exchange-rate/get` | Get exchange rate between two currencies | user |
+| `POST` | `/currency/exchange-rate/update` | Update a currency's exchange rate to base | admin |
+
+### Currency Definition
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/definition/create` | Create a new currency definition | admin |
+| `POST` | `/currency/definition/get` | Get currency definition by ID or code | user |
+| `POST` | `/currency/definition/list` | List currency definitions with filters | user |
+| `POST` | `/currency/definition/update` | Update mutable fields of a currency definition | admin |
+
+### Escrow Integration
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/escrow/deposit` | Debit wallet for escrow deposit | developer |
+| `POST` | `/currency/escrow/refund` | Credit depositor on escrow refund | developer |
+| `POST` | `/currency/escrow/release` | Credit recipient on escrow completion | developer |
+
+### Transaction History
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/transaction/by-reference` | Get transactions by reference type and ID | developer |
+| `POST` | `/currency/transaction/get` | Get a transaction by ID | developer |
+| `POST` | `/currency/transaction/history` | Get paginated transaction history for a wallet | user |
+
+### Wallet
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/currency/wallet/close` | Permanently close a wallet | admin |
+| `POST` | `/currency/wallet/create` | Create a new wallet for an owner | developer |
+| `POST` | `/currency/wallet/freeze` | Freeze a wallet to prevent transactions | admin |
+| `POST` | `/currency/wallet/get` | Get wallet by ID or owner | user |
+| `POST` | `/currency/wallet/get-or-create` | Get existing wallet or create if not exists | developer |
+| `POST` | `/currency/wallet/unfreeze` | Unfreeze a frozen wallet | admin |
 
 ---
 
@@ -1402,8 +1483,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 36
-- **Total endpoints**: 447
+- **Total services**: 37
+- **Total endpoints**: 479
 
 ---
 

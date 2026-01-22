@@ -176,6 +176,26 @@ This document lists all events defined in Bannou's event schemas.
 | `ContractProposedEvent` | Custom | `contract-proposed` | Event published when a contract is proposed to par... |
 | `ContractTerminatedEvent` | Custom | `contract-terminated` | Event published when contract is terminated early |
 
+### Currency
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CurrencyAutogainCalculatedEvent` | Custom | `currency-autogain-calculated` | Event published when autogain is calculated for a ... |
+| `CurrencyCreditedEvent` | Custom | `currency-credited` | Event published when currency is credited to a wal... |
+| `CurrencyDebitedEvent` | Custom | `currency-debited` | Event published when currency is debited from a wa... |
+| `CurrencyEarnCapReachedEvent` | Custom | `currency-earn-cap-reached` | Event published when a credit is limited by earn c... |
+| `CurrencyExchangeRateUpdatedEvent` | Lifecycle (Updated) | `currency-exchange-rate.updated` | Event published when a currency exchange rate is u... |
+| `CurrencyExpiredEvent` | Expiration | `currency.expired` | Event published when currency expires |
+| `CurrencyHoldCapturedEvent` | Custom | `currency-hold-captured` | Event published when a hold is captured |
+| `CurrencyHoldCreatedEvent` | Lifecycle (Created) | `currency-hold.created` | Event published when an authorization hold is crea... |
+| `CurrencyHoldExpiredEvent` | Expiration | `currency-hold.expired` | Event published when a hold expires (auto-release) |
+| `CurrencyHoldReleasedEvent` | Custom | `currency-hold-released` | Event published when a hold is released |
+| `CurrencyTransferredEvent` | Custom | `currency-transferred` | Event published when currency is transferred betwe... |
+| `CurrencyWalletCapReachedEvent` | Custom | `currency-wallet-cap-reached` | Event published when a credit hits the wallet cap |
+| `CurrencyWalletClosedEvent` | Custom | `currency-wallet-closed` | Event published when a wallet is permanently close... |
+| `CurrencyWalletFrozenEvent` | Custom | `currency-wallet-frozen` | Event published when a wallet is frozen |
+| `CurrencyWalletUnfrozenEvent` | Custom | `currency-wallet-unfrozen` | Event published when a wallet is unfrozen |
+
 ### Documentation
 
 | Event | Type | Likely Topic | Description |

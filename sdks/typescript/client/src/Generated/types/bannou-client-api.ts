@@ -1962,6 +1962,531 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/currency/definition/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get currency definition by ID or code
+     * @description Retrieves a currency definition by its unique ID or code.
+     *     At least one of definitionId or code must be provided.
+     */
+    post: operations['getCurrencyDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/definition/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List currency definitions with filters
+     * @description Lists currency definitions with optional filtering by realm, scope,
+     *     active status, and base currency flag.
+     */
+    post: operations['listCurrencyDefinitions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/wallet/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new wallet for an owner
+     * @description Creates a new wallet for a polymorphic owner (account, character, NPC, guild, etc.).
+     *     Each owner+ownerType+realm combination can have at most one wallet.
+     */
+    post: operations['createWallet'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/wallet/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get wallet by ID or owner
+     * @description Retrieves a wallet by its ID, or by owner+ownerType+realm combination.
+     *     Returns the wallet with all non-zero balances.
+     */
+    post: operations['getWallet'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/wallet/get-or-create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get existing wallet or create if not exists
+     * @description Retrieves a wallet if it exists, otherwise creates a new one.
+     *     Upsert pattern for convenience.
+     */
+    post: operations['getOrCreateWallet'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/balance/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get balance for a specific currency in a wallet
+     * @description Retrieves the current balance for a specific currency in a wallet.
+     *     In lazy autogain mode, this may trigger autogain calculation and emit events.
+     *     Returns earn cap info and autogain info when applicable.
+     */
+    post: operations['getBalance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/balance/batch-get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get multiple balances in one call
+     * @description Retrieves balances for multiple wallet+currency combinations.
+     *     Autogain is applied where applicable.
+     */
+    post: operations['batchGetBalances'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/credit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Credit currency to a wallet (faucet operation)
+     * @description Credits currency to a wallet. This is a faucet operation (currency enters the system).
+     *     Enforces earn caps, wallet caps, and global supply caps. Requires idempotency key.
+     */
+    post: operations['creditCurrency'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/debit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Debit currency from a wallet (sink operation)
+     * @description Debits currency from a wallet. This is a sink operation (currency exits the system).
+     *     Checks for sufficient funds unless negative balance is allowed.
+     */
+    post: operations['debitCurrency'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/transfer': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Transfer currency between wallets
+     * @description Transfers currency from one wallet to another. Validates transferability,
+     *     realm compatibility, and sufficient funds.
+     */
+    post: operations['transferCurrency'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/batch-credit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Credit multiple wallets in one call
+     * @description Credits currency to multiple wallets in one call. Each operation is independent;
+     *     failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+     */
+    post: operations['batchCreditCurrency'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/convert/calculate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Calculate conversion without executing
+     * @description Previews a currency conversion calculation without executing it.
+     *     Uses base currency exchange rates to compute the effective rate.
+     */
+    post: operations['calculateConversion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/convert/execute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Execute currency conversion in a wallet
+     * @description Executes a currency conversion within a single wallet. Debits the source
+     *     currency and credits the target currency at the computed exchange rate.
+     */
+    post: operations['executeConversion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/exchange-rate/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get exchange rate between two currencies
+     * @description Retrieves the exchange rate between two currencies using the base currency
+     *     as an intermediary.
+     */
+    post: operations['getExchangeRate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/transaction/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a transaction by ID
+     * @description Retrieves a single transaction record by its unique ID.
+     */
+    post: operations['getTransaction'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/transaction/history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get paginated transaction history for a wallet
+     * @description Retrieves transaction history for a wallet with optional filters
+     *     by currency, transaction type, and date range.
+     */
+    post: operations['getTransactionHistory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/transaction/by-reference': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get transactions by reference type and ID
+     * @description Retrieves all transactions linked to a specific reference (quest, auction,
+     *     escrow, etc.).
+     */
+    post: operations['getTransactionsByReference'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/stats/global-supply': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get global supply statistics for a currency
+     * @description Returns aggregate supply statistics including total supply, circulation,
+     *     escrow amounts, and lifetime mint/burn totals.
+     */
+    post: operations['getGlobalSupply'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/escrow/deposit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Debit wallet for escrow deposit
+     * @description Called by lib-escrow when a party deposits currency into an escrow agreement.
+     *     Immediately debits the wallet (no lock tracking needed - escrow owns the funds).
+     */
+    post: operations['escrowDeposit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/escrow/release': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Credit recipient on escrow completion
+     * @description Called by lib-escrow when an escrow agreement completes successfully.
+     *     Credits the recipient wallet with the released funds.
+     */
+    post: operations['escrowRelease'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/escrow/refund': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Credit depositor on escrow refund
+     * @description Called by lib-escrow when an escrow agreement is cancelled or refunded.
+     *     Credits the original depositor wallet with the refunded funds.
+     */
+    post: operations['escrowRefund'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/hold/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create an authorization hold (reserve funds)
+     * @description Creates an authorization hold that reserves funds without debiting.
+     *     The held amount reduces the effective balance but does not leave the wallet.
+     *     Used for pre-auth scenarios (dining, gas, hotels) where final amount may differ.
+     */
+    post: operations['createHold'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/hold/capture': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Capture held funds (debit final amount)
+     * @description Captures an active hold by debiting the final amount (which may be less than
+     *     or equal to the held amount). Any difference is released back to available balance.
+     */
+    post: operations['captureHold'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/hold/release': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Release held funds (make available again)
+     * @description Releases an active hold, making all held funds available again.
+     *     No debit occurs.
+     */
+    post: operations['releaseHold'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/hold/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get hold status and details
+     * @description Retrieves the current status and details of an authorization hold.
+     */
+    post: operations['getHold'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/documentation/query': {
     parameters: {
       query?: never;
@@ -5659,6 +6184,31 @@ export interface components {
        */
       characterIdCaptureGroup?: number | null;
     };
+    /** @description Autogain status for a balance */
+    AutogainInfo: {
+      /**
+       * Format: date-time
+       * @description When autogain was last calculated
+       */
+      lastCalculatedAt: string;
+      /**
+       * Format: date-time
+       * @description When the next autogain will apply
+       */
+      nextGainAt: string;
+      /**
+       * Format: double
+       * @description Estimated next gain amount
+       */
+      nextGainAmount: number;
+      /** @description Current autogain mode */
+      mode: components['schemas']['AutogainMode'];
+    };
+    /**
+     * @description How autogain (energy/interest) is calculated
+     * @enum {string}
+     */
+    AutogainMode: 'simple' | 'compound';
     /** @description A machine-readable backstory element for behavior system consumption */
     BackstoryElement: {
       /** @description Category of this backstory element */
@@ -5741,6 +6291,132 @@ export interface components {
     BackstorySnapshot: {
       /** @description List of backstory elements */
       elements: components['schemas']['BackstoryElementSnapshot'][];
+    };
+    /** @description A single balance query */
+    BalanceQuery: {
+      /**
+       * Format: uuid
+       * @description Wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency definition ID
+       */
+      currencyDefinitionId: string;
+    };
+    /** @description Summary of a balance in a wallet */
+    BalanceSummary: {
+      /**
+       * Format: uuid
+       * @description Currency definition ID
+       */
+      currencyDefinitionId: string;
+      /** @description Currency code for convenience */
+      currencyCode: string;
+      /**
+       * Format: double
+       * @description Total balance amount
+       */
+      amount: number;
+      /**
+       * Format: double
+       * @description Amount reserved by authorization holds
+       */
+      lockedAmount: number;
+      /**
+       * Format: double
+       * @description Available balance (amount - lockedAmount)
+       */
+      effectiveAmount: number;
+    };
+    /** @description Result of a single balance query in a batch */
+    BatchBalanceResult: {
+      /**
+       * Format: uuid
+       * @description Wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency definition ID
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Total balance
+       */
+      amount: number;
+      /**
+       * Format: double
+       * @description Amount in holds
+       */
+      lockedAmount: number;
+      /**
+       * Format: double
+       * @description Available balance
+       */
+      effectiveAmount: number;
+    };
+    /** @description A single credit operation in a batch */
+    BatchCreditOperation: {
+      /**
+       * Format: uuid
+       * @description Target wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to credit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to credit
+       */
+      amount: number;
+      /** @description Faucet transaction type */
+      transactionType: components['schemas']['TransactionType'];
+      /** @description Reference type */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference ID
+       */
+      referenceId?: string | null;
+    };
+    /** @description Request to credit multiple wallets */
+    BatchCreditRequest: {
+      /** @description Credit operations to execute */
+      operations: components['schemas']['BatchCreditOperation'][];
+      /** @description Unique key covering the entire batch */
+      idempotencyKey: string;
+    };
+    /** @description Results of batch credit operations */
+    BatchCreditResponse: {
+      /** @description Results for each operation */
+      results: components['schemas']['BatchCreditResult'][];
+    };
+    /** @description Result of a single credit in a batch */
+    BatchCreditResult: {
+      /** @description Index in the operations array */
+      index: number;
+      /** @description Whether the operation succeeded */
+      success: boolean;
+      /** @description Transaction record if successful */
+      transaction?: components['schemas']['CurrencyTransactionRecord'];
+      /** @description Error code if failed */
+      error?: string | null;
+    };
+    /** @description Request to get multiple balances */
+    BatchGetBalancesRequest: {
+      /** @description Balance queries to execute */
+      queries: components['schemas']['BalanceQuery'][];
+    };
+    /** @description Results of batch balance queries */
+    BatchGetBalancesResponse: {
+      /** @description Balance results (same order as queries) */
+      balances: components['schemas']['BatchBalanceResult'][];
     };
     /** @description Compiled behavior tree data with bytecode or download reference */
     BehaviorTreeData: {
@@ -6124,6 +6800,41 @@ export interface components {
        */
       strength?: 'perfect' | 'imperfect' | null;
     };
+    /** @description Request to preview a currency conversion */
+    CalculateConversionRequest: {
+      /**
+       * Format: uuid
+       * @description Source currency definition ID
+       */
+      fromCurrencyId: string;
+      /**
+       * Format: uuid
+       * @description Target currency definition ID
+       */
+      toCurrencyId: string;
+      /**
+       * Format: double
+       * @description Amount to convert
+       */
+      fromAmount: number;
+    };
+    /** @description Conversion preview result */
+    CalculateConversionResponse: {
+      /**
+       * Format: double
+       * @description Amount that would be received
+       */
+      toAmount: number;
+      /**
+       * Format: double
+       * @description Effective conversion rate applied
+       */
+      effectiveRate: number;
+      /** @description Steps in the conversion */
+      conversionPath?: components['schemas']['ConversionStep'][];
+      /** @description Base currency used for conversion */
+      baseCurrency: string;
+    };
     /** @description Request to cancel an async metabundle creation job */
     CancelJobRequest: {
       /**
@@ -6158,6 +6869,43 @@ export interface components {
       subscriptionId: string;
       /** @description Optional reason for cancellation */
       reason?: string | null;
+    };
+    /**
+     * @description What happens when a credit would exceed the wallet cap
+     * @enum {string}
+     */
+    CapOverflowBehavior: 'reject' | 'cap_and_lose' | 'cap_and_return';
+    /** @description Request to capture (finalize) a hold */
+    CaptureHoldRequest: {
+      /**
+       * Format: uuid
+       * @description Hold ID to capture
+       */
+      holdId: string;
+      /**
+       * Format: double
+       * @description Final amount to debit (may be less than hold amount)
+       */
+      captureAmount: number;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Result of hold capture */
+    CaptureHoldResponse: {
+      /** @description Updated hold record */
+      hold: components['schemas']['HoldRecord'];
+      /** @description Debit transaction */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Balance after capture
+       */
+      newBalance: number;
+      /**
+       * Format: double
+       * @description Difference between hold and capture (released back)
+       */
+      amountReleased: number;
     };
     /**
      * @description Compressed archive of a dead character.
@@ -7127,6 +7875,18 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description A step in the conversion path */
+    ConversionStep: {
+      /** @description Source currency code */
+      from: string;
+      /** @description Target currency code */
+      to: string;
+      /**
+       * Format: double
+       * @description Rate applied in this step
+       */
+      rate: number;
+    };
     /** @description 3D spatial coordinates representing a position in the game world */
     Coordinates: {
       /** @description X coordinate position */
@@ -7387,6 +8147,38 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Request to create an authorization hold */
+    CreateHoldRequest: {
+      /**
+       * Format: uuid
+       * @description Wallet to hold funds in
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to hold
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to reserve
+       */
+      amount: number;
+      /**
+       * Format: date-time
+       * @description When the hold auto-releases
+       */
+      expiresAt: string;
+      /** @description Reference type (e.g. dining, hotel, gas) */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
     /** @description Request to create a new leaderboard */
     CreateLeaderboardDefinitionRequest: {
       /**
@@ -7548,6 +8340,83 @@ export interface components {
         [key: string]: string;
       } | null;
     };
+    /** @description Request to create a new wallet */
+    CreateWalletRequest: {
+      /**
+       * Format: uuid
+       * @description Owner entity ID
+       */
+      ownerId: string;
+      /** @description Type of owner entity */
+      ownerType: components['schemas']['WalletOwnerType'];
+      /**
+       * Format: uuid
+       * @description Realm ID for realm-scoped wallets (null for global)
+       */
+      realmId?: string | null;
+    };
+    /** @description Request to credit currency to a wallet */
+    CreditCurrencyRequest: {
+      /**
+       * Format: uuid
+       * @description Target wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to credit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to credit (must be positive)
+       */
+      amount: number;
+      /** @description Must be a faucet type (mint, quest_reward, loot_drop, etc.) */
+      transactionType: components['schemas']['TransactionType'];
+      /** @description What triggered this transaction (quest, admin, etc.) */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /** @description Unique key to prevent duplicate processing */
+      idempotencyKey: string;
+      /**
+       * @description Skip earn cap enforcement (admin use)
+       * @default false
+       */
+      bypassEarnCap: boolean;
+      /** @description Free-form transaction metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Result of credit operation */
+    CreditCurrencyResponse: {
+      /** @description Created transaction record */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Balance after credit
+       */
+      newBalance: number;
+      /** @description Whether earn cap limited the credit */
+      earnCapApplied: boolean;
+      /**
+       * Format: double
+       * @description Amount reduced by earn cap
+       */
+      earnCapAmountLimited?: number | null;
+      /** @description Whether wallet cap limited the credit */
+      walletCapApplied: boolean;
+      /**
+       * Format: double
+       * @description Amount lost due to wallet cap (cap_and_lose behavior)
+       */
+      walletCapAmountLost?: number | null;
+    };
     /** @description Request to cure a breach */
     CureBreachRequest: {
       /**
@@ -7557,6 +8426,229 @@ export interface components {
       breachId: string;
       /** @description Evidence of cure */
       cureEvidence?: string | null;
+    };
+    /** @description Currency definition details */
+    CurrencyDefinitionResponse: {
+      /**
+       * Format: uuid
+       * @description Unique definition identifier
+       */
+      definitionId: string;
+      /** @description Unique currency code */
+      code: string;
+      /** @description Human-readable name */
+      name: string;
+      /** @description Detailed description */
+      description?: string | null;
+      /** @description Realm availability scope */
+      scope: components['schemas']['CurrencyScope'];
+      /** @description Available realm IDs */
+      realmsAvailable?: string[] | null;
+      /** @description Decimal precision */
+      precision: components['schemas']['CurrencyPrecision'];
+      /** @description Whether transferable between wallets */
+      transferable: boolean;
+      /** @description Whether usable in trades */
+      tradeable: boolean;
+      /** @description Whether negative balance allowed (null uses plugin default) */
+      allowNegative?: boolean | null;
+      /**
+       * Format: double
+       * @description Maximum per-wallet balance
+       */
+      perWalletCap?: number | null;
+      /** @description Overflow behavior when cap exceeded */
+      capOverflowBehavior?: components['schemas']['CapOverflowBehavior'];
+      /**
+       * Format: double
+       * @description Global supply cap
+       */
+      globalSupplyCap?: number | null;
+      /**
+       * Format: double
+       * @description Daily earn cap
+       */
+      dailyEarnCap?: number | null;
+      /**
+       * Format: double
+       * @description Weekly earn cap
+       */
+      weeklyEarnCap?: number | null;
+      /** @description Earn cap reset time */
+      earnCapResetTime?: string | null;
+      /** @description Whether autogain is enabled */
+      autogainEnabled: boolean;
+      /** @description Autogain calculation mode */
+      autogainMode?: components['schemas']['AutogainMode'];
+      /**
+       * Format: double
+       * @description Autogain amount per interval
+       */
+      autogainAmount?: number | null;
+      /** @description Autogain interval duration */
+      autogainInterval?: string | null;
+      /**
+       * Format: double
+       * @description Autogain balance cap
+       */
+      autogainCap?: number | null;
+      /** @description Whether currency can expire */
+      expires: boolean;
+      /** @description Expiration policy */
+      expirationPolicy?: components['schemas']['ExpirationPolicy'];
+      /**
+       * Format: date-time
+       * @description Fixed expiration date
+       */
+      expirationDate?: string | null;
+      /** @description Expiration duration */
+      expirationDuration?: string | null;
+      /**
+       * Format: uuid
+       * @description Season ID for expiration
+       */
+      seasonId?: string | null;
+      /** @description Whether linked to inventory item */
+      linkedToItem: boolean;
+      /**
+       * Format: uuid
+       * @description Linked item template ID
+       */
+      linkedItemTemplateId?: string | null;
+      /** @description Item linkage mode */
+      linkageMode?: components['schemas']['ItemLinkageMode'];
+      /** @description Whether this is the base currency */
+      isBaseCurrency: boolean;
+      /**
+       * Format: double
+       * @description Exchange rate to base currency
+       */
+      exchangeRateToBase?: number | null;
+      /**
+       * Format: date-time
+       * @description When exchange rate was last updated
+       */
+      exchangeRateUpdatedAt?: string | null;
+      /**
+       * Format: uuid
+       * @description Icon asset ID
+       */
+      iconAssetId?: string | null;
+      /** @description Display format string */
+      displayFormat?: string | null;
+      /** @description Whether definition is active */
+      isActive: boolean;
+      /**
+       * Format: date-time
+       * @description Creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Last modification timestamp
+       */
+      modifiedAt?: string | null;
+    };
+    /**
+     * @description How the currency handles decimal values (immutable after creation)
+     * @enum {string}
+     */
+    CurrencyPrecision:
+      | 'integer'
+      | 'decimal_2'
+      | 'decimal_4'
+      | 'decimal_8'
+      | 'decimal_full'
+      | 'big_integer';
+    /**
+     * @description Scope of currency availability across realms
+     * @enum {string}
+     */
+    CurrencyScope: 'global' | 'realm_specific' | 'multi_realm';
+    /** @description Immutable record of a currency transaction */
+    CurrencyTransactionRecord: {
+      /**
+       * Format: uuid
+       * @description Unique transaction identifier
+       */
+      transactionId: string;
+      /**
+       * Format: uuid
+       * @description Source wallet (null for faucets)
+       */
+      sourceWalletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Target wallet (null for sinks)
+       */
+      targetWalletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Currency definition ID
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Transaction amount (always positive)
+       */
+      amount: number;
+      /** @description Transaction classification */
+      transactionType: components['schemas']['TransactionType'];
+      /** @description What triggered this transaction */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /**
+       * Format: uuid
+       * @description Associated escrow ID
+       */
+      escrowId?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+      /**
+       * Format: date-time
+       * @description When transaction occurred
+       */
+      timestamp: string;
+      /**
+       * Format: double
+       * @description Source balance before transaction
+       */
+      sourceBalanceBefore?: number | null;
+      /**
+       * Format: double
+       * @description Source balance after transaction
+       */
+      sourceBalanceAfter?: number | null;
+      /**
+       * Format: double
+       * @description Target balance before transaction
+       */
+      targetBalanceBefore?: number | null;
+      /**
+       * Format: double
+       * @description Target balance after transaction
+       */
+      targetBalanceAfter?: number | null;
+      /** @description Number of autogain periods applied */
+      autogainPeriodsApplied?: number | null;
+      /**
+       * Format: double
+       * @description Amount lost to cap overflow
+       */
+      overflowAmountLost?: number | null;
+      /**
+       * Format: double
+       * @description Amount limited by earn cap
+       */
+      earnCapAmountLimited?: number | null;
+      /** @description Free-form metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Custom affordance definition for novel scenarios */
     CustomAffordance: {
@@ -7592,6 +8684,51 @@ export interface components {
       bodyStart?: string | null;
       /** @description Custom scripts to inject at the end of the body */
       bodyEnd?: string | null;
+    };
+    /** @description Request to debit currency from a wallet */
+    DebitCurrencyRequest: {
+      /**
+       * Format: uuid
+       * @description Source wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to debit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to debit (must be positive)
+       */
+      amount: number;
+      /** @description Must be a sink type (burn, vendor_purchase, fee, etc.) */
+      transactionType: components['schemas']['TransactionType'];
+      /** @description What triggered this transaction */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /** @description Unique key to prevent duplicate processing */
+      idempotencyKey: string;
+      /** @description Override negative balance allowance for this transaction */
+      allowNegative?: boolean | null;
+      /** @description Free-form transaction metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Result of debit operation */
+    DebitCurrencyResponse: {
+      /** @description Created transaction record */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Balance after debit
+       */
+      newBalance: number;
     };
     /** @description Request to decline a formed match */
     DeclineMatchRequest: {
@@ -7939,6 +9076,39 @@ export interface components {
       /** @description Optional different scene type */
       newSceneType?: components['schemas']['SceneType'];
     };
+    /** @description Current earn cap status for a balance */
+    EarnCapInfo: {
+      /**
+       * Format: double
+       * @description Amount earned today
+       */
+      dailyEarned: number;
+      /**
+       * Format: double
+       * @description Remaining daily earn allowance
+       */
+      dailyRemaining: number;
+      /**
+       * Format: date-time
+       * @description When daily counter resets
+       */
+      dailyResetsAt: string;
+      /**
+       * Format: double
+       * @description Amount earned this week
+       */
+      weeklyEarned: number;
+      /**
+       * Format: double
+       * @description Remaining weekly earn allowance
+       */
+      weeklyRemaining: number;
+      /**
+       * Format: date-time
+       * @description When weekly counter resets
+       */
+      weeklyResetsAt: string;
+    };
     /**
      * @description How the encounter emotionally affected the character
      * @enum {string}
@@ -8254,6 +9424,111 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Request from lib-escrow to debit wallet for deposit */
+    EscrowDepositRequest: {
+      /**
+       * Format: uuid
+       * @description Wallet to debit
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to debit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to debit for escrow
+       */
+      amount: number;
+      /**
+       * Format: uuid
+       * @description Associated escrow agreement ID
+       */
+      escrowId: string;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Result of escrow deposit (wallet debit) */
+    EscrowDepositResponse: {
+      /** @description Debit transaction record */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Wallet balance after debit
+       */
+      newBalance: number;
+    };
+    /** @description Request from lib-escrow to credit depositor on refund */
+    EscrowRefundRequest: {
+      /**
+       * Format: uuid
+       * @description Depositor wallet to credit
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to credit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to refund
+       */
+      amount: number;
+      /**
+       * Format: uuid
+       * @description Associated escrow agreement ID
+       */
+      escrowId: string;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Result of escrow refund (depositor credit) */
+    EscrowRefundResponse: {
+      /** @description Credit transaction record */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Depositor balance after credit
+       */
+      newBalance: number;
+    };
+    /** @description Request from lib-escrow to credit recipient on completion */
+    EscrowReleaseRequest: {
+      /**
+       * Format: uuid
+       * @description Recipient wallet to credit
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to credit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to credit
+       */
+      amount: number;
+      /**
+       * Format: uuid
+       * @description Associated escrow agreement ID
+       */
+      escrowId: string;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Result of escrow release (recipient credit) */
+    EscrowReleaseResponse: {
+      /** @description Credit transaction record */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Recipient balance after credit
+       */
+      newBalance: number;
+    };
     /**
      * @description Categories of historical events that characters can participate in
      * @enum {string}
@@ -8266,6 +9541,53 @@ export interface components {
       | 'RELIGIOUS'
       | 'CULTURAL'
       | 'PERSONAL';
+    /** @description Request to execute a currency conversion */
+    ExecuteConversionRequest: {
+      /**
+       * Format: uuid
+       * @description Wallet to perform conversion in
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to debit
+       */
+      fromCurrencyId: string;
+      /**
+       * Format: uuid
+       * @description Currency to credit
+       */
+      toCurrencyId: string;
+      /**
+       * Format: double
+       * @description Amount to convert
+       */
+      fromAmount: number;
+      /** @description Unique key for idempotency */
+      idempotencyKey: string;
+    };
+    /** @description Result of conversion execution */
+    ExecuteConversionResponse: {
+      /** @description Debit transaction (conversion_debit) */
+      debitTransaction: components['schemas']['CurrencyTransactionRecord'];
+      /** @description Credit transaction (conversion_credit) */
+      creditTransaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Amount debited
+       */
+      fromDebited: number;
+      /**
+       * Format: double
+       * @description Amount credited
+       */
+      toCredited: number;
+      /**
+       * Format: double
+       * @description Rate applied
+       */
+      effectiveRate: number;
+    };
     /** @description Metadata about behavior execution requirements including timing, resources, and interrupt conditions */
     ExecutionMetadata: {
       /** @description Estimated execution time in seconds */
@@ -8277,6 +9599,11 @@ export interface components {
       /** @description Conditions that can interrupt behavior execution */
       interruptConditions?: string[] | null;
     };
+    /**
+     * @description How currency expiration is determined
+     * @enum {string}
+     */
+    ExpirationPolicy: 'fixed_date' | 'duration_from_earn' | 'end_of_season';
     /** @description Request to export all saves for an owner to a downloadable archive */
     ExportSavesRequest: {
       /** @description Game identifier for namespace isolation */
@@ -8702,6 +10029,53 @@ export interface components {
        */
       minimumStrength?: number | null;
     };
+    /** @description Request to get a specific currency balance */
+    GetBalanceRequest: {
+      /**
+       * Format: uuid
+       * @description Wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency definition ID
+       */
+      currencyDefinitionId: string;
+    };
+    /** @description Detailed balance information */
+    GetBalanceResponse: {
+      /**
+       * Format: uuid
+       * @description Wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency definition ID
+       */
+      currencyDefinitionId: string;
+      /** @description Currency code */
+      currencyCode?: string;
+      /**
+       * Format: double
+       * @description Total balance
+       */
+      amount: number;
+      /**
+       * Format: double
+       * @description Amount in authorization holds
+       */
+      lockedAmount: number;
+      /**
+       * Format: double
+       * @description Available balance (amount - lockedAmount)
+       */
+      effectiveAmount: number;
+      /** @description Earn cap status (null if no caps configured) */
+      earnCapInfo?: components['schemas']['EarnCapInfo'];
+      /** @description Autogain status (null if autogain not enabled) */
+      autogainInfo?: components['schemas']['AutogainInfo'];
+    };
     /** @description Request to get breach details */
     GetBreachRequest: {
       /**
@@ -8830,6 +10204,16 @@ export interface components {
       /** @description Template code (provide this or templateId) */
       code?: string | null;
     };
+    /** @description Request to get a currency definition */
+    GetCurrencyDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Definition ID (provide this or code)
+       */
+      definitionId?: string | null;
+      /** @description Currency code (provide this or definitionId) */
+      code?: string | null;
+    };
     /** @description Request to get a map definition */
     GetDefinitionRequest: {
       /**
@@ -8952,6 +10336,44 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to get exchange rate between currencies */
+    GetExchangeRateRequest: {
+      /**
+       * Format: uuid
+       * @description Source currency ID
+       */
+      fromCurrencyId: string;
+      /**
+       * Format: uuid
+       * @description Target currency ID
+       */
+      toCurrencyId: string;
+    };
+    /** @description Exchange rate information */
+    GetExchangeRateResponse: {
+      /**
+       * Format: double
+       * @description Conversion rate (from -> to)
+       */
+      rate: number;
+      /**
+       * Format: double
+       * @description Inverse rate (to -> from)
+       */
+      inverseRate: number;
+      /** @description Base currency code */
+      baseCurrency: string;
+      /**
+       * Format: double
+       * @description Source currency rate to base
+       */
+      fromCurrencyRateToBase: number;
+      /**
+       * Format: double
+       * @description Target currency rate to base
+       */
+      toCurrencyRateToBase: number;
+    };
     /** @description Request to get a specific game session */
     GetGameSessionRequest: {
       /**
@@ -8959,6 +10381,60 @@ export interface components {
        * @description ID of the game session to retrieve
        */
       sessionId: string;
+    };
+    /** @description Request to get global supply stats */
+    GetGlobalSupplyRequest: {
+      /**
+       * Format: uuid
+       * @description Currency to query
+       */
+      currencyDefinitionId: string;
+    };
+    /** @description Global supply statistics */
+    GetGlobalSupplyResponse: {
+      /**
+       * Format: double
+       * @description Sum of all positive balances
+       */
+      totalSupply: number;
+      /**
+       * Format: double
+       * @description Total in wallets
+       */
+      inCirculation: number;
+      /**
+       * Format: double
+       * @description Locked in escrow
+       */
+      inEscrow: number;
+      /**
+       * Format: double
+       * @description All-time faucet total
+       */
+      totalMinted: number;
+      /**
+       * Format: double
+       * @description All-time sink total
+       */
+      totalBurned: number;
+      /**
+       * Format: double
+       * @description Global supply cap (null if none)
+       */
+      supplyCap?: number | null;
+      /**
+       * Format: double
+       * @description Remaining supply before cap
+       */
+      supplyCapRemaining?: number | null;
+    };
+    /** @description Request to get hold details */
+    GetHoldRequest: {
+      /**
+       * Format: uuid
+       * @description Hold ID
+       */
+      holdId: string;
     };
     /** @description Request to get the status of an async metabundle creation job */
     GetJobStatusRequest: {
@@ -9115,6 +10591,30 @@ export interface components {
       contractId: string;
       /** @description Milestone code */
       milestoneCode: string;
+    };
+    /** @description Request to get or create a wallet */
+    GetOrCreateWalletRequest: {
+      /**
+       * Format: uuid
+       * @description Owner entity ID
+       */
+      ownerId: string;
+      /** @description Type of owner entity */
+      ownerType: components['schemas']['WalletOwnerType'];
+      /**
+       * Format: uuid
+       * @description Realm ID for realm-scoped wallets
+       */
+      realmId?: string | null;
+    };
+    /** @description Result of get-or-create operation */
+    GetOrCreateWalletResponse: {
+      /** @description Wallet details */
+      wallet: components['schemas']['WalletResponse'];
+      /** @description All non-zero balances */
+      balances: components['schemas']['BalanceSummary'][];
+      /** @description Whether a new wallet was created */
+      created: boolean;
     };
     /** @description Request payload for getting a character's event participation */
     GetParticipationRequest: {
@@ -9443,6 +10943,71 @@ export interface components {
        */
       offset: number;
     };
+    /** @description Request to get transaction history */
+    GetTransactionHistoryRequest: {
+      /**
+       * Format: uuid
+       * @description Wallet to query
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Filter by currency
+       */
+      currencyDefinitionId?: string | null;
+      /** @description Filter by transaction types */
+      transactionTypes?: components['schemas']['TransactionType'][] | null;
+      /**
+       * Format: date-time
+       * @description Start of date range
+       */
+      fromDate?: string | null;
+      /**
+       * Format: date-time
+       * @description End of date range
+       */
+      toDate?: string | null;
+      /**
+       * @description Results per page
+       * @default 50
+       */
+      limit: number;
+      /**
+       * @description Result offset
+       * @default 0
+       */
+      offset: number;
+    };
+    /** @description Paginated transaction history */
+    GetTransactionHistoryResponse: {
+      /** @description Transaction records */
+      transactions: components['schemas']['CurrencyTransactionRecord'][];
+      /** @description Total matching transactions */
+      totalCount: number;
+    };
+    /** @description Request to get a transaction by ID */
+    GetTransactionRequest: {
+      /**
+       * Format: uuid
+       * @description Transaction ID
+       */
+      transactionId: string;
+    };
+    /** @description Request to get transactions by reference */
+    GetTransactionsByReferenceRequest: {
+      /** @description Reference type */
+      referenceType: string;
+      /**
+       * Format: uuid
+       * @description Reference ID
+       */
+      referenceId: string;
+    };
+    /** @description Transactions for a reference */
+    GetTransactionsByReferenceResponse: {
+      /** @description Matching transactions */
+      transactions: components['schemas']['CurrencyTransactionRecord'][];
+    };
     /** @description Request to get validation rules */
     GetValidationRulesRequest: {
       /** @description Game ID */
@@ -9458,6 +11023,26 @@ export interface components {
       sceneType: components['schemas']['SceneType'];
       /** @description Registered rules (empty if none) */
       rules?: components['schemas']['ValidationRule'][];
+    };
+    /** @description Request to get a wallet */
+    GetWalletRequest: {
+      /**
+       * Format: uuid
+       * @description Wallet ID (provide this or ownerId+ownerType)
+       */
+      walletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Owner ID (requires ownerType)
+       */
+      ownerId?: string | null;
+      /** @description Owner type (requires ownerId) */
+      ownerType?: components['schemas']['WalletOwnerType'];
+      /**
+       * Format: uuid
+       * @description Realm ID (required if using ownerId lookup)
+       */
+      realmId?: string | null;
     };
     /** @description Goal definition for GOAP planning with conditions and priority */
     GoapGoal: {
@@ -9717,6 +11302,68 @@ export interface components {
       /** @description Version history entries */
       versions: components['schemas']['VersionInfo'][];
     };
+    /** @description Authorization hold record */
+    HoldRecord: {
+      /**
+       * Format: uuid
+       * @description Unique hold identifier
+       */
+      holdId: string;
+      /**
+       * Format: uuid
+       * @description Wallet with held funds
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency held
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount reserved
+       */
+      amount: number;
+      /** @description Current hold status */
+      status: components['schemas']['HoldStatus'];
+      /**
+       * Format: date-time
+       * @description When hold was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When hold auto-releases
+       */
+      expiresAt: string;
+      /** @description Reference type */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference ID
+       */
+      referenceId?: string | null;
+      /**
+       * Format: double
+       * @description Amount actually captured (may differ from held amount)
+       */
+      capturedAmount?: number | null;
+      /**
+       * Format: date-time
+       * @description When hold was captured/released/expired
+       */
+      completedAt?: string | null;
+    };
+    /** @description Hold details */
+    HoldResponse: {
+      /** @description Hold record */
+      hold: components['schemas']['HoldRecord'];
+    };
+    /**
+     * @description Current status of an authorization hold
+     * @enum {string}
+     */
+    HoldStatus: 'active' | 'captured' | 'released' | 'expired';
     /** @description Request to inject a perception event into an actor's queue */
     InjectPerceptionRequest: {
       /** @description Target actor to inject perception into */
@@ -9763,6 +11410,11 @@ export interface components {
       /** @description Unique identifier for the cached behavior to invalidate */
       behaviorId: string;
     };
+    /**
+     * @description How currency is linked to inventory items
+     * @enum {string}
+     */
+    ItemLinkageMode: 'none' | 'visual_only' | 'reference_only';
     /** @description Request to join a matchmaking queue */
     JoinMatchmakingRequest: {
       /**
@@ -10138,6 +11790,28 @@ export interface components {
       pageSize: number;
       /** @description Whether more results exist */
       hasNextPage?: boolean;
+    };
+    /** @description Request to list currency definitions */
+    ListCurrencyDefinitionsRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by realm availability
+       */
+      realmId?: string | null;
+      /** @description Filter by scope */
+      scope?: components['schemas']['CurrencyScope'];
+      /**
+       * @description Include inactive definitions
+       * @default false
+       */
+      includeInactive: boolean;
+      /** @description Filter by base currency flag */
+      isBaseCurrency?: boolean | null;
+    };
+    /** @description List of currency definitions */
+    ListCurrencyDefinitionsResponse: {
+      /** @description Currency definitions matching filter */
+      definitions: components['schemas']['CurrencyDefinitionResponse'][];
     };
     /** @description Request to list map definitions */
     ListDefinitionsRequest: {
@@ -13014,6 +14688,14 @@ export interface components {
        */
       updatedAt: string;
     };
+    /** @description Request to release a hold */
+    ReleaseHoldRequest: {
+      /**
+       * Format: uuid
+       * @description Hold ID to release
+       */
+      holdId: string;
+    };
     /** @description Request to rename an existing save slot */
     RenameSlotRequest: {
       /** @description Game identifier */
@@ -14556,6 +16238,95 @@ export interface components {
        */
       changeCount: number;
     };
+    /** @description Transaction details */
+    TransactionResponse: {
+      /** @description Transaction record */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+    };
+    /**
+     * @description Classification of the currency transaction
+     * @enum {string}
+     */
+    TransactionType:
+      | 'mint'
+      | 'quest_reward'
+      | 'loot_drop'
+      | 'vendor_sale'
+      | 'autogain'
+      | 'refund'
+      | 'conversion_credit'
+      | 'burn'
+      | 'vendor_purchase'
+      | 'fee'
+      | 'expiration'
+      | 'cap_overflow'
+      | 'conversion_debit'
+      | 'transfer'
+      | 'trade'
+      | 'gift'
+      | 'escrow_deposit'
+      | 'escrow_release'
+      | 'escrow_refund';
+    /** @description Request to transfer currency between wallets */
+    TransferCurrencyRequest: {
+      /**
+       * Format: uuid
+       * @description Source wallet ID
+       */
+      sourceWalletId: string;
+      /**
+       * Format: uuid
+       * @description Target wallet ID
+       */
+      targetWalletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to transfer
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to transfer (must be positive)
+       */
+      amount: number;
+      /** @description Must be a transfer type (transfer, trade, gift) */
+      transactionType: components['schemas']['TransactionType'];
+      /** @description What triggered this transfer */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /** @description Unique key to prevent duplicate processing */
+      idempotencyKey: string;
+      /** @description Free-form transaction metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Result of transfer operation */
+    TransferCurrencyResponse: {
+      /** @description Created transaction record */
+      transaction: components['schemas']['CurrencyTransactionRecord'];
+      /**
+       * Format: double
+       * @description Source wallet balance after transfer
+       */
+      sourceNewBalance: number;
+      /**
+       * Format: double
+       * @description Target wallet balance after transfer
+       */
+      targetNewBalance: number;
+      /** @description Whether target wallet cap was applied */
+      targetCapApplied: boolean;
+      /**
+       * Format: double
+       * @description Amount lost due to target wallet cap
+       */
+      targetCapAmountLost?: number | null;
+    };
     /** @description Position, rotation, and scale in 3D space */
     Transform: {
       /** @description Position relative to parent */
@@ -15304,6 +17075,64 @@ export interface components {
      * @enum {string}
      */
     VolumeShape: 'box' | 'sphere' | 'capsule' | 'cylinder';
+    /**
+     * @description Type of entity that owns a wallet
+     * @enum {string}
+     */
+    WalletOwnerType: 'account' | 'character' | 'npc' | 'guild' | 'faction' | 'location' | 'system';
+    /** @description Wallet details */
+    WalletResponse: {
+      /**
+       * Format: uuid
+       * @description Unique wallet identifier
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Owner entity ID
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['WalletOwnerType'];
+      /**
+       * Format: uuid
+       * @description Realm ID
+       */
+      realmId?: string | null;
+      /** @description Current wallet status */
+      status: components['schemas']['WalletStatus'];
+      /** @description Reason wallet was frozen */
+      frozenReason?: string | null;
+      /**
+       * Format: date-time
+       * @description When wallet was frozen
+       */
+      frozenAt?: string | null;
+      /** @description Who froze the wallet */
+      frozenBy?: string | null;
+      /**
+       * Format: date-time
+       * @description Creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Last transaction timestamp
+       */
+      lastActivityAt?: string | null;
+    };
+    /**
+     * @description Current status of a wallet
+     * @enum {string}
+     */
+    WalletStatus: 'active' | 'frozen' | 'closed';
+    /** @description Wallet with all non-zero balances */
+    WalletWithBalancesResponse: {
+      /** @description Wallet details */
+      wallet: components['schemas']['WalletResponse'];
+      /** @description All non-zero balances in this wallet */
+      balances: components['schemas']['BalanceSummary'][];
+    };
   };
   responses: never;
   parameters: never;
@@ -18210,6 +20039,851 @@ export interface operations {
         content: {
           'application/json': components['schemas']['QueryActiveContractsResponse'];
         };
+      };
+    };
+  };
+  getCurrencyDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCurrencyDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Currency definition retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CurrencyDefinitionResponse'];
+        };
+      };
+      /** @description Neither definitionId nor code provided */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Currency definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listCurrencyDefinitions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListCurrencyDefinitionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Currency definitions retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListCurrencyDefinitionsResponse'];
+        };
+      };
+    };
+  };
+  createWallet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWalletRequest'];
+      };
+    };
+    responses: {
+      /** @description Wallet created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletResponse'];
+        };
+      };
+      /** @description Wallet already exists for this owner/realm */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getWallet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetWalletRequest'];
+      };
+    };
+    responses: {
+      /** @description Wallet retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletWithBalancesResponse'];
+        };
+      };
+      /** @description Wallet not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getOrCreateWallet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetOrCreateWalletRequest'];
+      };
+    };
+    responses: {
+      /** @description Wallet retrieved or created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetOrCreateWalletResponse'];
+        };
+      };
+    };
+  };
+  getBalance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBalanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Balance retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetBalanceResponse'];
+        };
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  batchGetBalances: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchGetBalancesRequest'];
+      };
+    };
+    responses: {
+      /** @description Balances retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchGetBalancesResponse'];
+        };
+      };
+    };
+  };
+  creditCurrency: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreditCurrencyRequest'];
+      };
+    };
+    responses: {
+      /** @description Currency credited successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreditCurrencyResponse'];
+        };
+      };
+      /** @description Invalid transaction type or amount */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Idempotency key already used */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Earn cap or supply cap exceeded */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  debitCurrency: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DebitCurrencyRequest'];
+      };
+    };
+    responses: {
+      /** @description Currency debited successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DebitCurrencyResponse'];
+        };
+      };
+      /** @description Invalid transaction type or amount */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient funds */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transferCurrency: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransferCurrencyRequest'];
+      };
+    };
+    responses: {
+      /** @description Transfer completed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TransferCurrencyResponse'];
+        };
+      };
+      /** @description Invalid request or currency not transferable */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient funds or cross-realm not allowed */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  batchCreditCurrency: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchCreditRequest'];
+      };
+    };
+    responses: {
+      /** @description Batch credit processed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchCreditResponse'];
+        };
+      };
+    };
+  };
+  calculateConversion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CalculateConversionRequest'];
+      };
+    };
+    responses: {
+      /** @description Conversion calculated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalculateConversionResponse'];
+        };
+      };
+      /** @description Currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description No base currency or missing exchange rate */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  executeConversion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExecuteConversionRequest'];
+      };
+    };
+    responses: {
+      /** @description Conversion executed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecuteConversionResponse'];
+        };
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient funds or missing exchange rate */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getExchangeRate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetExchangeRateRequest'];
+      };
+    };
+    responses: {
+      /** @description Exchange rate retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetExchangeRateResponse'];
+        };
+      };
+      /** @description Currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description No base currency or missing exchange rate */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getTransaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetTransactionRequest'];
+      };
+    };
+    responses: {
+      /** @description Transaction retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TransactionResponse'];
+        };
+      };
+      /** @description Transaction not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getTransactionHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetTransactionHistoryRequest'];
+      };
+    };
+    responses: {
+      /** @description Transaction history retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetTransactionHistoryResponse'];
+        };
+      };
+      /** @description Wallet not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getTransactionsByReference: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetTransactionsByReferenceRequest'];
+      };
+    };
+    responses: {
+      /** @description Transactions retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetTransactionsByReferenceResponse'];
+        };
+      };
+    };
+  };
+  getGlobalSupply: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetGlobalSupplyRequest'];
+      };
+    };
+    responses: {
+      /** @description Supply statistics retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetGlobalSupplyResponse'];
+        };
+      };
+      /** @description Currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  escrowDeposit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EscrowDepositRequest'];
+      };
+    };
+    responses: {
+      /** @description Escrow deposit processed (wallet debited) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EscrowDepositResponse'];
+        };
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient funds or wallet frozen */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  escrowRelease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EscrowReleaseRequest'];
+      };
+    };
+    responses: {
+      /** @description Escrow release processed (recipient credited) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EscrowReleaseResponse'];
+        };
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  escrowRefund: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EscrowRefundRequest'];
+      };
+    };
+    responses: {
+      /** @description Escrow refund processed (depositor credited) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EscrowRefundResponse'];
+        };
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  createHold: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateHoldRequest'];
+      };
+    };
+    responses: {
+      /** @description Hold created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HoldResponse'];
+        };
+      };
+      /** @description Wallet or currency not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient effective balance for hold */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  captureHold: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CaptureHoldRequest'];
+      };
+    };
+    responses: {
+      /** @description Hold captured successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CaptureHoldResponse'];
+        };
+      };
+      /** @description Hold is not in active status or capture amount exceeds hold */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Hold not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  releaseHold: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReleaseHoldRequest'];
+      };
+    };
+    responses: {
+      /** @description Hold released successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HoldResponse'];
+        };
+      };
+      /** @description Hold is not in active status */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Hold not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getHold: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetHoldRequest'];
+      };
+    };
+    responses: {
+      /** @description Hold retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HoldResponse'];
+        };
+      };
+      /** @description Hold not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

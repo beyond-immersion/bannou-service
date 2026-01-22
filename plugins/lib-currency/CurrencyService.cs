@@ -1609,7 +1609,12 @@ public partial class CurrencyService : ICurrencyService
                 MedianBalance = 0,
                 Percentiles = new DistributionPercentiles
                 {
-                    P10 = 0, P25 = 0, P50 = 0, P75 = 0, P90 = 0, P99 = 0
+                    P10 = 0,
+                    P25 = 0,
+                    P50 = 0,
+                    P75 = 0,
+                    P90 = 0,
+                    P99 = 0
                 },
                 GiniCoefficient = 0
             });
@@ -2104,11 +2109,7 @@ public partial class CurrencyService : ICurrencyService
     {
         var store = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
         var key = $"{BALANCE_PREFIX}{walletId}:{currencyDefId}";
-        var balance = await store.GetAsync(key, ct);
-
-        if (balance is null)
-        {
-            balance = new BalanceModel
+        var balance = await store.GetAsync(key, ct) ?? new BalanceModel
             {
                 WalletId = walletId,
                 CurrencyDefinitionId = currencyDefId,
@@ -2120,8 +2121,6 @@ public partial class CurrencyService : ICurrencyService
                 CreatedAt = DateTimeOffset.UtcNow,
                 LastModifiedAt = DateTimeOffset.UtcNow
             };
-        }
-
         return balance;
     }
 
