@@ -77,6 +77,9 @@ info:
     - topic: contract.prebound-api.failed
       event: ContractPreboundApiFailedEvent
       description: Published when a prebound API call fails
+    - topic: contract.prebound-api.validation-failed
+      event: ContractPreboundApiValidationFailedEvent
+      description: Published when a prebound API response fails validation
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/contract-lifecycle-events.yaml
@@ -609,6 +612,50 @@ components:
           type: integer
           nullable: true
           description: HTTP status code if available
+
+    ContractPreboundApiValidationFailedEvent:
+      type: object
+      description: Event published when a prebound API response fails validation
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - serviceName
+      - endpoint
+      - validationOutcome
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        trigger:
+          type: string
+          description: What triggered the API call
+        serviceName:
+          type: string
+          description: Target service
+        endpoint:
+          type: string
+          description: Target endpoint
+        statusCode:
+          type: integer
+          description: HTTP status code from the API response
+        validationOutcome:
+          type: string
+          description: Validation outcome (PermanentFailure, TransientFailure)
+        failureReason:
+          type: string
+          nullable: true
+          description: Description of why validation failed
 
     # =========================================================================
     # Shared Event Models

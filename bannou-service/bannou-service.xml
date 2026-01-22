@@ -14421,6 +14421,56 @@
             HTTP status code if available
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent">
+            <summary>
+            Event published when a prebound API response fails validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.Trigger">
+            <summary>
+            What triggered the API call
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.ServiceName">
+            <summary>
+            Target service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.Endpoint">
+            <summary>
+            Target endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.StatusCode">
+            <summary>
+            HTTP status code from the API response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.ValidationOutcome">
+            <summary>
+            Validation outcome (PermanentFailure, TransientFailure)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiValidationFailedEvent.FailureReason">
+            <summary>
+            Description of why validation failed
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.PartyInfo">
             <summary>
             Brief party information for events

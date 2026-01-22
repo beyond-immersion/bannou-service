@@ -350,6 +350,1060 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
     #endregion
 
+    #region ListContractTemplates Tests
+
+    [Fact]
+    public async Task ListContractTemplatesAsync_ReturnsAllTemplates()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId1 = Guid.NewGuid();
+        var templateId2 = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync("all-templates", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { templateId1.ToString(), templateId2.ToString() });
+
+        var template1 = CreateTestTemplateModel(templateId1, "template_1");
+        var template2 = CreateTestTemplateModel(templateId2, "template_2");
+
+        _mockTemplateStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractTemplateModel>
+            {
+                [$"template:{templateId1}"] = template1,
+                [$"template:{templateId2}"] = template2
+            });
+
+        // Act
+        var (status, response) = await service.ListContractTemplatesAsync(new ListContractTemplatesRequest());
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Templates.Count);
+    }
+
+    [Fact]
+    public async Task ListContractTemplatesAsync_EmptyList_ReturnsEmptyResponse()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockListStore
+            .Setup(s => s.GetAsync("all-templates", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+
+        // Act
+        var (status, response) = await service.ListContractTemplatesAsync(new ListContractTemplatesRequest());
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Templates);
+    }
+
+    #endregion
+
+    #region UpdateContractTemplate Tests
+
+    [Fact]
+    public async Task UpdateContractTemplateAsync_ExistingTemplate_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var model = CreateTestTemplateModel(templateId);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new UpdateContractTemplateRequest
+        {
+            TemplateId = templateId,
+            Name = "Updated Name",
+            Description = "Updated description"
+        };
+
+        // Act
+        var (status, response) = await service.UpdateContractTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("Updated Name", response.Name);
+    }
+
+    [Fact]
+    public async Task UpdateContractTemplateAsync_NonExistent_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ContractTemplateModel?)null);
+
+        var request = new UpdateContractTemplateRequest
+        {
+            TemplateId = templateId,
+            Name = "Updated Name"
+        };
+
+        // Act
+        var (status, response) = await service.UpdateContractTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ProposeContractInstance Tests
+
+    [Fact]
+    public async Task ProposeContractInstanceAsync_ValidDraft_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "draft";
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new ProposeContractInstanceRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.ProposeContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(ContractStatus.Proposed, response.Status);
+    }
+
+    [Fact]
+    public async Task ProposeContractInstanceAsync_NotDraft_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new ProposeContractInstanceRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.ProposeContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ConsentToContract Tests
+
+    [Fact]
+    public async Task ConsentToContractAsync_ValidParty_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var partyEntityId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "proposed";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "pending" },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "pending" }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new ConsentToContractRequest
+        {
+            ContractId = contractId,
+            PartyEntityId = partyEntityId,
+            PartyEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.ConsentToContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task ConsentToContractAsync_NotProposed_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "draft";
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new ConsentToContractRequest
+        {
+            ContractId = contractId,
+            PartyEntityId = Guid.NewGuid(),
+            PartyEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.ConsentToContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ConsentToContractAsync_AllPartiesConsent_BecomesAccepted()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var partyEntityId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "proposed";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "pending" },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented", ConsentedAt = DateTimeOffset.UtcNow }
+        };
+
+        ContractInstanceModel? savedInstance = null;
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContractInstanceModel, StateOptions?, CancellationToken>((k, m, _, _) => savedInstance = m)
+            .ReturnsAsync("etag");
+
+        var request = new ConsentToContractRequest
+        {
+            ContractId = contractId,
+            PartyEntityId = partyEntityId,
+            PartyEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.ConsentToContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(savedInstance);
+        // When EffectiveFrom is null, contract becomes "active" immediately after all consent
+        Assert.Equal("active", savedInstance.Status);
+    }
+
+    #endregion
+
+    #region GetContractInstance Tests
+
+    [Fact]
+    public async Task GetContractInstanceAsync_ExistingContract_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new GetContractInstanceRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(contractId, response.ContractId);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceAsync_NonExistent_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ContractInstanceModel?)null);
+
+        var request = new GetContractInstanceRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region TerminateContractInstance Tests
+
+    [Fact]
+    public async Task TerminateContractInstanceAsync_ActiveContract_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var requestingEntityId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = requestingEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new TerminateContractInstanceRequest
+        {
+            ContractId = contractId,
+            RequestingEntityId = requestingEntityId,
+            RequestingEntityType = EntityType.Character,
+            Reason = "Mutual agreement"
+        };
+
+        // Act
+        var (status, response) = await service.TerminateContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(ContractStatus.Terminated, response.Status);
+    }
+
+    [Fact]
+    public async Task TerminateContractInstanceAsync_NotAParty_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var nonPartyEntityId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new TerminateContractInstanceRequest
+        {
+            ContractId = contractId,
+            RequestingEntityId = nonPartyEntityId,
+            RequestingEntityType = EntityType.Character,
+            Reason = "Test reason"
+        };
+
+        // Act
+        var (status, response) = await service.TerminateContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region GetContractInstanceStatus Tests
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_ExistingContract_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(contractId, response.ContractId);
+    }
+
+    #endregion
+
+    #region CompleteMilestone Tests
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_ValidMilestone_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = true, Sequence = 1 }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "milestone_1"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Completed, response.Milestone.Status);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_AlreadyCompleted_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "milestone_1", Name = "First Milestone", Status = "completed", Required = true, Sequence = 1, CompletedAt = DateTimeOffset.UtcNow }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "milestone_1"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region FailMilestone Tests
+
+    [Fact]
+    public async Task FailMilestoneAsync_RequiredMilestone_ReturnsFailed()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = true, Sequence = 1 }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new FailMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "milestone_1",
+            Reason = "Deadline exceeded"
+        };
+
+        // Act
+        var (status, response) = await service.FailMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Failed, response.Milestone.Status);
+    }
+
+    [Fact]
+    public async Task FailMilestoneAsync_OptionalMilestone_ReturnsSkipped()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = false, Sequence = 1 }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new FailMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "milestone_1",
+            Reason = "Optional milestone skipped"
+        };
+
+        // Act
+        var (status, response) = await service.FailMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Skipped, response.Milestone.Status);
+    }
+
+    #endregion
+
+    #region GetMilestone Tests
+
+    [Fact]
+    public async Task GetMilestoneAsync_ExistingMilestone_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = true, Sequence = 1 }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new GetMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "milestone_1"
+        };
+
+        // Act
+        var (status, response) = await service.GetMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("milestone_1", response.Milestone.Code);
+    }
+
+    [Fact]
+    public async Task GetMilestoneAsync_NonExistentMilestone_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Milestones = new List<MilestoneInstanceModel>();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new GetMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "nonexistent"
+        };
+
+        // Act
+        var (status, response) = await service.GetMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ReportBreach Tests
+
+    [Fact]
+    public async Task ReportBreachAsync_ValidBreach_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockBreachStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BreachModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var breachingEntityId = Guid.NewGuid();
+        var request = new ReportBreachRequest
+        {
+            ContractId = contractId,
+            BreachingEntityId = breachingEntityId,
+            BreachingEntityType = EntityType.Character,
+            BreachType = BreachType.Term_violation,
+            Description = "Failed to deliver goods"
+        };
+
+        // Act
+        var (status, response) = await service.ReportBreachAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(BreachStatus.Detected, response.Status);
+    }
+
+    [Fact]
+    public async Task ReportBreachAsync_ContractNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ContractInstanceModel?)null);
+
+        var request = new ReportBreachRequest
+        {
+            ContractId = contractId,
+            BreachingEntityId = Guid.NewGuid(),
+            BreachingEntityType = EntityType.Character,
+            BreachType = BreachType.Term_violation,
+            BreachedTermOrMilestone = "payment_term"
+        };
+
+        // Act
+        var (status, response) = await service.ReportBreachAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region CureBreach Tests
+
+    [Fact]
+    public async Task CureBreachAsync_ExistingBreach_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var breachId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+        var breach = new BreachModel
+        {
+            BreachId = breachId.ToString(),
+            ContractId = contractId.ToString(),
+            BreachingEntityId = Guid.NewGuid().ToString(),
+            BreachingEntityType = "Character",
+            BreachType = "term_violation",
+            Status = "detected",
+            DetectedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockBreachStore
+            .Setup(s => s.GetAsync($"breach:{breachId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(breach);
+
+        _mockBreachStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BreachModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new CureBreachRequest
+        {
+            BreachId = breachId,
+            CureEvidence = "Issue resolved"
+        };
+
+        // Act
+        var (status, response) = await service.CureBreachAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(BreachStatus.Cured, response.Status);
+    }
+
+    [Fact]
+    public async Task CureBreachAsync_NonExistent_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var breachId = Guid.NewGuid();
+
+        _mockBreachStore
+            .Setup(s => s.GetAsync($"breach:{breachId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BreachModel?)null);
+
+        var request = new CureBreachRequest { BreachId = breachId };
+
+        // Act
+        var (status, response) = await service.CureBreachAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region GetBreach Tests
+
+    [Fact]
+    public async Task GetBreachAsync_ExistingBreach_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var breachId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+        var breach = new BreachModel
+        {
+            BreachId = breachId.ToString(),
+            ContractId = contractId.ToString(),
+            BreachingEntityId = Guid.NewGuid().ToString(),
+            BreachingEntityType = "Character",
+            BreachType = "term_violation",
+            Status = "detected",
+            DetectedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockBreachStore
+            .Setup(s => s.GetAsync($"breach:{breachId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(breach);
+
+        var request = new GetBreachRequest { BreachId = breachId };
+
+        // Act
+        var (status, response) = await service.GetBreachAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(breachId, response.BreachId);
+    }
+
+    [Fact]
+    public async Task GetBreachAsync_NonExistent_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var breachId = Guid.NewGuid();
+
+        _mockBreachStore
+            .Setup(s => s.GetAsync($"breach:{breachId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BreachModel?)null);
+
+        var request = new GetBreachRequest { BreachId = breachId };
+
+        // Act
+        var (status, response) = await service.GetBreachAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region UpdateContractMetadata Tests
+
+    [Fact]
+    public async Task UpdateContractMetadataAsync_ExistingContract_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new UpdateContractMetadataRequest
+        {
+            ContractId = contractId,
+            MetadataType = MetadataType.Instance_data,
+            Data = new Dictionary<string, object> { ["quest_id"] = "quest_123" }
+        };
+
+        // Act
+        var (status, response) = await service.UpdateContractMetadataAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task UpdateContractMetadataAsync_NonExistent_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ContractInstanceModel?)null);
+
+        var request = new UpdateContractMetadataRequest
+        {
+            ContractId = contractId,
+            MetadataType = MetadataType.Instance_data,
+            Data = new Dictionary<string, object> { ["key"] = "value" }
+        };
+
+        // Act
+        var (status, response) = await service.UpdateContractMetadataAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region GetContractMetadata Tests
+
+    [Fact]
+    public async Task GetContractMetadataAsync_ExistingContract_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new GetContractMetadataRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractMetadataAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task GetContractMetadataAsync_NonExistent_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ContractInstanceModel?)null);
+
+        var request = new GetContractMetadataRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractMetadataAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region CheckContractConstraint Tests
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_NoActiveContracts_ReturnsAllowed()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.Exclusivity
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Allowed);
+    }
+
+    #endregion
+
+    #region QueryActiveContracts Tests
+
+    [Fact]
+    public async Task QueryActiveContractsAsync_NoContracts_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+
+        var request = new QueryActiveContractsRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.QueryActiveContractsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Contracts);
+    }
+
+    [Fact]
+    public async Task QueryActiveContractsAsync_HasActiveContracts_ReturnsContracts()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = entityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" }
+        };
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"party-idx:Character:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = instance
+            });
+
+        var request = new QueryActiveContractsRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.QueryActiveContractsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Contracts);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static CreateContractTemplateRequest CreateValidTemplateRequest()
@@ -387,6 +1441,23 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             DefaultEnforcementMode = "event_only",
             Transferable = false,
             IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    private static ContractInstanceModel CreateTestInstanceModel(Guid contractId)
+    {
+        return new ContractInstanceModel
+        {
+            ContractId = contractId.ToString(),
+            TemplateId = Guid.NewGuid().ToString(),
+            TemplateCode = "test_template",
+            Status = "draft",
+            Parties = new List<ContractPartyModel>
+            {
+                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "pending" },
+                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "pending" }
+            },
             CreatedAt = DateTimeOffset.UtcNow
         };
     }

@@ -1650,7 +1650,8 @@ public partial class ContractService : IContractService
             Endpoint = api.Endpoint,
             PayloadTemplate = api.PayloadTemplate,
             Description = api.Description,
-            ExecutionMode = api.ExecutionMode.ToString()
+            ExecutionMode = api.ExecutionMode.ToString(),
+            ResponseValidation = api.ResponseValidation
         };
     }
 
@@ -1665,11 +1666,69 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Executing prebound API: {Service}{Endpoint} for contract {ContractId}",
                 api.ServiceName, api.Endpoint, contract.ContractId);
 
-            // Substitute variables in payload template
-            var payload = SubstituteVariables(api.PayloadTemplate, contract);
+            // Build context dictionary for template substitution
+            var context = BuildContractContext(contract);
 
-            // For now, just log the execution - full implementation would use IMeshInvocationClient
-            _logger.LogDebug("Prebound API payload: {Payload}", payload);
+            // Convert to PreboundApiDefinition for ServiceNavigator
+            var apiDefinition = new ServiceClients.PreboundApiDefinition
+            {
+                ServiceName = api.ServiceName,
+                Endpoint = api.Endpoint,
+                PayloadTemplate = api.PayloadTemplate,
+                Description = api.Description,
+                ExecutionMode = ConvertExecutionMode(api.ExecutionMode)
+            };
+
+            // Execute via ServiceNavigator
+            var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);
+
+            if (!result.SubstitutionSucceeded)
+            {
+                _logger.LogWarning("Template substitution failed for prebound API {Service}{Endpoint}: {Error}",
+                    api.ServiceName, api.Endpoint, result.SubstitutionError);
+
+                await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ContractId = Guid.Parse(contract.ContractId),
+                    Trigger = trigger,
+                    ServiceName = api.ServiceName,
+                    Endpoint = api.Endpoint,
+                    ErrorMessage = $"Template substitution failed: {result.SubstitutionError}",
+                    StatusCode = null
+                });
+                return;
+            }
+
+            // Validate response if validation rules are configured
+            if (api.ResponseValidation != null && result.Result != null)
+            {
+                var validationResult = Utilities.ResponseValidator.Validate(
+                    result.Result.StatusCode,
+                    result.Result.ResponseBody,
+                    api.ResponseValidation);
+
+                if (validationResult.Outcome != Utilities.ValidationOutcome.Success)
+                {
+                    _logger.LogWarning("Prebound API response validation failed for {Service}{Endpoint}: {Outcome} - {Reason}",
+                        api.ServiceName, api.Endpoint, validationResult.Outcome, validationResult.FailureReason);
+
+                    await _messageBus.TryPublishAsync("contract.prebound-api.validation-failed", new ContractPreboundApiValidationFailedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ContractId = Guid.Parse(contract.ContractId),
+                        Trigger = trigger,
+                        ServiceName = api.ServiceName,
+                        Endpoint = api.Endpoint,
+                        StatusCode = result.Result.StatusCode,
+                        ValidationOutcome = validationResult.Outcome.ToString(),
+                        FailureReason = validationResult.FailureReason
+                    });
+                    return;
+                }
+            }
 
             // Publish execution event
             await _messageBus.TryPublishAsync("contract.prebound-api.executed", new ContractPreboundApiExecutedEvent
@@ -1680,7 +1739,7 @@ public partial class ContractService : IContractService
                 Trigger = trigger,
                 ServiceName = api.ServiceName,
                 Endpoint = api.Endpoint,
-                StatusCode = 200 // Placeholder
+                StatusCode = result.Result?.StatusCode ?? 0
             });
         }
         catch (Exception ex)
@@ -1702,16 +1761,81 @@ public partial class ContractService : IContractService
         }
     }
 
-    private string SubstituteVariables(string template, ContractInstanceModel contract)
+    /// <summary>
+    /// Builds a context dictionary from contract data for template substitution.
+    /// </summary>
+    private static Dictionary<string, object?> BuildContractContext(ContractInstanceModel contract)
     {
-        // Simple variable substitution - replace {{variable}} patterns
-        var result = template;
+        var context = new Dictionary<string, object?>
+        {
+            ["contract.id"] = contract.ContractId,
+            ["contract.templateId"] = contract.TemplateId,
+            ["contract.templateCode"] = contract.TemplateCode,
+            ["contract.status"] = contract.Status,
+            ["contract.effectiveFrom"] = contract.EffectiveFrom?.ToString("o"),
+            ["contract.effectiveUntil"] = contract.EffectiveUntil?.ToString("o"),
+            ["contract.currentMilestoneIndex"] = contract.CurrentMilestoneIndex
+        };
 
-        result = result.Replace("{{contract.id}}", contract.ContractId);
-        result = result.Replace("{{contract.templateCode}}", contract.TemplateCode);
+        // Add parties
+        if (contract.Parties != null)
+        {
+            context["contract.parties"] = contract.Parties.Select(p => new Dictionary<string, object?>
+            {
+                ["entityId"] = p.EntityId,
+                ["entityType"] = p.EntityType,
+                ["role"] = p.Role,
+                ["consentStatus"] = p.ConsentStatus
+            }).ToList();
 
-        // More sophisticated substitution would be needed for production
-        return result;
+            // Add party shortcuts by role
+            foreach (var party in contract.Parties)
+            {
+                context[$"contract.party.{party.Role.ToLowerInvariant()}.entityId"] = party.EntityId;
+                context[$"contract.party.{party.Role.ToLowerInvariant()}.entityType"] = party.EntityType;
+            }
+        }
+
+        // Add terms
+        if (contract.Terms != null)
+        {
+            context["contract.terms.duration"] = contract.Terms.Duration;
+            context["contract.terms.paymentFrequency"] = contract.Terms.PaymentFrequency;
+
+            if (contract.Terms.CustomTerms != null)
+            {
+                foreach (var term in contract.Terms.CustomTerms)
+                {
+                    context[$"contract.terms.custom.{term.Key}"] = term.Value;
+                }
+            }
+        }
+
+        // Add game metadata
+        if (contract.GameMetadata?.InstanceData != null)
+        {
+            context["contract.gameMetadata.instanceData"] = contract.GameMetadata.InstanceData;
+        }
+        if (contract.GameMetadata?.RuntimeState != null)
+        {
+            context["contract.gameMetadata.runtimeState"] = contract.GameMetadata.RuntimeState;
+        }
+
+        return context;
+    }
+
+    /// <summary>
+    /// Converts execution mode string to ExecutionMode enum.
+    /// </summary>
+    private static ServiceClients.ExecutionMode ConvertExecutionMode(string? mode)
+    {
+        return mode?.ToLowerInvariant() switch
+        {
+            "sync" => ServiceClients.ExecutionMode.Sync,
+            "async" => ServiceClients.ExecutionMode.Async,
+            "fire_and_forget" => ServiceClients.ExecutionMode.FireAndForget,
+            _ => ServiceClients.ExecutionMode.Sync
+        };
     }
 
     private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
@@ -1800,7 +1924,8 @@ public partial class ContractService : IContractService
             PayloadTemplate = model.PayloadTemplate,
             Description = model.Description,
             ExecutionMode = string.IsNullOrEmpty(model.ExecutionMode) ? PreboundApiExecutionMode.Sync :
-                Enum.TryParse<PreboundApiExecutionMode>(model.ExecutionMode, true, out var em) ? em : PreboundApiExecutionMode.Sync
+                Enum.TryParse<PreboundApiExecutionMode>(model.ExecutionMode, true, out var em) ? em : PreboundApiExecutionMode.Sync,
+            ResponseValidation = model.ResponseValidation
         };
     }
 
@@ -2207,6 +2332,7 @@ internal class PreboundApiModel
     public string PayloadTemplate { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string ExecutionMode { get; set; } = "sync";
+    public ResponseValidation? ResponseValidation { get; set; }
 }
 
 /// <summary>
