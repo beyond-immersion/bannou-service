@@ -219,7 +219,7 @@ public partial class CurrencyService : ICurrencyService
                 if (body.IsBaseCurrency is not null && model.IsBaseCurrency != body.IsBaseCurrency) continue;
                 if (body.RealmId is not null)
                 {
-                    var realmStr = body.RealmId.ToString();
+                    var realmStr = body.RealmId.Value.ToString();
                     if (model.Scope == CurrencyScope.Global.ToString()) { /* global is always available */ }
                     else if (model.RealmsAvailable is null || !model.RealmsAvailable.Contains(realmStr)) continue;
                 }
@@ -1846,11 +1846,14 @@ public partial class CurrencyService : ICurrencyService
             var definition = await defStore.GetAsync($"{DEF_PREFIX}{balance.CurrencyDefinitionId}", ct);
             if (definition is null) continue;
 
+            var lockedAmount = await GetTotalHeldAmountAsync(balance.WalletId, balance.CurrencyDefinitionId, ct);
             summaries.Add(new BalanceSummary
             {
+                CurrencyDefinitionId = Guid.Parse(balance.CurrencyDefinitionId),
                 CurrencyCode = definition.Code,
-                CurrencyName = definition.Name,
-                Amount = balance.Amount
+                Amount = balance.Amount,
+                LockedAmount = lockedAmount,
+                EffectiveAmount = balance.Amount - lockedAmount
             });
         }
 
