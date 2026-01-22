@@ -392,3 +392,13 @@ x-state-stores:
     prefix: "music:comp"
     service: Music
     purpose: Cached generated compositions
+
+  # ============================================================================
+  # Contract Stores
+  # ============================================================================
+
+  contract-statestore:
+    backend: redis
+    prefix: contract
+    service: Contract
+    purpose: Contract templates, instances, breaches, and indexes

@@ -29,6 +29,7 @@ This document lists all state store components used in Bannou.
 | `character-personality-statestore` | MySQL | CharacterPersonality | Character personality traits and combat preferences |
 | `character-statestore` | MySQL | Character | Persistent character data |
 | `connect-statestore` | Redis | Connect | WebSocket session state |
+| `contract-statestore` | Redis | Contract | Contract templates, instances, breaches, and indexes |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
@@ -64,7 +65,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 54 stores (34 Redis, 20 MySQL)
+**Total**: 55 stores (35 Redis, 20 MySQL)
 
 ## Naming Conventions
 

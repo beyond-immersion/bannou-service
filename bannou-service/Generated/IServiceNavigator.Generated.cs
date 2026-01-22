@@ -17,6 +17,7 @@ using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Connect;
+using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
@@ -107,6 +108,11 @@ public partial interface IServiceNavigator
     /// Gets the Connect service client.
     /// </summary>
     IConnectClient Connect { get; }
+
+    /// <summary>
+    /// Gets the Contract service client.
+    /// </summary>
+    IContractClient Contract { get; }
 
     /// <summary>
     /// Gets the Documentation service client.

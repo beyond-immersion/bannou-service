@@ -26,6 +26,7 @@ public partial class BannouClient
     private CharacterHistoryProxy? _characterHistory;
     private CharacterPersonalityProxy? _characterPersonality;
     private ConnectProxy? _connect;
+    private ContractProxy? _contract;
     private DocumentationProxy? _documentation;
     private GameServiceProxy? _gameService;
     private GameSessionProxy? _gameSession;
@@ -121,6 +122,12 @@ public partial class BannouClient
     /// </summary>
     public ConnectProxy Connect =>
         _connect ??= new ConnectProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Contract Service API operations.
+    /// </summary>
+    public ContractProxy Contract =>
+        _contract ??= new ContractProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Documentation API operations.

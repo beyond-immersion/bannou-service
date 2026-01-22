@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: Contract Service Configuration
+  description: |
+    Configuration schema for Contract service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    defaultEnforcementMode:
+      type: string
+      env: CONTRACT_DEFAULT_ENFORCEMENT_MODE
+      default: event_only
+      description: Default enforcement mode for contracts (advisory, event_only, consequence_based, community)
+    defaultConsentTimeoutDays:
+      type: integer
+      env: CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS
+      default: 7
+      description: Default number of days for parties to consent before proposal expires
+    maxPartiesPerContract:
+      type: integer
+      env: CONTRACT_MAX_PARTIES_PER_CONTRACT
+      default: 20
+      description: Maximum number of parties allowed in a single contract
+    maxMilestonesPerTemplate:
+      type: integer
+      env: CONTRACT_MAX_MILESTONES_PER_TEMPLATE
+      default: 50
+      description: Maximum number of milestones allowed in a template
+    maxPreboundApisPerMilestone:
+      type: integer
+      env: CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE
+      default: 10
+      description: Maximum number of prebound APIs per milestone
+    maxActiveContractsPerEntity:
+      type: integer
+      env: CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY
+      default: 100
+      description: Maximum active contracts per entity (0 for unlimited)
+    preboundApiBatchSize:
+      type: integer
+      env: CONTRACT_PREBOUND_API_BATCH_SIZE
+      default: 10
+      description: Number of prebound APIs to execute in parallel
+    preboundApiTimeoutMs:
+      type: integer
+      env: CONTRACT_PREBOUND_API_TIMEOUT_MS
+      default: 30000
+      description: Timeout for individual prebound API calls in milliseconds

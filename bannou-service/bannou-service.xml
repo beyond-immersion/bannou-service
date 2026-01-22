@@ -13921,6 +13921,951 @@
             ID of the character whose combat preferences were deleted
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractProposedEvent">
+            <summary>
+            Event published when a contract is proposed to parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractProposedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractProposedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractProposedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractProposedEvent.TemplateId">
+            <summary>
+            Source template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractProposedEvent.TemplateCode">
+            <summary>
+            Source template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractProposedEvent.Parties">
+            <summary>
+            Parties awaiting consent
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent">
+            <summary>
+            Event published when one party consents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent.ConsentingEntityId">
+            <summary>
+            Entity that consented
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent.ConsentingEntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent.Role">
+            <summary>
+            Party's role in the contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractConsentReceivedEvent.RemainingConsentsNeeded">
+            <summary>
+            How many more consents are needed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractAcceptedEvent">
+            <summary>
+            Event published when all required parties consent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractAcceptedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractAcceptedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractAcceptedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractAcceptedEvent.TemplateCode">
+            <summary>
+            Template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractAcceptedEvent.Parties">
+            <summary>
+            All contract parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractAcceptedEvent.EffectiveFrom">
+            <summary>
+            When contract will become active
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractActivatedEvent">
+            <summary>
+            Event published when contract becomes active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractActivatedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractActivatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractActivatedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractActivatedEvent.TemplateCode">
+            <summary>
+            Template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractActivatedEvent.Parties">
+            <summary>
+            All contract parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractActivatedEvent.EffectiveUntil">
+            <summary>
+            When contract expires
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent">
+            <summary>
+            Event published when a milestone is completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent.MilestoneCode">
+            <summary>
+            Completed milestone code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent.MilestoneName">
+            <summary>
+            Milestone display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent.Evidence">
+            <summary>
+            Evidence of completion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneCompletedEvent.PreboundApisExecuted">
+            <summary>
+            Number of prebound APIs executed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent">
+            <summary>
+            Event published when a milestone fails
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.MilestoneCode">
+            <summary>
+            Failed milestone code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.MilestoneName">
+            <summary>
+            Milestone display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.Reason">
+            <summary>
+            Reason for failure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.WasRequired">
+            <summary>
+            Whether this was a required milestone
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractMilestoneFailedEvent.TriggeredBreach">
+            <summary>
+            Whether this failure triggered a breach
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent">
+            <summary>
+            Event published when a breach is recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.BreachId">
+            <summary>
+            Breach record ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.BreachingEntityId">
+            <summary>
+            Entity that breached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.BreachingEntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.BreachType">
+            <summary>
+            Type of breach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.BreachedTermOrMilestone">
+            <summary>
+            What was breached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachDetectedEvent.CureDeadline">
+            <summary>
+            Deadline to cure the breach
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractBreachCuredEvent">
+            <summary>
+            Event published when a breach is cured
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachCuredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachCuredEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachCuredEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachCuredEvent.BreachId">
+            <summary>
+            Breach record ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractBreachCuredEvent.CureEvidence">
+            <summary>
+            Evidence of cure
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractFulfilledEvent">
+            <summary>
+            Event published when all required milestones complete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractFulfilledEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractFulfilledEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractFulfilledEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractFulfilledEvent.TemplateCode">
+            <summary>
+            Template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractFulfilledEvent.Parties">
+            <summary>
+            All contract parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractFulfilledEvent.MilestonesCompleted">
+            <summary>
+            Number of milestones completed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractTerminatedEvent">
+            <summary>
+            Event published when contract is terminated early
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTerminatedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTerminatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTerminatedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTerminatedEvent.TerminatedByEntityId">
+            <summary>
+            Entity that requested termination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTerminatedEvent.TerminatedByEntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTerminatedEvent.Reason">
+            <summary>
+            Reason for termination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTerminatedEvent.WasBreachRelated">
+            <summary>
+            Whether termination was due to breach
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractExpiredEvent">
+            <summary>
+            Event published when contract reaches natural expiration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExpiredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExpiredEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExpiredEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExpiredEvent.TemplateCode">
+            <summary>
+            Template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractExpiredEvent.EffectiveUntil">
+            <summary>
+            When contract was set to expire
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent">
+            <summary>
+            Event published when a prebound API is executed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent.Trigger">
+            <summary>
+            What triggered the API call (milestone.completed, breach.detected, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent.ServiceName">
+            <summary>
+            Target service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent.Endpoint">
+            <summary>
+            Target endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiExecutedEvent.StatusCode">
+            <summary>
+            HTTP status code returned
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent">
+            <summary>
+            Event published when a prebound API call fails
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.Trigger">
+            <summary>
+            What triggered the API call
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.ServiceName">
+            <summary>
+            Target service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.Endpoint">
+            <summary>
+            Target endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.ErrorMessage">
+            <summary>
+            Error message from failure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractPreboundApiFailedEvent.StatusCode">
+            <summary>
+            HTTP status code if available
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PartyInfo">
+            <summary>
+            Brief party information for events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PartyInfo.EntityId">
+            <summary>
+            Entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PartyInfo.EntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PartyInfo.Role">
+            <summary>
+            Role in contract
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent">
+            <summary>
+            Published to contract-template.created when a contracttemplate is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.EventName">
+            <summary>
+            Event type identifier: contract-template.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.TemplateId">
+            <summary>
+            Unique identifier for the contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.Code">
+            <summary>
+            Unique template code (lowercase, underscores)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.Name">
+            <summary>
+            Human-readable template name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.Description">
+            <summary>
+            Detailed description of this contract type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.RealmId">
+            <summary>
+            Realm ID if template is realm-specific
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.MinParties">
+            <summary>
+            Minimum number of parties required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.MaxParties">
+            <summary>
+            Maximum number of parties allowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.DefaultEnforcementMode">
+            <summary>
+            Default enforcement mode for instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.Transferable">
+            <summary>
+            Whether contracts can be transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.IsActive">
+            <summary>
+            Whether template is active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.CreatedAt">
+            <summary>
+            Timestamp when the template was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateCreatedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the template was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent">
+            <summary>
+            Published to contract-template.updated when a contracttemplate is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: contract-template.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.TemplateId">
+            <summary>
+            Unique identifier for the contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.Code">
+            <summary>
+            Unique template code (lowercase, underscores)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.Name">
+            <summary>
+            Human-readable template name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.Description">
+            <summary>
+            Detailed description of this contract type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.RealmId">
+            <summary>
+            Realm ID if template is realm-specific
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.MinParties">
+            <summary>
+            Minimum number of parties required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.MaxParties">
+            <summary>
+            Maximum number of parties allowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.DefaultEnforcementMode">
+            <summary>
+            Default enforcement mode for instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.Transferable">
+            <summary>
+            Whether contracts can be transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.IsActive">
+            <summary>
+            Whether template is active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.CreatedAt">
+            <summary>
+            Timestamp when the template was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the template was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent">
+            <summary>
+            Published to contract-template.deleted when a contracttemplate is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.EventName">
+            <summary>
+            Event type identifier: contract-template.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.TemplateId">
+            <summary>
+            Unique identifier for the contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.Code">
+            <summary>
+            Unique template code (lowercase, underscores)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.Name">
+            <summary>
+            Human-readable template name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.Description">
+            <summary>
+            Detailed description of this contract type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.RealmId">
+            <summary>
+            Realm ID if template is realm-specific
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.MinParties">
+            <summary>
+            Minimum number of parties required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.MaxParties">
+            <summary>
+            Maximum number of parties allowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.DefaultEnforcementMode">
+            <summary>
+            Default enforcement mode for instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.Transferable">
+            <summary>
+            Whether contracts can be transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.IsActive">
+            <summary>
+            Whether template is active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.CreatedAt">
+            <summary>
+            Timestamp when the template was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the template was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractTemplateDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent">
+            <summary>
+            Published to contract-instance.created when a contractinstance is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.EventName">
+            <summary>
+            Event type identifier: contract-instance.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.ContractId">
+            <summary>
+            Unique identifier for the contract instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.TemplateId">
+            <summary>
+            Reference to the source template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.TemplateCode">
+            <summary>
+            Template code for reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.Status">
+            <summary>
+            Current contract status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.ProposedAt">
+            <summary>
+            When contract was proposed to parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.AcceptedAt">
+            <summary>
+            When all parties consented
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.EffectiveFrom">
+            <summary>
+            When contract became active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.EffectiveUntil">
+            <summary>
+            When contract expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.TerminatedAt">
+            <summary>
+            When contract was terminated early
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.CreatedAt">
+            <summary>
+            Timestamp when the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceCreatedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the instance was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent">
+            <summary>
+            Published to contract-instance.updated when a contractinstance is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: contract-instance.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.ContractId">
+            <summary>
+            Unique identifier for the contract instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.TemplateId">
+            <summary>
+            Reference to the source template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.TemplateCode">
+            <summary>
+            Template code for reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.Status">
+            <summary>
+            Current contract status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.ProposedAt">
+            <summary>
+            When contract was proposed to parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.AcceptedAt">
+            <summary>
+            When all parties consented
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.EffectiveFrom">
+            <summary>
+            When contract became active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.EffectiveUntil">
+            <summary>
+            When contract expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.TerminatedAt">
+            <summary>
+            When contract was terminated early
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.CreatedAt">
+            <summary>
+            Timestamp when the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the instance was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent">
+            <summary>
+            Published to contract-instance.deleted when a contractinstance is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.EventName">
+            <summary>
+            Event type identifier: contract-instance.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.ContractId">
+            <summary>
+            Unique identifier for the contract instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.TemplateId">
+            <summary>
+            Reference to the source template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.TemplateCode">
+            <summary>
+            Template code for reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.Status">
+            <summary>
+            Current contract status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.ProposedAt">
+            <summary>
+            When contract was proposed to parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.AcceptedAt">
+            <summary>
+            When all parties consented
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.EffectiveFrom">
+            <summary>
+            When contract became active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.EffectiveUntil">
+            <summary>
+            When contract expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.TerminatedAt">
+            <summary>
+            When contract was terminated early
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.CreatedAt">
+            <summary>
+            Timestamp when the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the instance was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ContractInstanceDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationQueriedEvent">
             <summary>
             Published when documentation is queried with natural language
@@ -31714,6 +32659,1975 @@
         <member name="P:BeyondImmersion.BannouService.Connect.PermissionRecompileEvent.Metadata">
             <summary>
             Additional context for the recompilation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.IContractClient">
+            <summary>
+            Client interface for the Contract service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.CreateContractTemplateAsync(BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a contract template
+            </summary>
+            <remarks>
+            Creates a new contract template that defines a type of agreement.
+            <br/>Templates specify party roles, default terms, milestones, and prebound APIs.
+            </remarks>
+            <returns>Template created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.GetContractTemplateAsync(BeyondImmersion.BannouService.Contract.GetContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get template by ID or code
+            </summary>
+            <remarks>
+            Retrieves a contract template by its unique ID or code.
+            <br/>At least one of templateId or code must be provided.
+            </remarks>
+            <returns>Template retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.ListContractTemplatesAsync(BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List templates with filters
+            </summary>
+            <remarks>
+            Lists contract templates with optional filtering by realm, active status,
+            <br/>and search term.
+            </remarks>
+            <returns>Templates retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.UpdateContractTemplateAsync(BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update template (not instances)
+            </summary>
+            <remarks>
+            Updates an existing contract template. Does not affect existing instances.
+            <br/>Only certain fields can be updated after creation.
+            </remarks>
+            <returns>Template updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.DeleteContractTemplateAsync(BeyondImmersion.BannouService.Contract.DeleteContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Soft-delete template
+            </summary>
+            <remarks>
+            Soft-deletes a contract template. Existing instances continue to function
+            <br/>but no new instances can be created from this template.
+            </remarks>
+            <returns>Template deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.CreateContractInstanceAsync(BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create contract instance from template
+            </summary>
+            <remarks>
+            Creates a new contract instance from a template. The instance starts
+            <br/>in 'draft' status and must be proposed to parties before activation.
+            </remarks>
+            <returns>Instance created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.ProposeContractInstanceAsync(BeyondImmersion.BannouService.Contract.ProposeContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Propose contract to parties (starts consent flow)
+            </summary>
+            <remarks>
+            Moves a draft contract to 'proposed' status and notifies parties.
+            <br/>Parties must consent before the contract becomes active.
+            </remarks>
+            <returns>Contract proposed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.ConsentToContractAsync(BeyondImmersion.BannouService.Contract.ConsentToContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Party consents to contract
+            </summary>
+            <remarks>
+            Records a party's consent to a proposed contract. When all required
+            <br/>parties consent, the contract moves to 'accepted' then 'active' status.
+            </remarks>
+            <returns>Consent recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.GetContractInstanceAsync(BeyondImmersion.BannouService.Contract.GetContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get instance by ID
+            </summary>
+            <remarks>
+            Retrieves a contract instance by its unique ID.
+            </remarks>
+            <returns>Instance retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.QueryContractInstancesAsync(BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query instances by party, template, status
+            </summary>
+            <remarks>
+            Queries contract instances with various filters. At least one filter
+            <br/>must be provided.
+            </remarks>
+            <returns>Instances retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.TerminateContractInstanceAsync(BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Request early termination
+            </summary>
+            <remarks>
+            Requests early termination of an active contract. Depending on the
+            <br/>contract's termination policy, this may require mutual consent or
+            <br/>incur penalties.
+            </remarks>
+            <returns>Termination processed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.GetContractInstanceStatusAsync(BeyondImmersion.BannouService.Contract.GetContractInstanceStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current status and milestone progress
+            </summary>
+            <remarks>
+            Gets the current status of a contract including milestone progress,
+            <br/>pending consents, and any active breaches.
+            </remarks>
+            <returns>Status retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.CompleteMilestoneAsync(BeyondImmersion.BannouService.Contract.CompleteMilestoneRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            External system reports milestone completed
+            </summary>
+            <remarks>
+            Called by external systems to report that a milestone's conditions
+            <br/>have been met. Triggers onComplete prebound APIs and may advance
+            <br/>contract status.
+            </remarks>
+            <returns>Milestone completed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.FailMilestoneAsync(BeyondImmersion.BannouService.Contract.FailMilestoneRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            External system reports milestone failed
+            </summary>
+            <remarks>
+            Called by external systems to report that a milestone has failed
+            <br/>(e.g., deadline passed, conditions cannot be met). Triggers onExpire
+            <br/>prebound APIs and may record a breach.
+            </remarks>
+            <returns>Milestone failure recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.GetMilestoneAsync(BeyondImmersion.BannouService.Contract.GetMilestoneRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get milestone details and status
+            </summary>
+            <remarks>
+            Gets the current state of a specific milestone.
+            </remarks>
+            <returns>Milestone retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.ReportBreachAsync(BeyondImmersion.BannouService.Contract.ReportBreachRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Report a contract breach
+            </summary>
+            <remarks>
+            Reports a breach of contract terms. This can be called by parties
+            <br/>or external systems. The breach enters a grace period for cure
+            <br/>if configured.
+            </remarks>
+            <returns>Breach reported successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.CureBreachAsync(BeyondImmersion.BannouService.Contract.CureBreachRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Mark breach as cured (system/admin action)
+            </summary>
+            <remarks>
+            Marks a breach as cured within the grace period. This prevents
+            <br/>consequences from being applied. Called by systems that verify
+            <br/>the breach has been remedied.
+            </remarks>
+            <returns>Breach cured successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.GetBreachAsync(BeyondImmersion.BannouService.Contract.GetBreachRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get breach details
+            </summary>
+            <remarks>
+            Retrieves details of a specific breach record.
+            </remarks>
+            <returns>Breach retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.UpdateContractMetadataAsync(BeyondImmersion.BannouService.Contract.UpdateContractMetadataRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update game metadata on instance
+            </summary>
+            <remarks>
+            Updates game-specific metadata on a contract instance without
+            <br/>touching contract state. Used by higher-level systems (quests, etc.)
+            <br/>to store additional context.
+            </remarks>
+            <returns>Metadata updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.GetContractMetadataAsync(BeyondImmersion.BannouService.Contract.GetContractMetadataRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get game metadata
+            </summary>
+            <remarks>
+            Retrieves game-specific metadata from a contract instance.
+            </remarks>
+            <returns>Metadata retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.CheckContractConstraintAsync(BeyondImmersion.BannouService.Contract.CheckConstraintRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if entity can take action given contracts
+            </summary>
+            <remarks>
+            Checks whether an entity's proposed action would violate any
+            <br/>active contract constraints (exclusivity, non-compete, territory, etc.).
+            </remarks>
+            <returns>Constraint check completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.QueryActiveContractsAsync(BeyondImmersion.BannouService.Contract.QueryActiveContractsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query active contracts for entity
+            </summary>
+            <remarks>
+            Returns all active contracts where the specified entity is a party.
+            <br/>Useful for displaying current obligations in UI.
+            </remarks>
+            <returns>Active contracts retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractClient">
+            <summary>
+            Client implementation for the Contract service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Contract.ContractClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Contract.ContractClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Contract.ContractClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Contract.ContractClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Contract.ContractClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.CreateContractTemplateAsync(BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a contract template
+            </summary>
+            <remarks>
+            Creates a new contract template that defines a type of agreement.
+            <br/>Templates specify party roles, default terms, milestones, and prebound APIs.
+            </remarks>
+            <returns>Template created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.GetContractTemplateAsync(BeyondImmersion.BannouService.Contract.GetContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get template by ID or code
+            </summary>
+            <remarks>
+            Retrieves a contract template by its unique ID or code.
+            <br/>At least one of templateId or code must be provided.
+            </remarks>
+            <returns>Template retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ListContractTemplatesAsync(BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List templates with filters
+            </summary>
+            <remarks>
+            Lists contract templates with optional filtering by realm, active status,
+            <br/>and search term.
+            </remarks>
+            <returns>Templates retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.UpdateContractTemplateAsync(BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update template (not instances)
+            </summary>
+            <remarks>
+            Updates an existing contract template. Does not affect existing instances.
+            <br/>Only certain fields can be updated after creation.
+            </remarks>
+            <returns>Template updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.DeleteContractTemplateAsync(BeyondImmersion.BannouService.Contract.DeleteContractTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Soft-delete template
+            </summary>
+            <remarks>
+            Soft-deletes a contract template. Existing instances continue to function
+            <br/>but no new instances can be created from this template.
+            </remarks>
+            <returns>Template deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.CreateContractInstanceAsync(BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create contract instance from template
+            </summary>
+            <remarks>
+            Creates a new contract instance from a template. The instance starts
+            <br/>in 'draft' status and must be proposed to parties before activation.
+            </remarks>
+            <returns>Instance created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ProposeContractInstanceAsync(BeyondImmersion.BannouService.Contract.ProposeContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Propose contract to parties (starts consent flow)
+            </summary>
+            <remarks>
+            Moves a draft contract to 'proposed' status and notifies parties.
+            <br/>Parties must consent before the contract becomes active.
+            </remarks>
+            <returns>Contract proposed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ConsentToContractAsync(BeyondImmersion.BannouService.Contract.ConsentToContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Party consents to contract
+            </summary>
+            <remarks>
+            Records a party's consent to a proposed contract. When all required
+            <br/>parties consent, the contract moves to 'accepted' then 'active' status.
+            </remarks>
+            <returns>Consent recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.GetContractInstanceAsync(BeyondImmersion.BannouService.Contract.GetContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get instance by ID
+            </summary>
+            <remarks>
+            Retrieves a contract instance by its unique ID.
+            </remarks>
+            <returns>Instance retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.QueryContractInstancesAsync(BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query instances by party, template, status
+            </summary>
+            <remarks>
+            Queries contract instances with various filters. At least one filter
+            <br/>must be provided.
+            </remarks>
+            <returns>Instances retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.TerminateContractInstanceAsync(BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Request early termination
+            </summary>
+            <remarks>
+            Requests early termination of an active contract. Depending on the
+            <br/>contract's termination policy, this may require mutual consent or
+            <br/>incur penalties.
+            </remarks>
+            <returns>Termination processed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.GetContractInstanceStatusAsync(BeyondImmersion.BannouService.Contract.GetContractInstanceStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current status and milestone progress
+            </summary>
+            <remarks>
+            Gets the current status of a contract including milestone progress,
+            <br/>pending consents, and any active breaches.
+            </remarks>
+            <returns>Status retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.CompleteMilestoneAsync(BeyondImmersion.BannouService.Contract.CompleteMilestoneRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            External system reports milestone completed
+            </summary>
+            <remarks>
+            Called by external systems to report that a milestone's conditions
+            <br/>have been met. Triggers onComplete prebound APIs and may advance
+            <br/>contract status.
+            </remarks>
+            <returns>Milestone completed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.FailMilestoneAsync(BeyondImmersion.BannouService.Contract.FailMilestoneRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            External system reports milestone failed
+            </summary>
+            <remarks>
+            Called by external systems to report that a milestone has failed
+            <br/>(e.g., deadline passed, conditions cannot be met). Triggers onExpire
+            <br/>prebound APIs and may record a breach.
+            </remarks>
+            <returns>Milestone failure recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.GetMilestoneAsync(BeyondImmersion.BannouService.Contract.GetMilestoneRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get milestone details and status
+            </summary>
+            <remarks>
+            Gets the current state of a specific milestone.
+            </remarks>
+            <returns>Milestone retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ReportBreachAsync(BeyondImmersion.BannouService.Contract.ReportBreachRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Report a contract breach
+            </summary>
+            <remarks>
+            Reports a breach of contract terms. This can be called by parties
+            <br/>or external systems. The breach enters a grace period for cure
+            <br/>if configured.
+            </remarks>
+            <returns>Breach reported successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.CureBreachAsync(BeyondImmersion.BannouService.Contract.CureBreachRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Mark breach as cured (system/admin action)
+            </summary>
+            <remarks>
+            Marks a breach as cured within the grace period. This prevents
+            <br/>consequences from being applied. Called by systems that verify
+            <br/>the breach has been remedied.
+            </remarks>
+            <returns>Breach cured successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.GetBreachAsync(BeyondImmersion.BannouService.Contract.GetBreachRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get breach details
+            </summary>
+            <remarks>
+            Retrieves details of a specific breach record.
+            </remarks>
+            <returns>Breach retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.UpdateContractMetadataAsync(BeyondImmersion.BannouService.Contract.UpdateContractMetadataRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update game metadata on instance
+            </summary>
+            <remarks>
+            Updates game-specific metadata on a contract instance without
+            <br/>touching contract state. Used by higher-level systems (quests, etc.)
+            <br/>to store additional context.
+            </remarks>
+            <returns>Metadata updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.GetContractMetadataAsync(BeyondImmersion.BannouService.Contract.GetContractMetadataRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get game metadata
+            </summary>
+            <remarks>
+            Retrieves game-specific metadata from a contract instance.
+            </remarks>
+            <returns>Metadata retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.CheckContractConstraintAsync(BeyondImmersion.BannouService.Contract.CheckConstraintRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if entity can take action given contracts
+            </summary>
+            <remarks>
+            Checks whether an entity's proposed action would violate any
+            <br/>active contract constraints (exclusivity, non-compete, territory, etc.).
+            </remarks>
+            <returns>Constraint check completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.QueryActiveContractsAsync(BeyondImmersion.BannouService.Contract.QueryActiveContractsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query active contracts for entity
+            </summary>
+            <remarks>
+            Returns all active contracts where the specified entity is a party.
+            <br/>Useful for displaying current obligations in UI.
+            </remarks>
+            <returns>Active contracts retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Contract.ContractClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.EntityType">
+            <summary>
+            Type of entity that can be a contract party
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractStatus">
+            <summary>
+            Current status of a contract instance
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MilestoneStatus">
+            <summary>
+            Current status of a milestone
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.BreachType">
+            <summary>
+            Type of contract breach
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.BreachStatus">
+            <summary>
+            Current status of a breach record
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ConsentStatus">
+            <summary>
+            Party's consent status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.EnforcementMode">
+            <summary>
+            How contract breaches are handled
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.TerminationPolicy">
+            <summary>
+            How the contract can be terminated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.PaymentSchedule">
+            <summary>
+            When payments occur
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ConstraintType">
+            <summary>
+            Type of constraint to check
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MetadataType">
+            <summary>
+            Type of metadata to update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest">
+            <summary>
+            Request to create a new contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.Code">
+            <summary>
+            Unique code for this template (lowercase, underscores)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.Name">
+            <summary>
+            Human-readable template name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.Description">
+            <summary>
+            Detailed description of this contract type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.RealmId">
+            <summary>
+            Realm ID if template is realm-specific (null for cross-realm)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.MinParties">
+            <summary>
+            Minimum number of parties required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.MaxParties">
+            <summary>
+            Maximum number of parties allowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.PartyRoles">
+            <summary>
+            Role definitions for parties in this contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.DefaultTerms">
+            <summary>
+            Default terms for instances of this template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.Milestones">
+            <summary>
+            Milestone definitions for this contract type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.DefaultEnforcementMode">
+            <summary>
+            Default enforcement mode for instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.Transferable">
+            <summary>
+            Whether contracts can be transferred to other parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractTemplateRequest.GameMetadata">
+            <summary>
+            Template-level game-specific metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.GetContractTemplateRequest">
+            <summary>
+            Request to get a contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetContractTemplateRequest.TemplateId">
+            <summary>
+            Template ID (provide this or code)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetContractTemplateRequest.Code">
+            <summary>
+            Template code (provide this or templateId)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest">
+            <summary>
+            Request to list contract templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.RealmId">
+            <summary>
+            Filter by realm (null includes cross-realm templates)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.IsActive">
+            <summary>
+            Filter by active status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.SearchTerm">
+            <summary>
+            Search in name and description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.Page">
+            <summary>
+            Page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesRequest.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest">
+            <summary>
+            Request to update a contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest.TemplateId">
+            <summary>
+            Template ID to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest.Name">
+            <summary>
+            New template name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest.IsActive">
+            <summary>
+            Active status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractTemplateRequest.GameMetadata">
+            <summary>
+            Updated game metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.DeleteContractTemplateRequest">
+            <summary>
+            Request to delete a contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DeleteContractTemplateRequest.TemplateId">
+            <summary>
+            Template ID to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractTemplateResponse">
+            <summary>
+            Contract template details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.TemplateId">
+            <summary>
+            Unique template identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.Code">
+            <summary>
+            Unique template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.Name">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.Description">
+            <summary>
+            Detailed description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.RealmId">
+            <summary>
+            Realm ID if realm-specific
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.MinParties">
+            <summary>
+            Minimum parties required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.MaxParties">
+            <summary>
+            Maximum parties allowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.PartyRoles">
+            <summary>
+            Party role definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.DefaultTerms">
+            <summary>
+            Default contract terms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.Milestones">
+            <summary>
+            Milestone definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.DefaultEnforcementMode">
+            <summary>
+            Default enforcement mode
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.Transferable">
+            <summary>
+            Whether contracts can be transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.GameMetadata">
+            <summary>
+            Game-specific metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.IsActive">
+            <summary>
+            Whether template is active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTemplateResponse.UpdatedAt">
+            <summary>
+            Last update timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse">
+            <summary>
+            Paginated list of contract templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.Templates">
+            <summary>
+            List of templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.TotalCount">
+            <summary>
+            Total matching templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.Page">
+            <summary>
+            Current page number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListContractTemplatesResponse.HasNextPage">
+            <summary>
+            Whether more results exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest">
+            <summary>
+            Request to create a contract instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest.TemplateId">
+            <summary>
+            Template to create instance from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest.Parties">
+            <summary>
+            Parties to this contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest.Terms">
+            <summary>
+            Terms overriding template defaults
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest.EffectiveFrom">
+            <summary>
+            When contract becomes active (null for immediate)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest.EffectiveUntil">
+            <summary>
+            When contract expires (null for perpetual)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest.EscrowIds">
+            <summary>
+            Related escrow IDs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CreateContractInstanceRequest.GameMetadata">
+            <summary>
+            Instance-level game metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ProposeContractInstanceRequest">
+            <summary>
+            Request to propose a contract to parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ProposeContractInstanceRequest.ContractId">
+            <summary>
+            Contract instance to propose
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ConsentToContractRequest">
+            <summary>
+            Request to consent to a contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ConsentToContractRequest.ContractId">
+            <summary>
+            Contract to consent to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ConsentToContractRequest.PartyEntityId">
+            <summary>
+            Entity ID of consenting party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ConsentToContractRequest.PartyEntityType">
+            <summary>
+            Entity type of consenting party
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.GetContractInstanceRequest">
+            <summary>
+            Request to get a contract instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetContractInstanceRequest.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest">
+            <summary>
+            Request to query contract instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PartyEntityId">
+            <summary>
+            Filter by party entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PartyEntityType">
+            <summary>
+            Filter by party entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.TemplateId">
+            <summary>
+            Filter by template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Statuses">
+            <summary>
+            Filter by statuses
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.Page">
+            <summary>
+            Page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesRequest.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest">
+            <summary>
+            Request to terminate a contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest.ContractId">
+            <summary>
+            Contract to terminate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest.RequestingEntityId">
+            <summary>
+            Entity requesting termination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest.RequestingEntityType">
+            <summary>
+            Type of requesting entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TerminateContractInstanceRequest.Reason">
+            <summary>
+            Reason for termination
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.GetContractInstanceStatusRequest">
+            <summary>
+            Request to get contract status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetContractInstanceStatusRequest.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractInstanceResponse">
+            <summary>
+            Contract instance details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.ContractId">
+            <summary>
+            Unique contract identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.TemplateId">
+            <summary>
+            Source template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.TemplateCode">
+            <summary>
+            Source template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.Status">
+            <summary>
+            Current contract status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.Parties">
+            <summary>
+            Contract parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.Terms">
+            <summary>
+            Contract terms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.Milestones">
+            <summary>
+            Milestone progress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.CurrentMilestoneIndex">
+            <summary>
+            Index of current milestone
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.EscrowIds">
+            <summary>
+            Related escrow IDs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.ProposedAt">
+            <summary>
+            When contract was proposed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.AcceptedAt">
+            <summary>
+            When all parties consented
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.EffectiveFrom">
+            <summary>
+            When contract became active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.EffectiveUntil">
+            <summary>
+            When contract expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.TerminatedAt">
+            <summary>
+            When contract was terminated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.GameMetadata">
+            <summary>
+            Game-specific metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceResponse.UpdatedAt">
+            <summary>
+            Last update timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse">
+            <summary>
+            Paginated list of contract instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.Contracts">
+            <summary>
+            List of contracts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.TotalCount">
+            <summary>
+            Total matching contracts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.Page">
+            <summary>
+            Current page number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.PageSize">
+            <summary>
+            Results per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryContractInstancesResponse.HasNextPage">
+            <summary>
+            Whether more results exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse">
+            <summary>
+            Contract status summary
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse.Status">
+            <summary>
+            Current status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse.MilestoneProgress">
+            <summary>
+            Milestone progress summary
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse.PendingConsents">
+            <summary>
+            Parties who haven't consented
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse.ActiveBreaches">
+            <summary>
+            Active breach records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractInstanceStatusResponse.DaysUntilExpiration">
+            <summary>
+            Days until natural expiration
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.PartyRoleDefinition">
+            <summary>
+            Definition of a party role in a contract template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PartyRoleDefinition.Role">
+            <summary>
+            Role identifier (employer, employee, buyer, seller, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PartyRoleDefinition.MinCount">
+            <summary>
+            Minimum entities required in this role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PartyRoleDefinition.MaxCount">
+            <summary>
+            Maximum entities allowed in this role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PartyRoleDefinition.AllowedEntityTypes">
+            <summary>
+            Which entity types can fill this role (null for any)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractPartyInput">
+            <summary>
+            Party input for contract creation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyInput.EntityId">
+            <summary>
+            Entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyInput.EntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyInput.Role">
+            <summary>
+            Role from template
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractPartyResponse">
+            <summary>
+            Contract party details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyResponse.EntityId">
+            <summary>
+            Entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyResponse.EntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyResponse.Role">
+            <summary>
+            Role in contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyResponse.ConsentStatus">
+            <summary>
+            Consent status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractPartyResponse.ConsentedAt">
+            <summary>
+            When consent was given
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.PendingConsentSummary">
+            <summary>
+            Summary of pending consent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PendingConsentSummary.EntityId">
+            <summary>
+            Entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PendingConsentSummary.EntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PendingConsentSummary.Role">
+            <summary>
+            Role in contract
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractTerms">
+            <summary>
+            Configurable contract terms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.Duration">
+            <summary>
+            Contract duration (ISO 8601 duration, null for perpetual)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.PaymentSchedule">
+            <summary>
+            When payments occur
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.PaymentFrequency">
+            <summary>
+            Recurring payment frequency (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.TerminationPolicy">
+            <summary>
+            How contract can be terminated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.TerminationNoticePeriod">
+            <summary>
+            Required notice for termination (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.BreachThreshold">
+            <summary>
+            Breaches before auto-termination (0 for no auto)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.GracePeriodForCure">
+            <summary>
+            Time to cure breach (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractTerms.CustomTerms">
+            <summary>
+            Game-specific custom terms
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MilestoneDefinition">
+            <summary>
+            Milestone definition in a template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.Code">
+            <summary>
+            Unique milestone code within template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.Name">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.Description">
+            <summary>
+            What this milestone represents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.Sequence">
+            <summary>
+            Order in the contract flow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.Required">
+            <summary>
+            Whether milestone must be completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.Deadline">
+            <summary>
+            Relative deadline (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.OnComplete">
+            <summary>
+            APIs to call on completion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneDefinition.OnExpire">
+            <summary>
+            APIs to call if deadline passes
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse">
+            <summary>
+            Milestone instance status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Code">
+            <summary>
+            Milestone code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Name">
+            <summary>
+            Milestone name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Sequence">
+            <summary>
+            Order in flow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Required">
+            <summary>
+            Whether required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Status">
+            <summary>
+            Current status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.CompletedAt">
+            <summary>
+            When completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.FailedAt">
+            <summary>
+            When failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneInstanceResponse.Deadline">
+            <summary>
+            Absolute deadline
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MilestoneProgressSummary">
+            <summary>
+            Brief milestone progress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneProgressSummary.Code">
+            <summary>
+            Milestone code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneProgressSummary.Status">
+            <summary>
+            Current status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CompleteMilestoneRequest">
+            <summary>
+            Request to complete a milestone
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CompleteMilestoneRequest.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CompleteMilestoneRequest.MilestoneCode">
+            <summary>
+            Milestone to complete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CompleteMilestoneRequest.Evidence">
+            <summary>
+            Evidence of completion
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.FailMilestoneRequest">
+            <summary>
+            Request to fail a milestone
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.FailMilestoneRequest.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.FailMilestoneRequest.MilestoneCode">
+            <summary>
+            Milestone that failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.FailMilestoneRequest.Reason">
+            <summary>
+            Reason for failure
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.GetMilestoneRequest">
+            <summary>
+            Request to get milestone details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetMilestoneRequest.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetMilestoneRequest.MilestoneCode">
+            <summary>
+            Milestone code
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.MilestoneResponse">
+            <summary>
+            Milestone details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.MilestoneResponse.Milestone">
+            <summary>
+            Milestone details
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ReportBreachRequest">
+            <summary>
+            Request to report a breach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ReportBreachRequest.ContractId">
+            <summary>
+            Contract that was breached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ReportBreachRequest.BreachingEntityId">
+            <summary>
+            Entity that breached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ReportBreachRequest.BreachingEntityType">
+            <summary>
+            Type of breaching entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ReportBreachRequest.BreachType">
+            <summary>
+            Type of breach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ReportBreachRequest.BreachedTermOrMilestone">
+            <summary>
+            Code of breached term or milestone
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ReportBreachRequest.Description">
+            <summary>
+            Breach description
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CureBreachRequest">
+            <summary>
+            Request to cure a breach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CureBreachRequest.BreachId">
+            <summary>
+            Breach to cure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CureBreachRequest.CureEvidence">
+            <summary>
+            Evidence of cure
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.GetBreachRequest">
+            <summary>
+            Request to get breach details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetBreachRequest.BreachId">
+            <summary>
+            Breach ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.BreachResponse">
+            <summary>
+            Breach record details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.BreachId">
+            <summary>
+            Unique breach identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.ContractId">
+            <summary>
+            Contract that was breached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.BreachingEntityId">
+            <summary>
+            Entity that breached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.BreachingEntityType">
+            <summary>
+            Type of breaching entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.BreachType">
+            <summary>
+            Type of breach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.BreachedTermOrMilestone">
+            <summary>
+            What was breached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.Description">
+            <summary>
+            Breach description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.Status">
+            <summary>
+            Current status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.DetectedAt">
+            <summary>
+            When breach was detected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.CureDeadline">
+            <summary>
+            Deadline to cure breach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.CuredAt">
+            <summary>
+            When breach was cured
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachResponse.ConsequencesAppliedAt">
+            <summary>
+            When consequences were applied
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.BreachSummary">
+            <summary>
+            Brief breach information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachSummary.BreachId">
+            <summary>
+            Breach ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachSummary.BreachType">
+            <summary>
+            Type of breach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.BreachSummary.Status">
+            <summary>
+            Current status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.UpdateContractMetadataRequest">
+            <summary>
+            Request to update contract metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractMetadataRequest.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractMetadataRequest.MetadataType">
+            <summary>
+            Which metadata to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UpdateContractMetadataRequest.Data">
+            <summary>
+            Metadata to set or merge
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.GetContractMetadataRequest">
+            <summary>
+            Request to get contract metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.GetContractMetadataRequest.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractMetadataResponse">
+            <summary>
+            Contract metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractMetadataResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractMetadataResponse.InstanceData">
+            <summary>
+            Instance-level metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractMetadataResponse.RuntimeState">
+            <summary>
+            Runtime state metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CheckConstraintRequest">
+            <summary>
+            Request to check constraint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckConstraintRequest.EntityId">
+            <summary>
+            Entity to check
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckConstraintRequest.EntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckConstraintRequest.ConstraintType">
+            <summary>
+            Type of constraint to check
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckConstraintRequest.ProposedAction">
+            <summary>
+            What the entity wants to do
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CheckConstraintResponse">
+            <summary>
+            Constraint check result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckConstraintResponse.Allowed">
+            <summary>
+            Whether action is allowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckConstraintResponse.ConflictingContracts">
+            <summary>
+            Contracts that would be violated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckConstraintResponse.Reason">
+            <summary>
+            Explanation if not allowed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.QueryActiveContractsRequest">
+            <summary>
+            Request to query active contracts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryActiveContractsRequest.EntityId">
+            <summary>
+            Entity to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryActiveContractsRequest.EntityType">
+            <summary>
+            Entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryActiveContractsRequest.TemplateCodes">
+            <summary>
+            Filter by template codes
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.QueryActiveContractsResponse">
+            <summary>
+            Active contracts for entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.QueryActiveContractsResponse.Contracts">
+            <summary>
+            Active contracts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ContractSummary">
+            <summary>
+            Brief contract information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractSummary.ContractId">
+            <summary>
+            Contract ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractSummary.TemplateCode">
+            <summary>
+            Template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractSummary.TemplateName">
+            <summary>
+            Template name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractSummary.Status">
+            <summary>
+            Current status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractSummary.Role">
+            <summary>
+            Entity's role in contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ContractSummary.EffectiveUntil">
+            <summary>
+            When contract expires
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.PreboundApi">
+            <summary>
+            Pre-configured API call to execute on contract events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PreboundApi.ServiceName">
+            <summary>
+            Target service name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PreboundApi.Endpoint">
+            <summary>
+            Target endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PreboundApi.PayloadTemplate">
+            <summary>
+            JSON payload with variable placeholders
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PreboundApi.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PreboundApi.ExecutionMode">
+            <summary>
+            How to execute the API call
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.IDocumentationClient">
@@ -58881,6 +61795,11 @@
             Gets the Connect service client.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Contract">
+            <summary>
+            Gets the Contract service client.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Documentation">
             <summary>
             Gets the Documentation service client.
@@ -59047,7 +61966,7 @@
             Session context is read from ServiceRequestContext (AsyncLocal storage).
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
             <summary>
             Creates a new ServiceNavigator with all service client dependencies.
             </summary>
@@ -59101,6 +62020,9 @@
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Connect">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Contract">
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Documentation">
@@ -59446,6 +62368,9 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Connect">
             <summary>WebSocket session state</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Contract">
+            <summary>Contract templates, instances, breaches, and indexes</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Documentation">
             <summary>Documentation content and metadata</summary>

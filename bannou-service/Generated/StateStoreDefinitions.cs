@@ -77,6 +77,10 @@ public static class StateStoreDefinitions
     /// <summary>WebSocket session state</summary>
     public const string Connect = "connect-statestore";
 
+    // Contract Service
+    /// <summary>Contract templates, instances, breaches, and indexes</summary>
+    public const string Contract = "contract-statestore";
+
     // Documentation Service
     /// <summary>Documentation content and metadata</summary>
     public const string Documentation = "documentation-statestore";
@@ -220,6 +224,7 @@ public static class StateStoreDefinitions
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
+            [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract" },
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
@@ -286,6 +291,7 @@ public static class StateStoreDefinitions
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql"),
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql"),
             [Connect] = new StoreMetadata("Connect", "WebSocket session state", "redis"),
+            [Contract] = new StoreMetadata("Contract", "Contract templates, instances, breaches, and indexes", "redis"),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),

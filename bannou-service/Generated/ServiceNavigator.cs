@@ -19,6 +19,7 @@ using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Connect;
+using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
@@ -69,6 +70,7 @@ public sealed class ServiceNavigator : IServiceNavigator
     private readonly ICharacterHistoryClient _characterHistory;
     private readonly ICharacterPersonalityClient _characterPersonality;
     private readonly IConnectClient _connect;
+    private readonly IContractClient _contract;
     private readonly IDocumentationClient _documentation;
     private readonly IGameServiceClient _gameService;
     private readonly IGameSessionClient _gameSession;
@@ -110,6 +112,7 @@ public sealed class ServiceNavigator : IServiceNavigator
         ICharacterHistoryClient characterHistory,
         ICharacterPersonalityClient characterPersonality,
         IConnectClient connect,
+        IContractClient contract,
         IDocumentationClient documentation,
         IGameServiceClient gameService,
         IGameSessionClient gameSession,
@@ -147,6 +150,7 @@ public sealed class ServiceNavigator : IServiceNavigator
         _characterHistory = characterHistory;
         _characterPersonality = characterPersonality;
         _connect = connect;
+        _contract = contract;
         _documentation = documentation;
         _gameService = gameService;
         _gameSession = gameSession;
@@ -251,6 +255,9 @@ public sealed class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IConnectClient Connect => _connect;
+
+    /// <inheritdoc />
+    public IContractClient Contract => _contract;
 
     /// <inheritdoc />
     public IDocumentationClient Documentation => _documentation;
