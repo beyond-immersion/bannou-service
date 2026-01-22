@@ -7,6 +7,8 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
@@ -51,12 +53,21 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 /// and provides session context access for client event publishing.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Registered as Scoped in DI to ensure per-request isolation of service clients.
 /// Session context is read from ServiceRequestContext (AsyncLocal storage).
+/// </para>
+/// <para>
+/// This is a partial class. Raw API execution methods are implemented in
+/// ServiceClients/ServiceNavigator.RawApi.cs (manual file).
+/// </para>
 /// </remarks>
-public sealed class ServiceNavigator : IServiceNavigator
+public partial class ServiceNavigator : IServiceNavigator
 {
     private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IServiceAppMappingResolver _appMappingResolver;
+    private readonly AppConfiguration _configuration;
 
     private readonly IAccountClient _account;
     private readonly IAchievementClient _achievement;
@@ -100,6 +111,9 @@ public sealed class ServiceNavigator : IServiceNavigator
     /// </summary>
     public ServiceNavigator(
         IClientEventPublisher clientEventPublisher,
+        IHttpClientFactory httpClientFactory,
+        IServiceAppMappingResolver appMappingResolver,
+        AppConfiguration configuration,
         IAccountClient account,
         IAchievementClient achievement,
         IActorClient actor,
@@ -138,6 +152,9 @@ public sealed class ServiceNavigator : IServiceNavigator
         IWebsiteClient website)
     {
         _clientEventPublisher = clientEventPublisher;
+        _httpClientFactory = httpClientFactory;
+        _appMappingResolver = appMappingResolver;
+        _configuration = configuration;
         _account = account;
         _achievement = achievement;
         _actor = actor;

@@ -318,8 +318,107 @@ public partial class ContractController
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
+                },
+                "responseValidation": {
+                    "$ref": "#/$defs/ResponseValidation",
+                    "nullable": true,
+                    "description": "Optional validation rules for the response"
                 }
             }
+        },
+        "ResponseValidation": {
+            "type": "object",
+            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "additionalProperties": false,
+            "properties": {
+                "successConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                },
+                "permanentFailureConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                }
+            }
+        },
+        "ValidationCondition": {
+            "type": "object",
+            "description": "A single condition to check against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidationConditionType"
+                        }
+                    ],
+                    "description": "The type of validation condition to check"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric comparisons"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes for statusCodeIn condition"
+                }
+            }
+        },
+        "ValidationConditionType": {
+            "type": "string",
+            "description": "Type of validation condition",
+            "enum": [
+                "statusCodeIn",
+                "jsonPathEquals",
+                "jsonPathNotEquals",
+                "jsonPathExists",
+                "jsonPathNotExists",
+                "jsonPathGreaterThan",
+                "jsonPathLessThan",
+                "jsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "eq",
+                "ne",
+                "gt",
+                "gte",
+                "lt",
+                "lte"
+            ]
         },
         "EnforcementMode": {
             "type": "string",
@@ -651,8 +750,107 @@ public partial class ContractController
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
+                },
+                "responseValidation": {
+                    "$ref": "#/$defs/ResponseValidation",
+                    "nullable": true,
+                    "description": "Optional validation rules for the response"
                 }
             }
+        },
+        "ResponseValidation": {
+            "type": "object",
+            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "additionalProperties": false,
+            "properties": {
+                "successConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                },
+                "permanentFailureConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                }
+            }
+        },
+        "ValidationCondition": {
+            "type": "object",
+            "description": "A single condition to check against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidationConditionType"
+                        }
+                    ],
+                    "description": "The type of validation condition to check"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric comparisons"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes for statusCodeIn condition"
+                }
+            }
+        },
+        "ValidationConditionType": {
+            "type": "string",
+            "description": "Type of validation condition",
+            "enum": [
+                "statusCodeIn",
+                "jsonPathEquals",
+                "jsonPathNotEquals",
+                "jsonPathExists",
+                "jsonPathNotExists",
+                "jsonPathGreaterThan",
+                "jsonPathLessThan",
+                "jsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "eq",
+                "ne",
+                "gt",
+                "gte",
+                "lt",
+                "lte"
+            ]
         },
         "EnforcementMode": {
             "type": "string",
@@ -1067,8 +1265,107 @@ public partial class ContractController
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
+                },
+                "responseValidation": {
+                    "$ref": "#/$defs/ResponseValidation",
+                    "nullable": true,
+                    "description": "Optional validation rules for the response"
                 }
             }
+        },
+        "ResponseValidation": {
+            "type": "object",
+            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "additionalProperties": false,
+            "properties": {
+                "successConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                },
+                "permanentFailureConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                }
+            }
+        },
+        "ValidationCondition": {
+            "type": "object",
+            "description": "A single condition to check against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidationConditionType"
+                        }
+                    ],
+                    "description": "The type of validation condition to check"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric comparisons"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes for statusCodeIn condition"
+                }
+            }
+        },
+        "ValidationConditionType": {
+            "type": "string",
+            "description": "Type of validation condition",
+            "enum": [
+                "statusCodeIn",
+                "jsonPathEquals",
+                "jsonPathNotEquals",
+                "jsonPathExists",
+                "jsonPathNotExists",
+                "jsonPathGreaterThan",
+                "jsonPathLessThan",
+                "jsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "eq",
+                "ne",
+                "gt",
+                "gte",
+                "lt",
+                "lte"
+            ]
         },
         "EnforcementMode": {
             "type": "string",
@@ -1537,8 +1834,107 @@ public partial class ContractController
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
+                },
+                "responseValidation": {
+                    "$ref": "#/$defs/ResponseValidation",
+                    "nullable": true,
+                    "description": "Optional validation rules for the response"
                 }
             }
+        },
+        "ResponseValidation": {
+            "type": "object",
+            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "additionalProperties": false,
+            "properties": {
+                "successConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                },
+                "permanentFailureConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                }
+            }
+        },
+        "ValidationCondition": {
+            "type": "object",
+            "description": "A single condition to check against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidationConditionType"
+                        }
+                    ],
+                    "description": "The type of validation condition to check"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric comparisons"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes for statusCodeIn condition"
+                }
+            }
+        },
+        "ValidationConditionType": {
+            "type": "string",
+            "description": "Type of validation condition",
+            "enum": [
+                "statusCodeIn",
+                "jsonPathEquals",
+                "jsonPathNotEquals",
+                "jsonPathExists",
+                "jsonPathNotExists",
+                "jsonPathGreaterThan",
+                "jsonPathLessThan",
+                "jsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "eq",
+                "ne",
+                "gt",
+                "gte",
+                "lt",
+                "lte"
+            ]
         },
         "EnforcementMode": {
             "type": "string",
@@ -1973,8 +2369,107 @@ public partial class ContractController
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
+                },
+                "responseValidation": {
+                    "$ref": "#/$defs/ResponseValidation",
+                    "nullable": true,
+                    "description": "Optional validation rules for the response"
                 }
             }
+        },
+        "ResponseValidation": {
+            "type": "object",
+            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "additionalProperties": false,
+            "properties": {
+                "successConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                },
+                "permanentFailureConditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationCondition"
+                    },
+                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                }
+            }
+        },
+        "ValidationCondition": {
+            "type": "object",
+            "description": "A single condition to check against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ValidationConditionType"
+                        }
+                    ],
+                    "description": "The type of validation condition to check"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric comparisons"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "description": "HTTP status codes for statusCodeIn condition"
+                }
+            }
+        },
+        "ValidationConditionType": {
+            "type": "string",
+            "description": "Type of validation condition",
+            "enum": [
+                "statusCodeIn",
+                "jsonPathEquals",
+                "jsonPathNotEquals",
+                "jsonPathExists",
+                "jsonPathNotExists",
+                "jsonPathGreaterThan",
+                "jsonPathLessThan",
+                "jsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "eq",
+                "ne",
+                "gt",
+                "gte",
+                "lt",
+                "lte"
+            ]
         },
         "EnforcementMode": {
             "type": "string",

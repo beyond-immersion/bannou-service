@@ -65,7 +65,6 @@ public static class ContractPermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
-        // Templates (5 endpoints)
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/template/create",
@@ -73,7 +72,11 @@ public static class ContractPermissionRegistration
             Description = "createContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "admin", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -84,7 +87,11 @@ public static class ContractPermissionRegistration
             Description = "getContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -95,7 +102,11 @@ public static class ContractPermissionRegistration
             Description = "listContractTemplates",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -106,7 +117,11 @@ public static class ContractPermissionRegistration
             Description = "updateContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "admin", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -117,11 +132,14 @@ public static class ContractPermissionRegistration
             Description = "deleteContractTemplate",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "admin", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
-        // Instances (7 endpoints)
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/instance/create",
@@ -129,7 +147,11 @@ public static class ContractPermissionRegistration
             Description = "createContractInstance",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -140,7 +162,11 @@ public static class ContractPermissionRegistration
             Description = "proposeContractInstance",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -151,7 +177,11 @@ public static class ContractPermissionRegistration
             Description = "consentToContract",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -162,7 +192,11 @@ public static class ContractPermissionRegistration
             Description = "getContractInstance",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -173,7 +207,11 @@ public static class ContractPermissionRegistration
             Description = "queryContractInstances",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -184,7 +222,11 @@ public static class ContractPermissionRegistration
             Description = "terminateContractInstance",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -195,11 +237,14 @@ public static class ContractPermissionRegistration
             Description = "getContractInstanceStatus",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
-        // Milestones (3 endpoints)
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/milestone/complete",
@@ -207,7 +252,11 @@ public static class ContractPermissionRegistration
             Description = "completeMilestone",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "developer", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -218,7 +267,11 @@ public static class ContractPermissionRegistration
             Description = "failMilestone",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "developer", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -229,11 +282,14 @@ public static class ContractPermissionRegistration
             Description = "getMilestone",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
-        // Breaches (3 endpoints)
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/breach/report",
@@ -241,7 +297,11 @@ public static class ContractPermissionRegistration
             Description = "reportBreach",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -252,7 +312,11 @@ public static class ContractPermissionRegistration
             Description = "cureBreach",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "developer", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -263,11 +327,14 @@ public static class ContractPermissionRegistration
             Description = "getBreach",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
-        // Metadata (2 endpoints)
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/metadata/update",
@@ -275,7 +342,11 @@ public static class ContractPermissionRegistration
             Description = "updateContractMetadata",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "developer", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -286,11 +357,14 @@ public static class ContractPermissionRegistration
             Description = "getContractMetadata",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
-        // Constraints (2 endpoints)
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/contract/check-constraint",
@@ -298,7 +372,11 @@ public static class ContractPermissionRegistration
             Description = "checkContractConstraint",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -309,7 +387,11 @@ public static class ContractPermissionRegistration
             Description = "queryActiveContracts",
             Permissions = new List<PermissionRequirement>
             {
-                new PermissionRequirement { Role = "user", RequiredStates = new Dictionary<string, string>() },
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
             }
         });
 
@@ -319,6 +401,9 @@ public static class ContractPermissionRegistration
     /// <summary>
     /// Builds the permission matrix for RegisterServicePermissionsAsync.
     /// Key structure: state -> role -> list of methods
+    /// State key construction must match PermissionService.RecompileSessionPermissionsAsync:
+    /// - Same service (s.Key == ServiceId): use just s.Value (e.g., "ringing")
+    /// - Cross-service: use "{s.Key}:{s.Value}" (e.g., "game-session:in_game")
     /// </summary>
     public static Dictionary<string, IDictionary<string, ICollection<string>>> BuildPermissionMatrix()
     {
@@ -330,6 +415,8 @@ public static class ContractPermissionRegistration
 
             foreach (var permission in endpoint.Permissions)
             {
+                // Determine state key - use "default" if no specific states required
+                // For same-service states, use just the value to match lookup logic
                 var stateKey = permission.RequiredStates.Count > 0
                     ? string.Join("|", permission.RequiredStates.Select(s =>
                         s.Key == ServiceId ? s.Value : $"{s.Key}:{s.Value}"))
@@ -359,6 +446,7 @@ public static class ContractPermissionRegistration
 
     /// <summary>
     /// Registers service permissions via event publishing.
+    /// Should only be called after messaging infrastructure is confirmed.
     /// </summary>
     public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
     {
@@ -381,4 +469,5 @@ public static class ContractPermissionRegistration
                 ServiceId);
         }
     }
+
 }

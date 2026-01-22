@@ -2162,7 +2162,161 @@ public partial class PreboundApi
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public PreboundApiExecutionMode ExecutionMode { get; set; } = BeyondImmersion.BannouService.Contract.PreboundApiExecutionMode.Sync;
 
+    /// <summary>
+    /// Optional validation rules for the response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("responseValidation")]
+    public ResponseValidation? ResponseValidation { get; set; } = default!;
+
 }
+
+/// <summary>
+/// Validation rules for API responses with three-outcome model.
+/// <br/>Used by lib-contract to validate clause conditions without
+/// <br/>understanding the specific API semantics.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResponseValidation
+{
+
+    /// <summary>
+    /// Conditions that must ALL pass for success.
+    /// <br/>If any fail, checks permanent failure conditions.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("successConditions")]
+    public System.Collections.Generic.ICollection<ValidationCondition> SuccessConditions { get; set; } = default!;
+
+    /// <summary>
+    /// Conditions that indicate permanent failure (clause violated).
+    /// <br/>Checked when success conditions fail.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("permanentFailureConditions")]
+    public System.Collections.Generic.ICollection<ValidationCondition> PermanentFailureConditions { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP status codes that indicate transient failure (retry later).
+    /// <br/>Default: [408, 429, 502, 503, 504]
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transientFailureStatusCodes")]
+    public System.Collections.Generic.ICollection<int> TransientFailureStatusCodes { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single condition to check against an API response
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidationCondition
+{
+
+    /// <summary>
+    /// The type of validation condition to check
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ValidationConditionType Type { get; set; } = default!;
+
+    /// <summary>
+    /// JsonPath expression to extract value from response.
+    /// <br/>Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
+    /// <br/>Example: "$.balance", "$.items[0].status"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jsonPath")]
+    public string? JsonPath { get; set; } = default!;
+
+    /// <summary>
+    /// Expected value for comparison conditions.
+    /// <br/>Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expectedValue")]
+    public string? ExpectedValue { get; set; } = default!;
+
+    /// <summary>
+    /// Comparison operator for numeric comparisons
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("operator")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ComparisonOperator? Operator { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP status codes for statusCodeIn condition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusCodes")]
+    public System.Collections.Generic.ICollection<int> StatusCodes { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Type of validation condition
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ValidationConditionType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"statusCodeIn")]
+    StatusCodeIn = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathEquals")]
+    JsonPathEquals = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathNotEquals")]
+    JsonPathNotEquals = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathExists")]
+    JsonPathExists = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathNotExists")]
+    JsonPathNotExists = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathGreaterThan")]
+    JsonPathGreaterThan = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathLessThan")]
+    JsonPathLessThan = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"jsonPathContains")]
+    JsonPathContains = 7,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Comparison operators for numeric conditions
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ComparisonOperator
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"eq")]
+    Eq = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ne")]
+    Ne = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"gt")]
+    Gt = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"gte")]
+    Gte = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lt")]
+    Lt = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lte")]
+    Lte = 5,
+
+}
+#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

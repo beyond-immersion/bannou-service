@@ -2071,6 +2071,98 @@ components:
           enum: [sync, async, fire_and_forget]
           default: sync
           description: How to execute the API call
+        responseValidation:
+          $ref: '#/components/schemas/ResponseValidation'
+          nullable: true
+          description: Optional validation rules for the response
+
+    ResponseValidation:
+      type: object
+      description: |
+        Validation rules for API responses with three-outcome model.
+        Used by lib-contract to validate clause conditions without
+        understanding the specific API semantics.
+      additionalProperties: false
+      properties:
+        successConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationCondition'
+          description: |
+            Conditions that must ALL pass for success.
+            If any fail, checks permanent failure conditions.
+        permanentFailureConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationCondition'
+          description: |
+            Conditions that indicate permanent failure (clause violated).
+            Checked when success conditions fail.
+        transientFailureStatusCodes:
+          type: array
+          items:
+            type: integer
+          description: |
+            HTTP status codes that indicate transient failure (retry later).
+            Default: [408, 429, 502, 503, 504]
+
+    ValidationCondition:
+      type: object
+      description: A single condition to check against an API response
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ValidationConditionType'
+          description: The type of validation condition to check
+        jsonPath:
+          type: string
+          nullable: true
+          description: |
+            JsonPath expression to extract value from response.
+            Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
+            Example: "$.balance", "$.items[0].status"
+        expectedValue:
+          type: string
+          nullable: true
+          description: |
+            Expected value for comparison conditions.
+            Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+        operator:
+          $ref: '#/components/schemas/ComparisonOperator'
+          nullable: true
+          description: Comparison operator for numeric comparisons
+        statusCodes:
+          type: array
+          items:
+            type: integer
+          description: HTTP status codes for statusCodeIn condition
+
+    ValidationConditionType:
+      type: string
+      description: Type of validation condition
+      enum:
+      - statusCodeIn
+      - jsonPathEquals
+      - jsonPathNotEquals
+      - jsonPathExists
+      - jsonPathNotExists
+      - jsonPathGreaterThan
+      - jsonPathLessThan
+      - jsonPathContains
+
+    ComparisonOperator:
+      type: string
+      description: Comparison operators for numeric conditions
+      enum:
+      - eq
+      - ne
+      - gt
+      - gte
+      - lt
+      - lte
 
 # Service Registration Information
 x-service-registration:

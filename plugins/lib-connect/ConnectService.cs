@@ -44,6 +44,7 @@ public partial class ConnectService : IConnectService
     private readonly IMessageBus _messageBus;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceAppMappingResolver _appMappingResolver;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly ISessionManager _sessionManager;
@@ -90,6 +91,7 @@ public partial class ConnectService : IConnectService
         IMessageSubscriber messageSubscriber,
         IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
+        IServiceScopeFactory serviceScopeFactory,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
@@ -103,6 +105,7 @@ public partial class ConnectService : IConnectService
         _messageSubscriber = messageSubscriber;
         _httpClientFactory = httpClientFactory;
         _appMappingResolver = appMappingResolver;
+        _serviceScopeFactory = serviceScopeFactory;
         _configuration = configuration;
         _logger = logger;
         _loggerFactory = loggerFactory;
@@ -1124,6 +1127,7 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Routes a message to a Bannou service and handles the response.
+    /// Uses ServiceNavigator.ExecuteRawApiAsync for unified service invocation.
     /// ServiceName format: "servicename:METHOD:/path" (e.g., "orchestrator:GET:/orchestrator/health/infrastructure")
     /// </summary>
     private async Task RouteToServiceAsync(
@@ -1156,136 +1160,78 @@ public partial class ConnectService : IConnectService
             var httpMethod = parts[1].ToUpperInvariant();
             var path = parts[2];
 
-            // Use ServiceAppMappingResolver for dynamic app-id resolution (using just service name)
-            var appId = _appMappingResolver.GetAppIdForService(serviceName);
-
-            _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path}) via app-id {AppId}",
-                serviceName, httpMethod, path, appId);
+            _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path})",
+                serviceName, httpMethod, path);
 
             // Get raw payload bytes - true zero-copy forwarding without UTF-16 string conversion
             // Connect service should NEVER parse the payload - zero-copy routing based on GUID only
             var payloadBytes = message.Payload;
 
-            // Make the actual Bannou service invocation via direct HTTP
-            string? responseJson = null;
-            HttpResponseMessage? httpResponse = null;
-
+            // Execute service invocation via ServiceNavigator
+            // ServiceNavigator is Scoped, so we create a scope for each request
+            RawApiResult? apiResult = null;
             try
             {
-                // Build mesh URL using direct path
-                var bannouHttpEndpoint = Program.Configuration.EffectiveHttpEndpoint;
-                var meshUrl = $"{bannouHttpEndpoint}/{path.TrimStart('/')}";
+                // Set session context for tracing (ServiceNavigator will read from ServiceRequestContext)
+                ServiceRequestContext.SessionId = sessionId;
 
-                // Create HTTP request with proper headers
-                using var request = new HttpRequestMessage(new HttpMethod(httpMethod), meshUrl);
-
-                // Add bannou-app-id header for routing (like ServiceClientBase.PrepareRequest)
-                request.Headers.Add("bannou-app-id", appId);
-                // Use static cached Accept header to avoid per-request allocation
-                request.Headers.Accept.Add(s_jsonAcceptHeader);
-
-                // TRACING ONLY: Pass client's WebSocket session ID to downstream services for request correlation.
-                // WARNING: This header is ONLY for distributed tracing and logging correlation.
-                // DO NOT use this for ownership, attribution, or access control decisions.
-                // For ownership/audit trail, services must receive an explicit "owner" field in request bodies
-                // containing either a service name (for service-initiated operations) or an accountId
-                // (for user-initiated operations).
-                request.Headers.Add("X-Bannou-Session-Id", sessionId);
+                await using var scope = _serviceScopeFactory.CreateAsyncScope();
+                var navigator = scope.ServiceProvider.GetRequiredService<IServiceNavigator>();
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning
-                _logger.LogWarning("WebSocket -> mesh HTTP: {Method} {Uri} AppId={AppId}",
-                    request.Method, meshUrl, appId);
+                _logger.LogWarning("WebSocket -> ServiceNavigator: {Method} {Path}",
+                    httpMethod, path);
 
-                // Pass raw payload bytes directly to service - true zero-copy forwarding
-                // Uses ByteArrayContent instead of StringContent to avoid UTF-8 → UTF-16 → UTF-8 conversion
-                // All WebSocket binary protocol endpoints should be POST with JSON body
-                if (payloadBytes.Length > 0 && httpMethod == "POST")
-                {
-                    var content = new ByteArrayContent(payloadBytes.ToArray());
-                    content.Headers.ContentType = s_jsonContentType;
-                    request.Content = content;
-                    _logger.LogDebug("Request body: {Length} bytes", payloadBytes.Length);
-                }
+                // Execute via ServiceNavigator - uses zero-copy byte forwarding
+                apiResult = await navigator.ExecuteRawApiAsync(
+                    serviceName,
+                    path,
+                    payloadBytes,
+                    new HttpMethod(httpMethod),
+                    cancellationToken);
 
-                // Track timing for long-running requests
-                var requestStartTime = DateTimeOffset.UtcNow;
-                _logger.LogDebug("Sending HTTP request to mesh at {StartTime}", requestStartTime);
-
-                // Create HttpClient from factory (properly pooled, configured with 120s timeout)
-                using var httpClient = _httpClientFactory.CreateClient(HttpClientName);
-
-                // Invoke the service via direct HTTP (preserves full path)
-                httpResponse = await httpClient.SendAsync(request, cancellationToken);
-
-                var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
                 // Use Warning level for response timing to ensure visibility in CI
-                _logger.LogWarning("mesh HTTP response in {DurationMs}ms: {StatusCode}",
-                    requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
+                _logger.LogWarning("ServiceNavigator response in {DurationMs}ms: {StatusCode}",
+                    apiResult.Duration.TotalMilliseconds, apiResult.StatusCode);
 
-                // Read response content
-                responseJson = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-
-                // Log response details - use Info level for non-success to help debug routing issues
-                if (httpResponse.IsSuccessStatusCode)
+                // Log response details
+                if (apiResult.IsSuccess)
                 {
                     _logger.LogDebug("Service {Service} responded with status {Status}: {ResponsePreview}",
-                        serviceName, httpResponse.StatusCode,
-                        responseJson?.Substring(0, Math.Min(200, responseJson?.Length ?? 0)) ?? "(empty)");
+                        serviceName, apiResult.StatusCode,
+                        apiResult.ResponseBody?.Substring(0, Math.Min(200, apiResult.ResponseBody?.Length ?? 0)) ?? "(empty)");
+                }
+                else if (apiResult.ErrorMessage != null)
+                {
+                    // Transport-level error (timeout, connection refused, etc.)
+                    _logger.LogError("Service {Service} transport error: {Error}",
+                        serviceName, apiResult.ErrorMessage);
+                    await PublishErrorEventAsync("RouteToService", "transport_error", apiResult.ErrorMessage,
+                        dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = apiResult.StatusCode });
                 }
                 else
                 {
+                    // HTTP error response
                     _logger.LogWarning("Service {Service} returned non-success status {StatusCode}: {ResponsePreview}",
-                        serviceName, (int)httpResponse.StatusCode,
-                        responseJson?.Substring(0, Math.Min(500, responseJson?.Length ?? 0)) ?? "(empty body)");
+                        serviceName, apiResult.StatusCode,
+                        apiResult.ResponseBody?.Substring(0, Math.Min(500, apiResult.ResponseBody?.Length ?? 0)) ?? "(empty body)");
                 }
             }
-            catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
+            finally
             {
-                // HTTP client timeout reached (120 seconds)
-                _logger.LogError("mesh HTTP request timed out (120s) for {Service} {Method} {Path}",
-                    serviceName, httpMethod, path);
-                await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out (120s) for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
-            }
-            catch (TaskCanceledException tcEx)
-            {
-                // Either cancellation was requested or timeout without inner TimeoutException
-                var isTimeout = !cancellationToken.IsCancellationRequested;
-                if (isTimeout)
-                {
-                    _logger.LogError("mesh HTTP request timed out for {Service} {Method} {Path}",
-                        serviceName, httpMethod, path);
-                    await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
-                }
-                else
-                {
-                    _logger.LogWarning(tcEx, "mesh HTTP request cancelled for {Service} {Method} {Path}",
-                        serviceName, httpMethod, path);
-                }
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
-            }
-            catch (HttpRequestException httpEx)
-            {
-                _logger.LogWarning(httpEx, "HTTP request to mesh failed for {Service} {Method} {Path}",
-                    serviceName, httpMethod, path);
-                await PublishErrorEventAsync("RouteToService", "http_error", httpEx.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = (int?)httpEx.StatusCode });
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error invoking service {Service} {Method} {Path}",
-                    serviceName, httpMethod, path);
-                await PublishErrorEventAsync("RouteToService", ex.GetType().Name, ex.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path });
-                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
+                // Always clear context after request
+                ServiceRequestContext.SessionId = null;
+                ServiceRequestContext.CorrelationId = null;
             }
 
             // Send response back to WebSocket client
             if (routeInfo.RequiresResponse)
             {
-                var responseCode = MapHttpStatusToResponseCode(httpResponse?.StatusCode);
+                var responseCode = MapHttpStatusToResponseCode(apiResult?.StatusCode);
+                var responseJson = apiResult?.ResponseBody ?? "{}";
 
                 var responseMessage = BinaryMessage.CreateResponse(
-                    message, responseCode, Encoding.UTF8.GetBytes(responseJson ?? "{}"));
+                    message, responseCode, Encoding.UTF8.GetBytes(responseJson));
 
                 await _connectionManager.SendMessageAsync(sessionId, responseMessage, cancellationToken);
             }
@@ -2972,6 +2918,28 @@ public partial class ConnectService : IConnectService
             System.Net.HttpStatusCode.Forbidden => ResponseCodes.Service_Unauthorized,
             System.Net.HttpStatusCode.NotFound => ResponseCodes.Service_NotFound,
             System.Net.HttpStatusCode.Conflict => ResponseCodes.Service_Conflict,
+            _ => ResponseCodes.Service_InternalServerError
+        };
+    }
+
+    /// <summary>
+    /// Maps HTTP status codes (as int) to WebSocket ResponseCodes.
+    /// Overload for use with RawApiResult.StatusCode.
+    /// </summary>
+    private static ResponseCodes MapHttpStatusToResponseCode(int? statusCode)
+    {
+        if (statusCode == null || statusCode == 0)
+        {
+            return ResponseCodes.Service_InternalServerError;
+        }
+
+        return statusCode.Value switch
+        {
+            200 or 201 or 202 or 204 => ResponseCodes.OK,
+            400 => ResponseCodes.Service_BadRequest,
+            401 or 403 => ResponseCodes.Service_Unauthorized,
+            404 => ResponseCodes.Service_NotFound,
+            409 => ResponseCodes.Service_Conflict,
             _ => ResponseCodes.Service_InternalServerError
         };
     }

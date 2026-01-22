@@ -34630,6 +34630,85 @@
             How to execute the API call
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PreboundApi.ResponseValidation">
+            <summary>
+            Optional validation rules for the response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ResponseValidation">
+            <summary>
+            Validation rules for API responses with three-outcome model.
+            <br/>Used by lib-contract to validate clause conditions without
+            <br/>understanding the specific API semantics.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ResponseValidation.SuccessConditions">
+            <summary>
+            Conditions that must ALL pass for success.
+            <br/>If any fail, checks permanent failure conditions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ResponseValidation.PermanentFailureConditions">
+            <summary>
+            Conditions that indicate permanent failure (clause violated).
+            <br/>Checked when success conditions fail.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ResponseValidation.TransientFailureStatusCodes">
+            <summary>
+            HTTP status codes that indicate transient failure (retry later).
+            <br/>Default: [408, 429, 502, 503, 504]
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ValidationCondition">
+            <summary>
+            A single condition to check against an API response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ValidationCondition.Type">
+            <summary>
+            The type of validation condition to check
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ValidationCondition.JsonPath">
+            <summary>
+            JsonPath expression to extract value from response.
+            <br/>Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
+            <br/>Example: "$.balance", "$.items[0].status"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ValidationCondition.ExpectedValue">
+            <summary>
+            Expected value for comparison conditions.
+            <br/>Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ValidationCondition.Operator">
+            <summary>
+            Comparison operator for numeric comparisons
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ValidationCondition.StatusCodes">
+            <summary>
+            HTTP status codes for statusCodeIn condition
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ValidationConditionType">
+            <summary>
+            Type of validation condition
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ComparisonOperator">
+            <summary>
+            Comparison operators for numeric conditions
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.IDocumentationClient">
             <summary>
             Client interface for the Documentation service.
@@ -61956,17 +62035,74 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>True if the event was published successfully.</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.String,System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
+            <summary>
+            Executes a raw JSON payload against a service endpoint.
+            This is the low-level method used by both Connect shortcuts and Contract prebound APIs.
+            </summary>
+            <param name="serviceName">Target service name (e.g., "currency", "inventory").</param>
+            <param name="endpoint">Endpoint path (e.g., "/currency/transfer").</param>
+            <param name="jsonPayload">Raw JSON payload string to send.</param>
+            <param name="method">HTTP method (default: POST).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Raw API result with status, response body, and headers.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.ReadOnlyMemory{System.Byte},System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
+            <summary>
+            Executes a raw byte payload against a service endpoint.
+            Used by Connect for zero-copy shortcut forwarding.
+            </summary>
+            <param name="serviceName">Target service name.</param>
+            <param name="endpoint">Endpoint path.</param>
+            <param name="payload">Raw byte payload to send.</param>
+            <param name="method">HTTP method (default: POST).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Raw API result with status, response body, and headers.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecutePreboundApiAsync(BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executes a prebound API with variable substitution.
+            </summary>
+            <param name="api">Prebound API definition with template.</param>
+            <param name="context">Variables to substitute into the template.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Prebound API execution result including substituted payload.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecutePreboundApiBatchAsync(System.Collections.Generic.IEnumerable{BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode,System.Threading.CancellationToken)">
+            <summary>
+            Executes multiple prebound APIs in batch.
+            </summary>
+            <param name="apis">Collection of prebound API definitions to execute.</param>
+            <param name="context">Variables to substitute into templates.</param>
+            <param name="mode">How to execute the batch (parallel, sequential, stop on failure).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>List of results for each API in order.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator">
             <summary>
             Concrete implementation of IServiceNavigator that aggregates all service clients
             and provides session context access for client event publishing.
             </summary>
             <remarks>
+            <para>
             Registered as Scoped in DI to ensure per-request isolation of service clients.
             Session context is read from ServiceRequestContext (AsyncLocal storage).
+            </para>
+            <para>
+            This is a partial class. Raw API execution methods are implemented in
+            ServiceClients/ServiceNavigator.RawApi.cs (manual file).
+            </para>
+            </remarks>
+            <summary>
+            Partial class implementing raw API execution methods for ServiceNavigator.
+            </summary>
+            <remarks>
+            These methods enable direct service invocation with JSON or byte payloads,
+            supporting both typed prebound API execution with template substitution
+            and zero-copy byte forwarding for Connect service routing.
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,System.Net.Http.IHttpClientFactory,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
             <summary>
             Creates a new ServiceNavigator with all service client dependencies.
             </summary>
@@ -62094,6 +62230,43 @@
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Website">
             <inheritdoc />
         </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.RawApiHttpClientName">
+            <summary>
+            HTTP client name for raw API execution.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.s_jsonContentType">
+            <summary>
+            Cached JSON content type header for reuse.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.s_jsonAcceptHeader">
+            <summary>
+            Cached JSON accept header for reuse.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.String,System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.ReadOnlyMemory{System.Byte},System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.ExecutePreboundApiAsync(BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.ExecutePreboundApiBatchAsync(System.Collections.Generic.IEnumerable{BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.ExecuteBatchParallelAsync(System.Collections.Generic.List{BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executes APIs in parallel.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.ExecuteBatchSequentialAsync(System.Collections.Generic.List{BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Executes APIs sequentially.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient">
             <summary>
             Base marker interface for all Bannou service clients.
@@ -62121,6 +62294,195 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition">
+            <summary>
+            Definition of a prebound API call.
+            Decoupled from generated contract models for use across services.
+            </summary>
+            <remarks>
+            This model is used by ServiceNavigator.ExecutePreboundApiAsync to define
+            what service/endpoint to call and what payload template to use.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition.ServiceName">
+            <summary>
+            Target service name (e.g., "currency", "inventory", "character").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition.Endpoint">
+            <summary>
+            Target endpoint path (e.g., "/currency/transfer", "/inventory/add").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition.PayloadTemplate">
+            <summary>
+            JSON payload template with {{variable}} placeholders.
+            Variables are substituted from the context dictionary at execution time.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition.Description">
+            <summary>
+            Human-readable description of what this API call does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition.ExecutionMode">
+            <summary>
+            How to execute this API call.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ExecutionMode">
+            <summary>
+            How a prebound API should be executed.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ExecutionMode.Sync">
+            <summary>Execute synchronously and wait for response.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ExecutionMode.Async">
+            <summary>Execute asynchronously but still track completion.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ExecutionMode.FireAndForget">
+            <summary>Execute and don't wait or track - fire and forget.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode">
+            <summary>
+            How to execute a batch of prebound APIs.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode.Parallel">
+            <summary>Execute all APIs in parallel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode.Sequential">
+            <summary>Execute APIs sequentially, continuing even if some fail.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode.SequentialStopOnFailure">
+            <summary>Execute APIs sequentially, stopping on first failure.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.RawApiResult">
+            <summary>
+            Result of executing a raw API call.
+            </summary>
+            <remarks>
+            This is the low-level result returned by ExecuteRawApiAsync.
+            Contains the HTTP response details without any template substitution info.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.StatusCode">
+            <summary>
+            HTTP status code returned by the service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.IsSuccess">
+            <summary>
+            Whether the request was successful (2xx status code).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.ResponseBody">
+            <summary>
+            Raw response body as string.
+            May be null if the response had no body or couldn't be read.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.ResponseDocument">
+            <summary>
+            Parsed response as JsonDocument.
+            Lazy-loaded from ResponseBody. May be null if response isn't valid JSON.
+            </summary>
+            <remarks>
+            The caller is responsible for disposing this JsonDocument if not null.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.Headers">
+            <summary>
+            Response headers from the service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.Duration">
+            <summary>
+            How long the request took to complete.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.ErrorMessage">
+            <summary>
+            Error message if the request failed.
+            This is set for network errors, timeouts, etc. - not HTTP error statuses.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.Exception">
+            <summary>
+            Exception that was thrown, if any.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.ServiceName">
+            <summary>
+            The service name that was called.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.RawApiResult.Endpoint">
+            <summary>
+            The endpoint path that was called.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.RawApiResult.Success(System.Int32,System.String,System.TimeSpan,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}})">
+            <summary>
+            Creates a successful result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.RawApiResult.Failure(System.String,System.Exception,System.TimeSpan,System.String,System.String,System.Int32)">
+            <summary>
+            Creates a failure result for network/transport errors.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult">
+            <summary>
+            Result of executing a prebound API with variable substitution.
+            </summary>
+            <remarks>
+            Wraps RawApiResult with additional information about the template substitution.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.Api">
+            <summary>
+            The API definition that was executed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.SubstitutedPayload">
+            <summary>
+            The JSON payload after variable substitution.
+            This is what was actually sent to the service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.Result">
+            <summary>
+            The raw API result from executing the request.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.SubstitutionSucceeded">
+            <summary>
+            Whether template variable substitution succeeded.
+            If false, the API was not called.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.SubstitutionError">
+            <summary>
+            Error message if substitution failed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.IsSuccess">
+            <summary>
+            Whether the overall operation succeeded (substitution + API call).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.Success(BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition,System.String,BeyondImmersion.BannouService.ServiceClients.RawApiResult)">
+            <summary>
+            Creates a result for successful substitution and execution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.PreboundApiResult.SubstitutionFailed(BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition,System.String)">
+            <summary>
+            Creates a result for substitution failure (API was not called).
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
             <summary>
@@ -66532,6 +66894,251 @@
         <member name="M:BeyondImmersion.BannouService.Testing.TestDataGenerators.GenerateTestTimestamp">
             <summary>
             Generates a test timestamp.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Utilities.ValidationOutcome">
+            <summary>
+            Outcome of response validation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Utilities.ValidationOutcome.Success">
+            <summary>All success conditions passed.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Utilities.ValidationOutcome.PermanentFailure">
+            <summary>Permanent failure - clause condition violated, no retry.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Utilities.ValidationOutcome.TransientFailure">
+            <summary>Transient failure - temporary error, should retry later.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Utilities.ResponseValidationResult">
+            <summary>
+            Result of validating a response against validation rules.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.ResponseValidationResult.Outcome">
+            <summary>
+            The validation outcome.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.ResponseValidationResult.FailureReason">
+            <summary>
+            Description of why validation failed (if applicable).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.ResponseValidationResult.FailedCondition">
+            <summary>
+            The condition that failed (if applicable).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidationResult.Succeeded">
+            <summary>
+            Creates a success result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidationResult.PermanentFailed(System.String,BeyondImmersion.BannouService.Contract.ValidationCondition)">
+            <summary>
+            Creates a permanent failure result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidationResult.TransientFailed(System.String)">
+            <summary>
+            Creates a transient failure result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Utilities.ResponseValidator">
+            <summary>
+            Validates API responses against configurable validation rules.
+            Supports three-outcome model: Success, PermanentFailure, TransientFailure.
+            </summary>
+            <remarks>
+            This utility is used by lib-contract to validate prebound API responses
+            without needing to understand specific API semantics. The validation rules
+            are defined in the contract schema (ResponseValidation).
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Utilities.ResponseValidator.DefaultTransientStatusCodes">
+            <summary>
+            Default transient failure status codes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidator.Validate(System.Int32,System.String,BeyondImmersion.BannouService.Contract.ResponseValidation)">
+            <summary>
+            Validates a response against the given validation rules.
+            </summary>
+            <param name="statusCode">HTTP status code from the response.</param>
+            <param name="responseBody">Response body as JSON string.</param>
+            <param name="validation">Validation rules to apply.</param>
+            <returns>Validation result with outcome and failure reason.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidator.CheckPermanentFailure(System.Int32,System.Text.Json.JsonDocument,BeyondImmersion.BannouService.Contract.ResponseValidation,BeyondImmersion.BannouService.Contract.ValidationCondition,System.String)">
+            <summary>
+            Checks permanent failure conditions after a success condition fails.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidator.EvaluateCondition(System.Int32,System.Text.Json.JsonDocument,BeyondImmersion.BannouService.Contract.ValidationCondition)">
+            <summary>
+            Evaluates a single validation condition.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidator.GetJsonPathValue(System.Text.Json.JsonElement,System.String)">
+            <summary>
+            Gets a value from a JSON document using a simple path notation.
+            Supports: $.property, $.nested.property, $.array[0], $.array[0].property
+            </summary>
+            <remarks>
+            This is a simplified JsonPath implementation. For more complex queries,
+            consider using JsonPath.Net library.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidator.ParsePathSegments(System.String)">
+            <summary>
+            Parses a path string into segments.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidator.GetElementValue(System.Text.Json.JsonElement)">
+            <summary>
+            Gets the string value of a JSON element.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.ResponseValidator.TryGetNumericValue(System.Text.Json.JsonElement,System.Decimal@)">
+            <summary>
+            Tries to get a numeric value from a JSON element.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor">
+            <summary>
+            Substitutes {{variable}} placeholders in JSON templates.
+            Supports dot-path navigation (e.g., {{party.wallet_id}}) and array indexing (e.g., {{parties[0].id}}).
+            </summary>
+            <remarks>
+            This utility is used by ServiceNavigator for prebound API execution.
+            It preserves JSON types: strings are quoted, numbers/bools/nulls are not.
+            Missing variables cause explicit failure - no silent empty string substitution.
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.VariablePattern">
+            <summary>
+            Pattern matches {{variableName}}, {{path.to.value}}, {{array[0].item}}
+            Captures the full path inside the braces.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.Substitute(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Substitutes variables in a JSON template string.
+            </summary>
+            <param name="template">JSON template with {{variable}} placeholders</param>
+            <param name="context">Dictionary of values to substitute. Values can be primitives or nested objects.</param>
+            <returns>Substituted JSON string</returns>
+            <exception cref="T:BeyondImmersion.BannouService.Utilities.TemplateSubstitutionException">If a variable is missing or path is invalid</exception>
+            <exception cref="T:System.ArgumentNullException">If template or context is null</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.Validate(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Validates a template without substituting - checks all variables exist in context.
+            </summary>
+            <param name="template">JSON template to validate</param>
+            <param name="context">Context dictionary to validate against</param>
+            <returns>Validation result with any missing or invalid variables</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.ExtractVariables(System.String)">
+            <summary>
+            Extracts all variable paths from a template.
+            Useful for understanding what context variables a template requires.
+            </summary>
+            <param name="template">JSON template to analyze</param>
+            <returns>List of unique variable paths found in the template</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.ResolveValue(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.String)">
+            <summary>
+            Resolves a dot-path variable from the context dictionary.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.ParsePath(System.String)">
+            <summary>
+            Parses a variable path into segments.
+            E.g., "party.wallet_id" -> ["party", "wallet_id"]
+            E.g., "parties[0].id" -> ["parties", "[0]", "id"]
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.ResolveSegment(System.Object,System.String,System.String,System.String)">
+            <summary>
+            Resolves a single segment from the current value.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.ResolveArrayIndex(System.Object,System.Int32,System.String,System.String)">
+            <summary>
+            Resolves an array index from a collection.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.ResolveProperty(System.Object,System.String,System.String,System.String)">
+            <summary>
+            Resolves a property or dictionary key from an object.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.FormatValueForJson(System.Object,System.String,System.String)">
+            <summary>
+            Formats a value for JSON output, preserving types.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutor.FormatJsonElement(System.Text.Json.JsonElement)">
+            <summary>
+            Formats a JsonElement to its raw JSON string representation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Utilities.TemplateSubstitutionException">
+            <summary>
+            Exception thrown when template substitution fails.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.TemplateSubstitutionException.VariablePath">
+            <summary>
+            The variable path that caused the failure.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.TemplateSubstitutionException.Template">
+            <summary>
+            The template being processed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.TemplateSubstitutionException.ErrorType">
+            <summary>
+            The type of substitution error.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Utilities.TemplateSubstitutionException.#ctor(System.String,System.String,System.String,BeyondImmersion.BannouService.Utilities.SubstitutionErrorType)">
+            <summary>
+            Creates a new TemplateSubstitutionException.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Utilities.SubstitutionErrorType">
+            <summary>
+            Type of template substitution error.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Utilities.SubstitutionErrorType.MissingVariable">
+            <summary>A required variable was not found in the context.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Utilities.SubstitutionErrorType.InvalidPath">
+            <summary>The variable path is syntactically invalid or points to an invalid location.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Utilities.TemplateValidationResult">
+            <summary>
+            Result of template validation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.TemplateValidationResult.IsValid">
+            <summary>
+            Whether the template is valid (all variables found, all paths valid).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.TemplateValidationResult.MissingVariables">
+            <summary>
+            List of variable paths that were not found in the context.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Utilities.TemplateValidationResult.InvalidPaths">
+            <summary>
+            List of variable paths that are syntactically invalid.
             </summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.ExpressionPattern_0">

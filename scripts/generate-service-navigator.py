@@ -145,6 +145,8 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
         "",
         "using BeyondImmersion.Bannou.Core;",
         "using BeyondImmersion.BannouService.ClientEvents;",
+        "using BeyondImmersion.BannouService.Configuration;",
+        "using BeyondImmersion.BannouService.Services;",
     ]
 
     # Add using statements for each client namespace
@@ -160,12 +162,21 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
         "/// and provides session context access for client event publishing.",
         "/// </summary>",
         "/// <remarks>",
+        "/// <para>",
         "/// Registered as Scoped in DI to ensure per-request isolation of service clients.",
         "/// Session context is read from ServiceRequestContext (AsyncLocal storage).",
+        "/// </para>",
+        "/// <para>",
+        "/// This is a partial class. Raw API execution methods are implemented in",
+        "/// ServiceClients/ServiceNavigator.RawApi.cs (manual file).",
+        "/// </para>",
         "/// </remarks>",
-        "public sealed class ServiceNavigator : IServiceNavigator",
+        "public partial class ServiceNavigator : IServiceNavigator",
         "{",
         "    private readonly IClientEventPublisher _clientEventPublisher;",
+        "    private readonly IHttpClientFactory _httpClientFactory;",
+        "    private readonly IServiceAppMappingResolver _appMappingResolver;",
+        "    private readonly AppConfiguration _configuration;",
         "",
     ])
 
@@ -181,6 +192,9 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
     lines.append("    /// </summary>")
     lines.append("    public ServiceNavigator(")
     lines.append("        IClientEventPublisher clientEventPublisher,")
+    lines.append("        IHttpClientFactory httpClientFactory,")
+    lines.append("        IServiceAppMappingResolver appMappingResolver,")
+    lines.append("        AppConfiguration configuration,")
 
     # Add constructor parameters
     for i, client in enumerate(clients):
@@ -189,6 +203,9 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
 
     lines.append("    {")
     lines.append("        _clientEventPublisher = clientEventPublisher;")
+    lines.append("        _httpClientFactory = httpClientFactory;")
+    lines.append("        _appMappingResolver = appMappingResolver;")
+    lines.append("        _configuration = configuration;")
 
     for client in clients:
         param_name = client.field_name.lstrip('_')
