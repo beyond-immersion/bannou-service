@@ -1463,4 +1463,654 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     }
 
     #endregion
+
+    #region Prebound API Execution Tests
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_WithPreboundApi_ExecutesApi()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var employerId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
+            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+        };
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "payment_milestone",
+                Name = "Payment Milestone",
+                Status = "active",
+                Required = true,
+                Sequence = 1,
+                OnComplete = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "currency",
+                        Endpoint = "/currency/transfer",
+                        PayloadTemplate = """{"fromEntityId": "{{contract.party.employer.entityId}}", "toEntityId": "{{contract.party.employee.entityId}}", "amount": 100}""",
+                        Description = "Transfer payment on completion",
+                        ExecutionMode = "sync"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup navigator to return success
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
+                new ServiceClients.PreboundApiDefinition
+                {
+                    ServiceName = "currency",
+                    Endpoint = "/currency/transfer"
+                },
+                """{"fromEntityId": "xxx", "toEntityId": "yyy", "amount": 100}""",
+                ServiceClients.RawApiResult.Success(200, """{"success": true}""", TimeSpan.FromMilliseconds(50))));
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "payment_milestone"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Completed, response.Milestone.Status);
+
+        // Verify navigator was called
+        _mockNavigator.Verify(
+            n => n.ExecutePreboundApiAsync(
+                It.Is<ServiceClients.PreboundApiDefinition>(api =>
+                    api.ServiceName == "currency" &&
+                    api.Endpoint == "/currency/transfer"),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify execution event was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.prebound-api.executed",
+                It.IsAny<ContractPreboundApiExecutedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_WithPreboundApiSubstitutionFailure_PublishesFailedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "payment_milestone",
+                Name = "Payment Milestone",
+                Status = "active",
+                Required = true,
+                Sequence = 1,
+                OnComplete = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "currency",
+                        Endpoint = "/currency/transfer",
+                        PayloadTemplate = """{"amount": "{{missing.variable}}"}""",
+                        ExecutionMode = "sync"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup navigator to return substitution failure
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceClients.PreboundApiResult.SubstitutionFailed(
+                new ServiceClients.PreboundApiDefinition
+                {
+                    ServiceName = "currency",
+                    Endpoint = "/currency/transfer"
+                },
+                "Variable 'missing.variable' not found in context"));
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "payment_milestone"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert - milestone still completes even if prebound API fails
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Completed, response.Milestone.Status);
+
+        // Verify failed event was published (not executed event)
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.prebound-api.failed",
+                It.IsAny<ContractPreboundApiFailedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_WithPreboundApiValidationFailure_PublishesValidationFailedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "payment_milestone",
+                Name = "Payment Milestone",
+                Status = "active",
+                Required = true,
+                Sequence = 1,
+                OnComplete = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "currency",
+                        Endpoint = "/currency/transfer",
+                        PayloadTemplate = """{"amount": 100}""",
+                        ExecutionMode = "sync",
+                        ResponseValidation = new ResponseValidation
+                        {
+                            SuccessConditions = new List<ValidationCondition>
+                            {
+                                new()
+                                {
+                                    Type = ValidationConditionType.StatusCodeIn,
+                                    StatusCodes = new List<int> { 200 }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup navigator to return HTTP 400 (which will fail the statusCode validation)
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
+                new ServiceClients.PreboundApiDefinition
+                {
+                    ServiceName = "currency",
+                    Endpoint = "/currency/transfer"
+                },
+                """{"amount": 100}""",
+                ServiceClients.RawApiResult.Success(400, """{"error": "Insufficient funds"}""", TimeSpan.FromMilliseconds(50))));
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "payment_milestone"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert - milestone still completes
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify validation-failed event was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.prebound-api.validation-failed",
+                It.IsAny<ContractPreboundApiValidationFailedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_WithMultiplePreboundApis_ExecutesAll()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "multi_action_milestone",
+                Name = "Multi Action Milestone",
+                Status = "active",
+                Required = true,
+                Sequence = 1,
+                OnComplete = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "currency",
+                        Endpoint = "/currency/transfer",
+                        PayloadTemplate = """{"amount": 100}""",
+                        ExecutionMode = "sync"
+                    },
+                    new()
+                    {
+                        ServiceName = "notification",
+                        Endpoint = "/notification/send",
+                        PayloadTemplate = """{"message": "Milestone completed"}""",
+                        ExecutionMode = "fire_and_forget"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup navigator to return success for both calls
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ServiceClients.PreboundApiDefinition api, IReadOnlyDictionary<string, object?> ctx, CancellationToken ct) =>
+                ServiceClients.PreboundApiResult.Success(
+                    api,
+                    api.PayloadTemplate,
+                    ServiceClients.RawApiResult.Success(200, """{"success": true}""", TimeSpan.FromMilliseconds(50))));
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "multi_action_milestone"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify navigator was called twice
+        _mockNavigator.Verify(
+            n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        // Verify execution events were published for both
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.prebound-api.executed",
+                It.IsAny<ContractPreboundApiExecutedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task FailMilestoneAsync_WithOnExpirePreboundApi_ExecutesApi()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "deadline_milestone",
+                Name = "Deadline Milestone",
+                Status = "active",
+                Required = true,
+                Sequence = 1,
+                OnExpire = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "notification",
+                        Endpoint = "/notification/send",
+                        PayloadTemplate = """{"type": "milestone_failed", "contractId": "{{contract.id}}"}""",
+                        ExecutionMode = "fire_and_forget"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
+                new ServiceClients.PreboundApiDefinition
+                {
+                    ServiceName = "notification",
+                    Endpoint = "/notification/send"
+                },
+                """{"type": "milestone_failed"}""",
+                ServiceClients.RawApiResult.Success(200, """{"sent": true}""", TimeSpan.FromMilliseconds(20))));
+
+        var request = new FailMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "deadline_milestone",
+            Reason = "Deadline exceeded"
+        };
+
+        // Act
+        var (status, response) = await service.FailMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Failed, response.Milestone.Status);
+
+        // Verify onExpire API was called
+        _mockNavigator.Verify(
+            n => n.ExecutePreboundApiAsync(
+                It.Is<ServiceClients.PreboundApiDefinition>(api =>
+                    api.ServiceName == "notification" &&
+                    api.Endpoint == "/notification/send"),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_PreboundApiException_PublishesFailedEventAndContinues()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "milestone_1",
+                Name = "Test Milestone",
+                Status = "active",
+                Required = true,
+                Sequence = 1,
+                OnComplete = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "unreachable",
+                        Endpoint = "/api/call",
+                        PayloadTemplate = """{}""",
+                        ExecutionMode = "sync"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup navigator to throw exception
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "milestone_1"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert - milestone still completes even though API threw exception
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Completed, response.Milestone.Status);
+
+        // Verify failed event was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.prebound-api.failed",
+                It.IsAny<ContractPreboundApiFailedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_NoPreboundApis_NoNavigatorCall()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = "active";
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "simple_milestone",
+                Name = "Simple Milestone",
+                Status = "active",
+                Required = true,
+                Sequence = 1
+                // No OnComplete or OnExpire APIs
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "simple_milestone"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify navigator was NOT called
+        _mockNavigator.Verify(
+            n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_PreboundApiContextIncludesContractData()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var employerId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId.ToString();
+        instance.TemplateCode = "employment_contract";
+        instance.Status = "active";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
+            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+        };
+        instance.Terms = new ContractTermsModel
+        {
+            Duration = "P30D",
+            PaymentFrequency = "weekly",
+            CustomTerms = new Dictionary<string, object>
+            {
+                ["wage"] = 500
+            }
+        };
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "payment",
+                Name = "Payment",
+                Status = "active",
+                Required = true,
+                Sequence = 1,
+                OnComplete = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "test",
+                        Endpoint = "/test",
+                        PayloadTemplate = """{}""",
+                        ExecutionMode = "sync"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        IReadOnlyDictionary<string, object?>? capturedContext = null;
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ServiceClients.PreboundApiDefinition, IReadOnlyDictionary<string, object?>, CancellationToken>((api, ctx, ct) =>
+                capturedContext = ctx)
+            .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
+                new ServiceClients.PreboundApiDefinition(),
+                "{}",
+                ServiceClients.RawApiResult.Success(200, "{}", TimeSpan.Zero)));
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "payment"
+        };
+
+        // Act
+        await service.CompleteMilestoneAsync(request);
+
+        // Assert - verify context contains expected contract data
+        Assert.NotNull(capturedContext);
+        Assert.Equal(contractId.ToString(), capturedContext["contract.id"]);
+        Assert.Equal(templateId.ToString(), capturedContext["contract.templateId"]);
+        Assert.Equal("employment_contract", capturedContext["contract.templateCode"]);
+        Assert.Equal("active", capturedContext["contract.status"]);
+
+        // Verify party shortcuts
+        Assert.Equal(employerId.ToString(), capturedContext["contract.party.employer.entityId"]);
+        Assert.Equal("Character", capturedContext["contract.party.employer.entityType"]);
+        Assert.Equal(employeeId.ToString(), capturedContext["contract.party.employee.entityId"]);
+
+        // Verify terms
+        Assert.Equal("P30D", capturedContext["contract.terms.duration"]);
+        Assert.Equal("weekly", capturedContext["contract.terms.paymentFrequency"]);
+        Assert.Equal(500, capturedContext["contract.terms.custom.wage"]);
+    }
+
+    #endregion
 }
