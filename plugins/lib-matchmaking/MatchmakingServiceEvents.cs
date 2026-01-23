@@ -80,7 +80,7 @@ public partial class MatchmakingService
                 }
 
                 // Only cancel tickets associated with this session
-                if (ticket.WebSocketSessionId != evt.SessionId.ToString())
+                if (ticket.WebSocketSessionId != evt.SessionId)
                 {
                     continue;
                 }
@@ -135,7 +135,7 @@ public partial class MatchmakingService
                         var ticket = await LoadTicketAsync(playerTicket.TicketId, CancellationToken.None);
                         if (ticket != null)
                         {
-                            ticket.WebSocketSessionId = evt.SessionId.ToString();
+                            ticket.WebSocketSessionId = evt.SessionId;
                             await SaveTicketAsync(ticket, CancellationToken.None);
                         }
 

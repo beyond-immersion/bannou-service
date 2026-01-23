@@ -2,6 +2,7 @@ using System.Linq;
 using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Species;
@@ -51,6 +52,20 @@ public class ContractTestHandler : BaseHttpTestHandler
             "Test breach reporting and curing on active contract"),
         new ServiceTest(TestExclusivityConstraintCheck, "ExclusivityConstraint", "Contract",
             "Test constraint checking prevents conflicting contracts"),
+
+        // Escrow Integration Tests
+        new ServiceTest(TestGuardianLockUnlock, "GuardianLockUnlock", "Contract",
+            "Test locking and unlocking a contract under guardian custody"),
+        new ServiceTest(TestTransferPartyRole, "TransferPartyRole", "Contract",
+            "Test transferring a party role while contract is locked"),
+        new ServiceTest(TestGuardianEnforcementOnTerminate, "GuardianEnforcement", "Contract",
+            "Test that locked contracts cannot be terminated"),
+        new ServiceTest(TestClauseTypeRegistration, "ClauseTypeRegistration", "Contract",
+            "Test registering and listing clause types"),
+        new ServiceTest(TestSetTemplateValues, "SetTemplateValues", "Contract",
+            "Test setting template values on a contract instance"),
+        new ServiceTest(TestContractExecutionWithCurrency, "ExecuteWithCurrency", "Contract",
+            "Test full contract execution with currency transfer clauses"),
     ];
 
     // =========================================================================
@@ -773,4 +788,538 @@ public class ContractTestHandler : BaseHttpTestHandler
                 $"Exclusivity constraint enforced: worker {charB.CharacterId} blocked from new contracts, " +
                 $"{constraintCheck.ConflictingContracts.Count} conflicting contract(s) found");
         }, "Exclusivity constraint check");
+
+    // =========================================================================
+    // Escrow Integration Tests
+    // =========================================================================
+
+    /// <summary>
+    /// Creates a transferable contract template with employer/worker roles.
+    /// </summary>
+    private static async Task<ContractTemplateResponse> CreateTransferableEmploymentTemplateAsync(
+        IContractClient contractClient,
+        string testSuffix,
+        Guid? realmId = null,
+        ICollection<MilestoneDefinition>? milestones = null,
+        ContractTerms? defaultTerms = null)
+    {
+        return await contractClient.CreateContractTemplateAsync(new CreateContractTemplateRequest
+        {
+            Code = $"transferable_employment_{DateTime.Now.Ticks}_{testSuffix}",
+            Name = $"Transferable Employment Contract {testSuffix}",
+            Description = "Test employment contract template with transfer enabled",
+            RealmId = realmId,
+            MinParties = 2,
+            MaxParties = 2,
+            PartyRoles = new List<PartyRoleDefinition>
+            {
+                new PartyRoleDefinition
+                {
+                    Role = "employer",
+                    MinCount = 1,
+                    MaxCount = 1,
+                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                },
+                new PartyRoleDefinition
+                {
+                    Role = "worker",
+                    MinCount = 1,
+                    MaxCount = 1,
+                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                }
+            },
+            DefaultTerms = defaultTerms ?? new ContractTerms
+            {
+                Duration = "P30D",
+                BreachThreshold = 3,
+                GracePeriodForCure = "P7D"
+            },
+            Milestones = milestones,
+            DefaultEnforcementMode = EnforcementMode.Event_only,
+            Transferable = true
+        });
+    }
+
+    /// <summary>
+    /// Tests locking a contract under guardian custody and then unlocking it.
+    /// Verifies that the lock/unlock lifecycle works correctly.
+    /// </summary>
+    private static async Task<TestResult> TestGuardianLockUnlock(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("GUARDIAN_LOCK");
+
+            var template = await CreateTransferableEmploymentTemplateAsync(
+                contractClient, "guardian_lock", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            if (activeContract.Status != ContractStatus.Active)
+                return TestResult.Failed($"Contract not active: {activeContract.Status}");
+
+            // Lock the contract
+            var guardianId = Guid.NewGuid();
+            var lockResponse = await contractClient.LockContractAsync(new LockContractRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                GuardianId = guardianId,
+                GuardianType = "escrow"
+            });
+
+            if (!lockResponse.Locked)
+                return TestResult.Failed("Lock response indicates not locked");
+
+            if (lockResponse.ContractId != activeContract.ContractId)
+                return TestResult.Failed("Lock response contract ID mismatch");
+
+            if (lockResponse.GuardianId != guardianId)
+                return TestResult.Failed("Lock response guardian ID mismatch");
+
+            // Unlock the contract
+            var unlockResponse = await contractClient.UnlockContractAsync(new UnlockContractRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                GuardianId = guardianId,
+                GuardianType = "escrow"
+            });
+
+            if (!unlockResponse.Unlocked)
+                return TestResult.Failed("Unlock response indicates not unlocked");
+
+            return TestResult.Successful(
+                $"Guardian lock/unlock lifecycle: contract {activeContract.ContractId}, " +
+                $"guardian {guardianId}");
+        }, "Guardian lock/unlock");
+
+    /// <summary>
+    /// Tests transferring a party role to a new entity while the contract is locked.
+    /// Verifies that the transfer updates the party correctly.
+    /// </summary>
+    private static async Task<TestResult> TestTransferPartyRole(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("TRANSFER_PARTY");
+
+            var template = await CreateTransferableEmploymentTemplateAsync(
+                contractClient, "transfer_party", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Lock the contract
+            var guardianId = Guid.NewGuid();
+            await contractClient.LockContractAsync(new LockContractRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                GuardianId = guardianId,
+                GuardianType = "escrow"
+            });
+
+            // Create a third character to receive the worker role
+            var characterClient = GetServiceClient<ICharacterClient>();
+            var speciesClient = GetServiceClient<ISpeciesClient>();
+
+            var speciesResponse = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
+            {
+                Code = $"TRANSFER_SPECIES_{DateTime.Now.Ticks}",
+                Name = "Transfer Test Species",
+                Description = "Test species for transfer test"
+            });
+            await speciesClient.AddSpeciesToRealmAsync(new AddSpeciesToRealmRequest
+            {
+                SpeciesId = speciesResponse.SpeciesId,
+                RealmId = realm.RealmId
+            });
+
+            var newWorker = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"NewWorker_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = speciesResponse.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-25),
+                Status = CharacterStatus.Alive
+            });
+
+            // Transfer the worker role from charB to newWorker
+            var transferResponse = await contractClient.TransferContractPartyAsync(new TransferContractPartyRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                FromEntityId = charB.CharacterId,
+                FromEntityType = ContractEntityType.Character,
+                ToEntityId = newWorker.CharacterId,
+                ToEntityType = ContractEntityType.Character,
+                GuardianId = guardianId,
+                GuardianType = "escrow"
+            });
+
+            if (!transferResponse.Transferred)
+                return TestResult.Failed("Transfer response indicates not transferred");
+
+            // Verify the contract now shows the new worker
+            var updatedContract = await contractClient.GetContractInstanceAsync(new GetContractInstanceRequest
+            {
+                ContractId = activeContract.ContractId
+            });
+
+            var workerParty = updatedContract.Parties?.FirstOrDefault(p => p.Role == "worker");
+            if (workerParty == null)
+                return TestResult.Failed("Worker party not found after transfer");
+
+            if (workerParty.EntityId != newWorker.CharacterId)
+                return TestResult.Failed(
+                    $"Worker entity ID not updated: expected {newWorker.CharacterId}, got {workerParty.EntityId}");
+
+            return TestResult.Successful(
+                $"Party transfer: contract {activeContract.ContractId}, " +
+                $"worker {charB.CharacterId} → {newWorker.CharacterId}");
+        }, "Transfer party role");
+
+    /// <summary>
+    /// Tests that a locked contract cannot be terminated.
+    /// Verifies guardian enforcement on state-modifying operations.
+    /// </summary>
+    private static async Task<TestResult> TestGuardianEnforcementOnTerminate(ITestClient client, string[] args) =>
+        await ExecuteExpectingStatusAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("GUARDIAN_ENFORCE");
+
+            var template = await CreateTransferableEmploymentTemplateAsync(
+                contractClient, "guardian_enforce", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Lock the contract
+            var guardianId = Guid.NewGuid();
+            await contractClient.LockContractAsync(new LockContractRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                GuardianId = guardianId,
+                GuardianType = "escrow"
+            });
+
+            // Attempt to terminate - should be forbidden
+            await contractClient.TerminateContractInstanceAsync(new TerminateContractInstanceRequest
+            {
+                ContractId = activeContract.ContractId,
+                RequestingEntityId = charA.CharacterId,
+                RequestingEntityType = ContractEntityType.Character,
+                Reason = "Should be blocked by guardian"
+            });
+        }, 403, "Guardian enforcement on terminate");
+
+    /// <summary>
+    /// Tests registering a custom clause type and listing all types.
+    /// Verifies the clause type system works end-to-end.
+    /// </summary>
+    private static async Task<TestResult> TestClauseTypeRegistration(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+
+            var typeCode = $"test_clause_{DateTime.Now.Ticks}";
+
+            // Register a custom clause type
+            var registerResponse = await contractClient.RegisterClauseTypeAsync(new RegisterClauseTypeRequest
+            {
+                TypeCode = typeCode,
+                Description = "Test clause type for HTTP integration tests",
+                Category = ClauseCategory.Execution,
+                ExecutionHandler = new ClauseHandlerDefinition
+                {
+                    Service = "currency",
+                    Endpoint = "/currency/transfer"
+                }
+            });
+
+            if (!registerResponse.Registered)
+                return TestResult.Failed("RegisterClauseType returned not registered");
+
+            if (registerResponse.TypeCode != typeCode)
+                return TestResult.Failed($"Type code mismatch: expected {typeCode}, got {registerResponse.TypeCode}");
+
+            // List clause types
+            var listResponse = await contractClient.ListClauseTypesAsync(new ListClauseTypesRequest
+            {
+                IncludeBuiltIn = true
+            });
+
+            if (listResponse.ClauseTypes == null || listResponse.ClauseTypes.Count == 0)
+                return TestResult.Failed("No clause types returned");
+
+            var registeredType = listResponse.ClauseTypes.FirstOrDefault(ct => ct.TypeCode == typeCode);
+            if (registeredType == null)
+                return TestResult.Failed($"Registered type '{typeCode}' not found in list");
+
+            if (registeredType.Category != ClauseCategory.Execution)
+                return TestResult.Failed($"Category mismatch: expected Execution, got {registeredType.Category}");
+
+            if (!registeredType.HasExecutionHandler)
+                return TestResult.Failed("Expected HasExecutionHandler to be true");
+
+            return TestResult.Successful(
+                $"Clause type registered: {typeCode}, total types: {listResponse.ClauseTypes.Count}");
+        }, "Clause type registration");
+
+    /// <summary>
+    /// Tests setting template values on an active contract instance.
+    /// Verifies the template value system stores and returns values correctly.
+    /// </summary>
+    private static async Task<TestResult> TestSetTemplateValues(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("TEMPLATE_VALUES");
+
+            var template = await CreateEmploymentTemplateAsync(
+                contractClient, "template_values", realm.RealmId);
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            // Set template values
+            var walletIdA = Guid.NewGuid();
+            var walletIdB = Guid.NewGuid();
+            var response = await contractClient.SetContractTemplateValuesAsync(new SetTemplateValuesRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                TemplateValues = new Dictionary<string, string>
+                {
+                    ["PartyA_WalletId"] = walletIdA.ToString(),
+                    ["PartyB_WalletId"] = walletIdB.ToString(),
+                    ["CurrencyCode"] = "gold",
+                    ["base_amount"] = "1000"
+                }
+            });
+
+            if (!response.Updated)
+                return TestResult.Failed("SetTemplateValues returned not updated");
+
+            if (response.ContractId != activeContract.ContractId)
+                return TestResult.Failed("Contract ID mismatch in response");
+
+            if (response.ValueCount != 4)
+                return TestResult.Failed($"Expected 4 values set, got {response.ValueCount}");
+
+            // Set additional values (merge behavior)
+            var response2 = await contractClient.SetContractTemplateValuesAsync(new SetTemplateValuesRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                TemplateValues = new Dictionary<string, string>
+                {
+                    ["FeeWalletId"] = Guid.NewGuid().ToString()
+                }
+            });
+
+            if (!response2.Updated)
+                return TestResult.Failed("Second SetTemplateValues returned not updated");
+
+            if (response2.ValueCount != 5)
+                return TestResult.Failed($"Expected 5 total values after merge, got {response2.ValueCount}");
+
+            return TestResult.Successful(
+                $"Template values set: contract {activeContract.ContractId}, " +
+                $"total values: {response2.ValueCount}");
+        }, "Set template values");
+
+    /// <summary>
+    /// Tests full contract execution with currency transfer clauses.
+    /// Creates a contract with fee and distribution clauses, sets up currency
+    /// wallets, sets template values, and executes the contract.
+    /// </summary>
+    private static async Task<TestResult> TestContractExecutionWithCurrency(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var contractClient = GetServiceClient<IContractClient>();
+            var currencyClient = GetServiceClient<ICurrencyClient>();
+            var (realm, charA, charB) = await CreateTestCharacterPairAsync("EXECUTE_CURRENCY");
+
+            // Step 1: Create a currency definition for the test
+            var currencyCode = $"exec_gold_{DateTime.Now.Ticks}";
+            var currencyDef = await currencyClient.CreateCurrencyDefinitionAsync(new CreateCurrencyDefinitionRequest
+            {
+                Code = currencyCode,
+                Name = "Execution Test Gold",
+                Precision = CurrencyPrecision.Integer,
+                Scope = CurrencyScope.Global,
+                Transferable = true
+            });
+
+            // Step 2: Create wallets for both parties and a fee wallet
+            var walletA = await currencyClient.CreateWalletAsync(new CreateWalletRequest
+            {
+                OwnerId = charA.CharacterId,
+                OwnerType = WalletOwnerType.Character
+            });
+            var walletB = await currencyClient.CreateWalletAsync(new CreateWalletRequest
+            {
+                OwnerId = charB.CharacterId,
+                OwnerType = WalletOwnerType.Character
+            });
+            var feeOwnerId = Guid.NewGuid();
+            var feeWallet = await currencyClient.CreateWalletAsync(new CreateWalletRequest
+            {
+                OwnerId = feeOwnerId,
+                OwnerType = WalletOwnerType.System
+            });
+
+            // Step 3: Credit wallet A with funds
+            await currencyClient.CreditCurrencyAsync(new CreditCurrencyRequest
+            {
+                WalletId = walletA.WalletId,
+                CurrencyDefinitionId = currencyDef.DefinitionId,
+                Amount = 1000,
+                TransactionType = TransactionType.Mint
+            });
+
+            // Step 4: Create contract template with currency clauses in CustomTerms
+            // The clauses define a fee (10%) and a distribution (remainder)
+            var clausesJson = $@"[
+                {{
+                    ""id"": ""platform_fee"",
+                    ""type"": ""currency_transfer"",
+                    ""category"": ""fee"",
+                    ""source_wallet"": ""{{{{PartyA_WalletId}}}}"",
+                    ""destination_wallet"": ""{{{{FeeWalletId}}}}"",
+                    ""currency_code"": ""{currencyCode}"",
+                    ""amount_type"": ""percentage"",
+                    ""amount_value"": 10,
+                    ""party_role"": ""employer""
+                }},
+                {{
+                    ""id"": ""worker_payment"",
+                    ""type"": ""currency_transfer"",
+                    ""category"": ""distribution"",
+                    ""source_wallet"": ""{{{{PartyA_WalletId}}}}"",
+                    ""destination_wallet"": ""{{{{PartyB_WalletId}}}}"",
+                    ""currency_code"": ""{currencyCode}"",
+                    ""amount_type"": ""remainder"",
+                    ""party_role"": ""employer""
+                }}
+            ]";
+
+            var template = await contractClient.CreateContractTemplateAsync(new CreateContractTemplateRequest
+            {
+                Code = $"exec_template_{DateTime.Now.Ticks}",
+                Name = "Execution Test Template",
+                Description = "Template with currency transfer clauses",
+                RealmId = realm.RealmId,
+                MinParties = 2,
+                MaxParties = 2,
+                PartyRoles = new List<PartyRoleDefinition>
+                {
+                    new PartyRoleDefinition
+                    {
+                        Role = "employer",
+                        MinCount = 1,
+                        MaxCount = 1,
+                        AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                    },
+                    new PartyRoleDefinition
+                    {
+                        Role = "worker",
+                        MinCount = 1,
+                        MaxCount = 1,
+                        AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                    }
+                },
+                DefaultTerms = new ContractTerms
+                {
+                    Duration = "P30D",
+                    CustomTerms = new Dictionary<string, object>
+                    {
+                        ["clauses"] = clausesJson
+                    }
+                },
+                DefaultEnforcementMode = EnforcementMode.Event_only,
+                Transferable = false
+            });
+
+            // Step 5: Create and activate contract
+            var activeContract = await CreateActiveContractAsync(
+                contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
+
+            if (activeContract.Status != ContractStatus.Active)
+                return TestResult.Failed($"Contract not active: {activeContract.Status}");
+
+            // Step 6: Set template values
+            await contractClient.SetContractTemplateValuesAsync(new SetTemplateValuesRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                TemplateValues = new Dictionary<string, string>
+                {
+                    ["PartyA_WalletId"] = walletA.WalletId.ToString(),
+                    ["PartyB_WalletId"] = walletB.WalletId.ToString(),
+                    ["FeeWalletId"] = feeWallet.WalletId.ToString(),
+                    ["base_amount"] = "1000"
+                }
+            });
+
+            // Step 7: Register the currency_transfer clause type if not already
+            try
+            {
+                await contractClient.RegisterClauseTypeAsync(new RegisterClauseTypeRequest
+                {
+                    TypeCode = "currency_transfer",
+                    Description = "Currency transfer between wallets",
+                    Category = ClauseCategory.Execution,
+                    ExecutionHandler = new ClauseHandlerDefinition
+                    {
+                        Service = "currency",
+                        Endpoint = "/currency/transfer"
+                    }
+                });
+            }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                // Already registered - expected on repeated test runs
+            }
+
+            // Step 8: Execute the contract
+            var idempotencyKey = Guid.NewGuid().ToString("N");
+            var executeResponse = await contractClient.ExecuteContractAsync(new ExecuteContractRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                IdempotencyKey = idempotencyKey
+            });
+
+            if (!executeResponse.Executed)
+                return TestResult.Failed("ExecuteContract returned not executed");
+
+            if (executeResponse.AlreadyExecuted)
+                return TestResult.Failed("First execution should not be flagged as already executed");
+
+            // Step 9: Verify idempotency - execute again with same key
+            var repeatResponse = await contractClient.ExecuteContractAsync(new ExecuteContractRequest
+            {
+                ContractInstanceId = activeContract.ContractId,
+                IdempotencyKey = idempotencyKey
+            });
+
+            if (!repeatResponse.AlreadyExecuted)
+                return TestResult.Failed("Repeat execution should be flagged as already executed");
+
+            // Step 10: Verify balances
+            var balanceA = await currencyClient.GetBalanceAsync(new GetBalanceRequest
+            {
+                WalletId = walletA.WalletId,
+                CurrencyDefinitionId = currencyDef.DefinitionId
+            });
+            var balanceB = await currencyClient.GetBalanceAsync(new GetBalanceRequest
+            {
+                WalletId = walletB.WalletId,
+                CurrencyDefinitionId = currencyDef.DefinitionId
+            });
+            var balanceFee = await currencyClient.GetBalanceAsync(new GetBalanceRequest
+            {
+                WalletId = feeWallet.WalletId,
+                CurrencyDefinitionId = currencyDef.DefinitionId
+            });
+
+            return TestResult.Successful(
+                $"Contract executed: {activeContract.ContractId}, " +
+                $"idempotency verified, " +
+                $"balances: A={balanceA.Amount}, B={balanceB.Amount}, Fee={balanceFee.Amount}, " +
+                $"distributions: {executeResponse.Distributions?.Count ?? 0}");
+        }, "Contract execution with currency");
 }

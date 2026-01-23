@@ -418,7 +418,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            var sessionId = body.WebSocketSessionId.ToString();
+            var sessionId = body.WebSocketSessionId;
             var accountId = body.AccountId;
             var queueId = body.QueueId;
 
@@ -489,7 +489,7 @@ public partial class MatchmakingService : IMatchmakingService
                 PartyMembers = body.PartyMembers?.Select(m => new PartyMemberModel
                 {
                     AccountId = m.AccountId,
-                    WebSocketSessionId = m.WebSocketSessionId.ToString(),
+                    WebSocketSessionId = m.WebSocketSessionId,
                     SkillRating = m.SkillRating
                 }).ToList(),
                 StringProperties = body.StringProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, string>(),
@@ -572,7 +572,7 @@ public partial class MatchmakingService : IMatchmakingService
             }, cancellationToken: cancellationToken);
 
             // Send client event
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new QueueJoinedEvent
+            await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), new QueueJoinedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -709,7 +709,7 @@ public partial class MatchmakingService : IMatchmakingService
         {
             var matchId = body.MatchId;
             var accountId = body.AccountId;
-            var sessionId = body.WebSocketSessionId.ToString();
+            var sessionId = body.WebSocketSessionId;
 
             _logger.LogInformation("Player {AccountId} accepting match {MatchId}", accountId, matchId);
 
@@ -744,7 +744,7 @@ public partial class MatchmakingService : IMatchmakingService
             // Notify all players of acceptance progress
             foreach (var ticket in match.MatchedTickets)
             {
-                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchPlayerAcceptedEvent
+                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchPlayerAcceptedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -989,7 +989,7 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                 {
-                    SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                    SessionId = ticket.WebSocketSessionId,
                     ServiceId = "matchmaking",
                     NewState = "match_pending"
                 }, cancellationToken);
@@ -1003,7 +1003,7 @@ public partial class MatchmakingService : IMatchmakingService
         // Send match found events
         foreach (var ticket in tickets)
         {
-            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchFoundEvent
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchFoundEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1032,7 +1032,7 @@ public partial class MatchmakingService : IMatchmakingService
                 TicketId = t.TicketId,
                 AccountId = t.AccountId,
                 PartyId = t.PartyId,
-                WebSocketSessionId = Guid.Parse(t.WebSocketSessionId),
+                WebSocketSessionId = t.WebSocketSessionId,
                 SkillRating = t.SkillRating,
                 WaitTimeSeconds = t.WaitTimeSeconds
             }).ToList(),
@@ -1092,7 +1092,7 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 var reservation = reservations.FirstOrDefault(r => r.AccountId == ticket.AccountId);
 
-                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchConfirmedEvent
+                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchConfirmedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1119,7 +1119,7 @@ public partial class MatchmakingService : IMatchmakingService
                 {
                     await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
                     {
-                        SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                        SessionId = ticket.WebSocketSessionId,
                         ServiceId = "matchmaking"
                     }, cancellationToken);
                 }
@@ -1182,7 +1182,7 @@ public partial class MatchmakingService : IMatchmakingService
         foreach (var ticket in match.MatchedTickets)
         {
             // Send cancelled event
-            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchDeclinedEvent
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchDeclinedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1227,7 +1227,7 @@ public partial class MatchmakingService : IMatchmakingService
                 {
                     await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                     {
-                        SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                        SessionId = ticket.WebSocketSessionId,
                         ServiceId = "matchmaking",
                         NewState = "in_queue"
                     }, cancellationToken);
@@ -1265,7 +1265,7 @@ public partial class MatchmakingService : IMatchmakingService
         _logger.LogInformation("Cancelling ticket {TicketId} with reason {Reason}", ticketId, reason);
 
         // Send client event
-        await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId, new MatchmakingCancelledEvent
+        await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchmakingCancelledEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1281,7 +1281,7 @@ public partial class MatchmakingService : IMatchmakingService
         {
             await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
             {
-                SessionId = Guid.Parse(ticket.WebSocketSessionId),
+                SessionId = ticket.WebSocketSessionId,
                 ServiceId = "matchmaking"
             }, cancellationToken);
         }
@@ -1321,26 +1321,28 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Publishes matchmaking shortcuts (leave, status) after joining queue.
     /// </summary>
-    private async Task PublishMatchmakingShortcutsAsync(string sessionId, Guid accountId, Guid ticketId, CancellationToken cancellationToken)
+    private async Task PublishMatchmakingShortcutsAsync(Guid sessionId, Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
         try
         {
-            // Leave shortcut
-            var leaveRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_leave", "matchmaking", _serverSalt);
-            var leaveTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/leave", _serverSalt);
+            var sessionIdStr = sessionId.ToString();
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            // Leave shortcut
+            var leaveRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_leave", "matchmaking", _serverSalt);
+            var leaveTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/leave", _serverSalt);
+
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = leaveRouteGuid,
                     TargetGuid = leaveTargetGuid,
                     BoundPayload = BannouJson.Serialize(new LeaveMatchmakingRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         TicketId = ticketId
                     }),
@@ -1359,21 +1361,21 @@ public partial class MatchmakingService : IMatchmakingService
             }, cancellationToken);
 
             // Status shortcut
-            var statusRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_status", "matchmaking", _serverSalt);
-            var statusTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/status", _serverSalt);
+            var statusRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_status", "matchmaking", _serverSalt);
+            var statusTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/status", _serverSalt);
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = statusRouteGuid,
                     TargetGuid = statusTargetGuid,
                     BoundPayload = BannouJson.Serialize(new GetMatchmakingStatusRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         TicketId = ticketId
                     }),
@@ -1400,26 +1402,28 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Publishes match shortcuts (accept, decline) after match formation.
     /// </summary>
-    private async Task PublishMatchShortcutsAsync(string sessionId, Guid accountId, Guid matchId, CancellationToken cancellationToken)
+    private async Task PublishMatchShortcutsAsync(Guid sessionId, Guid accountId, Guid matchId, CancellationToken cancellationToken)
     {
         try
         {
-            // Accept shortcut
-            var acceptRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_accept", "matchmaking", _serverSalt);
-            var acceptTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/accept", _serverSalt);
+            var sessionIdStr = sessionId.ToString();
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            // Accept shortcut
+            var acceptRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_accept", "matchmaking", _serverSalt);
+            var acceptTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/accept", _serverSalt);
+
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = acceptRouteGuid,
                     TargetGuid = acceptTargetGuid,
                     BoundPayload = BannouJson.Serialize(new AcceptMatchRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         MatchId = matchId
                     }),
@@ -1438,21 +1442,21 @@ public partial class MatchmakingService : IMatchmakingService
             }, cancellationToken);
 
             // Decline shortcut
-            var declineRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "matchmaking_decline", "matchmaking", _serverSalt);
-            var declineTargetGuid = GuidGenerator.GenerateServiceGuid(sessionId, "matchmaking/decline", _serverSalt);
+            var declineRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionIdStr, "matchmaking_decline", "matchmaking", _serverSalt);
+            var declineTargetGuid = GuidGenerator.GenerateServiceGuid(sessionIdStr, "matchmaking/decline", _serverSalt);
 
-            await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent
+            await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = declineRouteGuid,
                     TargetGuid = declineTargetGuid,
                     BoundPayload = BannouJson.Serialize(new DeclineMatchRequest
                     {
-                        WebSocketSessionId = Guid.Parse(sessionId),
+                        WebSocketSessionId = sessionId,
                         AccountId = accountId,
                         MatchId = matchId
                     }),

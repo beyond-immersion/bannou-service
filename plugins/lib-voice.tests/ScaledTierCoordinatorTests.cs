@@ -146,7 +146,7 @@ public class ScaledTierCoordinatorTests
     {
         // Arrange
         var coordinator = CreateCoordinator();
-        var sessionId = "session-abc-12345";
+        var sessionId = Guid.NewGuid();
         var roomId = Guid.NewGuid();
 
         // Act
@@ -154,9 +154,9 @@ public class ScaledTierCoordinatorTests
 
         // Assert
         Assert.NotNull(credentials);
+        // Username is "voice-" + first 8 chars of session ID string
         Assert.StartsWith("voice-", credentials.Username);
-        // Username is "voice-" + first 8 chars of sessionId = "voice-session-"
-        Assert.Equal("voice-session-", credentials.Username);
+        Assert.Equal($"voice-{sessionId.ToString()[..8]}", credentials.Username);
         Assert.NotEmpty(credentials.Password);
         Assert.Equal(32, credentials.Password.Length); // SHA256 first 32 chars
         Assert.Contains("voice.bannou", credentials.ConferenceUri);
@@ -165,14 +165,19 @@ public class ScaledTierCoordinatorTests
     }
 
     [Fact]
-    public void GenerateSipCredentials_WithEmptySessionId_ThrowsArgumentException()
+    public void GenerateSipCredentials_WithEmptyGuid_ProducesValidCredentials()
     {
         // Arrange
         var coordinator = CreateCoordinator();
         var roomId = Guid.NewGuid();
 
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => coordinator.GenerateSipCredentials(string.Empty, roomId));
+        // Act - Guid.Empty is a valid Guid, should produce deterministic credentials
+        var credentials = coordinator.GenerateSipCredentials(Guid.Empty, roomId);
+
+        // Assert
+        Assert.NotNull(credentials);
+        Assert.Equal("voice-00000000", credentials.Username);
+        Assert.Equal(32, credentials.Password.Length);
     }
 
     [Fact]
@@ -180,7 +185,7 @@ public class ScaledTierCoordinatorTests
     {
         // Arrange
         var coordinator = CreateCoordinator();
-        var sessionId = "session-xyz-67890";
+        var sessionId = Guid.NewGuid();
         var roomId = Guid.NewGuid();
 
         // Act
@@ -201,25 +206,26 @@ public class ScaledTierCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var creds1 = coordinator.GenerateSipCredentials("session-1", roomId);
-        var creds2 = coordinator.GenerateSipCredentials("session-2", roomId);
+        var creds1 = coordinator.GenerateSipCredentials(Guid.NewGuid(), roomId);
+        var creds2 = coordinator.GenerateSipCredentials(Guid.NewGuid(), roomId);
 
         // Assert
         Assert.NotEqual(creds1.Password, creds2.Password);
     }
 
     [Fact]
-    public void GenerateSipCredentials_ShortSessionId_HandlesGracefully()
+    public void GenerateSipCredentials_UsernameContainsFirst8CharsOfGuid()
     {
         // Arrange
         var coordinator = CreateCoordinator();
+        var sessionId = Guid.Parse("abcdef01-2345-6789-abcd-ef0123456789");
         var roomId = Guid.NewGuid();
 
-        // Act - Session ID shorter than 8 chars
-        var credentials = coordinator.GenerateSipCredentials("abc", roomId);
+        // Act
+        var credentials = coordinator.GenerateSipCredentials(sessionId, roomId);
 
-        // Assert
-        Assert.StartsWith("voice-abc", credentials.Username);
+        // Assert - Username is "voice-" + first 8 chars of Guid string
+        Assert.Equal("voice-abcdef01", credentials.Username);
     }
 
     #endregion
@@ -334,7 +340,7 @@ public class ScaledTierCoordinatorTests
         // Arrange
         var coordinator = CreateCoordinator();
         var roomId = Guid.NewGuid();
-        var sessionId = "session-test-123";
+        var sessionId = Guid.NewGuid();
         var rtpServerUri = "udp://localhost:22222";
 
         // Act
@@ -361,7 +367,7 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, "session-1", "udp://host:1234", "g711", CancellationToken.None);
+            roomId, Guid.NewGuid(), "udp://host:1234", "g711", CancellationToken.None);
 
         // Assert
         Assert.Equal(VoiceCodec.G711, result.Codec);
@@ -376,7 +382,7 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, "session-1", "udp://host:1234", "g722", CancellationToken.None);
+            roomId, Guid.NewGuid(), "udp://host:1234", "g722", CancellationToken.None);
 
         // Assert
         Assert.Equal(VoiceCodec.G722, result.Codec);
@@ -391,7 +397,7 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, "session-1", "udp://host:1234", "unknown", CancellationToken.None);
+            roomId, Guid.NewGuid(), "udp://host:1234", "unknown", CancellationToken.None);
 
         // Assert
         Assert.Equal(VoiceCodec.Opus, result.Codec);

@@ -1816,7 +1816,7 @@ public partial class ContractService : IContractService
             ["contract.id"] = contract.ContractId,
             ["contract.templateId"] = contract.TemplateId,
             ["contract.templateCode"] = contract.TemplateCode,
-            ["contract.status"] = contract.Status,
+            ["contract.status"] = contract.Status.ToString().ToLowerInvariant(),
             ["contract.effectiveFrom"] = contract.EffectiveFrom?.ToString("o"),
             ["contract.effectiveUntil"] = contract.EffectiveUntil?.ToString("o"),
             ["contract.currentMilestoneIndex"] = contract.CurrentMilestoneIndex

@@ -442,7 +442,7 @@ public class ConnectServiceTests
         var service = CreateConnectService();
         var eventData = new AuthEvent
         {
-            SessionId = "test-session-456",
+            SessionId = Guid.NewGuid(),
             EventType = AuthEventType.Login,
             UserId = "user-123",
             Timestamp = DateTimeOffset.UtcNow
