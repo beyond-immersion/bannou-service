@@ -110,7 +110,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var typeId = Guid.NewGuid();
             var data = new EncounterTypeData
             {
-                TypeId = typeId.ToString(),
+                TypeId = typeId,
                 Code = body.Code.ToUpperInvariant(),
                 Name = body.Name,
                 Description = body.Description,
@@ -480,14 +480,14 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
             var encounterData = new EncounterData
             {
-                EncounterId = encounterId.ToString(),
+                EncounterId = encounterId,
                 Timestamp = body.Timestamp.ToUnixTimeSeconds(),
-                RealmId = body.RealmId.ToString(),
-                LocationId = body.LocationId?.ToString(),
+                RealmId = body.RealmId,
+                LocationId = body.LocationId,
                 EncounterTypeCode = body.EncounterTypeCode.ToUpperInvariant(),
                 Context = body.Context,
                 Outcome = body.Outcome.ToString(),
-                ParticipantIds = participantIds.Select(p => p.ToString()).ToList(),
+                ParticipantIds = participantIds,
                 Metadata = body.Metadata,
                 CreatedAtUnix = now.ToUnixTimeSeconds()
             };
@@ -510,9 +510,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
                 var perspectiveData = new PerspectiveData
                 {
-                    PerspectiveId = perspectiveId.ToString(),
-                    EncounterId = encounterId.ToString(),
-                    CharacterId = participantId.ToString(),
+                    PerspectiveId = perspectiveId,
+                    EncounterId = encounterId,
+                    CharacterId = participantId,
                     EmotionalImpact = hasProvidedPerspective && provided != null
                         ? provided.EmotionalImpact.ToString()
                         : defaultEmotionalImpact.ToString(),
@@ -637,7 +637,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     continue;
 
                 // Get all perspectives for this encounter
-                var allPerspectives = await GetEncounterPerspectivesAsync(Guid.Parse(encounter.EncounterId), cancellationToken);
+                var allPerspectives = await GetEncounterPerspectivesAsync(encounter.EncounterId, cancellationToken);
 
                 encounters.Add(new EncounterResponse
                 {
@@ -706,7 +706,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     continue;
 
                 // Get perspectives and check memory strength filter
-                var perspectives = await GetEncounterPerspectivesAsync(Guid.Parse(encounter.EncounterId), cancellationToken);
+                var perspectives = await GetEncounterPerspectivesAsync(encounter.EncounterId, cancellationToken);
 
                 if (body.MinimumMemoryStrength.HasValue)
                 {
@@ -786,7 +786,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 if (body.FromTimestamp.HasValue && encounterTimestamp < body.FromTimestamp.Value)
                     continue;
 
-                var perspectives = await GetEncounterPerspectivesAsync(Guid.Parse(encounter.EncounterId), cancellationToken);
+                var perspectives = await GetEncounterPerspectivesAsync(encounter.EncounterId, cancellationToken);
 
                 encounters.Add(new EncounterResponse
                 {
@@ -1088,7 +1088,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Timestamp = DateTimeOffset.UtcNow,
                 EncounterId = body.EncounterId,
                 CharacterId = body.CharacterId,
-                PerspectiveId = Guid.Parse(perspective.PerspectiveId),
+                PerspectiveId = perspective.PerspectiveId,
                 PreviousEmotionalImpact = previousEmotion,
                 NewEmotionalImpact = body.EmotionalImpact?.ToString(),
                 PreviousSentimentShift = previousSentiment,
@@ -1151,7 +1151,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Timestamp = DateTimeOffset.UtcNow,
                 EncounterId = body.EncounterId,
                 CharacterId = body.CharacterId,
-                PerspectiveId = Guid.Parse(perspective.PerspectiveId),
+                PerspectiveId = perspective.PerspectiveId,
                 PreviousStrength = previousStrength,
                 NewStrength = perspective.MemoryStrength
             }, cancellationToken: cancellationToken);
@@ -1203,7 +1203,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return (StatusCodes.NotFound, null);
             }
 
-            var participantIds = encounter.ParticipantIds.Select(Guid.Parse).ToList();
+            var participantIds = encounter.ParticipantIds;
 
             // Delete all perspectives
             var perspectivesDeleted = await DeleteEncounterPerspectivesAsync(body.EncounterId, cancellationToken);
@@ -1215,9 +1215,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             await RemoveFromPairIndexesAsync(participantIds, body.EncounterId, cancellationToken);
 
             // Update location index
-            if (!string.IsNullOrEmpty(encounter.LocationId))
+            if (encounter.LocationId.HasValue)
             {
-                await RemoveFromLocationIndexAsync(Guid.Parse(encounter.LocationId), body.EncounterId, cancellationToken);
+                await RemoveFromLocationIndexAsync(encounter.LocationId.Value, body.EncounterId, cancellationToken);
             }
 
             // Publish event
@@ -1272,7 +1272,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var perspectivesDeleted = 0;
 
             var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            var processedEncounterIds = new HashSet<string>();
+            var processedEncounterIds = new HashSet<Guid>();
 
             foreach (var perspectiveId in perspectiveIds)
             {
@@ -1298,20 +1298,20 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 if (encounter == null) continue;
 
                 // Delete all other perspectives for this encounter
-                perspectivesDeleted += await DeleteEncounterPerspectivesAsync(Guid.Parse(encounterId), cancellationToken);
+                perspectivesDeleted += await DeleteEncounterPerspectivesAsync(encounterId, cancellationToken);
 
                 // Delete the encounter
                 await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
                 encountersDeleted++;
 
                 // Update pair indexes
-                var participantIds = encounter.ParticipantIds.Select(Guid.Parse).ToList();
-                await RemoveFromPairIndexesAsync(participantIds, Guid.Parse(encounterId), cancellationToken);
+                var participantIds = encounter.ParticipantIds;
+                await RemoveFromPairIndexesAsync(participantIds, encounterId, cancellationToken);
 
                 // Update location index
-                if (!string.IsNullOrEmpty(encounter.LocationId))
+                if (encounter.LocationId.HasValue)
                 {
-                    await RemoveFromLocationIndexAsync(Guid.Parse(encounter.LocationId), Guid.Parse(encounterId), cancellationToken);
+                    await RemoveFromLocationIndexAsync(encounter.LocationId.Value, encounterId, cancellationToken);
                 }
 
                 // Publish event
@@ -1319,7 +1319,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    EncounterId = Guid.Parse(encounterId),
+                    EncounterId = encounterId,
                     ParticipantIds = participantIds,
                     PerspectivesDeleted = encounter.ParticipantIds.Count,
                     DeletedByCharacterCleanup = true,
@@ -1419,9 +1419,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                             {
                                 EventId = Guid.NewGuid(),
                                 Timestamp = DateTimeOffset.UtcNow,
-                                EncounterId = Guid.Parse(perspective.EncounterId),
-                                CharacterId = Guid.Parse(perspective.CharacterId),
-                                PerspectiveId = Guid.Parse(perspective.PerspectiveId),
+                                EncounterId = perspective.EncounterId,
+                                CharacterId = perspective.CharacterId,
+                                PerspectiveId = perspective.PerspectiveId,
                                 PreviousStrength = perspective.MemoryStrength + GetDecayAmount(perspective),
                                 NewStrength = perspective.MemoryStrength,
                                 FadeThreshold = (float)_configuration.MemoryFadeThreshold
@@ -1494,7 +1494,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         var data = new EncounterTypeData
         {
-            TypeId = Guid.NewGuid().ToString(),
+            TypeId = Guid.NewGuid(),
             Code = builtIn.Code,
             Name = builtIn.Name,
             Description = builtIn.Description,
@@ -1553,7 +1553,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var index = await indexStore.GetAsync($"{CHAR_INDEX_PREFIX}{characterId}", cancellationToken);
-        return index?.PerspectiveIds.Select(Guid.Parse).ToList() ?? new List<Guid>();
+        return index?.PerspectiveIds.ToList() ?? new List<Guid>();
     }
 
     private async Task<List<Guid>> GetPairEncounterIdsAsync(Guid charA, Guid charB, CancellationToken cancellationToken)
@@ -1561,14 +1561,14 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var pairKey = GetPairKey(charA, charB);
         var indexStore = _stateStoreFactory.GetStore<PairIndexData>(StateStoreDefinitions.CharacterEncounter);
         var index = await indexStore.GetAsync($"{PAIR_INDEX_PREFIX}{pairKey}", cancellationToken);
-        return index?.EncounterIds.Select(Guid.Parse).ToList() ?? new List<Guid>();
+        return index?.EncounterIds.ToList() ?? new List<Guid>();
     }
 
     private async Task<List<Guid>> GetLocationEncounterIdsAsync(Guid locationId, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
         var index = await indexStore.GetAsync($"{LOCATION_INDEX_PREFIX}{locationId}", cancellationToken);
-        return index?.EncounterIds.Select(Guid.Parse).ToList() ?? new List<Guid>();
+        return index?.EncounterIds.ToList() ?? new List<Guid>();
     }
 
     private async Task AddToCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
@@ -1578,11 +1578,11 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var index = await indexStore.GetAsync(key, cancellationToken);
         var isNewCharacter = index == null;
 
-        index ??= new CharacterIndexData { CharacterId = characterId.ToString() };
+        index ??= new CharacterIndexData { CharacterId = characterId };
 
-        if (!index.PerspectiveIds.Contains(perspectiveId.ToString()))
+        if (!index.PerspectiveIds.Contains(perspectiveId))
         {
-            index.PerspectiveIds.Add(perspectiveId.ToString());
+            index.PerspectiveIds.Add(perspectiveId);
             await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
         }
 
@@ -1599,10 +1599,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken)
             ?? new GlobalCharacterIndexData();
 
-        var characterIdStr = characterId.ToString();
-        if (!globalIndex.CharacterIds.Contains(characterIdStr))
+        if (!globalIndex.CharacterIds.Contains(characterId))
         {
-            globalIndex.CharacterIds.Add(characterIdStr);
+            globalIndex.CharacterIds.Add(characterId);
             await globalIndexStore.SaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
         }
     }
@@ -1614,7 +1613,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var index = await indexStore.GetAsync(key, cancellationToken);
         if (index != null)
         {
-            index.PerspectiveIds.Remove(perspectiveId.ToString());
+            index.PerspectiveIds.Remove(perspectiveId);
             await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
 
             // Remove from global index if this was the character's last perspective
@@ -1632,7 +1631,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         if (globalIndex != null)
         {
-            globalIndex.CharacterIds.Remove(characterId.ToString());
+            globalIndex.CharacterIds.Remove(characterId);
             await globalIndexStore.SaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
         }
     }
@@ -1687,7 +1686,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{perspective.EncounterId}", cancellationToken);
             if (encounter == null) continue;
 
-            perspectivesWithTimestamp.Add((perspectiveId, Guid.Parse(perspective.EncounterId), encounter.Timestamp));
+            perspectivesWithTimestamp.Add((perspectiveId, perspective.EncounterId, encounter.Timestamp));
         }
 
         // Sort by timestamp ascending (oldest first)
@@ -1719,13 +1718,13 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
 
                     // Clean up pair indexes
-                    var participantIds = encounter.ParticipantIds.Select(Guid.Parse).ToList();
+                    var participantIds = encounter.ParticipantIds;
                     await RemoveFromPairIndexesAsync(participantIds, encounterId, cancellationToken);
 
                     // Clean up location index
-                    if (!string.IsNullOrEmpty(encounter.LocationId))
+                    if (encounter.LocationId.HasValue)
                     {
-                        await RemoveFromLocationIndexAsync(Guid.Parse(encounter.LocationId), encounterId, cancellationToken);
+                        await RemoveFromLocationIndexAsync(encounter.LocationId.Value, encounterId, cancellationToken);
                     }
                 }
             }
@@ -1790,13 +1789,13 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                         await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
 
                         // Clean up pair indexes (including this pair and any others)
-                        var allParticipants = encounter.ParticipantIds.Select(Guid.Parse).ToList();
+                        var allParticipants = encounter.ParticipantIds;
                         await RemoveFromPairIndexesAsync(allParticipants, encounterId, cancellationToken);
 
                         // Clean up location index
-                        if (!string.IsNullOrEmpty(encounter.LocationId))
+                        if (encounter.LocationId.HasValue)
                         {
-                            await RemoveFromLocationIndexAsync(Guid.Parse(encounter.LocationId), encounterId, cancellationToken);
+                            await RemoveFromLocationIndexAsync(encounter.LocationId.Value, encounterId, cancellationToken);
                         }
                     }
                 }
@@ -1817,13 +1816,13 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 var key = $"{PAIR_INDEX_PREFIX}{pairKey}";
                 var index = await indexStore.GetAsync(key, cancellationToken) ?? new PairIndexData
                 {
-                    CharacterIdA = participantIds[i] < participantIds[j] ? participantIds[i].ToString() : participantIds[j].ToString(),
-                    CharacterIdB = participantIds[i] < participantIds[j] ? participantIds[j].ToString() : participantIds[i].ToString()
+                    CharacterIdA = participantIds[i] < participantIds[j] ? participantIds[i] : participantIds[j],
+                    CharacterIdB = participantIds[i] < participantIds[j] ? participantIds[j] : participantIds[i]
                 };
 
-                if (!index.EncounterIds.Contains(encounterId.ToString()))
+                if (!index.EncounterIds.Contains(encounterId))
                 {
-                    index.EncounterIds.Add(encounterId.ToString());
+                    index.EncounterIds.Add(encounterId);
                     await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
                 }
             }
@@ -1843,7 +1842,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 var index = await indexStore.GetAsync(key, cancellationToken);
                 if (index != null)
                 {
-                    index.EncounterIds.Remove(encounterId.ToString());
+                    index.EncounterIds.Remove(encounterId);
                     await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
                 }
             }
@@ -1854,10 +1853,10 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
-        var index = await indexStore.GetAsync(key, cancellationToken) ?? new LocationIndexData { LocationId = locationId.ToString() };
-        if (!index.EncounterIds.Contains(encounterId.ToString()))
+        var index = await indexStore.GetAsync(key, cancellationToken) ?? new LocationIndexData { LocationId = locationId };
+        if (!index.EncounterIds.Contains(encounterId))
         {
-            index.EncounterIds.Add(encounterId.ToString());
+            index.EncounterIds.Add(encounterId);
             await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
         }
     }
@@ -1869,7 +1868,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var index = await indexStore.GetAsync(key, cancellationToken);
         if (index != null)
         {
-            index.EncounterIds.Remove(encounterId.ToString());
+            index.EncounterIds.Remove(encounterId);
             await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
         }
     }
@@ -1890,7 +1889,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var perspectives = new List<EncounterPerspectiveModel>();
         foreach (var participantId in encounter.ParticipantIds)
         {
-            var perspective = await FindPerspectiveByEncounterAndCharacterAsync(encounterId, Guid.Parse(participantId), cancellationToken);
+            var perspective = await FindPerspectiveByEncounterAndCharacterAsync(encounterId, participantId, cancellationToken);
             if (perspective != null)
             {
                 // Apply lazy decay
@@ -1915,7 +1914,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         foreach (var perspectiveId in perspectiveIds)
         {
             var perspective = await perspectiveStore.GetAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", cancellationToken);
-            if (perspective != null && perspective.EncounterId == encounterId.ToString())
+            if (perspective != null && perspective.EncounterId == encounterId)
             {
                 return perspective;
             }
@@ -1933,11 +1932,11 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var deleted = 0;
         foreach (var participantId in encounter.ParticipantIds)
         {
-            var perspective = await FindPerspectiveByEncounterAndCharacterAsync(encounterId, Guid.Parse(participantId), cancellationToken);
+            var perspective = await FindPerspectiveByEncounterAndCharacterAsync(encounterId, participantId, cancellationToken);
             if (perspective != null)
             {
                 await perspectiveStore.DeleteAsync($"{PERSPECTIVE_KEY_PREFIX}{perspective.PerspectiveId}", cancellationToken);
-                await RemoveFromCharacterIndexAsync(Guid.Parse(participantId), Guid.Parse(perspective.PerspectiveId), cancellationToken);
+                await RemoveFromCharacterIndexAsync(participantId, perspective.PerspectiveId, cancellationToken);
                 deleted++;
             }
         }
@@ -1955,13 +1954,10 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
 
         var allPerspectiveIds = new List<Guid>();
-        foreach (var characterIdStr in globalIndex.CharacterIds)
+        foreach (var characterId in globalIndex.CharacterIds)
         {
-            if (Guid.TryParse(characterIdStr, out var characterId))
-            {
-                var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
-                allPerspectiveIds.AddRange(perspectiveIds);
-            }
+            var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
+            allPerspectiveIds.AddRange(perspectiveIds);
         }
 
         return allPerspectiveIds;
@@ -1989,9 +1985,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                EncounterId = Guid.Parse(perspective.EncounterId),
-                CharacterId = Guid.Parse(perspective.CharacterId),
-                PerspectiveId = Guid.Parse(perspective.PerspectiveId),
+                EncounterId = perspective.EncounterId,
+                CharacterId = perspective.CharacterId,
+                PerspectiveId = perspective.PerspectiveId,
                 PreviousStrength = previousStrength,
                 NewStrength = perspective.MemoryStrength,
                 FadeThreshold = (float)_configuration.MemoryFadeThreshold
@@ -2068,7 +2064,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         return new EncounterTypeResponse
         {
-            TypeId = Guid.Parse(data.TypeId),
+            TypeId = data.TypeId,
             Code = data.Code,
             Name = data.Name,
             Description = data.Description,
@@ -2084,14 +2080,14 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         return new EncounterModel
         {
-            EncounterId = Guid.Parse(data.EncounterId),
+            EncounterId = data.EncounterId,
             Timestamp = DateTimeOffset.FromUnixTimeSeconds(data.Timestamp),
-            RealmId = Guid.Parse(data.RealmId),
-            LocationId = data.LocationId != null ? Guid.Parse(data.LocationId) : null,
+            RealmId = data.RealmId,
+            LocationId = data.LocationId,
             EncounterTypeCode = data.EncounterTypeCode,
             Context = data.Context,
             Outcome = Enum.Parse<EncounterOutcome>(data.Outcome),
-            ParticipantIds = data.ParticipantIds.Select(Guid.Parse).ToList(),
+            ParticipantIds = data.ParticipantIds,
             Metadata = data.Metadata,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix)
         };
@@ -2101,9 +2097,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         return new EncounterPerspectiveModel
         {
-            PerspectiveId = Guid.Parse(data.PerspectiveId),
-            EncounterId = Guid.Parse(data.EncounterId),
-            CharacterId = Guid.Parse(data.CharacterId),
+            PerspectiveId = data.PerspectiveId,
+            EncounterId = data.EncounterId,
+            CharacterId = data.CharacterId,
             EmotionalImpact = Enum.Parse<EmotionalImpact>(data.EmotionalImpact),
             SentimentShift = data.SentimentShift,
             MemoryStrength = data.MemoryStrength,
@@ -2123,7 +2119,7 @@ internal record BuiltInEncounterType(string Code, string Name, string Descriptio
 
 internal class EncounterTypeData
 {
-    public string TypeId { get; set; } = string.Empty;
+    public Guid TypeId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -2136,23 +2132,23 @@ internal class EncounterTypeData
 
 internal class EncounterData
 {
-    public string EncounterId { get; set; } = string.Empty;
+    public Guid EncounterId { get; set; }
     public long Timestamp { get; set; }
-    public string RealmId { get; set; } = string.Empty;
-    public string? LocationId { get; set; }
+    public Guid RealmId { get; set; }
+    public Guid? LocationId { get; set; }
     public string EncounterTypeCode { get; set; } = string.Empty;
     public string? Context { get; set; }
     public string Outcome { get; set; } = string.Empty;
-    public List<string> ParticipantIds { get; set; } = new();
+    public List<Guid> ParticipantIds { get; set; } = new();
     public object? Metadata { get; set; }
     public long CreatedAtUnix { get; set; }
 }
 
 internal class PerspectiveData
 {
-    public string PerspectiveId { get; set; } = string.Empty;
-    public string EncounterId { get; set; } = string.Empty;
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid PerspectiveId { get; set; }
+    public Guid EncounterId { get; set; }
+    public Guid CharacterId { get; set; }
     public string EmotionalImpact { get; set; } = string.Empty;
     public float? SentimentShift { get; set; }
     public float MemoryStrength { get; set; } = 1.0f;
@@ -2164,21 +2160,21 @@ internal class PerspectiveData
 
 internal class CharacterIndexData
 {
-    public string CharacterId { get; set; } = string.Empty;
-    public List<string> PerspectiveIds { get; set; } = new();
+    public Guid CharacterId { get; set; }
+    public List<Guid> PerspectiveIds { get; set; } = new();
 }
 
 internal class PairIndexData
 {
-    public string CharacterIdA { get; set; } = string.Empty;
-    public string CharacterIdB { get; set; } = string.Empty;
-    public List<string> EncounterIds { get; set; } = new();
+    public Guid CharacterIdA { get; set; }
+    public Guid CharacterIdB { get; set; }
+    public List<Guid> EncounterIds { get; set; } = new();
 }
 
 internal class LocationIndexData
 {
-    public string LocationId { get; set; } = string.Empty;
-    public List<string> EncounterIds { get; set; } = new();
+    public Guid LocationId { get; set; }
+    public List<Guid> EncounterIds { get; set; } = new();
 }
 
 /// <summary>
@@ -2187,7 +2183,7 @@ internal class LocationIndexData
 /// </summary>
 internal class GlobalCharacterIndexData
 {
-    public List<string> CharacterIds { get; set; } = new();
+    public List<Guid> CharacterIds { get; set; } = new();
 }
 
 /// <summary>

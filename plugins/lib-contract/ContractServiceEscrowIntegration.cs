@@ -1745,7 +1745,7 @@ internal class ClauseTypeModel
 {
     public string TypeCode { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
+    public ClauseCategory Category { get; set; }
     public bool IsBuiltIn { get; set; }
     public ClauseHandlerModel? ValidationHandler { get; set; }
     public ClauseHandlerModel? ExecutionHandler { get; set; }
@@ -1772,10 +1772,10 @@ internal class DistributionRecordModel
     public string ClauseType { get; set; } = string.Empty;
     public string AssetType { get; set; } = string.Empty;
     public double Amount { get; set; }
-    public string? SourceWalletId { get; set; }
-    public string? DestinationWalletId { get; set; }
-    public string? SourceContainerId { get; set; }
-    public string? DestinationContainerId { get; set; }
+    public Guid? SourceWalletId { get; set; }
+    public Guid? DestinationWalletId { get; set; }
+    public Guid? SourceContainerId { get; set; }
+    public Guid? DestinationContainerId { get; set; }
 }
 
 /// <summary>

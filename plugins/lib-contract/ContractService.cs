@@ -127,11 +127,11 @@ public partial class ContractService : IContractService
 
             var model = new ContractTemplateModel
             {
-                TemplateId = templateId.ToString(),
+                TemplateId = templateId,
                 Code = body.Code,
                 Name = body.Name,
                 Description = body.Description,
-                RealmId = body.RealmId?.ToString(),
+                RealmId = body.RealmId,
                 MinParties = body.MinParties,
                 MaxParties = body.MaxParties,
                 PartyRoles = body.PartyRoles?.Select(r => new PartyRoleModel
@@ -139,7 +139,7 @@ public partial class ContractService : IContractService
                     Role = r.Role,
                     MinCount = r.MinCount,
                     MaxCount = r.MaxCount,
-                    AllowedEntityTypes = r.AllowedEntityTypes?.Select(e => e.ToString()).ToList()
+                    AllowedEntityTypes = r.AllowedEntityTypes?.ToList()
                 }).ToList() ?? new List<PartyRoleModel>(),
                 DefaultTerms = MapTermsToModel(body.DefaultTerms),
                 Milestones = body.Milestones?.Select(m => new MilestoneDefinitionModel
@@ -153,7 +153,7 @@ public partial class ContractService : IContractService
                     OnComplete = m.OnComplete?.Select(MapPreboundApiToModel).ToList(),
                     OnExpire = m.OnExpire?.Select(MapPreboundApiToModel).ToList()
                 }).ToList(),
-                DefaultEnforcementMode = body.DefaultEnforcementMode.ToString(),
+                DefaultEnforcementMode = body.DefaultEnforcementMode,
                 Transferable = body.Transferable,
                 GameMetadata = body.GameMetadata,
                 IsActive = true,
@@ -271,8 +271,7 @@ public partial class ContractService : IContractService
 
             if (body.RealmId.HasValue)
             {
-                var realmIdStr = body.RealmId.Value.ToString();
-                filtered = filtered.Where(t => t.RealmId == realmIdStr || t.RealmId == null);
+                filtered = filtered.Where(t => t.RealmId == body.RealmId.Value || t.RealmId == null);
             }
 
             if (body.IsActive.HasValue)
@@ -481,8 +480,8 @@ public partial class ContractService : IContractService
             // Create parties with pending consent
             var parties = body.Parties.Select(p => new ContractPartyModel
             {
-                EntityId = p.EntityId.ToString(),
-                EntityType = p.EntityType.ToString(),
+                EntityId = p.EntityId,
+                EntityType = p.EntityType,
                 Role = p.Role,
                 ConsentStatus = ConsentStatus.Pending,
                 ConsentedAt = null
@@ -507,15 +506,15 @@ public partial class ContractService : IContractService
 
             var model = new ContractInstanceModel
             {
-                ContractId = contractId.ToString(),
-                TemplateId = body.TemplateId.ToString(),
+                ContractId = contractId,
+                TemplateId = body.TemplateId,
                 TemplateCode = template.Code,
                 Status = ContractStatus.Draft,
                 Parties = parties,
                 Terms = mergedTerms,
                 Milestones = milestones,
                 CurrentMilestoneIndex = 0,
-                EscrowIds = body.EscrowIds?.Select(e => e.ToString()).ToList(),
+                EscrowIds = body.EscrowIds?.ToList(),
                 EffectiveFrom = body.EffectiveFrom,
                 EffectiveUntil = body.EffectiveUntil,
                 GameMetadata = body.GameMetadata != null ? new GameMetadataModel
@@ -640,8 +639,8 @@ public partial class ContractService : IContractService
 
             // Find party
             var party = model.Parties?.FirstOrDefault(p =>
-                p.EntityId == body.PartyEntityId.ToString() &&
-                p.EntityType == body.PartyEntityType.ToString());
+                p.EntityId == body.PartyEntityId &&
+                p.EntityType == body.PartyEntityType);
 
             if (party == null)
             {
@@ -866,8 +865,8 @@ public partial class ContractService : IContractService
 
             // Verify requesting entity is a party
             var requestingParty = model.Parties?.FirstOrDefault(p =>
-                p.EntityId == body.RequestingEntityId.ToString() &&
-                p.EntityType == body.RequestingEntityType.ToString());
+                p.EntityId == body.RequestingEntityId &&
+                p.EntityType == body.RequestingEntityType);
 
             if (requestingParty == null)
             {
@@ -888,7 +887,7 @@ public partial class ContractService : IContractService
             await AddToListAsync($"{STATUS_INDEX_PREFIX}terminated", body.ContractId.ToString(), cancellationToken);
 
             // Publish event
-            await PublishContractTerminatedEventAsync(model, body.RequestingEntityId.ToString(),
+            await PublishContractTerminatedEventAsync(model, body.RequestingEntityId,
                 body.RequestingEntityType.ToString(), body.Reason, false, cancellationToken);
 
             _logger.LogInformation("Terminated contract: {ContractId}", body.ContractId);
@@ -928,8 +927,8 @@ public partial class ContractService : IContractService
                 .Where(p => p.ConsentStatus == ConsentStatus.Pending)
                 .Select(p => new PendingConsentSummary
                 {
-                    EntityId = Guid.Parse(p.EntityId),
-                    EntityType = Enum.TryParse<EntityType>(p.EntityType, true, out var et) ? et : EntityType.Character,
+                    EntityId = p.EntityId,
+                    EntityType = p.EntityType,
                     Role = p.Role
                 }).ToList();
 
@@ -943,12 +942,13 @@ public partial class ContractService : IContractService
 
                 var activeStatuses = new[] { BreachStatus.Detected, BreachStatus.Cure_period };
                 activeBreaches = breaches
-                    .Where(b => b.Value != null && activeStatuses.Contains(b.Value.Status))
-                    .Select(b => new BreachSummary
+                    .Select(b => b.Value)
+                    .Where(breach => breach != null && activeStatuses.Contains(breach.Status))
+                    .Select(breach => new BreachSummary
                     {
-                        BreachId = Guid.Parse(b.Value!.BreachId),
-                        BreachType = Enum.TryParse<BreachType>(b.Value.BreachType, true, out var bt) ? bt : BreachType.Term_violation,
-                        Status = b.Value.Status
+                        BreachId = breach.BreachId,
+                        BreachType = breach.BreachType,
+                        Status = breach.Status
                     }).ToList();
             }
 
@@ -961,7 +961,7 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, new ContractInstanceStatusResponse
             {
-                ContractId = Guid.Parse(model.ContractId),
+                ContractId = model.ContractId,
                 Status = model.Status,
                 MilestoneProgress = milestoneProgress ?? new List<MilestoneProgressSummary>(),
                 PendingConsents = pendingConsents?.Count > 0 ? pendingConsents : null,
@@ -1058,7 +1058,7 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, new MilestoneResponse
             {
-                ContractId = Guid.Parse(model.ContractId),
+                ContractId = model.ContractId,
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
@@ -1132,7 +1132,7 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, new MilestoneResponse
             {
-                ContractId = Guid.Parse(model.ContractId),
+                ContractId = model.ContractId,
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
@@ -1168,7 +1168,7 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, new MilestoneResponse
             {
-                ContractId = Guid.Parse(model.ContractId),
+                ContractId = model.ContractId,
                 Milestone = MapMilestoneToResponse(milestone)
             });
         }
@@ -1222,11 +1222,11 @@ public partial class ContractService : IContractService
 
             var breachModel = new BreachModel
             {
-                BreachId = breachId.ToString(),
-                ContractId = body.ContractId.ToString(),
-                BreachingEntityId = body.BreachingEntityId.ToString(),
-                BreachingEntityType = body.BreachingEntityType.ToString(),
-                BreachType = body.BreachType.ToString(),
+                BreachId = breachId,
+                ContractId = body.ContractId,
+                BreachingEntityId = body.BreachingEntityId,
+                BreachingEntityType = body.BreachingEntityType,
+                BreachType = body.BreachType,
                 BreachedTermOrMilestone = body.BreachedTermOrMilestone,
                 Description = body.Description,
                 Status = cureDeadline.HasValue ? BreachStatus.Cure_period : BreachStatus.Detected,
@@ -1240,8 +1240,8 @@ public partial class ContractService : IContractService
                 .SaveAsync(breachKey, breachModel, cancellationToken: cancellationToken);
 
             // Link breach to contract
-            model.BreachIds ??= new List<string>();
-            model.BreachIds.Add(breachId.ToString());
+            model.BreachIds ??= new List<Guid>();
+            model.BreachIds.Add(breachId);
             model.UpdatedAt = now;
 
             await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
@@ -1369,7 +1369,7 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, new ContractMetadataResponse
             {
-                ContractId = Guid.Parse(model.ContractId),
+                ContractId = model.ContractId,
                 InstanceData = model.GameMetadata.InstanceData,
                 RuntimeState = model.GameMetadata.RuntimeState
             });
@@ -1400,7 +1400,7 @@ public partial class ContractService : IContractService
 
             return (StatusCodes.OK, new ContractMetadataResponse
             {
-                ContractId = Guid.Parse(model.ContractId),
+                ContractId = model.ContractId,
                 InstanceData = model.GameMetadata?.InstanceData,
                 RuntimeState = model.GameMetadata?.RuntimeState
             });
@@ -1459,8 +1459,8 @@ public partial class ContractService : IContractService
             {
                 var hasViolation = false;
                 var party = contract.Parties?.FirstOrDefault(p =>
-                    p.EntityId == body.EntityId.ToString() &&
-                    p.EntityType == body.EntityType.ToString());
+                    p.EntityId == body.EntityId &&
+                    p.EntityType == body.EntityType);
 
                 if (party == null) continue;
 
@@ -1501,7 +1501,7 @@ public partial class ContractService : IContractService
                 {
                     conflicting.Add(new ContractSummary
                     {
-                        ContractId = Guid.Parse(contract.ContractId),
+                        ContractId = contract.ContractId,
                         TemplateCode = contract.TemplateCode,
                         TemplateName = null, // Would need to load template
                         Status = contract.Status,
@@ -1569,12 +1569,12 @@ public partial class ContractService : IContractService
             var summaries = activeContracts.Select(c =>
             {
                 var party = c.Parties?.FirstOrDefault(p =>
-                    p.EntityId == body.EntityId.ToString() &&
-                    p.EntityType == body.EntityType.ToString());
+                    p.EntityId == body.EntityId &&
+                    p.EntityType == body.EntityType);
 
                 return new ContractSummary
                 {
-                    ContractId = Guid.Parse(c.ContractId),
+                    ContractId = c.ContractId,
                     TemplateCode = c.TemplateCode,
                     TemplateName = null,
                     Status = c.Status,
@@ -1641,9 +1641,9 @@ public partial class ContractService : IContractService
         return new ContractTermsModel
         {
             Duration = terms.Duration,
-            PaymentSchedule = terms.PaymentSchedule?.ToString(),
+            PaymentSchedule = terms.PaymentSchedule,
             PaymentFrequency = terms.PaymentFrequency,
-            TerminationPolicy = terms.TerminationPolicy?.ToString(),
+            TerminationPolicy = terms.TerminationPolicy,
             TerminationNoticePeriod = terms.TerminationNoticePeriod,
             BreachThreshold = terms.BreachThreshold,
             GracePeriodForCure = terms.GracePeriodForCure,
@@ -1736,7 +1736,7 @@ public partial class ContractService : IContractService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    ContractId = Guid.Parse(contract.ContractId),
+                    ContractId = contract.ContractId,
                     Trigger = trigger,
                     ServiceName = api.ServiceName,
                     Endpoint = api.Endpoint,
@@ -1763,7 +1763,7 @@ public partial class ContractService : IContractService
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
-                        ContractId = Guid.Parse(contract.ContractId),
+                        ContractId = contract.ContractId,
                         Trigger = trigger,
                         ServiceName = api.ServiceName,
                         Endpoint = api.Endpoint,
@@ -1780,7 +1780,7 @@ public partial class ContractService : IContractService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ContractId = Guid.Parse(contract.ContractId),
+                ContractId = contract.ContractId,
                 Trigger = trigger,
                 ServiceName = api.ServiceName,
                 Endpoint = api.Endpoint,
@@ -1796,7 +1796,7 @@ public partial class ContractService : IContractService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ContractId = Guid.Parse(contract.ContractId),
+                ContractId = contract.ContractId,
                 Trigger = trigger,
                 ServiceName = api.ServiceName,
                 Endpoint = api.Endpoint,
@@ -1904,11 +1904,11 @@ public partial class ContractService : IContractService
     {
         return new ContractTemplateResponse
         {
-            TemplateId = Guid.Parse(model.TemplateId),
+            TemplateId = model.TemplateId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            RealmId = string.IsNullOrEmpty(model.RealmId) ? null : Guid.Parse(model.RealmId),
+            RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
             PartyRoles = model.PartyRoles?.Select(r => new PartyRoleDefinition
@@ -1916,8 +1916,7 @@ public partial class ContractService : IContractService
                 Role = r.Role,
                 MinCount = r.MinCount,
                 MaxCount = r.MaxCount,
-                AllowedEntityTypes = r.AllowedEntityTypes?.Select(e =>
-                    Enum.TryParse<EntityType>(e, true, out var et) ? et : EntityType.Character).ToList()
+                AllowedEntityTypes = r.AllowedEntityTypes?.ToList()
             }).ToList() ?? new List<PartyRoleDefinition>(),
             DefaultTerms = MapTermsToResponse(model.DefaultTerms),
             Milestones = model.Milestones?.Select(m => new MilestoneDefinition
@@ -1931,8 +1930,7 @@ public partial class ContractService : IContractService
                 OnComplete = m.OnComplete?.Select(MapPreboundApiToResponse).ToList(),
                 OnExpire = m.OnExpire?.Select(MapPreboundApiToResponse).ToList()
             }).ToList(),
-            DefaultEnforcementMode = Enum.TryParse<EnforcementMode>(model.DefaultEnforcementMode, true, out var em)
-                ? em : EnforcementMode.Event_only,
+            DefaultEnforcementMode = model.DefaultEnforcementMode,
             Transferable = model.Transferable,
             GameMetadata = model.GameMetadata,
             IsActive = model.IsActive,
@@ -1948,11 +1946,9 @@ public partial class ContractService : IContractService
         return new ContractTerms
         {
             Duration = model.Duration,
-            PaymentSchedule = string.IsNullOrEmpty(model.PaymentSchedule) ? null :
-                Enum.TryParse<PaymentSchedule>(model.PaymentSchedule, true, out var ps) ? ps : null,
+            PaymentSchedule = model.PaymentSchedule,
             PaymentFrequency = model.PaymentFrequency,
-            TerminationPolicy = string.IsNullOrEmpty(model.TerminationPolicy) ? null :
-                Enum.TryParse<TerminationPolicy>(model.TerminationPolicy, true, out var tp) ? tp : null,
+            TerminationPolicy = model.TerminationPolicy,
             TerminationNoticePeriod = model.TerminationNoticePeriod,
             BreachThreshold = model.BreachThreshold,
             GracePeriodForCure = model.GracePeriodForCure,
@@ -1977,14 +1973,14 @@ public partial class ContractService : IContractService
     {
         return new ContractInstanceResponse
         {
-            ContractId = Guid.Parse(model.ContractId),
-            TemplateId = Guid.Parse(model.TemplateId),
+            ContractId = model.ContractId,
+            TemplateId = model.TemplateId,
             TemplateCode = model.TemplateCode,
             Status = model.Status,
             Parties = model.Parties?.Select(p => new ContractPartyResponse
             {
-                EntityId = Guid.Parse(p.EntityId),
-                EntityType = Enum.TryParse<EntityType>(p.EntityType, true, out var et) ? et : EntityType.Character,
+                EntityId = p.EntityId,
+                EntityType = p.EntityType,
                 Role = p.Role,
                 ConsentStatus = p.ConsentStatus,
                 ConsentedAt = p.ConsentedAt
@@ -1992,7 +1988,7 @@ public partial class ContractService : IContractService
             Terms = MapTermsToResponse(model.Terms),
             Milestones = model.Milestones?.Select(MapMilestoneToResponse).ToList(),
             CurrentMilestoneIndex = model.CurrentMilestoneIndex,
-            EscrowIds = model.EscrowIds?.Select(Guid.Parse).ToList(),
+            EscrowIds = model.EscrowIds?.ToList(),
             ProposedAt = model.ProposedAt,
             AcceptedAt = model.AcceptedAt,
             EffectiveFrom = model.EffectiveFrom,
@@ -2023,13 +2019,11 @@ public partial class ContractService : IContractService
     {
         return new BreachResponse
         {
-            BreachId = Guid.Parse(model.BreachId),
-            ContractId = Guid.Parse(model.ContractId),
-            BreachingEntityId = Guid.Parse(model.BreachingEntityId),
-            BreachingEntityType = Enum.TryParse<EntityType>(model.BreachingEntityType, true, out var et)
-                ? et : EntityType.Character,
-            BreachType = Enum.TryParse<BreachType>(model.BreachType, true, out var bt)
-                ? bt : BreachType.Term_violation,
+            BreachId = model.BreachId,
+            ContractId = model.ContractId,
+            BreachingEntityId = model.BreachingEntityId,
+            BreachingEntityType = model.BreachingEntityType,
+            BreachType = model.BreachType,
             BreachedTermOrMilestone = model.BreachedTermOrMilestone,
             Description = model.Description,
             Status = model.Status,
@@ -2050,11 +2044,11 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            TemplateId = Guid.Parse(model.TemplateId),
+            TemplateId = model.TemplateId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            RealmId = string.IsNullOrEmpty(model.RealmId) ? default : Guid.Parse(model.RealmId),
+            RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
             DefaultEnforcementMode = model.DefaultEnforcementMode,
@@ -2071,11 +2065,11 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            TemplateId = Guid.Parse(model.TemplateId),
+            TemplateId = model.TemplateId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            RealmId = string.IsNullOrEmpty(model.RealmId) ? default : Guid.Parse(model.RealmId),
+            RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
             DefaultEnforcementMode = model.DefaultEnforcementMode,
@@ -2093,11 +2087,11 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            TemplateId = Guid.Parse(model.TemplateId),
+            TemplateId = model.TemplateId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            RealmId = string.IsNullOrEmpty(model.RealmId) ? default : Guid.Parse(model.RealmId),
+            RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
             DefaultEnforcementMode = model.DefaultEnforcementMode,
@@ -2115,8 +2109,8 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
-            TemplateId = Guid.Parse(model.TemplateId),
+            ContractId = model.ContractId,
+            TemplateId = model.TemplateId,
             TemplateCode = model.TemplateCode,
             Status = model.Status.ToString(),
             CreatedAt = model.CreatedAt
@@ -2127,8 +2121,8 @@ public partial class ContractService : IContractService
     {
         var parties = model.Parties?.Select(p => new PartyInfo
         {
-            EntityId = Guid.Parse(p.EntityId),
-            EntityType = p.EntityType,
+            EntityId = p.EntityId,
+            EntityType = p.EntityType.ToString(),
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
@@ -2136,8 +2130,8 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
-            TemplateId = Guid.Parse(model.TemplateId),
+            ContractId = model.ContractId,
+            TemplateId = model.TemplateId,
             TemplateCode = model.TemplateCode,
             Parties = parties
         });
@@ -2150,9 +2144,9 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
-            ConsentingEntityId = Guid.Parse(party.EntityId),
-            ConsentingEntityType = party.EntityType,
+            ContractId = model.ContractId,
+            ConsentingEntityId = party.EntityId,
+            ConsentingEntityType = party.EntityType.ToString(),
             Role = party.Role,
             RemainingConsentsNeeded = remaining
         });
@@ -2162,8 +2156,8 @@ public partial class ContractService : IContractService
     {
         var parties = model.Parties?.Select(p => new PartyInfo
         {
-            EntityId = Guid.Parse(p.EntityId),
-            EntityType = p.EntityType,
+            EntityId = p.EntityId,
+            EntityType = p.EntityType.ToString(),
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
@@ -2171,7 +2165,7 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
+            ContractId = model.ContractId,
             TemplateCode = model.TemplateCode,
             Parties = parties,
             EffectiveFrom = model.EffectiveFrom
@@ -2182,8 +2176,8 @@ public partial class ContractService : IContractService
     {
         var parties = model.Parties?.Select(p => new PartyInfo
         {
-            EntityId = Guid.Parse(p.EntityId),
-            EntityType = p.EntityType,
+            EntityId = p.EntityId,
+            EntityType = p.EntityType.ToString(),
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
@@ -2191,7 +2185,7 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
+            ContractId = model.ContractId,
             TemplateCode = model.TemplateCode,
             Parties = parties,
             EffectiveUntil = model.EffectiveUntil
@@ -2206,7 +2200,7 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(contract.ContractId),
+            ContractId = contract.ContractId,
             MilestoneCode = milestone.Code,
             MilestoneName = milestone.Name,
             Evidence = evidence as Dictionary<string, object>,
@@ -2222,7 +2216,7 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(contract.ContractId),
+            ContractId = contract.ContractId,
             MilestoneCode = milestone.Code,
             MilestoneName = milestone.Name,
             Reason = reason,
@@ -2238,11 +2232,11 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(contract.ContractId),
-            BreachId = Guid.Parse(breach.BreachId),
-            BreachingEntityId = Guid.Parse(breach.BreachingEntityId),
-            BreachingEntityType = breach.BreachingEntityType,
-            BreachType = breach.BreachType,
+            ContractId = contract.ContractId,
+            BreachId = breach.BreachId,
+            BreachingEntityId = breach.BreachingEntityId,
+            BreachingEntityType = breach.BreachingEntityType.ToString(),
+            BreachType = breach.BreachType.ToString(),
             BreachedTermOrMilestone = breach.BreachedTermOrMilestone,
             CureDeadline = breach.CureDeadline
         });
@@ -2254,8 +2248,8 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(breach.ContractId),
-            BreachId = Guid.Parse(breach.BreachId),
+            ContractId = breach.ContractId,
+            BreachId = breach.BreachId,
             CureEvidence = evidence
         });
     }
@@ -2264,8 +2258,8 @@ public partial class ContractService : IContractService
     {
         var parties = model.Parties?.Select(p => new PartyInfo
         {
-            EntityId = Guid.Parse(p.EntityId),
-            EntityType = p.EntityType,
+            EntityId = p.EntityId,
+            EntityType = p.EntityType.ToString(),
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
@@ -2273,7 +2267,7 @@ public partial class ContractService : IContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
+            ContractId = model.ContractId,
             TemplateCode = model.TemplateCode,
             Parties = parties,
             MilestonesCompleted = model.Milestones?.Count(m => m.Status == MilestoneStatus.Completed) ?? 0
@@ -2281,15 +2275,15 @@ public partial class ContractService : IContractService
     }
 
     private async Task PublishContractTerminatedEventAsync(
-        ContractInstanceModel model, string terminatedById, string terminatedByType,
+        ContractInstanceModel model, Guid terminatedById, string terminatedByType,
         string? reason, bool wasBreachRelated, CancellationToken ct)
     {
         await _messageBus.TryPublishAsync("contract.terminated", new ContractTerminatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
-            TerminatedByEntityId = Guid.Parse(terminatedById),
+            ContractId = model.ContractId,
+            TerminatedByEntityId = terminatedById,
             TerminatedByEntityType = terminatedByType,
             Reason = reason,
             WasBreachRelated = wasBreachRelated
@@ -2341,9 +2335,9 @@ internal class PartyRoleModel
 internal class ContractTermsModel
 {
     public string? Duration { get; set; }
-    public string? PaymentSchedule { get; set; }
+    public PaymentSchedule? PaymentSchedule { get; set; }
     public string? PaymentFrequency { get; set; }
-    public string? TerminationPolicy { get; set; }
+    public TerminationPolicy? TerminationPolicy { get; set; }
     public string? TerminationNoticePeriod { get; set; }
     public int? BreachThreshold { get; set; }
     public string? GracePeriodForCure { get; set; }
@@ -2383,16 +2377,16 @@ internal class PreboundApiModel
 /// </summary>
 internal class ContractInstanceModel
 {
-    public string ContractId { get; set; } = string.Empty;
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid ContractId { get; set; }
+    public Guid TemplateId { get; set; }
     public string TemplateCode { get; set; } = string.Empty;
     public ContractStatus Status { get; set; } = ContractStatus.Draft;
     public List<ContractPartyModel>? Parties { get; set; }
     public ContractTermsModel? Terms { get; set; }
     public List<MilestoneInstanceModel>? Milestones { get; set; }
     public int CurrentMilestoneIndex { get; set; }
-    public List<string>? EscrowIds { get; set; }
-    public List<string>? BreachIds { get; set; }
+    public List<Guid>? EscrowIds { get; set; }
+    public List<Guid>? BreachIds { get; set; }
     public DateTimeOffset? ProposedAt { get; set; }
     public DateTimeOffset? AcceptedAt { get; set; }
     public DateTimeOffset? EffectiveFrom { get; set; }
@@ -2403,7 +2397,7 @@ internal class ContractInstanceModel
     public DateTimeOffset? UpdatedAt { get; set; }
 
     // Guardian state (for escrow integration)
-    public string? GuardianId { get; set; }
+    public Guid? GuardianId { get; set; }
     public string? GuardianType { get; set; }
     public DateTimeOffset? LockedAt { get; set; }
 
@@ -2421,8 +2415,8 @@ internal class ContractInstanceModel
 /// </summary>
 internal class ContractPartyModel
 {
-    public string EntityId { get; set; } = string.Empty;
-    public string EntityType { get; set; } = string.Empty;
+    public Guid EntityId { get; set; }
+    public EntityType EntityType { get; set; }
     public string Role { get; set; } = string.Empty;
     public ConsentStatus ConsentStatus { get; set; } = ConsentStatus.Pending;
     public DateTimeOffset? ConsentedAt { get; set; }
@@ -2460,11 +2454,11 @@ internal class GameMetadataModel
 /// </summary>
 internal class BreachModel
 {
-    public string BreachId { get; set; } = string.Empty;
-    public string ContractId { get; set; } = string.Empty;
-    public string BreachingEntityId { get; set; } = string.Empty;
-    public string BreachingEntityType { get; set; } = string.Empty;
-    public string BreachType { get; set; } = string.Empty;
+    public Guid BreachId { get; set; }
+    public Guid ContractId { get; set; }
+    public Guid BreachingEntityId { get; set; }
+    public EntityType BreachingEntityType { get; set; }
+    public BreachType BreachType { get; set; }
     public string? BreachedTermOrMilestone { get; set; }
     public string? Description { get; set; }
     public BreachStatus Status { get; set; } = BreachStatus.Detected;
