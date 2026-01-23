@@ -20,6 +20,7 @@ using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Documentation;
+using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Inventory;
@@ -126,6 +127,11 @@ public partial interface IServiceNavigator
     /// Gets the Documentation service client.
     /// </summary>
     IDocumentationClient Documentation { get; }
+
+    /// <summary>
+    /// Gets the Escrow service client.
+    /// </summary>
+    IEscrowClient Escrow { get; }
 
     /// <summary>
     /// Gets the GameService service client.

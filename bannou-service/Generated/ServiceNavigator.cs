@@ -24,6 +24,7 @@ using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Documentation;
+using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Inventory;
@@ -87,6 +88,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IContractClient _contract;
     private readonly ICurrencyClient _currency;
     private readonly IDocumentationClient _documentation;
+    private readonly IEscrowClient _escrow;
     private readonly IGameServiceClient _gameService;
     private readonly IGameSessionClient _gameSession;
     private readonly IInventoryClient _inventory;
@@ -135,6 +137,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IContractClient contract,
         ICurrencyClient currency,
         IDocumentationClient documentation,
+        IEscrowClient escrow,
         IGameServiceClient gameService,
         IGameSessionClient gameSession,
         IInventoryClient inventory,
@@ -179,6 +182,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _contract = contract;
         _currency = currency;
         _documentation = documentation;
+        _escrow = escrow;
         _gameService = gameService;
         _gameSession = gameSession;
         _inventory = inventory;
@@ -293,6 +297,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IDocumentationClient Documentation => _documentation;
+
+    /// <inheritdoc />
+    public IEscrowClient Escrow => _escrow;
 
     /// <inheritdoc />
     public IGameServiceClient GameService => _gameService;

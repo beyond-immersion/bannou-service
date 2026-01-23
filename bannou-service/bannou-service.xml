@@ -44103,6 +44103,2569 @@
             Whether the archive was successfully deleted
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.IEscrowClient">
+            <summary>
+            Client interface for the Escrow service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.CreateEscrowAsync(BeyondImmersion.BannouService.Escrow.CreateEscrowRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new escrow agreement
+            </summary>
+            <remarks>
+            Create a new escrow agreement. For each party, creates a dedicated escrow wallet
+            <br/>and container (owned by escrow entity). Issues deposit tokens and returns ALL
+            <br/>tokens to the creating service, which is responsible for distributing them to
+            <br/>parties through appropriate channels. Sets template values on bound contract.
+            </remarks>
+            <returns>Escrow created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.GetEscrowAsync(BeyondImmersion.BannouService.Escrow.GetEscrowRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get escrow details
+            </summary>
+            <remarks>
+            Get escrow agreement details by ID.
+            </remarks>
+            <returns>Escrow details</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ListEscrowsAsync(BeyondImmersion.BannouService.Escrow.ListEscrowsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List escrows for a party
+            </summary>
+            <remarks>
+            List escrow agreements with filtering options.
+            </remarks>
+            <returns>List of escrows</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.GetMyTokenAsync(BeyondImmersion.BannouService.Escrow.GetMyTokenRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get deposit or release token for a party
+            </summary>
+            <remarks>
+            Get the deposit or release token for a specific party. Internal-only endpoint
+            <br/>accessed via Shortcut APIs (prebound). Direct user access is prohibited to prevent
+            <br/>token snooping. The party is identified by ownerId/ownerType (works for characters,
+            <br/>NPCs, guilds, etc.).
+            </remarks>
+            <returns>Token information</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.DepositAsync(BeyondImmersion.BannouService.Escrow.DepositRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Deposit assets into escrow
+            </summary>
+            <remarks>
+            Deposit assets into escrow. Transfers currency from party's own wallet to that
+            <br/>party's escrow wallet. Moves items from party's own container to that party's
+            <br/>escrow container. Locks contracts with escrow as guardian.
+            <br/>Rejects soulbound/non-tradeable items. After each deposit, queries bound contract
+            <br/>to check if all asset requirements are satisfied.
+            </remarks>
+            <returns>Deposit successful</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ValidateDepositAsync(BeyondImmersion.BannouService.Escrow.ValidateDepositRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate a deposit without executing
+            </summary>
+            <remarks>
+            Validate a deposit without executing (dry run).
+            </remarks>
+            <returns>Validation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.GetDepositStatusAsync(BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get deposit status for a party
+            </summary>
+            <remarks>
+            Get deposit status for a party in an escrow.
+            </remarks>
+            <returns>Deposit status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.RecordConsentAsync(BeyondImmersion.BannouService.Escrow.ConsentRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record party consent
+            </summary>
+            <remarks>
+            Record party consent for release, refund, or re-affirmation.
+            </remarks>
+            <returns>Consent recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.GetConsentStatusAsync(BeyondImmersion.BannouService.Escrow.GetConsentStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get consent status for escrow
+            </summary>
+            <remarks>
+            Get consent status for all parties in an escrow.
+            </remarks>
+            <returns>Consent status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ReleaseAsync(BeyondImmersion.BannouService.Escrow.ReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Trigger release
+            </summary>
+            <remarks>
+            Trigger release (for trusted modes or after consent).
+            <br/>If boundContractId is set, checks contract status first (must be fulfilled).
+            <br/>Runs finalization flow before releasing remaining assets.
+            </remarks>
+            <returns>Release result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.RefundAsync(BeyondImmersion.BannouService.Escrow.RefundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Trigger refund
+            </summary>
+            <remarks>
+            Trigger refund (for trusted modes or consent).
+            </remarks>
+            <returns>Refund result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.CancelAsync(BeyondImmersion.BannouService.Escrow.CancelRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel escrow before fully funded
+            </summary>
+            <remarks>
+            Cancel escrow before fully funded, refunding any deposits.
+            </remarks>
+            <returns>Cancel result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.DisputeAsync(BeyondImmersion.BannouService.Escrow.DisputeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Raise a dispute on funded escrow
+            </summary>
+            <remarks>
+            Raise a dispute on a funded escrow.
+            </remarks>
+            <returns>Dispute raised</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ResolveAsync(BeyondImmersion.BannouService.Escrow.ResolveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Arbiter resolves disputed escrow
+            </summary>
+            <remarks>
+            Arbiter resolves a disputed escrow.
+            </remarks>
+            <returns>Resolution result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.VerifyConditionAsync(BeyondImmersion.BannouService.Escrow.VerifyConditionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Verify condition for conditional escrow
+            </summary>
+            <remarks>
+            Verify condition for conditional escrow (non-contract path).
+            <br/>For escrows with boundContractId, use contract milestones instead.
+            </remarks>
+            <returns>Verification result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ValidateEscrowAsync(BeyondImmersion.BannouService.Escrow.ValidateEscrowRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Manually trigger validation
+            </summary>
+            <remarks>
+            Manually trigger validation on an active escrow.
+            </remarks>
+            <returns>Validation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ReaffirmAsync(BeyondImmersion.BannouService.Escrow.ReaffirmRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Re-affirm after validation failure
+            </summary>
+            <remarks>
+            Re-affirm after validation failure (party accepts changed state).
+            </remarks>
+            <returns>Reaffirmation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.RegisterHandlerAsync(BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Register a custom asset type handler
+            </summary>
+            <remarks>
+            Register a custom asset type handler for extensibility.
+            </remarks>
+            <returns>Handler registered</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.ListHandlersAsync(BeyondImmersion.BannouService.Escrow.ListHandlersRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List registered asset handlers
+            </summary>
+            <remarks>
+            List registered asset handlers (includes built-in).
+            </remarks>
+            <returns>List of handlers</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.IEscrowClient.DeregisterHandlerAsync(BeyondImmersion.BannouService.Escrow.DeregisterHandlerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Remove a custom asset handler registration
+            </summary>
+            <remarks>
+            Remove a custom asset handler registration.
+            </remarks>
+            <returns>Handler deregistered</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowClient">
+            <summary>
+            Client implementation for the Escrow service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Escrow.EscrowClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Escrow.EscrowClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Escrow.EscrowClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Escrow.EscrowClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Escrow.EscrowClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.CreateEscrowAsync(BeyondImmersion.BannouService.Escrow.CreateEscrowRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new escrow agreement
+            </summary>
+            <remarks>
+            Create a new escrow agreement. For each party, creates a dedicated escrow wallet
+            <br/>and container (owned by escrow entity). Issues deposit tokens and returns ALL
+            <br/>tokens to the creating service, which is responsible for distributing them to
+            <br/>parties through appropriate channels. Sets template values on bound contract.
+            </remarks>
+            <returns>Escrow created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.GetEscrowAsync(BeyondImmersion.BannouService.Escrow.GetEscrowRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get escrow details
+            </summary>
+            <remarks>
+            Get escrow agreement details by ID.
+            </remarks>
+            <returns>Escrow details</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ListEscrowsAsync(BeyondImmersion.BannouService.Escrow.ListEscrowsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List escrows for a party
+            </summary>
+            <remarks>
+            List escrow agreements with filtering options.
+            </remarks>
+            <returns>List of escrows</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.GetMyTokenAsync(BeyondImmersion.BannouService.Escrow.GetMyTokenRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get deposit or release token for a party
+            </summary>
+            <remarks>
+            Get the deposit or release token for a specific party. Internal-only endpoint
+            <br/>accessed via Shortcut APIs (prebound). Direct user access is prohibited to prevent
+            <br/>token snooping. The party is identified by ownerId/ownerType (works for characters,
+            <br/>NPCs, guilds, etc.).
+            </remarks>
+            <returns>Token information</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.DepositAsync(BeyondImmersion.BannouService.Escrow.DepositRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Deposit assets into escrow
+            </summary>
+            <remarks>
+            Deposit assets into escrow. Transfers currency from party's own wallet to that
+            <br/>party's escrow wallet. Moves items from party's own container to that party's
+            <br/>escrow container. Locks contracts with escrow as guardian.
+            <br/>Rejects soulbound/non-tradeable items. After each deposit, queries bound contract
+            <br/>to check if all asset requirements are satisfied.
+            </remarks>
+            <returns>Deposit successful</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ValidateDepositAsync(BeyondImmersion.BannouService.Escrow.ValidateDepositRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate a deposit without executing
+            </summary>
+            <remarks>
+            Validate a deposit without executing (dry run).
+            </remarks>
+            <returns>Validation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.GetDepositStatusAsync(BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get deposit status for a party
+            </summary>
+            <remarks>
+            Get deposit status for a party in an escrow.
+            </remarks>
+            <returns>Deposit status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.RecordConsentAsync(BeyondImmersion.BannouService.Escrow.ConsentRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record party consent
+            </summary>
+            <remarks>
+            Record party consent for release, refund, or re-affirmation.
+            </remarks>
+            <returns>Consent recorded</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.GetConsentStatusAsync(BeyondImmersion.BannouService.Escrow.GetConsentStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get consent status for escrow
+            </summary>
+            <remarks>
+            Get consent status for all parties in an escrow.
+            </remarks>
+            <returns>Consent status</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ReleaseAsync(BeyondImmersion.BannouService.Escrow.ReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Trigger release
+            </summary>
+            <remarks>
+            Trigger release (for trusted modes or after consent).
+            <br/>If boundContractId is set, checks contract status first (must be fulfilled).
+            <br/>Runs finalization flow before releasing remaining assets.
+            </remarks>
+            <returns>Release result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.RefundAsync(BeyondImmersion.BannouService.Escrow.RefundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Trigger refund
+            </summary>
+            <remarks>
+            Trigger refund (for trusted modes or consent).
+            </remarks>
+            <returns>Refund result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.CancelAsync(BeyondImmersion.BannouService.Escrow.CancelRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel escrow before fully funded
+            </summary>
+            <remarks>
+            Cancel escrow before fully funded, refunding any deposits.
+            </remarks>
+            <returns>Cancel result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.DisputeAsync(BeyondImmersion.BannouService.Escrow.DisputeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Raise a dispute on funded escrow
+            </summary>
+            <remarks>
+            Raise a dispute on a funded escrow.
+            </remarks>
+            <returns>Dispute raised</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ResolveAsync(BeyondImmersion.BannouService.Escrow.ResolveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Arbiter resolves disputed escrow
+            </summary>
+            <remarks>
+            Arbiter resolves a disputed escrow.
+            </remarks>
+            <returns>Resolution result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.VerifyConditionAsync(BeyondImmersion.BannouService.Escrow.VerifyConditionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Verify condition for conditional escrow
+            </summary>
+            <remarks>
+            Verify condition for conditional escrow (non-contract path).
+            <br/>For escrows with boundContractId, use contract milestones instead.
+            </remarks>
+            <returns>Verification result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ValidateEscrowAsync(BeyondImmersion.BannouService.Escrow.ValidateEscrowRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Manually trigger validation
+            </summary>
+            <remarks>
+            Manually trigger validation on an active escrow.
+            </remarks>
+            <returns>Validation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ReaffirmAsync(BeyondImmersion.BannouService.Escrow.ReaffirmRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Re-affirm after validation failure
+            </summary>
+            <remarks>
+            Re-affirm after validation failure (party accepts changed state).
+            </remarks>
+            <returns>Reaffirmation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.RegisterHandlerAsync(BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Register a custom asset type handler
+            </summary>
+            <remarks>
+            Register a custom asset type handler for extensibility.
+            </remarks>
+            <returns>Handler registered</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ListHandlersAsync(BeyondImmersion.BannouService.Escrow.ListHandlersRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List registered asset handlers
+            </summary>
+            <remarks>
+            List registered asset handlers (includes built-in).
+            </remarks>
+            <returns>List of handlers</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.DeregisterHandlerAsync(BeyondImmersion.BannouService.Escrow.DeregisterHandlerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Remove a custom asset handler registration
+            </summary>
+            <remarks>
+            Remove a custom asset handler registration.
+            </remarks>
+            <returns>Handler deregistered</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Escrow.EscrowClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Escrow.EscrowClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowType">
+            <summary>
+            Type of escrow agreement.
+            <br/>- two_party: Simple trade escrow between Party A and Party B
+            <br/>- multi_party: N parties with complex deposit/receive rules
+            <br/>- conditional: Release based on external condition or contract fulfillment
+            <br/>- auction: Winner-takes-all with refunds to losers
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowStatus">
+            <summary>
+            Current status of the escrow agreement.
+            <br/>- pending_deposits: Waiting for parties to deposit
+            <br/>- partially_funded: Some but not all deposits received
+            <br/>- funded: All deposits received, awaiting consent/condition
+            <br/>- pending_consent: Some consents received, waiting for more
+            <br/>- pending_condition: Waiting for contract fulfillment or external verification
+            <br/>- finalizing: Running contract finalizer prebound APIs (transient)
+            <br/>- releasing: Release in progress (transient)
+            <br/>- released: Assets transferred to recipients
+            <br/>- refunding: Refund in progress (transient)
+            <br/>- refunded: Assets returned to depositors
+            <br/>- disputed: In dispute, arbiter must resolve
+            <br/>- expired: Timed out without completion
+            <br/>- cancelled: Cancelled before funding complete
+            <br/>- validation_failed: Held assets changed, awaiting re-affirmation
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowTrustMode">
+            <summary>
+            Trust model for the escrow agreement.
+            <br/>- full_consent: All parties must explicitly consent using tokens
+            <br/>- initiator_trusted: The service that created the escrow can complete unilaterally
+            <br/>- single_party_trusted: A designated party can complete unilaterally
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowPartyRole">
+            <summary>
+            Role of a party in the escrow.
+            <br/>- depositor: Deposits assets into escrow
+            <br/>- recipient: Receives assets when released
+            <br/>- depositor_recipient: Both deposits and can receive (typical for trades)
+            <br/>- arbiter: Can resolve disputes, does not deposit or receive
+            <br/>- observer: Can view status but cannot act
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowConsentType">
+            <summary>
+            Type of consent being given.
+            <br/>- release: Agrees to release assets to recipients
+            <br/>- refund: Agrees to refund assets to depositors
+            <br/>- dispute: Raises a dispute
+            <br/>- reaffirm: Re-affirms after validation failure
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowResolution">
+            <summary>
+            How the escrow was resolved.
+            <br/>- released: Assets went to designated recipients
+            <br/>- refunded: Assets returned to depositors
+            <br/>- split: Arbiter split assets between parties
+            <br/>- expired_refunded: Timed out, auto-refunded
+            <br/>- cancelled_refunded: Cancelled, deposits refunded
+            <br/>- violation_refunded: Validation failure caused refund
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.AssetType">
+            <summary>
+            Type of asset held in escrow.
+            <br/>- currency: Currency amount held in escrow wallet
+            <br/>- item: Item instance held in escrow container
+            <br/>- item_stack: Stackable items (quantity) held in escrow container
+            <br/>- contract: Contract instance locked under escrow guardianship
+            <br/>- custom: Custom asset type via registered handler
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ValidationFailureType">
+            <summary>
+            Type of validation failure detected.
+            <br/>- asset_missing: Asset no longer exists in escrow custody
+            <br/>- asset_mutated: Asset properties changed (e.g., item durability)
+            <br/>- asset_expired: Asset has a time-based expiration that triggered
+            <br/>- balance_mismatch: Wallet balance does not match expected held amount
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.TokenAlgorithm">
+            <summary>
+            Algorithm used for token generation.
+            <br/>- hmac_sha256: HMAC-SHA256 based tokens
+            <br/>- random_bytes: Cryptographically random tokens
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.TokenType">
+            <summary>
+            Type of token being requested.
+            <br/>- deposit: Token for depositing assets
+            <br/>- release: Token for consenting to release
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAgreement">
+            <summary>
+            Main escrow agreement record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Id">
+            <summary>
+            Unique escrow agreement identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.TrustedPartyId">
+            <summary>
+            For single_party_trusted - which party has authority
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.TrustedPartyType">
+            <summary>
+            Type of the trusted party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.InitiatorServiceId">
+            <summary>
+            For initiator_trusted - which service created this
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Parties">
+            <summary>
+            All parties involved in the escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ExpectedDeposits">
+            <summary>
+            What deposits are expected from each party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Deposits">
+            <summary>
+            Actual deposits received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ReleaseAllocations">
+            <summary>
+            How assets should be distributed on release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.BoundContractId">
+            <summary>
+            Contract governing conditions for this escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Consents">
+            <summary>
+            Consent decisions from parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.RequiredConsentsForRelease">
+            <summary>
+            How many parties must consent for release (-1 = all required)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.LastValidatedAt">
+            <summary>
+            When the escrow was last validated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ValidationFailures">
+            <summary>
+            Any validation failures detected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.CreatedAt">
+            <summary>
+            When the escrow was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.CreatedBy">
+            <summary>
+            Who created the escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.CreatedByType">
+            <summary>
+            Type of the creator entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.FundedAt">
+            <summary>
+            When all expected deposits were received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ExpiresAt">
+            <summary>
+            Auto-refund if not completed by this time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.CompletedAt">
+            <summary>
+            When the escrow reached terminal state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ReferenceType">
+            <summary>
+            What this escrow is for (e.g., trade, auction, contract)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ReferenceId">
+            <summary>
+            ID of the referenced entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Metadata">
+            <summary>
+            Game/application specific metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ResolutionNotes">
+            <summary>
+            Notes about the resolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowParty">
+            <summary>
+            A party in the escrow agreement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.PartyId">
+            <summary>
+            Party entity identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.PartyType">
+            <summary>
+            Type of the party entity (account, character, npc, guild, system)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.DisplayName">
+            <summary>
+            Display name for UI/logging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.ConsentRequired">
+            <summary>
+            Whether this party consent is required for release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.WalletId">
+            <summary>
+            Party own wallet (where currency comes from/returns to)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.ContainerId">
+            <summary>
+            Party own container (where items come from/return to)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.EscrowWalletId">
+            <summary>
+            Escrow wallet for THIS party deposits (owned by escrow)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.EscrowContainerId">
+            <summary>
+            Escrow container for THIS party deposits (owned by escrow)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.DepositToken">
+            <summary>
+            Token for depositing (full_consent mode)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.DepositTokenUsed">
+            <summary>
+            Whether the deposit token has been used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.DepositTokenUsedAt">
+            <summary>
+            When the deposit token was used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.ReleaseToken">
+            <summary>
+            Token for consenting to release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.ReleaseTokenUsed">
+            <summary>
+            Whether the release token has been used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.ReleaseTokenUsedAt">
+            <summary>
+            When the release token was used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAsset">
+            <summary>
+            An asset held in escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.CurrencyDefinitionId">
+            <summary>
+            For assetType=currency - currency definition ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.CurrencyCode">
+            <summary>
+            Denormalized currency code for display
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.CurrencyAmount">
+            <summary>
+            Amount of currency
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ItemInstanceId">
+            <summary>
+            For assetType=item - unique item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ItemName">
+            <summary>
+            Denormalized item name for display
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ItemTemplateId">
+            <summary>
+            For assetType=item_stack - stackable item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ItemTemplateName">
+            <summary>
+            Denormalized template name for display
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ItemQuantity">
+            <summary>
+            For assetType=item_stack - quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ContractInstanceId">
+            <summary>
+            For assetType=contract - contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ContractTemplateCode">
+            <summary>
+            Denormalized contract template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ContractDescription">
+            <summary>
+            Description of the contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.ContractPartyRole">
+            <summary>
+            Which party role in the contract is being escrowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.CustomAssetType">
+            <summary>
+            For assetType=custom - registered handler type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.CustomAssetId">
+            <summary>
+            Custom asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.CustomAssetData">
+            <summary>
+            Handler-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.SourceOwnerId">
+            <summary>
+            Where this asset came from (for refunds)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.SourceOwnerType">
+            <summary>
+            Type of the source owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.SourceContainerId">
+            <summary>
+            Source wallet/container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAssetBundle">
+            <summary>
+            Groups multiple assets for a single deposit or release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundle.BundleId">
+            <summary>
+            Bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundle.Assets">
+            <summary>
+            Assets in this bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundle.Description">
+            <summary>
+            Summary for display
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundle.EstimatedValue">
+            <summary>
+            Optional valuation for UI display
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundle.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ExpectedDeposit">
+            <summary>
+            Defines what a party should deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.PartyId">
+            <summary>
+            Party who should deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.PartyType">
+            <summary>
+            Type of the party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.ExpectedAssets">
+            <summary>
+            Expected assets from this party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.Optional">
+            <summary>
+            Is this deposit optional
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.DepositDeadline">
+            <summary>
+            Deadline for this specific deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.Fulfilled">
+            <summary>
+            Has this party fulfilled their deposit requirement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowDeposit">
+            <summary>
+            Records an actual deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.Id">
+            <summary>
+            Deposit record identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.EscrowId">
+            <summary>
+            Escrow this deposit belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.PartyId">
+            <summary>
+            Party who deposited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.PartyType">
+            <summary>
+            Type of the depositing party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.DepositedAt">
+            <summary>
+            When the deposit was made
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.DepositTokenUsed">
+            <summary>
+            Token used (for audit)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.IdempotencyKey">
+            <summary>
+            Idempotency key for this deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReleaseAllocation">
+            <summary>
+            Defines who gets what on release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocation.RecipientPartyId">
+            <summary>
+            Party receiving assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocation.RecipientPartyType">
+            <summary>
+            Type of the recipient party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocation.Assets">
+            <summary>
+            Assets this recipient should receive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocation.DestinationWalletId">
+            <summary>
+            Where to deliver currency
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocation.DestinationContainerId">
+            <summary>
+            Where to deliver items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocation.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowConsent">
+            <summary>
+            Records a party consent decision
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.PartyId">
+            <summary>
+            Party giving consent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.PartyType">
+            <summary>
+            Type of the party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.ConsentedAt">
+            <summary>
+            When consent was given
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.ReleaseTokenUsed">
+            <summary>
+            Token used (for audit)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.Notes">
+            <summary>
+            Optional notes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ValidationFailure">
+            <summary>
+            Records a validation check failure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.DetectedAt">
+            <summary>
+            When the failure was detected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.AssetType">
+            <summary>
+            Type of asset affected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.AssetDescription">
+            <summary>
+            Description of the affected asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.AffectedPartyId">
+            <summary>
+            Which party deposit is affected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.AffectedPartyType">
+            <summary>
+            Type of the affected party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.Details">
+            <summary>
+            Additional failure details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo">
+            <summary>
+            Information about a registered asset handler
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.AssetType">
+            <summary>
+            Unique asset type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.PluginId">
+            <summary>
+            Plugin that implements this handler
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.BuiltIn">
+            <summary>
+            Whether this is a built-in handler
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.DepositEndpoint">
+            <summary>
+            Endpoint for depositing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.ReleaseEndpoint">
+            <summary>
+            Endpoint for releasing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.RefundEndpoint">
+            <summary>
+            Endpoint for refunding
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.ValidateEndpoint">
+            <summary>
+            Endpoint for validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.TrustedPartyId">
+            <summary>
+            For single_party_trusted mode
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.TrustedPartyType">
+            <summary>
+            Type of the trusted party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.Parties">
+            <summary>
+            Parties in the escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.ExpectedDeposits">
+            <summary>
+            Expected deposits from parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.ReleaseAllocations">
+            <summary>
+            Optional explicit release allocations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.BoundContractId">
+            <summary>
+            Contract governing this escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.RequiredConsentsForRelease">
+            <summary>
+            Number of consents required (-1 for all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.ExpiresAt">
+            <summary>
+            Optional expiration time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.ReferenceType">
+            <summary>
+            Reference type (trade, auction, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.ReferenceId">
+            <summary>
+            Reference entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.Metadata">
+            <summary>
+            Application metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.IdempotencyKey">
+            <summary>
+            Idempotency key for this operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.PartyId">
+            <summary>
+            Party entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.PartyType">
+            <summary>
+            Party entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.DisplayName">
+            <summary>
+            Display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.ConsentRequired">
+            <summary>
+            Whether consent is required (defaults based on role)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.WalletId">
+            <summary>
+            Party wallet for currency operations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.ContainerId">
+            <summary>
+            Party container for item operations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.PartyId">
+            <summary>
+            Party who should deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.PartyType">
+            <summary>
+            Type of the party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.ExpectedAssets">
+            <summary>
+            Expected assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.Optional">
+            <summary>
+            Is this deposit optional
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.DepositDeadline">
+            <summary>
+            Specific deadline for this deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.CurrencyDefinitionId">
+            <summary>
+            Currency definition ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.CurrencyCode">
+            <summary>
+            Currency code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.CurrencyAmount">
+            <summary>
+            Currency amount
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ItemInstanceId">
+            <summary>
+            Item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ItemName">
+            <summary>
+            Item name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ItemTemplateId">
+            <summary>
+            Item template ID (for stacks)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ItemTemplateName">
+            <summary>
+            Item template name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ItemQuantity">
+            <summary>
+            Item quantity (for stacks)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ContractInstanceId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ContractTemplateCode">
+            <summary>
+            Contract template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ContractDescription">
+            <summary>
+            Contract description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.ContractPartyRole">
+            <summary>
+            Contract party role being escrowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.CustomAssetType">
+            <summary>
+            Custom asset type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.CustomAssetId">
+            <summary>
+            Custom asset ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.CustomAssetData">
+            <summary>
+            Custom asset data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput.RecipientPartyId">
+            <summary>
+            Recipient party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput.RecipientPartyType">
+            <summary>
+            Recipient party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput.Assets">
+            <summary>
+            Assets to allocate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput.DestinationWalletId">
+            <summary>
+            Destination wallet
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput.DestinationContainerId">
+            <summary>
+            Destination container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowResponse.DepositTokens">
+            <summary>
+            Deposit tokens for each party (full_consent mode)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyToken.PartyId">
+            <summary>
+            Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyToken.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyToken.Token">
+            <summary>
+            The token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyToken.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetEscrowRequest.EscrowId">
+            <summary>
+            Escrow ID to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetEscrowRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetEscrowResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.PartyId">
+            <summary>
+            Filter by party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.PartyType">
+            <summary>
+            Party type filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.Status">
+            <summary>
+            Filter by status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.ReferenceType">
+            <summary>
+            Filter by reference type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.ReferenceId">
+            <summary>
+            Filter by reference ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.FromDate">
+            <summary>
+            Filter from date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.ToDate">
+            <summary>
+            Filter to date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.Limit">
+            <summary>
+            Limit results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.Offset">
+            <summary>
+            Offset for pagination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ListEscrowsResponse">
+            <summary>
+            Response containing list of escrow agreements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsResponse.Escrows">
+            <summary>
+            List of escrow agreements matching the query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsResponse.TotalCount">
+            <summary>
+            Total count for pagination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest.OwnerId">
+            <summary>
+            Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest.OwnerType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenResponse.Token">
+            <summary>
+            The requested token (if available)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenResponse.TokenUsed">
+            <summary>
+            Whether the token has been used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenResponse.TokenUsedAt">
+            <summary>
+            When the token was used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.PartyId">
+            <summary>
+            Party depositing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.DepositToken">
+            <summary>
+            Deposit token (required for full_consent)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundleInput.Assets">
+            <summary>
+            Assets to deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundleInput.Description">
+            <summary>
+            Bundle description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundleInput.EstimatedValue">
+            <summary>
+            Estimated value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundleInput.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositResponse.FullyFunded">
+            <summary>
+            Whether escrow is now fully funded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositResponse.ReleaseTokens">
+            <summary>
+            Release tokens (issued when fully funded)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.PartyId">
+            <summary>
+            Party to validate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositResponse.Valid">
+            <summary>
+            Whether the deposit would be valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositResponse.Errors">
+            <summary>
+            Validation errors
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositResponse.Warnings">
+            <summary>
+            Validation warnings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.PartyId">
+            <summary>
+            Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse.ExpectedAssets">
+            <summary>
+            Expected assets from this party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse.DepositedAssets">
+            <summary>
+            Actually deposited assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse.Fulfilled">
+            <summary>
+            Whether deposit requirement is fulfilled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse.DepositToken">
+            <summary>
+            Deposit token (if not yet used)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse.DepositDeadline">
+            <summary>
+            Deposit deadline
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.PartyId">
+            <summary>
+            Party giving consent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.ReleaseToken">
+            <summary>
+            Release token (required for full_consent)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.Notes">
+            <summary>
+            Optional notes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentResponse.ConsentRecorded">
+            <summary>
+            Whether consent was recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentResponse.Triggered">
+            <summary>
+            Whether this consent triggered completion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse.PartiesRequiringConsent">
+            <summary>
+            Consent status per party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse.ConsentsReceived">
+            <summary>
+            Number of consents received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse.ConsentsRequired">
+            <summary>
+            Number of consents required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse.CanRelease">
+            <summary>
+            Whether release can proceed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse.CanRefund">
+            <summary>
+            Whether refund can proceed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.PartyId">
+            <summary>
+            Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.DisplayName">
+            <summary>
+            Party display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.ConsentGiven">
+            <summary>
+            Whether consent was given
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.ConsentedAt">
+            <summary>
+            When consent was given
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseRequest.InitiatorServiceId">
+            <summary>
+            For initiator_trusted mode
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseRequest.Notes">
+            <summary>
+            Optional notes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResponse.FinalizerResults">
+            <summary>
+            Results of contract finalizer APIs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResponse.Releases">
+            <summary>
+            Release results per recipient
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.FinalizerResult.Endpoint">
+            <summary>
+            Finalizer endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.FinalizerResult.Success">
+            <summary>
+            Whether it succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.FinalizerResult.Error">
+            <summary>
+            Error message if failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.FinalizerResult.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.RecipientPartyId">
+            <summary>
+            Recipient party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.Success">
+            <summary>
+            Whether release succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.Error">
+            <summary>
+            Error message if failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundRequest.InitiatorServiceId">
+            <summary>
+            For initiator_trusted mode
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundRequest.Reason">
+            <summary>
+            Reason for refund
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResponse.Refunds">
+            <summary>
+            Refund results per depositor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.DepositorPartyId">
+            <summary>
+            Depositor party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.Success">
+            <summary>
+            Whether refund succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.Error">
+            <summary>
+            Error message if failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CancelRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CancelRequest.Reason">
+            <summary>
+            Reason for cancellation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CancelRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CancelRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CancelResponse.Refunds">
+            <summary>
+            Refund results for any deposits
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CancelResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.PartyId">
+            <summary>
+            Party raising dispute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.Reason">
+            <summary>
+            Reason for dispute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.ReleaseToken">
+            <summary>
+            Release token (proves party identity)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.ArbiterId">
+            <summary>
+            Arbiter ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.ArbiterType">
+            <summary>
+            Arbiter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.SplitAllocations">
+            <summary>
+            For split resolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.Notes">
+            <summary>
+            Resolution notes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.SplitAllocation.PartyId">
+            <summary>
+            Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.SplitAllocation.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.SplitAllocation.Assets">
+            <summary>
+            Assets allocated to this party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.SplitAllocation.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveResponse.Transfers">
+            <summary>
+            Transfer results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.PartyId">
+            <summary>
+            Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.Success">
+            <summary>
+            Whether transfer succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.Error">
+            <summary>
+            Error message if failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.ConditionMet">
+            <summary>
+            Whether the condition was met
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.VerifierId">
+            <summary>
+            Verifier entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.VerifierType">
+            <summary>
+            Verifier entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.VerificationData">
+            <summary>
+            Proof/evidence data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionResponse.Triggered">
+            <summary>
+            Whether this triggered release/refund
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowResponse.Valid">
+            <summary>
+            Whether all assets are valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowResponse.Failures">
+            <summary>
+            Validation failures
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.EscrowId">
+            <summary>
+            Escrow ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.PartyId">
+            <summary>
+            Party reaffirming
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.ReleaseToken">
+            <summary>
+            Release token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.IdempotencyKey">
+            <summary>
+            Idempotency key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmResponse.AllReaffirmed">
+            <summary>
+            Whether all parties have reaffirmed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.AssetType">
+            <summary>
+            Unique asset type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.PluginId">
+            <summary>
+            Plugin implementing this handler
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.DepositEndpoint">
+            <summary>
+            Deposit endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.ReleaseEndpoint">
+            <summary>
+            Release endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.RefundEndpoint">
+            <summary>
+            Refund endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.ValidateEndpoint">
+            <summary>
+            Validate endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerResponse.Registered">
+            <summary>
+            Whether registration succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ListHandlersRequest">
+            <summary>
+            Empty request to list handlers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListHandlersRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListHandlersResponse.Handlers">
+            <summary>
+            Registered handlers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ListHandlersResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DeregisterHandlerRequest.AssetType">
+            <summary>
+            Asset type to deregister
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DeregisterHandlerRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DeregisterHandlerResponse.Deregistered">
+            <summary>
+            Whether deregistration succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DeregisterHandlerResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ErrorResponse.Error">
+            <summary>
+            Error code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ErrorResponse.Message">
+            <summary>
+            Human-readable error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ErrorResponse.Details">
+            <summary>
+            Additional error details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ErrorResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration">
+            <summary>
+            Escrow service configuration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.DefaultTimeout">
+            <summary>
+            Default escrow expiration if not specified (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.MaxTimeout">
+            <summary>
+            Maximum allowed escrow duration (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.ExpirationGracePeriod">
+            <summary>
+            Grace period after expiration before auto-refund (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.TokenAlgorithm">
+            <summary>
+            Algorithm used for token generation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.TokenLength">
+            <summary>
+            Token length in bytes (before encoding)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.TokenSecret">
+            <summary>
+            Token secret for HMAC (must be set in production)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.ExpirationCheckInterval">
+            <summary>
+            How often to check for expired escrows (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.ExpirationBatchSize">
+            <summary>
+            Batch size for expiration processing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.ValidationCheckInterval">
+            <summary>
+            How often to validate held assets (ISO 8601 duration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.MaxParties">
+            <summary>
+            Maximum parties per escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.MaxAssetsPerDeposit">
+            <summary>
+            Maximum asset lines per deposit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.MaxPendingPerParty">
+            <summary>
+            Maximum concurrent pending escrows per party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowServiceConfiguration.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.GameService.IGameServiceClient">
             <summary>
             Client interface for the GameService service.
@@ -71869,6 +74432,11 @@
             Gets the Documentation service client.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Escrow">
+            <summary>
+            Gets the Escrow service client.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GameService">
             <summary>
             Gets the GameService service client.
@@ -72097,7 +74665,7 @@
             and zero-copy byte forwarding for Connect service routing.
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,System.Net.Http.IHttpClientFactory,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Currency.ICurrencyClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Inventory.IInventoryClient,BeyondImmersion.BannouService.Item.IItemClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,System.Net.Http.IHttpClientFactory,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Currency.ICurrencyClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.Escrow.IEscrowClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Inventory.IInventoryClient,BeyondImmersion.BannouService.Item.IItemClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
             <summary>
             Creates a new ServiceNavigator with all service client dependencies.
             </summary>
@@ -72160,6 +74728,9 @@
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Documentation">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Escrow">
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GameService">
