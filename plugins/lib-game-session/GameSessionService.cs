@@ -102,6 +102,14 @@ public partial class GameSessionService : IGameSessionService
     private readonly string _serverSalt;
 
     /// <summary>
+    /// State options for session saves. Applies TTL when DefaultSessionTimeoutSeconds is configured (greater than 0).
+    /// When null (default = 0), sessions have no expiry.
+    /// </summary>
+    private StateOptions? SessionTtlOptions => _configuration.DefaultSessionTimeoutSeconds > 0
+        ? new StateOptions { Ttl = _configuration.DefaultSessionTimeoutSeconds }
+        : null;
+
+    /// <summary>
     /// Creates a new GameSessionService instance.
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for state operations.</param>
@@ -304,7 +312,7 @@ public partial class GameSessionService : IGameSessionService
 
             // Save to state store
             await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
-                .SaveAsync(SESSION_KEY_PREFIX + session.SessionId, session, cancellationToken: cancellationToken);
+                .SaveAsync(SESSION_KEY_PREFIX + session.SessionId, session, SessionTtlOptions, cancellationToken);
 
             // Add to session list
             var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
@@ -500,7 +508,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, cancellationToken: cancellationToken);
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, SessionTtlOptions, cancellationToken);
 
             // Publish event (SessionId in event = lobby ID for game session identification)
             await _messageBus.TryPublishAsync(
@@ -778,7 +786,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, cancellationToken: cancellationToken);
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(
@@ -956,7 +964,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, cancellationToken: cancellationToken);
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(
@@ -1109,7 +1117,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, cancellationToken: cancellationToken);
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(
@@ -1300,7 +1308,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(
@@ -1915,8 +1923,8 @@ public partial class GameSessionService : IGameSessionService
             };
 
             // Save the lobby
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId, lobby);
-            await sessionStore.SaveAsync(lobbyKey, lobby);
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId, lobby, SessionTtlOptions);
+            await sessionStore.SaveAsync(lobbyKey, lobby, SessionTtlOptions);
 
             // Add to session list
             var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);

@@ -66,10 +66,10 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     public int MaxPlayersPerSession { get; set; } = 16;
 
     /// <summary>
-    /// Default session timeout in seconds
+    /// Default session timeout in seconds (0 = no timeout)
     /// Environment variable: GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS
     /// </summary>
-    public int DefaultSessionTimeoutSeconds { get; set; } = 7200;
+    public int DefaultSessionTimeoutSeconds { get; set; } = 0;
 
     /// <summary>
     /// Default TTL for player reservations when not specified in request

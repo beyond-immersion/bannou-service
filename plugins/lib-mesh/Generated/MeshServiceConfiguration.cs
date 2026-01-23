@@ -90,7 +90,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int DegradationThresholdSeconds { get; set; } = 60;
 
     /// <summary>
-    /// Default load balancing algorithm (RoundRobin, LeastConnections, Weighted, Random)
+    /// Default load balancing algorithm
     /// Environment variable: MESH_DEFAULT_LOAD_BALANCER
     /// </summary>
     public string DefaultLoadBalancer { get; set; } = "RoundRobin";

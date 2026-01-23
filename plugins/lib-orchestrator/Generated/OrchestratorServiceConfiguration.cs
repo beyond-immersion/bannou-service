@@ -66,7 +66,7 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public int CacheTtlMinutes { get; set; } = 5;
 
     /// <summary>
-    /// Default container orchestration backend when not specified in deploy request (compose, swarm, portainer, kubernetes)
+    /// Default container orchestration backend when not specified in deploy request
     /// Environment variable: ORCHESTRATOR_DEFAULT_BACKEND
     /// </summary>
     public string DefaultBackend { get; set; } = "compose";

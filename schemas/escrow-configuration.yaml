@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: Escrow Service Configuration
+  description: |
+    Configuration schema for Escrow service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    defaultTimeout:
+      type: string
+      env: ESCROW_DEFAULT_TIMEOUT
+      default: "P7D"
+      description: Default escrow expiration if not specified (ISO 8601 duration)
+    maxTimeout:
+      type: string
+      env: ESCROW_MAX_TIMEOUT
+      default: "P30D"
+      description: Maximum allowed escrow duration (ISO 8601 duration)
+    expirationGracePeriod:
+      type: string
+      env: ESCROW_EXPIRATION_GRACE_PERIOD
+      default: "PT1H"
+      description: Grace period after expiration before auto-refund (ISO 8601 duration)
+    tokenAlgorithm:
+      type: string
+      env: ESCROW_TOKEN_ALGORITHM
+      default: hmac_sha256
+      description: Algorithm used for token generation
+    tokenLength:
+      type: integer
+      env: ESCROW_TOKEN_LENGTH
+      default: 32
+      description: Token length in bytes (before encoding)
+    tokenSecret:
+      type: string
+      env: ESCROW_TOKEN_SECRET
+      nullable: true
+      description: Token secret for HMAC (must be set in production)
+    expirationCheckInterval:
+      type: string
+      env: ESCROW_EXPIRATION_CHECK_INTERVAL
+      default: "PT1M"
+      description: How often to check for expired escrows (ISO 8601 duration)
+    expirationBatchSize:
+      type: integer
+      env: ESCROW_EXPIRATION_BATCH_SIZE
+      default: 100
+      description: Batch size for expiration processing
+    validationCheckInterval:
+      type: string
+      env: ESCROW_VALIDATION_CHECK_INTERVAL
+      default: "PT5M"
+      description: How often to validate held assets (ISO 8601 duration)
+    maxParties:
+      type: integer
+      env: ESCROW_MAX_PARTIES
+      default: 10
+      description: Maximum parties per escrow
+    maxAssetsPerDeposit:
+      type: integer
+      env: ESCROW_MAX_ASSETS_PER_DEPOSIT
+      default: 50
+      description: Maximum asset lines per deposit
+    maxPendingPerParty:
+      type: integer
+      env: ESCROW_MAX_PENDING_PER_PARTY
+      default: 100
+      description: Maximum concurrent pending escrows per party

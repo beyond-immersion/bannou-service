@@ -84,7 +84,7 @@ public class StateServiceConfiguration : IServiceConfiguration
     public int ConnectRetryCount { get; set; } = 5;
 
     /// <summary>
-    /// Default consistency level for state operations (strong or eventual)
+    /// Default consistency level for state operations
     /// Environment variable: STATE_DEFAULT_CONSISTENCY
     /// </summary>
     public string DefaultConsistency { get; set; } = "strong";

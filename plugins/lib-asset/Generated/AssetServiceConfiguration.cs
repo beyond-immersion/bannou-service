@@ -54,7 +54,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Storage backend type (minio, s3, r2, azure, filesystem)
+    /// Storage backend type
     /// Environment variable: ASSET_STORAGE_PROVIDER
     /// </summary>
     public string StorageProvider { get; set; } = "minio";
@@ -162,7 +162,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string ProcessingPoolType { get; set; } = "asset-processor";
 
     /// <summary>
-    /// Service mode (api, worker, both)
+    /// Service mode
     /// Environment variable: ASSET_PROCESSING_MODE
     /// </summary>
     public string ProcessingMode { get; set; } = "both";
@@ -216,7 +216,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string FfmpegWorkingDirectory { get; set; } = "/tmp/bannou-ffmpeg";
 
     /// <summary>
-    /// Default audio output format (mp3, opus, aac)
+    /// Default audio output format
     /// Environment variable: ASSET_AUDIO_OUTPUT_FORMAT
     /// </summary>
     public string AudioOutputFormat { get; set; } = "mp3";
@@ -234,7 +234,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public bool AudioPreserveLossless { get; set; } = true;
 
     /// <summary>
-    /// Default compression for bundles (lz4, lzma, none)
+    /// Default compression for bundles
     /// Environment variable: ASSET_BUNDLE_COMPRESSION_DEFAULT
     /// </summary>
     public string BundleCompressionDefault { get; set; } = "lz4";

@@ -60,7 +60,7 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
     public bool DefaultAllowNegative { get; set; } = false;
 
     /// <summary>
-    /// Default precision for currencies that do not specify (integer, decimal_2, decimal_4, decimal_8, decimal_full, big_integer)
+    /// Default precision for currencies that do not specify
     /// Environment variable: CURRENCY_DEFAULT_PRECISION
     /// </summary>
     public string DefaultPrecision { get; set; } = "decimal_2";
