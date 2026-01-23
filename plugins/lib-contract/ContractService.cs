@@ -2306,17 +2306,17 @@ public partial class ContractService : IContractService
 /// </summary>
 internal class ContractTemplateModel
 {
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string? RealmId { get; set; }
+    public Guid? RealmId { get; set; }
     public int MinParties { get; set; }
     public int MaxParties { get; set; }
     public List<PartyRoleModel>? PartyRoles { get; set; }
     public ContractTermsModel? DefaultTerms { get; set; }
     public List<MilestoneDefinitionModel>? Milestones { get; set; }
-    public string DefaultEnforcementMode { get; set; } = "event_only";
+    public EnforcementMode DefaultEnforcementMode { get; set; } = EnforcementMode.Event_only;
     public bool Transferable { get; set; }
     public object? GameMetadata { get; set; }
     public bool IsActive { get; set; } = true;
@@ -2332,7 +2332,7 @@ internal class PartyRoleModel
     public string Role { get; set; } = string.Empty;
     public int MinCount { get; set; }
     public int MaxCount { get; set; }
-    public List<string>? AllowedEntityTypes { get; set; }
+    public List<EntityType>? AllowedEntityTypes { get; set; }
 }
 
 /// <summary>

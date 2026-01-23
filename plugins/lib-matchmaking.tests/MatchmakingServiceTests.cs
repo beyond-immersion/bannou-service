@@ -635,7 +635,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             TicketId = ticketId,
             AccountId = accountId,
             QueueId = TEST_QUEUE_ID,
-            WebSocketSessionId = sessionId.ToString(),
+            WebSocketSessionId = sessionId,
             Status = TicketStatus.Searching,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -727,8 +727,8 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             AcceptedPlayers = new List<Guid>(),
             MatchedTickets = new List<MatchedTicketModel>
             {
-                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId.ToString() },
-                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid().ToString() }
+                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId },
+                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid() }
             },
             CreatedAt = DateTimeOffset.UtcNow,
             Status = MatchStatus.Pending
@@ -856,8 +856,8 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             AcceptedPlayers = new List<Guid>(),
             MatchedTickets = new List<MatchedTicketModel>
             {
-                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId.ToString() },
-                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid().ToString() }
+                new() { TicketId = ticketId, AccountId = accountId, WebSocketSessionId = sessionId },
+                new() { TicketId = Guid.NewGuid(), AccountId = Guid.NewGuid(), WebSocketSessionId = Guid.NewGuid() }
             },
             CreatedAt = DateTimeOffset.UtcNow,
             Status = MatchStatus.Pending

@@ -91,12 +91,12 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     /// <summary>
     /// Sets up a valid subscriber session so authorization checks pass.
     /// </summary>
-    private void SetupValidSubscriberSession(Guid accountId, string sessionId)
+    private void SetupValidSubscriberSession(Guid accountId, Guid sessionId)
     {
         var subscriberSessions = new SubscriberSessionsModel
         {
             AccountId = accountId,
-            SessionIds = new HashSet<string> { sessionId }
+            SessionIds = new HashSet<Guid> { sessionId }
         };
 
         _mockSubscriberSessionsStore
@@ -449,7 +449,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         };
 
         // Setup valid subscriber session so auth passes
-        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+        SetupValidSubscriberSession(accountId, clientSessionId);
 
         // Return a lobby from lobby key lookup, but nothing from session key lookup
         var lobbyId = Guid.NewGuid();
@@ -484,7 +484,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         };
 
         // Setup valid subscriber session
-        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+        SetupValidSubscriberSession(accountId, clientSessionId);
 
         // Setup full lobby
         var lobbyId = Guid.NewGuid();
@@ -526,7 +526,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         };
 
         // Setup valid subscriber session
-        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+        SetupValidSubscriberSession(accountId, clientSessionId);
 
         // Setup finished lobby
         var lobbyId = Guid.NewGuid();
@@ -564,7 +564,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         };
 
         // Setup valid subscriber session
-        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+        SetupValidSubscriberSession(accountId, clientSessionId);
 
         // Setup active lobby
         var lobbyId = Guid.NewGuid();
@@ -616,7 +616,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         };
 
         // Setup valid subscriber session
-        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+        SetupValidSubscriberSession(accountId, clientSessionId);
 
         // Setup active lobby
         var lobby = new GameSessionModel
