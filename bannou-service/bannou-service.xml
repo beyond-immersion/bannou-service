@@ -76347,6 +76347,11 @@
             Creates a MeshInvocationException for when no endpoints are available.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.MeshInvocationException.CircuitBreakerOpen(System.String,System.String)">
+            <summary>
+            Creates a MeshInvocationException for when the circuit breaker is open.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Services.MeshInvocationException.HttpError(System.String,System.String,System.Int32,System.String)">
             <summary>
             Creates a MeshInvocationException for HTTP errors.

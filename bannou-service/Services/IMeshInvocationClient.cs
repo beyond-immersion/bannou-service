@@ -153,6 +153,12 @@ public class MeshInvocationException : Exception
         => new(appId, methodName, "No healthy endpoints available", statusCode: 503);
 
     /// <summary>
+    /// Creates a MeshInvocationException for when the circuit breaker is open.
+    /// </summary>
+    public static MeshInvocationException CircuitBreakerOpen(string appId, string methodName)
+        => new(appId, methodName, "Circuit breaker is open - service appears unhealthy", statusCode: 503);
+
+    /// <summary>
     /// Creates a MeshInvocationException for HTTP errors.
     /// </summary>
     public static MeshInvocationException HttpError(

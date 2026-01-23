@@ -406,7 +406,6 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | bool | `true` | Automatically archive leaderboard data when season ends |
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
-| `LEADERBOARD_RANK_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for cached rank queries |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
 
 ### Mapping
@@ -466,7 +465,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_CONNECT_TIMEOUT_SECONDS` | int | `10` | TCP connection timeout in seconds |
 | `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
-| `MESH_ENABLE_DETAILED_LOGGING` | bool | `false` | Whether to log detailed routing decisions |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
 | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | int | `5` | TTL in seconds for cached service endpoints |
 | `MESH_ENDPOINT_HOST` | string | **REQUIRED** | Hostname/IP for mesh endpoint registration. Defaults to app-... |
@@ -480,7 +478,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | int | `10` | Maximum service mappings shown in diagnostic logs |
 | `MESH_MAX_TOP_ENDPOINTS_RETURNED` | int | `2` | Maximum top endpoints returned in health status queries |
-| `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
 | `MESH_POOLED_CONNECTION_LIFETIME_MINUTES` | int | `2` | How long to keep pooled HTTP connections alive in minutes |
 | `MESH_RETRY_DELAY_MILLISECONDS` | int | `100` | Initial delay between retries (doubles on each retry) |
 | `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of lib-state. All calls route... |
@@ -677,9 +674,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 513
+- **Total properties**: 510
 - **Required (no default)**: 40
-- **Optional (has default)**: 473
+- **Optional (has default)**: 470
 
 ## Environment Variable Naming Convention
 

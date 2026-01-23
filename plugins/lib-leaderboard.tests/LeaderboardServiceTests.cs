@@ -40,8 +40,7 @@ public class LeaderboardServiceTests
         _configuration = new LeaderboardServiceConfiguration
         {
             MaxEntriesPerQuery = 100,
-            ScoreUpdateBatchSize = 50,
-            RankCacheTtlSeconds = 60
+            ScoreUpdateBatchSize = 50
         };
 
         SetupMinimalMocks();
@@ -101,7 +100,6 @@ public class LeaderboardServiceTests
 
         Assert.Equal(1000, config.MaxEntriesPerQuery);
         Assert.Equal(1000, config.ScoreUpdateBatchSize);
-        Assert.Equal(60, config.RankCacheTtlSeconds);
         Assert.True(config.AutoArchiveOnSeasonEnd);
     }
 
@@ -112,13 +110,11 @@ public class LeaderboardServiceTests
         {
             MaxEntriesPerQuery = 500,
             ScoreUpdateBatchSize = 200,
-            RankCacheTtlSeconds = 120,
             AutoArchiveOnSeasonEnd = false
         };
 
         Assert.Equal(500, config.MaxEntriesPerQuery);
         Assert.Equal(200, config.ScoreUpdateBatchSize);
-        Assert.Equal(120, config.RankCacheTtlSeconds);
         Assert.False(config.AutoArchiveOnSeasonEnd);
     }
 
