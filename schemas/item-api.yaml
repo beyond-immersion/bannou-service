@@ -550,7 +550,8 @@ components:
           description: Flexible filtering tags
         rarity:
           $ref: '#/components/schemas/ItemRarity'
-          description: Item rarity tier
+          nullable: true
+          description: Item rarity tier (defaults to config when not specified)
         quantityModel:
           $ref: '#/components/schemas/QuantityModel'
           description: How quantities are tracked for this item
@@ -565,7 +566,8 @@ components:
           description: Unit for continuous quantities (e.g., liters, kg)
         weightPrecision:
           $ref: '#/components/schemas/WeightPrecision'
-          description: Precision for weight values
+          nullable: true
+          description: Precision for weight values (defaults to config when not specified)
         weight:
           type: number
           format: double
@@ -605,7 +607,8 @@ components:
           description: Whether item can be destroyed/discarded
         soulboundType:
           $ref: '#/components/schemas/SoulboundType'
-          description: Binding behavior when item is acquired
+          nullable: true
+          description: Binding behavior when item is acquired (defaults to config when not specified)
         hasDurability:
           type: boolean
           default: false

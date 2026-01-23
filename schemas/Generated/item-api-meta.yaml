@@ -82,71 +82,73 @@ paths:
         \  \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                     \
         \   \"type\": \"string\",\n                        \"maxLength\": 32\n                    },\n                   \
         \ \"nullable\": true,\n                    \"description\": \"Flexible filtering tags\"\n                },\n    \
-        \            \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\",\n                    \"description\"\
-        : \"Item rarity tier\"\n                },\n                \"quantityModel\": {\n                    \"$ref\": \"\
-        #/$defs/QuantityModel\",\n                    \"description\": \"How quantities are tracked for this item\"\n    \
-        \            },\n                \"maxStackSize\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 1,\n                    \"description\": \"Maximum stack size (1 for unique items)\"\n        \
-        \        },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                   \
-        \ \"maxLength\": 32,\n                    \"nullable\": true,\n                    \"description\": \"Unit for continuous
-        quantities (e.g., liters, kg)\"\n                },\n                \"weightPrecision\": {\n                    \"\
-        $ref\": \"#/$defs/WeightPrecision\",\n                    \"description\": \"Precision for weight values\"\n     \
-        \           },\n                \"weight\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Weight value (interpreted
-        per weightPrecision)\"\n                },\n                \"volume\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Volume for volumetric inventories\"\n                },\n                \"gridWidth\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Width in grid-based inventories\"\n                },\n                \"gridHeight\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Height in grid-based inventories\"\n                },\n         \
-        \       \"canRotate\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Whether item can be rotated in grid\"\n                },\n                \"\
-        baseValue\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Reference price for vendors/markets\"\n  \
-        \              },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"default\": true,\n                    \"description\": \"Whether item can be traded/auctioned\"\n         \
-        \       },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": true,\n                    \"description\": \"Whether item can be destroyed/discarded\"\n             \
-        \   },\n                \"soulboundType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\",\n         \
-        \           \"description\": \"Binding behavior when item is acquired\"\n                },\n                \"hasDurability\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether item has durability tracking\"\n                },\n                \"maxDurability\": {\n           \
-        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"#/$defs/ItemScope\"\
-        ,\n                    \"description\": \"Realm availability scope\"\n                },\n                \"availableRealms\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Realm IDs where this template is available (for realm_specific or
-        multi_realm)\"\n                },\n                \"stats\": {\n                    \"type\": \"object\",\n    \
-        \                \"nullable\": true,\n                    \"description\": \"Game-defined stats (e.g., attack, defense)\"\
-        \n                },\n                \"effects\": {\n                    \"type\": \"object\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Game-defined effects (e.g., on_use, on_equip)\"\n\
-        \                },\n                \"requirements\": {\n                    \"type\": \"object\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Game-defined requirements (e.g., level, strength)\"\
-        \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Display properties (e.g., iconId, modelId)\"\n  \
-        \              },\n                \"metadata\": {\n                    \"type\": \"object\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Any other game-specific data\"\n                }\n\
-        \            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
-        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
-        \n            ]\n        }\n    }\n}"
+        \            \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Item rarity tier (defaults to config when not specified)\"\n     \
+        \           },\n                \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\",\n \
+        \                   \"description\": \"How quantities are tracked for this item\"\n                },\n          \
+        \      \"maxStackSize\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n    \
+        \                \"description\": \"Maximum stack size (1 for unique items)\"\n                },\n              \
+        \  \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 32,\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Unit for continuous quantities (e.g.,
+        liters, kg)\"\n                },\n                \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Precision for weight values (defaults
+        to config when not specified)\"\n                },\n                \"weight\": {\n                    \"type\":
+        \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Weight value (interpreted per weightPrecision)\"\n                },\n                \"\
+        volume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Volume for volumetric inventories\"\n       \
+        \         },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Width in grid-based
+        inventories\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Height in grid-based inventories\"\n                },\n                \"canRotate\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
+        item can be rotated in grid\"\n                },\n                \"baseValue\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Reference price for vendors/markets\"\n                },\n                \"tradeable\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Whether item can be traded/auctioned\"\n                },\n                \"destroyable\": {\n             \
+        \       \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        item can be destroyed/discarded\"\n                },\n                \"soulboundType\": {\n                    \"\
+        $ref\": \"#/$defs/SoulboundType\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Binding behavior when item is acquired (defaults to config when not specified)\"\n                },\n         \
+        \       \"hasDurability\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether item has durability tracking\"\n                },\n             \
+        \   \"maxDurability\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Maximum durability value\"\n                },\n                \"scope\": {\n\
+        \                    \"$ref\": \"#/$defs/ItemScope\",\n                    \"description\": \"Realm availability scope\"\
+        \n                },\n                \"availableRealms\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Realm IDs
+        where this template is available (for realm_specific or multi_realm)\"\n                },\n                \"stats\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-defined stats (e.g., attack, defense)\"\n                },\n                \"effects\": {\n           \
+        \         \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Game-defined effects (e.g., on_use, on_equip)\"\n                },\n                \"requirements\": {\n       \
+        \             \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-defined requirements (e.g., level, strength)\"\n                },\n                \"display\": {\n    \
+        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display properties (e.g., iconId, modelId)\"\n                },\n                \"metadata\": {\n          \
+        \          \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Any other game-specific data\"\n                }\n            }\n        },\n        \"ItemCategory\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"Item classification category\",\n            \"enum\"\
+        : [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n                \"consumable\"\
+        ,\n                \"material\",\n                \"container\",\n                \"quest\",\n                \"currency_like\"\
+        ,\n                \"misc\",\n                \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n \
+        \           \"type\": \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n \
+        \               \"common\",\n                \"uncommon\",\n                \"rare\",\n                \"epic\",\n\
+        \                \"legendary\",\n                \"custom\"\n            ]\n        },\n        \"QuantityModel\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How quantities are tracked for this item type\"\
+        ,\n            \"enum\": [\n                \"discrete\",\n                \"continuous\",\n                \"unique\"\
+        \n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Precision for weight values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"\
+        integer\",\n                \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n      \
+        \      ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"When item becomes bound to a character\",\n            \"enum\": [\n                \"none\",\n              \
+        \  \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"\
+        ItemScope\": {\n            \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent
+        with CurrencyScope)\",\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n\
+        \                \"multi_realm\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -1677,7 +1679,8 @@ components:
           description: Flexible filtering tags
         rarity:
           $ref: '#/components/schemas/ItemRarity'
-          description: Item rarity tier
+          nullable: true
+          description: Item rarity tier (defaults to config when not specified)
         quantityModel:
           $ref: '#/components/schemas/QuantityModel'
           description: How quantities are tracked for this item
@@ -1692,7 +1695,8 @@ components:
           description: Unit for continuous quantities (e.g., liters, kg)
         weightPrecision:
           $ref: '#/components/schemas/WeightPrecision'
-          description: Precision for weight values
+          nullable: true
+          description: Precision for weight values (defaults to config when not specified)
         weight:
           type: number
           format: double
@@ -1732,7 +1736,8 @@ components:
           description: Whether item can be destroyed/discarded
         soulboundType:
           $ref: '#/components/schemas/SoulboundType'
-          description: Binding behavior when item is acquired
+          nullable: true
+          description: Binding behavior when item is acquired (defaults to config when not specified)
         hasDurability:
           type: boolean
           default: false

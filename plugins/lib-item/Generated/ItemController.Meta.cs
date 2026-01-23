@@ -79,7 +79,8 @@ public partial class ItemController
                 },
                 "rarity": {
                     "$ref": "#/$defs/ItemRarity",
-                    "description": "Item rarity tier"
+                    "nullable": true,
+                    "description": "Item rarity tier (defaults to config when not specified)"
                 },
                 "quantityModel": {
                     "$ref": "#/$defs/QuantityModel",
@@ -98,7 +99,8 @@ public partial class ItemController
                 },
                 "weightPrecision": {
                     "$ref": "#/$defs/WeightPrecision",
-                    "description": "Precision for weight values"
+                    "nullable": true,
+                    "description": "Precision for weight values (defaults to config when not specified)"
                 },
                 "weight": {
                     "type": "number",
@@ -147,7 +149,8 @@ public partial class ItemController
                 },
                 "soulboundType": {
                     "$ref": "#/$defs/SoulboundType",
-                    "description": "Binding behavior when item is acquired"
+                    "nullable": true,
+                    "description": "Binding behavior when item is acquired (defaults to config when not specified)"
                 },
                 "hasDurability": {
                     "type": "boolean",
