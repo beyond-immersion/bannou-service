@@ -10,10 +10,4 @@ info:
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties:
-    # State Store Configuration
-    StateStoreName:
-      type: string
-      description: State store name for game service data
-      env: GAME_SERVICE_STATE_STORE_NAME
-      default: "game-service-statestore"
+  properties: {}

@@ -11,22 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    # State Store Configuration
-    DefinitionStoreName:
-      type: string
-      description: Name of the state store for achievement definitions (MySQL recommended)
-      default: "achievement-definition"
-      env: ACHIEVEMENT_DEFINITION_STORE_NAME
-    ProgressStoreName:
-      type: string
-      description: Name of the state store for progress tracking (Redis for hot data)
-      default: "achievement-progress"
-      env: ACHIEVEMENT_PROGRESS_STORE_NAME
-    UnlockStoreName:
-      type: string
-      description: Name of the state store for unlock records (MySQL for persistence)
-      default: "achievement-unlock"
-      env: ACHIEVEMENT_UNLOCK_STORE_NAME
     # Platform Sync Configuration (all optional - platform sync disabled when not configured)
     SteamApiKey:
       type: string

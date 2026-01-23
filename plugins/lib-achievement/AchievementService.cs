@@ -102,7 +102,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             // Check if already exists
@@ -172,7 +172,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             var definition = await definitionStore.GetAsync(key, cancellationToken);
@@ -210,7 +210,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var indexKey = GetDefinitionIndexKey(body.GameServiceId);
             var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 
@@ -294,7 +294,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             var definition = await definitionStore.GetAsync(key, cancellationToken);
@@ -368,7 +368,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
             var definition = await definitionStore.GetAsync(key, cancellationToken);
@@ -415,7 +415,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(_configuration.ProgressStoreName);
+            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
             var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
@@ -484,7 +484,7 @@ public partial class AchievementService : IAchievementService
         try
         {
             // Get achievement definition
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -506,7 +506,7 @@ public partial class AchievementService : IAchievementService
             }
 
             // Get/create entity progress
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(_configuration.ProgressStoreName);
+            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
             var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
             {
@@ -630,7 +630,7 @@ public partial class AchievementService : IAchievementService
         try
         {
             // Get achievement definition
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
             var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
@@ -648,7 +648,7 @@ public partial class AchievementService : IAchievementService
             // Check prerequisites
             if (definition.Prerequisites != null && definition.Prerequisites.Count > 0)
             {
-                var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(_configuration.ProgressStoreName);
+                var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
                 var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
                 var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
 
@@ -669,7 +669,7 @@ public partial class AchievementService : IAchievementService
             }
 
             // Get/create entity progress
-            var store = _stateStoreFactory.GetStore<EntityProgressData>(_configuration.ProgressStoreName);
+            var store = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var key = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
             var progress = await store.GetAsync(key, cancellationToken) ?? new EntityProgressData
             {
@@ -757,7 +757,7 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(_configuration.ProgressStoreName);
+            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
             var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
 
@@ -772,7 +772,7 @@ public partial class AchievementService : IAchievementService
                 });
             }
 
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var unlockedAchievements = new List<UnlockedAchievement>();
             var totalPoints = 0;
 
@@ -880,7 +880,7 @@ public partial class AchievementService : IAchievementService
             }
 
             // Get entity progress
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(_configuration.ProgressStoreName);
+            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
             var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
 
@@ -895,7 +895,7 @@ public partial class AchievementService : IAchievementService
                 });
             }
 
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var synced = 0;
             var failed = 0;
             var errors = new List<string>();

@@ -11,12 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    # State Store Configuration
-    StateStoreName:
-      type: string
-      description: State store name for subscription
-      env: SUBSCRIPTION_STATE_STORE_NAME
-      default: "subscription-statestore"
     AuthorizationSuffix:
       type: string
       description: Suffix for authorization keys in state store

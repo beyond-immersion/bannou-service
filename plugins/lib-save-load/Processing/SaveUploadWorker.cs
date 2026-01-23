@@ -110,8 +110,8 @@ public class SaveUploadWorker : BackgroundService
             return;
         }
 
-        var pendingStore = stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
-        var versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+        var pendingStore = stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+        var versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
         // Get pending upload IDs from tracking set (Redis doesn't support LINQ queries)
         var pendingUploadIds = await pendingStore.GetSetAsync<string>(PendingUploadIdsSetKey, cancellationToken);

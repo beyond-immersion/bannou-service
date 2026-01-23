@@ -61,7 +61,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             var ownerTypeStr = body.OwnerType.ToString();
 
             // Query slots for this owner
-            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var slots = await slotQueryStore.QueryAsync(
                 s => s.GameId == body.GameId && s.OwnerId == ownerIdStr && s.OwnerType == ownerTypeStr,
                 cancellationToken);
@@ -83,7 +83,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             using var memoryStream = new MemoryStream();
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
             {
-                var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+                var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
                 var manifest = new ExportManifest
                 {
                     GameId = body.GameId,
@@ -324,8 +324,8 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             var targetOwnerIdStr = body.TargetOwnerId.ToString();
             var targetOwnerTypeStr = body.TargetOwnerType.ToString();
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
             var importedSlots = 0;
             var importedVersions = 0;
@@ -354,7 +354,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
                         case ConflictResolution.OVERWRITE:
                             // Delete existing slot and versions
-                            var existingVersions = await _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName)
+                            var existingVersions = await _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions)
                                 .QueryAsync(v => v.SlotId == existingSlot.SlotId, cancellationToken);
                             foreach (var existingVersion in existingVersions)
                             {
@@ -418,7 +418,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 importedVersions++;
 
                 // Store in hot cache
-                var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+                var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
                 var hotEntry = new HotSaveEntry
                 {
                     SlotId = newSlot.SlotId,
@@ -440,7 +440,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 // Queue for upload if enabled
                 if (_configuration.AsyncUploadEnabled)
                 {
-                    var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                    var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                     var uploadId = Guid.NewGuid().ToString();
                     var pendingEntry = new PendingUploadEntry
                     {

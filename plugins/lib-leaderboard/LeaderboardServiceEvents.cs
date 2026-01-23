@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -250,7 +251,7 @@ public partial class LeaderboardService
             return null;
         }
 
-        var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(_configuration.DefinitionStoreName);
+        var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
         var normalized = eventType.Trim();
         var candidateIds = normalized.Equals(normalized.ToLowerInvariant(), StringComparison.Ordinal)
             ? new[] { normalized }

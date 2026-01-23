@@ -181,25 +181,6 @@ x-service-configuration:
       default: 60
       description: Default expiration time in minutes for actor memories
 
-    # === State Store Configuration (Tier 3) ===
-    TemplateStatestoreName:
-      type: string
-      env: ACTOR_TEMPLATE_STATESTORE_NAME
-      default: "actor-templates"
-      description: Name of the state store for actor templates
-
-    InstanceStatestoreName:
-      type: string
-      env: ACTOR_INSTANCE_STATESTORE_NAME
-      default: "actor-instances"
-      description: Name of the state store for actor instance tracking
-
-    ActorStateStoreName:
-      type: string
-      env: ACTOR_STATE_STORE_NAME
-      default: "actor-state"
-      description: Name of the state store for actor state persistence
-
     # === Pool Health Monitoring (Tier 2) ===
     PoolHealthCheckIntervalSeconds:
       type: integer

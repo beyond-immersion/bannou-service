@@ -28,7 +28,7 @@ public class MinioWebhookHandler
         AssetServiceConfiguration configuration)
     {
         _configuration = configuration;
-        _stateStore = stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
+        _stateStore = stateStoreFactory.GetStore<UploadSession>(StateStoreDefinitions.Asset);
         _messageBus = messageBus;
         _logger = logger;
     }

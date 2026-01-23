@@ -43,7 +43,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         CancellationToken cancellationToken)
     {
         // Try hot cache first
-        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         var hotKey = HotSaveEntry.GetStateKey(slotId, version.VersionNumber);
         var hotEntry = await hotCacheStore.GetAsync(hotKey, cancellationToken);
 

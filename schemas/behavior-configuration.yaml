@@ -200,19 +200,6 @@ x-service-configuration:
       default: 65536
       description: Maximum strings in behavior string table
 
-    # === State Store Configuration (Tier 3) ===
-    StatestoreName:
-      type: string
-      env: BEHAVIOR_STATESTORE_NAME
-      default: "behavior-statestore"
-      description: Name of the state store for behavior metadata
-
-    MemoryStatestoreName:
-      type: string
-      env: BEHAVIOR_MEMORY_STATESTORE_NAME
-      default: "agent-memories"
-      description: Name of the state store for actor memories
-
     # === Key Prefix Configuration (Tier 3) ===
     BundleMembershipKeyPrefix:
       type: string

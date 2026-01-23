@@ -58,6 +58,12 @@ x-state-stores:
     service: Asset
     purpose: Asset upload tracking and bundle state
 
+  asset-processor-pool:
+    backend: redis
+    prefix: "asset:pool"
+    service: Asset
+    purpose: Processor pool node state and indexing
+
   # ============================================================================
   # Orchestrator Stores
   # ============================================================================
@@ -129,6 +135,12 @@ x-state-stores:
     prefix: "actor:assign"
     service: Actor
     purpose: Actor-to-node assignments
+
+  behavior-statestore:
+    backend: redis
+    prefix: "behavior"
+    service: Behavior
+    purpose: Behavior metadata and compiled definitions
 
   # ============================================================================
   # Documentation Stores

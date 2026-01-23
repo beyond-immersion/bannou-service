@@ -86,7 +86,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var ownerType = body.OwnerType.ToString();
             var ownerId = body.OwnerId.ToString();
 
@@ -158,7 +158,7 @@ public partial class SaveLoadService : ISaveLoadService
     {
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
 
             var slotKey = SaveSlotMetadata.GetStateKey(
                 body.GameId, body.OwnerType.ToString(),
@@ -196,7 +196,7 @@ public partial class SaveLoadService : ISaveLoadService
     {
         try
         {
-            var queryableStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var queryableStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var gameId = body.GameId;
             var ownerId = body.OwnerId.ToString();
             var ownerType = body.OwnerType.ToString();
@@ -245,8 +245,8 @@ public partial class SaveLoadService : ISaveLoadService
     {
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
             var slotKey = SaveSlotMetadata.GetStateKey(
                 body.GameId, body.OwnerType.ToString(),
@@ -305,7 +305,7 @@ public partial class SaveLoadService : ISaveLoadService
     {
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
 
             // Get old slot key
             var oldSlotKey = SaveSlotMetadata.GetStateKey(
@@ -366,9 +366,9 @@ public partial class SaveLoadService : ISaveLoadService
     {
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-            var queryableStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+            var queryableStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
 
             var deletedCount = 0;
             long totalBytesFreed = 0;
@@ -451,10 +451,10 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
-            var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
+            var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
 
             var ownerType = body.OwnerType.ToString();
             var ownerId = body.OwnerId.ToString();
@@ -674,9 +674,9 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
 
             var ownerType = body.OwnerType.ToString();
             var ownerId = body.OwnerId.ToString();
@@ -864,7 +864,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Find the slot
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var ownerType = body.OwnerType.ToString();
             var ownerId = body.OwnerId.ToString();
             var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
@@ -877,7 +877,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the base version
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var baseVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.BaseVersion);
             var baseVersion = await versionStore.GetAsync(baseVersionKey, cancellationToken);
 
@@ -959,7 +959,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Store in hot cache
-            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var hotEntry = new HotSaveEntry
             {
                 SlotId = slot.SlotId,
@@ -1005,7 +1005,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for async upload if enabled
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
@@ -1113,7 +1113,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the target version (0 or null means latest)
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionNumber = (body.VersionNumber == null || body.VersionNumber == 0)
                 ? (slot.LatestVersion ?? 0)
                 : body.VersionNumber.Value;
@@ -1217,7 +1217,7 @@ public partial class SaveLoadService : ISaveLoadService
         try
         {
             // Find the slot
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var ownerType = body.OwnerType.ToString();
             var ownerId = body.OwnerId.ToString();
             var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
@@ -1230,7 +1230,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the target version
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionToFetch = body.VersionNumber ?? slot.LatestVersion;
             if (!versionToFetch.HasValue)
             {
@@ -1308,7 +1308,7 @@ public partial class SaveLoadService : ISaveLoadService
             await versionStore.SaveAsync(targetVersion.GetStateKey(), targetVersion, cancellationToken: cancellationToken);
 
             // Store in hot cache
-            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var resolvedVersionNumber = targetVersion.VersionNumber;
             var hotEntry = new HotSaveEntry
             {
@@ -1331,7 +1331,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for upload if enabled
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
@@ -1422,7 +1422,7 @@ public partial class SaveLoadService : ISaveLoadService
         try
         {
             // Find the slot by querying slots for this owner
-            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var ownerIdStr = body.OwnerId.ToString();
             var ownerTypeStr = body.OwnerType.ToString();
             var matchingSlots = await slotQueryStore.QueryAsync(
@@ -1438,7 +1438,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Query versions for this slot
-            var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versions = await versionQueryStore.QueryAsync(
                 v => v.SlotId == slot.SlotId,
                 cancellationToken);
@@ -1502,7 +1502,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the version
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.VersionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
@@ -1574,7 +1574,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the version
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.VersionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
@@ -1647,7 +1647,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the version
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.VersionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
@@ -1685,12 +1685,12 @@ public partial class SaveLoadService : ISaveLoadService
             await versionStore.DeleteAsync(versionKey, cancellationToken);
 
             // Delete from hot cache if present
-            var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId, body.VersionNumber);
             await hotStore.DeleteAsync(hotCacheKey, cancellationToken);
 
             // Update slot metadata
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             slot.VersionCount = Math.Max(0, slot.VersionCount - 1);
             slot.TotalSizeBytes = Math.Max(0, slot.TotalSizeBytes - bytesFreed);
             slot.UpdatedAt = DateTimeOffset.UtcNow;
@@ -1698,7 +1698,7 @@ public partial class SaveLoadService : ISaveLoadService
             // If we deleted the latest version, find the new latest
             if (slot.LatestVersion == body.VersionNumber)
             {
-                var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+                var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
                 var remainingVersions = await versionQueryStore.QueryAsync(
                     v => v.SlotId == slot.SlotId,
                     cancellationToken);
@@ -1765,7 +1765,7 @@ public partial class SaveLoadService : ISaveLoadService
             var categoryStr = body.Category.ToString();
 
             // Query slots for this owner
-            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var slots = await slotQueryStore.QueryAsync(
                 s => s.OwnerId == ownerIdStr && s.OwnerType == ownerTypeStr,
                 cancellationToken);
@@ -1777,7 +1777,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Query versions for matching slots
-            var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var results = new List<QueryResultItem>();
 
             foreach (var slot in slots)
@@ -1918,8 +1918,8 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
             // Find source slot
             var sourceOwnerType = body.SourceOwnerType.ToString();
@@ -2019,7 +2019,7 @@ public partial class SaveLoadService : ISaveLoadService
             await slotStore.SaveAsync(targetSlot.GetStateKey(), targetSlot, cancellationToken: cancellationToken);
 
             // Store in hot cache
-            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var hotEntry = new HotSaveEntry
             {
                 SlotId = targetSlot.SlotId,
@@ -2041,7 +2041,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for upload if enabled
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
@@ -2131,7 +2131,7 @@ public partial class SaveLoadService : ISaveLoadService
             var ownerTypeStr = body.OwnerType.ToString();
 
             // Find the slot
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
             var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
@@ -2142,7 +2142,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the version to verify
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionNumber = body.VersionNumber ?? slot.LatestVersion;
             if (!versionNumber.HasValue)
             {
@@ -2223,7 +2223,7 @@ public partial class SaveLoadService : ISaveLoadService
         try
         {
             // Get the slot
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, body.OwnerType.ToString(), body.OwnerId.ToString(), body.SlotName);
             var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
@@ -2233,7 +2233,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Get the source version
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var sourceVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.VersionNumber);
             var sourceVersion = await versionStore.GetAsync(sourceVersionKey, cancellationToken);
 
@@ -2244,7 +2244,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             // Get the data from hot cache or asset service
             byte[] data;
-            var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId, body.VersionNumber);
             var hotEntry = await hotStore.GetAsync(hotCacheKey, cancellationToken);
 
@@ -2317,7 +2317,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Queue for async upload
             if (_configuration.AsyncUploadEnabled)
             {
-                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                 var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
@@ -2414,8 +2414,8 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
             var ownerType = body.OwnerType.ToString();
             var category = body.Category.ToString();
@@ -2528,8 +2528,8 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
             // Get all slots
             var slots = await slotStore.QueryAsync(_ => true, cancellationToken);
@@ -2741,7 +2741,7 @@ public partial class SaveLoadService : ISaveLoadService
         string slotName,
         CancellationToken cancellationToken)
     {
-        var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+        var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         var matchingSlots = await slotQueryStore.QueryAsync(
             s => s.OwnerId == ownerId &&
                 s.OwnerType == ownerType &&

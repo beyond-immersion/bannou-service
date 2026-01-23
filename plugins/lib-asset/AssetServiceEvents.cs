@@ -43,7 +43,7 @@ public partial class AssetService
             evt.JobId, evt.MetabundleId, evt.AssetCount);
 
         // Load job from state store
-        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{evt.JobId}";
         var job = await jobStore.GetAsync(jobKey, cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -129,8 +129,8 @@ public partial class AssetService
 
         var request = job.Request;
         var bucket = _configuration.StorageBucket;
-        var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
-        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+        var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(StateStoreDefinitions.Asset);
+        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{job.JobId}";
 
         // Load streaming options from configuration
@@ -149,7 +149,7 @@ public partial class AssetService
         }
 
         // Load standalone assets if specified
-        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(StateStoreDefinitions.Asset);
         var standaloneAssets = new List<InternalAssetRecord>();
         foreach (var assetId in request.StandaloneAssetIds ?? Enumerable.Empty<string>())
         {

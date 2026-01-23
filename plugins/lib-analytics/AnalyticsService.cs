@@ -266,7 +266,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummary);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
             var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
@@ -344,7 +344,7 @@ public partial class AnalyticsService : IAnalyticsService
                 }
             }
 
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummary);
             var indexKey = GetSummaryIndexKey(body.GameServiceId);
             var entityKeys = await summaryStore.GetSetAsync<string>(indexKey, cancellationToken);
 
@@ -440,7 +440,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(_configuration.RatingStoreName);
+            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
             var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
 
             var rating = await ratingStore.GetAsync(ratingKey, cancellationToken);
@@ -509,7 +509,7 @@ public partial class AnalyticsService : IAnalyticsService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(_configuration.RatingStoreName);
+            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
             var updatedRatings = new List<SkillRatingChange>();
             var now = DateTimeOffset.UtcNow;
 
@@ -621,7 +621,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(_configuration.HistoryStoreName);
+            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistory);
             var eventId = Guid.NewGuid();
             var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
 
@@ -689,7 +689,7 @@ public partial class AnalyticsService : IAnalyticsService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(_configuration.HistoryStoreName);
+            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistory);
             var indexKey = body.AccountId.HasValue
                 ? GetControllerAccountIndexKey(body.GameServiceId, body.AccountId.Value)
                 : GetControllerIndexKey(body.GameServiceId);
@@ -949,7 +949,7 @@ public partial class AnalyticsService : IAnalyticsService
     {
         try
         {
-            var backend = _stateStoreFactory.GetBackendType(_configuration.SummaryStoreName);
+            var backend = _stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary);
             if (backend == StateBackend.Redis)
             {
                 return true;
@@ -959,7 +959,7 @@ public partial class AnalyticsService : IAnalyticsService
             _logger.LogError(
                 "{Message} (StoreName: {StoreName}, Backend: {Backend})",
                 message,
-                _configuration.SummaryStoreName,
+                StateStoreDefinitions.AnalyticsSummary,
                 backend);
             await _messageBus.TryPublishErrorAsync(
                 "analytics",
@@ -968,7 +968,7 @@ public partial class AnalyticsService : IAnalyticsService
                 message,
                 dependency: "state",
                 endpoint: "state:summary",
-                details: $"store:{_configuration.SummaryStoreName};backend:{backend}",
+                details: $"store:{StateStoreDefinitions.AnalyticsSummary};backend:{backend}",
                 stack: null,
                 cancellationToken: cancellationToken);
             return false;
@@ -983,7 +983,7 @@ public partial class AnalyticsService : IAnalyticsService
                 ex.Message,
                 dependency: "state",
                 endpoint: "state:summary",
-                details: $"store:{_configuration.SummaryStoreName}",
+                details: $"store:{StateStoreDefinitions.AnalyticsSummary}",
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return false;
@@ -1013,7 +1013,7 @@ public partial class AnalyticsService : IAnalyticsService
         var cacheOptions = BuildSummaryCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(_configuration.SummaryStoreName);
+            var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
             var cacheKey = GetGameServiceCacheKey(stubName);
             var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
@@ -1048,7 +1048,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (cacheOptions != null)
             {
-                var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(_configuration.SummaryStoreName);
+                var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
                 var cacheKey = GetGameServiceCacheKey(stubName);
                 await cacheStore.SaveAsync(cacheKey, new GameServiceCacheEntry
                 {
@@ -1095,7 +1095,7 @@ public partial class AnalyticsService : IAnalyticsService
     {
         try
         {
-            var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+            var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
             var mappingKey = GetSessionMappingKey(sessionId);
             var mapping = await mappingStore.GetAsync(mappingKey, cancellationToken);
             if (mapping != null)
@@ -1189,7 +1189,7 @@ public partial class AnalyticsService : IAnalyticsService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
-        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
         var cacheOptions = BuildSummaryCacheOptions();
         await mappingStore.SaveAsync(mappingKey, new GameSessionMappingData
@@ -1203,7 +1203,7 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task RemoveGameSessionMappingAsync(Guid sessionId, CancellationToken cancellationToken)
     {
-        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
         await mappingStore.DeleteAsync(mappingKey, cancellationToken);
     }
@@ -1229,8 +1229,8 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(_configuration.SummaryStoreName);
-            bufferIndexStore = _stateStoreFactory.GetStore<object>(_configuration.SummaryStoreName);
+            bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
+            bufferIndexStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.AnalyticsSummary);
             eventKey = GetEventBufferEntryKey(bufferedEvent.EventId);
 
             await bufferStore.SaveAsync(eventKey, bufferedEvent, options: null, cancellationToken);
@@ -1326,7 +1326,7 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
-        var bufferIndexStore = _stateStoreFactory.GetStore<object>(_configuration.SummaryStoreName);
+        var bufferIndexStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.AnalyticsSummary);
         var bufferCount = await bufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
         if (bufferCount == 0)
         {
@@ -1358,7 +1358,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         var lockExpirySeconds = Math.Max(10, flushIntervalSeconds > 0 ? flushIntervalSeconds * 2 : 10);
         await using var lockResponse = await _lockProvider.LockAsync(
-            _configuration.SummaryStoreName,
+            StateStoreDefinitions.AnalyticsSummary,
             BUFFER_LOCK_RESOURCE,
             Guid.NewGuid().ToString(),
             lockExpirySeconds,
@@ -1400,7 +1400,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(_configuration.SummaryStoreName);
+            var bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
             await FlushBufferedEventsBatchAsync(bufferIndexStore, bufferStore, cancellationToken);
         }
         catch (Exception ex)
@@ -1424,7 +1424,7 @@ public partial class AnalyticsService : IAnalyticsService
         IStateStore<BufferedAnalyticsEvent> bufferStore,
         CancellationToken cancellationToken)
     {
-        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
+        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummary);
         var summaryOptions = BuildSummaryCacheOptions();
         var batchSize = Math.Max(1, _configuration.EventBufferSize);
 

@@ -28,7 +28,10 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     private readonly ILogger<AssetProcessorPoolManager> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
-    // Store name now comes from configuration (ProcessorPoolStoreName)
+    /// <summary>
+    /// Processor pool state store name. Matches StateStoreDefinitions.AssetProcessorPool after next regeneration.
+    /// </summary>
+    private const string ProcessorPoolStore = "asset-processor-pool";
     private const string INDEX_SUFFIX = ":index";
 
     /// <summary>
@@ -58,7 +61,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(appId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
         var nodeKey = GetNodeKey(poolType, nodeId);
 
         // Check if node already exists
@@ -111,7 +114,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
         var nodeKey = GetNodeKey(poolType, nodeId);
         var state = await store.GetAsync(nodeKey, cancellationToken);
 
@@ -162,7 +165,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
         var nodeKey = GetNodeKey(poolType, nodeId);
 
         // Remove from index first
@@ -187,7 +190,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
         var nodeKey = GetNodeKey(poolType, nodeId);
         var state = await store.GetAsync(nodeKey, cancellationToken);
 
@@ -225,7 +228,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
         var nodeKey = GetNodeKey(poolType, nodeId);
         return await store.GetAsync(nodeKey, cancellationToken);
     }
@@ -276,7 +279,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
             return Array.Empty<ProcessorNodeState>();
         }
 
-        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorNodeState>(ProcessorPoolStore);
         var nodes = new List<ProcessorNodeState>();
         var staleNodeIds = new List<string>();
 
@@ -331,7 +334,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     /// </summary>
     private async Task<ProcessorPoolIndex> GetPoolIndexAsync(string poolType, CancellationToken ct)
     {
-        var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(ProcessorPoolStore);
         var indexKey = GetIndexKey(poolType);
         var index = await store.GetAsync(indexKey, ct);
         return index ?? new ProcessorPoolIndex();
@@ -344,7 +347,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     /// </summary>
     private async Task UpdatePoolIndexAsync(string poolType, string nodeId, bool add, CancellationToken ct)
     {
-        var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(_configuration.ProcessorPoolStoreName);
+        var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(ProcessorPoolStore);
         var indexKey = GetIndexKey(poolType);
         var maxRetries = _configuration.ProcessingMaxRetries;
 

@@ -11,22 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    # State Store Configuration
-    SummaryStoreName:
-      type: string
-      description: Name of the state store for entity summaries (Redis recommended)
-      default: "analytics-summary"
-      env: ANALYTICS_SUMMARY_STORE_NAME
-    RatingStoreName:
-      type: string
-      description: Name of the state store for skill ratings (Redis recommended)
-      default: "analytics-rating"
-      env: ANALYTICS_RATING_STORE_NAME
-    HistoryStoreName:
-      type: string
-      description: Name of the state store for event history (MySQL recommended)
-      default: "analytics-history"
-      env: ANALYTICS_HISTORY_STORE_NAME
     # Event Buffer Configuration
     EventBufferSize:
       type: integer

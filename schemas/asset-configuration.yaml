@@ -291,19 +291,6 @@ x-service-configuration:
       env: ASSET_PROCESSING_RETRY_DELAY_SECONDS
       default: 30
 
-    # === State Store Configuration (Tier 3) ===
-    StatestoreName:
-      type: string
-      description: Name of the state store for asset metadata
-      env: ASSET_STATESTORE_NAME
-      default: asset-statestore
-
-    ProcessorPoolStoreName:
-      type: string
-      description: Name of the state store for processor pool management
-      env: ASSET_PROCESSOR_POOL_STORE_NAME
-      default: asset-processor-pool
-
     # === Key Prefix Configuration (Tier 3) ===
     UploadSessionKeyPrefix:
       type: string

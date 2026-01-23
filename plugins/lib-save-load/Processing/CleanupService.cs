@@ -105,8 +105,8 @@ public class CleanupService : BackgroundService
         var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
         var assetClient = serviceProvider.GetRequiredService<IAssetClient>();
 
-        var slotStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-        var versionStore = stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+        var slotStore = stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+        var versionStore = stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
         // Get all slots
         var slots = await slotStore.QueryAsync(_ => true, cancellationToken);
@@ -252,7 +252,7 @@ public class CleanupService : BackgroundService
             using var scope = _serviceProvider.CreateScope();
             var slotStore = scope.ServiceProvider
                 .GetRequiredService<IStateStoreFactory>()
-                .GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+                .GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
         }
 

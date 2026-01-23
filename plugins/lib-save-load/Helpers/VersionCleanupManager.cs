@@ -92,7 +92,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             return;
         }
 
-        var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+        var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
         var versions = await versionQueryStore.QueryAsync(
             v => v.SlotId == slot.SlotId,
             cancellationToken);
@@ -112,8 +112,8 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             return;
         }
 
-        var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-        var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+        var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+        var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         long bytesFreed = 0;
 
         foreach (var version in versionsToDelete)
@@ -151,7 +151,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         }
 
         // Update slot metadata
-        var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+        var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         slot.VersionCount -= versionsToDelete.Count;
         slot.TotalSizeBytes -= bytesFreed;
         slot.UpdatedAt = DateTimeOffset.UtcNow;

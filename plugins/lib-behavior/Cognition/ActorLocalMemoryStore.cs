@@ -138,7 +138,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             memoryId, entityId, significance);
 
         // Store the memory data
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(_configuration.MemoryStatestoreName);
+        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         var memoryKey = BuildMemoryKey(entityId, memoryId);
         await memoryStore.SaveAsync(memoryKey, memory, cancellationToken: ct);
 
@@ -163,7 +163,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         }
 
         // Get the memory index for this entity
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.MemoryStatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
         var indexKey = BuildMemoryIndexKey(entityId);
         var memoryIds = await indexStore.GetAsync(indexKey, ct) ?? [];
 
@@ -176,7 +176,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         var idsToFetch = memoryIds.TakeLast(limit).ToList();
 
         // Bulk fetch the memories
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(_configuration.MemoryStatestoreName);
+        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         var memoryKeys = idsToFetch.Select(id => BuildMemoryKey(entityId, id));
         var memoriesDict = await memoryStore.GetBulkAsync(memoryKeys, ct);
 
@@ -206,7 +206,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             memoryId, entityId);
 
         // Delete the memory data
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(_configuration.MemoryStatestoreName);
+        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         var memoryKey = BuildMemoryKey(entityId, memoryId);
         await memoryStore.DeleteAsync(memoryKey, ct);
 
@@ -225,12 +225,12 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         _logger.LogDebug("Clearing all memories for entity {EntityId}", entityId);
 
         // Get the memory index
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.MemoryStatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
         var indexKey = BuildMemoryIndexKey(entityId);
         var memoryIds = await indexStore.GetAsync(indexKey, ct) ?? [];
 
         // Delete all memory data
-        var memoryStore = _stateStoreFactory.GetStore<Memory>(_configuration.MemoryStatestoreName);
+        var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
         foreach (var memoryId in memoryIds)
         {
             var memoryKey = BuildMemoryKey(entityId, memoryId);
@@ -259,7 +259,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     private async Task AddToMemoryIndexAsync(string entityId, string memoryId, CancellationToken ct)
     {
         var indexKey = BuildMemoryIndexKey(entityId);
-        var store = _stateStoreFactory.GetStore<List<string>>(_configuration.MemoryStatestoreName);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
 
         for (int retry = 0; retry < _configuration.MemoryStoreMaxRetries; retry++)
         {
@@ -305,7 +305,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     private async Task RemoveFromMemoryIndexAsync(string entityId, string memoryId, CancellationToken ct)
     {
         var indexKey = BuildMemoryIndexKey(entityId);
-        var store = _stateStoreFactory.GetStore<List<string>>(_configuration.MemoryStatestoreName);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
 
         for (int retry = 0; retry < _configuration.MemoryStoreMaxRetries; retry++)
         {

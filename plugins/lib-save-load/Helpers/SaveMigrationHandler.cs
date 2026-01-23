@@ -55,7 +55,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
         try
         {
-            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreName);
+            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
 
             // Check if schema already exists
             var schemaKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.SchemaVersion);
@@ -142,7 +142,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
         try
         {
-            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(_configuration.SchemaStoreName);
+            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
 
             // Query all schemas in the namespace
             var schemas = await schemaStore.QueryAsync(
@@ -222,9 +222,9 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
         try
         {
-            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(_configuration.SchemaStoreName);
+            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
 
             // Find source slot by querying by owner and slot name
             var ownerType = body.OwnerType.ToString();

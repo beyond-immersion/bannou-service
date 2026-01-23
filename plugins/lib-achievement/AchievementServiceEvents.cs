@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
@@ -385,7 +386,7 @@ public partial class AchievementService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
-        var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(_configuration.DefinitionStoreName);
+        var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
         var indexKey = GetDefinitionIndexKey(gameServiceId);
         var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 

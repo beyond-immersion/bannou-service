@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -81,8 +82,8 @@ public partial class ActorService
             }
 
             // Find actors using this behavior
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
             // Get all template IDs from index
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, CancellationToken.None) ?? new List<string>();

@@ -275,14 +275,14 @@ public class StorageCircuitBreaker
 
     private async Task<CircuitBreakerState> GetOrCreateStateAsync(CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<CircuitBreakerState>(_configuration.PendingUploadStoreName);
+        var store = _stateStoreFactory.GetStore<CircuitBreakerState>(StateStoreDefinitions.SaveLoadPending);
         var state = await store.GetAsync(CircuitStateKey, cancellationToken);
         return state ?? new CircuitBreakerState();
     }
 
     private async Task SaveStateAsync(CircuitBreakerState state, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<CircuitBreakerState>(_configuration.PendingUploadStoreName);
+        var store = _stateStoreFactory.GetStore<CircuitBreakerState>(StateStoreDefinitions.SaveLoadPending);
         await store.SaveAsync(CircuitStateKey, state, cancellationToken: cancellationToken);
     }
 

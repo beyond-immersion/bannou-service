@@ -20,35 +20,11 @@ x-service-configuration:
       default: GZIP
       description: Default compression algorithm (NONE, GZIP, BROTLI)
 
-    SlotMetadataStoreName:
-      type: string
-      env: SAVE_LOAD_SLOT_METADATA_STORE_NAME
-      default: save-load-slots
-      description: State store name for slot metadata (MySQL backend)
-
-    VersionManifestStoreName:
-      type: string
-      env: SAVE_LOAD_VERSION_MANIFEST_STORE_NAME
-      default: save-load-versions
-      description: State store name for version manifests (MySQL backend)
-
-    HotCacheStoreName:
-      type: string
-      env: SAVE_LOAD_HOT_CACHE_STORE_NAME
-      default: save-load-cache
-      description: State store name for hot save cache (Redis backend)
-
     HotCacheTtlMinutes:
       type: integer
       env: SAVE_LOAD_HOT_CACHE_TTL_MINUTES
       default: 60
       description: TTL for hot cache entries in minutes
-
-    SchemaStoreName:
-      type: string
-      env: SAVE_LOAD_SCHEMA_STORE_NAME
-      default: save-load-schemas
-      description: State store name for registered schemas
 
     AssetBucket:
       type: string
@@ -260,12 +236,6 @@ x-service-configuration:
       env: SAVE_LOAD_ASYNC_UPLOAD_ENABLED
       default: true
       description: Queue uploads to MinIO/S3 instead of synchronous write. Save is acknowledged immediately when data is stored in Redis pending queue. Background worker uploads asynchronously.
-
-    PendingUploadStoreName:
-      type: string
-      env: SAVE_LOAD_PENDING_UPLOAD_STORE_NAME
-      default: save-load-pending
-      description: Redis store for pending uploads awaiting async processing
 
     PendingUploadTtlMinutes:
       type: integer

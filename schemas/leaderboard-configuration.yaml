@@ -11,22 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    # State Store Configuration
-    DefinitionStoreName:
-      type: string
-      description: Name of the state store for leaderboard definitions (MySQL recommended)
-      default: "leaderboard-definition"
-      env: LEADERBOARD_DEFINITION_STORE_NAME
-    RankingStoreName:
-      type: string
-      description: Name of the state store for rankings (Redis required for sorted sets)
-      default: "leaderboard-ranking"
-      env: LEADERBOARD_RANKING_STORE_NAME
-    SeasonStoreName:
-      type: string
-      description: Name of the state store for season data (MySQL recommended)
-      default: "leaderboard-season"
-      env: LEADERBOARD_SEASON_STORE_NAME
     # Performance Configuration
     MaxEntriesPerQuery:
       type: integer
