@@ -16436,6 +16436,641 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowCreatedEvent">
+            <summary>
+            Event published when a new escrow agreement is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.EscrowType">
+            <summary>
+            Type of escrow (two_party, multi_party, conditional, auction)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.TrustMode">
+            <summary>
+            Trust mode (full_consent, initiator_trusted, single_party_trusted)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.Parties">
+            <summary>
+            Parties in the escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.ExpectedDepositCount">
+            <summary>
+            Number of expected deposits
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.ExpiresAt">
+            <summary>
+            When the escrow expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.BoundContractId">
+            <summary>
+            Bound contract ID if applicable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.ReferenceType">
+            <summary>
+            Reference type (trade, auction, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.ReferenceId">
+            <summary>
+            Reference ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.CreatedAt">
+            <summary>
+            When the escrow was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent">
+            <summary>
+            Event published when a deposit is received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.PartyId">
+            <summary>
+            Party who deposited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.PartyType">
+            <summary>
+            Type of the depositing party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.DepositId">
+            <summary>
+            Deposit record ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.AssetSummary">
+            <summary>
+            Human-readable summary of deposited assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.DepositsReceived">
+            <summary>
+            Number of deposits received so far
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.DepositsExpected">
+            <summary>
+            Total deposits expected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.FullyFunded">
+            <summary>
+            Whether escrow is now fully funded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDepositReceivedEvent.DepositedAt">
+            <summary>
+            When the deposit was made
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowFundedEvent">
+            <summary>
+            Event published when all expected deposits are received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFundedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFundedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFundedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFundedEvent.TotalDeposits">
+            <summary>
+            Total number of deposits received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFundedEvent.FundedAt">
+            <summary>
+            When funding completed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent">
+            <summary>
+            Event published when a party consents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.PartyId">
+            <summary>
+            Party who consented
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.PartyType">
+            <summary>
+            Type of the consenting party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentType">
+            <summary>
+            Type of consent (release, refund, dispute, reaffirm)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentsReceived">
+            <summary>
+            Number of consents received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentsRequired">
+            <summary>
+            Number of consents required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentedAt">
+            <summary>
+            When consent was given
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent">
+            <summary>
+            Event published when finalization begins
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.BoundContractId">
+            <summary>
+            Bound contract ID if applicable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.FinalizerCount">
+            <summary>
+            Number of finalizer APIs to execute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowFinalizingEvent.StartedAt">
+            <summary>
+            When finalization started
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowReleasedEvent">
+            <summary>
+            Event published when assets are released
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.Recipients">
+            <summary>
+            Recipients and what they received
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.Resolution">
+            <summary>
+            Resolution type (released)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.CompletedAt">
+            <summary>
+            When release completed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowRefundedEvent">
+            <summary>
+            Event published when assets are refunded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.Depositors">
+            <summary>
+            Depositors and what was refunded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.Reason">
+            <summary>
+            Reason for refund
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.Resolution">
+            <summary>
+            Resolution type (refunded, expired_refunded, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.CompletedAt">
+            <summary>
+            When refund completed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowDisputedEvent">
+            <summary>
+            Event published when a party raises a dispute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDisputedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDisputedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDisputedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDisputedEvent.DisputedBy">
+            <summary>
+            Party who raised the dispute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDisputedEvent.DisputedByType">
+            <summary>
+            Type of the disputing party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDisputedEvent.Reason">
+            <summary>
+            Reason for dispute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowDisputedEvent.DisputedAt">
+            <summary>
+            When dispute was raised
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowResolvedEvent">
+            <summary>
+            Event published when an arbiter resolves a dispute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.ArbiterId">
+            <summary>
+            Arbiter ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.ArbiterType">
+            <summary>
+            Arbiter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.Resolution">
+            <summary>
+            Resolution type (released, refunded, split)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.Notes">
+            <summary>
+            Arbiter notes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.ResolvedAt">
+            <summary>
+            When dispute was resolved
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowExpiredEvent">
+            <summary>
+            Event published when escrow times out
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowExpiredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowExpiredEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowExpiredEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowExpiredEvent.Status">
+            <summary>
+            Status when expiration occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowExpiredEvent.AutoRefunded">
+            <summary>
+            Whether deposits were automatically refunded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowExpiredEvent.ExpiredAt">
+            <summary>
+            When expiration occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowCancelledEvent">
+            <summary>
+            Event published when escrow is cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.CancelledBy">
+            <summary>
+            Entity that cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.CancelledByType">
+            <summary>
+            Type of cancelling entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.Reason">
+            <summary>
+            Reason for cancellation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.DepositsRefunded">
+            <summary>
+            Number of deposits refunded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowCancelledEvent.CancelledAt">
+            <summary>
+            When cancellation occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowValidationFailedEvent">
+            <summary>
+            Event published when validation detects asset changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationFailedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationFailedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationFailedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationFailedEvent.Failures">
+            <summary>
+            Detected failures
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationFailedEvent.DetectedAt">
+            <summary>
+            When failures were detected
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent">
+            <summary>
+            Event published when a party reaffirms after validation failure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent.EscrowId">
+            <summary>
+            Escrow agreement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent.ReaffirmedBy">
+            <summary>
+            Party who reaffirmed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent.ReaffirmedByType">
+            <summary>
+            Type of reaffirming party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent.AllReaffirmed">
+            <summary>
+            Whether all parties have reaffirmed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowValidationReaffirmedEvent.ReaffirmedAt">
+            <summary>
+            When reaffirmation occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EscrowPartyInfo">
+            <summary>
+            Brief party information for events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowPartyInfo.PartyId">
+            <summary>
+            Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowPartyInfo.PartyType">
+            <summary>
+            Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowPartyInfo.Role">
+            <summary>
+            Role in escrow (depositor, recipient, etc.)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RecipientInfo">
+            <summary>
+            Recipient information for release events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RecipientInfo.PartyId">
+            <summary>
+            Recipient party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RecipientInfo.PartyType">
+            <summary>
+            Recipient party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RecipientInfo.AssetSummary">
+            <summary>
+            Summary of assets received
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DepositorInfo">
+            <summary>
+            Depositor information for refund events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DepositorInfo.PartyId">
+            <summary>
+            Depositor party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DepositorInfo.PartyType">
+            <summary>
+            Depositor party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DepositorInfo.AssetSummary">
+            <summary>
+            Summary of assets refunded
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ValidationFailureInfo">
+            <summary>
+            Validation failure information for events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.AssetType">
+            <summary>
+            Type of asset affected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.FailureType">
+            <summary>
+            Type of failure (asset_missing, asset_mutated, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.AffectedPartyId">
+            <summary>
+            Party whose deposit is affected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.Details">
+            <summary>
+            Additional failure details
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent">
             <summary>
             Published to game-service.created when a gameservice is created

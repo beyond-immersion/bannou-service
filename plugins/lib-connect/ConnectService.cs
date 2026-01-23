@@ -653,7 +653,7 @@ public partial class ConnectService : IConnectService
         // Add connection to manager
         _connectionManager.AddConnection(sessionId, webSocket, connectionState);
 
-        var buffer = new byte[65536]; // Larger buffer for binary protocol
+        var buffer = new byte[_configuration.BufferSize]; // Configurable buffer for binary protocol
 
         try
         {
@@ -773,9 +773,9 @@ public partial class ConnectService : IConnectService
 
                 connectionState.UpdateActivity();
 
-                // Periodic heartbeat update (every 30 seconds)
+                // Periodic heartbeat update (configurable interval)
                 if (_sessionManager != null &&
-                    (DateTimeOffset.UtcNow - connectionState.LastActivity).TotalSeconds >= 30)
+                    (DateTimeOffset.UtcNow - connectionState.LastActivity).TotalSeconds >= _configuration.HeartbeatIntervalSeconds)
                 {
                     await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
                 }
@@ -1033,7 +1033,7 @@ public partial class ConnectService : IConnectService
             }
 
             // Check rate limiting
-            var rateLimitResult = MessageRouter.CheckRateLimit(connectionState);
+            var rateLimitResult = MessageRouter.CheckRateLimit(connectionState, _configuration.MaxMessagesPerMinute);
             if (!rateLimitResult.IsAllowed)
             {
                 _logger.LogWarning("Rate limit exceeded for session {SessionId}", sessionId);
@@ -1497,7 +1497,7 @@ public partial class ConnectService : IConnectService
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
-        var buffer = new byte[65536];
+        var buffer = new byte[_configuration.BufferSize];
 
         try
         {

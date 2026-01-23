@@ -696,49 +696,56 @@ components:
 
     EscrowTrustMode:
       type: string
-      description: Trust model for the escrow agreement
+      description: |
+        Trust model for the escrow agreement.
+        - full_consent: All parties must explicitly consent using tokens
+        - initiator_trusted: The service that created the escrow can complete unilaterally
+        - single_party_trusted: A designated party can complete unilaterally
       enum:
       - full_consent
       - initiator_trusted
       - single_party_trusted
-      x-enum-descriptions:
-        full_consent: All parties must explicitly consent using tokens
-        initiator_trusted: The service/entity that created the escrow can complete it unilaterally
-        single_party_trusted: A designated party can complete unilaterally
 
     EscrowPartyRole:
       type: string
-      description: Role of a party in the escrow
+      description: |
+        Role of a party in the escrow.
+        - depositor: Deposits assets into escrow
+        - recipient: Receives assets when released
+        - depositor_recipient: Both deposits and can receive (typical for trades)
+        - arbiter: Can resolve disputes, does not deposit or receive
+        - observer: Can view status but cannot act
       enum:
       - depositor
       - recipient
       - depositor_recipient
       - arbiter
       - observer
-      x-enum-descriptions:
-        depositor: Deposits assets into escrow
-        recipient: Receives assets when released
-        depositor_recipient: Both deposits and can receive (typical for trades)
-        arbiter: Can resolve disputes, does not deposit or receive
-        observer: Can view status but cannot act
 
     EscrowConsentType:
       type: string
-      description: Type of consent being given
+      description: |
+        Type of consent being given.
+        - release: Agrees to release assets to recipients
+        - refund: Agrees to refund assets to depositors
+        - dispute: Raises a dispute
+        - reaffirm: Re-affirms after validation failure
       enum:
       - release
       - refund
       - dispute
       - reaffirm
-      x-enum-descriptions:
-        release: Agrees to release assets to recipients
-        refund: Agrees to refund assets to depositors
-        dispute: Raises a dispute
-        reaffirm: Re-affirms after validation failure
 
     EscrowResolution:
       type: string
-      description: How the escrow was resolved
+      description: |
+        How the escrow was resolved.
+        - released: Assets went to designated recipients
+        - refunded: Assets returned to depositors
+        - split: Arbiter split assets between parties
+        - expired_refunded: Timed out, auto-refunded
+        - cancelled_refunded: Cancelled, deposits refunded
+        - violation_refunded: Validation failure caused refund
       enum:
       - released
       - refunded
@@ -746,63 +753,56 @@ components:
       - expired_refunded
       - cancelled_refunded
       - violation_refunded
-      x-enum-descriptions:
-        released: Assets went to designated recipients
-        refunded: Assets returned to depositors
-        split: Arbiter split assets between parties
-        expired_refunded: Timed out, auto-refunded
-        cancelled_refunded: Cancelled, deposits refunded
-        violation_refunded: Validation failure caused refund
 
     AssetType:
       type: string
-      description: Type of asset held in escrow
+      description: |
+        Type of asset held in escrow.
+        - currency: Currency amount held in escrow wallet
+        - item: Item instance held in escrow container
+        - item_stack: Stackable items (quantity) held in escrow container
+        - contract: Contract instance locked under escrow guardianship
+        - custom: Custom asset type via registered handler
       enum:
       - currency
       - item
       - item_stack
       - contract
       - custom
-      x-enum-descriptions:
-        currency: Currency amount held in escrow wallet
-        item: Item instance held in escrow container
-        item_stack: Stackable items (quantity) held in escrow container
-        contract: Contract instance locked under escrow guardianship
-        custom: Custom asset type via registered handler
 
     ValidationFailureType:
       type: string
-      description: Type of validation failure detected
+      description: |
+        Type of validation failure detected.
+        - asset_missing: Asset no longer exists in escrow custody
+        - asset_mutated: Asset properties changed (e.g., item durability)
+        - asset_expired: Asset has a time-based expiration that triggered
+        - balance_mismatch: Wallet balance does not match expected held amount
       enum:
       - asset_missing
       - asset_mutated
       - asset_expired
       - balance_mismatch
-      x-enum-descriptions:
-        asset_missing: Asset no longer exists in escrow custody
-        asset_mutated: Asset properties changed (e.g., item durability, contract terms)
-        asset_expired: Asset has a time-based expiration that triggered
-        balance_mismatch: Wallet balance does not match expected held amount
 
     TokenAlgorithm:
       type: string
-      description: Algorithm used for token generation
+      description: |
+        Algorithm used for token generation.
+        - hmac_sha256: HMAC-SHA256 based tokens
+        - random_bytes: Cryptographically random tokens
       enum:
       - hmac_sha256
       - random_bytes
-      x-enum-descriptions:
-        hmac_sha256: HMAC-SHA256 based tokens
-        random_bytes: Cryptographically random tokens
 
     TokenType:
       type: string
-      description: Type of token being requested
+      description: |
+        Type of token being requested.
+        - deposit: Token for depositing assets
+        - release: Token for consenting to release
       enum:
       - deposit
       - release
-      x-enum-descriptions:
-        deposit: Token for depositing assets
-        release: Token for consenting to release
 
     # ==========================================================================
     # Core Models

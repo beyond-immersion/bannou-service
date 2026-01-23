@@ -30,9 +30,11 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// Creates a new MeshInvocationClient.
     /// </summary>
     /// <param name="stateManager">State manager for endpoint resolution (avoids circular dependency with generated clients).</param>
+    /// <param name="configuration">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     public MeshInvocationClient(
         IMeshStateManager stateManager,
+        MeshServiceConfiguration configuration,
         ILogger<MeshInvocationClient> logger)
     {
         _stateManager = stateManager;
@@ -47,13 +49,13 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             AutomaticDecompression = DecompressionMethods.None,
             UseCookies = false,
             EnableMultipleHttp2Connections = true,
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-            ConnectTimeout = TimeSpan.FromSeconds(10)
+            PooledConnectionLifetime = TimeSpan.FromMinutes(configuration.PooledConnectionLifetimeMinutes),
+            ConnectTimeout = TimeSpan.FromSeconds(configuration.ConnectTimeoutSeconds)
         };
         _httpClient = new HttpMessageInvoker(handler);
 #pragma warning restore CA2000
 
-        _endpointCache = new EndpointCache(TimeSpan.FromSeconds(5));
+        _endpointCache = new EndpointCache(TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds));
     }
 
     /// <inheritdoc/>
