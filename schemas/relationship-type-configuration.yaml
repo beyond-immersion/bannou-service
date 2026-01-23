@@ -10,4 +10,10 @@ info:
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties: {}
+  properties:
+    # Seed Operation Configuration
+    SeedPageSize:
+      type: integer
+      description: Number of records to process per page during seed operations
+      env: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
+      default: 100

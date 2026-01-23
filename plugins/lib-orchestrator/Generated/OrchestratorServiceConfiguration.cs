@@ -144,6 +144,12 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public int OpenRestyPort { get; set; } = 80;
 
     /// <summary>
+    /// Timeout in seconds for OpenResty HTTP requests
+    /// Environment variable: ORCHESTRATOR_OPENRESTY_REQUEST_TIMEOUT_SECONDS
+    /// </summary>
+    public int OpenRestyRequestTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
     /// Kubernetes namespace for deployments
     /// Environment variable: ORCHESTRATOR_KUBERNETES_NAMESPACE
     /// </summary>
@@ -154,6 +160,12 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Environment variable: ORCHESTRATOR_KUBECONFIG_PATH
     /// </summary>
     public string? KubeconfigPath { get; set; }
+
+    /// <summary>
+    /// Interval in seconds for polling container status during deploy
+    /// Environment variable: ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS
+    /// </summary>
+    public int ContainerStatusPollIntervalSeconds { get; set; } = 2;
 
     /// <summary>
     /// Redis connection string for orchestrator state.

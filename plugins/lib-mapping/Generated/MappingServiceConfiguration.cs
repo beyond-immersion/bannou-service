@@ -197,4 +197,10 @@ public class MappingServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int TtlVisualEffects { get; set; } = 60;
 
+    /// <summary>
+    /// Maximum results returned for spatial queries (bounding box, etc)
+    /// Environment variable: MAPPING_MAX_SPATIAL_QUERY_RESULTS
+    /// </summary>
+    public int MaxSpatialQueryResults { get; set; } = 5;
+
 }

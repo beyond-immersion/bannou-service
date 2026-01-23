@@ -227,4 +227,46 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string ActorStateStoreName { get; set; } = "actor-state";
 
+    /// <summary>
+    /// Interval in seconds between pool health check operations
+    /// Environment variable: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    public int PoolHealthCheckIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Interval in milliseconds for checking scheduled events
+    /// Environment variable: ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS
+    /// </summary>
+    public int ScheduledEventCheckIntervalMilliseconds { get; set; } = 100;
+
+    /// <summary>
+    /// Timeout in seconds for individual actor operations
+    /// Environment variable: ACTOR_OPERATION_TIMEOUT_SECONDS
+    /// </summary>
+    public int ActorOperationTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// TTL in minutes for cached personality data
+    /// Environment variable: ACTOR_PERSONALITY_CACHE_TTL_MINUTES
+    /// </summary>
+    public int PersonalityCacheTtlMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// TTL in minutes for cached encounter data
+    /// Environment variable: ACTOR_ENCOUNTER_CACHE_TTL_MINUTES
+    /// </summary>
+    public int EncounterCacheTtlMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum encounter results returned per query
+    /// Environment variable: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
+    /// </summary>
+    public int MaxEncounterResultsPerQuery { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum retry attempts for memory store operations
+    /// Environment variable: ACTOR_MEMORY_STORE_MAX_RETRIES
+    /// </summary>
+    public int MemoryStoreMaxRetries { get; set; } = 3;
+
 }

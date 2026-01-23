@@ -101,4 +101,10 @@ public class ItemServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string DefaultSoulboundType { get; set; } = "none";
 
+    /// <summary>
+    /// Maximum retry attempts for optimistic concurrency on list operations
+    /// Environment variable: ITEM_LIST_OPERATION_MAX_RETRIES
+    /// </summary>
+    public int ListOperationMaxRetries { get; set; } = 3;
+
 }

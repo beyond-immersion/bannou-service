@@ -54,9 +54,9 @@ public class RelationshipTypeServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Default configuration property - can be removed if not needed.
-    /// Environment variable: RELATIONSHIP-TYPE_ENABLED
+    /// Number of records to process per page during seed operations
+    /// Environment variable: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
     /// </summary>
-    public bool Enabled { get; set; } = true;
+    public int SeedPageSize { get; set; } = 100;
 
 }

@@ -51,3 +51,15 @@ x-service-configuration:
       env: CURRENCY_HOLD_MAX_DURATION_DAYS
       default: 7
       description: Maximum duration for authorization holds in days
+
+    # Cache TTL Configuration
+    balanceCacheTtlSeconds:
+      type: integer
+      env: CURRENCY_BALANCE_CACHE_TTL_SECONDS
+      default: 60
+      description: TTL in seconds for balance cache entries
+    holdCacheTtlSeconds:
+      type: integer
+      env: CURRENCY_HOLD_CACHE_TTL_SECONDS
+      default: 120
+      description: TTL in seconds for hold cache entries

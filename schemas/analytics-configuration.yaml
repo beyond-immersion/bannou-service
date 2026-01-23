@@ -69,3 +69,16 @@ x-service-configuration:
       description: TTL in seconds for cached entity summaries
       default: 300
       env: ANALYTICS_SUMMARY_CACHE_TTL_SECONDS
+    # Event Buffer Lock Configuration
+    EventBufferLockExpiryBaseSeconds:
+      type: integer
+      description: Base lock expiry time in seconds for event buffer flush operations (actual expiry is max of this and 2x flush interval)
+      default: 10
+      env: ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS
+    # Glicko-2 Algorithm Precision
+    Glicko2VolatilityConvergenceTolerance:
+      type: number
+      format: double
+      description: Convergence tolerance for Glicko-2 volatility iteration (smaller = more precise but slower)
+      default: 0.000001
+      env: ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE

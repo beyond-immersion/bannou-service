@@ -455,4 +455,46 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int StreamingProgressUpdateIntervalAssets { get; set; } = 10;
 
+    /// <summary>
+    /// Maximum seconds to wait for a synchronous processing job to complete
+    /// Environment variable: ASSET_PROCESSING_JOB_MAX_WAIT_SECONDS
+    /// </summary>
+    public int ProcessingJobMaxWaitSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Interval in seconds to poll for job completion during synchronous wait
+    /// Environment variable: ASSET_PROCESSING_JOB_POLL_INTERVAL_SECONDS
+    /// </summary>
+    public int ProcessingJobPollIntervalSeconds { get; set; } = 2;
+
+    /// <summary>
+    /// Interval in seconds to check processing queue when no jobs are available
+    /// Environment variable: ASSET_PROCESSING_QUEUE_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    public int ProcessingQueueCheckIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Delay in seconds between batch processing attempts
+    /// Environment variable: ASSET_PROCESSING_BATCH_INTERVAL_SECONDS
+    /// </summary>
+    public int ProcessingBatchIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum minutes to allow queue draining during graceful shutdown
+    /// Environment variable: ASSET_SHUTDOWN_DRAIN_TIMEOUT_MINUTES
+    /// </summary>
+    public int ShutdownDrainTimeoutMinutes { get; set; } = 2;
+
+    /// <summary>
+    /// Interval in seconds between shutdown drain checks
+    /// Environment variable: ASSET_SHUTDOWN_DRAIN_INTERVAL_SECONDS
+    /// </summary>
+    public int ShutdownDrainIntervalSeconds { get; set; } = 2;
+
+    /// <summary>
+    /// Default TTL in hours for bundle cache entries
+    /// Environment variable: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS
+    /// </summary>
+    public int DefaultBundleCacheTtlHours { get; set; } = 24;
+
 }

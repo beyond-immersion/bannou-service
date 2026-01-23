@@ -173,4 +173,28 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ReconnectionWindowSeconds { get; set; } = 300;
 
+    /// <summary>
+    /// Timeout in seconds for HTTP client requests to backend services
+    /// Environment variable: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
+    /// </summary>
+    public int HttpClientTimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Interval in seconds for WebSocket keep-alive ping/pong
+    /// Environment variable: CONNECT_WEBSOCKET_KEEP_ALIVE_INTERVAL_SECONDS
+    /// </summary>
+    public int WebSocketKeepAliveIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Timeout in seconds when waiting for connection closure during shutdown
+    /// Environment variable: CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS
+    /// </summary>
+    public int ConnectionShutdownTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Additional minutes added to reconnection window on each extension
+    /// Environment variable: CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES
+    /// </summary>
+    public int ReconnectionWindowExtensionMinutes { get; set; } = 1;
+
 }

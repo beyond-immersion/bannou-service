@@ -29,3 +29,21 @@ x-service-configuration:
       description: Number of days to retain deleted characters before permanent removal
       env: CHARACTER_RETENTION_DAYS
       default: 90
+    # Concurrency Configuration
+    RealmIndexUpdateMaxRetries:
+      type: integer
+      description: Maximum retry attempts when updating realm character index (optimistic concurrency)
+      env: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
+      default: 3
+    CharacterListUpdateMaxRetries:
+      type: integer
+      description: Maximum retry attempts when updating character list state (optimistic concurrency)
+      env: CHARACTER_LIST_UPDATE_MAX_RETRIES
+      default: 3
+
+    # Cleanup Configuration
+    CleanupGracePeriodDays:
+      type: integer
+      description: Grace period in days before cleanup of dead character references (default 30 days)
+      env: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
+      default: 30

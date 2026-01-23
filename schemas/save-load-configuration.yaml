@@ -92,6 +92,12 @@ x-service-configuration:
       default: 60
       description: Interval for automatic cleanup task
 
+    CleanupStartupDelaySeconds:
+      type: integer
+      env: SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 30
+      description: Delay in seconds before cleanup service starts processing
+
     CleanupControlPlaneOnly:
       type: boolean
       env: SAVE_LOAD_CLEANUP_CONTROL_PLANE_ONLY
@@ -222,6 +228,12 @@ x-service-configuration:
       env: SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT
       default: 50
       description: If delta is larger than this percent of full save, store as full instead. Avoids storing deltas that dont provide meaningful savings.
+
+    MinBaseSizeForDeltaThresholdBytes:
+      type: integer
+      env: SAVE_LOAD_MIN_BASE_SIZE_FOR_DELTA_THRESHOLD_BYTES
+      default: 1024
+      description: Minimum base save size in bytes before applying delta threshold logic (1KB default)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # DEVICE & CLOUD SYNC SETTINGS

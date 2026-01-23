@@ -167,4 +167,34 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// </summary>
     public bool MetricsEnabled { get; set; } = true;
 
+    /// <summary>
+    /// How long to keep pooled HTTP connections alive in minutes
+    /// Environment variable: MESH_POOLED_CONNECTION_LIFETIME_MINUTES
+    /// </summary>
+    public int PooledConnectionLifetimeMinutes { get; set; } = 2;
+
+    /// <summary>
+    /// TCP connection timeout in seconds
+    /// Environment variable: MESH_CONNECT_TIMEOUT_SECONDS
+    /// </summary>
+    public int ConnectTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// TTL in seconds for cached service endpoints
+    /// Environment variable: MESH_ENDPOINT_CACHE_TTL_SECONDS
+    /// </summary>
+    public int EndpointCacheTtlSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum top endpoints returned in health status queries
+    /// Environment variable: MESH_MAX_TOP_ENDPOINTS_RETURNED
+    /// </summary>
+    public int MaxTopEndpointsReturned { get; set; } = 2;
+
+    /// <summary>
+    /// Maximum service mappings shown in diagnostic logs
+    /// Environment variable: MESH_MAX_SERVICE_MAPPINGS_DISPLAYED
+    /// </summary>
+    public int MaxServiceMappingsDisplayed { get; set; } = 10;
+
 }

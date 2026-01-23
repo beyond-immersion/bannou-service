@@ -83,3 +83,10 @@ x-service-configuration:
       description: RTPEngine control port
       env: VOICE_RTPENGINE_PORT
       default: 22222
+
+    # Request Timeout Configuration
+    KamailioRequestTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for Kamailio service requests
+      env: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
+      default: 5

@@ -97,3 +97,8 @@ x-service-configuration:
       description: Threshold percentage below which an achievement is considered rare
       default: 5.0
       env: ACHIEVEMENT_RARE_THRESHOLD_PERCENT
+    RarityThresholdEarnedCount:
+      type: integer
+      description: Minimum earned count for an achievement to be considered common (below this is rare regardless of percentage)
+      default: 100
+      env: ACHIEVEMENT_RARITY_THRESHOLD_EARNED_COUNT

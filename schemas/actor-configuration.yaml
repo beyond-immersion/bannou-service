@@ -200,5 +200,50 @@ x-service-configuration:
       default: "actor-state"
       description: Name of the state store for actor state persistence
 
+    # === Pool Health Monitoring (Tier 2) ===
+    PoolHealthCheckIntervalSeconds:
+      type: integer
+      env: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
+      default: 5
+      description: Interval in seconds between pool health check operations
+
+    # === Scheduled Events (Tier 2) ===
+    ScheduledEventCheckIntervalMilliseconds:
+      type: integer
+      env: ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS
+      default: 100
+      description: Interval in milliseconds for checking scheduled events
+
+    # === Actor Operation Timeouts (Tier 2) ===
+    ActorOperationTimeoutSeconds:
+      type: integer
+      env: ACTOR_OPERATION_TIMEOUT_SECONDS
+      default: 5
+      description: Timeout in seconds for individual actor operations
+
+    # === Actor Data Caching (Tier 2) ===
+    PersonalityCacheTtlMinutes:
+      type: integer
+      env: ACTOR_PERSONALITY_CACHE_TTL_MINUTES
+      default: 5
+      description: TTL in minutes for cached personality data
+    EncounterCacheTtlMinutes:
+      type: integer
+      env: ACTOR_ENCOUNTER_CACHE_TTL_MINUTES
+      default: 5
+      description: TTL in minutes for cached encounter data
+    MaxEncounterResultsPerQuery:
+      type: integer
+      env: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
+      default: 10
+      description: Maximum encounter results returned per query
+
+    # === Memory Store Retry Configuration (Tier 3) ===
+    MemoryStoreMaxRetries:
+      type: integer
+      env: ACTOR_MEMORY_STORE_MAX_RETRIES
+      default: 3
+      description: Maximum retry attempts for memory store operations
+
 components:
   schemas: {}

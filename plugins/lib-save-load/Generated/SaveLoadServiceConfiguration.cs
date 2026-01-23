@@ -144,6 +144,12 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     public int CleanupIntervalMinutes { get; set; } = 60;
 
     /// <summary>
+    /// Delay in seconds before cleanup service starts processing
+    /// Environment variable: SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int CleanupStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
     /// Run scheduled cleanup only on control plane instance (EffectiveAppID == DefaultAppId). Prevents duplicate cleanup work across multi-instance deployments.
     /// Environment variable: SAVE_LOAD_CLEANUP_CONTROL_PLANE_ONLY
     /// </summary>
@@ -251,6 +257,12 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     /// Environment variable: SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT
     /// </summary>
     public int DeltaSizeThresholdPercent { get; set; } = 50;
+
+    /// <summary>
+    /// Minimum base save size in bytes before applying delta threshold logic (1KB default)
+    /// Environment variable: SAVE_LOAD_MIN_BASE_SIZE_FOR_DELTA_THRESHOLD_BYTES
+    /// </summary>
+    public int MinBaseSizeForDeltaThresholdBytes { get; set; } = 1024;
 
     /// <summary>
     /// Enable device-based conflict detection for cloud saves. Requires deviceId to be provided in save requests.

@@ -113,4 +113,16 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int SummaryCacheTtlSeconds { get; set; } = 300;
 
+    /// <summary>
+    /// Base lock expiry time in seconds for event buffer flush operations (actual expiry is max of this and 2x flush interval)
+    /// Environment variable: ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS
+    /// </summary>
+    public int EventBufferLockExpiryBaseSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Convergence tolerance for Glicko-2 volatility iteration (smaller = more precise but slower)
+    /// Environment variable: ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE
+    /// </summary>
+    public double Glicko2VolatilityConvergenceTolerance { get; set; } = 1e-06;
+
 }

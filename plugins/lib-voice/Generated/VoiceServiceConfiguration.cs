@@ -125,4 +125,10 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int RtpEnginePort { get; set; } = 22222;
 
+    /// <summary>
+    /// Timeout in seconds for Kamailio service requests
+    /// Environment variable: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
+    /// </summary>
+    public int KamailioRequestTimeoutSeconds { get; set; } = 5;
+
 }

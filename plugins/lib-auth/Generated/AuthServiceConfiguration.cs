@@ -167,4 +167,10 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string? PasswordResetBaseUrl { get; set; }
 
+    /// <summary>
+    /// Session token TTL in days for persistent sessions
+    /// Environment variable: AUTH_SESSION_TOKEN_TTL_DAYS
+    /// </summary>
+    public int SessionTokenTtlDays { get; set; } = 7;
+
 }

@@ -53,3 +53,9 @@ x-service-configuration:
       default: 10000
       env: INVENTORY_MAX_COUNT_QUERY_LIMIT
       description: Maximum items to scan when counting items across containers
+
+    QueryPageSize:
+      type: integer
+      default: 200
+      env: INVENTORY_QUERY_PAGE_SIZE
+      description: Number of items to fetch per query page for inventory operations

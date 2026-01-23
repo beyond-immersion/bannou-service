@@ -101,6 +101,11 @@ x-service-configuration:
       description: OpenResty port for cache invalidation calls
       env: ORCHESTRATOR_OPENRESTY_PORT
       default: 80
+    OpenRestyRequestTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for OpenResty HTTP requests
+      env: ORCHESTRATOR_OPENRESTY_REQUEST_TIMEOUT_SECONDS
+      default: 5
 
     # Kubernetes Configuration
     KubernetesNamespace:
@@ -114,6 +119,13 @@ x-service-configuration:
       description: Path to kubeconfig file (null uses default ~/.kube/config)
       env: ORCHESTRATOR_KUBECONFIG_PATH
       example: "/path/to/.kube/config"
+
+    # Polling Configuration
+    ContainerStatusPollIntervalSeconds:
+      type: integer
+      description: Interval in seconds for polling container status during deploy
+      env: ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS
+      default: 2
 
     # Infrastructure Connection Strings
     RedisConnectionString:

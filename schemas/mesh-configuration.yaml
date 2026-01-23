@@ -159,3 +159,36 @@ x-service-configuration:
       description: Whether to collect routing metrics
       env: MESH_METRICS_ENABLED
       default: true
+
+    # =========================================================================
+    # HTTP Client Configuration
+    # =========================================================================
+    PooledConnectionLifetimeMinutes:
+      type: integer
+      description: How long to keep pooled HTTP connections alive in minutes
+      env: MESH_POOLED_CONNECTION_LIFETIME_MINUTES
+      default: 2
+    ConnectTimeoutSeconds:
+      type: integer
+      description: TCP connection timeout in seconds
+      env: MESH_CONNECT_TIMEOUT_SECONDS
+      default: 10
+    EndpointCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for cached service endpoints
+      env: MESH_ENDPOINT_CACHE_TTL_SECONDS
+      default: 5
+
+    # =========================================================================
+    # Display and Output Limits
+    # =========================================================================
+    MaxTopEndpointsReturned:
+      type: integer
+      description: Maximum top endpoints returned in health status queries
+      env: MESH_MAX_TOP_ENDPOINTS_RETURNED
+      default: 2
+    MaxServiceMappingsDisplayed:
+      type: integer
+      description: Maximum service mappings shown in diagnostic logs
+      env: MESH_MAX_SERVICE_MAPPINGS_DISPLAYED
+      default: 10

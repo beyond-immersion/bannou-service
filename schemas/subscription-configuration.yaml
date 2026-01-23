@@ -22,3 +22,20 @@ x-service-configuration:
       description: Suffix for authorization keys in state store
       env: SUBSCRIPTION_AUTHORIZATION_SUFFIX
       default: "authorized"
+
+    # Background Service Configuration
+    ExpirationCheckIntervalMinutes:
+      type: integer
+      description: Interval in minutes between subscription expiration checks
+      env: SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES
+      default: 5
+    ExpirationGracePeriodSeconds:
+      type: integer
+      description: Grace period in seconds before expired subscriptions are marked inactive
+      env: SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS
+      default: 30
+    StartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before background service starts processing
+      env: SUBSCRIPTION_STARTUP_DELAY_SECONDS
+      default: 30

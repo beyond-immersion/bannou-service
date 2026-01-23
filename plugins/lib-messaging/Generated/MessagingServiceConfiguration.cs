@@ -209,4 +209,28 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// </summary>
     public bool EnableTracing { get; set; } = true;
 
+    /// <summary>
+    /// Interval in hours between subscription TTL refresh operations
+    /// Environment variable: MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS
+    /// </summary>
+    public int SubscriptionTtlRefreshIntervalHours { get; set; } = 6;
+
+    /// <summary>
+    /// Delay in seconds before starting subscription recovery service
+    /// Environment variable: MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int SubscriptionRecoveryStartupDelaySeconds { get; set; } = 2;
+
+    /// <summary>
+    /// Interval in seconds between RabbitMQ connection recovery attempts
+    /// Environment variable: MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS
+    /// </summary>
+    public int RabbitMQNetworkRecoveryIntervalSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// TTL in seconds for external HTTP callback subscriptions (default 24 hours)
+    /// Environment variable: MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS
+    /// </summary>
+    public int ExternalSubscriptionTtlSeconds { get; set; } = 86400;
+
 }

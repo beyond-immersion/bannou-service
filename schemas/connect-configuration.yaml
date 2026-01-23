@@ -125,5 +125,29 @@ x-service-configuration:
       default: 300
       description: Window for client reconnection after disconnect in seconds (default 5 minutes)
 
+    # === HTTP Client Configuration (Tier 2) ===
+    HttpClientTimeoutSeconds:
+      type: integer
+      env: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
+      default: 120
+      description: Timeout in seconds for HTTP client requests to backend services
+
+    # === WebSocket Connection Management (Tier 2) ===
+    WebSocketKeepAliveIntervalSeconds:
+      type: integer
+      env: CONNECT_WEBSOCKET_KEEP_ALIVE_INTERVAL_SECONDS
+      default: 30
+      description: Interval in seconds for WebSocket keep-alive ping/pong
+    ConnectionShutdownTimeoutSeconds:
+      type: integer
+      env: CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS
+      default: 5
+      description: Timeout in seconds when waiting for connection closure during shutdown
+    ReconnectionWindowExtensionMinutes:
+      type: integer
+      env: CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES
+      default: 1
+      description: Additional minutes added to reconnection window on each extension
+
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permission.capabilities-updated

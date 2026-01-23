@@ -153,3 +153,28 @@ x-service-configuration:
       description: Enable distributed tracing for messages
       env: MESSAGING_ENABLE_TRACING
       default: true
+
+    # Subscription Recovery Service Configuration
+    SubscriptionTtlRefreshIntervalHours:
+      type: integer
+      description: Interval in hours between subscription TTL refresh operations
+      default: 6
+      env: MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS
+    SubscriptionRecoveryStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before starting subscription recovery service
+      default: 2
+      env: MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS
+    # RabbitMQ Connection Recovery
+    RabbitMQNetworkRecoveryIntervalSeconds:
+      type: integer
+      description: Interval in seconds between RabbitMQ connection recovery attempts
+      default: 10
+      env: MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS
+
+    # External Subscription Configuration
+    ExternalSubscriptionTtlSeconds:
+      type: integer
+      description: TTL in seconds for external HTTP callback subscriptions (default 24 hours)
+      default: 86400
+      env: MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS

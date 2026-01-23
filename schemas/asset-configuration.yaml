@@ -437,3 +437,40 @@ x-service-configuration:
       description: Number of assets to process before updating job progress. Lower values give more frequent updates but add overhead.
       env: ASSET_STREAMING_PROGRESS_UPDATE_INTERVAL_ASSETS
       default: 10
+
+    # === Processing Worker Configuration ===
+    ProcessingJobMaxWaitSeconds:
+      type: integer
+      description: Maximum seconds to wait for a synchronous processing job to complete
+      default: 60
+      env: ASSET_PROCESSING_JOB_MAX_WAIT_SECONDS
+    ProcessingJobPollIntervalSeconds:
+      type: integer
+      description: Interval in seconds to poll for job completion during synchronous wait
+      default: 2
+      env: ASSET_PROCESSING_JOB_POLL_INTERVAL_SECONDS
+    ProcessingQueueCheckIntervalSeconds:
+      type: integer
+      description: Interval in seconds to check processing queue when no jobs are available
+      default: 30
+      env: ASSET_PROCESSING_QUEUE_CHECK_INTERVAL_SECONDS
+    ProcessingBatchIntervalSeconds:
+      type: integer
+      description: Delay in seconds between batch processing attempts
+      default: 5
+      env: ASSET_PROCESSING_BATCH_INTERVAL_SECONDS
+    ShutdownDrainTimeoutMinutes:
+      type: integer
+      description: Maximum minutes to allow queue draining during graceful shutdown
+      default: 2
+      env: ASSET_SHUTDOWN_DRAIN_TIMEOUT_MINUTES
+    ShutdownDrainIntervalSeconds:
+      type: integer
+      description: Interval in seconds between shutdown drain checks
+      default: 2
+      env: ASSET_SHUTDOWN_DRAIN_INTERVAL_SECONDS
+    DefaultBundleCacheTtlHours:
+      type: integer
+      description: Default TTL in hours for bundle cache entries
+      default: 24
+      env: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS

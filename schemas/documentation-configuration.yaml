@@ -118,3 +118,16 @@ x-service-configuration:
       description: Maximum documents per sync operation
       env: DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC
       default: 1000
+
+    # Background Service Configuration
+    RepositorySyncCheckIntervalSeconds:
+      type: integer
+      description: Interval in seconds between repository sync opportunity checks
+      env: DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS
+      default: 30
+    # Bulk Operation Limits
+    BulkOperationBatchSize:
+      type: integer
+      description: Maximum documents processed per bulk operation
+      env: DOCUMENTATION_BULK_OPERATION_BATCH_SIZE
+      default: 10

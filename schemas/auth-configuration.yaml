@@ -128,3 +128,10 @@ x-service-configuration:
       description: Base URL for password reset page
       env: AUTH_PASSWORD_RESET_BASE_URL
       example: "https://your-domain.com/reset-password"
+
+    # Session Configuration
+    SessionTokenTtlDays:
+      type: integer
+      description: Session token TTL in days for persistent sessions
+      env: AUTH_SESSION_TOKEN_TTL_DAYS
+      default: 7

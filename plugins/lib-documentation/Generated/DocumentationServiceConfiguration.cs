@@ -161,4 +161,16 @@ public class DocumentationServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxDocumentsPerSync { get; set; } = 1000;
 
+    /// <summary>
+    /// Interval in seconds between repository sync opportunity checks
+    /// Environment variable: DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    public int RepositorySyncCheckIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum documents processed per bulk operation
+    /// Environment variable: DOCUMENTATION_BULK_OPERATION_BATCH_SIZE
+    /// </summary>
+    public int BulkOperationBatchSize { get; set; } = 10;
+
 }

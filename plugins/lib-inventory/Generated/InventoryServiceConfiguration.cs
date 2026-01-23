@@ -101,4 +101,10 @@ public class InventoryServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxCountQueryLimit { get; set; } = 10000;
 
+    /// <summary>
+    /// Number of items to fetch per query page for inventory operations
+    /// Environment variable: INVENTORY_QUERY_PAGE_SIZE
+    /// </summary>
+    public int QueryPageSize { get; set; } = 200;
+
 }

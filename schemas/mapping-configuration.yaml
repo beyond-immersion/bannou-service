@@ -152,3 +152,10 @@ x-service-configuration:
       description: TTL for visual effects layer data (short-lived, ephemeral)
       default: 60
       env: MAPPING_TTL_VISUAL_EFFECTS
+
+    # Spatial Query Configuration
+    MaxSpatialQueryResults:
+      type: integer
+      description: Maximum results returned for spatial queries (bounding box, etc)
+      default: 5
+      env: MAPPING_MAX_SPATIAL_QUERY_RESULTS

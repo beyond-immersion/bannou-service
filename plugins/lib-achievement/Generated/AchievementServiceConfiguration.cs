@@ -149,4 +149,10 @@ public class AchievementServiceConfiguration : IServiceConfiguration
     /// </summary>
     public double RareThresholdPercent { get; set; } = 5.0;
 
+    /// <summary>
+    /// Minimum earned count for an achievement to be considered common (below this is rare regardless of percentage)
+    /// Environment variable: ACHIEVEMENT_RARITY_THRESHOLD_EARNED_COUNT
+    /// </summary>
+    public int RarityThresholdEarnedCount { get; set; } = 100;
+
 }

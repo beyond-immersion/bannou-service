@@ -24,3 +24,17 @@ x-service-configuration:
       description: Email domain that grants admin access (e.g., "@company.com")
       env: ACCOUNT_ADMIN_EMAIL_DOMAIN
       example: "@admin.example.com"
+
+    # Index Update Configuration
+    IndexUpdateMaxRetries:
+      type: integer
+      description: Maximum retry attempts for account index update operations
+      env: ACCOUNT_INDEX_UPDATE_MAX_RETRIES
+      default: 3
+
+    # Batch Processing Configuration
+    ListBatchSize:
+      type: integer
+      description: Number of accounts to process per batch in list operations
+      env: ACCOUNT_LIST_BATCH_SIZE
+      default: 100

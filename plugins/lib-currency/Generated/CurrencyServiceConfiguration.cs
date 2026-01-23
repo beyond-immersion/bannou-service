@@ -101,4 +101,16 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int HoldMaxDurationDays { get; set; } = 7;
 
+    /// <summary>
+    /// TTL in seconds for balance cache entries
+    /// Environment variable: CURRENCY_BALANCE_CACHE_TTL_SECONDS
+    /// </summary>
+    public int BalanceCacheTtlSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// TTL in seconds for hold cache entries
+    /// Environment variable: CURRENCY_HOLD_CACHE_TTL_SECONDS
+    /// </summary>
+    public int HoldCacheTtlSeconds { get; set; } = 120;
+
 }

@@ -51,3 +51,10 @@ x-service-configuration:
       env: ITEM_DEFAULT_SOULBOUND_TYPE
       default: none
       description: Default soulbound type for new templates (none, on_pickup, on_equip, on_use)
+
+    # List Operation Configuration
+    listOperationMaxRetries:
+      type: integer
+      env: ITEM_LIST_OPERATION_MAX_RETRIES
+      default: 3
+      description: Maximum retry attempts for optimistic concurrency on list operations

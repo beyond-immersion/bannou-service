@@ -65,4 +65,22 @@ public class SubscriptionServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string AuthorizationSuffix { get; set; } = "authorized";
 
+    /// <summary>
+    /// Interval in minutes between subscription expiration checks
+    /// Environment variable: SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES
+    /// </summary>
+    public int ExpirationCheckIntervalMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Grace period in seconds before expired subscriptions are marked inactive
+    /// Environment variable: SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS
+    /// </summary>
+    public int ExpirationGracePeriodSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Delay in seconds before background service starts processing
+    /// Environment variable: SUBSCRIPTION_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int StartupDelaySeconds { get; set; } = 30;
+
 }
