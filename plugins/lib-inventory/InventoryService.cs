@@ -26,6 +26,7 @@ public partial class InventoryService : IInventoryService
     private readonly IMessageBus _messageBus;
     private readonly IServiceNavigator _navigator;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<InventoryService> _logger;
     private readonly InventoryServiceConfiguration _configuration;
 
@@ -37,6 +38,9 @@ public partial class InventoryService : IInventoryService
     // Pagination limit matching schema maximum
     private const int QUERY_PAGE_SIZE = 200;
 
+    // Lock configuration
+    private const int LOCK_EXPIRY_SECONDS = 30;
+
     /// <summary>
     /// Initializes a new instance of the InventoryService.
     /// </summary>
@@ -44,12 +48,14 @@ public partial class InventoryService : IInventoryService
         IMessageBus messageBus,
         IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
+        IDistributedLockProvider lockProvider,
         ILogger<InventoryService> logger,
         InventoryServiceConfiguration configuration)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
@@ -164,6 +170,9 @@ public partial class InventoryService : IInventoryService
 
             await containerStore.SaveAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken: cancellationToken);
 
+            // Update Redis cache after MySQL write
+            await UpdateContainerCacheAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken);
+
             var ownerIndexKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
             await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
                 ownerIndexKey, containerId.ToString(), cancellationToken);
@@ -203,8 +212,8 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var model = await containerStore.GetAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+            var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
 
             if (model is null)
             {
@@ -391,8 +400,23 @@ public partial class InventoryService : IInventoryService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var model = await containerStore.GetAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+            // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
+            var lockOwner = $"update-container-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.InventoryLock,
+                body.ContainerId.ToString(),
+                lockOwner,
+                LOCK_EXPIRY_SECONDS,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId}", body.ContainerId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+            var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
 
             if (model is null)
             {
@@ -413,7 +437,8 @@ public partial class InventoryService : IInventoryService
             if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
             model.ModifiedAt = now;
 
-            await containerStore.SaveAsync($"{CONT_PREFIX}{body.ContainerId}", model, cancellationToken: cancellationToken);
+            // Save with cache write-through
+            await SaveContainerWithCacheAsync(model, cancellationToken);
 
             await _messageBus.TryPublishAsync("inventory-container.updated", new InventoryContainerUpdatedEvent
             {
@@ -448,8 +473,8 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var model = await containerStore.GetAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+            var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
 
             if (model is null)
             {
@@ -527,7 +552,11 @@ public partial class InventoryService : IInventoryService
             await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
                 $"{CONT_TYPE_INDEX}{model.ContainerType}", body.ContainerId.ToString(), cancellationToken);
 
+            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
             await containerStore.DeleteAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+
+            // Invalidate cache after MySQL delete
+            await InvalidateContainerCacheAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
 
             await _messageBus.TryPublishAsync("inventory-container.deleted", new InventoryContainerDeletedEvent
             {
@@ -571,8 +600,23 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var container = await containerStore.GetAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+            // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
+            var lockOwner = $"add-item-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.InventoryLock,
+                body.ContainerId.ToString(),
+                lockOwner,
+                LOCK_EXPIRY_SECONDS,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId}", body.ContainerId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+            var container = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
 
             if (container is null)
             {
@@ -652,7 +696,8 @@ public partial class InventoryService : IInventoryService
             }
             container.ModifiedAt = now;
 
-            await containerStore.SaveAsync($"{CONT_PREFIX}{body.ContainerId}", container, cancellationToken: cancellationToken);
+            // Save with cache write-through
+            await SaveContainerWithCacheAsync(container, cancellationToken);
 
             // Check if container is now full and emit event
             await EmitContainerFullEventIfNeededAsync(container, now, cancellationToken);
@@ -715,8 +760,23 @@ public partial class InventoryService : IInventoryService
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var container = await containerStore.GetAsync($"{CONT_PREFIX}{item.ContainerId}", cancellationToken);
+            // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
+            var lockOwner = $"remove-item-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.InventoryLock,
+                item.ContainerId.ToString(),
+                lockOwner,
+                LOCK_EXPIRY_SECONDS,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId}", item.ContainerId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+            var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
 
             if (container is null)
             {
@@ -751,7 +811,8 @@ public partial class InventoryService : IInventoryService
             }
 
             container.ModifiedAt = now;
-            await containerStore.SaveAsync($"{CONT_PREFIX}{item.ContainerId}", container, cancellationToken: cancellationToken);
+            // Save with cache write-through
+            await SaveContainerWithCacheAsync(container, cancellationToken);
 
             await _messageBus.TryPublishAsync("inventory-item.removed", new InventoryItemRemovedEvent
             {
@@ -821,8 +882,8 @@ public partial class InventoryService : IInventoryService
             }
 
             // Moving to different container - check constraints
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var targetContainer = await containerStore.GetAsync($"{CONT_PREFIX}{body.TargetContainerId}", cancellationToken);
+            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+            var targetContainer = await GetContainerWithCacheAsync(body.TargetContainerId, cancellationToken);
 
             if (targetContainer is null)
             {
@@ -1916,6 +1977,108 @@ public partial class InventoryService : IInventoryService
             CreatedAt = model.CreatedAt,
             ModifiedAt = model.ModifiedAt
         };
+    }
+
+    #endregion
+
+    #region Container Cache Helpers
+
+    /// <summary>
+    /// Container cache TTL in seconds (300 seconds - containers change less frequently).
+    /// </summary>
+    private const int CONTAINER_CACHE_TTL_SECONDS = 300;
+
+    /// <summary>
+    /// Attempts to retrieve a container from the Redis cache.
+    /// Uses StateStoreDefinitions.InventoryContainerCache directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task<ContainerModel?> TryGetContainerFromCacheAsync(string key, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
+            return await cache.GetAsync(key, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache error is non-fatal - proceed to MySQL
+            _logger.LogDebug(ex, "Container cache lookup failed for {Key}", key);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Updates the container cache after a read or write.
+    /// Uses StateStoreDefinitions.InventoryContainerCache directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task UpdateContainerCacheAsync(string key, ContainerModel container, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
+            await cache.SaveAsync(key, container, new StateOptions { Ttl = CONTAINER_CACHE_TTL_SECONDS }, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache write failure is non-fatal
+            _logger.LogWarning(ex, "Failed to update container cache for {Key}", key);
+        }
+    }
+
+    /// <summary>
+    /// Invalidates a container from the cache (for deletes).
+    /// </summary>
+    private async Task InvalidateContainerCacheAsync(string key, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
+            await cache.DeleteAsync(key, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache invalidation failure is non-fatal
+            _logger.LogDebug(ex, "Failed to invalidate container cache for {Key}", key);
+        }
+    }
+
+    /// <summary>
+    /// Gets a container, checking cache first, then MySQL.
+    /// Populates cache on miss.
+    /// </summary>
+    private async Task<ContainerModel?> GetContainerWithCacheAsync(Guid containerId, CancellationToken ct)
+    {
+        var key = $"{CONT_PREFIX}{containerId}";
+
+        // Check Redis cache first
+        var cached = await TryGetContainerFromCacheAsync(key, ct);
+        if (cached != null)
+            return cached;
+
+        // Cache miss - read from MySQL
+        var store = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+        var container = await store.GetAsync(key, ct);
+
+        if (container != null)
+        {
+            // Populate cache for future reads
+            await UpdateContainerCacheAsync(key, container, ct);
+        }
+
+        return container;
+    }
+
+    /// <summary>
+    /// Saves a container to MySQL and updates the cache.
+    /// </summary>
+    private async Task SaveContainerWithCacheAsync(ContainerModel container, CancellationToken ct)
+    {
+        var key = $"{CONT_PREFIX}{container.ContainerId}";
+        var store = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+        await store.SaveAsync(key, container, cancellationToken: ct);
+
+        // Update Redis cache after MySQL write
+        await UpdateContainerCacheAsync(key, container, ct);
     }
 
     #endregion
