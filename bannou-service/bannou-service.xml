@@ -35260,6 +35260,118 @@
             <returns>Active contracts retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.LockContractAsync(BeyondImmersion.BannouService.Contract.LockContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Lock contract under guardian custody
+            </summary>
+            <remarks>
+            Locks a contract under guardian custody (e.g., escrow). A locked contract
+            <br/>cannot be modified, terminated, or have parties transferred except by the
+            <br/>guardian. Requires the contract template to have `transferable: true`.
+            </remarks>
+            <returns>Contract locked successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.UnlockContractAsync(BeyondImmersion.BannouService.Contract.UnlockContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Unlock contract from guardian custody
+            </summary>
+            <remarks>
+            Unlocks a contract from guardian custody. Only the current guardian can
+            <br/>unlock a contract. Called on escrow refund to restore contract to original state.
+            </remarks>
+            <returns>Contract unlocked successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.TransferContractPartyAsync(BeyondImmersion.BannouService.Contract.TransferContractPartyRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Transfer party role to new entity
+            </summary>
+            <remarks>
+            Transfers a party role to a new entity. Used by escrow to reassign contract
+            <br/>roles on release (e.g., transfer landlord role to new property owner).
+            <br/>Contract must be locked and caller must be the guardian.
+            </remarks>
+            <returns>Party transferred successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.RegisterClauseTypeAsync(BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Register a new clause type
+            </summary>
+            <remarks>
+            Registers a new clause type with validation and/or execution handlers.
+            <br/>Clause types are registered globally (plugin-level, admin operation) and
+            <br/>referenced by contract templates via typeCode. Built-in types
+            <br/>(asset_requirement, currency_transfer, item_transfer) are pre-registered.
+            </remarks>
+            <returns>Clause type registered successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.ListClauseTypesAsync(BeyondImmersion.BannouService.Contract.ListClauseTypesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all registered clause types
+            </summary>
+            <remarks>
+            Lists all registered clause types including built-in types and
+            <br/>custom-registered types.
+            </remarks>
+            <returns>Clause types listed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.SetContractTemplateValuesAsync(BeyondImmersion.BannouService.Contract.SetTemplateValuesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Set template values on contract instance
+            </summary>
+            <remarks>
+            Sets template values on a contract instance. Called by escrow when binding
+            <br/>a contract to an escrow agreement. Template values are used for variable
+            <br/>substitution in clause handlers (e.g., wallet IDs, container IDs).
+            </remarks>
+            <returns>Template values set successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.CheckAssetRequirementsAsync(BeyondImmersion.BannouService.Contract.CheckAssetRequirementsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if asset requirement clauses are satisfied
+            </summary>
+            <remarks>
+            Checks if all asset requirement clauses are satisfied. Uses template values
+            <br/>(e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+            <br/>via the registered clause type handlers.
+            </remarks>
+            <returns>Asset requirements checked</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.IContractClient.ExecuteContractAsync(BeyondImmersion.BannouService.Contract.ExecuteContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Execute all contract clauses (idempotent)
+            </summary>
+            <remarks>
+            Executes all contract distribution clauses - distribute assets per clauses,
+            <br/>collect fees, mark contract as executed. This is idempotent - calling twice
+            <br/>returns the same result without re-executing. Contract must be in fulfilled
+            <br/>status and all template values must be set.
+            </remarks>
+            <returns>Contract executed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ContractClient">
             <summary>
             Client implementation for the Contract service.
@@ -35619,6 +35731,118 @@
             <br/>Useful for displaying current obligations in UI.
             </remarks>
             <returns>Active contracts retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.LockContractAsync(BeyondImmersion.BannouService.Contract.LockContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Lock contract under guardian custody
+            </summary>
+            <remarks>
+            Locks a contract under guardian custody (e.g., escrow). A locked contract
+            <br/>cannot be modified, terminated, or have parties transferred except by the
+            <br/>guardian. Requires the contract template to have `transferable: true`.
+            </remarks>
+            <returns>Contract locked successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.UnlockContractAsync(BeyondImmersion.BannouService.Contract.UnlockContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Unlock contract from guardian custody
+            </summary>
+            <remarks>
+            Unlocks a contract from guardian custody. Only the current guardian can
+            <br/>unlock a contract. Called on escrow refund to restore contract to original state.
+            </remarks>
+            <returns>Contract unlocked successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.TransferContractPartyAsync(BeyondImmersion.BannouService.Contract.TransferContractPartyRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Transfer party role to new entity
+            </summary>
+            <remarks>
+            Transfers a party role to a new entity. Used by escrow to reassign contract
+            <br/>roles on release (e.g., transfer landlord role to new property owner).
+            <br/>Contract must be locked and caller must be the guardian.
+            </remarks>
+            <returns>Party transferred successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.RegisterClauseTypeAsync(BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Register a new clause type
+            </summary>
+            <remarks>
+            Registers a new clause type with validation and/or execution handlers.
+            <br/>Clause types are registered globally (plugin-level, admin operation) and
+            <br/>referenced by contract templates via typeCode. Built-in types
+            <br/>(asset_requirement, currency_transfer, item_transfer) are pre-registered.
+            </remarks>
+            <returns>Clause type registered successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ListClauseTypesAsync(BeyondImmersion.BannouService.Contract.ListClauseTypesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all registered clause types
+            </summary>
+            <remarks>
+            Lists all registered clause types including built-in types and
+            <br/>custom-registered types.
+            </remarks>
+            <returns>Clause types listed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.SetContractTemplateValuesAsync(BeyondImmersion.BannouService.Contract.SetTemplateValuesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Set template values on contract instance
+            </summary>
+            <remarks>
+            Sets template values on a contract instance. Called by escrow when binding
+            <br/>a contract to an escrow agreement. Template values are used for variable
+            <br/>substitution in clause handlers (e.g., wallet IDs, container IDs).
+            </remarks>
+            <returns>Template values set successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.CheckAssetRequirementsAsync(BeyondImmersion.BannouService.Contract.CheckAssetRequirementsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if asset requirement clauses are satisfied
+            </summary>
+            <remarks>
+            Checks if all asset requirement clauses are satisfied. Uses template values
+            <br/>(e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+            <br/>via the registered clause type handlers.
+            </remarks>
+            <returns>Asset requirements checked</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Contract.ContractClient.ExecuteContractAsync(BeyondImmersion.BannouService.Contract.ExecuteContractRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Execute all contract clauses (idempotent)
+            </summary>
+            <remarks>
+            Executes all contract distribution clauses - distribute assets per clauses,
+            <br/>collect fees, mark contract as executed. This is idempotent - calling twice
+            <br/>returns the same result without re-executing. Contract must be in fulfilled
+            <br/>status and all template values must be set.
+            </remarks>
+            <returns>Contract executed successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ContractClient.ObjectResponseResult`1">
@@ -37012,6 +37236,528 @@
         <member name="T:BeyondImmersion.BannouService.Contract.ComparisonOperator">
             <summary>
             Comparison operators for numeric conditions
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.LockContractRequest">
+            <summary>
+            Request to lock a contract under guardian custody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractRequest.ContractInstanceId">
+            <summary>
+            Contract instance ID to lock
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractRequest.GuardianId">
+            <summary>
+            Guardian entity ID (e.g., escrow agreement ID)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractRequest.GuardianType">
+            <summary>
+            Guardian entity type (e.g., "escrow")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractRequest.IdempotencyKey">
+            <summary>
+            Optional idempotency key for the operation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.LockContractResponse">
+            <summary>
+            Response from locking a contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractResponse.Locked">
+            <summary>
+            Whether the contract was locked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractResponse.GuardianId">
+            <summary>
+            Guardian entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.LockContractResponse.LockedAt">
+            <summary>
+            When the contract was locked
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.UnlockContractRequest">
+            <summary>
+            Request to unlock a contract from guardian custody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UnlockContractRequest.ContractInstanceId">
+            <summary>
+            Contract instance ID to unlock
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UnlockContractRequest.GuardianId">
+            <summary>
+            Guardian entity ID (must match current guardian)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UnlockContractRequest.GuardianType">
+            <summary>
+            Guardian entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UnlockContractRequest.IdempotencyKey">
+            <summary>
+            Optional idempotency key for the operation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.UnlockContractResponse">
+            <summary>
+            Response from unlocking a contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UnlockContractResponse.Unlocked">
+            <summary>
+            Whether the contract was unlocked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.UnlockContractResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest">
+            <summary>
+            Request to transfer a party role to a new entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.ContractInstanceId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.FromEntityId">
+            <summary>
+            Current party entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.FromEntityType">
+            <summary>
+            Current party entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.ToEntityId">
+            <summary>
+            New entity ID to receive the role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.ToEntityType">
+            <summary>
+            New entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.GuardianId">
+            <summary>
+            Guardian entity ID (must be current guardian)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.GuardianType">
+            <summary>
+            Guardian entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyRequest.IdempotencyKey">
+            <summary>
+            Optional idempotency key for the operation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.TransferContractPartyResponse">
+            <summary>
+            Response from transferring a party role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyResponse.Transferred">
+            <summary>
+            Whether the transfer was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyResponse.Role">
+            <summary>
+            Role that was transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyResponse.FromEntityId">
+            <summary>
+            Previous party entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.TransferContractPartyResponse.ToEntityId">
+            <summary>
+            New party entity ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ClauseCategory">
+            <summary>
+            Category of clause type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ClauseHandlerDefinition">
+            <summary>
+            Handler definition for clause type operations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseHandlerDefinition.Service">
+            <summary>
+            Target service name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseHandlerDefinition.Endpoint">
+            <summary>
+            Target endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseHandlerDefinition.RequestMapping">
+            <summary>
+            Template variable to request field mapping
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseHandlerDefinition.ResponseMapping">
+            <summary>
+            Response field to result mapping
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest">
+            <summary>
+            Request to register a new clause type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest.TypeCode">
+            <summary>
+            Unique identifier for this clause type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest.Category">
+            <summary>
+            Whether this is a validation, execution, or both type of clause
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest.ValidationHandler">
+            <summary>
+            Handler called during check-asset-requirements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.RegisterClauseTypeRequest.ExecutionHandler">
+            <summary>
+            Handler called during execute
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.RegisterClauseTypeResponse">
+            <summary>
+            Response from registering a clause type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.RegisterClauseTypeResponse.Registered">
+            <summary>
+            Whether the type was registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.RegisterClauseTypeResponse.TypeCode">
+            <summary>
+            The registered type code
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ListClauseTypesRequest">
+            <summary>
+            Request to list clause types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListClauseTypesRequest.Category">
+            <summary>
+            Filter by category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListClauseTypesRequest.IncludeBuiltIn">
+            <summary>
+            Include built-in types in response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ClauseTypeSummary">
+            <summary>
+            Summary of a clause type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseTypeSummary.TypeCode">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseTypeSummary.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseTypeSummary.Category">
+            <summary>
+            Clause category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseTypeSummary.HasValidationHandler">
+            <summary>
+            Whether a validation handler is registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseTypeSummary.HasExecutionHandler">
+            <summary>
+            Whether an execution handler is registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseTypeSummary.IsBuiltIn">
+            <summary>
+            Whether this is a built-in type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ListClauseTypesResponse">
+            <summary>
+            Response containing list of clause types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ListClauseTypesResponse.ClauseTypes">
+            <summary>
+            List of registered clause types
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.SetTemplateValuesRequest">
+            <summary>
+            Request to set template values on a contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.SetTemplateValuesRequest.ContractInstanceId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.SetTemplateValuesRequest.TemplateValues">
+            <summary>
+            Key-value pairs for template substitution.
+            <br/>Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.SetTemplateValuesResponse">
+            <summary>
+            Response from setting template values
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.SetTemplateValuesResponse.Updated">
+            <summary>
+            Whether values were updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.SetTemplateValuesResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.SetTemplateValuesResponse.ValueCount">
+            <summary>
+            Number of template values set
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CheckAssetRequirementsRequest">
+            <summary>
+            Request to check asset requirement clauses
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckAssetRequirementsRequest.ContractInstanceId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.AssetRequirementInfo">
+            <summary>
+            Information about a required asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.AssetRequirementInfo.Type">
+            <summary>
+            Asset type (currency, item, item_stack)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.AssetRequirementInfo.Code">
+            <summary>
+            Currency code or item template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.AssetRequirementInfo.Amount">
+            <summary>
+            Amount or quantity required
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ClauseAssetStatus">
+            <summary>
+            Status of a single clause's asset requirements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseAssetStatus.ClauseId">
+            <summary>
+            Clause identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseAssetStatus.Satisfied">
+            <summary>
+            Whether requirement is satisfied
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseAssetStatus.Required">
+            <summary>
+            What the clause requires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseAssetStatus.Current">
+            <summary>
+            Current amount present
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ClauseAssetStatus.Missing">
+            <summary>
+            Amount still needed (0 if satisfied)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.PartyAssetRequirementStatus">
+            <summary>
+            Asset requirement status for a single party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PartyAssetRequirementStatus.PartyRole">
+            <summary>
+            Party role (e.g., party_a, party_b)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PartyAssetRequirementStatus.Satisfied">
+            <summary>
+            Whether all party's requirements are satisfied
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.PartyAssetRequirementStatus.Clauses">
+            <summary>
+            Status of each clause for this party
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.CheckAssetRequirementsResponse">
+            <summary>
+            Response from checking asset requirements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckAssetRequirementsResponse.AllSatisfied">
+            <summary>
+            Whether all requirements across all parties are satisfied
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.CheckAssetRequirementsResponse.ByParty">
+            <summary>
+            Status broken down by party
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ExecuteContractRequest">
+            <summary>
+            Request to execute contract clauses
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractRequest.ContractInstanceId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractRequest.IdempotencyKey">
+            <summary>
+            Idempotency key for the execution
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.DistributionRecord">
+            <summary>
+            Record of an asset distribution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.ClauseId">
+            <summary>
+            Clause that was executed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.ClauseType">
+            <summary>
+            Type of clause (fee, distribution)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.AssetType">
+            <summary>
+            Type of asset (currency, item)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.Amount">
+            <summary>
+            Amount transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.SourceWalletId">
+            <summary>
+            Source wallet ID (for currency)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.DestinationWalletId">
+            <summary>
+            Destination wallet ID (for currency)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.SourceContainerId">
+            <summary>
+            Source container ID (for items)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.DistributionRecord.DestinationContainerId">
+            <summary>
+            Destination container ID (for items)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Contract.ExecuteContractResponse">
+            <summary>
+            Response from executing a contract
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.Executed">
+            <summary>
+            Whether execution was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.AlreadyExecuted">
+            <summary>
+            True if this was a repeat call (idempotency)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.ContractId">
+            <summary>
+            Contract instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.Distributions">
+            <summary>
+            Records of what was moved where
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Contract.ExecuteContractResponse.ExecutedAt">
+            <summary>
+            When execution occurred
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Currency.ICurrencyClient">
