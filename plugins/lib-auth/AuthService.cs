@@ -1462,7 +1462,7 @@ public partial class AuthService : IAuthService
                         // Publish session.updated event for Permission service
                         await PublishSessionUpdatedEventAsync(
                             accountId,
-                            session.SessionId,
+                            session.SessionId.ToString(),
                             newRoles,
                             session.Authorizations,
                             SessionUpdatedEventReason.Role_changed,
@@ -1534,7 +1534,7 @@ public partial class AuthService : IAuthService
                         // Publish session.updated event for Permission service
                         await PublishSessionUpdatedEventAsync(
                             accountId,
-                            session.SessionId,
+                            session.SessionId.ToString(),
                             session.Roles,
                             authorizations,
                             SessionUpdatedEventReason.Authorization_changed,
