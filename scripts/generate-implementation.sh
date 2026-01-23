@@ -71,19 +71,23 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
+/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
+/// <list type="bullet">
+///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
+///   <item><b>Configuration:</b> ALL config properties in ${SERVICE_PASCAL}ServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
+///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
+///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
+///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
+/// </list>
+/// </para>
+/// <para>
 /// <b>RELATED FILES:</b>
 /// <list type="bullet">
 ///   <item>Request/Response models: bannou-service/Generated/Models/${SERVICE_PASCAL}Models.cs</item>
 ///   <item>Event models: bannou-service/Generated/Events/${SERVICE_PASCAL}EventsModels.cs</item>
 ///   <item>Lifecycle events: bannou-service/Generated/Events/${SERVICE_PASCAL}LifecycleEvents.cs</item>
-/// </list>
-/// </para>
-/// <para>
-/// Standard structure:
-/// <list type="bullet">
-///   <item>${SERVICE_PASCAL}Service.cs (this file) - Business logic</item>
-///   <item>${SERVICE_PASCAL}ServiceEvents.cs - Event consumer handlers (generated)</item>
-///   <item>Generated/${SERVICE_PASCAL}PermissionRegistration.cs - Permission registration (generated)</item>
+///   <item>Configuration: Generated/${SERVICE_PASCAL}ServiceConfiguration.cs</item>
+///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
 /// </list>
 /// </para>
 /// </remarks>

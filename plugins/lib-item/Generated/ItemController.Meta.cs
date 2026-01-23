@@ -2865,6 +2865,12 @@ public partial class ItemController
                     "nullable": true,
                     "description": "New custom name"
                 },
+                "quantityDelta": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true,
+                    "description": "Change to quantity (positive to add, negative to subtract). Only valid for stackable items."
+                },
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,

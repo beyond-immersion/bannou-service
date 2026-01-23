@@ -41,7 +41,7 @@ Tenets are organized into three categories based on when they're needed:
 | Category | Tenets | When to Reference |
 |----------|--------|-------------------|
 | [**Foundation**](tenets/FOUNDATION.md) | T1, T2, T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24 | While actively writing service code |
+| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 ---
@@ -76,9 +76,10 @@ Tenets are organized into three categories based on when they're needed:
 | **T14** | Polymorphic Associations | Entity ID + Type columns; composite string keys |
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
 | **T20** | JSON Serialization | Always use BannouJson; never direct JsonSerializer |
-| **T21** | Configuration-First | Use generated config classes; no direct Environment.GetEnvironmentVariable |
+| **T21** | Configuration-First | Use generated config classes; no dead config; no hardcoded tunables |
 | **T23** | Async Method Pattern | Task-returning methods must be async with await |
 | **T24** | Using Statement Pattern | Use `using` for disposables; manual Dispose only for class-owned resources |
+| **T25** | Internal Model Type Safety | POCOs use proper types (enums, Guids); no string representations |
 
 ---
 
@@ -125,11 +126,19 @@ Tenets are organized into three categories based on when they're needed:
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
 | Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
 | Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
+| Unused configuration property | T21 | Wire up in service or remove from schema |
+| Hardcoded magic number for tunable | T21 | Define in configuration schema, use config |
+| Defined cache store not used | T21 | Implement cache read-through or remove store |
 | Non-async Task-returning method | T23 | Add async keyword and await |
 | `Task.FromResult` without async | T23 | Use async method with await |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |
+| String field for enum in internal POCO | T25 | Use the generated enum type |
+| String field for GUID in internal POCO | T25 | Use `Guid` type |
+| `Enum.Parse` in business logic | T25 | Use typed POCO, parse only at boundaries |
+| `.ToString()` populating internal model | T25 | Assign enum directly |
+| String comparison for enum value | T25 | Use enum equality operator |
 | `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |

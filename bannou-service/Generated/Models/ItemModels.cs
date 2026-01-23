@@ -1160,6 +1160,12 @@ public partial class ModifyItemInstanceRequest
     public string? CustomName { get; set; } = default!;
 
     /// <summary>
+    /// Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("quantityDelta")]
+    public double? QuantityDelta { get; set; } = default!;
+
+    /// <summary>
     /// New instance metadata (merges with existing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]

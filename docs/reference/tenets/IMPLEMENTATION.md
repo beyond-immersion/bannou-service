@@ -2,7 +2,7 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25
 
 These tenets define the patterns you follow while implementing services. Reference them during active development.
 
@@ -458,6 +458,48 @@ All serialization via `BannouJson` uses these settings:
 3. **Fail-Fast Required Config**: Required values without defaults MUST throw at startup
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
 5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
+6. **No Dead Configuration**: Every defined config property MUST be referenced in service code
+7. **No Hardcoded Tunables**: Any tunable value (limits, timeouts, thresholds, capacities) MUST be a configuration property. A hardcoded tunable is a sign you need to create a new config property.
+8. **Use Defined Infrastructure**: If a cache/ephemeral state store is defined for the service in `schemas/state-stores.yaml`, the service MUST implement cache read-through/write-through using that store
+
+### Configuration Completeness (MANDATORY)
+
+**Rule**: Configuration properties exist to be used. If a property is defined in the configuration schema, the service implementation MUST reference it. Unused config properties indicate either dead schema (remove from configuration YAML) or missing functionality (implement the feature that uses it).
+
+**Hardcoded Tunables are Forbidden**:
+
+Any numeric literal that represents a limit, timeout, threshold, or capacity is a sign that a configuration property needs to exist. If you find yourself writing a magic number, define it in the configuration schema first.
+
+```csharp
+// FORBIDDEN: Hardcoded tunables - these need configuration properties
+var maxResults = Math.Min(body.Limit, 1000);  // NO - define MaxResultsPerQuery in config schema
+await Task.Delay(TimeSpan.FromSeconds(30));   // NO - define RetryDelaySeconds in config schema
+if (list.Count >= 100) return error;          // NO - define MaxItemsPerContainer in config schema
+
+// CORRECT: All tunables come from configuration
+var maxResults = Math.Min(body.Limit, _configuration.MaxResultsPerQuery);
+await Task.Delay(TimeSpan.FromSeconds(_configuration.RetryDelaySeconds));
+if (list.Count >= _configuration.MaxItemsPerContainer) return error;
+```
+
+**Defined State Stores Must Be Used**:
+
+If `schemas/state-stores.yaml` defines a Redis cache store for your service (e.g., `item-template-cache`), you MUST implement cache read-through:
+
+```csharp
+// CORRECT: Cache store defined in schema is used for read-through caching
+var cached = await _cacheStore.GetAsync(key, ct);
+if (cached is not null) return cached;
+
+var persistent = await _persistentStore.GetAsync(key, ct);
+if (persistent is null) return null;
+
+await _cacheStore.SaveAsync(key, persistent,
+    new StateOptions { Ttl = _configuration.CacheTtlSeconds }, ct);
+return persistent;
+```
+
+If a defined cache store is genuinely unnecessary, remove it from `schemas/state-stores.yaml` rather than leaving dead infrastructure.
 
 ### Allowed Exceptions (4 Categories)
 
@@ -683,4 +725,134 @@ This tenet is enforced via `CA2000` (Dispose objects before losing scope) at war
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24. See [TENETS.md](../TENETS.md) for the complete index.*
+## Tenet 25: Internal Model Type Safety (MANDATORY)
+
+**Rule**: Internal data models (POCOs stored in state stores) MUST use the strongest available C# type for each field. String representations of typed values are forbidden in internal models.
+
+### Why This Matters
+
+When internal POCOs use `string` for fields that have proper C# types (enums, Guids, DateTimeOffset), several problems cascade:
+
+1. **Fragile comparisons**: `model.Rarity == "common"` instead of `model.Rarity == ItemRarity.Common`
+2. **Runtime parsing**: `Enum.Parse<ItemRarity>(model.Rarity)` on every read - wasteful and exception-prone
+3. **No compile-time safety**: Typos in string values (`"commom"`) compile fine but fail at runtime
+4. **Refactoring blindness**: Renaming an enum member doesn't surface all the string comparisons that break
+
+### Requirements
+
+1. **Enums**: If the API schema defines an enum type, the internal POCO MUST use that enum type (not `string`)
+2. **GUIDs**: If a field represents an entity ID, the POCO MUST use `Guid` (not `string`)
+3. **Dates**: If a field represents a timestamp, the POCO MUST use `DateTimeOffset` (not `string`)
+4. **No Enum.Parse in business logic**: Enum parsing belongs only at system boundaries (deserialization, external input)
+
+### Correct Pattern
+
+```csharp
+// CORRECT: Internal model uses proper types
+internal class ItemTemplateModel
+{
+    public Guid TemplateId { get; set; }
+    public ItemCategory Category { get; set; }
+    public ItemRarity Rarity { get; set; }
+    public WeightPrecision WeightPrecision { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+// CORRECT: Direct enum assignment from request (request already uses enum)
+var model = new ItemTemplateModel
+{
+    Category = body.Category,    // Both are ItemCategory enum
+    Rarity = body.Rarity,        // Both are ItemRarity enum
+};
+
+// CORRECT: Direct enum comparison
+if (model.Rarity == ItemRarity.Legendary) { ... }
+```
+
+### Forbidden Patterns
+
+```csharp
+// FORBIDDEN: String representation of enum
+internal class ItemTemplateModel
+{
+    public string Category { get; set; } = string.Empty;  // NO - use ItemCategory
+    public string Rarity { get; set; } = string.Empty;    // NO - use ItemRarity
+}
+
+// FORBIDDEN: ToString() when populating internal model
+Category = body.Category.ToString(),  // NO - assign enum directly
+
+// FORBIDDEN: Enum.Parse in business logic
+var rarity = Enum.Parse<ItemRarity>(model.Rarity);  // NO - model should already be typed
+
+// FORBIDDEN: String comparison for enum values
+if (model.Status == "active") { ... }  // NO - use enum equality
+
+// FORBIDDEN: String for GUID fields
+public string OwnerId { get; set; } = string.Empty;  // NO - use Guid
+```
+
+### Boundary Conversions
+
+Enum parsing is acceptable ONLY at system boundaries where string input is unavoidable:
+
+```csharp
+// ACCEPTABLE: Parsing configuration defaults (string config → enum)
+Rarity = body.Rarity ?? Enum.Parse<ItemRarity>(_configuration.DefaultRarity, ignoreCase: true),
+
+// ACCEPTABLE: Parsing external API responses (third-party string → enum)
+var status = Enum.Parse<OrderStatus>(externalResponse.Status, ignoreCase: true);
+```
+
+### Event Model Conversions
+
+When publishing events that use `string` fields (because event schemas use string for cross-language compatibility), convert at the event boundary:
+
+```csharp
+// CORRECT: Enum → string only when creating event models for publishing
+var evt = new ItemCreatedEvent
+{
+    Category = model.Category.ToString(),  // Event model has string Category
+    Rarity = model.Rarity.ToString(),      // Event model has string Rarity
+};
+await _messageBus.PublishAsync("item.created", evt, cancellationToken: ct);
+```
+
+### Serialization
+
+`BannouJson` handles enum serialization automatically (PascalCase string representation). State stores using `IStateStore<T>` serialize via `BannouJson`, so enum-typed POCO fields are stored as their string names and deserialized back to enum values transparently.
+
+---
+
+## Quick Reference: Implementation Violations
+
+| Violation | Tenet | Fix |
+|-----------|-------|-----|
+| Missing event consumer registration | T3 | Add RegisterEventConsumers call |
+| Using IErrorEventEmitter | T7 | Use IMessageBus.TryPublishErrorAsync instead |
+| Generic catch returning 500 | T7 | Catch ApiException specifically |
+| Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
+| Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
+| Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
+| Per-instance salt/key generation | T9 | Use shared/deterministic values |
+| Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
+| Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
+| Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
+| Hardcoded credential fallback | T21 | Remove default, require configuration |
+| Unused configuration property | T21 | Wire up in service or remove from schema |
+| Hardcoded magic number for tunable | T21 | Define in configuration schema |
+| Defined cache store not used | T21 | Implement cache read-through or remove store |
+| Non-async Task-returning method | T23 | Add async keyword and await |
+| `Task.FromResult` without async | T23 | Use async method with await |
+| `.Result` or `.Wait()` on Task | T23 | Use await instead |
+| Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
+| try/finally for disposal | T24 | Use `using` statement instead |
+| String field for enum in internal POCO | T25 | Use the generated enum type |
+| String field for GUID in internal POCO | T25 | Use `Guid` type |
+| `Enum.Parse` in business logic | T25 | Use typed POCO, parse only at boundaries |
+| `.ToString()` populating internal model | T25 | Assign enum directly |
+| String comparison for enum value | T25 | Use enum equality operator |
+
+---
+
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25. See [TENETS.md](../TENETS.md) for the complete index.*

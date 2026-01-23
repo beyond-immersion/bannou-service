@@ -1099,9 +1099,12 @@ paths:
         : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"New custom stats (merges with existing)\"\n                },\n                \"customName\": {\n           \
         \         \"type\": \"string\",\n                    \"maxLength\": 128,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"New custom name\"\n                },\n                \"instanceMetadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New instance metadata (merges with existing)\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"description\": \"New custom name\"\n                },\n                \"quantityDelta\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Change to quantity (positive to add, negative to subtract).
+        Only valid for stackable items.\"\n                },\n                \"instanceMetadata\": {\n                 \
+        \   \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"New instance
+        metadata (merges with existing)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -2258,6 +2261,11 @@ components:
           maxLength: 128
           nullable: true
           description: New custom name
+        quantityDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
         instanceMetadata:
           type: object
           nullable: true

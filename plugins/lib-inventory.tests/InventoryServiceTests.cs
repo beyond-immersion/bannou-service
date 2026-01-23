@@ -57,6 +57,8 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Configuration.DefaultMaxSlots = 20;
         Configuration.DefaultMaxWeight = 100.0;
         Configuration.DefaultMaxNestingDepth = 3;
+        Configuration.DefaultWeightContribution = "self_plus_contents";
+        Configuration.EnableLazyContainerCreation = true;
     }
 
     private InventoryService CreateService()
@@ -267,6 +269,154 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.Null(response);
     }
 
+    [Fact]
+    public async Task CreateContainerAsync_NegativeMaxSlots_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.MaxSlots = -5;
+
+        // Act
+        var (status, response) = await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_ZeroMaxSlots_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.MaxSlots = 0;
+
+        // Act
+        var (status, response) = await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_NegativeMaxWeight_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.MaxWeight = -10.0;
+
+        // Act
+        var (status, response) = await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_NegativeMaxVolume_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.MaxVolume = -1.0;
+
+        // Act
+        var (status, response) = await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_NegativeGridWidth_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.GridWidth = -2;
+
+        // Act
+        var (status, response) = await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_NegativeGridHeight_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.GridHeight = -3;
+
+        // Act
+        var (status, response) = await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_DefaultWeightContribution_AppliedWhenNone()
+    {
+        // Arrange
+        Configuration.DefaultWeightContribution = "self_only";
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.WeightContribution = WeightContribution.None;
+
+        ContainerModel? savedModel = null;
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.NotNull(savedModel);
+        Assert.Equal(WeightContribution.Self_only, savedModel.WeightContribution);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_ExplicitWeightContribution_NotOverridden()
+    {
+        // Arrange
+        Configuration.DefaultWeightContribution = "self_only";
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.WeightContribution = WeightContribution.Self_plus_contents;
+
+        ContainerModel? savedModel = null;
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        await service.CreateContainerAsync(request);
+
+        // Assert
+        Assert.NotNull(savedModel);
+        Assert.Equal(WeightContribution.Self_plus_contents, savedModel.WeightContribution);
+    }
+
     #endregion
 
     #region GetContainer Tests
@@ -381,8 +531,8 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var ownerId = Guid.NewGuid();
         var containerId = Guid.NewGuid();
         var model = CreateStoredContainerModel(containerId);
-        model.OwnerId = ownerId.ToString();
-        model.OwnerType = ContainerOwnerType.Character.ToString();
+        model.OwnerId = ownerId;
+        model.OwnerType = ContainerOwnerType.Character;
         model.ContainerType = "inventory";
 
         _mockStringStore
@@ -444,6 +594,29 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.NotNull(response);
         Assert.Equal("bank", response.ContainerType);
         Assert.Equal(ownerId, response.OwnerId);
+    }
+
+    [Fact]
+    public async Task GetOrCreateContainerAsync_LazyCreationDisabled_ReturnsBadRequest()
+    {
+        // Arrange
+        Configuration.EnableLazyContainerCreation = false;
+        var service = CreateService();
+
+        var request = new GetOrCreateContainerRequest
+        {
+            OwnerId = Guid.NewGuid(),
+            OwnerType = ContainerOwnerType.Character,
+            ContainerType = "inventory",
+            ConstraintModel = ContainerConstraintModel.Slot_only
+        };
+
+        // Act
+        var (status, response) = await service.GetOrCreateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
     }
 
     #endregion
@@ -526,6 +699,66 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             "inventory-container.updated",
             It.Is<InventoryContainerUpdatedEvent>(e => e.ContainerId == containerId),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateContainerAsync_NegativeMaxSlots_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxSlots = -1 };
+
+        // Act
+        var (status, response) = await service.UpdateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateContainerAsync_NegativeMaxWeight_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxWeight = -5.0 };
+
+        // Act
+        var (status, response) = await service.UpdateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateContainerAsync_NegativeMaxVolume_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxVolume = -1.0 };
+
+        // Act
+        var (status, response) = await service.UpdateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateContainerAsync_ZeroGridWidth_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), GridWidth = 0 };
+
+        // Act
+        var (status, response) = await service.UpdateContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
     }
 
     #endregion
@@ -886,7 +1119,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Weight_only.ToString();
+        container.ConstraintModel = ContainerConstraintModel.Weight_only;
         container.MaxWeight = 50;
         container.ContentsWeight = 45;
 
@@ -985,6 +1218,80 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     }
 
     [Fact]
+    public async Task AddItemToContainerAsync_CaseInsensitiveCategory_AllowedCategories()
+    {
+        // Arrange - category in allowed list is different case from item category
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.AllowedCategories = new List<string> { "consumable" }; // lowercase
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+
+        var template = CreateTestTemplate(templateId);
+        template.Category = ItemCategory.Consumable; // Will produce "Consumable" via ToString()
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        var (status, response) = await service.AddItemToContainerAsync(request);
+
+        // Assert - should succeed because comparison is case-insensitive
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+    }
+
+    [Fact]
+    public async Task AddItemToContainerAsync_CaseInsensitiveCategory_ForbiddenCategories()
+    {
+        // Arrange - forbidden category is different case from item category
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.ForbiddenCategories = new List<string> { "weapon" }; // lowercase
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+
+        var weaponTemplate = CreateTestTemplate(templateId);
+        weaponTemplate.Category = ItemCategory.Weapon; // "Weapon" via ToString()
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(weaponTemplate);
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        var (status, response) = await service.AddItemToContainerAsync(request);
+
+        // Assert - should be rejected because comparison is case-insensitive
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
     public async Task AddItemToContainerAsync_UnlimitedConstraint_AlwaysSucceeds()
     {
         // Arrange
@@ -993,7 +1300,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Unlimited.ToString();
+        container.ConstraintModel = ContainerConstraintModel.Unlimited;
         container.UsedSlots = 9999;
 
         _mockContainerStore
@@ -1112,7 +1419,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Slot_and_weight.ToString();
+        container.ConstraintModel = ContainerConstraintModel.Slot_and_weight;
         container.ContentsWeight = 10;
         container.MaxWeight = 100;
 
@@ -1144,6 +1451,130 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Assert
         Assert.NotNull(savedContainer);
         Assert.Equal(20, savedContainer.ContentsWeight); // 10 + (5.0 * 2)
+    }
+
+    [Fact]
+    public async Task AddItemToContainerAsync_ContainerFull_EmitsContainerFullEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.ConstraintModel = ContainerConstraintModel.Slot_only;
+        container.MaxSlots = 5;
+        container.UsedSlots = 4; // One slot left - after adding, will be full
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestTemplate(templateId));
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        await service.AddItemToContainerAsync(request);
+
+        // Assert
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "inventory-container.full",
+            It.Is<InventoryContainerFullEvent>(e =>
+                e.ContainerId == containerId &&
+                e.ConstraintType == "slots"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddItemToContainerAsync_ContainerNotFull_DoesNotEmitFullEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.ConstraintModel = ContainerConstraintModel.Slot_only;
+        container.MaxSlots = 10;
+        container.UsedSlots = 3; // Plenty of room left
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestTemplate(templateId));
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        await service.AddItemToContainerAsync(request);
+
+        // Assert - container full event should NOT be published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "inventory-container.full",
+            It.IsAny<InventoryContainerFullEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AddItemToContainerAsync_WeightFull_EmitsContainerFullEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var container = CreateStoredContainerModel(containerId);
+        container.ConstraintModel = ContainerConstraintModel.Weight_only;
+        container.MaxWeight = 50;
+        container.ContentsWeight = 45; // Adding 5 weight will fill it
+
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(container);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 1 });
+
+        var template = CreateTestTemplate(templateId);
+        template.Weight = 5.0;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
+
+        // Act
+        await service.AddItemToContainerAsync(request);
+
+        // Assert
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "inventory-container.full",
+            It.Is<InventoryContainerFullEvent>(e =>
+                e.ContainerId == containerId &&
+                e.ConstraintType == "weight"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -1257,6 +1688,9 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 7 });
+        _mockItemClient
             .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ItemInstanceResponse { InstanceId = newInstanceId, TemplateId = templateId, Quantity = 3 });
 
@@ -1273,6 +1707,109 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.Equal(newInstanceId, response.NewInstanceId);
         Assert.Equal(7, response.OriginalQuantity); // 10 - 3
         Assert.Equal(3, response.NewQuantity);
+    }
+
+    [Fact]
+    public async Task SplitStackAsync_CallsModifyWithNegativeQuantityDelta()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse
+            {
+                InstanceId = instanceId,
+                TemplateId = templateId,
+                ContainerId = Guid.NewGuid(),
+                RealmId = Guid.NewGuid(),
+                Quantity = 20
+            });
+
+        var template = CreateTestTemplate(templateId);
+        template.QuantityModel = QuantityModel.Discrete;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = 12 });
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = Guid.NewGuid(), TemplateId = templateId, Quantity = 8 });
+
+        var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 8 };
+
+        // Act
+        await service.SplitStackAsync(request);
+
+        // Assert - Verify ModifyItemInstance was called with negative QuantityDelta
+        _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
+            It.Is<ModifyItemInstanceRequest>(r =>
+                r.InstanceId == instanceId &&
+                r.QuantityDelta == -8),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SplitStackAsync_CreateFails_RestoresOriginalQuantity()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse
+            {
+                InstanceId = instanceId,
+                TemplateId = templateId,
+                ContainerId = Guid.NewGuid(),
+                RealmId = Guid.NewGuid(),
+                Quantity = 10
+            });
+
+        var template = CreateTestTemplate(templateId);
+        template.QuantityModel = QuantityModel.Discrete;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // First call: reduce original quantity (succeeds)
+        // Second call: restore original quantity (rollback)
+        var modifyCalls = 0;
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                modifyCalls++;
+                return new ItemInstanceResponse { InstanceId = instanceId, TemplateId = templateId, Quantity = modifyCalls == 1 ? 7 : 10 };
+            });
+
+        // CreateItemInstance fails
+        _mockItemClient
+            .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Failed", 500, "", new Dictionary<string, IEnumerable<string>>(), null));
+
+        var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 3 };
+
+        // Act
+        var (status, response) = await service.SplitStackAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Verify rollback: ModifyItemInstance called twice - first to reduce, then to restore
+        _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
+            It.Is<ModifyItemInstanceRequest>(r => r.InstanceId == instanceId && r.QuantityDelta == -3),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
+            It.Is<ModifyItemInstanceRequest>(r => r.InstanceId == instanceId && r.QuantityDelta == 3),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1359,8 +1896,19 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 13 });
+        _mockItemClient
             .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = sourceId });
+
+        var containerModel = CreateStoredContainerModel(containerId);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(containerModel);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
 
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
@@ -1375,6 +1923,106 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.Equal(13, response.NewQuantity); // 5 + 8
         Assert.True(response.SourceDestroyed);
         Assert.Null(response.OverflowQuantity);
+    }
+
+    [Fact]
+    public async Task MergeStacksAsync_UpdatesTargetViaModifyItemInstance()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = containerId, Quantity = 7 });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = containerId, Quantity = 3 });
+
+        var template = CreateTestTemplate(templateId);
+        template.MaxStackSize = 99;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 10 });
+        _mockItemClient
+            .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = sourceId });
+
+        var containerModel = CreateStoredContainerModel(containerId);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(containerModel);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
+
+        // Act
+        await service.MergeStacksAsync(request);
+
+        // Assert - Verify target update via ModifyItemInstance with positive QuantityDelta
+        _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
+            It.Is<ModifyItemInstanceRequest>(r =>
+                r.InstanceId == targetId &&
+                r.QuantityDelta == 7),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task MergeStacksAsync_FullMerge_DestroysSource()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = containerId, Quantity = 5 });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = containerId, Quantity = 3 });
+
+        var template = CreateTestTemplate(templateId);
+        template.MaxStackSize = 99;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 8 });
+        _mockItemClient
+            .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = sourceId });
+
+        var containerModel = CreateStoredContainerModel(containerId);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(containerModel);
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
+
+        // Act
+        await service.MergeStacksAsync(request);
+
+        // Assert - source destroyed with "merged" reason
+        _mockItemClient.Verify(c => c.DestroyItemInstanceAsync(
+            It.Is<DestroyItemInstanceRequest>(r =>
+                r.InstanceId == sourceId &&
+                r.Reason == "merged"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1399,8 +2047,8 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockItemClient
-            .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = sourceId });
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 20 });
 
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
@@ -1412,6 +2060,55 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.NotNull(response);
         Assert.Equal(20, response.NewQuantity);
         Assert.Equal(13, response.OverflowQuantity); // 15 + 18 - 20 = 13
+    }
+
+    [Fact]
+    public async Task MergeStacksAsync_PartialMerge_ReducesSourceViaModify()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, Quantity = 10 });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 15 });
+
+        var template = CreateTestTemplate(templateId);
+        template.MaxStackSize = 20;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 20 });
+
+        var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
+
+        // Act
+        var (status, response) = await service.MergeStacksAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.SourceDestroyed); // Source not destroyed because of overflow
+        Assert.Equal(5, response.OverflowQuantity); // 10 + 15 - 20 = 5
+
+        // Verify source was reduced via ModifyItemInstance (not destroyed)
+        _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
+            It.Is<ModifyItemInstanceRequest>(r =>
+                r.InstanceId == sourceId &&
+                r.QuantityDelta == -5), // Only moved 5 to target (20-15=5)
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Source should NOT be destroyed
+        _mockItemClient.Verify(c => c.DestroyItemInstanceAsync(
+            It.Is<DestroyItemInstanceRequest>(r => r.InstanceId == sourceId),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1611,6 +2308,19 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.NotNull(config);
     }
 
+    [Fact]
+    public void InventoryServiceConfiguration_HasCorrectDefaults()
+    {
+        var config = new InventoryServiceConfiguration();
+        Assert.Equal(3, config.DefaultMaxNestingDepth);
+        Assert.Equal("self_plus_contents", config.DefaultWeightContribution);
+        Assert.Equal(300, config.ContainerCacheTtlSeconds);
+        Assert.Equal(30, config.LockTimeoutSeconds);
+        Assert.True(config.EnableLazyContainerCreation);
+        Assert.Equal(20, config.DefaultMaxSlots);
+        Assert.Equal(100.0, config.DefaultMaxWeight);
+    }
+
     #endregion
 
     #region Helper Methods
@@ -1633,11 +2343,11 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     {
         return new ContainerModel
         {
-            ContainerId = containerId.ToString(),
-            OwnerId = Guid.NewGuid().ToString(),
-            OwnerType = ContainerOwnerType.Character.ToString(),
+            ContainerId = containerId,
+            OwnerId = Guid.NewGuid(),
+            OwnerType = ContainerOwnerType.Character,
             ContainerType = "inventory",
-            ConstraintModel = ContainerConstraintModel.Slot_only.ToString(),
+            ConstraintModel = ContainerConstraintModel.Slot_only,
             IsEquipmentSlot = false,
             MaxSlots = 20,
             UsedSlots = 0,
@@ -1646,7 +2356,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             NestingDepth = 0,
             MaxNestingDepth = 3,
             SelfWeight = 1.0,
-            WeightContribution = WeightContribution.Self_plus_contents.ToString(),
+            WeightContribution = WeightContribution.Self_plus_contents,
             SlotCost = 1,
             Tags = new List<string>(),
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-1)

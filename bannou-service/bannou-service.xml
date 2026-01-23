@@ -47001,6 +47001,11 @@
             New custom name
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.QuantityDelta">
+            <summary>
+            Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.InstanceMetadata">
             <summary>
             New instance metadata (merges with existing)

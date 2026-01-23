@@ -34,6 +34,9 @@ public partial class InventoryService : IInventoryService
     private const string CONT_OWNER_INDEX = "cont-owner:";
     private const string CONT_TYPE_INDEX = "cont-type:";
 
+    // Pagination limit matching schema maximum
+    private const int QUERY_PAGE_SIZE = 200;
+
     /// <summary>
     /// Initializes a new instance of the InventoryService.
     /// </summary>
@@ -63,6 +66,33 @@ public partial class InventoryService : IInventoryService
             _logger.LogInformation("Creating container type {ContainerType} for owner {OwnerId}",
                 body.ContainerType, body.OwnerId);
 
+            // Input validation
+            if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
+            {
+                _logger.LogWarning("MaxSlots must be positive, got {MaxSlots}", body.MaxSlots.Value);
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.MaxWeight.HasValue && body.MaxWeight.Value <= 0)
+            {
+                _logger.LogWarning("MaxWeight must be positive, got {MaxWeight}", body.MaxWeight.Value);
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.MaxVolume.HasValue && body.MaxVolume.Value <= 0)
+            {
+                _logger.LogWarning("MaxVolume must be positive, got {MaxVolume}", body.MaxVolume.Value);
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.GridWidth.HasValue && body.GridWidth.Value <= 0)
+            {
+                _logger.LogWarning("GridWidth must be positive, got {GridWidth}", body.GridWidth.Value);
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.GridHeight.HasValue && body.GridHeight.Value <= 0)
+            {
+                _logger.LogWarning("GridHeight must be positive, got {GridHeight}", body.GridHeight.Value);
+                return (StatusCodes.BadRequest, null);
+            }
+
             var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
 
             var containerId = Guid.NewGuid();
@@ -88,13 +118,21 @@ public partial class InventoryService : IInventoryService
                 }
             }
 
+            // Resolve weight contribution: use config default if not specified (enum default is None)
+            var weightContribution = body.WeightContribution;
+            if (weightContribution == WeightContribution.None
+                && Enum.TryParse<WeightContribution>(_configuration.DefaultWeightContribution, true, out var configDefault))
+            {
+                weightContribution = configDefault;
+            }
+
             var model = new ContainerModel
             {
-                ContainerId = containerId.ToString(),
-                OwnerId = body.OwnerId.ToString(),
-                OwnerType = body.OwnerType.ToString(),
+                ContainerId = containerId,
+                OwnerId = body.OwnerId,
+                OwnerType = body.OwnerType,
                 ContainerType = body.ContainerType,
-                ConstraintModel = body.ConstraintModel.ToString(),
+                ConstraintModel = body.ConstraintModel,
                 IsEquipmentSlot = body.IsEquipmentSlot,
                 EquipmentSlotName = body.EquipmentSlotName,
                 MaxSlots = body.MaxSlots ?? _configuration.DefaultMaxSlots,
@@ -102,12 +140,12 @@ public partial class InventoryService : IInventoryService
                 GridWidth = body.GridWidth,
                 GridHeight = body.GridHeight,
                 MaxVolume = body.MaxVolume,
-                ParentContainerId = body.ParentContainerId?.ToString(),
+                ParentContainerId = body.ParentContainerId,
                 NestingDepth = nestingDepth,
                 CanContainContainers = body.CanContainContainers,
                 MaxNestingDepth = body.MaxNestingDepth ?? _configuration.DefaultMaxNestingDepth,
                 SelfWeight = body.SelfWeight,
-                WeightContribution = body.WeightContribution.ToString(),
+                WeightContribution = weightContribution,
                 SlotCost = body.SlotCost,
                 ParentGridWidth = body.ParentGridWidth,
                 ParentGridHeight = body.ParentGridHeight,
@@ -115,7 +153,7 @@ public partial class InventoryService : IInventoryService
                 AllowedCategories = body.AllowedCategories?.ToList(),
                 ForbiddenCategories = body.ForbiddenCategories?.ToList(),
                 AllowedTags = body.AllowedTags?.ToList(),
-                RealmId = body.RealmId?.ToString(),
+                RealmId = body.RealmId,
                 Tags = body.Tags?.ToList() ?? new List<string>(),
                 Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null,
                 ContentsWeight = 0,
@@ -125,8 +163,10 @@ public partial class InventoryService : IInventoryService
             };
 
             await containerStore.SaveAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken: cancellationToken);
+
+            var ownerIndexKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
             await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
-                $"{CONT_OWNER_INDEX}{body.OwnerType}:{body.OwnerId}", containerId.ToString(), cancellationToken);
+                ownerIndexKey, containerId.ToString(), cancellationToken);
             await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
                 $"{CONT_TYPE_INDEX}{body.ContainerType}", containerId.ToString(), cancellationToken);
 
@@ -224,11 +264,18 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
+            // Check if lazy container creation is enabled
+            if (!_configuration.EnableLazyContainerCreation)
+            {
+                _logger.LogWarning("Lazy container creation is disabled");
+                return (StatusCodes.BadRequest, null);
+            }
+
             var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
 
             // Look for existing container by owner + type
-            var ownerKey = $"{CONT_OWNER_INDEX}{body.OwnerType}:{body.OwnerId}";
+            var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
             var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
             var ids = string.IsNullOrEmpty(idsJson)
                 ? new List<string>()
@@ -278,7 +325,7 @@ public partial class InventoryService : IInventoryService
             var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
 
-            var ownerKey = $"{CONT_OWNER_INDEX}{body.OwnerType}:{body.OwnerId}";
+            var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
             var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
             var ids = string.IsNullOrEmpty(idsJson)
                 ? new List<string>()
@@ -293,7 +340,7 @@ public partial class InventoryService : IInventoryService
                 // Apply filters
                 if (!string.IsNullOrEmpty(body.ContainerType) && model.ContainerType != body.ContainerType) continue;
                 if (!body.IncludeEquipmentSlots && model.IsEquipmentSlot) continue;
-                if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value.ToString()) continue;
+                if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
 
                 containers.Add(MapContainerToResponse(model));
             }
@@ -322,6 +369,28 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
+            // Input validation
+            if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.MaxWeight.HasValue && body.MaxWeight.Value <= 0)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.MaxVolume.HasValue && body.MaxVolume.Value <= 0)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.GridWidth.HasValue && body.GridWidth.Value <= 0)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+            if (body.GridHeight.HasValue && body.GridHeight.Value <= 0)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
             var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
             var model = await containerStore.GetAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
 
@@ -351,10 +420,10 @@ public partial class InventoryService : IInventoryService
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 ContainerId = body.ContainerId,
-                OwnerId = Guid.Parse(model.OwnerId),
-                OwnerType = model.OwnerType,
+                OwnerId = model.OwnerId,
+                OwnerType = model.OwnerType.ToString(),
                 ContainerType = model.ContainerType,
-                ConstraintModel = model.ConstraintModel,
+                ConstraintModel = model.ConstraintModel.ToString(),
                 IsEquipmentSlot = model.IsEquipmentSlot
             }, cancellationToken);
 
@@ -452,8 +521,9 @@ public partial class InventoryService : IInventoryService
             var now = DateTimeOffset.UtcNow;
 
             // Remove from indexes
+            var ownerIndexKey = BuildOwnerIndexKey(model.OwnerType, model.OwnerId);
             await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
-                $"{CONT_OWNER_INDEX}{model.OwnerType}:{model.OwnerId}", body.ContainerId.ToString(), cancellationToken);
+                ownerIndexKey, body.ContainerId.ToString(), cancellationToken);
             await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
                 $"{CONT_TYPE_INDEX}{model.ContainerType}", body.ContainerId.ToString(), cancellationToken);
 
@@ -464,10 +534,10 @@ public partial class InventoryService : IInventoryService
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 ContainerId = body.ContainerId,
-                OwnerId = Guid.Parse(model.OwnerId),
-                OwnerType = model.OwnerType,
+                OwnerId = model.OwnerId,
+                OwnerType = model.OwnerType.ToString(),
                 ContainerType = model.ContainerType,
-                ConstraintModel = model.ConstraintModel,
+                ConstraintModel = model.ConstraintModel.ToString(),
                 IsEquipmentSlot = model.IsEquipmentSlot
             }, cancellationToken);
 
@@ -538,9 +608,10 @@ public partial class InventoryService : IInventoryService
             }
 
             // Check category constraints
+            var categoryString = template.Category.ToString();
             if (container.AllowedCategories is not null && container.AllowedCategories.Count > 0)
             {
-                if (!container.AllowedCategories.Contains(template.Category.ToString()))
+                if (!container.AllowedCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
                 {
                     _logger.LogWarning("Category {Category} not allowed in container {ContainerId}",
                         template.Category, body.ContainerId);
@@ -550,7 +621,7 @@ public partial class InventoryService : IInventoryService
 
             if (container.ForbiddenCategories is not null && container.ForbiddenCategories.Count > 0)
             {
-                if (container.ForbiddenCategories.Contains(template.Category.ToString()))
+                if (container.ForbiddenCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
                 {
                     _logger.LogWarning("Category {Category} forbidden in container {ContainerId}",
                         template.Category, body.ContainerId);
@@ -583,6 +654,9 @@ public partial class InventoryService : IInventoryService
 
             await containerStore.SaveAsync($"{CONT_PREFIX}{body.ContainerId}", container, cancellationToken: cancellationToken);
 
+            // Check if container is now full and emit event
+            await EmitContainerFullEventIfNeededAsync(container, now, cancellationToken);
+
             await _messageBus.TryPublishAsync("inventory-item.placed", new InventoryItemPlacedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -590,8 +664,8 @@ public partial class InventoryService : IInventoryService
                 InstanceId = body.InstanceId,
                 TemplateId = item.TemplateId,
                 ContainerId = body.ContainerId,
-                OwnerId = Guid.Parse(container.OwnerId),
-                OwnerType = container.OwnerType,
+                OwnerId = container.OwnerId,
+                OwnerType = container.OwnerType.ToString(),
                 Quantity = item.Quantity,
                 SlotIndex = body.SlotIndex,
                 SlotX = body.SlotX,
@@ -686,8 +760,8 @@ public partial class InventoryService : IInventoryService
                 InstanceId = body.InstanceId,
                 TemplateId = item.TemplateId,
                 ContainerId = item.ContainerId,
-                OwnerId = Guid.Parse(container.OwnerId),
-                OwnerType = container.OwnerType
+                OwnerId = container.OwnerId,
+                OwnerType = container.OwnerType.ToString()
             }, cancellationToken);
 
             return (StatusCodes.OK, new RemoveItemResponse
@@ -734,27 +808,6 @@ public partial class InventoryService : IInventoryService
             // If moving to same container, just update slot
             if (sourceContainerId == body.TargetContainerId)
             {
-                // Update item slot position via modify
-                try
-                {
-                    await _navigator.Item.ModifyItemInstanceAsync(
-                        new ModifyItemInstanceRequest
-                        {
-                            InstanceId = body.InstanceId,
-                            InstanceMetadata = new Dictionary<string, object>
-                            {
-                                ["slotIndex"] = body.TargetSlotIndex ?? 0,
-                                ["slotX"] = body.TargetSlotX ?? 0,
-                                ["slotY"] = body.TargetSlotY ?? 0,
-                                ["rotated"] = body.Rotated ?? false
-                            }
-                        }, cancellationToken);
-                }
-                catch (ApiException ex)
-                {
-                    _logger.LogWarning(ex, "Failed to modify item position: {StatusCode}", ex.StatusCode);
-                }
-
                 return (StatusCodes.OK, new MoveItemResponse
                 {
                     Success = true,
@@ -931,11 +984,11 @@ public partial class InventoryService : IInventoryService
                 InstanceId = body.InstanceId,
                 TemplateId = item.TemplateId,
                 SourceContainerId = sourceContainerId,
-                SourceOwnerId = Guid.Parse(sourceContainer.OwnerId),
-                SourceOwnerType = sourceContainer.OwnerType,
+                SourceOwnerId = sourceContainer.OwnerId,
+                SourceOwnerType = sourceContainer.OwnerType.ToString(),
                 TargetContainerId = body.TargetContainerId,
-                TargetOwnerId = Guid.Parse(targetContainer.OwnerId),
-                TargetOwnerType = targetContainer.OwnerType,
+                TargetOwnerId = targetContainer.OwnerId,
+                TargetOwnerType = targetContainer.OwnerType.ToString(),
                 QuantityTransferred = quantityToTransfer
             }, cancellationToken);
 
@@ -1010,6 +1063,22 @@ public partial class InventoryService : IInventoryService
             var now = DateTimeOffset.UtcNow;
             var originalRemaining = item.Quantity - body.Quantity;
 
+            // Update original instance quantity
+            try
+            {
+                await _navigator.Item.ModifyItemInstanceAsync(
+                    new ModifyItemInstanceRequest
+                    {
+                        InstanceId = body.InstanceId,
+                        QuantityDelta = -body.Quantity
+                    }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Failed to update original quantity for split");
+                return (StatusCodes.InternalServerError, null);
+            }
+
             // Create new instance with split quantity
             ItemInstanceResponse newItem;
             try
@@ -1030,6 +1099,20 @@ public partial class InventoryService : IInventoryService
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Failed to create new item instance for split");
+                // Attempt to restore original quantity
+                try
+                {
+                    await _navigator.Item.ModifyItemInstanceAsync(
+                        new ModifyItemInstanceRequest
+                        {
+                            InstanceId = body.InstanceId,
+                            QuantityDelta = body.Quantity
+                        }, cancellationToken);
+                }
+                catch (ApiException restoreEx)
+                {
+                    _logger.LogError(restoreEx, "Failed to restore original quantity after split failure");
+                }
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -1119,30 +1202,79 @@ public partial class InventoryService : IInventoryService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            var newQuantity = source.Quantity + target.Quantity;
+            var combinedQuantity = source.Quantity + target.Quantity;
+            var quantityToAdd = source.Quantity;
             double? overflow = null;
 
-            if (newQuantity > template.MaxStackSize)
+            if (combinedQuantity > template.MaxStackSize)
             {
-                overflow = newQuantity - template.MaxStackSize;
-                newQuantity = template.MaxStackSize;
+                overflow = combinedQuantity - template.MaxStackSize;
+                quantityToAdd = source.Quantity - overflow.Value;
+                combinedQuantity = template.MaxStackSize;
             }
 
             var now = DateTimeOffset.UtcNow;
 
-            // Destroy source
+            // Update target quantity first (safer: if this fails, source is unaffected)
             try
             {
-                await _navigator.Item.DestroyItemInstanceAsync(
-                    new DestroyItemInstanceRequest
+                await _navigator.Item.ModifyItemInstanceAsync(
+                    new ModifyItemInstanceRequest
                     {
-                        InstanceId = body.SourceInstanceId,
-                        Reason = "merged"
+                        InstanceId = body.TargetInstanceId,
+                        QuantityDelta = quantityToAdd
                     }, cancellationToken);
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Failed to destroy source item during merge: {StatusCode}", ex.StatusCode);
+                _logger.LogError(ex, "Failed to update target quantity during merge");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Then destroy or reduce source
+            if (overflow.HasValue && overflow.Value > 0)
+            {
+                // Partial merge - reduce source quantity
+                try
+                {
+                    await _navigator.Item.ModifyItemInstanceAsync(
+                        new ModifyItemInstanceRequest
+                        {
+                            InstanceId = body.SourceInstanceId,
+                            QuantityDelta = -quantityToAdd
+                        }, cancellationToken);
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to reduce source quantity during partial merge: {StatusCode}", ex.StatusCode);
+                }
+            }
+            else
+            {
+                // Full merge - destroy source
+                try
+                {
+                    await _navigator.Item.DestroyItemInstanceAsync(
+                        new DestroyItemInstanceRequest
+                        {
+                            InstanceId = body.SourceInstanceId,
+                            Reason = "merged"
+                        }, cancellationToken);
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to destroy source item during merge: {StatusCode}", ex.StatusCode);
+                }
+
+                // Update container slot count since source is gone
+                var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+                var container = await containerStore.GetAsync($"{CONT_PREFIX}{source.ContainerId}", cancellationToken);
+                if (container is not null)
+                {
+                    container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
+                    container.ModifiedAt = now;
+                    await containerStore.SaveAsync($"{CONT_PREFIX}{source.ContainerId}", container, cancellationToken: cancellationToken);
+                }
             }
 
             await _messageBus.TryPublishAsync("inventory-item.stacked", new InventoryItemStackedEvent
@@ -1153,16 +1285,16 @@ public partial class InventoryService : IInventoryService
                 TargetInstanceId = body.TargetInstanceId,
                 TemplateId = source.TemplateId,
                 ContainerId = target.ContainerId,
-                QuantityAdded = source.Quantity,
-                NewTotalQuantity = newQuantity
+                QuantityAdded = quantityToAdd,
+                NewTotalQuantity = combinedQuantity
             }, cancellationToken);
 
             return (StatusCodes.OK, new MergeStacksResponse
             {
                 Success = true,
                 TargetInstanceId = body.TargetInstanceId,
-                NewQuantity = newQuantity,
-                SourceDestroyed = true,
+                NewQuantity = combinedQuantity,
+                SourceDestroyed = !overflow.HasValue || overflow.Value <= 0,
                 OverflowQuantity = overflow
             });
         }
@@ -1234,7 +1366,12 @@ public partial class InventoryService : IInventoryService
                                 new GetItemTemplateRequest { TemplateId = item.TemplateId },
                                 cancellationToken);
 
-                            if (!string.IsNullOrEmpty(body.Category) && template.Category.ToString() != body.Category) continue;
+                            if (!string.IsNullOrEmpty(body.Category)
+                                && !string.Equals(template.Category.ToString(), body.Category, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
                             if (body.Tags is not null && body.Tags.Count > 0)
                             {
                                 if (!body.Tags.All(t => template.Tags.Contains(t))) continue;
@@ -1285,27 +1422,46 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
-            var (queryStatus, queryResponse) = await QueryItemsAsync(
-                new QueryItemsRequest
-                {
-                    OwnerId = body.OwnerId,
-                    OwnerType = body.OwnerType,
-                    TemplateId = body.TemplateId,
-                    Limit = 1000
-                }, cancellationToken);
+            // Page through all results to get accurate count
+            var allItems = new List<QueryResultItem>();
+            var offset = 0;
+            var maxItems = _configuration.MaxCountQueryLimit;
 
-            if (queryStatus != StatusCodes.OK || queryResponse is null)
+            while (offset < maxItems)
             {
-                return (queryStatus, null);
+                var (queryStatus, queryResponse) = await QueryItemsAsync(
+                    new QueryItemsRequest
+                    {
+                        OwnerId = body.OwnerId,
+                        OwnerType = body.OwnerType,
+                        TemplateId = body.TemplateId,
+                        Offset = offset,
+                        Limit = QUERY_PAGE_SIZE
+                    }, cancellationToken);
+
+                if (queryStatus != StatusCodes.OK || queryResponse is null)
+                {
+                    return (queryStatus, null);
+                }
+
+                allItems.AddRange(queryResponse.Items);
+
+                // If we got fewer items than the page size, we've reached the end
+                if (queryResponse.Items.Count < QUERY_PAGE_SIZE)
+                {
+                    break;
+                }
+
+                offset += QUERY_PAGE_SIZE;
             }
 
-            var totalQuantity = queryResponse.Items.Sum(i => i.Quantity);
+            var totalQuantity = allItems.Sum(i => i.Quantity);
 
             return (StatusCodes.OK, new CountItemsResponse
             {
                 TemplateId = body.TemplateId,
                 TotalQuantity = totalQuantity,
-                StackCount = queryResponse.Items.Count
+                StackCount = allItems.Count
             });
         }
         catch (Exception ex)
@@ -1405,32 +1561,28 @@ public partial class InventoryService : IInventoryService
             }
 
             var candidates = new List<SpaceCandidate>();
+            var categoryString = template.Category.ToString();
 
             foreach (var container in containersResponse.Containers)
             {
-                // Check if item category is allowed
+                // Check if item category is allowed (case-insensitive)
                 if (container.AllowedCategories is not null && container.AllowedCategories.Count > 0)
                 {
-                    if (!container.AllowedCategories.Contains(template.Category.ToString())) continue;
+                    if (!container.AllowedCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
                 }
                 if (container.ForbiddenCategories is not null && container.ForbiddenCategories.Count > 0)
                 {
-                    if (container.ForbiddenCategories.Contains(template.Category.ToString())) continue;
+                    if (container.ForbiddenCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
                 }
 
-                // Check constraints
-                var containerModel = new ContainerModel
-                {
-                    ConstraintModel = container.ConstraintModel.ToString(),
-                    MaxSlots = container.MaxSlots,
-                    UsedSlots = container.UsedSlots,
-                    MaxWeight = container.MaxWeight,
-                    ContentsWeight = container.ContentsWeight,
-                    MaxVolume = container.MaxVolume,
-                    CurrentVolume = container.CurrentVolume
-                };
-
-                var violation = CheckConstraints(containerModel, template, body.Quantity);
+                // Check constraints using response fields directly
+                var violation = CheckConstraintsFromResponse(container, template, body.Quantity);
                 if (violation is not null) continue;
 
                 var candidate = new SpaceCandidate
@@ -1508,14 +1660,23 @@ public partial class InventoryService : IInventoryService
         };
     }
 
+    /// <summary>
+    /// Builds the owner index key for state store lookups.
+    /// </summary>
+    private static string BuildOwnerIndexKey(ContainerOwnerType ownerType, Guid ownerId)
+    {
+        return $"{CONT_OWNER_INDEX}{ownerType}:{ownerId}";
+    }
+
+    /// <summary>
+    /// Checks container capacity constraints against the typed ContainerModel.
+    /// </summary>
     private static string? CheckConstraints(
         ContainerModel container,
         ItemTemplateResponse template,
         double quantity)
     {
-        var constraintModel = Enum.Parse<ContainerConstraintModel>(container.ConstraintModel);
-
-        switch (constraintModel)
+        switch (container.ConstraintModel)
         {
             case ContainerConstraintModel.Slot_only:
                 if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
@@ -1566,6 +1727,122 @@ public partial class InventoryService : IInventoryService
         return null;
     }
 
+    /// <summary>
+    /// Checks container capacity constraints using ContainerResponse fields directly.
+    /// Avoids creating temporary ContainerModel instances.
+    /// </summary>
+    private static string? CheckConstraintsFromResponse(
+        ContainerResponse container,
+        ItemTemplateResponse template,
+        double quantity)
+    {
+        switch (container.ConstraintModel)
+        {
+            case ContainerConstraintModel.Slot_only:
+                if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
+                    return "Container is full (slots)";
+                break;
+
+            case ContainerConstraintModel.Weight_only:
+                if (container.MaxWeight.HasValue && template.Weight.HasValue)
+                {
+                    var newWeight = container.ContentsWeight + template.Weight.Value * quantity;
+                    if (newWeight > container.MaxWeight.Value)
+                        return "Container is full (weight)";
+                }
+                break;
+
+            case ContainerConstraintModel.Slot_and_weight:
+                if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
+                    return "Container is full (slots)";
+                if (container.MaxWeight.HasValue && template.Weight.HasValue)
+                {
+                    var newWeight = container.ContentsWeight + template.Weight.Value * quantity;
+                    if (newWeight > container.MaxWeight.Value)
+                        return "Container is full (weight)";
+                }
+                break;
+
+            case ContainerConstraintModel.Grid:
+                if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
+                    return "Container is full (grid)";
+                break;
+
+            case ContainerConstraintModel.Volumetric:
+                if (container.MaxVolume.HasValue && template.Volume.HasValue)
+                {
+                    var newVolume = (container.CurrentVolume ?? 0) + template.Volume.Value * quantity;
+                    if (newVolume > container.MaxVolume.Value)
+                        return "Container is full (volume)";
+                }
+                break;
+
+            case ContainerConstraintModel.Unlimited:
+                break;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Emits a container full event if the container has reached its capacity.
+    /// </summary>
+    private async Task EmitContainerFullEventIfNeededAsync(
+        ContainerModel container,
+        DateTimeOffset timestamp,
+        CancellationToken cancellationToken)
+    {
+        string? constraintType = null;
+
+        switch (container.ConstraintModel)
+        {
+            case ContainerConstraintModel.Slot_only:
+            case ContainerConstraintModel.Slot_and_weight:
+                if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
+                    constraintType = "slots";
+                break;
+
+            case ContainerConstraintModel.Weight_only:
+                if (container.MaxWeight.HasValue && container.ContentsWeight >= container.MaxWeight.Value)
+                    constraintType = "weight";
+                break;
+
+            case ContainerConstraintModel.Grid:
+                if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
+                    constraintType = "grid";
+                break;
+
+            case ContainerConstraintModel.Volumetric:
+                if (container.MaxVolume.HasValue && (container.CurrentVolume ?? 0) >= container.MaxVolume.Value)
+                    constraintType = "volume";
+                break;
+        }
+
+        // Also check weight for slot_and_weight
+        if (constraintType is null && container.ConstraintModel == ContainerConstraintModel.Slot_and_weight)
+        {
+            if (container.MaxWeight.HasValue && container.ContentsWeight >= container.MaxWeight.Value)
+                constraintType = "weight";
+        }
+
+        if (constraintType is not null)
+        {
+            await _messageBus.TryPublishAsync("inventory-container.full", new InventoryContainerFullEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = timestamp,
+                ContainerId = container.ContainerId,
+                OwnerId = container.OwnerId,
+                OwnerType = container.OwnerType.ToString(),
+                ContainerType = container.ContainerType,
+                ConstraintType = constraintType
+            }, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Adds a value to a JSON-serialized list in the state store.
+    /// </summary>
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
@@ -1581,6 +1858,9 @@ public partial class InventoryService : IInventoryService
         }
     }
 
+    /// <summary>
+    /// Removes a value from a JSON-serialized list in the state store.
+    /// </summary>
     private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
@@ -1594,15 +1874,18 @@ public partial class InventoryService : IInventoryService
         }
     }
 
+    /// <summary>
+    /// Maps the internal ContainerModel to the API response type.
+    /// </summary>
     private static ContainerResponse MapContainerToResponse(ContainerModel model)
     {
         return new ContainerResponse
         {
-            ContainerId = Guid.Parse(model.ContainerId),
-            OwnerId = Guid.Parse(model.OwnerId),
-            OwnerType = Enum.Parse<ContainerOwnerType>(model.OwnerType),
+            ContainerId = model.ContainerId,
+            OwnerId = model.OwnerId,
+            OwnerType = model.OwnerType,
             ContainerType = model.ContainerType,
-            ConstraintModel = Enum.Parse<ContainerConstraintModel>(model.ConstraintModel),
+            ConstraintModel = model.ConstraintModel,
             IsEquipmentSlot = model.IsEquipmentSlot,
             EquipmentSlotName = model.EquipmentSlotName,
             MaxSlots = model.MaxSlots,
@@ -1612,12 +1895,12 @@ public partial class InventoryService : IInventoryService
             GridHeight = model.GridHeight,
             MaxVolume = model.MaxVolume,
             CurrentVolume = model.CurrentVolume,
-            ParentContainerId = model.ParentContainerId is not null ? Guid.Parse(model.ParentContainerId) : null,
+            ParentContainerId = model.ParentContainerId,
             NestingDepth = model.NestingDepth,
             CanContainContainers = model.CanContainContainers,
             MaxNestingDepth = model.MaxNestingDepth,
             SelfWeight = model.SelfWeight,
-            WeightContribution = Enum.Parse<WeightContribution>(model.WeightContribution),
+            WeightContribution = model.WeightContribution,
             SlotCost = model.SlotCost,
             ParentGridWidth = model.ParentGridWidth,
             ParentGridHeight = model.ParentGridHeight,
@@ -1627,7 +1910,7 @@ public partial class InventoryService : IInventoryService
             AllowedCategories = model.AllowedCategories,
             ForbiddenCategories = model.ForbiddenCategories,
             AllowedTags = model.AllowedTags,
-            RealmId = model.RealmId is not null ? Guid.Parse(model.RealmId) : null,
+            RealmId = model.RealmId,
             Tags = model.Tags,
             Metadata = model.Metadata is not null ? BannouJson.Deserialize<object>(model.Metadata) : null,
             CreatedAt = model.CreatedAt,
@@ -1642,41 +1925,107 @@ public partial class InventoryService : IInventoryService
 
 /// <summary>
 /// Internal storage model for containers.
+/// Uses proper typed fields for enums and GUIDs to avoid string roundtripping.
 /// </summary>
 internal class ContainerModel
 {
-    public string ContainerId { get; set; } = string.Empty;
-    public string OwnerId { get; set; } = string.Empty;
-    public string OwnerType { get; set; } = string.Empty;
+    /// <summary>Container unique identifier</summary>
+    public Guid ContainerId { get; set; }
+
+    /// <summary>Owner entity ID</summary>
+    public Guid OwnerId { get; set; }
+
+    /// <summary>Owner type</summary>
+    public ContainerOwnerType OwnerType { get; set; }
+
+    /// <summary>Game-defined container type</summary>
     public string ContainerType { get; set; } = string.Empty;
-    public string ConstraintModel { get; set; } = string.Empty;
+
+    /// <summary>Capacity constraint model</summary>
+    public ContainerConstraintModel ConstraintModel { get; set; }
+
+    /// <summary>Whether this is an equipment slot</summary>
     public bool IsEquipmentSlot { get; set; }
+
+    /// <summary>Equipment slot name if applicable</summary>
     public string? EquipmentSlotName { get; set; }
+
+    /// <summary>Maximum slots for slot-based containers</summary>
     public int? MaxSlots { get; set; }
+
+    /// <summary>Current used slots</summary>
     public int? UsedSlots { get; set; }
+
+    /// <summary>Maximum weight capacity</summary>
     public double? MaxWeight { get; set; }
+
+    /// <summary>Internal grid width</summary>
     public int? GridWidth { get; set; }
+
+    /// <summary>Internal grid height</summary>
     public int? GridHeight { get; set; }
+
+    /// <summary>Maximum volume</summary>
     public double? MaxVolume { get; set; }
+
+    /// <summary>Current volume used</summary>
     public double? CurrentVolume { get; set; }
-    public string? ParentContainerId { get; set; }
+
+    /// <summary>Parent container ID for nested containers</summary>
+    public Guid? ParentContainerId { get; set; }
+
+    /// <summary>Depth in container hierarchy</summary>
     public int NestingDepth { get; set; }
+
+    /// <summary>Whether can hold other containers</summary>
     public bool CanContainContainers { get; set; }
+
+    /// <summary>Max nesting depth</summary>
     public int? MaxNestingDepth { get; set; }
+
+    /// <summary>Empty container weight</summary>
     public double SelfWeight { get; set; }
-    public string WeightContribution { get; set; } = string.Empty;
+
+    /// <summary>Weight propagation mode</summary>
+    public WeightContribution WeightContribution { get; set; }
+
+    /// <summary>Slots used in parent</summary>
     public int SlotCost { get; set; }
+
+    /// <summary>Width in parent grid</summary>
     public int? ParentGridWidth { get; set; }
+
+    /// <summary>Height in parent grid</summary>
     public int? ParentGridHeight { get; set; }
+
+    /// <summary>Volume in parent</summary>
     public double? ParentVolume { get; set; }
+
+    /// <summary>Weight of direct contents</summary>
     public double ContentsWeight { get; set; }
+
+    /// <summary>Allowed item categories</summary>
     public List<string>? AllowedCategories { get; set; }
+
+    /// <summary>Forbidden item categories</summary>
     public List<string>? ForbiddenCategories { get; set; }
+
+    /// <summary>Required item tags</summary>
     public List<string>? AllowedTags { get; set; }
-    public string? RealmId { get; set; }
+
+    /// <summary>Realm this container belongs to</summary>
+    public Guid? RealmId { get; set; }
+
+    /// <summary>Container tags</summary>
     public List<string> Tags { get; set; } = new();
+
+    /// <summary>Serialized game-specific metadata</summary>
     public string? Metadata { get; set; }
+
+    /// <summary>Creation timestamp</summary>
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>Last modification timestamp</summary>
     public DateTimeOffset? ModifiedAt { get; set; }
 }
 
