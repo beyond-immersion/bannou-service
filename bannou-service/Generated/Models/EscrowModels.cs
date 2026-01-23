@@ -361,12 +361,18 @@ public partial class EscrowAgreement
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type of escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrowType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EscrowType EscrowType { get; set; } = default!;
 
+    /// <summary>
+    /// Trust mode for the escrow
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("trustMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -435,6 +441,9 @@ public partial class EscrowAgreement
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<EscrowConsent> Consents { get; set; } = new System.Collections.ObjectModel.Collection<EscrowConsent>();
 
+    /// <summary>
+    /// Current escrow status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -527,6 +536,9 @@ public partial class EscrowAgreement
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// How the escrow was resolved
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resolution")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EscrowResolution? Resolution { get; set; } = default!;
@@ -580,6 +592,9 @@ public partial class EscrowParty
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Role of this party in the escrow
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -673,6 +688,9 @@ public partial class EscrowParty
 public partial class EscrowAsset
 {
 
+    /// <summary>
+    /// Type of asset held in escrow
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -956,6 +974,9 @@ public partial class EscrowDeposit
     [System.Text.Json.Serialization.JsonRequired]
     public string PartyType { get; set; } = default!;
 
+    /// <summary>
+    /// Assets deposited
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assets")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1077,6 +1098,9 @@ public partial class EscrowConsent
     [System.Text.Json.Serialization.JsonRequired]
     public string PartyType { get; set; } = default!;
 
+    /// <summary>
+    /// Type of consent given
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consentType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1148,6 +1172,9 @@ public partial class ValidationFailure
     [System.Text.Json.Serialization.JsonRequired]
     public string AssetDescription { get; set; } = default!;
 
+    /// <summary>
+    /// Type of validation failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failureType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1265,16 +1292,25 @@ public partial class AssetHandlerInfo
 
 }
 
+/// <summary>
+/// Request to create a new escrow agreement
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateEscrowRequest
 {
 
+    /// <summary>
+    /// Type of escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrowType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EscrowType EscrowType { get; set; } = default!;
 
+    /// <summary>
+    /// Trust mode for the escrow
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("trustMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1379,6 +1415,9 @@ public partial class CreateEscrowRequest
 
 }
 
+/// <summary>
+/// Input for defining a party in escrow creation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateEscrowPartyInput
 {
@@ -1405,6 +1444,9 @@ public partial class CreateEscrowPartyInput
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Role of this party in the escrow
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1443,6 +1485,9 @@ public partial class CreateEscrowPartyInput
 
 }
 
+/// <summary>
+/// Input for defining expected deposits from a party
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ExpectedDepositInput
 {
@@ -1497,10 +1542,16 @@ public partial class ExpectedDepositInput
 
 }
 
+/// <summary>
+/// Input for specifying an asset in escrow operations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class EscrowAssetInput
 {
 
+    /// <summary>
+    /// Type of asset to deposit
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1611,6 +1662,9 @@ public partial class EscrowAssetInput
 
 }
 
+/// <summary>
+/// Input for specifying how assets should be allocated on release
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReleaseAllocationInput
 {
@@ -1665,10 +1719,16 @@ public partial class ReleaseAllocationInput
 
 }
 
+/// <summary>
+/// Response from creating an escrow agreement
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateEscrowResponse
 {
 
+    /// <summary>
+    /// Created escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1696,6 +1756,9 @@ public partial class CreateEscrowResponse
 
 }
 
+/// <summary>
+/// Token issued to a party for deposit or release operations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PartyToken
 {
@@ -1738,6 +1801,9 @@ public partial class PartyToken
 
 }
 
+/// <summary>
+/// Request to retrieve an escrow agreement by ID
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetEscrowRequest
 {
@@ -1764,10 +1830,16 @@ public partial class GetEscrowRequest
 
 }
 
+/// <summary>
+/// Response containing escrow agreement details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetEscrowResponse
 {
 
+    /// <summary>
+    /// Escrow agreement details
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1787,6 +1859,9 @@ public partial class GetEscrowResponse
 
 }
 
+/// <summary>
+/// Request to list escrow agreements with optional filters
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListEscrowsRequest
 {
@@ -1895,6 +1970,9 @@ public partial class ListEscrowsResponse
 
 }
 
+/// <summary>
+/// Request to retrieve a party token for deposit or release
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetMyTokenRequest
 {
@@ -1923,6 +2001,9 @@ public partial class GetMyTokenRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Type of token to retrieve
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tokenType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1943,6 +2024,9 @@ public partial class GetMyTokenRequest
 
 }
 
+/// <summary>
+/// Response containing party token information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetMyTokenResponse
 {
@@ -1979,6 +2063,9 @@ public partial class GetMyTokenResponse
 
 }
 
+/// <summary>
+/// Request to deposit assets into an escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DepositRequest
 {
@@ -2007,6 +2094,9 @@ public partial class DepositRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string PartyType { get; set; } = default!;
 
+    /// <summary>
+    /// Assets to deposit
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assets")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2040,6 +2130,9 @@ public partial class DepositRequest
 
 }
 
+/// <summary>
+/// Input for specifying a bundle of assets
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class EscrowAssetBundleInput
 {
@@ -2078,15 +2171,24 @@ public partial class EscrowAssetBundleInput
 
 }
 
+/// <summary>
+/// Response from depositing assets into an escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DepositResponse
 {
 
+    /// <summary>
+    /// Updated escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public EscrowAgreement Escrow { get; set; } = new EscrowAgreement();
 
+    /// <summary>
+    /// Deposit record
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deposit")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2120,6 +2222,9 @@ public partial class DepositResponse
 
 }
 
+/// <summary>
+/// Request to validate a deposit without executing
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateDepositRequest
 {
@@ -2148,6 +2253,9 @@ public partial class ValidateDepositRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string PartyType { get; set; } = default!;
 
+    /// <summary>
+    /// Assets to validate
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assets")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2167,6 +2275,9 @@ public partial class ValidateDepositRequest
 
 }
 
+/// <summary>
+/// Response from deposit validation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateDepositResponse
 {
@@ -2207,6 +2318,9 @@ public partial class ValidateDepositResponse
 
 }
 
+/// <summary>
+/// Request to get deposit status for a party
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetDepositStatusRequest
 {
@@ -2249,6 +2363,9 @@ public partial class GetDepositStatusRequest
 
 }
 
+/// <summary>
+/// Response containing party deposit status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetDepositStatusResponse
 {
@@ -2301,6 +2418,9 @@ public partial class GetDepositStatusResponse
 
 }
 
+/// <summary>
+/// Request to record party consent for release or refund
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConsentRequest
 {
@@ -2329,6 +2449,9 @@ public partial class ConsentRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string PartyType { get; set; } = default!;
 
+    /// <summary>
+    /// Type of consent being given
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consentType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2369,10 +2492,16 @@ public partial class ConsentRequest
 
 }
 
+/// <summary>
+/// Response from recording party consent
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConsentResponse
 {
 
+    /// <summary>
+    /// Updated escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2390,6 +2519,9 @@ public partial class ConsentResponse
     [System.Text.Json.Serialization.JsonPropertyName("triggered")]
     public bool Triggered { get; set; } = default!;
 
+    /// <summary>
+    /// New escrow status after consent
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newStatus")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2410,6 +2542,9 @@ public partial class ConsentResponse
 
 }
 
+/// <summary>
+/// Request to get consent status for all parties
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetConsentStatusRequest
 {
@@ -2436,6 +2571,9 @@ public partial class GetConsentStatusRequest
 
 }
 
+/// <summary>
+/// Response containing consent status for all parties
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetConsentStatusResponse
 {
@@ -2486,6 +2624,9 @@ public partial class GetConsentStatusResponse
 
 }
 
+/// <summary>
+/// Consent status for a single party
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PartyConsentStatus
 {
@@ -2518,6 +2659,9 @@ public partial class PartyConsentStatus
     [System.Text.Json.Serialization.JsonPropertyName("consentGiven")]
     public bool ConsentGiven { get; set; } = default!;
 
+    /// <summary>
+    /// Type of consent given (if any)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consentType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EscrowConsentType? ConsentType { get; set; } = default!;
@@ -2542,6 +2686,9 @@ public partial class PartyConsentStatus
 
 }
 
+/// <summary>
+/// Request to trigger escrow release to recipients
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReleaseRequest
 {
@@ -2588,10 +2735,16 @@ public partial class ReleaseRequest
 
 }
 
+/// <summary>
+/// Response from releasing escrow assets to recipients
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReleaseResponse
 {
 
+    /// <summary>
+    /// Released escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2627,6 +2780,9 @@ public partial class ReleaseResponse
 
 }
 
+/// <summary>
+/// Result from a contract finalizer API call
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class FinalizerResult
 {
@@ -2665,6 +2821,9 @@ public partial class FinalizerResult
 
 }
 
+/// <summary>
+/// Result of releasing assets to a single recipient
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReleaseResult
 {
@@ -2677,6 +2836,9 @@ public partial class ReleaseResult
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RecipientPartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Assets released (null if failed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assets")]
     public EscrowAssetBundle? Assets { get; set; } = default!;
 
@@ -2706,6 +2868,9 @@ public partial class ReleaseResult
 
 }
 
+/// <summary>
+/// Request to trigger escrow refund to depositors
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RefundRequest
 {
@@ -2752,10 +2917,16 @@ public partial class RefundRequest
 
 }
 
+/// <summary>
+/// Response from refunding escrow assets to depositors
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RefundResponse
 {
 
+    /// <summary>
+    /// Refunded escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2783,6 +2954,9 @@ public partial class RefundResponse
 
 }
 
+/// <summary>
+/// Result of refunding assets to a single depositor
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RefundResult
 {
@@ -2795,6 +2969,9 @@ public partial class RefundResult
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DepositorPartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Assets refunded (null if failed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assets")]
     public EscrowAssetBundle? Assets { get; set; } = default!;
 
@@ -2824,6 +3001,9 @@ public partial class RefundResult
 
 }
 
+/// <summary>
+/// Request to cancel escrow before fully funded
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CancelRequest
 {
@@ -2864,10 +3044,16 @@ public partial class CancelRequest
 
 }
 
+/// <summary>
+/// Response from cancelling an escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CancelResponse
 {
 
+    /// <summary>
+    /// Cancelled escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2895,6 +3081,9 @@ public partial class CancelResponse
 
 }
 
+/// <summary>
+/// Request to raise a dispute on a funded escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DisputeRequest
 {
@@ -2959,10 +3148,16 @@ public partial class DisputeRequest
 
 }
 
+/// <summary>
+/// Response from raising a dispute on an escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DisputeResponse
 {
 
+    /// <summary>
+    /// Disputed escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2982,6 +3177,9 @@ public partial class DisputeResponse
 
 }
 
+/// <summary>
+/// Request for arbiter to resolve a disputed escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ResolveRequest
 {
@@ -3010,6 +3208,9 @@ public partial class ResolveRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string ArbiterType { get; set; } = default!;
 
+    /// <summary>
+    /// Resolution decision for the dispute
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resolution")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3050,6 +3251,9 @@ public partial class ResolveRequest
 
 }
 
+/// <summary>
+/// Allocation of assets to a party in a split resolution
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SplitAllocation
 {
@@ -3092,10 +3296,16 @@ public partial class SplitAllocation
 
 }
 
+/// <summary>
+/// Response from arbiter resolving a disputed escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ResolveResponse
 {
 
+    /// <summary>
+    /// Resolved escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3123,6 +3333,9 @@ public partial class ResolveResponse
 
 }
 
+/// <summary>
+/// Result of transferring assets to a party during resolution
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TransferResult
 {
@@ -3135,6 +3348,9 @@ public partial class TransferResult
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Assets transferred (null if failed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assets")]
     public EscrowAssetBundle? Assets { get; set; } = default!;
 
@@ -3164,6 +3380,9 @@ public partial class TransferResult
 
 }
 
+/// <summary>
+/// Request to verify a condition for conditional escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class VerifyConditionRequest
 {
@@ -3226,10 +3445,16 @@ public partial class VerifyConditionRequest
 
 }
 
+/// <summary>
+/// Response from verifying a condition on an escrow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class VerifyConditionResponse
 {
 
+    /// <summary>
+    /// Updated escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3255,6 +3480,9 @@ public partial class VerifyConditionResponse
 
 }
 
+/// <summary>
+/// Request to manually validate escrow assets
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateEscrowRequest
 {
@@ -3281,6 +3509,9 @@ public partial class ValidateEscrowRequest
 
 }
 
+/// <summary>
+/// Response from validating escrow assets
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateEscrowResponse
 {
@@ -3299,6 +3530,9 @@ public partial class ValidateEscrowResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ValidationFailure> Failures { get; set; } = new System.Collections.ObjectModel.Collection<ValidationFailure>();
 
+    /// <summary>
+    /// Escrow agreement with validation results
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3318,6 +3552,9 @@ public partial class ValidateEscrowResponse
 
 }
 
+/// <summary>
+/// Request to re-affirm after validation failure
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReaffirmRequest
 {
@@ -3374,10 +3611,16 @@ public partial class ReaffirmRequest
 
 }
 
+/// <summary>
+/// Response from party re-affirming after validation failure
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReaffirmResponse
 {
 
+    /// <summary>
+    /// Reaffirmed escrow agreement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrow")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3403,6 +3646,9 @@ public partial class ReaffirmResponse
 
 }
 
+/// <summary>
+/// Request to register a custom asset type handler
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RegisterHandlerRequest
 {
@@ -3469,6 +3715,9 @@ public partial class RegisterHandlerRequest
 
 }
 
+/// <summary>
+/// Response from registering an asset handler
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RegisterHandlerResponse
 {
@@ -3514,6 +3763,9 @@ public partial class ListHandlersRequest
 
 }
 
+/// <summary>
+/// Response containing list of registered asset handlers
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListHandlersResponse
 {
@@ -3540,6 +3792,9 @@ public partial class ListHandlersResponse
 
 }
 
+/// <summary>
+/// Request to remove a custom asset handler registration
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeregisterHandlerRequest
 {
@@ -3566,6 +3821,9 @@ public partial class DeregisterHandlerRequest
 
 }
 
+/// <summary>
+/// Response from deregistering an asset handler
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeregisterHandlerResponse
 {
@@ -3590,6 +3848,9 @@ public partial class DeregisterHandlerResponse
 
 }
 
+/// <summary>
+/// Standard error response format
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ErrorResponse
 {
