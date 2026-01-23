@@ -301,6 +301,7 @@ components:
           description: Voice room ID to join
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID (unique participant identifier)
         sipEndpoint:
           $ref: '#/components/schemas/SipEndpoint'
@@ -324,6 +325,7 @@ components:
           description: Voice room ID to leave
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID of the leaving participant
 
     DeleteVoiceRoomRequest:
@@ -355,6 +357,7 @@ components:
           description: Voice room ID
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID of the peer
 
     AnswerPeerRequest:
@@ -375,9 +378,11 @@ components:
           description: Voice room ID
         senderSessionId:
           type: string
+          format: uuid
           description: Session ID of the answering peer (caller of this endpoint)
         targetSessionId:
           type: string
+          format: uuid
           description: Session ID of the peer whose offer we're answering
         sdpAnswer:
           type: string
@@ -511,6 +516,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID (unique participant identifier)
         displayName:
           type: string
@@ -535,6 +541,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID for this peer (ephemeral identifier)
         displayName:
           type: string

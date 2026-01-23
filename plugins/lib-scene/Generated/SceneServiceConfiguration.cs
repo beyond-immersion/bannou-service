@@ -13,8 +13,8 @@
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
 //     - ALL properties below MUST be referenced in SceneService.cs (no dead config).
-//     - Hardcoded magic numbers for tunables (limits, timeouts, thresholds) are FORBIDDEN
-//       when a configuration property exists for that value.
+//     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
+//       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
 //
 //     Example: public MyService(SceneServiceConfiguration config) { _config = config; }

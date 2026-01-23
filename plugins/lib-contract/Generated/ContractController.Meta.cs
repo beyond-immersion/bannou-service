@@ -7513,4 +7513,1283 @@ public partial class ContractController
             _QueryActiveContracts_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for LockContract
+
+    private static readonly string _LockContract_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LockContractRequest",
+    "$defs": {
+        "LockContractRequest": {
+            "type": "object",
+            "description": "Request to lock a contract under guardian custody",
+            "additionalProperties": false,
+            "required": [
+                "contractInstanceId",
+                "guardianId",
+                "guardianType"
+            ],
+            "properties": {
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID to lock"
+                },
+                "guardianId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Guardian entity ID (e.g., escrow agreement ID)"
+                },
+                "guardianType": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Guardian entity type (e.g., \"escrow\")"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "nullable": true,
+                    "description": "Optional idempotency key for the operation"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _LockContract_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LockContractResponse",
+    "$defs": {
+        "LockContractResponse": {
+            "type": "object",
+            "description": "Response from locking a contract",
+            "additionalProperties": false,
+            "required": [
+                "locked",
+                "contractId"
+            ],
+            "properties": {
+                "locked": {
+                    "type": "boolean",
+                    "description": "Whether the contract was locked"
+                },
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                },
+                "guardianId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Guardian entity ID"
+                },
+                "lockedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the contract was locked"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _LockContract_Info = """
+{
+    "summary": "Lock contract under guardian custody",
+    "description": "Locks a contract under guardian custody (e.g., escrow). A locked contract\ncannot be modified, terminated, or have parties transferred except by the\nguardian. Requires the contract template to have `transferable: true`.\n",
+    "tags": [
+        "Guardian"
+    ],
+    "deprecated": false,
+    "operationId": "lockContract"
+}
+""";
+
+    /// <summary>Returns endpoint information for LockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/lock/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LockContract_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/lock",
+            _LockContract_Info));
+
+    /// <summary>Returns request schema for LockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/lock/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LockContract_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/lock",
+            "request-schema",
+            _LockContract_RequestSchema));
+
+    /// <summary>Returns response schema for LockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/lock/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LockContract_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/lock",
+            "response-schema",
+            _LockContract_ResponseSchema));
+
+    /// <summary>Returns full schema for LockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/lock/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LockContract_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/lock",
+            _LockContract_Info,
+            _LockContract_RequestSchema,
+            _LockContract_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UnlockContract
+
+    private static readonly string _UnlockContract_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UnlockContractRequest",
+    "$defs": {
+        "UnlockContractRequest": {
+            "type": "object",
+            "description": "Request to unlock a contract from guardian custody",
+            "additionalProperties": false,
+            "required": [
+                "contractInstanceId",
+                "guardianId",
+                "guardianType"
+            ],
+            "properties": {
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID to unlock"
+                },
+                "guardianId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Guardian entity ID (must match current guardian)"
+                },
+                "guardianType": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Guardian entity type"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "nullable": true,
+                    "description": "Optional idempotency key for the operation"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UnlockContract_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UnlockContractResponse",
+    "$defs": {
+        "UnlockContractResponse": {
+            "type": "object",
+            "description": "Response from unlocking a contract",
+            "additionalProperties": false,
+            "required": [
+                "unlocked",
+                "contractId"
+            ],
+            "properties": {
+                "unlocked": {
+                    "type": "boolean",
+                    "description": "Whether the contract was unlocked"
+                },
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UnlockContract_Info = """
+{
+    "summary": "Unlock contract from guardian custody",
+    "description": "Unlocks a contract from guardian custody. Only the current guardian can\nunlock a contract. Called on escrow refund to restore contract to original state.\n",
+    "tags": [
+        "Guardian"
+    ],
+    "deprecated": false,
+    "operationId": "unlockContract"
+}
+""";
+
+    /// <summary>Returns endpoint information for UnlockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/unlock/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnlockContract_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/unlock",
+            _UnlockContract_Info));
+
+    /// <summary>Returns request schema for UnlockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/unlock/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnlockContract_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/unlock",
+            "request-schema",
+            _UnlockContract_RequestSchema));
+
+    /// <summary>Returns response schema for UnlockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/unlock/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnlockContract_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/unlock",
+            "response-schema",
+            _UnlockContract_ResponseSchema));
+
+    /// <summary>Returns full schema for UnlockContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/unlock/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnlockContract_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/unlock",
+            _UnlockContract_Info,
+            _UnlockContract_RequestSchema,
+            _UnlockContract_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for TransferContractParty
+
+    private static readonly string _TransferContractParty_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferContractPartyRequest",
+    "$defs": {
+        "TransferContractPartyRequest": {
+            "type": "object",
+            "description": "Request to transfer a party role to a new entity",
+            "additionalProperties": false,
+            "required": [
+                "contractInstanceId",
+                "fromEntityId",
+                "fromEntityType",
+                "toEntityId",
+                "toEntityType",
+                "guardianId",
+                "guardianType"
+            ],
+            "properties": {
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                },
+                "fromEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Current party entity ID"
+                },
+                "fromEntityType": {
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Current party entity type"
+                },
+                "toEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "New entity ID to receive the role"
+                },
+                "toEntityType": {
+                    "$ref": "#/$defs/EntityType",
+                    "description": "New entity type"
+                },
+                "guardianId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Guardian entity ID (must be current guardian)"
+                },
+                "guardianType": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Guardian entity type"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "nullable": true,
+                    "description": "Optional idempotency key for the operation"
+                }
+            }
+        },
+        "EntityType": {
+            "type": "string",
+            "description": "Type of entity that can be a contract party",
+            "enum": [
+                "character",
+                "npc",
+                "guild",
+                "company",
+                "government",
+                "faction",
+                "location",
+                "system"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferContractParty_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferContractPartyResponse",
+    "$defs": {
+        "TransferContractPartyResponse": {
+            "type": "object",
+            "description": "Response from transferring a party role",
+            "additionalProperties": false,
+            "required": [
+                "transferred",
+                "contractId"
+            ],
+            "properties": {
+                "transferred": {
+                    "type": "boolean",
+                    "description": "Whether the transfer was successful"
+                },
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                },
+                "role": {
+                    "type": "string",
+                    "description": "Role that was transferred"
+                },
+                "fromEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Previous party entity ID"
+                },
+                "toEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "New party entity ID"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferContractParty_Info = """
+{
+    "summary": "Transfer party role to new entity",
+    "description": "Transfers a party role to a new entity. Used by escrow to reassign contract\nroles on release (e.g., transfer landlord role to new property owner).\nContract must be locked and caller must be the guardian.\n",
+    "tags": [
+        "Guardian"
+    ],
+    "deprecated": false,
+    "operationId": "transferContractParty"
+}
+""";
+
+    /// <summary>Returns endpoint information for TransferContractParty</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/transfer-party/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferContractParty_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/transfer-party",
+            _TransferContractParty_Info));
+
+    /// <summary>Returns request schema for TransferContractParty</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/transfer-party/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferContractParty_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/transfer-party",
+            "request-schema",
+            _TransferContractParty_RequestSchema));
+
+    /// <summary>Returns response schema for TransferContractParty</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/transfer-party/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferContractParty_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/transfer-party",
+            "response-schema",
+            _TransferContractParty_ResponseSchema));
+
+    /// <summary>Returns full schema for TransferContractParty</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/transfer-party/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferContractParty_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/transfer-party",
+            _TransferContractParty_Info,
+            _TransferContractParty_RequestSchema,
+            _TransferContractParty_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RegisterClauseType
+
+    private static readonly string _RegisterClauseType_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterClauseTypeRequest",
+    "$defs": {
+        "RegisterClauseTypeRequest": {
+            "type": "object",
+            "description": "Request to register a new clause type",
+            "additionalProperties": false,
+            "required": [
+                "typeCode",
+                "description",
+                "category"
+            ],
+            "properties": {
+                "typeCode": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9_]+$",
+                    "description": "Unique identifier for this clause type"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Human-readable description"
+                },
+                "category": {
+                    "$ref": "#/$defs/ClauseCategory",
+                    "description": "Whether this is a validation, execution, or both type of clause"
+                },
+                "validationHandler": {
+                    "$ref": "#/$defs/ClauseHandlerDefinition",
+                    "nullable": true,
+                    "description": "Handler called during check-asset-requirements"
+                },
+                "executionHandler": {
+                    "$ref": "#/$defs/ClauseHandlerDefinition",
+                    "nullable": true,
+                    "description": "Handler called during execute"
+                }
+            }
+        },
+        "ClauseCategory": {
+            "type": "string",
+            "description": "Category of clause type",
+            "enum": [
+                "validation",
+                "execution",
+                "both"
+            ]
+        },
+        "ClauseHandlerDefinition": {
+            "type": "object",
+            "description": "Handler definition for clause type operations",
+            "additionalProperties": false,
+            "required": [
+                "service",
+                "endpoint"
+            ],
+            "properties": {
+                "service": {
+                    "type": "string",
+                    "description": "Target service name"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Target endpoint path"
+                },
+                "requestMapping": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Template variable to request field mapping"
+                },
+                "responseMapping": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Response field to result mapping"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RegisterClauseType_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterClauseTypeResponse",
+    "$defs": {
+        "RegisterClauseTypeResponse": {
+            "type": "object",
+            "description": "Response from registering a clause type",
+            "additionalProperties": false,
+            "required": [
+                "registered",
+                "typeCode"
+            ],
+            "properties": {
+                "registered": {
+                    "type": "boolean",
+                    "description": "Whether the type was registered"
+                },
+                "typeCode": {
+                    "type": "string",
+                    "description": "The registered type code"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RegisterClauseType_Info = """
+{
+    "summary": "Register a new clause type",
+    "description": "Registers a new clause type with validation and/or execution handlers.\nClause types are registered globally (plugin-level, admin operation) and\nreferenced by contract templates via typeCode. Built-in types\n(asset_requirement, currency_transfer, item_transfer) are pre-registered.\n",
+    "tags": [
+        "ClauseTypes"
+    ],
+    "deprecated": false,
+    "operationId": "registerClauseType"
+}
+""";
+
+    /// <summary>Returns endpoint information for RegisterClauseType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/register/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterClauseType_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/register",
+            _RegisterClauseType_Info));
+
+    /// <summary>Returns request schema for RegisterClauseType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/register/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterClauseType_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/register",
+            "request-schema",
+            _RegisterClauseType_RequestSchema));
+
+    /// <summary>Returns response schema for RegisterClauseType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/register/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterClauseType_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/register",
+            "response-schema",
+            _RegisterClauseType_ResponseSchema));
+
+    /// <summary>Returns full schema for RegisterClauseType</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/register/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterClauseType_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/register",
+            _RegisterClauseType_Info,
+            _RegisterClauseType_RequestSchema,
+            _RegisterClauseType_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListClauseTypes
+
+    private static readonly string _ListClauseTypes_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListClauseTypesRequest",
+    "$defs": {
+        "ListClauseTypesRequest": {
+            "type": "object",
+            "description": "Request to list clause types",
+            "additionalProperties": false,
+            "properties": {
+                "category": {
+                    "$ref": "#/$defs/ClauseCategory",
+                    "nullable": true,
+                    "description": "Filter by category"
+                },
+                "includeBuiltIn": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include built-in types in response"
+                }
+            }
+        },
+        "ClauseCategory": {
+            "type": "string",
+            "description": "Category of clause type",
+            "enum": [
+                "validation",
+                "execution",
+                "both"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ListClauseTypes_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListClauseTypesResponse",
+    "$defs": {
+        "ListClauseTypesResponse": {
+            "type": "object",
+            "description": "Response containing list of clause types",
+            "additionalProperties": false,
+            "required": [
+                "clauseTypes"
+            ],
+            "properties": {
+                "clauseTypes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ClauseTypeSummary"
+                    },
+                    "description": "List of registered clause types"
+                }
+            }
+        },
+        "ClauseTypeSummary": {
+            "type": "object",
+            "description": "Summary of a clause type",
+            "additionalProperties": false,
+            "required": [
+                "typeCode",
+                "description",
+                "category",
+                "hasValidationHandler",
+                "hasExecutionHandler",
+                "isBuiltIn"
+            ],
+            "properties": {
+                "typeCode": {
+                    "type": "string",
+                    "description": "Unique identifier"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description"
+                },
+                "category": {
+                    "$ref": "#/$defs/ClauseCategory",
+                    "description": "Clause category"
+                },
+                "hasValidationHandler": {
+                    "type": "boolean",
+                    "description": "Whether a validation handler is registered"
+                },
+                "hasExecutionHandler": {
+                    "type": "boolean",
+                    "description": "Whether an execution handler is registered"
+                },
+                "isBuiltIn": {
+                    "type": "boolean",
+                    "description": "Whether this is a built-in type"
+                }
+            }
+        },
+        "ClauseCategory": {
+            "type": "string",
+            "description": "Category of clause type",
+            "enum": [
+                "validation",
+                "execution",
+                "both"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ListClauseTypes_Info = """
+{
+    "summary": "List all registered clause types",
+    "description": "Lists all registered clause types including built-in types and\ncustom-registered types.\n",
+    "tags": [
+        "ClauseTypes"
+    ],
+    "deprecated": false,
+    "operationId": "listClauseTypes"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListClauseTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListClauseTypes_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/list",
+            _ListClauseTypes_Info));
+
+    /// <summary>Returns request schema for ListClauseTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListClauseTypes_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/list",
+            "request-schema",
+            _ListClauseTypes_RequestSchema));
+
+    /// <summary>Returns response schema for ListClauseTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListClauseTypes_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/list",
+            "response-schema",
+            _ListClauseTypes_ResponseSchema));
+
+    /// <summary>Returns full schema for ListClauseTypes</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/clause-type/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListClauseTypes_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/clause-type/list",
+            _ListClauseTypes_Info,
+            _ListClauseTypes_RequestSchema,
+            _ListClauseTypes_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SetContractTemplateValues
+
+    private static readonly string _SetContractTemplateValues_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SetTemplateValuesRequest",
+    "$defs": {
+        "SetTemplateValuesRequest": {
+            "type": "object",
+            "description": "Request to set template values on a contract",
+            "additionalProperties": false,
+            "required": [
+                "contractInstanceId",
+                "templateValues"
+            ],
+            "properties": {
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                },
+                "templateValues": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Key-value pairs for template substitution.\nKeys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.\n"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _SetContractTemplateValues_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SetTemplateValuesResponse",
+    "$defs": {
+        "SetTemplateValuesResponse": {
+            "type": "object",
+            "description": "Response from setting template values",
+            "additionalProperties": false,
+            "required": [
+                "updated",
+                "contractId"
+            ],
+            "properties": {
+                "updated": {
+                    "type": "boolean",
+                    "description": "Whether values were updated"
+                },
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                },
+                "valueCount": {
+                    "type": "integer",
+                    "description": "Number of template values set"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _SetContractTemplateValues_Info = """
+{
+    "summary": "Set template values on contract instance",
+    "description": "Sets template values on a contract instance. Called by escrow when binding\na contract to an escrow agreement. Template values are used for variable\nsubstitution in clause handlers (e.g., wallet IDs, container IDs).\n",
+    "tags": [
+        "Execution"
+    ],
+    "deprecated": false,
+    "operationId": "setContractTemplateValues"
+}
+""";
+
+    /// <summary>Returns endpoint information for SetContractTemplateValues</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/set-template-values/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetContractTemplateValues_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/set-template-values",
+            _SetContractTemplateValues_Info));
+
+    /// <summary>Returns request schema for SetContractTemplateValues</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/set-template-values/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetContractTemplateValues_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/set-template-values",
+            "request-schema",
+            _SetContractTemplateValues_RequestSchema));
+
+    /// <summary>Returns response schema for SetContractTemplateValues</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/set-template-values/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetContractTemplateValues_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/set-template-values",
+            "response-schema",
+            _SetContractTemplateValues_ResponseSchema));
+
+    /// <summary>Returns full schema for SetContractTemplateValues</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/set-template-values/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetContractTemplateValues_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/set-template-values",
+            _SetContractTemplateValues_Info,
+            _SetContractTemplateValues_RequestSchema,
+            _SetContractTemplateValues_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CheckAssetRequirements
+
+    private static readonly string _CheckAssetRequirements_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CheckAssetRequirementsRequest",
+    "$defs": {
+        "CheckAssetRequirementsRequest": {
+            "type": "object",
+            "description": "Request to check asset requirement clauses",
+            "additionalProperties": false,
+            "required": [
+                "contractInstanceId"
+            ],
+            "properties": {
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CheckAssetRequirements_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CheckAssetRequirementsResponse",
+    "$defs": {
+        "CheckAssetRequirementsResponse": {
+            "type": "object",
+            "description": "Response from checking asset requirements",
+            "additionalProperties": false,
+            "required": [
+                "allSatisfied",
+                "byParty"
+            ],
+            "properties": {
+                "allSatisfied": {
+                    "type": "boolean",
+                    "description": "Whether all requirements across all parties are satisfied"
+                },
+                "byParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PartyAssetRequirementStatus"
+                    },
+                    "description": "Status broken down by party"
+                }
+            }
+        },
+        "PartyAssetRequirementStatus": {
+            "type": "object",
+            "description": "Asset requirement status for a single party",
+            "additionalProperties": false,
+            "required": [
+                "partyRole",
+                "satisfied",
+                "clauses"
+            ],
+            "properties": {
+                "partyRole": {
+                    "type": "string",
+                    "description": "Party role (e.g., party_a, party_b)"
+                },
+                "satisfied": {
+                    "type": "boolean",
+                    "description": "Whether all party's requirements are satisfied"
+                },
+                "clauses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ClauseAssetStatus"
+                    },
+                    "description": "Status of each clause for this party"
+                }
+            }
+        },
+        "ClauseAssetStatus": {
+            "type": "object",
+            "description": "Status of a single clause's asset requirements",
+            "additionalProperties": false,
+            "required": [
+                "clauseId",
+                "satisfied",
+                "required",
+                "current",
+                "missing"
+            ],
+            "properties": {
+                "clauseId": {
+                    "type": "string",
+                    "description": "Clause identifier"
+                },
+                "satisfied": {
+                    "type": "boolean",
+                    "description": "Whether requirement is satisfied"
+                },
+                "required": {
+                    "$ref": "#/$defs/AssetRequirementInfo",
+                    "description": "What the clause requires"
+                },
+                "current": {
+                    "type": "number",
+                    "description": "Current amount present"
+                },
+                "missing": {
+                    "type": "number",
+                    "description": "Amount still needed (0 if satisfied)"
+                }
+            }
+        },
+        "AssetRequirementInfo": {
+            "type": "object",
+            "description": "Information about a required asset",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item, item_stack)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Currency code or item template code"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Amount or quantity required"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CheckAssetRequirements_Info = """
+{
+    "summary": "Check if asset requirement clauses are satisfied",
+    "description": "Checks if all asset requirement clauses are satisfied. Uses template values\n(e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers\nvia the registered clause type handlers.\n",
+    "tags": [
+        "Execution"
+    ],
+    "deprecated": false,
+    "operationId": "checkAssetRequirements"
+}
+""";
+
+    /// <summary>Returns endpoint information for CheckAssetRequirements</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/check-asset-requirements/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CheckAssetRequirements_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/check-asset-requirements",
+            _CheckAssetRequirements_Info));
+
+    /// <summary>Returns request schema for CheckAssetRequirements</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/check-asset-requirements/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CheckAssetRequirements_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/check-asset-requirements",
+            "request-schema",
+            _CheckAssetRequirements_RequestSchema));
+
+    /// <summary>Returns response schema for CheckAssetRequirements</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/check-asset-requirements/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CheckAssetRequirements_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/check-asset-requirements",
+            "response-schema",
+            _CheckAssetRequirements_ResponseSchema));
+
+    /// <summary>Returns full schema for CheckAssetRequirements</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/check-asset-requirements/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CheckAssetRequirements_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/check-asset-requirements",
+            _CheckAssetRequirements_Info,
+            _CheckAssetRequirements_RequestSchema,
+            _CheckAssetRequirements_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ExecuteContract
+
+    private static readonly string _ExecuteContract_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteContractRequest",
+    "$defs": {
+        "ExecuteContractRequest": {
+            "type": "object",
+            "description": "Request to execute contract clauses",
+            "additionalProperties": false,
+            "required": [
+                "contractInstanceId"
+            ],
+            "properties": {
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                },
+                "idempotencyKey": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "nullable": true,
+                    "description": "Idempotency key for the execution"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteContract_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteContractResponse",
+    "$defs": {
+        "ExecuteContractResponse": {
+            "type": "object",
+            "description": "Response from executing a contract",
+            "additionalProperties": false,
+            "required": [
+                "executed",
+                "alreadyExecuted"
+            ],
+            "properties": {
+                "executed": {
+                    "type": "boolean",
+                    "description": "Whether execution was successful"
+                },
+                "alreadyExecuted": {
+                    "type": "boolean",
+                    "description": "True if this was a repeat call (idempotency)"
+                },
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contract instance ID"
+                },
+                "distributions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DistributionRecord"
+                    },
+                    "nullable": true,
+                    "description": "Records of what was moved where"
+                },
+                "executedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When execution occurred"
+                }
+            }
+        },
+        "DistributionRecord": {
+            "type": "object",
+            "description": "Record of an asset distribution",
+            "additionalProperties": false,
+            "required": [
+                "clauseId",
+                "clauseType",
+                "assetType",
+                "amount"
+            ],
+            "properties": {
+                "clauseId": {
+                    "type": "string",
+                    "description": "Clause that was executed"
+                },
+                "clauseType": {
+                    "type": "string",
+                    "description": "Type of clause (fee, distribution)"
+                },
+                "assetType": {
+                    "type": "string",
+                    "description": "Type of asset (currency, item)"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Amount transferred"
+                },
+                "sourceWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source wallet ID (for currency)"
+                },
+                "destinationWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Destination wallet ID (for currency)"
+                },
+                "sourceContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Source container ID (for items)"
+                },
+                "destinationContainerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Destination container ID (for items)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteContract_Info = """
+{
+    "summary": "Execute all contract clauses (idempotent)",
+    "description": "Executes all contract distribution clauses - distribute assets per clauses,\ncollect fees, mark contract as executed. This is idempotent - calling twice\nreturns the same result without re-executing. Contract must be in fulfilled\nstatus and all template values must be set.\n",
+    "tags": [
+        "Execution"
+    ],
+    "deprecated": false,
+    "operationId": "executeContract"
+}
+""";
+
+    /// <summary>Returns endpoint information for ExecuteContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/execute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteContract_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/execute",
+            _ExecuteContract_Info));
+
+    /// <summary>Returns request schema for ExecuteContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/execute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteContract_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/execute",
+            "request-schema",
+            _ExecuteContract_RequestSchema));
+
+    /// <summary>Returns response schema for ExecuteContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/execute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteContract_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/execute",
+            "response-schema",
+            _ExecuteContract_ResponseSchema));
+
+    /// <summary>Returns full schema for ExecuteContract</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/contract/instance/execute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteContract_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Contract",
+            "POST",
+            "/contract/instance/execute",
+            _ExecuteContract_Info,
+            _ExecuteContract_RequestSchema,
+            _ExecuteContract_ResponseSchema));
+
+    #endregion
 }

@@ -37,11 +37,12 @@ public class P2PCoordinator : IP2PCoordinator
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
 
         // Convert participants to VoicePeer, excluding the joining participant
+        // p.SessionId is Guid (never empty), joiningSessionId is string from API
         var peers = participants
-            .Where(p => p.SessionId != joiningSessionId && !string.IsNullOrEmpty(p.SessionId))
+            .Where(p => p.SessionId.ToString() != joiningSessionId)
             .Select(p => new VoicePeer
             {
-                SessionId = p.SessionId,
+                SessionId = p.SessionId.ToString(),
                 DisplayName = p.DisplayName,
                 SipEndpoint = p.Endpoint ?? new SipEndpoint { SdpOffer = string.Empty, IceCandidates = new List<string>() }
             })

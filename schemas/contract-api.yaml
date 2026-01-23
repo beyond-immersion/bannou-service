@@ -678,6 +678,264 @@ paths:
       - role: user
         states: {}
 
+  # ===========================================================================
+  # Guardian System (3 endpoints) - for escrow to lock contracts as assets
+  # ===========================================================================
+
+  /contract/lock:
+    post:
+      operationId: lockContract
+      tags:
+      - Guardian
+      summary: Lock contract under guardian custody
+      description: |
+        Locks a contract under guardian custody (e.g., escrow). A locked contract
+        cannot be modified, terminated, or have parties transferred except by the
+        guardian. Requires the contract template to have `transferable: true`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LockContractRequest'
+      responses:
+        '200':
+          description: Contract locked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockContractResponse'
+        '400':
+          description: Contract not transferable
+        '404':
+          description: Contract not found
+        '409':
+          description: Contract already locked
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/unlock:
+    post:
+      operationId: unlockContract
+      tags:
+      - Guardian
+      summary: Unlock contract from guardian custody
+      description: |
+        Unlocks a contract from guardian custody. Only the current guardian can
+        unlock a contract. Called on escrow refund to restore contract to original state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockContractRequest'
+      responses:
+        '200':
+          description: Contract unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockContractResponse'
+        '403':
+          description: Not the current guardian
+        '404':
+          description: Contract not found or not locked
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/transfer-party:
+    post:
+      operationId: transferContractParty
+      tags:
+      - Guardian
+      summary: Transfer party role to new entity
+      description: |
+        Transfers a party role to a new entity. Used by escrow to reassign contract
+        roles on release (e.g., transfer landlord role to new property owner).
+        Contract must be locked and caller must be the guardian.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferContractPartyRequest'
+      responses:
+        '200':
+          description: Party transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferContractPartyResponse'
+        '400':
+          description: Party not found in contract
+        '403':
+          description: Not the current guardian or contract not locked
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Clause Types (2 endpoints) - extensible clause type registration
+  # ===========================================================================
+
+  /contract/clause-type/register:
+    post:
+      operationId: registerClauseType
+      tags:
+      - ClauseTypes
+      summary: Register a new clause type
+      description: |
+        Registers a new clause type with validation and/or execution handlers.
+        Clause types are registered globally (plugin-level, admin operation) and
+        referenced by contract templates via typeCode. Built-in types
+        (asset_requirement, currency_transfer, item_transfer) are pre-registered.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterClauseTypeRequest'
+      responses:
+        '200':
+          description: Clause type registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterClauseTypeResponse'
+        '409':
+          description: Clause type code already exists
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /contract/clause-type/list:
+    post:
+      operationId: listClauseTypes
+      tags:
+      - ClauseTypes
+      summary: List all registered clause types
+      description: |
+        Lists all registered clause types including built-in types and
+        custom-registered types.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListClauseTypesRequest'
+      responses:
+        '200':
+          description: Clause types listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListClauseTypesResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Execution System (3 endpoints) - for escrow-driven contract execution
+  # ===========================================================================
+
+  /contract/instance/set-template-values:
+    post:
+      operationId: setContractTemplateValues
+      tags:
+      - Execution
+      summary: Set template values on contract instance
+      description: |
+        Sets template values on a contract instance. Called by escrow when binding
+        a contract to an escrow agreement. Template values are used for variable
+        substitution in clause handlers (e.g., wallet IDs, container IDs).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTemplateValuesRequest'
+      responses:
+        '200':
+          description: Template values set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetTemplateValuesResponse'
+        '400':
+          description: Invalid template key format
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/instance/check-asset-requirements:
+    post:
+      operationId: checkAssetRequirements
+      tags:
+      - Execution
+      summary: Check if asset requirement clauses are satisfied
+      description: |
+        Checks if all asset requirement clauses are satisfied. Uses template values
+        (e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+        via the registered clause type handlers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAssetRequirementsRequest'
+      responses:
+        '200':
+          description: Asset requirements checked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckAssetRequirementsResponse'
+        '400':
+          description: Template values not set
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/instance/execute:
+    post:
+      operationId: executeContract
+      tags:
+      - Execution
+      summary: Execute all contract clauses (idempotent)
+      description: |
+        Executes all contract distribution clauses - distribute assets per clauses,
+        collect fees, mark contract as executed. This is idempotent - calling twice
+        returns the same result without re-executing. Contract must be in fulfilled
+        status and all template values must be set.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteContractRequest'
+      responses:
+        '200':
+          description: Contract executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteContractResponse'
+        '400':
+          description: Contract not in fulfilled status or template values missing
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
 components:
   schemas:
     # =========================================================================
@@ -2163,6 +2421,545 @@ components:
       - gte
       - lt
       - lte
+
+    # =========================================================================
+    # Guardian Models
+    # =========================================================================
+
+    LockContractRequest:
+      type: object
+      description: Request to lock a contract under guardian custody
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID to lock
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (e.g., escrow agreement ID)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type (e.g., "escrow")
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    LockContractResponse:
+      type: object
+      description: Response from locking a contract
+      additionalProperties: false
+      required:
+      - locked
+      - contractId
+      properties:
+        locked:
+          type: boolean
+          description: Whether the contract was locked
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID
+        lockedAt:
+          type: string
+          format: date-time
+          description: When the contract was locked
+
+    UnlockContractRequest:
+      type: object
+      description: Request to unlock a contract from guardian custody
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID to unlock
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (must match current guardian)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    UnlockContractResponse:
+      type: object
+      description: Response from unlocking a contract
+      additionalProperties: false
+      required:
+      - unlocked
+      - contractId
+      properties:
+        unlocked:
+          type: boolean
+          description: Whether the contract was unlocked
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    TransferContractPartyRequest:
+      type: object
+      description: Request to transfer a party role to a new entity
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - fromEntityId
+      - fromEntityType
+      - toEntityId
+      - toEntityType
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Current party entity ID
+        fromEntityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Current party entity type
+        toEntityId:
+          type: string
+          format: uuid
+          description: New entity ID to receive the role
+        toEntityType:
+          $ref: '#/components/schemas/EntityType'
+          description: New entity type
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (must be current guardian)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    TransferContractPartyResponse:
+      type: object
+      description: Response from transferring a party role
+      additionalProperties: false
+      required:
+      - transferred
+      - contractId
+      properties:
+        transferred:
+          type: boolean
+          description: Whether the transfer was successful
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        role:
+          type: string
+          description: Role that was transferred
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Previous party entity ID
+        toEntityId:
+          type: string
+          format: uuid
+          description: New party entity ID
+
+    # =========================================================================
+    # Clause Type Models
+    # =========================================================================
+
+    ClauseCategory:
+      type: string
+      description: Category of clause type
+      enum:
+      - validation
+      - execution
+      - both
+
+    ClauseHandlerDefinition:
+      type: object
+      description: Handler definition for clause type operations
+      additionalProperties: false
+      required:
+      - service
+      - endpoint
+      properties:
+        service:
+          type: string
+          description: Target service name
+        endpoint:
+          type: string
+          description: Target endpoint path
+        requestMapping:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Template variable to request field mapping
+        responseMapping:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Response field to result mapping
+
+    RegisterClauseTypeRequest:
+      type: object
+      description: Request to register a new clause type
+      additionalProperties: false
+      required:
+      - typeCode
+      - description
+      - category
+      properties:
+        typeCode:
+          type: string
+          maxLength: 64
+          pattern: "^[a-z0-9_]+$"
+          description: Unique identifier for this clause type
+        description:
+          type: string
+          maxLength: 500
+          description: Human-readable description
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          description: Whether this is a validation, execution, or both type of clause
+        validationHandler:
+          $ref: '#/components/schemas/ClauseHandlerDefinition'
+          nullable: true
+          description: Handler called during check-asset-requirements
+        executionHandler:
+          $ref: '#/components/schemas/ClauseHandlerDefinition'
+          nullable: true
+          description: Handler called during execute
+
+    RegisterClauseTypeResponse:
+      type: object
+      description: Response from registering a clause type
+      additionalProperties: false
+      required:
+      - registered
+      - typeCode
+      properties:
+        registered:
+          type: boolean
+          description: Whether the type was registered
+        typeCode:
+          type: string
+          description: The registered type code
+
+    ListClauseTypesRequest:
+      type: object
+      description: Request to list clause types
+      additionalProperties: false
+      properties:
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          nullable: true
+          description: Filter by category
+        includeBuiltIn:
+          type: boolean
+          default: true
+          description: Include built-in types in response
+
+    ClauseTypeSummary:
+      type: object
+      description: Summary of a clause type
+      additionalProperties: false
+      required:
+      - typeCode
+      - description
+      - category
+      - hasValidationHandler
+      - hasExecutionHandler
+      - isBuiltIn
+      properties:
+        typeCode:
+          type: string
+          description: Unique identifier
+        description:
+          type: string
+          description: Human-readable description
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          description: Clause category
+        hasValidationHandler:
+          type: boolean
+          description: Whether a validation handler is registered
+        hasExecutionHandler:
+          type: boolean
+          description: Whether an execution handler is registered
+        isBuiltIn:
+          type: boolean
+          description: Whether this is a built-in type
+
+    ListClauseTypesResponse:
+      type: object
+      description: Response containing list of clause types
+      additionalProperties: false
+      required:
+      - clauseTypes
+      properties:
+        clauseTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseTypeSummary'
+          description: List of registered clause types
+
+    # =========================================================================
+    # Execution Models
+    # =========================================================================
+
+    SetTemplateValuesRequest:
+      type: object
+      description: Request to set template values on a contract
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - templateValues
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateValues:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Key-value pairs for template substitution.
+            Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+
+    SetTemplateValuesResponse:
+      type: object
+      description: Response from setting template values
+      additionalProperties: false
+      required:
+      - updated
+      - contractId
+      properties:
+        updated:
+          type: boolean
+          description: Whether values were updated
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        valueCount:
+          type: integer
+          description: Number of template values set
+
+    CheckAssetRequirementsRequest:
+      type: object
+      description: Request to check asset requirement clauses
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    AssetRequirementInfo:
+      type: object
+      description: Information about a required asset
+      additionalProperties: false
+      required:
+      - type
+      - code
+      - amount
+      properties:
+        type:
+          type: string
+          description: Asset type (currency, item, item_stack)
+        code:
+          type: string
+          description: Currency code or item template code
+        amount:
+          type: number
+          description: Amount or quantity required
+
+    ClauseAssetStatus:
+      type: object
+      description: Status of a single clause's asset requirements
+      additionalProperties: false
+      required:
+      - clauseId
+      - satisfied
+      - required
+      - current
+      - missing
+      properties:
+        clauseId:
+          type: string
+          description: Clause identifier
+        satisfied:
+          type: boolean
+          description: Whether requirement is satisfied
+        required:
+          $ref: '#/components/schemas/AssetRequirementInfo'
+          description: What the clause requires
+        current:
+          type: number
+          description: Current amount present
+        missing:
+          type: number
+          description: Amount still needed (0 if satisfied)
+
+    PartyAssetRequirementStatus:
+      type: object
+      description: Asset requirement status for a single party
+      additionalProperties: false
+      required:
+      - partyRole
+      - satisfied
+      - clauses
+      properties:
+        partyRole:
+          type: string
+          description: Party role (e.g., party_a, party_b)
+        satisfied:
+          type: boolean
+          description: Whether all party's requirements are satisfied
+        clauses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseAssetStatus'
+          description: Status of each clause for this party
+
+    CheckAssetRequirementsResponse:
+      type: object
+      description: Response from checking asset requirements
+      additionalProperties: false
+      required:
+      - allSatisfied
+      - byParty
+      properties:
+        allSatisfied:
+          type: boolean
+          description: Whether all requirements across all parties are satisfied
+        byParty:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAssetRequirementStatus'
+          description: Status broken down by party
+
+    ExecuteContractRequest:
+      type: object
+      description: Request to execute contract clauses
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Idempotency key for the execution
+
+    DistributionRecord:
+      type: object
+      description: Record of an asset distribution
+      additionalProperties: false
+      required:
+      - clauseId
+      - clauseType
+      - assetType
+      - amount
+      properties:
+        clauseId:
+          type: string
+          description: Clause that was executed
+        clauseType:
+          type: string
+          description: Type of clause (fee, distribution)
+        assetType:
+          type: string
+          description: Type of asset (currency, item)
+        amount:
+          type: number
+          description: Amount transferred
+        sourceWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source wallet ID (for currency)
+        destinationWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination wallet ID (for currency)
+        sourceContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source container ID (for items)
+        destinationContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination container ID (for items)
+
+    ExecuteContractResponse:
+      type: object
+      description: Response from executing a contract
+      additionalProperties: false
+      required:
+      - executed
+      - alreadyExecuted
+      properties:
+        executed:
+          type: boolean
+          description: Whether execution was successful
+        alreadyExecuted:
+          type: boolean
+          description: True if this was a repeat call (idempotency)
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        distributions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistributionRecord'
+          nullable: true
+          description: Records of what was moved where
+        executedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When execution occurred
 
 # Service Registration Information
 x-service-registration:

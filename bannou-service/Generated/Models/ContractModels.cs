@@ -2303,6 +2303,809 @@ public enum ComparisonOperator
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to lock a contract under guardian custody
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LockContractRequest
+{
+
+    /// <summary>
+    /// Contract instance ID to lock
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Guardian entity ID (e.g., escrow agreement ID)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guardianId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GuardianId { get; set; } = default!;
+
+    /// <summary>
+    /// Guardian entity type (e.g., "escrow")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guardianType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string GuardianType { get; set; } = default!;
+
+    /// <summary>
+    /// Optional idempotency key for the operation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string? IdempotencyKey { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from locking a contract
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LockContractResponse
+{
+
+    /// <summary>
+    /// Whether the contract was locked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locked")]
+    public bool Locked { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Guardian entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guardianId")]
+    public System.Guid GuardianId { get; set; } = default!;
+
+    /// <summary>
+    /// When the contract was locked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lockedAt")]
+    public System.DateTimeOffset LockedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to unlock a contract from guardian custody
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UnlockContractRequest
+{
+
+    /// <summary>
+    /// Contract instance ID to unlock
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Guardian entity ID (must match current guardian)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guardianId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GuardianId { get; set; } = default!;
+
+    /// <summary>
+    /// Guardian entity type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guardianType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string GuardianType { get; set; } = default!;
+
+    /// <summary>
+    /// Optional idempotency key for the operation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string? IdempotencyKey { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from unlocking a contract
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UnlockContractResponse
+{
+
+    /// <summary>
+    /// Whether the contract was unlocked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("unlocked")]
+    public bool Unlocked { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to transfer a party role to a new entity
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransferContractPartyRequest
+{
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Current party entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fromEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FromEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Current party entity type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fromEntityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType FromEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// New entity ID to receive the role
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("toEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ToEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// New entity type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("toEntityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType ToEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Guardian entity ID (must be current guardian)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guardianId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GuardianId { get; set; } = default!;
+
+    /// <summary>
+    /// Guardian entity type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guardianType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string GuardianType { get; set; } = default!;
+
+    /// <summary>
+    /// Optional idempotency key for the operation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string? IdempotencyKey { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from transferring a party role
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransferContractPartyResponse
+{
+
+    /// <summary>
+    /// Whether the transfer was successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transferred")]
+    public bool Transferred { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Role that was transferred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    public string Role { get; set; } = default!;
+
+    /// <summary>
+    /// Previous party entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fromEntityId")]
+    public System.Guid FromEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// New party entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("toEntityId")]
+    public System.Guid ToEntityId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Category of clause type
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ClauseCategory
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"validation")]
+    Validation = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"execution")]
+    Execution = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"both")]
+    Both = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Handler definition for clause type operations
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClauseHandlerDefinition
+{
+
+    /// <summary>
+    /// Target service name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("service")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Service { get; set; } = default!;
+
+    /// <summary>
+    /// Target endpoint path
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Template variable to request field mapping
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requestMapping")]
+    public object? RequestMapping { get; set; } = default!;
+
+    /// <summary>
+    /// Response field to result mapping
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("responseMapping")]
+    public object? ResponseMapping { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to register a new clause type
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisterClauseTypeRequest
+{
+
+    /// <summary>
+    /// Unique identifier for this clause type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("typeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9_]+$")]
+    public string TypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this is a validation, execution, or both type of clause
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ClauseCategory Category { get; set; } = default!;
+
+    /// <summary>
+    /// Handler called during check-asset-requirements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("validationHandler")]
+    public ClauseHandlerDefinition? ValidationHandler { get; set; } = default!;
+
+    /// <summary>
+    /// Handler called during execute
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionHandler")]
+    public ClauseHandlerDefinition? ExecutionHandler { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from registering a clause type
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisterClauseTypeResponse
+{
+
+    /// <summary>
+    /// Whether the type was registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registered")]
+    public bool Registered { get; set; } = default!;
+
+    /// <summary>
+    /// The registered type code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("typeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TypeCode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list clause types
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListClauseTypesRequest
+{
+
+    /// <summary>
+    /// Filter by category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ClauseCategory? Category { get; set; } = default!;
+
+    /// <summary>
+    /// Include built-in types in response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeBuiltIn")]
+    public bool IncludeBuiltIn { get; set; } = true;
+
+}
+
+/// <summary>
+/// Summary of a clause type
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClauseTypeSummary
+{
+
+    /// <summary>
+    /// Unique identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("typeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Clause category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ClauseCategory Category { get; set; } = default!;
+
+    /// <summary>
+    /// Whether a validation handler is registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasValidationHandler")]
+    public bool HasValidationHandler { get; set; } = default!;
+
+    /// <summary>
+    /// Whether an execution handler is registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasExecutionHandler")]
+    public bool HasExecutionHandler { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this is a built-in type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isBuiltIn")]
+    public bool IsBuiltIn { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing list of clause types
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListClauseTypesResponse
+{
+
+    /// <summary>
+    /// List of registered clause types
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clauseTypes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ClauseTypeSummary> ClauseTypes { get; set; } = new System.Collections.ObjectModel.Collection<ClauseTypeSummary>();
+
+}
+
+/// <summary>
+/// Request to set template values on a contract
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SetTemplateValuesRequest
+{
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Key-value pairs for template substitution.
+    /// <br/>Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateValues")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.IDictionary<string, string> TemplateValues { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+
+}
+
+/// <summary>
+/// Response from setting template values
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SetTemplateValuesResponse
+{
+
+    /// <summary>
+    /// Whether values were updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updated")]
+    public bool Updated { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of template values set
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("valueCount")]
+    public int ValueCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to check asset requirement clauses
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CheckAssetRequirementsRequest
+{
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Information about a required asset
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AssetRequirementInfo
+{
+
+    /// <summary>
+    /// Asset type (currency, item, item_stack)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Type { get; set; } = default!;
+
+    /// <summary>
+    /// Currency code or item template code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Amount or quantity required
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    public double Amount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Status of a single clause's asset requirements
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClauseAssetStatus
+{
+
+    /// <summary>
+    /// Clause identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clauseId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ClauseId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether requirement is satisfied
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("satisfied")]
+    public bool Satisfied { get; set; } = default!;
+
+    /// <summary>
+    /// What the clause requires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("required")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public AssetRequirementInfo Required { get; set; } = new AssetRequirementInfo();
+
+    /// <summary>
+    /// Current amount present
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("current")]
+    public double Current { get; set; } = default!;
+
+    /// <summary>
+    /// Amount still needed (0 if satisfied)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("missing")]
+    public double Missing { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Asset requirement status for a single party
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PartyAssetRequirementStatus
+{
+
+    /// <summary>
+    /// Party role (e.g., party_a, party_b)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyRole")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PartyRole { get; set; } = default!;
+
+    /// <summary>
+    /// Whether all party's requirements are satisfied
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("satisfied")]
+    public bool Satisfied { get; set; } = default!;
+
+    /// <summary>
+    /// Status of each clause for this party
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clauses")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ClauseAssetStatus> Clauses { get; set; } = new System.Collections.ObjectModel.Collection<ClauseAssetStatus>();
+
+}
+
+/// <summary>
+/// Response from checking asset requirements
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CheckAssetRequirementsResponse
+{
+
+    /// <summary>
+    /// Whether all requirements across all parties are satisfied
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allSatisfied")]
+    public bool AllSatisfied { get; set; } = default!;
+
+    /// <summary>
+    /// Status broken down by party
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("byParty")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<PartyAssetRequirementStatus> ByParty { get; set; } = new System.Collections.ObjectModel.Collection<PartyAssetRequirementStatus>();
+
+}
+
+/// <summary>
+/// Request to execute contract clauses
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteContractRequest
+{
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Idempotency key for the execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string? IdempotencyKey { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Record of an asset distribution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DistributionRecord
+{
+
+    /// <summary>
+    /// Clause that was executed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clauseId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ClauseId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of clause (fee, distribution)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clauseType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ClauseType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of asset (currency, item)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetType { get; set; } = default!;
+
+    /// <summary>
+    /// Amount transferred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    public double Amount { get; set; } = default!;
+
+    /// <summary>
+    /// Source wallet ID (for currency)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceWalletId")]
+    public System.Guid? SourceWalletId { get; set; } = default!;
+
+    /// <summary>
+    /// Destination wallet ID (for currency)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationWalletId")]
+    public System.Guid? DestinationWalletId { get; set; } = default!;
+
+    /// <summary>
+    /// Source container ID (for items)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceContainerId")]
+    public System.Guid? SourceContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// Destination container ID (for items)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationContainerId")]
+    public System.Guid? DestinationContainerId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from executing a contract
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteContractResponse
+{
+
+    /// <summary>
+    /// Whether execution was successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executed")]
+    public bool Executed { get; set; } = default!;
+
+    /// <summary>
+    /// True if this was a repeat call (idempotency)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("alreadyExecuted")]
+    public bool AlreadyExecuted { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Records of what was moved where
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("distributions")]
+    public System.Collections.Generic.ICollection<DistributionRecord>? Distributions { get; set; } = default!;
+
+    /// <summary>
+    /// When execution occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executedAt")]
+    public System.DateTimeOffset? ExecutedAt { get; set; } = default!;
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum PreboundApiExecutionMode

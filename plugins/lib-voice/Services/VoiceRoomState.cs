@@ -53,7 +53,7 @@ public class ParticipantRegistration
     /// WebSocket session ID (unique participant identifier).
     /// This is the primary key for participant tracking.
     /// </summary>
-    public string SessionId { get; set; } = string.Empty;
+    public Guid SessionId { get; set; }
 
     /// <summary>
     /// Display name.
@@ -87,7 +87,7 @@ public class ParticipantRegistration
     {
         return new VoiceParticipant
         {
-            SessionId = SessionId,
+            SessionId = SessionId.ToString(),
             DisplayName = DisplayName,
             JoinedAt = JoinedAt,
             IsMuted = IsMuted
@@ -101,7 +101,7 @@ public class ParticipantRegistration
     {
         return new VoicePeer
         {
-            SessionId = SessionId,
+            SessionId = SessionId.ToString(),
             DisplayName = DisplayName,
             SipEndpoint = Endpoint ?? new SipEndpoint()
         };

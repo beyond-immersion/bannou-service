@@ -319,6 +319,118 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryActiveContractsResponse>> QueryActiveContractsAsync(QueryActiveContractsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Lock contract under guardian custody
+    /// </summary>
+
+    /// <remarks>
+    /// Locks a contract under guardian custody (e.g., escrow). A locked contract
+    /// <br/>cannot be modified, terminated, or have parties transferred except by the
+    /// <br/>guardian. Requires the contract template to have `transferable: true`.
+    /// </remarks>
+
+    /// <returns>Contract locked successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LockContractResponse>> LockContractAsync(LockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Unlock contract from guardian custody
+    /// </summary>
+
+    /// <remarks>
+    /// Unlocks a contract from guardian custody. Only the current guardian can
+    /// <br/>unlock a contract. Called on escrow refund to restore contract to original state.
+    /// </remarks>
+
+    /// <returns>Contract unlocked successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockContractResponse>> UnlockContractAsync(UnlockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Transfer party role to new entity
+    /// </summary>
+
+    /// <remarks>
+    /// Transfers a party role to a new entity. Used by escrow to reassign contract
+    /// <br/>roles on release (e.g., transfer landlord role to new property owner).
+    /// <br/>Contract must be locked and caller must be the guardian.
+    /// </remarks>
+
+    /// <returns>Party transferred successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferContractPartyResponse>> TransferContractPartyAsync(TransferContractPartyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Register a new clause type
+    /// </summary>
+
+    /// <remarks>
+    /// Registers a new clause type with validation and/or execution handlers.
+    /// <br/>Clause types are registered globally (plugin-level, admin operation) and
+    /// <br/>referenced by contract templates via typeCode. Built-in types
+    /// <br/>(asset_requirement, currency_transfer, item_transfer) are pre-registered.
+    /// </remarks>
+
+    /// <returns>Clause type registered successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterClauseTypeResponse>> RegisterClauseTypeAsync(RegisterClauseTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List all registered clause types
+    /// </summary>
+
+    /// <remarks>
+    /// Lists all registered clause types including built-in types and
+    /// <br/>custom-registered types.
+    /// </remarks>
+
+    /// <returns>Clause types listed successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListClauseTypesResponse>> ListClauseTypesAsync(ListClauseTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Set template values on contract instance
+    /// </summary>
+
+    /// <remarks>
+    /// Sets template values on a contract instance. Called by escrow when binding
+    /// <br/>a contract to an escrow agreement. Template values are used for variable
+    /// <br/>substitution in clause handlers (e.g., wallet IDs, container IDs).
+    /// </remarks>
+
+    /// <returns>Template values set successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTemplateValuesResponse>> SetContractTemplateValuesAsync(SetTemplateValuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Check if asset requirement clauses are satisfied
+    /// </summary>
+
+    /// <remarks>
+    /// Checks if all asset requirement clauses are satisfied. Uses template values
+    /// <br/>(e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+    /// <br/>via the registered clause type handlers.
+    /// </remarks>
+
+    /// <returns>Asset requirements checked</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckAssetRequirementsResponse>> CheckAssetRequirementsAsync(CheckAssetRequirementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Execute all contract clauses (idempotent)
+    /// </summary>
+
+    /// <remarks>
+    /// Executes all contract distribution clauses - distribute assets per clauses,
+    /// <br/>collect fees, mark contract as executed. This is idempotent - calling twice
+    /// <br/>returns the same result without re-executing. Contract must be in fulfilled
+    /// <br/>status and all template values must be set.
+    /// </remarks>
+
+    /// <returns>Contract executed successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteContractResponse>> ExecuteContractAsync(ExecuteContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -741,6 +853,150 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     {
 
         var (statusCode, result) = await _implementation.QueryActiveContractsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Lock contract under guardian custody
+    /// </summary>
+    /// <remarks>
+    /// Locks a contract under guardian custody (e.g., escrow). A locked contract
+    /// <br/>cannot be modified, terminated, or have parties transferred except by the
+    /// <br/>guardian. Requires the contract template to have `transferable: true`.
+    /// </remarks>
+    /// <returns>Contract locked successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/lock")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LockContractResponse>> LockContract([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.LockContractAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Unlock contract from guardian custody
+    /// </summary>
+    /// <remarks>
+    /// Unlocks a contract from guardian custody. Only the current guardian can
+    /// <br/>unlock a contract. Called on escrow refund to restore contract to original state.
+    /// </remarks>
+    /// <returns>Contract unlocked successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/unlock")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockContractResponse>> UnlockContract([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnlockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UnlockContractAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Transfer party role to new entity
+    /// </summary>
+    /// <remarks>
+    /// Transfers a party role to a new entity. Used by escrow to reassign contract
+    /// <br/>roles on release (e.g., transfer landlord role to new property owner).
+    /// <br/>Contract must be locked and caller must be the guardian.
+    /// </remarks>
+    /// <returns>Party transferred successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/transfer-party")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferContractPartyResponse>> TransferContractParty([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TransferContractPartyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.TransferContractPartyAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Register a new clause type
+    /// </summary>
+    /// <remarks>
+    /// Registers a new clause type with validation and/or execution handlers.
+    /// <br/>Clause types are registered globally (plugin-level, admin operation) and
+    /// <br/>referenced by contract templates via typeCode. Built-in types
+    /// <br/>(asset_requirement, currency_transfer, item_transfer) are pre-registered.
+    /// </remarks>
+    /// <returns>Clause type registered successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/clause-type/register")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterClauseTypeResponse>> RegisterClauseType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterClauseTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.RegisterClauseTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List all registered clause types
+    /// </summary>
+    /// <remarks>
+    /// Lists all registered clause types including built-in types and
+    /// <br/>custom-registered types.
+    /// </remarks>
+    /// <returns>Clause types listed successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/clause-type/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListClauseTypesResponse>> ListClauseTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListClauseTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListClauseTypesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Set template values on contract instance
+    /// </summary>
+    /// <remarks>
+    /// Sets template values on a contract instance. Called by escrow when binding
+    /// <br/>a contract to an escrow agreement. Template values are used for variable
+    /// <br/>substitution in clause handlers (e.g., wallet IDs, container IDs).
+    /// </remarks>
+    /// <returns>Template values set successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/instance/set-template-values")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTemplateValuesResponse>> SetContractTemplateValues([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetTemplateValuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.SetContractTemplateValuesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Check if asset requirement clauses are satisfied
+    /// </summary>
+    /// <remarks>
+    /// Checks if all asset requirement clauses are satisfied. Uses template values
+    /// <br/>(e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+    /// <br/>via the registered clause type handlers.
+    /// </remarks>
+    /// <returns>Asset requirements checked</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/instance/check-asset-requirements")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckAssetRequirementsResponse>> CheckAssetRequirements([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CheckAssetRequirementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CheckAssetRequirementsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Execute all contract clauses (idempotent)
+    /// </summary>
+    /// <remarks>
+    /// Executes all contract distribution clauses - distribute assets per clauses,
+    /// <br/>collect fees, mark contract as executed. This is idempotent - calling twice
+    /// <br/>returns the same result without re-executing. Contract must be in fulfilled
+    /// <br/>status and all template values must be set.
+    /// </remarks>
+    /// <returns>Contract executed successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("contract/instance/execute")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteContractResponse>> ExecuteContract([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ExecuteContractAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

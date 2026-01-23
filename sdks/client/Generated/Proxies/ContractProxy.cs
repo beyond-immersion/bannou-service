@@ -419,4 +419,148 @@ public sealed class ContractProxy
         return _client.InvokeAsync<QueryActiveContractsRequest, QueryActiveContractsResponse>(
             "POST", "/contract/query-active", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Lock contract under guardian custody
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing LockContractResponse on success.</returns>
+    public Task<ApiResponse<LockContractResponse>> LockContractAsync(
+        LockContractRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<LockContractRequest, LockContractResponse>(
+            "POST", "/contract/lock", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Unlock contract from guardian custody
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing UnlockContractResponse on success.</returns>
+    public Task<ApiResponse<UnlockContractResponse>> UnlockContractAsync(
+        UnlockContractRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UnlockContractRequest, UnlockContractResponse>(
+            "POST", "/contract/unlock", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Transfer party role to new entity
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing TransferContractPartyResponse on success.</returns>
+    public Task<ApiResponse<TransferContractPartyResponse>> TransferContractPartyAsync(
+        TransferContractPartyRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<TransferContractPartyRequest, TransferContractPartyResponse>(
+            "POST", "/contract/transfer-party", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Register a new clause type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RegisterClauseTypeResponse on success.</returns>
+    public Task<ApiResponse<RegisterClauseTypeResponse>> RegisterClauseTypeAsync(
+        RegisterClauseTypeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RegisterClauseTypeRequest, RegisterClauseTypeResponse>(
+            "POST", "/contract/clause-type/register", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// List all registered clause types
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ListClauseTypesResponse on success.</returns>
+    public Task<ApiResponse<ListClauseTypesResponse>> ListClauseTypesAsync(
+        ListClauseTypesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListClauseTypesRequest, ListClauseTypesResponse>(
+            "POST", "/contract/clause-type/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Set template values on contract instance
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing SetTemplateValuesResponse on success.</returns>
+    public Task<ApiResponse<SetTemplateValuesResponse>> SetContractTemplateValuesAsync(
+        SetTemplateValuesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<SetTemplateValuesRequest, SetTemplateValuesResponse>(
+            "POST", "/contract/instance/set-template-values", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Check if asset requirement clauses are satisfied
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CheckAssetRequirementsResponse on success.</returns>
+    public Task<ApiResponse<CheckAssetRequirementsResponse>> CheckAssetRequirementsAsync(
+        CheckAssetRequirementsRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CheckAssetRequirementsRequest, CheckAssetRequirementsResponse>(
+            "POST", "/contract/instance/check-asset-requirements", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Execute all contract clauses (idempotent)
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ExecuteContractResponse on success.</returns>
+    public Task<ApiResponse<ExecuteContractResponse>> ExecuteContractAsync(
+        ExecuteContractRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ExecuteContractRequest, ExecuteContractResponse>(
+            "POST", "/contract/instance/execute", request, channel, timeout, cancellationToken);
+    }
 }

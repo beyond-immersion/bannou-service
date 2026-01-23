@@ -20,9 +20,9 @@ public class SipEndpointRegistry : ISipEndpointRegistry
 
     /// <summary>
     /// Local cache of room participants for fast lookups.
-    /// Key: roomId, Value: concurrent dictionary of sessionId -> participant
+    /// Key: roomId, Value: concurrent dictionary of sessionId (Guid) -> participant
     /// </summary>
-    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, ParticipantRegistration>> _localCache = new();
+    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, ParticipantRegistration>> _localCache = new();
 
     /// <summary>
     /// Initializes a new instance of the SipEndpointRegistry.
@@ -48,15 +48,15 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         string? displayName = null,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId) || !Guid.TryParse(sessionId, out var sessionGuid))
         {
-            throw new ArgumentException("SessionId is required", nameof(sessionId));
+            throw new ArgumentException("SessionId must be a valid GUID", nameof(sessionId));
         }
 
         var now = DateTimeOffset.UtcNow;
         var participant = new ParticipantRegistration
         {
-            SessionId = sessionId,
+            SessionId = sessionGuid,
             DisplayName = displayName,
             Endpoint = endpoint,
             JoinedAt = now,
@@ -73,13 +73,13 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             if (roomParticipants == null)
             {
                 // Room doesn't exist yet, create new dictionary
-                roomParticipants = new ConcurrentDictionary<string, ParticipantRegistration>();
+                roomParticipants = new ConcurrentDictionary<Guid, ParticipantRegistration>();
                 _localCache[roomId] = roomParticipants;
             }
         }
 
         // Try to add (fails if already exists)
-        if (!roomParticipants.TryAdd(sessionId, participant))
+        if (!roomParticipants.TryAdd(sessionGuid, participant))
         {
             _logger.LogWarning("Session {SessionId} already registered in room {RoomId}", sessionId, roomId);
             return false;
@@ -98,7 +98,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         string sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId) || !Guid.TryParse(sessionId, out var sessionGuid))
         {
             return null;
         }
@@ -114,7 +114,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             }
         }
 
-        if (!roomParticipants.TryRemove(sessionId, out var removed))
+        if (!roomParticipants.TryRemove(sessionGuid, out var removed))
         {
             _logger.LogDebug("Session {SessionId} not found in room {RoomId}", sessionId, roomId);
             return null;
@@ -151,7 +151,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         string sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId) || !Guid.TryParse(sessionId, out var sessionGuid))
         {
             return null;
         }
@@ -165,7 +165,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             }
         }
 
-        roomParticipants.TryGetValue(sessionId, out var participant);
+        roomParticipants.TryGetValue(sessionGuid, out var participant);
         return participant;
     }
 
@@ -175,7 +175,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         string sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId) || !Guid.TryParse(sessionId, out var sessionGuid))
         {
             return false;
         }
@@ -189,7 +189,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             }
         }
 
-        if (!roomParticipants.TryGetValue(sessionId, out var existing))
+        if (!roomParticipants.TryGetValue(sessionGuid, out var existing))
         {
             return false;
         }
@@ -205,7 +205,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             IsMuted = existing.IsMuted
         };
 
-        roomParticipants[sessionId] = updated;
+        roomParticipants[sessionGuid] = updated;
         await PersistRoomParticipantsAsync(roomId, roomParticipants, cancellationToken);
 
         return true;
@@ -324,7 +324,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         var dict = new ConcurrentDictionary<string, ParticipantRegistration>();
         foreach (var p in participantList)
         {
-            dict[p.SessionId] = p;
+            dict[p.SessionId.ToString()] = p;
         }
 
         // Cache locally
