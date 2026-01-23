@@ -475,3 +475,24 @@ x-state-stores:
     backend: mysql
     service: Item
     purpose: Item instances (persistent, realm-partitioned)
+
+  # ============================================================================
+  # Inventory Stores
+  # ============================================================================
+
+  inventory-container-cache:
+    backend: redis
+    prefix: "inv:cont"
+    service: Inventory
+    purpose: Container state and item list cache
+
+  inventory-container-store:
+    backend: mysql
+    service: Inventory
+    purpose: Container definitions (persistent)
+
+  inventory-lock:
+    backend: redis
+    prefix: "inv:lock"
+    service: Inventory
+    purpose: Distributed locks for concurrent modifications

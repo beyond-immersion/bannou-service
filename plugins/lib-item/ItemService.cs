@@ -598,9 +598,17 @@ public partial class ItemService : IItemService
 
             await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
 
-            // Get template for event
+            // Get template for event enrichment
             var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
             var template = await templateStore.GetAsync($"{TPL_PREFIX}{model.TemplateId}", cancellationToken);
+
+            if (template is null)
+            {
+                _logger.LogWarning("Template {TemplateId} not found when binding instance {InstanceId}, possible data inconsistency",
+                    model.TemplateId, body.InstanceId);
+            }
+
+            var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
 
             await _messageBus.TryPublishAsync("item-instance.bound", new ItemInstanceBoundEvent
             {
@@ -608,7 +616,7 @@ public partial class ItemService : IItemService
                 Timestamp = now,
                 InstanceId = body.InstanceId,
                 TemplateId = Guid.Parse(model.TemplateId),
-                TemplateCode = template?.Code ?? "unknown",
+                TemplateCode = templateCode,
                 RealmId = Guid.Parse(model.RealmId),
                 CharacterId = body.CharacterId,
                 BindType = body.BindType.ToString()
