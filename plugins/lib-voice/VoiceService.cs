@@ -331,7 +331,7 @@ public partial class VoiceService : IVoiceService
                 {
                     await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                     {
-                        SessionId = Guid.Parse(body.SessionId),
+                        SessionId = body.SessionId,
                         ServiceId = "voice",
                         NewState = "ringing"
                     }, cancellationToken);
@@ -572,9 +572,9 @@ public partial class VoiceService : IVoiceService
                 }
             };
 
-            // Send directly to the target session
+            // Send directly to the target session (IClientEventPublisher uses string routing keys)
             await _clientEventPublisher.PublishToSessionsAsync(
-                new[] { body.TargetSessionId },
+                new[] { body.TargetSessionId.ToString() },
                 peerUpdatedEvent,
                 cancellationToken);
 
@@ -606,42 +606,40 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     private async Task NotifyPeerJoinedAsync(
         Guid roomId,
-        string newPeerSessionId,
+        Guid newPeerSessionId,
         string? displayName,
         SipEndpoint sipEndpoint,
         int currentCount,
         CancellationToken cancellationToken)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
-        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
-        var sessionIds = participants
-            .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != newPeerSessionId)
-            .Select(p => p.SessionId ?? string.Empty)
+        var otherParticipants = participants
+            .Where(p => p.SessionId != newPeerSessionId)
             .ToList();
 
-        if (sessionIds.Count == 0)
+        if (otherParticipants.Count == 0)
         {
             return;
         }
 
         // Set voice:ringing state for all recipient sessions before publishing the event
         // This enables them to call /voice/peer/answer to send SDP answers (FOUNDATION TENETS)
-        foreach (var sessionId in sessionIds)
+        foreach (var participant in otherParticipants)
         {
             try
             {
                 await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                 {
-                    SessionId = Guid.Parse(sessionId),
+                    SessionId = participant.SessionId,
                     ServiceId = "voice",
                     NewState = "ringing"
                 }, cancellationToken);
-                _logger.LogDebug("Set voice:ringing state for session {SessionId}", sessionId);
+                _logger.LogDebug("Set voice:ringing state for session {SessionId}", participant.SessionId);
             }
             catch (Exception ex)
             {
                 // Log but don't fail - the event is more important
-                _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", sessionId);
+                _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", participant.SessionId);
             }
         }
 
@@ -661,7 +659,9 @@ public partial class VoiceService : IVoiceService
             CurrentParticipantCount = currentCount
         };
 
-        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIds, peerJoinedEvent, cancellationToken);
+        // IClientEventPublisher uses string routing keys for RabbitMQ topics
+        var sessionIdStrings = otherParticipants.Select(p => p.SessionId.ToString());
+        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerJoinedEvent, cancellationToken);
         _logger.LogDebug("Published peer_joined event to {Count} sessions", publishedCount);
     }
 
@@ -670,19 +670,14 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     private async Task NotifyPeerLeftAsync(
         Guid roomId,
-        string leftPeerSessionId,
+        Guid leftPeerSessionId,
         string? displayName,
         int remainingCount,
         CancellationToken cancellationToken)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
-        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
-        var sessionIds = participants
-            .Where(p => !string.IsNullOrEmpty(p.SessionId))
-            .Select(p => p.SessionId ?? string.Empty)
-            .ToList();
 
-        if (sessionIds.Count == 0)
+        if (participants.Count == 0)
         {
             return;
         }
@@ -697,7 +692,9 @@ public partial class VoiceService : IVoiceService
             RemainingParticipantCount = remainingCount
         };
 
-        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIds, peerLeftEvent, cancellationToken);
+        // IClientEventPublisher uses string routing keys for RabbitMQ topics
+        var sessionIdStrings = participants.Select(p => p.SessionId.ToString());
+        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerLeftEvent, cancellationToken);
         _logger.LogDebug("Published peer_left event to {Count} sessions", publishedCount);
     }
 
@@ -706,19 +703,17 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     private async Task NotifyPeerUpdatedAsync(
         Guid roomId,
-        string updatedPeerSessionId,
+        Guid updatedPeerSessionId,
         string? displayName,
         SipEndpoint sipEndpoint,
         CancellationToken cancellationToken)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
-        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
-        var sessionIds = participants
-            .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != updatedPeerSessionId)
-            .Select(p => p.SessionId ?? string.Empty)
+        var otherParticipants = participants
+            .Where(p => p.SessionId != updatedPeerSessionId)
             .ToList();
 
-        if (sessionIds.Count == 0)
+        if (otherParticipants.Count == 0)
         {
             return;
         }
@@ -738,7 +733,9 @@ public partial class VoiceService : IVoiceService
             }
         };
 
-        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIds, peerUpdatedEvent, cancellationToken);
+        // IClientEventPublisher uses string routing keys for RabbitMQ topics
+        var sessionIdStrings = otherParticipants.Select(p => p.SessionId.ToString());
+        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerUpdatedEvent, cancellationToken);
         _logger.LogDebug("Published peer_updated event to {Count} sessions", publishedCount);
     }
 

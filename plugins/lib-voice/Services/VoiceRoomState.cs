@@ -87,7 +87,7 @@ public class ParticipantRegistration
     {
         return new VoiceParticipant
         {
-            SessionId = SessionId.ToString(),
+            SessionId = SessionId,
             DisplayName = DisplayName,
             JoinedAt = JoinedAt,
             IsMuted = IsMuted
@@ -101,7 +101,7 @@ public class ParticipantRegistration
     {
         return new VoicePeer
         {
-            SessionId = SessionId.ToString(),
+            SessionId = SessionId,
             DisplayName = DisplayName,
             SipEndpoint = Endpoint ?? new SipEndpoint()
         };

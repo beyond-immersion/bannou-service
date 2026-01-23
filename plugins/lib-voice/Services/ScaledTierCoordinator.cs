@@ -69,13 +69,8 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     }
 
     /// <inheritdoc />
-    public SipCredentials GenerateSipCredentials(string sessionId, Guid roomId)
+    public SipCredentials GenerateSipCredentials(Guid sessionId, Guid roomId)
     {
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
-        }
-
         // Generate deterministic password using SHA256(sessionId:roomId:salt)
         // Using sessionId instead of accountId to support multiple sessions per account
         if (string.IsNullOrWhiteSpace(_configuration.SipPasswordSalt))
@@ -85,11 +80,12 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
                 "All service instances must share the same salt for voice credentials to work correctly.");
         }
         var salt = _configuration.SipPasswordSalt;
-        var input = $"{sessionId}:{roomId}:{salt}";
+        var sessionIdStr = sessionId.ToString();
+        var input = $"{sessionIdStr}:{roomId}:{salt}";
         var passwordHash = ComputeSha256Hash(input);
 
-        // Username is the session ID (safe, not sensitive)
-        var username = $"voice-{sessionId[..Math.Min(8, sessionId.Length)]}";
+        // Username is the first 8 chars of session ID (safe, not sensitive)
+        var username = $"voice-{sessionIdStr[..8]}";
 
         // Conference URI based on room ID (SipDomain has default in configuration)
         var conferenceUri = $"sip:room-{roomId}@{_configuration.SipDomain}";
@@ -99,7 +95,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
         _logger.LogDebug(
             "Generated SIP credentials for session {SessionId} in room {RoomId}",
-            sessionId[..Math.Min(8, sessionId.Length)], roomId);
+            sessionIdStr[..8], roomId);
 
         return new SipCredentials
         {
@@ -114,7 +110,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     /// <inheritdoc />
     public async Task<JoinVoiceRoomResponse> BuildScaledConnectionInfoAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         string rtpServerUri,
         string codec,
         CancellationToken cancellationToken = default)
@@ -137,7 +133,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
         _logger.LogDebug(
             "Built scaled connection info for session {SessionId} in room {RoomId}",
-            sessionId[..Math.Min(8, sessionId.Length)], roomId);
+            sessionId.ToString()[..8], roomId);
 
         return response;
     }

@@ -30,7 +30,7 @@ public interface IScaledTierCoordinator
     /// <param name="sessionId">The WebSocket session ID (unique per connection).</param>
     /// <param name="roomId">The voice room ID.</param>
     /// <returns>SIP credentials for the participant.</returns>
-    SipCredentials GenerateSipCredentials(string sessionId, Guid roomId);
+    SipCredentials GenerateSipCredentials(Guid sessionId, Guid roomId);
 
     /// <summary>
     /// Builds the JoinVoiceRoomResponse for a participant joining a scaled tier room.
@@ -43,7 +43,7 @@ public interface IScaledTierCoordinator
     /// <returns>Join voice room response for service-to-service calls.</returns>
     Task<JoinVoiceRoomResponse> BuildScaledConnectionInfoAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         string rtpServerUri,
         string codec,
         CancellationToken cancellationToken = default);

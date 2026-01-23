@@ -31,18 +31,17 @@ public class P2PCoordinator : IP2PCoordinator
     /// <inheritdoc />
     public async Task<List<VoicePeer>> GetMeshPeersForNewJoinAsync(
         Guid roomId,
-        string joiningSessionId,
+        Guid joiningSessionId,
         CancellationToken cancellationToken = default)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
 
         // Convert participants to VoicePeer, excluding the joining participant
-        // p.SessionId is Guid (never empty), joiningSessionId is string from API
         var peers = participants
-            .Where(p => p.SessionId.ToString() != joiningSessionId)
+            .Where(p => p.SessionId != joiningSessionId)
             .Select(p => new VoicePeer
             {
-                SessionId = p.SessionId.ToString(),
+                SessionId = p.SessionId,
                 DisplayName = p.DisplayName,
                 SipEndpoint = p.Endpoint ?? new SipEndpoint { SdpOffer = string.Empty, IceCandidates = new List<string>() }
             })

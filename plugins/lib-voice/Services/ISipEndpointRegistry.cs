@@ -19,7 +19,7 @@ public interface ISipEndpointRegistry
     /// <returns>True if registration successful, false if participant already registered.</returns>
     Task<bool> RegisterAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         SipEndpoint endpoint,
         string? displayName = null,
         CancellationToken cancellationToken = default);
@@ -33,7 +33,7 @@ public interface ISipEndpointRegistry
     /// <returns>The removed participant info, or null if not found.</returns>
     Task<ParticipantRegistration?> UnregisterAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -55,7 +55,7 @@ public interface ISipEndpointRegistry
     /// <returns>Participant info if found, null otherwise.</returns>
     Task<ParticipantRegistration?> GetParticipantAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -67,7 +67,7 @@ public interface ISipEndpointRegistry
     /// <returns>True if updated, false if participant not found.</returns>
     Task<bool> UpdateHeartbeatAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -80,7 +80,7 @@ public interface ISipEndpointRegistry
     /// <returns>True if updated, false if participant not found.</returns>
     Task<bool> UpdateEndpointAsync(
         Guid roomId,
-        string sessionId,
+        Guid sessionId,
         SipEndpoint newEndpoint,
         CancellationToken cancellationToken = default);
 

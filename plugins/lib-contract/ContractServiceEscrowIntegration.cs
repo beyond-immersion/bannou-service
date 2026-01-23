@@ -1,7 +1,6 @@
 #nullable enable
 
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
@@ -25,6 +24,9 @@ public partial class ContractService
     private const string CLAUSE_TYPE_PREFIX = "clause-type:";
     private const string ALL_CLAUSE_TYPES_KEY = "all-clause-types";
     private const string IDEMPOTENCY_PREFIX = "idempotency:";
+
+    // Regex for validating template value key format (alphanumeric + underscore)
+    private static readonly Regex TemplateKeyPattern = new(@"^[A-Za-z0-9_]+$", RegexOptions.Compiled);
 
     // Built-in clause type codes
     private static readonly HashSet<string> BuiltInClauseTypes = new()
@@ -582,10 +584,9 @@ public partial class ContractService
             }
 
             // Validate key format (alphanumeric + underscore)
-            var keyPattern = new Regex(@"^[A-Za-z0-9_]+$");
             foreach (var key in body.TemplateValues.Keys)
             {
-                if (!keyPattern.IsMatch(key))
+                if (!TemplateKeyPattern.IsMatch(key))
                 {
                     _logger.LogWarning("Invalid template key format: {Key}", key);
                     return (StatusCodes.BadRequest, null);

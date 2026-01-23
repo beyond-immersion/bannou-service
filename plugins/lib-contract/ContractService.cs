@@ -624,6 +624,14 @@ public partial class ContractService : IContractService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Guardian enforcement: locked contracts cannot be modified by parties
+            if (!string.IsNullOrEmpty(model.GuardianId))
+            {
+                _logger.LogWarning("Cannot consent to locked contract: {ContractId}, guardian: {GuardianId}",
+                    body.ContractId, model.GuardianId);
+                return (StatusCodes.Forbidden, null);
+            }
+
             if (model.Status != ContractStatus.Proposed)
             {
                 _logger.LogWarning("Contract not in proposed status: {ContractId}", body.ContractId);
@@ -846,6 +854,14 @@ public partial class ContractService : IContractService
             if (model == null)
             {
                 return (StatusCodes.NotFound, null);
+            }
+
+            // Guardian enforcement: locked contracts cannot be terminated by parties
+            if (!string.IsNullOrEmpty(model.GuardianId))
+            {
+                _logger.LogWarning("Cannot terminate locked contract: {ContractId}, guardian: {GuardianId}",
+                    body.ContractId, model.GuardianId);
+                return (StatusCodes.Forbidden, null);
             }
 
             // Verify requesting entity is a party
