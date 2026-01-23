@@ -47,6 +47,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             services.AddSingleton<IMeshStateManager, MeshStateManager>();
         }
 
+        // Register active health checking background service
+        services.AddHostedService<MeshHealthCheckService>();
+
         // Register the mesh invocation client for service-to-service calls
         // Uses IMeshStateManager directly (NOT IMeshClient) to avoid circular dependency:
         // - All generated clients (AccountClient, etc.) need IMeshInvocationClient

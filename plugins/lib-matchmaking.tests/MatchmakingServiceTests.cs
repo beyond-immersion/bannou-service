@@ -381,7 +381,16 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             DisplayName = "Updated Queue Name"
         };
 
-        SetupExistingQueue(TEST_QUEUE_ID, CreateTestQueue());
+        var existingQueue = CreateTestQueue();
+        SetupExistingQueue(TEST_QUEUE_ID, existingQueue);
+
+        _mockQueueStore
+            .Setup(s => s.GetWithETagAsync(QUEUE_PREFIX + TEST_QUEUE_ID, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingQueue, "etag-0"));
+
+        _mockQueueStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<QueueModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (status, response) = await service.UpdateQueueAsync(request, CancellationToken.None);
@@ -391,11 +400,11 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         Assert.NotNull(response);
         Assert.Equal("Updated Queue Name", response.DisplayName);
 
-        // Verify state was saved
-        _mockQueueStore.Verify(s => s.SaveAsync(
+        // Verify state was saved with optimistic concurrency
+        _mockQueueStore.Verify(s => s.TrySaveAsync(
             QUEUE_PREFIX + TEST_QUEUE_ID,
             It.Is<QueueModel>(q => q.DisplayName == "Updated Queue Name"),
-            It.IsAny<StateOptions?>(),
+            "etag-0",
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

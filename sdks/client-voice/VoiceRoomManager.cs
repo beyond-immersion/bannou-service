@@ -122,17 +122,17 @@ public sealed class VoiceRoomManager : IDisposable
     /// Fired when audio is received from any peer.
     /// Parameters: (peerSessionId, samples[], sampleRate, channels)
     /// </summary>
-    public event Action<string, float[], int, int>? OnAudioReceived;
+    public event Action<Guid, float[], int, int>? OnAudioReceived;
 
     /// <summary>
     /// Fired when a new peer joins the room.
     /// </summary>
-    public event Action<string, string?>? OnPeerJoined;
+    public event Action<Guid, string?>? OnPeerJoined;
 
     /// <summary>
     /// Fired when a peer leaves the room.
     /// </summary>
-    public event Action<string>? OnPeerLeft;
+    public event Action<Guid>? OnPeerLeft;
 
     /// <summary>
     /// Fired when the room is closed (session ended, error, etc.).
@@ -163,7 +163,7 @@ public sealed class VoiceRoomManager : IDisposable
     /// Fired when a peer connection changes state.
     /// Parameters: (peerSessionId, newState)
     /// </summary>
-    public event Action<string, VoicePeerConnectionState>? OnPeerStateChanged;
+    public event Action<Guid, VoicePeerConnectionState>? OnPeerStateChanged;
 
     /// <summary>
     /// Fired when an ICE candidate needs to be sent to the server.
@@ -173,7 +173,7 @@ public sealed class VoiceRoomManager : IDisposable
     /// </para>
     /// Parameters: (peerSessionId, iceCandidate)
     /// </summary>
-    public event Action<string, string>? OnIceCandidateReady;
+    public event Action<Guid, string>? OnIceCandidateReady;
 
     #endregion
 
@@ -202,7 +202,7 @@ public sealed class VoiceRoomManager : IDisposable
     /// If null, uses <see cref="ScaledVoiceConnection"/>.</param>
     public VoiceRoomManager(
         BannouClient client,
-        Func<string, string?, IEnumerable<string>?, IVoicePeerConnection>? peerFactory,
+        Func<Guid, string?, IEnumerable<string>?, IVoicePeerConnection>? peerFactory,
         Func<Guid, IScaledVoiceConnection>? scaledConnectionFactory = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
@@ -223,20 +223,9 @@ public sealed class VoiceRoomManager : IDisposable
         return new ScaledVoiceConnection(roomId);
     }
 
-    private static IVoicePeerConnection CreateDefaultPeer(string sessionId, string? displayName, IEnumerable<string>? stunServers)
+    private static IVoicePeerConnection CreateDefaultPeer(Guid peerSessionId, string? displayName, IEnumerable<string>? stunServers)
     {
-        // SIPSorceryVoicePeer expects a Guid, but we have a session ID string
-        // Create a deterministic GUID from the session ID for the peer
-        var peerGuid = CreateGuidFromSessionId(sessionId);
-        return new SIPSorceryVoicePeer(peerGuid, displayName, stunServers);
-    }
-
-    private static Guid CreateGuidFromSessionId(string sessionId)
-    {
-        // Create a deterministic GUID from the session ID using MD5 hash
-        using var md5 = System.Security.Cryptography.MD5.Create();
-        var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(sessionId));
-        return new Guid(hash);
+        return new SIPSorceryVoicePeer(peerSessionId, displayName, stunServers);
     }
 
     /// <summary>
@@ -284,7 +273,7 @@ public sealed class VoiceRoomManager : IDisposable
     /// <param name="peerSessionId">The peer's session ID.</param>
     /// <param name="sdpAnswer">The SDP answer string.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task ProcessSdpAnswerAsync(string peerSessionId, string sdpAnswer, CancellationToken cancellationToken = default)
+    public async Task ProcessSdpAnswerAsync(Guid peerSessionId, string sdpAnswer, CancellationToken cancellationToken = default)
     {
         if (_peers.TryGetValue(peerSessionId, out var peer))
         {
@@ -300,7 +289,7 @@ public sealed class VoiceRoomManager : IDisposable
     /// </summary>
     /// <param name="peerSessionId">The peer's session ID.</param>
     /// <param name="iceCandidate">The ICE candidate string.</param>
-    public void AddIceCandidateForPeer(string peerSessionId, string iceCandidate)
+    public void AddIceCandidateForPeer(Guid peerSessionId, string iceCandidate)
     {
         if (_peers.TryGetValue(peerSessionId, out var peer))
         {
@@ -513,8 +502,8 @@ public sealed class VoiceRoomManager : IDisposable
             _scaledConnection.OnAudioFrameReceived += (samples, rate, channels) =>
             {
                 // In scaled mode, audio from server doesn't have a specific peer session ID
-                // Use a constant identifier for the mixed stream
-                OnAudioReceived?.Invoke("__scaled_server__", samples, rate, channels);
+                // Use Guid.Empty to represent the mixed server stream
+                OnAudioReceived?.Invoke(Guid.Empty, samples, rate, channels);
             };
 
             _scaledConnection.OnDisconnected += (reason) =>

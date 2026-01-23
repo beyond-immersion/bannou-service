@@ -40,26 +40,36 @@ public class GitSyncService : IGitSyncService
         ArgumentException.ThrowIfNullOrWhiteSpace(branch);
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
 
+        // Apply configured timeout to prevent indefinitely hanging git operations
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.GitCloneTimeoutSeconds));
+        var effectiveToken = timeoutCts.Token;
+
         return await Task.Run(async () =>
         {
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                effectiveToken.ThrowIfCancellationRequested();
 
                 // Check if repository already exists
                 if (Repository.IsValid(localPath))
                 {
-                    return PullRepository(localPath, branch, cancellationToken);
+                    return PullRepository(localPath, branch, effectiveToken);
                 }
                 else
                 {
-                    return CloneRepository(repositoryUrl, branch, localPath, cancellationToken);
+                    return CloneRepository(repositoryUrl, branch, localPath, effectiveToken);
                 }
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Git sync operation cancelled for {Repository}", repositoryUrl);
-                return GitSyncResult.Failed("Operation cancelled");
+                var timedOut = !cancellationToken.IsCancellationRequested;
+                var message = timedOut
+                    ? $"Git operation timed out after {_configuration.GitCloneTimeoutSeconds}s"
+                    : "Operation cancelled";
+                _logger.LogInformation("Git sync operation {Reason} for {Repository}",
+                    timedOut ? "timed out" : "cancelled", repositoryUrl);
+                return GitSyncResult.Failed(message);
             }
             catch (LibGit2SharpException ex)
             {
@@ -87,7 +97,7 @@ public class GitSyncService : IGitSyncService
                     stack: ex.StackTrace);
                 return GitSyncResult.Failed($"Unexpected error: {ex.Message}");
             }
-        }, cancellationToken);
+        }, effectiveToken);
     }
 
     /// <inheritdoc />

@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using Markdig;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
 using System.Threading;
@@ -55,6 +56,9 @@ public partial class DocumentationService : IDocumentationService
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string ARCHIVE_KEY_PREFIX = "archive:";
     private const string SYNC_LOCK_PREFIX = "repo-sync:";
+
+    // Static search result cache shared across scoped instances (performance optimization, not authoritative state)
+    private static readonly SearchResultCache _searchCache = new();
 
     /// <summary>
     /// Creates a new instance of the DocumentationService.
@@ -401,9 +405,17 @@ public partial class DocumentationService : IDocumentationService
 
             var namespaceId = body.Namespace;
             var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
+            var categoryFilter = body.Category == default ? null : body.Category.ToString();
+
+            // Check search cache
+            var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter, maxResults);
+            if (_configuration.SearchCacheTtlSeconds > 0 &&
+                _searchCache.TryGet(cacheKey, out var cachedResponse))
+            {
+                return (StatusCodes.OK, cachedResponse);
+            }
 
             // Perform keyword search using search index
-            var categoryFilter = body.Category == default ? null : body.Category.ToString();
             var searchResults = await _searchIndexService.SearchAsync(
                 namespaceId,
                 body.SearchTerm,
@@ -460,13 +472,21 @@ public partial class DocumentationService : IDocumentationService
             _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results (sorted by {SortBy})",
                 namespaceId, body.SearchTerm, finalResults.Count, body.SortBy);
 
-            return (StatusCodes.OK, new SearchDocumentationResponse
+            var response = new SearchDocumentationResponse
             {
                 Results = finalResults,
                 TotalResults = finalResults.Count,
                 SearchTerm = body.SearchTerm,
                 Namespace = namespaceId
-            });
+            };
+
+            // Cache results
+            if (_configuration.SearchCacheTtlSeconds > 0)
+            {
+                _searchCache.Set(cacheKey, response, TimeSpan.FromSeconds(_configuration.SearchCacheTtlSeconds));
+            }
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -1138,6 +1158,7 @@ public partial class DocumentationService : IDocumentationService
             var now = DateTimeOffset.UtcNow;
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
+            var batchCounter = 0;
             foreach (var documentId in body.DocumentIds)
             {
                 try
@@ -1205,6 +1226,13 @@ public partial class DocumentationService : IDocumentationService
                 {
                     failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
                 }
+
+                batchCounter++;
+                if (batchCounter >= _configuration.BulkOperationBatchSize)
+                {
+                    batchCounter = 0;
+                    await Task.Yield();
+                }
             }
 
             _logger.LogInformation("BulkUpdate in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
@@ -1240,6 +1268,7 @@ public partial class DocumentationService : IDocumentationService
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
+            var batchCounter = 0;
             foreach (var documentId in body.DocumentIds)
             {
                 try
@@ -1288,6 +1317,13 @@ public partial class DocumentationService : IDocumentationService
                 catch (Exception ex)
                 {
                     failed.Add(new BulkOperationFailure { DocumentId = documentId, Error = ex.Message });
+                }
+
+                batchCounter++;
+                if (batchCounter >= _configuration.BulkOperationBatchSize)
+                {
+                    batchCounter = 0;
+                    await Task.Yield();
                 }
             }
 
@@ -2759,11 +2795,23 @@ public partial class DocumentationService : IDocumentationService
             }
 
             // Get matching files
-            var matchingFiles = await _gitSyncService.GetMatchingFilesAsync(
+            var allMatchingFiles = await _gitSyncService.GetMatchingFilesAsync(
                 localPath,
                 binding.FilePatterns,
                 binding.ExcludePatterns,
                 cancellationToken);
+
+            // Apply max documents per sync limit
+            var truncated = _configuration.MaxDocumentsPerSync > 0 && allMatchingFiles.Count > _configuration.MaxDocumentsPerSync;
+            if (truncated)
+            {
+                _logger.LogWarning(
+                    "Repository sync for namespace {Namespace} has {Total} files, limiting to {Max}",
+                    binding.Namespace, allMatchingFiles.Count, _configuration.MaxDocumentsPerSync);
+            }
+            var matchingFiles = truncated
+                ? allMatchingFiles.Take(_configuration.MaxDocumentsPerSync).ToList()
+                : allMatchingFiles;
 
             var documentsCreated = 0;
             var documentsUpdated = 0;
@@ -2820,7 +2868,12 @@ public partial class DocumentationService : IDocumentationService
             }
 
             // Delete orphan documents (documents not in processed slugs)
-            var documentsDeleted = await DeleteOrphanDocumentsAsync(binding.Namespace, processedSlugs, cancellationToken);
+            // Skip orphan deletion if we truncated the file list to avoid incorrectly deleting unprocessed documents
+            var documentsDeleted = 0;
+            if (!truncated)
+            {
+                documentsDeleted = await DeleteOrphanDocumentsAsync(binding.Namespace, processedSlugs, cancellationToken);
+            }
 
             // Update binding state
             binding.Status = Models.BindingStatusInternal.Synced;
@@ -3561,4 +3614,51 @@ public partial class DocumentationService : IDocumentationService
     }
 
     #endregion
+
+    /// <summary>
+    /// Thread-safe in-memory cache for search results.
+    /// Static lifetime shared across scoped service instances (performance optimization, not authoritative state).
+    /// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
+    /// </summary>
+    private sealed class SearchResultCache
+    {
+        private readonly ConcurrentDictionary<string, (SearchDocumentationResponse Response, DateTimeOffset Expiry)> _cache = new();
+
+        /// <summary>
+        /// Builds a deterministic cache key from search parameters.
+        /// </summary>
+        public static string BuildKey(string namespaceId, string searchTerm, string? category, int maxResults)
+        {
+            return $"{namespaceId}:{searchTerm}:{category ?? "_"}:{maxResults}";
+        }
+
+        /// <summary>
+        /// Attempts to retrieve a cached search response. Returns false if not found or expired.
+        /// </summary>
+        public bool TryGet(string key, out SearchDocumentationResponse? response)
+        {
+            if (_cache.TryGetValue(key, out var entry))
+            {
+                if (entry.Expiry > DateTimeOffset.UtcNow)
+                {
+                    response = entry.Response;
+                    return true;
+                }
+
+                // Expired - remove stale entry
+                _cache.TryRemove(key, out _);
+            }
+
+            response = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Stores a search response in the cache with the specified TTL.
+        /// </summary>
+        public void Set(string key, SearchDocumentationResponse response, TimeSpan ttl)
+        {
+            _cache[key] = (response, DateTimeOffset.UtcNow.Add(ttl));
+        }
+    }
 }

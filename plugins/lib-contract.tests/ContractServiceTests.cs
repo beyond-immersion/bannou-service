@@ -510,10 +510,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new ProposeContractInstanceRequest { ContractId = contractId };
 
@@ -538,6 +541,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new ProposeContractInstanceRequest { ContractId = contractId };
 
@@ -571,10 +577,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new ConsentToContractRequest
         {
@@ -603,6 +612,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new ConsentToContractRequest
         {
@@ -638,11 +650,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, ContractInstanceModel, StateOptions?, CancellationToken>((k, m, _, _) => savedInstance = m)
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContractInstanceModel, string, CancellationToken>((k, m, _, _) => savedInstance = m)
+            .ReturnsAsync("etag-1");
 
         var request = new ConsentToContractRequest
         {
@@ -677,6 +692,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new GetContractInstanceRequest { ContractId = contractId };
 
@@ -732,10 +750,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new TerminateContractInstanceRequest
         {
@@ -772,6 +793,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new TerminateContractInstanceRequest
         {
@@ -804,6 +828,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
@@ -836,10 +863,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new CompleteMilestoneRequest
         {
@@ -872,6 +902,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new CompleteMilestoneRequest
         {
@@ -907,10 +940,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new FailMilestoneRequest
         {
@@ -944,10 +980,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new FailMilestoneRequest
         {
@@ -984,6 +1023,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new GetMilestoneRequest
         {
@@ -1012,6 +1054,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new GetMilestoneRequest
         {
@@ -1043,10 +1088,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         _mockBreachStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BreachModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -1122,12 +1170,12 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         _mockBreachStore
-            .Setup(s => s.GetAsync($"breach:{breachId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(breach);
+            .Setup(s => s.GetWithETagAsync($"breach:{breachId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((breach, "etag-0"));
 
         _mockBreachStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BreachModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<BreachModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new CureBreachRequest
         {
@@ -1238,10 +1286,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new UpdateContractMetadataRequest
         {
@@ -1299,6 +1350,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new GetContractMetadataRequest { ContractId = contractId };
 
@@ -1537,10 +1591,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Setup navigator to return success
         _mockNavigator
@@ -1625,10 +1682,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Setup navigator to return substitution failure
         _mockNavigator
@@ -1713,10 +1773,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Setup navigator to return HTTP 400 (which will fail the statusCode validation)
         _mockNavigator
@@ -1797,10 +1860,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Setup navigator to return success for both calls
         _mockNavigator
@@ -1878,10 +1944,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
@@ -1956,10 +2025,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Setup navigator to throw exception
         _mockNavigator
@@ -2018,10 +2090,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new CompleteMilestoneRequest
         {
@@ -2097,10 +2172,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         IReadOnlyDictionary<string, object?>? capturedContext = null;
         _mockNavigator
@@ -2165,12 +2243,15 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
         _mockTemplateStore
             .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new LockContractRequest
         {
@@ -2209,6 +2290,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
         _mockTemplateStore
             .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
@@ -2245,6 +2329,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
         _mockTemplateStore
             .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
@@ -2281,8 +2368,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new UnlockContractRequest
         {
@@ -2314,6 +2404,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new UnlockContractRequest
         {
@@ -2352,8 +2445,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
         _mockListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { contractId.ToString() });
@@ -2396,6 +2492,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new TransferContractPartyRequest
         {
@@ -2555,8 +2654,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new SetTemplateValuesRequest
         {
@@ -2591,6 +2693,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new SetTemplateValuesRequest
         {
@@ -2627,6 +2732,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
         _mockInstanceStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, ContractInstanceModel, StateOptions?, CancellationToken>((k, m, o, c) => savedModel = m)
@@ -2674,6 +2782,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
         _mockTemplateStore
             .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
@@ -2705,6 +2816,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new CheckAssetRequirementsRequest
         {
@@ -2733,6 +2847,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new ExecuteContractRequest
         {
@@ -2761,6 +2878,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new ExecuteContractRequest
         {
@@ -2793,6 +2913,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new ExecuteContractRequest
         {
@@ -2829,12 +2952,15 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
         _mockTemplateStore
             .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
         _mockInstanceStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var request = new ExecuteContractRequest
         {
@@ -2896,6 +3022,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new TerminateContractInstanceRequest
         {
@@ -2932,6 +3061,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
 
         var request = new ConsentToContractRequest
         {

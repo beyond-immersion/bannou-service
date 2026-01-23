@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Currency.Services;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -31,7 +32,9 @@ public class CurrencyServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register CurrencyServiceConfiguration here
 
-        // Add any service-specific dependencies
+        // Register autogain background task processing service
+        services.AddHostedService<CurrencyAutogainTaskService>();
+
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
         Logger?.LogDebug("Service dependencies configured");

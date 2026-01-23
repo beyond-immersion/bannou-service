@@ -39,6 +39,7 @@ public partial class CurrencyService : ICurrencyService
     private const string WALLET_OWNER_INDEX = "wallet-owner:";
     private const string BALANCE_PREFIX = "bal:";
     private const string BALANCE_WALLET_INDEX = "bal-wallet:";
+    private const string BALANCE_CURRENCY_INDEX = "bal-currency:";
     private const string TX_PREFIX = "tx:";
     private const string TX_WALLET_INDEX = "tx-wallet:";
     private const string TX_REF_INDEX = "tx-ref:";
@@ -2259,6 +2260,9 @@ public partial class CurrencyService : ICurrencyService
 
         // Maintain wallet-balance index for efficient wallet queries
         await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_WALLET_INDEX}{balance.WalletId}", balance.CurrencyDefinitionId, ct);
+
+        // Maintain currency-balance reverse index for autogain task processing
+        await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_CURRENCY_INDEX}{balance.CurrencyDefinitionId}", balance.WalletId, ct);
     }
 
     private async Task<List<BalanceModel>> GetAllBalancesForWalletAsync(string walletId, CancellationToken ct)
