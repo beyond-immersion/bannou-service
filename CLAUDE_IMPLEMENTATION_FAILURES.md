@@ -357,7 +357,18 @@ Most complex. Each violation needs analysis of the specific operation to determi
   - [x] ContractService - ContractInstanceModel.Status, ContractPartyModel.ConsentStatus, MilestoneInstanceModel.Status, BreachModel.Status, PreboundApiModel.ExecutionMode → enum types
   - [x] ActorAssignment - Status → ActorStatus enum
   - [x] OrchestratorService - Created ProcessorStatus enum, ProcessorInstance.Status → ProcessorStatus
-- [ ] Phase 1: T25 GUID-as-string (0/25)
+- [ ] Phase 1: T25 GUID-as-string (4/11 services complete)
+  - [x] lib-account - AccountModel.AccountId → Guid
+  - [x] lib-character - CharacterModel.CharacterId, RealmId, SpeciesId → Guid; CharacterArchiveModel similarly; RefCountData.CharacterId → Guid
+  - [x] lib-location - LocationModel.LocationId, RealmId, ParentLocationId → Guid/Guid?
+  - [x] lib-connect - ConnectionStateData.SessionId, AccountId → Guid/Guid?; SessionHeartbeat.SessionId, InstanceId → Guid; SessionEvent.SessionId → Guid; PendingRPCInfo.ClientSessionId → Guid
+  - [ ] lib-character-encounter - Complex (many List<string> to List<Guid>)
+  - [ ] lib-auth - SessionModel IDs
+  - [ ] lib-voice - Room/peer IDs
+  - [ ] lib-matchmaking - Ticket/queue IDs
+  - [ ] lib-asset - Owner/realm IDs
+  - [ ] lib-documentation - Document owner
+  - [ ] lib-behavior - Behavior owner
 - [x] Phase 2: T21 unused cache stores (5/5)
   - [x] MusicCompositions - Implemented composition caching for deterministic requests
   - [x] CurrencyBalanceCache - Implemented cache read-through/write-through for balance operations

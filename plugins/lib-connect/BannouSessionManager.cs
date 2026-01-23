@@ -183,8 +183,8 @@ public class BannouSessionManager : ISessionManager
             var key = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
             var heartbeatData = new SessionHeartbeat
             {
-                SessionId = sessionId,
-                InstanceId = instanceId,
+                SessionId = Guid.Parse(sessionId),
+                InstanceId = Guid.Parse(instanceId),
                 LastSeen = DateTimeOffset.UtcNow,
                 ConnectionCount = 1
             };
@@ -464,7 +464,7 @@ public class BannouSessionManager : ISessionManager
             var sessionEvent = new SessionEvent
             {
                 EventType = eventType,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Timestamp = DateTimeOffset.UtcNow,
                 Data = eventData
             };

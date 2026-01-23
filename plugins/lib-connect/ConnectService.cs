@@ -526,10 +526,9 @@ public partial class ConnectService : IConnectService
                     {
                         _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
                         // Return stored roles and authorizations from reconnection state
-                        // Parse AccountId from string back to Guid (stored as string for Redis serialization)
+                        // AccountId is now Guid? type, no parsing needed
                         // Mark as reconnection so services can re-publish shortcuts
-                        Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
-                        return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations, true);
+                        return (sessionId, restoredState.AccountId, restoredState.UserRoles, restoredState.Authorizations, true);
                     }
                 }
 
@@ -666,8 +665,8 @@ public partial class ConnectService : IConnectService
             // Create initial connection state in Redis for reconnection support
             var connectionStateData = new ConnectionStateData
             {
-                SessionId = sessionId,
-                AccountId = accountId?.ToString(),
+                SessionId = Guid.Parse(sessionId),
+                AccountId = accountId,
                 ConnectedAt = DateTimeOffset.UtcNow,
                 LastActivity = DateTimeOffset.UtcNow,
                 UserRoles = userRoles?.ToList(),
@@ -1801,7 +1800,7 @@ public partial class ConnectService : IConnectService
                     var now = DateTimeOffset.UtcNow;
                     var pendingRPC = new PendingRPCInfo
                     {
-                        ClientSessionId = eventData.ClientId,
+                        ClientSessionId = Guid.Parse(eventData.ClientId),
                         ServiceName = eventData.ServiceName ?? "unknown",
                         ResponseChannel = eventData.ResponseChannel,
                         ServiceGuid = eventData.ServiceGuid,

@@ -1172,7 +1172,7 @@ public partial class AuthService : IAuthService
         public string? DisplayName { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
         public List<string> Authorizations { get; set; } = new List<string>();
-        public string SessionId { get; set; } = string.Empty;
+        public Guid SessionId { get; set; }
 
         // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
         public long CreatedAtUnix { get; set; }

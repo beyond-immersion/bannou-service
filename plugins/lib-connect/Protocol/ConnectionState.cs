@@ -445,7 +445,7 @@ public class PendingRPCInfo
     /// <summary>
     /// Session ID of the client that received the RPC.
     /// </summary>
-    public string ClientSessionId { get; set; } = string.Empty;
+    public Guid ClientSessionId { get; set; }
 
     /// <summary>
     /// Name of the service that initiated the RPC.

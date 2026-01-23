@@ -104,7 +104,7 @@ public class BannouSessionManagerTests
     public async Task SetSessionServiceMappingsAsync_WithValidParameters_ShouldSaveToStore()
     {
         // Arrange
-        var sessionId = "test-session-123";
+        var sessionId = Guid.NewGuid().ToString();
         var mappings = new Dictionary<string, Guid>
         {
             { "account", Guid.NewGuid() },
@@ -126,7 +126,7 @@ public class BannouSessionManagerTests
     public async Task SetSessionServiceMappingsAsync_WithCustomTtl_ShouldUseProvidedTtl()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var mappings = new Dictionary<string, Guid>();
         var customTtl = TimeSpan.FromMinutes(30);
 
@@ -148,7 +148,7 @@ public class BannouSessionManagerTests
     public async Task SetSessionServiceMappingsAsync_WhenStoreThrows_ShouldPropagateException()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var mappings = new Dictionary<string, Guid>();
 
         _mockMappingsStore
@@ -168,7 +168,7 @@ public class BannouSessionManagerTests
     public async Task GetSessionServiceMappingsAsync_WithExistingSession_ShouldReturnMappings()
     {
         // Arrange
-        var sessionId = "test-session-123";
+        var sessionId = Guid.NewGuid().ToString();
         var expectedMappings = new Dictionary<string, Guid>
         {
             { "account", Guid.NewGuid() }
@@ -190,7 +190,7 @@ public class BannouSessionManagerTests
     public async Task GetSessionServiceMappingsAsync_WithNonExistingSession_ShouldReturnNull()
     {
         // Arrange
-        var sessionId = "non-existent-session";
+        var sessionId = Guid.NewGuid().ToString();
 
         _mockMappingsStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -207,7 +207,7 @@ public class BannouSessionManagerTests
     public async Task GetSessionServiceMappingsAsync_WhenStoreThrows_ShouldPropagateException()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
 
         _mockMappingsStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -226,11 +226,11 @@ public class BannouSessionManagerTests
     public async Task SetConnectionStateAsync_WithValidParameters_ShouldSaveToStore()
     {
         // Arrange
-        var sessionId = "test-session-123";
+        var sessionId = Guid.NewGuid().ToString();
         var stateData = new ConnectionStateData
         {
-            SessionId = sessionId,
-            AccountId = "account-123",
+            SessionId = Guid.Parse(sessionId),
+            AccountId = Guid.NewGuid(),
             ConnectedAt = DateTimeOffset.UtcNow
         };
 
@@ -249,8 +249,8 @@ public class BannouSessionManagerTests
     public async Task SetConnectionStateAsync_WithCustomTtl_ShouldUseProvidedTtl()
     {
         // Arrange
-        var sessionId = "test-session";
-        var stateData = new ConnectionStateData { SessionId = sessionId };
+        var sessionId = Guid.NewGuid().ToString();
+        var stateData = new ConnectionStateData { SessionId = Guid.Parse(sessionId) };
         var customTtl = TimeSpan.FromHours(2);
 
         StateOptions? capturedOptions = null;
@@ -275,11 +275,11 @@ public class BannouSessionManagerTests
     public async Task GetConnectionStateAsync_WithExistingSession_ShouldReturnState()
     {
         // Arrange
-        var sessionId = "test-session-123";
+        var sessionId = Guid.NewGuid().ToString();
         var expectedState = new ConnectionStateData
         {
-            SessionId = sessionId,
-            AccountId = "account-123"
+            SessionId = Guid.Parse(sessionId),
+            AccountId = Guid.NewGuid()
         };
 
         _mockConnectionStore
@@ -291,14 +291,14 @@ public class BannouSessionManagerTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(sessionId, result.SessionId);
+        Assert.Equal(Guid.Parse(sessionId), result.SessionId);
     }
 
     [Fact]
     public async Task GetConnectionStateAsync_WithNonExistingSession_ShouldReturnNull()
     {
         // Arrange
-        var sessionId = "non-existent-session";
+        var sessionId = Guid.NewGuid().ToString();
 
         _mockConnectionStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -319,8 +319,8 @@ public class BannouSessionManagerTests
     public async Task UpdateSessionHeartbeatAsync_WithValidParameters_ShouldSaveHeartbeat()
     {
         // Arrange
-        var sessionId = "test-session";
-        var instanceId = "instance-001";
+        var sessionId = Guid.NewGuid().ToString();
+        var instanceId = Guid.NewGuid().ToString();
 
         SessionHeartbeat? capturedHeartbeat = null;
         _mockHeartbeatStore
@@ -333,8 +333,8 @@ public class BannouSessionManagerTests
 
         // Assert
         Assert.NotNull(capturedHeartbeat);
-        Assert.Equal(sessionId, capturedHeartbeat.SessionId);
-        Assert.Equal(instanceId, capturedHeartbeat.InstanceId);
+        Assert.Equal(Guid.Parse(sessionId), capturedHeartbeat.SessionId);
+        Assert.Equal(Guid.Parse(instanceId), capturedHeartbeat.InstanceId);
         Assert.Equal(1, capturedHeartbeat.ConnectionCount);
     }
 
@@ -342,8 +342,8 @@ public class BannouSessionManagerTests
     public async Task UpdateSessionHeartbeatAsync_WhenStoreThrows_ShouldNotPropagateException()
     {
         // Arrange
-        var sessionId = "test-session";
-        var instanceId = "instance-001";
+        var sessionId = Guid.NewGuid().ToString();
+        var instanceId = Guid.NewGuid().ToString();
 
         _mockHeartbeatStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -363,7 +363,7 @@ public class BannouSessionManagerTests
     {
         // Arrange
         var reconnectionToken = "reconnect-token-123";
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var window = TimeSpan.FromMinutes(5);
 
         StateOptions? capturedOptions = null;
@@ -484,15 +484,15 @@ public class BannouSessionManagerTests
     public async Task InitiateReconnectionWindowAsync_WithExistingSession_ShouldUpdateStateAndToken()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var reconnectionToken = "reconnect-token";
         var window = TimeSpan.FromMinutes(5);
         var userRoles = new List<string> { "user", "player" };
 
         var existingState = new ConnectionStateData
         {
-            SessionId = sessionId,
-            AccountId = "account-123",
+            SessionId = Guid.Parse(sessionId),
+            AccountId = Guid.NewGuid(),
             ConnectedAt = DateTimeOffset.UtcNow.AddHours(-1)
         };
 
@@ -528,7 +528,7 @@ public class BannouSessionManagerTests
     public async Task InitiateReconnectionWindowAsync_WithNonExistingSession_ShouldNotThrow()
     {
         // Arrange
-        var sessionId = "non-existent";
+        var sessionId = Guid.NewGuid().ToString();
         var reconnectionToken = "token";
         var window = TimeSpan.FromMinutes(5);
 
@@ -552,13 +552,13 @@ public class BannouSessionManagerTests
     public async Task RestoreSessionFromReconnectionAsync_WithValidSession_ShouldRestoreState()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var reconnectionToken = "valid-token";
 
         var existingState = new ConnectionStateData
         {
-            SessionId = sessionId,
-            AccountId = "account-123",
+            SessionId = Guid.Parse(sessionId),
+            AccountId = Guid.NewGuid(),
             ReconnectionToken = reconnectionToken,
             ReconnectionExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
             DisconnectedAt = DateTimeOffset.UtcNow.AddMinutes(-1)
@@ -587,7 +587,7 @@ public class BannouSessionManagerTests
     public async Task RestoreSessionFromReconnectionAsync_WithNonExistingSession_ShouldReturnNull()
     {
         // Arrange
-        var sessionId = "non-existent";
+        var sessionId = Guid.NewGuid().ToString();
         var reconnectionToken = "token";
 
         _mockConnectionStore
@@ -605,12 +605,12 @@ public class BannouSessionManagerTests
     public async Task RestoreSessionFromReconnectionAsync_WithExpiredWindow_ShouldReturnNull()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var reconnectionToken = "token";
 
         var existingState = new ConnectionStateData
         {
-            SessionId = sessionId,
+            SessionId = Guid.Parse(sessionId),
             ReconnectionToken = reconnectionToken,
             ReconnectionExpiresAt = DateTimeOffset.UtcNow.AddMinutes(-5), // Expired
             DisconnectedAt = DateTimeOffset.UtcNow.AddMinutes(-10)
@@ -631,13 +631,13 @@ public class BannouSessionManagerTests
     public async Task RestoreSessionFromReconnectionAsync_WithWrongToken_ShouldReturnNull()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var correctToken = "correct-token";
         var wrongToken = "wrong-token";
 
         var existingState = new ConnectionStateData
         {
-            SessionId = sessionId,
+            SessionId = Guid.Parse(sessionId),
             ReconnectionToken = correctToken,
             ReconnectionExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
             DisconnectedAt = DateTimeOffset.UtcNow.AddMinutes(-1)
@@ -662,7 +662,7 @@ public class BannouSessionManagerTests
     public async Task RemoveSessionAsync_WithValidSession_ShouldDeleteAllRelatedKeys()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
 
         // Act
         await _sessionManager.RemoveSessionAsync(sessionId);
@@ -683,7 +683,7 @@ public class BannouSessionManagerTests
     public async Task RemoveSessionAsync_WhenStoreThrows_ShouldNotPropagateException()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
 
         _mockConnectionStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -703,7 +703,7 @@ public class BannouSessionManagerTests
     {
         // Arrange
         var eventType = "connected";
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var eventData = new { reason = "new connection" };
 
         SessionEvent? capturedEvent = null;
@@ -718,7 +718,7 @@ public class BannouSessionManagerTests
         // Assert
         Assert.NotNull(capturedEvent);
         Assert.Equal(eventType, capturedEvent.EventType);
-        Assert.Equal(sessionId, capturedEvent.SessionId);
+        Assert.Equal(Guid.Parse(sessionId), capturedEvent.SessionId);
         Assert.NotNull(capturedEvent.Data);
     }
 
@@ -727,7 +727,7 @@ public class BannouSessionManagerTests
     {
         // Arrange
         var eventType = "disconnected";
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
 
         // Act
         await _sessionManager.PublishSessionEventAsync(eventType, sessionId);
@@ -746,7 +746,7 @@ public class BannouSessionManagerTests
     {
         // Arrange
         var eventType = "error";
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
 
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
@@ -805,8 +805,8 @@ public class BannouSessionManagerTests
             customConfig,
             _mockLogger.Object);
 
-        var sessionId = "test-session";
-        var stateData = new ConnectionStateData { SessionId = sessionId };
+        var sessionId = Guid.NewGuid().ToString();
+        var stateData = new ConnectionStateData { SessionId = Guid.Parse(sessionId) };
 
         // Act - Use default TTL (not explicit) so it uses config value
         await sessionManager.SetConnectionStateAsync(sessionId, stateData);
@@ -860,7 +860,7 @@ public class BannouSessionManagerTests
             customConfig,
             _mockLogger.Object);
 
-        var sessionId = "test-session";
+        var sessionId = Guid.NewGuid().ToString();
         var instanceId = "instance-1";
 
         // Act
