@@ -12,6 +12,11 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// </summary>
 public class BehaviorBundleManager : IBehaviorBundleManager
 {
+    /// <summary>
+    /// Behavior state store name. Matches StateStoreDefinitions.BehaviorStatestore after next regeneration.
+    /// </summary>
+    private const string BehaviorStore = "behavior-statestore";
+
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IAssetClient _assetClient;
     private readonly BehaviorServiceConfiguration _configuration;
