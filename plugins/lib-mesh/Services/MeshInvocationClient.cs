@@ -159,63 +159,130 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             }
         }
 
-        // Resolve endpoint
-        var endpoint = await ResolveEndpointAsync(appId, cancellationToken) ?? throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+        var maxAttempts = _configuration.MaxRetries + 1;
+        var delayMs = _configuration.RetryDelayMilliseconds;
+        HttpResponseMessage? lastResponse = null;
+        Exception? lastException = null;
 
-        // Build target URL
-        var targetUri = BuildTargetUri(endpoint, methodName);
-        request.RequestUri = new Uri(targetUri);
-
-        _logger.LogDebug(
-            "Invoking {Method} on {AppId} at {TargetUri}",
-            methodName, appId, targetUri);
-
-        try
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
-            var response = await _httpClient.SendAsync(request, cancellationToken);
-
-            // Record success/failure for circuit breaker
-            if (_configuration.CircuitBreakerEnabled)
+            // On retry, invalidate cache to potentially get a different endpoint
+            if (attempt > 0)
             {
-                if (IsServerError(response.StatusCode))
-                {
-                    _circuitBreaker.RecordFailure(appId);
-                    _logger.LogDebug(
-                        "Circuit breaker recorded failure for {AppId} (status {StatusCode})",
-                        appId, (int)response.StatusCode);
-                }
-                else
-                {
-                    _circuitBreaker.RecordSuccess(appId);
-                }
+                _endpointCache.Invalidate(appId);
+
+                _logger.LogDebug(
+                    "Retrying {Method} on {AppId} (attempt {Attempt}/{MaxAttempts}, delay {DelayMs}ms)",
+                    methodName, appId, attempt + 1, maxAttempts, delayMs);
+
+                await Task.Delay(delayMs, cancellationToken);
+                delayMs *= 2; // Exponential backoff
             }
 
-            return response;
+            // Resolve endpoint
+            var endpoint = await ResolveEndpointAsync(appId, cancellationToken);
+            if (endpoint == null)
+            {
+                if (attempt < maxAttempts - 1)
+                    continue; // Retry - endpoint might become available
+
+                RecordCircuitBreakerFailure(appId);
+                throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+            }
+
+            // Build target URL
+            var targetUri = BuildTargetUri(endpoint, methodName);
+            request.RequestUri = new Uri(targetUri);
+
+            if (attempt == 0)
+            {
+                _logger.LogDebug(
+                    "Invoking {Method} on {AppId} at {TargetUri}",
+                    methodName, appId, targetUri);
+            }
+
+            try
+            {
+                lastResponse = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (!IsTransientError(lastResponse.StatusCode))
+                {
+                    // Non-transient response (success or client error) - done
+                    RecordCircuitBreakerSuccess(appId);
+                    return lastResponse;
+                }
+
+                // Transient server error - retry if attempts remain
+                _logger.LogDebug(
+                    "Transient error {StatusCode} from {AppId}, {Remaining} retries remaining",
+                    (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
+
+                lastException = null;
+            }
+            catch (HttpRequestException ex)
+            {
+                lastException = ex;
+                _endpointCache.Invalidate(appId);
+
+                _logger.LogDebug(
+                    ex, "Connection failure to {AppId}, {Remaining} retries remaining",
+                    appId, maxAttempts - attempt - 1);
+            }
         }
-        catch (HttpRequestException ex)
+
+        // All attempts exhausted
+        RecordCircuitBreakerFailure(appId);
+
+        if (lastException != null)
         {
-            _logger.LogWarning(ex, "Failed to invoke {Method} on {AppId}", methodName, appId);
+            _logger.LogWarning(lastException, "Failed to invoke {Method} on {AppId} after {Attempts} attempts",
+                methodName, appId, maxAttempts);
+            throw new MeshInvocationException(appId, methodName, lastException.Message, lastException);
+        }
 
-            // Record connection failure for circuit breaker
-            if (_configuration.CircuitBreakerEnabled)
-            {
-                _circuitBreaker.RecordFailure(appId);
-            }
+        // Return the last transient error response
+        return lastResponse ?? throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+    }
 
-            // Invalidate cached endpoint on connection failure
-            _endpointCache.Invalidate(appId);
-
-            throw new MeshInvocationException(appId, methodName, ex.Message, ex);
+    /// <summary>
+    /// Records a circuit breaker failure if circuit breaking is enabled.
+    /// Called once per invocation after all retries are exhausted.
+    /// </summary>
+    private void RecordCircuitBreakerFailure(string appId)
+    {
+        if (_configuration.CircuitBreakerEnabled)
+        {
+            _circuitBreaker.RecordFailure(appId);
         }
     }
 
     /// <summary>
-    /// Determines if an HTTP status code represents a server error (eligible for circuit breaking).
-    /// Only server errors (5xx) trip the circuit breaker - client errors (4xx) do not.
+    /// Records a circuit breaker success if circuit breaking is enabled.
     /// </summary>
-    private static bool IsServerError(HttpStatusCode statusCode)
+    private void RecordCircuitBreakerSuccess(string appId)
     {
-        return (int)statusCode >= 500;
+        if (_configuration.CircuitBreakerEnabled)
+        {
+            _circuitBreaker.RecordSuccess(appId);
+        }
+    }
+
+    /// <summary>
+    /// Determines if an HTTP status code represents a transient error eligible for retry.
+    /// Only server errors and specific timeout/throttle codes are retried.
+    /// </summary>
+    private static bool IsTransientError(HttpStatusCode statusCode)
+    {
+        return statusCode switch
+        {
+            HttpStatusCode.RequestTimeout => true,          // 408
+            HttpStatusCode.TooManyRequests => true,         // 429
+            HttpStatusCode.InternalServerError => true,     // 500
+            HttpStatusCode.BadGateway => true,              // 502
+            HttpStatusCode.ServiceUnavailable => true,      // 503
+            HttpStatusCode.GatewayTimeout => true,          // 504
+            _ => false
+        };
     }
 
     /// <inheritdoc/>
