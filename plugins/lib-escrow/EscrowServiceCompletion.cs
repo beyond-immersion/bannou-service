@@ -5,6 +5,7 @@ namespace BeyondImmersion.BannouService.Escrow;
 
 /// <summary>
 /// Completion operations for escrow management.
+/// Handles release, refund, cancel, dispute, and resolve operations.
 /// </summary>
 public partial class EscrowService
 {
@@ -22,11 +23,7 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new ReleaseResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var validReleaseStates = new HashSet<EscrowStatus>
@@ -37,29 +34,29 @@ public partial class EscrowService
 
             if (!validReleaseStates.Contains(agreementModel.Status))
             {
-                return (StatusCodes.Status400BadRequest, new ReleaseResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state and cannot be released"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var now = DateTimeOffset.UtcNow;
             var previousStatus = agreementModel.Status;
 
-            var transferResults = new List<TransferResult>();
-
             // Process release allocations
+            var releases = new List<ReleaseResult>();
             if (agreementModel.ReleaseAllocations != null)
             {
                 foreach (var allocation in agreementModel.ReleaseAllocations)
                 {
-                    var assetsToTransfer = allocation.Assets ?? new List<EscrowAssetModel>();
-                    transferResults.Add(new TransferResult
+                    var bundle = new EscrowAssetBundle
+                    {
+                        BundleId = Guid.NewGuid(),
+                        Assets = allocation.Assets?.Select(MapAssetToApiModel).ToList()
+                            ?? new List<EscrowAsset>()
+                    };
+
+                    releases.Add(new ReleaseResult
                     {
                         RecipientPartyId = allocation.RecipientPartyId,
-                        RecipientPartyType = allocation.RecipientPartyType,
-                        Transferred = assetsToTransfer.Select(MapAssetToApiModel).ToList(),
+                        Assets = bundle,
                         Success = true
                     });
                 }
@@ -70,7 +67,7 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Notes;
 
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
@@ -83,8 +80,9 @@ public partial class EscrowService
                 ExpiresAt = agreementModel.ExpiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
 
+            // Decrement pending counts for all parties
             foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
             {
                 var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
@@ -93,55 +91,45 @@ public partial class EscrowService
                 {
                     existingCount.PendingCount--;
                     existingCount.LastUpdated = now;
-                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken);
+                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
                 }
             }
 
+            // Publish release event
             var releaseEvent = new EscrowReleasedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 EscrowId = body.EscrowId,
-                Recipients = transferResults.Select(tr => new RecipientInfo
+                Recipients = releases.Select(r => new RecipientInfo
                 {
-                    PartyId = tr.RecipientPartyId,
-                    PartyType = tr.RecipientPartyType,
-                    AssetSummary = GenerateAssetSummary(tr.Transferred?.Select(a => new EscrowAssetModel
-                    {
-                        AssetType = a.AssetType,
-                        CurrencyCode = a.CurrencyCode,
-                        CurrencyAmount = a.CurrencyAmount,
-                        ItemName = a.ItemName,
-                        ItemTemplateName = a.ItemTemplateName,
-                        ItemQuantity = a.ItemQuantity,
-                        ContractTemplateCode = a.ContractTemplateCode,
-                        CustomAssetType = a.CustomAssetType
-                    }))
+                    PartyId = r.RecipientPartyId,
+                    PartyType = agreementModel.ReleaseAllocations?
+                        .FirstOrDefault(a => a.RecipientPartyId == r.RecipientPartyId)?.RecipientPartyType ?? string.Empty,
+                    AssetSummary = GenerateAssetSummary(
+                        agreementModel.ReleaseAllocations?
+                            .FirstOrDefault(a => a.RecipientPartyId == r.RecipientPartyId)?.Assets)
                 }).ToList(),
                 Resolution = "released",
                 CompletedAt = now
             };
             await _messageBus.TryPublishAsync(EscrowTopics.EscrowReleased, releaseEvent, cancellationToken);
 
-            _logger.LogInformation("Escrow {EscrowId} released with {TransferCount} transfers",
-                body.EscrowId, transferResults.Count);
+            _logger.LogInformation("Escrow {EscrowId} released with {ReleaseCount} transfers",
+                body.EscrowId, releases.Count);
 
-            return (StatusCodes.Status200OK, new ReleaseResponse
+            return (StatusCodes.OK, new ReleaseResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
-                TransferResults = transferResults
+                FinalizerResults = new List<FinalizerResult>(),
+                Releases = releases
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to release escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("Release", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ReleaseResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while releasing the escrow"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -159,11 +147,7 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new RefundResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var validRefundStates = new HashSet<EscrowStatus>
@@ -177,25 +161,20 @@ public partial class EscrowService
 
             if (!validRefundStates.Contains(agreementModel.Status))
             {
-                return (StatusCodes.Status400BadRequest, new RefundResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state and cannot be refunded"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var now = DateTimeOffset.UtcNow;
             var previousStatus = agreementModel.Status;
 
-            var refundResults = new List<TransferResult>();
+            // Build refund results from deposits
+            var refunds = new List<RefundResult>();
             foreach (var deposit in agreementModel.Deposits ?? new List<EscrowDepositModel>())
             {
-                refundResults.Add(new TransferResult
+                refunds.Add(new RefundResult
                 {
-                    RecipientPartyId = deposit.PartyId,
-                    RecipientPartyType = deposit.PartyType,
-                    Transferred = deposit.Assets.Assets?.Select(MapAssetToApiModel).ToList()
-                        ?? new List<EscrowAsset>(),
+                    DepositorPartyId = deposit.PartyId,
+                    Assets = MapAssetBundleToApiModel(deposit.Assets),
                     Success = true
                 });
             }
@@ -205,7 +184,7 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Reason;
 
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
@@ -218,8 +197,9 @@ public partial class EscrowService
                 ExpiresAt = agreementModel.ExpiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
 
+            // Decrement pending counts
             foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
             {
                 var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
@@ -228,30 +208,24 @@ public partial class EscrowService
                 {
                     existingCount.PendingCount--;
                     existingCount.LastUpdated = now;
-                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken);
+                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
                 }
             }
 
+            // Publish refund event
             var refundEvent = new EscrowRefundedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 EscrowId = body.EscrowId,
-                Depositors = refundResults.Select(rr => new DepositorInfo
+                Depositors = refunds.Select(r => new DepositorInfo
                 {
-                    PartyId = rr.RecipientPartyId,
-                    PartyType = rr.RecipientPartyType,
-                    AssetSummary = GenerateAssetSummary(rr.Transferred?.Select(a => new EscrowAssetModel
-                    {
-                        AssetType = a.AssetType,
-                        CurrencyCode = a.CurrencyCode,
-                        CurrencyAmount = a.CurrencyAmount,
-                        ItemName = a.ItemName,
-                        ItemTemplateName = a.ItemTemplateName,
-                        ItemQuantity = a.ItemQuantity,
-                        ContractTemplateCode = a.ContractTemplateCode,
-                        CustomAssetType = a.CustomAssetType
-                    }))
+                    PartyId = r.DepositorPartyId,
+                    PartyType = agreementModel.Deposits?
+                        .FirstOrDefault(d => d.PartyId == r.DepositorPartyId)?.PartyType ?? string.Empty,
+                    AssetSummary = GenerateAssetSummary(
+                        agreementModel.Deposits?
+                            .FirstOrDefault(d => d.PartyId == r.DepositorPartyId)?.Assets?.Assets)
                 }).ToList(),
                 Reason = body.Reason,
                 Resolution = "refunded",
@@ -260,24 +234,19 @@ public partial class EscrowService
             await _messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} refunded with {RefundCount} refunds",
-                body.EscrowId, refundResults.Count);
+                body.EscrowId, refunds.Count);
 
-            return (StatusCodes.Status200OK, new RefundResponse
+            return (StatusCodes.OK, new RefundResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
-                RefundResults = refundResults
+                Refunds = refunds
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to refund escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("Refund", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new RefundResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while refunding the escrow"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -295,11 +264,7 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new CancelResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var validCancelStates = new HashSet<EscrowStatus>
@@ -310,25 +275,20 @@ public partial class EscrowService
 
             if (!validCancelStates.Contains(agreementModel.Status))
             {
-                return (StatusCodes.Status400BadRequest, new CancelResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state and cannot be cancelled"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var now = DateTimeOffset.UtcNow;
             var previousStatus = agreementModel.Status;
 
-            var refundResults = new List<TransferResult>();
+            // Build refund results for any partial deposits
+            var refunds = new List<RefundResult>();
             foreach (var deposit in agreementModel.Deposits ?? new List<EscrowDepositModel>())
             {
-                refundResults.Add(new TransferResult
+                refunds.Add(new RefundResult
                 {
-                    RecipientPartyId = deposit.PartyId,
-                    RecipientPartyType = deposit.PartyType,
-                    Transferred = deposit.Assets.Assets?.Select(MapAssetToApiModel).ToList()
-                        ?? new List<EscrowAsset>(),
+                    DepositorPartyId = deposit.PartyId,
+                    Assets = MapAssetBundleToApiModel(deposit.Assets),
                     Success = true
                 });
             }
@@ -338,7 +298,7 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Reason;
 
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
@@ -351,8 +311,9 @@ public partial class EscrowService
                 ExpiresAt = agreementModel.ExpiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
 
+            // Decrement pending counts
             foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
             {
                 var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
@@ -361,42 +322,36 @@ public partial class EscrowService
                 {
                     existingCount.PendingCount--;
                     existingCount.LastUpdated = now;
-                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken);
+                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
                 }
             }
 
+            // Publish cancel event
             var cancelEvent = new EscrowCancelledEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 EscrowId = body.EscrowId,
-                CancelledBy = body.CancelledBy,
-                CancelledByType = body.CancelledByType,
                 Reason = body.Reason,
-                DepositsRefunded = refundResults.Count,
+                DepositsRefunded = refunds.Count,
                 CancelledAt = now
             };
             await _messageBus.TryPublishAsync(EscrowTopics.EscrowCancelled, cancelEvent, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} cancelled, {RefundCount} deposits refunded",
-                body.EscrowId, refundResults.Count);
+                body.EscrowId, refunds.Count);
 
-            return (StatusCodes.Status200OK, new CancelResponse
+            return (StatusCodes.OK, new CancelResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
-                RefundResults = refundResults
+                Refunds = refunds
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to cancel escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("Cancel", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new CancelResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while cancelling the escrow"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -414,11 +369,7 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new DisputeResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var validDisputeStates = new HashSet<EscrowStatus>
@@ -431,23 +382,15 @@ public partial class EscrowService
 
             if (!validDisputeStates.Contains(agreementModel.Status))
             {
-                return (StatusCodes.Status400BadRequest, new DisputeResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state and cannot be disputed"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var disputerParty = agreementModel.Parties?.FirstOrDefault(p =>
-                p.PartyId == body.DisputedBy && p.PartyType == body.DisputedByType);
+                p.PartyId == body.PartyId && p.PartyType == body.PartyType);
 
             if (disputerParty == null)
             {
-                return (StatusCodes.Status403Forbidden, new DisputeResponse
-                {
-                    Success = false,
-                    Error = "Only parties to the escrow can raise disputes"
-                });
+                return (StatusCodes.Forbidden, null);
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -458,14 +401,14 @@ public partial class EscrowService
             agreementModel.Consents ??= new List<EscrowConsentModel>();
             agreementModel.Consents.Add(new EscrowConsentModel
             {
-                PartyId = body.DisputedBy,
-                PartyType = body.DisputedByType,
+                PartyId = body.PartyId,
+                PartyType = body.PartyType,
                 ConsentType = EscrowConsentType.Dispute,
                 ConsentedAt = now,
                 Notes = body.Reason
             });
 
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
             await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
@@ -478,46 +421,34 @@ public partial class EscrowService
                 ExpiresAt = agreementModel.ExpiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
 
+            // Publish dispute event
             var disputeEvent = new EscrowDisputedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 EscrowId = body.EscrowId,
-                DisputedBy = body.DisputedBy,
-                DisputedByType = body.DisputedByType,
-                Reason = body.Reason ?? "Dispute raised",
+                DisputedBy = body.PartyId,
+                DisputedByType = body.PartyType,
+                Reason = body.Reason,
                 DisputedAt = now
             };
             await _messageBus.TryPublishAsync(EscrowTopics.EscrowDisputed, disputeEvent, cancellationToken);
 
-            _logger.LogInformation("Dispute raised on escrow {EscrowId} by {DisputedBy}",
-                body.EscrowId, body.DisputedBy);
+            _logger.LogInformation("Dispute raised on escrow {EscrowId} by {PartyId}",
+                body.EscrowId, body.PartyId);
 
-            var arbiter = agreementModel.Parties?.FirstOrDefault(p =>
-                p.Role == EscrowPartyRole.Arbiter);
-
-            return (StatusCodes.Status200OK, new DisputeResponse
+            return (StatusCodes.OK, new DisputeResponse
             {
-                Success = true,
-                Escrow = MapToApiModel(agreementModel),
-                ArbiterId = arbiter?.PartyId,
-                ArbiterType = arbiter?.PartyType,
-                Message = arbiter != null
-                    ? "Dispute raised. Arbiter has been notified."
-                    : "Dispute raised. No arbiter assigned."
+                Escrow = MapToApiModel(agreementModel)
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to dispute escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("Dispute", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new DisputeResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while raising the dispute"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -535,62 +466,83 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new ResolveResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             if (agreementModel.Status != EscrowStatus.Disputed)
             {
-                return (StatusCodes.Status400BadRequest, new ResolveResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state, not disputed"
-                });
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Verify the arbiter is a party with arbiter role
+            var arbiterParty = agreementModel.Parties?.FirstOrDefault(p =>
+                p.PartyId == body.ArbiterId && p.PartyType == body.ArbiterType);
+
+            if (arbiterParty == null || arbiterParty.Role != EscrowPartyRole.Arbiter)
+            {
+                return (StatusCodes.Forbidden, null);
             }
 
             var now = DateTimeOffset.UtcNow;
-            var transferResults = new List<TransferResult>();
+            var transfers = new List<TransferResult>();
 
             switch (body.Resolution)
             {
                 case EscrowResolution.Released:
                     agreementModel.Status = EscrowStatus.Released;
-                    break;
-
-                case EscrowResolution.Refunded:
-                    foreach (var deposit in agreementModel.Deposits ?? new List<EscrowDepositModel>())
+                    if (agreementModel.ReleaseAllocations != null)
                     {
-                        transferResults.Add(new TransferResult
+                        foreach (var allocation in agreementModel.ReleaseAllocations)
                         {
-                            RecipientPartyId = deposit.PartyId,
-                            RecipientPartyType = deposit.PartyType,
-                            Transferred = deposit.Assets.Assets?.Select(MapAssetToApiModel).ToList()
-                                ?? new List<EscrowAsset>(),
-                            Success = true
-                        });
-                    }
-                    agreementModel.Status = EscrowStatus.Refunded;
-                    break;
-
-                case EscrowResolution.Split:
-                    if (body.SplitAllocations != null)
-                    {
-                        foreach (var allocation in body.SplitAllocations)
-                        {
-                            transferResults.Add(new TransferResult
+                            transfers.Add(new TransferResult
                             {
-                                RecipientPartyId = allocation.RecipientPartyId,
-                                RecipientPartyType = allocation.RecipientPartyType,
-                                Transferred = allocation.Assets?.Select(a => MapAssetInputToModel(a))
-                                    .Select(MapAssetToApiModel).ToList() ?? new List<EscrowAsset>(),
+                                PartyId = allocation.RecipientPartyId,
+                                Assets = new EscrowAssetBundle
+                                {
+                                    BundleId = Guid.NewGuid(),
+                                    Assets = allocation.Assets?.Select(MapAssetToApiModel).ToList()
+                                        ?? new List<EscrowAsset>()
+                                },
                                 Success = true
                             });
                         }
                     }
+                    break;
+
+                case EscrowResolution.Refunded:
+                    agreementModel.Status = EscrowStatus.Refunded;
+                    foreach (var deposit in agreementModel.Deposits ?? new List<EscrowDepositModel>())
+                    {
+                        transfers.Add(new TransferResult
+                        {
+                            PartyId = deposit.PartyId,
+                            Assets = MapAssetBundleToApiModel(deposit.Assets),
+                            Success = true
+                        });
+                    }
+                    break;
+
+                case EscrowResolution.Split:
                     agreementModel.Status = EscrowStatus.Released;
+                    if (body.SplitAllocations != null)
+                    {
+                        foreach (var allocation in body.SplitAllocations)
+                        {
+                            var assetModels = allocation.Assets?.Select(MapAssetInputToModel).ToList()
+                                ?? new List<EscrowAssetModel>();
+
+                            transfers.Add(new TransferResult
+                            {
+                                PartyId = allocation.PartyId,
+                                Assets = new EscrowAssetBundle
+                                {
+                                    BundleId = Guid.NewGuid(),
+                                    Assets = assetModels.Select(MapAssetToApiModel).ToList()
+                                },
+                                Success = true
+                            });
+                        }
+                    }
                     break;
 
                 default:
@@ -602,7 +554,7 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = body.Notes;
 
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             var oldStatusKey = $"{GetStatusIndexKey(EscrowStatus.Disputed)}:{body.EscrowId}";
             await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
@@ -615,8 +567,9 @@ public partial class EscrowService
                 ExpiresAt = agreementModel.ExpiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+            await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
 
+            // Decrement pending counts
             foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
             {
                 var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
@@ -625,17 +578,18 @@ public partial class EscrowService
                 {
                     existingCount.PendingCount--;
                     existingCount.LastUpdated = now;
-                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken);
+                    await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
                 }
             }
 
+            // Publish resolve event
             var resolveEvent = new EscrowResolvedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 EscrowId = body.EscrowId,
-                ArbiterId = body.ResolvedBy,
-                ArbiterType = body.ResolvedByType,
+                ArbiterId = body.ArbiterId,
+                ArbiterType = body.ArbiterType,
                 Resolution = body.Resolution.ToString(),
                 Notes = body.Notes,
                 ResolvedAt = now
@@ -645,22 +599,17 @@ public partial class EscrowService
             _logger.LogInformation("Escrow {EscrowId} resolved with {Resolution}",
                 body.EscrowId, body.Resolution);
 
-            return (StatusCodes.Status200OK, new ResolveResponse
+            return (StatusCodes.OK, new ResolveResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
-                TransferResults = transferResults
+                Transfers = transfers
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to resolve escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("Resolve", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ResolveResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while resolving the dispute"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 }

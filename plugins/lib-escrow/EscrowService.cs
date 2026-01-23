@@ -210,9 +210,9 @@ public partial class EscrowService : IEscrowService
 
     #region State Store Accessors
 
-    private IStateStore<EscrowAgreementModel>? _agreementStore;
-    private IStateStore<EscrowAgreementModel> AgreementStore =>
-        _agreementStore ??= _stateStoreFactory.GetStore<EscrowAgreementModel>(StateStoreDefinitions.EscrowAgreements);
+    private IQueryableStateStore<EscrowAgreementModel>? _agreementStore;
+    private IQueryableStateStore<EscrowAgreementModel> AgreementStore =>
+        _agreementStore ??= _stateStoreFactory.GetQueryableStore<EscrowAgreementModel>(StateStoreDefinitions.EscrowAgreements);
 
     private IStateStore<TokenHashModel>? _tokenStore;
     private IStateStore<TokenHashModel> TokenStore =>
@@ -222,9 +222,9 @@ public partial class EscrowService : IEscrowService
     private IStateStore<IdempotencyRecord> IdempotencyStore =>
         _idempotencyStore ??= _stateStoreFactory.GetStore<IdempotencyRecord>(StateStoreDefinitions.EscrowIdempotency);
 
-    private IStateStore<AssetHandlerModel>? _handlerStore;
-    private IStateStore<AssetHandlerModel> HandlerStore =>
-        _handlerStore ??= _stateStoreFactory.GetStore<AssetHandlerModel>(StateStoreDefinitions.EscrowHandlerRegistry);
+    private IQueryableStateStore<AssetHandlerModel>? _handlerStore;
+    private IQueryableStateStore<AssetHandlerModel> HandlerStore =>
+        _handlerStore ??= _stateStoreFactory.GetQueryableStore<AssetHandlerModel>(StateStoreDefinitions.EscrowHandlerRegistry);
 
     private IStateStore<PartyPendingCount>? _partyPendingStore;
     private IStateStore<PartyPendingCount> PartyPendingStore =>

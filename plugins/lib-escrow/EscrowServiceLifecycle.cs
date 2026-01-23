@@ -36,6 +36,8 @@ public partial class EscrowService
                 return (StatusCodes.BadRequest, null);
             }
 
+            var expiresAt = body.ExpiresAt ?? now.AddDays(7);
+
             var partyModels = new List<EscrowPartyModel>();
             var tokenRecordsToSave = new List<TokenHashModel>();
             var depositTokens = new List<PartyToken>();
@@ -73,7 +75,7 @@ public partial class EscrowService
                             PartyId = partyInput.PartyId,
                             TokenType = TokenType.Deposit,
                             CreatedAt = now,
-                            ExpiresAt = body.ExpiresAt,
+                            ExpiresAt = expiresAt,
                             Used = false
                         });
 
@@ -98,7 +100,7 @@ public partial class EscrowService
                             PartyId = partyInput.PartyId,
                             TokenType = TokenType.Release,
                             CreatedAt = now,
-                            ExpiresAt = body.ExpiresAt,
+                            ExpiresAt = expiresAt,
                             Used = false
                         });
                     }
@@ -135,8 +137,6 @@ public partial class EscrowService
             {
                 requiredConsents = partyModels.Count(p => p.ConsentRequired);
             }
-
-            var expiresAt = body.ExpiresAt ?? now.AddDays(7);
 
             var agreementModel = new EscrowAgreementModel
             {

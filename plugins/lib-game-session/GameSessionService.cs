@@ -231,13 +231,18 @@ public partial class GameSessionService : IGameSessionService
             var sessionType = body.SessionType;
             var reservationTtl = body.ReservationTtlSeconds > 0 ? body.ReservationTtlSeconds : _configuration.DefaultReservationTtlSeconds;
 
+            // Enforce max players cap from configuration
+            var maxPlayers = body.MaxPlayers > 0
+                ? Math.Min(body.MaxPlayers, _configuration.MaxPlayersPerSession)
+                : _configuration.MaxPlayersPerSession;
+
             // Create the session model
             var session = new GameSessionModel
             {
                 SessionId = sessionId.ToString(),
                 GameType = MapRequestGameTypeToResponse(body.GameType),
                 SessionName = body.SessionName,
-                MaxPlayers = body.MaxPlayers,
+                MaxPlayers = maxPlayers,
                 IsPrivate = body.IsPrivate,
                 Owner = body.OwnerId,
                 Status = GameSessionResponseStatus.Waiting,
