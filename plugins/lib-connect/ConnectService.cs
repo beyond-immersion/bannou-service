@@ -168,7 +168,7 @@ public partial class ConnectService : IConnectService
             var endpointKey = $"{body.TargetService}:{body.Method}:{body.TargetEndpoint}";
             var hasAccess = false;
 
-            if (_sessionServiceMappings.TryGetValue(body.SessionId, out var sessionMappings))
+            if (_sessionServiceMappings.TryGetValue(body.SessionId.ToString(), out var sessionMappings))
             {
                 hasAccess = sessionMappings.ContainsKey(endpointKey);
             }
@@ -315,7 +315,7 @@ public partial class ConnectService : IConnectService
                 body.SessionId, body.ServiceFilter ?? "(none)");
 
             // Look up the connection by session ID
-            var connection = _connectionManager.GetConnection(body.SessionId);
+            var connection = _connectionManager.GetConnection(body.SessionId.ToString());
             if (connection == null)
             {
                 _logger.LogWarning("No active WebSocket connection found for session {SessionId}", body.SessionId);

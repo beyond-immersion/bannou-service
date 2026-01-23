@@ -1148,6 +1148,7 @@ public partial class GameSessionService : IGameSessionService
         try
         {
             var targetSessionId = body.TargetWebSocketSessionId;
+            var targetSessionIdStr = targetSessionId.ToString();
             var gameSessionId = body.GameSessionId.ToString();
             var accountId = body.AccountId;
             var reservationToken = body.ReservationToken;
@@ -1178,21 +1179,21 @@ public partial class GameSessionService : IGameSessionService
 
             // Generate shortcut GUID (v7 for shortcuts - session-unique)
             var routeGuid = GuidGenerator.GenerateSessionShortcutGuid(
-                targetSessionId,
+                targetSessionIdStr,
                 shortcutName,
                 "game-session",
                 _serverSalt);
 
             // Generate target GUID (v5 for service capability) - points to join-session endpoint
             var targetGuid = GuidGenerator.GenerateServiceGuid(
-                targetSessionId,
+                targetSessionIdStr,
                 "game-session/sessions/join-session",
                 _serverSalt);
 
             // Build the pre-bound request for the shortcut
             var preboundRequest = new JoinGameSessionByIdRequest
             {
-                WebSocketSessionId = Guid.Parse(targetSessionId),
+                WebSocketSessionId = targetSessionId,
                 AccountId = accountId,
                 GameSessionId = body.GameSessionId,
                 ReservationToken = reservationToken
@@ -1203,7 +1204,7 @@ public partial class GameSessionService : IGameSessionService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(targetSessionId),
+                SessionId = targetSessionId,
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = routeGuid,
@@ -1224,7 +1225,7 @@ public partial class GameSessionService : IGameSessionService
                 ReplaceExisting = true
             };
 
-            await _clientEventPublisher.PublishToSessionAsync(targetSessionId, shortcutEvent);
+            await _clientEventPublisher.PublishToSessionAsync(targetSessionIdStr, shortcutEvent);
 
             _logger.LogInformation("Published join shortcut for game session {GameSessionId} to WebSocket session {TargetSessionId} with route GUID {RouteGuid}",
                 gameSessionId, targetSessionId, routeGuid);

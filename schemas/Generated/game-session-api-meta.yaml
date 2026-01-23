@@ -115,17 +115,18 @@ paths:
         \             \"characterData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific character data
         for this player (null if none provided)\"\n                },\n                \"voiceSessionId\": {\n           \
-        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Voice participant session ID (if player has joined voice)\"\n                }\n            }\n        },\n      \
-        \  \"ReservationInfo\": {\n            \"type\": \"object\",\n            \"description\": \"Reservation token returned
-        when creating a matchmade session\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"accountId\",\n                \"token\",\n                \"expiresAt\"\n            ],\n     \
-        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"description\": \"Account ID this reservation is for\"\n \
-        \               },\n                \"token\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Token to claim this reservation\"\n                },\n                \"expiresAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this reservation expires\"\n                }\n            }\n        }\n    }\n}"
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Voice participant session ID (if player has joined voice)\"\n            \
+        \    }\n            }\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Reservation token returned when creating a matchmade session\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"token\",\n              \
+        \  \"expiresAt\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
+        ID this reservation is for\"\n                },\n                \"token\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Token to claim this reservation\"\n                },\n                \"\
+        expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When this reservation expires\"\n                }\n            }\n        }\n \
+        \   }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List available game sessions\",\n    \"description\": \"List available
         game sessions. This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts
         or internal service calls.\\n\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\": false,\n\
@@ -242,18 +243,18 @@ paths:
         joined the session\"\n                },\n                \"characterData\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
         \    \"description\": \"Game-specific character data for this player (null if none provided)\"\n                },\n\
-        \                \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Voice participant session ID (if player has joined voice)\"\n    \
-        \            }\n            }\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n   \
-        \         \"description\": \"Reservation token returned when creating a matchmade session\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"accountId\",\n                \"token\",\n              \
-        \  \"expiresAt\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
-        ID this reservation is for\"\n                },\n                \"token\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Token to claim this reservation\"\n                },\n                \"\
-        expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When this reservation expires\"\n                }\n            }\n        }\n \
-        \   }\n}"
+        \                \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Voice participant session
+        ID (if player has joined voice)\"\n                }\n            }\n        },\n        \"ReservationInfo\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Reservation token returned when creating a matchmade
+        session\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
+        ,\n                \"token\",\n                \"expiresAt\"\n            ],\n            \"properties\": {\n    \
+        \            \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Account ID this reservation is for\"\n                },\n             \
+        \   \"token\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token to claim
+        this reservation\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this reservation expires\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new game session\",\n    \"description\": \"Create a new game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts or internal
         service calls.\\n\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -346,18 +347,18 @@ paths:
         joined the session\"\n                },\n                \"characterData\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
         \    \"description\": \"Game-specific character data for this player (null if none provided)\"\n                },\n\
-        \                \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Voice participant session ID (if player has joined voice)\"\n    \
-        \            }\n            }\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n   \
-        \         \"description\": \"Reservation token returned when creating a matchmade session\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"accountId\",\n                \"token\",\n              \
-        \  \"expiresAt\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
-        ID this reservation is for\"\n                },\n                \"token\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Token to claim this reservation\"\n                },\n                \"\
-        expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When this reservation expires\"\n                }\n            }\n        }\n \
-        \   }\n}"
+        \                \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Voice participant session
+        ID (if player has joined voice)\"\n                }\n            }\n        },\n        \"ReservationInfo\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Reservation token returned when creating a matchmade
+        session\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
+        ,\n                \"token\",\n                \"expiresAt\"\n            ],\n            \"properties\": {\n    \
+        \            \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Account ID this reservation is for\"\n                },\n             \
+        \   \"token\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token to claim
+        this reservation\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this reservation expires\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get game session details\",\n    \"description\": \"Get details of the
         current game session the user has joined.\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getGameSession\"\n}"
@@ -816,13 +817,13 @@ paths:
         : false,\n            \"required\": [\n                \"targetWebSocketSessionId\",\n                \"accountId\"\
         ,\n                \"gameSessionId\",\n                \"reservationToken\"\n            ],\n            \"properties\"\
         : {\n                \"targetWebSocketSessionId\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"WebSocket session ID to receive the shortcut\"\n                },\n                \"accountId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Account ID of the player\"\n                },\n                \"gameSessionId\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
-        \"ID of the game session to join\"\n                },\n                \"reservationToken\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"Token for this player's reservation\"\n       \
-        \         }\n            }\n        }\n    }\n}"
+        \    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID to receive the shortcut\"\n\
+        \                },\n                \"accountId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player\"\n                },\n\
+        \                \"gameSessionId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"ID of the game session to join\"\n                },\n         \
+        \       \"reservationToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Token for this player's reservation\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishJoinShortcutResponse\"\
         ,\n    \"$defs\": {\n        \"PublishJoinShortcutResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response after publishing a join shortcut\",\n            \"additionalProperties\": false,\n    \
@@ -1137,6 +1138,7 @@ components:
           description: Game-specific character data for this player (null if none provided)
         voiceSessionId:
           type: string
+          format: uuid
           nullable: true
           description: Voice participant session ID (if player has joined voice)
     KickPlayerRequest:
@@ -1390,6 +1392,7 @@ components:
       properties:
         targetWebSocketSessionId:
           type: string
+          format: uuid
           description: WebSocket session ID to receive the shortcut
         accountId:
           type: string

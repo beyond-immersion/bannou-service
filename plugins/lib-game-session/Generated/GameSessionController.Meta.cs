@@ -227,6 +227,7 @@ public partial class GameSessionController
                 },
                 "voiceSessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "Voice participant session ID (if player has joined voice)"
                 }
@@ -558,6 +559,7 @@ public partial class GameSessionController
                 },
                 "voiceSessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "Voice participant session ID (if player has joined voice)"
                 }
@@ -829,6 +831,7 @@ public partial class GameSessionController
                 },
                 "voiceSessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "Voice participant session ID (if player has joined voice)"
                 }
@@ -1946,6 +1949,7 @@ public partial class GameSessionController
             "properties": {
                 "targetWebSocketSessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID to receive the shortcut"
                 },
                 "accountId": {

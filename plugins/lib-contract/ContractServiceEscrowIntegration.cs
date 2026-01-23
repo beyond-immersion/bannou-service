@@ -2,6 +2,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -747,9 +748,14 @@ public partial class ContractService
                 var clauseAssetStatus = new ClauseAssetStatus
                 {
                     ClauseId = clause.Id,
-                    AssetType = assetType,
-                    RequiredAmount = requiredAmount,
-                    Satisfied = false
+                    Required = new AssetRequirementInfo
+                    {
+                        Type = assetType,
+                        Code = code,
+                        Amount = requiredAmount
+                    },
+                    Satisfied = false,
+                    Current = 0
                 };
 
                 // Call the validation handler if available
@@ -758,14 +764,13 @@ public partial class ContractService
                     var actualAmount = await QueryAssetBalanceAsync(
                         clauseType.ValidationHandler, checkLocation, code, assetType, contract, ct);
 
-                    clauseAssetStatus.CurrentAmount = actualAmount;
+                    clauseAssetStatus.Current = actualAmount;
                     clauseAssetStatus.Satisfied = actualAmount >= requiredAmount;
+                    clauseAssetStatus.Missing = Math.Max(0, requiredAmount - actualAmount);
                 }
                 else
                 {
-                    // No handler or missing check location - cannot verify, mark unsatisfied
-                    clauseAssetStatus.CurrentAmount = 0;
-                    clauseAssetStatus.Satisfied = false;
+                    clauseAssetStatus.Missing = requiredAmount;
                     _logger.LogWarning("Cannot verify asset requirement for clause {ClauseId}: missing handler or check_location",
                         clause.Id);
                 }
@@ -875,6 +880,71 @@ public partial class ContractService
         {
             _logger.LogError(ex, "Failed to query asset balance from {Service}{Endpoint}",
                 handler.Service, handler.Endpoint);
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Queries the current balance of a specific currency in a wallet via the currency service.
+    /// Used for resolving "remainder" amounts during clause execution.
+    /// </summary>
+    private async Task<double> QueryWalletBalanceAsync(
+        string walletId, string currencyCode, ContractInstanceModel contract, CancellationToken ct)
+    {
+        try
+        {
+            var context = BuildContractContext(contract);
+            if (contract.TemplateValues != null)
+            {
+                foreach (var kvp in contract.TemplateValues)
+                {
+                    context[kvp.Key] = kvp.Value;
+                }
+            }
+
+            var payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+            {
+                ["wallet_id"] = walletId,
+                ["currency_code"] = currencyCode
+            });
+
+            var apiDefinition = new PreboundApiDefinition
+            {
+                ServiceName = "currency",
+                Endpoint = "/currency/balance/get",
+                PayloadTemplate = payloadTemplate,
+                ExecutionMode = ExecutionMode.Sync
+            };
+
+            var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);
+
+            if (!result.SubstitutionSucceeded || result.Result == null || result.Result.StatusCode != 200)
+            {
+                _logger.LogWarning("Wallet balance query failed for wallet {WalletId}: status={Status}",
+                    walletId, result.Result?.StatusCode);
+                return 0;
+            }
+
+            if (!string.IsNullOrEmpty(result.Result.ResponseBody))
+            {
+                using var doc = JsonDocument.Parse(result.Result.ResponseBody);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("balance", out var balanceProp) && balanceProp.TryGetDouble(out var balance))
+                {
+                    return balance;
+                }
+                if (root.TryGetProperty("amount", out var amountProp) && amountProp.TryGetDouble(out var amount))
+                {
+                    return amount;
+                }
+            }
+
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to query wallet balance for {WalletId}", walletId);
             return 0;
         }
     }
@@ -1134,6 +1204,13 @@ public partial class ContractService
                 amount = ParseClauseAmount(clause, contract);
                 assetType = "currency";
 
+                // Remainder for fees: query source wallet balance
+                if (amount == REMAINDER_SENTINEL && !string.IsNullOrEmpty(sourceId))
+                {
+                    var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
+                    amount = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
+                }
+
                 var currencyCode = clause.GetProperty("currency_code") ?? "gold";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
                 {
@@ -1167,6 +1244,13 @@ public partial class ContractService
                 destinationId = ResolveTemplateValue(clause.GetProperty("destination_wallet"), contract.TemplateValues);
                 amount = ParseClauseAmount(clause, contract);
                 assetType = "currency";
+
+                // Remainder for distributions: query source wallet balance (after fees deducted)
+                if (amount == REMAINDER_SENTINEL && !string.IsNullOrEmpty(sourceId))
+                {
+                    var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
+                    amount = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
+                }
 
                 var currencyCode = clause.GetProperty("currency_code") ?? "gold";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
@@ -1249,7 +1333,14 @@ public partial class ContractService
     }
 
     /// <summary>
+    /// Sentinel value indicating the clause should transfer all remaining balance from the source.
+    /// </summary>
+    private const double REMAINDER_SENTINEL = -1;
+
+    /// <summary>
     /// Parses the amount from a clause definition, handling flat, percentage, and remainder types.
+    /// Returns REMAINDER_SENTINEL (-1) when the clause specifies "remainder" to signal the caller
+    /// should query the source wallet balance and use the full remaining amount.
     /// </summary>
     private static double ParseClauseAmount(ClauseDefinition clause, ContractInstanceModel contract)
     {
@@ -1258,21 +1349,12 @@ public partial class ContractService
 
         if (string.Equals(amountStr, "remainder", StringComparison.OrdinalIgnoreCase))
         {
-            // Remainder means the full amount - caller should handle this contextually
-            // For now, return the template value if available
-            if (contract.TemplateValues != null && contract.TemplateValues.TryGetValue("remainder_amount", out var remainderVal))
-            {
-                if (double.TryParse(remainderVal, out var remainder))
-                {
-                    return remainder;
-                }
-            }
-            return 0;
+            return REMAINDER_SENTINEL;
         }
 
         if (!double.TryParse(amountStr, out var rawAmount))
         {
-            // Try resolving from template values
+            // Try resolving {{TemplateKey}} patterns from template values
             if (!string.IsNullOrEmpty(amountStr) && contract.TemplateValues != null)
             {
                 var resolved = ResolveTemplateValue(amountStr, contract.TemplateValues);
@@ -1286,7 +1368,7 @@ public partial class ContractService
 
         if (string.Equals(amountType, "percentage", StringComparison.OrdinalIgnoreCase))
         {
-            // Percentage of the base amount (from template values)
+            // Percentage of the base_amount template value
             if (contract.TemplateValues != null && contract.TemplateValues.TryGetValue("base_amount", out var baseVal))
             {
                 if (double.TryParse(baseVal, out var baseAmount))
