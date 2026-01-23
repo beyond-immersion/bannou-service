@@ -611,6 +611,7 @@ components:
           description: Game-specific character data for this player (null if none provided)
         voiceSessionId:
           type: string
+          format: uuid
           nullable: true
           description: Voice participant session ID (if player has joined voice)
 
@@ -886,6 +887,7 @@ components:
       properties:
         targetWebSocketSessionId:
           type: string
+          format: uuid
           description: WebSocket session ID to receive the shortcut
         accountId:
           type: string

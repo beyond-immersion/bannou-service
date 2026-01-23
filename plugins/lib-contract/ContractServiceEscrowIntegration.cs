@@ -1,8 +1,12 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService.Contract;
@@ -25,17 +29,12 @@ public partial class ContractService
     private const string ALL_CLAUSE_TYPES_KEY = "all-clause-types";
     private const string IDEMPOTENCY_PREFIX = "idempotency:";
 
+    // TTL for idempotency cache entries (24 hours in seconds)
+    private const int IDEMPOTENCY_TTL_SECONDS = 86400;
+
     // Regex for validating template value key format (alphanumeric + underscore)
     private static readonly Regex TemplateKeyPattern = new(@"^[A-Za-z0-9_]+$", RegexOptions.Compiled);
 
-    // Built-in clause type codes
-    private static readonly HashSet<string> BuiltInClauseTypes = new()
-    {
-        "asset_requirement",
-        "currency_transfer",
-        "item_transfer",
-        "fee"
-    };
 
     #region Guardian System
 
@@ -114,7 +113,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, TimeSpan.FromHours(24), cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
             }
 
             // Publish event
@@ -199,7 +198,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, TimeSpan.FromHours(24), cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
             }
 
             // Publish event
@@ -304,7 +303,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, TimeSpan.FromHours(24), cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
             }
 
             // Publish event
@@ -682,7 +681,7 @@ public partial class ContractService
     }
 
     /// <summary>
-    /// Checks asset requirement clauses by querying actual balances.
+    /// Checks asset requirement clauses by querying actual balances via registered clause type handlers.
     /// </summary>
     private async Task<List<PartyAssetRequirementStatus>> CheckAssetRequirementClausesAsync(
         ContractInstanceModel contract,
@@ -691,24 +690,193 @@ public partial class ContractService
     {
         var results = new List<PartyAssetRequirementStatus>();
 
-        // Get clauses from template's custom terms (if defined there)
-        // For now, return empty - full implementation would parse clause definitions
-        // from the template and execute validation handlers
+        if (contract.Parties == null)
+        {
+            return results;
+        }
 
-        // Group by party roles defined in the contract
-        if (contract.Parties == null) return results;
+        // Parse clause definitions from template
+        var clauses = ParseClausesFromTemplate(template);
+        var requirementClauses = clauses.Where(c =>
+            string.Equals(c.Type, "asset_requirement", StringComparison.OrdinalIgnoreCase)).ToList();
 
+        // Initialize results for each party
+        var partyStatusMap = new Dictionary<string, PartyAssetRequirementStatus>();
         foreach (var party in contract.Parties)
         {
-            results.Add(new PartyAssetRequirementStatus
+            var status = new PartyAssetRequirementStatus
             {
                 PartyRole = party.Role,
-                Satisfied = true, // Default to true when no clauses defined
+                Satisfied = true,
                 Clauses = new List<ClauseAssetStatus>()
-            });
+            };
+            partyStatusMap[party.Role] = status;
+            results.Add(status);
+        }
+
+        if (requirementClauses.Count == 0)
+        {
+            return results;
+        }
+
+        // Load the asset_requirement clause type handler
+        var clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+            .GetAsync($"{CLAUSE_TYPE_PREFIX}asset_requirement", ct);
+
+        // Process each asset requirement clause
+        foreach (var clause in requirementClauses)
+        {
+            var partyRole = clause.GetProperty("party");
+            if (string.IsNullOrEmpty(partyRole) || !partyStatusMap.ContainsKey(partyRole))
+            {
+                _logger.LogWarning("Asset requirement clause {ClauseId} references unknown party role: {Role}",
+                    clause.Id, partyRole);
+                continue;
+            }
+
+            var partyStatus = partyStatusMap[partyRole];
+            var checkLocation = ResolveTemplateValue(clause.GetProperty("check_location"), contract.TemplateValues);
+            var assets = clause.GetArray("assets");
+
+            foreach (var asset in assets)
+            {
+                var assetType = GetJsonStringProperty(asset, "type");
+                var code = GetJsonStringProperty(asset, "code");
+                var requiredAmount = GetJsonDoubleProperty(asset, "amount");
+
+                var clauseAssetStatus = new ClauseAssetStatus
+                {
+                    ClauseId = clause.Id,
+                    AssetType = assetType,
+                    RequiredAmount = requiredAmount,
+                    Satisfied = false
+                };
+
+                // Call the validation handler if available
+                if (clauseType?.ValidationHandler != null && !string.IsNullOrEmpty(checkLocation))
+                {
+                    var actualAmount = await QueryAssetBalanceAsync(
+                        clauseType.ValidationHandler, checkLocation, code, assetType, contract, ct);
+
+                    clauseAssetStatus.CurrentAmount = actualAmount;
+                    clauseAssetStatus.Satisfied = actualAmount >= requiredAmount;
+                }
+                else
+                {
+                    // No handler or missing check location - cannot verify, mark unsatisfied
+                    clauseAssetStatus.CurrentAmount = 0;
+                    clauseAssetStatus.Satisfied = false;
+                    _logger.LogWarning("Cannot verify asset requirement for clause {ClauseId}: missing handler or check_location",
+                        clause.Id);
+                }
+
+                partyStatus.Clauses.Add(clauseAssetStatus);
+
+                if (!clauseAssetStatus.Satisfied)
+                {
+                    partyStatus.Satisfied = false;
+                }
+            }
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// Queries an asset balance by calling the clause type's validation handler.
+    /// </summary>
+    private async Task<double> QueryAssetBalanceAsync(
+        ClauseHandlerModel handler,
+        string walletOrContainerId,
+        string currencyOrItemCode,
+        string assetType,
+        ContractInstanceModel contract,
+        CancellationToken ct)
+    {
+        try
+        {
+            // Build context with contract data and template values
+            var context = BuildContractContext(contract);
+            if (contract.TemplateValues != null)
+            {
+                foreach (var kvp in contract.TemplateValues)
+                {
+                    context[kvp.Key] = kvp.Value;
+                }
+            }
+
+            // Build payload based on asset type
+            string payloadTemplate;
+            if (string.Equals(assetType, "currency", StringComparison.OrdinalIgnoreCase))
+            {
+                payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+                {
+                    ["wallet_id"] = walletOrContainerId,
+                    ["currency_code"] = currencyOrItemCode
+                });
+            }
+            else
+            {
+                payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+                {
+                    ["container_id"] = walletOrContainerId,
+                    ["item_code"] = currencyOrItemCode
+                });
+            }
+
+            var apiDefinition = new PreboundApiDefinition
+            {
+                ServiceName = handler.Service,
+                Endpoint = handler.Endpoint,
+                PayloadTemplate = payloadTemplate,
+                ExecutionMode = ExecutionMode.Sync
+            };
+
+            var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);
+
+            if (!result.SubstitutionSucceeded || result.Result == null)
+            {
+                _logger.LogWarning("Balance query failed for {Service}{Endpoint}: substitution={SubSuccess}",
+                    handler.Service, handler.Endpoint, result.SubstitutionSucceeded);
+                return 0;
+            }
+
+            if (result.Result.StatusCode != 200)
+            {
+                _logger.LogWarning("Balance query returned non-200: {StatusCode} from {Service}{Endpoint}",
+                    result.Result.StatusCode, handler.Service, handler.Endpoint);
+                return 0;
+            }
+
+            // Parse the balance from the response
+            if (!string.IsNullOrEmpty(result.Result.ResponseBody))
+            {
+                using var doc = JsonDocument.Parse(result.Result.ResponseBody);
+                var root = doc.RootElement;
+
+                // Look for common balance fields: "balance", "amount", "quantity"
+                if (root.TryGetProperty("balance", out var balanceProp) && balanceProp.TryGetDouble(out var balance))
+                {
+                    return balance;
+                }
+                if (root.TryGetProperty("amount", out var amountProp) && amountProp.TryGetDouble(out var amount))
+                {
+                    return amount;
+                }
+                if (root.TryGetProperty("quantity", out var quantityProp) && quantityProp.TryGetDouble(out var quantity))
+                {
+                    return quantity;
+                }
+            }
+
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to query asset balance from {Service}{Endpoint}",
+                handler.Service, handler.Endpoint);
+            return 0;
+        }
     }
 
     /// <inheritdoc/>
@@ -820,7 +988,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, TimeSpan.FromHours(24), cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
             }
 
             // Publish event
@@ -840,7 +1008,7 @@ public partial class ContractService
     }
 
     /// <summary>
-    /// Executes all contract clauses (fees first, then distributions).
+    /// Executes all contract clauses (fees first, then distributions) via registered clause type handlers.
     /// </summary>
     private async Task<List<DistributionRecordModel>> ExecuteContractClausesAsync(
         ContractInstanceModel contract,
@@ -848,16 +1016,420 @@ public partial class ContractService
     {
         var distributions = new List<DistributionRecordModel>();
 
-        // Get clause definitions from template custom terms
-        // For now, return empty - full implementation would:
-        // 1. Load clause definitions from template
-        // 2. Execute fee clauses first via service navigator
-        // 3. Execute distribution clauses via service navigator
-        // 4. Record each transfer in the distributions list
+        // Load the template to get clause definitions
+        var templateKey = $"{TEMPLATE_PREFIX}{contract.TemplateId}";
+        var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
+            .GetAsync(templateKey, ct);
 
-        _logger.LogDebug("Contract {ContractId} has no clauses to execute", contract.ContractId);
+        if (template == null)
+        {
+            _logger.LogError("Template not found during execution: {TemplateId}", contract.TemplateId);
+            return distributions;
+        }
+
+        // Parse clause definitions
+        var clauses = ParseClausesFromTemplate(template);
+
+        // Separate into fee clauses and distribution clauses (fees execute first)
+        var feeClauses = clauses.Where(c =>
+            string.Equals(c.Type, "fee", StringComparison.OrdinalIgnoreCase)).ToList();
+        var distributionClauses = clauses.Where(c =>
+            string.Equals(c.Type, "distribution", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(c.Type, "currency_transfer", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(c.Type, "item_transfer", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (feeClauses.Count == 0 && distributionClauses.Count == 0)
+        {
+            _logger.LogDebug("Contract {ContractId} has no executable clauses", contract.ContractId);
+            return distributions;
+        }
+
+        // Build context for template substitution
+        var context = BuildContractContext(contract);
+        if (contract.TemplateValues != null)
+        {
+            foreach (var kvp in contract.TemplateValues)
+            {
+                context[kvp.Key] = kvp.Value;
+            }
+        }
+
+        // Execute fee clauses first
+        foreach (var clause in feeClauses)
+        {
+            var result = await ExecuteSingleClauseAsync(clause, contract, context, ct);
+            if (result != null)
+            {
+                distributions.Add(result);
+            }
+        }
+
+        // Then execute distribution clauses
+        foreach (var clause in distributionClauses)
+        {
+            var result = await ExecuteSingleClauseAsync(clause, contract, context, ct);
+            if (result != null)
+            {
+                distributions.Add(result);
+            }
+        }
+
+        _logger.LogInformation("Executed {Count} clauses for contract {ContractId}",
+            distributions.Count, contract.ContractId);
 
         return distributions;
+    }
+
+    /// <summary>
+    /// Executes a single clause by calling the registered clause type's execution handler.
+    /// </summary>
+    private async Task<DistributionRecordModel?> ExecuteSingleClauseAsync(
+        ClauseDefinition clause,
+        ContractInstanceModel contract,
+        Dictionary<string, object?> context,
+        CancellationToken ct)
+    {
+        try
+        {
+            // Load the clause type to get its execution handler
+            var clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+                .GetAsync($"{CLAUSE_TYPE_PREFIX}{clause.Type}", ct);
+
+            // Fee type uses currency_transfer handler
+            if (clauseType == null && string.Equals(clause.Type, "fee", StringComparison.OrdinalIgnoreCase))
+            {
+                clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+                    .GetAsync($"{CLAUSE_TYPE_PREFIX}fee", ct);
+            }
+
+            // Distribution type uses currency_transfer or item_transfer
+            if (clauseType == null && string.Equals(clause.Type, "distribution", StringComparison.OrdinalIgnoreCase))
+            {
+                // Determine if currency or item based on clause properties
+                var hasSourceContainer = !string.IsNullOrEmpty(clause.GetProperty("source_container"));
+                var typeCode = hasSourceContainer ? "item_transfer" : "currency_transfer";
+                clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
+                    .GetAsync($"{CLAUSE_TYPE_PREFIX}{typeCode}", ct);
+            }
+
+            if (clauseType?.ExecutionHandler == null)
+            {
+                _logger.LogWarning("No execution handler found for clause type: {Type}, clause: {ClauseId}",
+                    clause.Type, clause.Id);
+                return null;
+            }
+
+            // Build the transfer payload based on clause type
+            var handler = clauseType.ExecutionHandler;
+            string payloadTemplate;
+            string assetType;
+            double amount;
+            string? sourceId;
+            string? destinationId;
+
+            if (string.Equals(clause.Type, "fee", StringComparison.OrdinalIgnoreCase))
+            {
+                sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
+                destinationId = ResolveTemplateValue(clause.GetProperty("recipient_wallet"), contract.TemplateValues);
+                amount = ParseClauseAmount(clause, contract);
+                assetType = "currency";
+
+                var currencyCode = clause.GetProperty("currency_code") ?? "gold";
+                payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+                {
+                    ["from_wallet_id"] = sourceId ?? string.Empty,
+                    ["to_wallet_id"] = destinationId ?? string.Empty,
+                    ["currency_code"] = currencyCode,
+                    ["amount"] = amount
+                });
+            }
+            else if (!string.IsNullOrEmpty(clause.GetProperty("source_container")))
+            {
+                // Item transfer
+                sourceId = ResolveTemplateValue(clause.GetProperty("source_container"), contract.TemplateValues);
+                destinationId = ResolveTemplateValue(clause.GetProperty("destination_container"), contract.TemplateValues);
+                amount = GetClauseDoubleProperty(clause, "quantity", 1);
+                assetType = "item";
+
+                var itemCode = clause.GetProperty("item_code") ?? "all";
+                payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+                {
+                    ["from_container_id"] = sourceId ?? string.Empty,
+                    ["to_container_id"] = destinationId ?? string.Empty,
+                    ["item_code"] = itemCode,
+                    ["quantity"] = (int)amount
+                });
+            }
+            else
+            {
+                // Currency transfer / distribution
+                sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
+                destinationId = ResolveTemplateValue(clause.GetProperty("destination_wallet"), contract.TemplateValues);
+                amount = ParseClauseAmount(clause, contract);
+                assetType = "currency";
+
+                var currencyCode = clause.GetProperty("currency_code") ?? "gold";
+                payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
+                {
+                    ["from_wallet_id"] = sourceId ?? string.Empty,
+                    ["to_wallet_id"] = destinationId ?? string.Empty,
+                    ["currency_code"] = currencyCode,
+                    ["amount"] = amount
+                });
+            }
+
+            // Execute via navigator
+            var apiDefinition = new PreboundApiDefinition
+            {
+                ServiceName = handler.Service,
+                Endpoint = handler.Endpoint,
+                PayloadTemplate = payloadTemplate,
+                ExecutionMode = ExecutionMode.Sync
+            };
+
+            var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);
+
+            if (!result.SubstitutionSucceeded)
+            {
+                _logger.LogWarning("Template substitution failed for clause {ClauseId}: {Error}",
+                    clause.Id, result.SubstitutionError);
+                await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ContractId = Guid.Parse(contract.ContractId),
+                    Trigger = "contract.execute",
+                    ServiceName = handler.Service,
+                    Endpoint = handler.Endpoint,
+                    ErrorMessage = $"Template substitution failed: {result.SubstitutionError}",
+                    StatusCode = null
+                });
+                return null;
+            }
+
+            if (result.Result == null || result.Result.StatusCode != 200)
+            {
+                _logger.LogWarning("Clause execution failed for {ClauseId}: status={StatusCode}",
+                    clause.Id, result.Result?.StatusCode);
+                await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ContractId = Guid.Parse(contract.ContractId),
+                    Trigger = "contract.execute",
+                    ServiceName = handler.Service,
+                    Endpoint = handler.Endpoint,
+                    ErrorMessage = $"Handler returned status {result.Result?.StatusCode}",
+                    StatusCode = result.Result?.StatusCode
+                });
+                return null;
+            }
+
+            _logger.LogDebug("Clause {ClauseId} executed: {Amount} {AssetType} from {Source} to {Dest}",
+                clause.Id, amount, assetType, sourceId, destinationId);
+
+            return new DistributionRecordModel
+            {
+                ClauseId = clause.Id,
+                ClauseType = clause.Type,
+                AssetType = assetType,
+                Amount = amount,
+                SourceWalletId = assetType == "currency" ? sourceId : null,
+                DestinationWalletId = assetType == "currency" ? destinationId : null,
+                SourceContainerId = assetType == "item" ? sourceId : null,
+                DestinationContainerId = assetType == "item" ? destinationId : null
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to execute clause {ClauseId} for contract {ContractId}",
+                clause.Id, contract.ContractId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parses the amount from a clause definition, handling flat, percentage, and remainder types.
+    /// </summary>
+    private static double ParseClauseAmount(ClauseDefinition clause, ContractInstanceModel contract)
+    {
+        var amountStr = clause.GetProperty("amount");
+        var amountType = clause.GetProperty("amount_type") ?? "flat";
+
+        if (string.Equals(amountStr, "remainder", StringComparison.OrdinalIgnoreCase))
+        {
+            // Remainder means the full amount - caller should handle this contextually
+            // For now, return the template value if available
+            if (contract.TemplateValues != null && contract.TemplateValues.TryGetValue("remainder_amount", out var remainderVal))
+            {
+                if (double.TryParse(remainderVal, out var remainder))
+                {
+                    return remainder;
+                }
+            }
+            return 0;
+        }
+
+        if (!double.TryParse(amountStr, out var rawAmount))
+        {
+            // Try resolving from template values
+            if (!string.IsNullOrEmpty(amountStr) && contract.TemplateValues != null)
+            {
+                var resolved = ResolveTemplateValue(amountStr, contract.TemplateValues);
+                if (double.TryParse(resolved, out var resolvedAmount))
+                {
+                    return resolvedAmount;
+                }
+            }
+            return 0;
+        }
+
+        if (string.Equals(amountType, "percentage", StringComparison.OrdinalIgnoreCase))
+        {
+            // Percentage of the base amount (from template values)
+            if (contract.TemplateValues != null && contract.TemplateValues.TryGetValue("base_amount", out var baseVal))
+            {
+                if (double.TryParse(baseVal, out var baseAmount))
+                {
+                    return Math.Floor(baseAmount * rawAmount / 100.0);
+                }
+            }
+            return 0;
+        }
+
+        return rawAmount;
+    }
+
+    /// <summary>
+    /// Gets a double property from a clause definition with a default value.
+    /// </summary>
+    private static double GetClauseDoubleProperty(ClauseDefinition clause, string key, double defaultValue)
+    {
+        var value = clause.GetProperty(key);
+        if (double.TryParse(value, out var result))
+        {
+            return result;
+        }
+        return defaultValue;
+    }
+
+    #endregion
+
+    #region Clause Parsing Helpers
+
+    /// <summary>
+    /// Parses clause definitions from a template's custom terms.
+    /// Clauses are stored as a JSON array under the "clauses" key in DefaultTerms.CustomTerms.
+    /// </summary>
+    private List<ClauseDefinition> ParseClausesFromTemplate(ContractTemplateModel template)
+    {
+        var clauses = new List<ClauseDefinition>();
+
+        if (template.DefaultTerms?.CustomTerms == null ||
+            !template.DefaultTerms.CustomTerms.TryGetValue("clauses", out var clausesObj))
+        {
+            return clauses;
+        }
+
+        // CustomTerms values are JsonElement when deserialized from state store
+        JsonElement clausesElement;
+        if (clausesObj is JsonElement je)
+        {
+            clausesElement = je;
+        }
+        else
+        {
+            // Try to serialize and re-parse as JsonElement
+            var json = BannouJson.Serialize(clausesObj);
+            using var doc = JsonDocument.Parse(json);
+            clausesElement = doc.RootElement.Clone();
+        }
+
+        if (clausesElement.ValueKind != JsonValueKind.Array)
+        {
+            _logger.LogWarning("Template clauses is not an array, kind: {Kind}", clausesElement.ValueKind);
+            return clauses;
+        }
+
+        foreach (var element in clausesElement.EnumerateArray())
+        {
+            if (element.ValueKind != JsonValueKind.Object) continue;
+
+            var id = GetJsonStringProperty(element, "id");
+            var type = GetJsonStringProperty(element, "type");
+
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(type))
+            {
+                _logger.LogWarning("Clause missing id or type, skipping");
+                continue;
+            }
+
+            clauses.Add(new ClauseDefinition(id, type, element.Clone()));
+        }
+
+        return clauses;
+    }
+
+    /// <summary>
+    /// Resolves template value references ({{Key}} patterns) in a string using the contract's template values.
+    /// </summary>
+    private static string ResolveTemplateValue(string? input, Dictionary<string, string>? templateValues)
+    {
+        if (string.IsNullOrEmpty(input) || templateValues == null)
+        {
+            return input ?? string.Empty;
+        }
+
+        // Replace all {{Key}} patterns with their values
+        return TemplateValuePattern.Replace(input, match =>
+        {
+            var key = match.Groups[1].Value;
+            if (templateValues.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+            // Return the original placeholder if no value found
+            return match.Value;
+        });
+    }
+
+    // Pattern for matching {{Key}} template value references
+    private static readonly Regex TemplateValuePattern = new(@"\{\{(\w+)\}\}", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Gets a string property from a JsonElement, returning empty string if not found.
+    /// </summary>
+    private static string GetJsonStringProperty(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var prop) && prop.ValueKind == JsonValueKind.String)
+        {
+            return prop.GetString() ?? string.Empty;
+        }
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// Gets a double property from a JsonElement, returning 0 if not found.
+    /// </summary>
+    private static double GetJsonDoubleProperty(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var prop))
+        {
+            if (prop.ValueKind == JsonValueKind.Number && prop.TryGetDouble(out var value))
+            {
+                return value;
+            }
+            // Handle string-encoded numbers
+            if (prop.ValueKind == JsonValueKind.String)
+            {
+                var str = prop.GetString();
+                if (double.TryParse(str, out var parsed))
+                {
+                    return parsed;
+                }
+            }
+        }
+        return 0;
     }
 
     #endregion
@@ -1105,6 +1677,66 @@ internal class DistributionRecordModel
     public string? DestinationWalletId { get; set; }
     public string? SourceContainerId { get; set; }
     public string? DestinationContainerId { get; set; }
+}
+
+/// <summary>
+/// Parsed clause definition from template's custom terms.
+/// Wraps a JsonElement to provide typed access to clause properties.
+/// </summary>
+internal class ClauseDefinition
+{
+    /// <summary>Unique clause identifier.</summary>
+    public string Id { get; }
+
+    /// <summary>Clause type code (e.g., asset_requirement, fee, distribution).</summary>
+    public string Type { get; }
+
+    private readonly JsonElement _element;
+
+    /// <summary>
+    /// Creates a new ClauseDefinition from a parsed JSON element.
+    /// </summary>
+    public ClauseDefinition(string id, string type, JsonElement element)
+    {
+        Id = id;
+        Type = type;
+        _element = element;
+    }
+
+    /// <summary>
+    /// Gets a string property from the clause definition.
+    /// </summary>
+    public string? GetProperty(string name)
+    {
+        if (_element.TryGetProperty(name, out var prop))
+        {
+            if (prop.ValueKind == JsonValueKind.String)
+            {
+                return prop.GetString();
+            }
+            if (prop.ValueKind == JsonValueKind.Number)
+            {
+                return prop.GetRawText();
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets an array of JsonElements from the clause definition.
+    /// </summary>
+    public List<JsonElement> GetArray(string name)
+    {
+        var items = new List<JsonElement>();
+        if (_element.TryGetProperty(name, out var prop) && prop.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in prop.EnumerateArray())
+            {
+                items.Add(item.Clone());
+            }
+        }
+        return items;
+    }
 }
 
 #endregion

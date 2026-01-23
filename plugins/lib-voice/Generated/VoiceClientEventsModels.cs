@@ -165,12 +165,12 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// WebSocket session ID of the peer who left (ephemeral identifier)
+    /// WebSocket session ID of the peer who left
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PeerSessionId { get; set; } = default!;
+    public System.Guid PeerSessionId { get; set; } = default!;
 
     /// <summary>
     /// Display name for UI notification
@@ -329,12 +329,12 @@ public partial class VoicePeerInfo
 {
 
     /// <summary>
-    /// WebSocket session ID for this peer (ephemeral identifier)
+    /// WebSocket session ID for this peer
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PeerSessionId { get; set; } = default!;
+    public System.Guid PeerSessionId { get; set; } = default!;
 
     /// <summary>
     /// Peer's display name

@@ -748,13 +748,7 @@ public partial class VoiceService : IVoiceService
         string reason,
         CancellationToken cancellationToken)
     {
-        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
-        var sessionIds = participants
-            .Where(p => !string.IsNullOrEmpty(p.SessionId))
-            .Select(p => p.SessionId ?? string.Empty)
-            .ToList();
-
-        if (sessionIds.Count == 0)
+        if (participants.Count == 0)
         {
             return;
         }
@@ -774,7 +768,9 @@ public partial class VoiceService : IVoiceService
             Reason = reasonEnum
         };
 
-        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIds, roomClosedEvent, cancellationToken);
+        // IClientEventPublisher uses string routing keys for RabbitMQ topics
+        var sessionIdStrings = participants.Select(p => p.SessionId.ToString());
+        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, roomClosedEvent, cancellationToken);
         _logger.LogDebug("Published room_closed event to {Count} sessions", publishedCount);
     }
 
@@ -788,23 +784,17 @@ public partial class VoiceService : IVoiceService
         CancellationToken cancellationToken)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
-        var participantsWithSessions = participants
-            .Where(p => !string.IsNullOrEmpty(p.SessionId))
-            .ToList();
 
-        if (participantsWithSessions.Count == 0)
+        if (participants.Count == 0)
         {
             return;
         }
 
         var publishedCount = 0;
-        foreach (var participant in participantsWithSessions)
+        foreach (var participant in participants)
         {
-            // SessionId is known non-null from the Where filter above
-            var sessionId = participant.SessionId ?? throw new InvalidOperationException("SessionId was null after filtering");
-
             // Generate unique SIP credentials for this participant
-            var internalCredentials = _scaledTierCoordinator.GenerateSipCredentials(sessionId, roomId);
+            var internalCredentials = _scaledTierCoordinator.GenerateSipCredentials(participant.SessionId, roomId);
 
             // Map internal credentials to client event model
             var clientCredentials = new ClientSipCredentials
@@ -827,7 +817,8 @@ public partial class VoiceService : IVoiceService
                 MigrationDeadlineMs = _configuration.TierUpgradeMigrationDeadlineMs
             };
 
-            var success = await _clientEventPublisher.PublishToSessionAsync(sessionId, tierUpgradeEvent, cancellationToken);
+            // IClientEventPublisher uses string routing keys for RabbitMQ topics
+            var success = await _clientEventPublisher.PublishToSessionAsync(participant.SessionId.ToString(), tierUpgradeEvent, cancellationToken);
             if (success)
             {
                 publishedCount++;
