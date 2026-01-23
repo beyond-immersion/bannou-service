@@ -957,6 +957,7 @@ public class MeshInvocationClientTests : IDisposable
     {
         _client = new MeshInvocationClient(
             _mockStateManager.Object,
+            new MeshServiceConfiguration(),
             _mockLogger.Object);
         return _client;
     }

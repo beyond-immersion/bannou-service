@@ -1685,12 +1685,14 @@ components:
 
     ListEscrowsResponse:
       type: object
+      description: Response containing list of escrow agreements
       required:
       - escrows
       - totalCount
       properties:
         escrows:
           type: array
+          description: List of escrow agreements matching the query
           items:
             $ref: '#/components/schemas/EscrowAgreement'
         totalCount:
@@ -2576,9 +2578,13 @@ components:
           default: "PT1H"
           x-env: ESCROW_EXPIRATION_GRACE_PERIOD
         tokenAlgorithm:
-          $ref: '#/components/schemas/TokenAlgorithm'
+          type: string
+          description: Algorithm used for token generation
           default: hmac_sha256
           x-env: ESCROW_TOKEN_ALGORITHM
+          enum:
+          - hmac_sha256
+          - random_bytes
         tokenLength:
           type: integer
           description: Token length in bytes (before encoding)

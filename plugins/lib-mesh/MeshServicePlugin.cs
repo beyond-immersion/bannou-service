@@ -54,8 +54,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         services.AddSingleton<IMeshInvocationClient>(sp =>
         {
             var stateManager = sp.GetRequiredService<IMeshStateManager>();
+            var configuration = sp.GetRequiredService<MeshServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-            return new MeshInvocationClient(stateManager, logger);
+            return new MeshInvocationClient(stateManager, configuration, logger);
         });
 
         Logger?.LogDebug("Service dependencies configured");
