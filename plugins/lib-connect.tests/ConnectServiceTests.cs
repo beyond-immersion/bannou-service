@@ -440,9 +440,10 @@ public class ConnectServiceTests
     {
         // Arrange
         var service = CreateConnectService();
+        var sessionId = Guid.NewGuid();
         var eventData = new AuthEvent
         {
-            SessionId = Guid.NewGuid(),
+            SessionId = sessionId,
             EventType = AuthEventType.Login,
             UserId = "user-123",
             Timestamp = DateTimeOffset.UtcNow
@@ -457,7 +458,7 @@ public class ConnectServiceTests
         var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal("test-session-456", resultDict["sessionId"].ToString());
+        Assert.Equal(sessionId.ToString(), resultDict["sessionId"].ToString());
     }
 
     [Fact]

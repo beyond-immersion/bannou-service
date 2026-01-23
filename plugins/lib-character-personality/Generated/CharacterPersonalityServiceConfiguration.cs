@@ -53,10 +53,4 @@ public class CharacterPersonalityServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public string? ForceServiceId { get; set; }
 
-    /// <summary>
-    /// Default configuration property - can be removed if not needed.
-    /// Environment variable: CHARACTER-PERSONALITY_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
 }

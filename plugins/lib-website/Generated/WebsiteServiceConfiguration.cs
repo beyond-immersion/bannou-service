@@ -53,10 +53,4 @@ public class WebsiteServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public string? ForceServiceId { get; set; }
 
-    /// <summary>
-    /// Default configuration property - can be removed if not needed.
-    /// Environment variable: WEBSITE_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
 }

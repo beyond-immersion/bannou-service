@@ -861,7 +861,7 @@ public class BannouSessionManagerTests
             _mockLogger.Object);
 
         var sessionId = Guid.NewGuid().ToString();
-        var instanceId = "instance-1";
+        var instanceId = Guid.NewGuid().ToString();
 
         // Act
         await sessionManager.UpdateSessionHeartbeatAsync(sessionId, instanceId);

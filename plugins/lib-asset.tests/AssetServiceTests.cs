@@ -1120,9 +1120,10 @@ public class AssetServiceTests
         _configuration.StorageBucket = "test-bucket";
         _configuration.LargeFileThresholdMb = 100; // High threshold
         var service = CreateService();
+        var bundleId = Guid.NewGuid().ToString();
         var request = new CreateBundleRequest
         {
-            BundleId = "small-bundle",
+            BundleId = bundleId,
             AssetIds = new List<string> { "small-asset" }
         };
 
@@ -1179,7 +1180,7 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.Equal("small-bundle", result.BundleId);
+        Assert.Equal(bundleId, result.BundleId);
         Assert.Equal(CreateBundleResponseStatus.Ready, result.Status);
     }
 
