@@ -266,7 +266,7 @@ public partial class LocationService : ILocationService
                 return (StatusCodes.NotFound, null);
             }
 
-            var parentIndexKey = BuildParentIndexKey(parentModel.RealmId, body.ParentLocationId.ToString());
+            var parentIndexKey = BuildParentIndexKey(parentModel.RealmId.ToString(), body.ParentLocationId.ToString());
             var childIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
             if (childIds.Count == 0)
@@ -417,9 +417,9 @@ public partial class LocationService : ILocationService
             var maxDepth = 10; // Safety limit
             var depth = 0;
 
-            while (!string.IsNullOrEmpty(currentParentId) && depth < maxDepth)
+            while (currentParentId.HasValue && depth < maxDepth)
             {
-                var parentKey = BuildLocationKey(currentParentId);
+                var parentKey = BuildLocationKey(currentParentId.Value.ToString());
                 var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
 
                 if (parentModel == null)
@@ -468,7 +468,7 @@ public partial class LocationService : ILocationService
 
             var maxDepth = body.MaxDepth ?? 10;
             var descendants = new List<LocationModel>();
-            await CollectDescendantsAsync(body.LocationId.ToString(), model.RealmId, descendants, 0, maxDepth, cancellationToken);
+            await CollectDescendantsAsync(body.LocationId.ToString(), model.RealmId.ToString(), descendants, 0, maxDepth, cancellationToken);
 
             // Apply filters
             var filtered = descendants.AsEnumerable();
@@ -541,8 +541,8 @@ public partial class LocationService : ILocationService
             {
                 Exists = true,
                 IsActive = !model.IsDeprecated,
-                LocationId = Guid.Parse(model.LocationId),
-                RealmId = Guid.Parse(model.RealmId)
+                LocationId = model.LocationId,
+                RealmId = model.RealmId
             });
         }
         catch (Exception ex)
@@ -599,7 +599,7 @@ public partial class LocationService : ILocationService
                     return (StatusCodes.BadRequest, null);
                 }
 
-                if (parentModel.RealmId != body.RealmId.ToString())
+                if (parentModel.RealmId != body.RealmId)
                 {
                     _logger.LogWarning("Parent location {ParentLocationId} is in a different realm", body.ParentLocationId);
                     return (StatusCodes.BadRequest, null);
@@ -613,13 +613,13 @@ public partial class LocationService : ILocationService
 
             var model = new LocationModel
             {
-                LocationId = locationId.ToString(),
-                RealmId = body.RealmId.ToString(),
+                LocationId = locationId,
+                RealmId = body.RealmId,
                 Code = code,
                 Name = body.Name,
                 Description = body.Description,
                 LocationType = body.LocationType.ToString(),
-                ParentLocationId = body.ParentLocationId?.ToString(),
+                ParentLocationId = body.ParentLocationId,
                 Depth = depth,
                 IsDeprecated = false,
                 DeprecatedAt = null,
@@ -766,7 +766,7 @@ public partial class LocationService : ILocationService
             }
 
             // Prevent circular reference
-            if (await IsDescendantOfAsync(body.ParentLocationId.ToString(), body.LocationId.ToString(), model.RealmId, cancellationToken))
+            if (await IsDescendantOfAsync(body.ParentLocationId.ToString(), body.LocationId.ToString(), model.RealmId.ToString(), cancellationToken))
             {
                 _logger.LogWarning("Cannot set parent - would create circular reference");
                 return (StatusCodes.BadRequest, null);
@@ -777,28 +777,28 @@ public partial class LocationService : ILocationService
             var newDepth = newParentModel.Depth + 1;
 
             // Update parent and depth
-            model.ParentLocationId = body.ParentLocationId.ToString();
+            model.ParentLocationId = body.ParentLocationId;
             model.Depth = newDepth;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
             // Update indexes
-            if (string.IsNullOrEmpty(oldParentId))
+            if (!oldParentId.HasValue)
             {
-                await RemoveFromRootLocationsAsync(model.RealmId, body.LocationId.ToString(), cancellationToken);
+                await RemoveFromRootLocationsAsync(model.RealmId.ToString(), body.LocationId.ToString(), cancellationToken);
             }
             else
             {
-                await RemoveFromParentIndexAsync(model.RealmId, oldParentId, body.LocationId.ToString(), cancellationToken);
+                await RemoveFromParentIndexAsync(model.RealmId.ToString(), oldParentId.Value.ToString(), body.LocationId.ToString(), cancellationToken);
             }
 
-            await AddToParentIndexAsync(model.RealmId, body.ParentLocationId.ToString(), body.LocationId.ToString(), cancellationToken);
+            await AddToParentIndexAsync(model.RealmId.ToString(), body.ParentLocationId.ToString(), body.LocationId.ToString(), cancellationToken);
 
             // Update descendant depths if depth changed
             if (newDepth != oldDepth)
             {
-                await UpdateDescendantDepthsAsync(body.LocationId.ToString(), model.RealmId, newDepth - oldDepth, cancellationToken);
+                await UpdateDescendantDepthsAsync(body.LocationId.ToString(), model.RealmId.ToString(), newDepth - oldDepth, cancellationToken);
             }
 
             // Publish event with changed fields
@@ -834,7 +834,7 @@ public partial class LocationService : ILocationService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (string.IsNullOrEmpty(model.ParentLocationId))
+            if (!model.ParentLocationId.HasValue)
             {
                 // Already a root location
                 return (StatusCodes.OK, MapToResponse(model));
@@ -851,13 +851,13 @@ public partial class LocationService : ILocationService
             await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
             // Update indexes
-            await RemoveFromParentIndexAsync(model.RealmId, oldParentId, body.LocationId.ToString(), cancellationToken);
-            await AddToRootLocationsAsync(model.RealmId, body.LocationId.ToString(), cancellationToken);
+            await RemoveFromParentIndexAsync(model.RealmId.ToString(), oldParentId.Value.ToString(), body.LocationId.ToString(), cancellationToken);
+            await AddToRootLocationsAsync(model.RealmId.ToString(), body.LocationId.ToString(), cancellationToken);
 
             // Update descendant depths
             if (oldDepth != 0)
             {
-                await UpdateDescendantDepthsAsync(body.LocationId.ToString(), model.RealmId, -oldDepth, cancellationToken);
+                await UpdateDescendantDepthsAsync(body.LocationId.ToString(), model.RealmId.ToString(), -oldDepth, cancellationToken);
             }
 
             // Publish event with changed fields
@@ -894,7 +894,7 @@ public partial class LocationService : ILocationService
             }
 
             // Check for children
-            var parentIndexKey = BuildParentIndexKey(model.RealmId, body.LocationId.ToString());
+            var parentIndexKey = BuildParentIndexKey(model.RealmId.ToString(), body.LocationId.ToString());
             var childIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
             if (childIds.Count > 0)
@@ -907,20 +907,20 @@ public partial class LocationService : ILocationService
             await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).DeleteAsync(locationKey, cancellationToken);
 
             // Clean up code index
-            var codeIndexKey = BuildCodeIndexKey(model.RealmId, model.Code);
+            var codeIndexKey = BuildCodeIndexKey(model.RealmId.ToString(), model.Code);
             await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from realm index
-            await RemoveFromRealmIndexAsync(model.RealmId, body.LocationId.ToString(), cancellationToken);
+            await RemoveFromRealmIndexAsync(model.RealmId.ToString(), body.LocationId.ToString(), cancellationToken);
 
             // Remove from parent or root index
-            if (string.IsNullOrEmpty(model.ParentLocationId))
+            if (!model.ParentLocationId.HasValue)
             {
-                await RemoveFromRootLocationsAsync(model.RealmId, body.LocationId.ToString(), cancellationToken);
+                await RemoveFromRootLocationsAsync(model.RealmId.ToString(), body.LocationId.ToString(), cancellationToken);
             }
             else
             {
-                await RemoveFromParentIndexAsync(model.RealmId, model.ParentLocationId, body.LocationId.ToString(), cancellationToken);
+                await RemoveFromParentIndexAsync(model.RealmId.ToString(), model.ParentLocationId.Value.ToString(), body.LocationId.ToString(), cancellationToken);
             }
 
             // Publish event
@@ -1297,7 +1297,7 @@ public partial class LocationService : ILocationService
     {
         var descendants = new List<LocationModel>();
         await CollectDescendantsAsync(potentialAncestorId, realmId, descendants, 0, 20, cancellationToken);
-        return descendants.Any(d => d.LocationId == potentialDescendantId);
+        return descendants.Any(d => d.LocationId.ToString() == potentialDescendantId);
     }
 
     private async Task UpdateDescendantDepthsAsync(string parentId, string realmId, int depthChange, CancellationToken cancellationToken)
@@ -1309,7 +1309,7 @@ public partial class LocationService : ILocationService
         {
             descendant.Depth += depthChange;
             descendant.UpdatedAt = DateTimeOffset.UtcNow;
-            var key = BuildLocationKey(descendant.LocationId);
+            var key = BuildLocationKey(descendant.LocationId.ToString());
             await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(key, descendant, cancellationToken: cancellationToken);
         }
     }
@@ -1318,13 +1318,13 @@ public partial class LocationService : ILocationService
     {
         return new LocationResponse
         {
-            LocationId = Guid.Parse(model.LocationId),
-            RealmId = Guid.Parse(model.RealmId),
+            LocationId = model.LocationId,
+            RealmId = model.RealmId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
             LocationType = Enum.Parse<LocationType>(model.LocationType),
-            ParentLocationId = string.IsNullOrEmpty(model.ParentLocationId) ? null : Guid.Parse(model.ParentLocationId),
+            ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
@@ -1341,13 +1341,13 @@ public partial class LocationService : ILocationService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            LocationId = Guid.Parse(model.LocationId),
-            RealmId = Guid.Parse(model.RealmId),
+            LocationId = model.LocationId,
+            RealmId = model.RealmId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = string.IsNullOrEmpty(model.ParentLocationId) ? Guid.Empty : Guid.Parse(model.ParentLocationId),
+            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt ?? default,
@@ -1366,13 +1366,13 @@ public partial class LocationService : ILocationService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            LocationId = Guid.Parse(model.LocationId),
-            RealmId = Guid.Parse(model.RealmId),
+            LocationId = model.LocationId,
+            RealmId = model.RealmId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = string.IsNullOrEmpty(model.ParentLocationId) ? Guid.Empty : Guid.Parse(model.ParentLocationId),
+            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt ?? default,
@@ -1392,13 +1392,13 @@ public partial class LocationService : ILocationService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            LocationId = Guid.Parse(model.LocationId),
-            RealmId = Guid.Parse(model.RealmId),
+            LocationId = model.LocationId,
+            RealmId = model.RealmId,
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = string.IsNullOrEmpty(model.ParentLocationId) ? Guid.Empty : Guid.Parse(model.ParentLocationId),
+            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt ?? default,
@@ -1429,13 +1429,13 @@ public partial class LocationService : ILocationService
 
     internal class LocationModel
     {
-        public string LocationId { get; set; } = string.Empty;
-        public string RealmId { get; set; } = string.Empty;
+        public Guid LocationId { get; set; }
+        public Guid RealmId { get; set; }
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string LocationType { get; set; } = "OTHER";
-        public string? ParentLocationId { get; set; }
+        public Guid? ParentLocationId { get; set; }
         public int Depth { get; set; }
         public bool IsDeprecated { get; set; }
         public DateTimeOffset? DeprecatedAt { get; set; }

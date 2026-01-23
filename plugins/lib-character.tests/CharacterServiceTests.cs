@@ -170,10 +170,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
-                CharacterId = characterId.ToString(),
+                CharacterId = characterId,
                 Name = "Test Character",
-                RealmId = realmId.ToString(),
-                SpeciesId = Guid.NewGuid().ToString(),
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
                 Status = CharacterStatus.Alive,
                 BirthDate = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -258,10 +258,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
-                CharacterId = characterId.ToString(),
+                CharacterId = characterId,
                 Name = "Original Name",
-                RealmId = realmId.ToString(),
-                SpeciesId = Guid.NewGuid().ToString(),
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
                 Status = CharacterStatus.Alive,
                 BirthDate = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -337,10 +337,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
-                CharacterId = characterId.ToString(),
+                CharacterId = characterId,
                 Name = "Test",
-                RealmId = realmId.ToString(),
-                SpeciesId = Guid.NewGuid().ToString(),
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
                 Status = CharacterStatus.Alive,
                 BirthDate = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -407,10 +407,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
-                CharacterId = characterId.ToString(),
+                CharacterId = characterId,
                 Name = "Test",
-                RealmId = realmId.ToString(),
-                SpeciesId = Guid.NewGuid().ToString(),
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
                 Status = CharacterStatus.Alive,
                 BirthDate = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -458,10 +458,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup bulk character retrieval - IStateStore.GetBulkAsync returns IReadOnlyDictionary
         var characterModel = new CharacterModel
         {
-            CharacterId = characterId.ToString(),
+            CharacterId = characterId,
             Name = "Test Character",
-            RealmId = realmId.ToString(),
-            SpeciesId = Guid.NewGuid().ToString(),
+            RealmId = realmId,
+            SpeciesId = Guid.NewGuid(),
             Status = CharacterStatus.Alive,
             BirthDate = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -522,10 +522,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup bulk character retrieval for both characters
         var aliveCharacter = new CharacterModel
         {
-            CharacterId = aliveCharId.ToString(),
+            CharacterId = aliveCharId,
             Name = "Alive Character",
-            RealmId = realmId.ToString(),
-            SpeciesId = Guid.NewGuid().ToString(),
+            RealmId = realmId,
+            SpeciesId = Guid.NewGuid(),
             Status = CharacterStatus.Alive,
             BirthDate = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -533,10 +533,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
         var deadCharacter = new CharacterModel
         {
-            CharacterId = deadCharId.ToString(),
+            CharacterId = deadCharId,
             Name = "Dead Character",
-            RealmId = realmId.ToString(),
-            SpeciesId = Guid.NewGuid().ToString(),
+            RealmId = realmId,
+            SpeciesId = Guid.NewGuid(),
             Status = CharacterStatus.Dead,
             BirthDate = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -584,10 +584,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             var charId = characterIds[i];
             bulkItems[$"{CHARACTER_KEY_PREFIX}{realmId}:{charId}"] = new CharacterModel
             {
-                CharacterId = charId.ToString(),
+                CharacterId = charId,
                 Name = $"Character {i}",
-                RealmId = realmId.ToString(),
-                SpeciesId = Guid.NewGuid().ToString(),
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
                 Status = CharacterStatus.Alive,
                 BirthDate = DateTimeOffset.UtcNow,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -635,10 +635,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup bulk character retrieval
         var characterModel = new CharacterModel
         {
-            CharacterId = characterId.ToString(),
+            CharacterId = characterId,
             Name = "Realm Character",
-            RealmId = realmId.ToString(),
-            SpeciesId = Guid.NewGuid().ToString(),
+            RealmId = realmId,
+            SpeciesId = Guid.NewGuid(),
             Status = CharacterStatus.Alive,
             BirthDate = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -684,10 +684,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         // Setup bulk character retrieval for both characters
         var targetCharacter = new CharacterModel
         {
-            CharacterId = targetCharId.ToString(),
+            CharacterId = targetCharId,
             Name = "Target Species Character",
-            RealmId = realmId.ToString(),
-            SpeciesId = targetSpeciesId.ToString(),
+            RealmId = realmId,
+            SpeciesId = targetSpeciesId,
             Status = CharacterStatus.Alive,
             BirthDate = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -695,10 +695,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
         var otherCharacter = new CharacterModel
         {
-            CharacterId = otherCharId.ToString(),
+            CharacterId = otherCharId,
             Name = "Other Species Character",
-            RealmId = realmId.ToString(),
-            SpeciesId = otherSpeciesId.ToString(),
+            RealmId = realmId,
+            SpeciesId = otherSpeciesId,
             Status = CharacterStatus.Alive,
             BirthDate = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -728,10 +728,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     {
         return new CharacterModel
         {
-            CharacterId = characterId.ToString(),
+            CharacterId = characterId,
             Name = name,
-            RealmId = realmId.ToString(),
-            SpeciesId = Guid.NewGuid().ToString(),
+            RealmId = realmId,
+            SpeciesId = Guid.NewGuid(),
             Status = CharacterStatus.Alive,
             BirthDate = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,

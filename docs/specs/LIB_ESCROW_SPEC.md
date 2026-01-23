@@ -14,8 +14,10 @@ This document is the implementation-ready specification for the `lib-escrow` ser
 **v3.0.0** (2026-01-23):
 - **Per-party escrow infrastructure**: Each party now gets their own escrow wallet and container (instead of one shared). Enables clean refunds, contribution tracking, and ownership validation.
 - **Contract-driven distribution**: Fees and asset distribution are now handled by the bound contract via `/contract/instance/execute`. Escrow is the "vault", contract is the "brain".
+- **Generic clause type architecture**: Clause types are registered globally (admin operation) with prebound API handlers, not hardcoded or per-instance. Validation clauses check conditions, execution clauses perform actions.
+- **Template value requirement**: Contract finalization requires ALL template values to be set (implicit validation condition).
 - **Neutral terminology**: Changed from buyer/seller to Party A/Party B throughout.
-- **Added `/escrow/get-my-token`**: Convenience endpoint for parties to retrieve their tokens.
+- **Added `/escrow/get-my-token`**: Internal endpoint (empty x-permissions) for parties to retrieve tokens via Shortcut APIs.
 - **Added `contractPartyRole`**: Required field for contract assets to specify which party role is being escrowed.
 - **Added Appendix B**: Contract endpoints for asset requirement checking and execution.
 - **Fixed x-permissions**: Converted all endpoints from incorrect `access:` format to proper `x-permissions:` array format.
@@ -1152,9 +1154,64 @@ When binding an escrow to a contract, lib-escrow sets these template values:
 
 For multi-party escrows, additional variables follow the pattern `{{PartyN_*}}`.
 
-### 10.3 Contract Clause Examples
+### 10.3 Contract Clause Type Architecture
 
-The contract template defines clauses for asset requirements, fees, and distribution:
+Clauses are NOT hardcoded concepts - they are registered **clause types** with associated handlers. This makes the system extensible: any new clause type can be defined without modifying lib-contract.
+
+**Registration Scope**: Clause types are registered **globally at the plugin level** (admin operation), NOT per-contract-instance. Contract templates and instances **reference** registered types by `typeCode` - they cannot define custom handlers. This is a deliberate security constraint: prebound API handlers are opaque to inspection, so allowing per-instance handlers would create an attack vector where malicious contracts could execute arbitrary service calls.
+
+**Clause Types** have:
+- A unique `typeCode` (e.g., `asset_requirement`, `currency_transfer`, `item_transfer`)
+- A **validation handler** (optional): Prebound API called during `/check-asset-requirements`
+- An **execution handler** (optional): Prebound API called during `/execute`
+
+**Validation vs Execution Clauses**:
+- **Validation clauses** (like `asset_requirement`): Check conditions. Called during `/check-asset-requirements` to verify deposited assets match requirements. No side effects.
+- **Execution clauses** (like `currency_transfer`, `item_transfer`): Perform actions. Called during `/execute` to move assets, collect fees, etc. Have side effects.
+- Some clause types may have BOTH a validation handler AND an execution handler.
+
+**Example Clause Type Registration**:
+```yaml
+# POST /contract/clause-type/register
+clauseTypes:
+  - typeCode: asset_requirement
+    description: "Validates that required assets exist at a location"
+    category: validation
+    validationHandler:
+      service: currency          # or inventory, depending on assetType
+      endpoint: /currency/balance/get
+      # Response mapped to check expected vs actual
+    executionHandler: null       # Validation-only clause
+
+  - typeCode: currency_transfer
+    description: "Transfers currency between wallets"
+    category: execution
+    validationHandler: null      # Execution-only clause
+    executionHandler:
+      service: currency
+      endpoint: /currency/transfer
+      # Template: sourceWalletId, destinationWalletId, amount
+
+  - typeCode: item_transfer
+    description: "Transfers items between containers"
+    category: execution
+    validationHandler: null
+    executionHandler:
+      service: inventory
+      endpoint: /inventory/transfer
+```
+
+**Template Value Requirement**: A contract CANNOT be finalized (executed) until ALL required template values have been set. This is an implicit validation condition: if any clause references `{{SomeValue}}` and it's not set, execution fails with `TEMPLATE_VALUES_NOT_SET`.
+
+**Built-in vs Custom Clause Types**:
+- **Built-in**: `asset_requirement`, `currency_transfer`, `item_transfer` (shipped with lib-contract)
+- **Custom**: Administrators can register new clause types via `/contract/clause-type/register` (admin-only)
+- **Contract templates**: Reference types by `typeCode`, provide clause-specific parameters (amounts, wallet IDs via templates)
+- **Contract instances**: Inherit clause types from their template, receive resolved template values from escrow
+
+### 10.4 Contract Clause Examples
+
+The contract template defines clauses using registered clause types:
 
 ```yaml
 # Asset requirement clauses (what must be deposited)
@@ -1206,9 +1263,9 @@ clauses:
     items: all  # All items from Party B's escrow container
 ```
 
-### 10.4 Fee Handling Design
+### 10.5 Fee Handling Design
 
-Fees are NOT a built-in escrow feature. They are contract terms that the contract plugin knows how to resolve:
+Fees are NOT a built-in escrow feature. They are clause types with `currency_transfer` handlers that the contract plugin knows how to resolve:
 
 1. **Contract defines fees**: Fee clauses specify flat amounts, percentages, or formulas
 2. **Contract tracks sources**: Each fee specifies which party's escrow wallet to deduct from
@@ -1461,13 +1518,12 @@ All custom handlers must implement these guarantees:
 
 /escrow/get-my-token:
   method: POST
-  x-permissions:
-    - role: user
-      states: {}
+  x-permissions: []
   description: |
-    Get the deposit or release token for a specific party. This is a convenience
-    endpoint for parties to retrieve their tokens if they weren't provided at creation.
-    The party is identified by ownerId/ownerType (works for characters, NPCs, guilds, etc.).
+    Get the deposit or release token for a specific party. Internal-only endpoint
+    accessed via Shortcut APIs (prebound). Direct user access is prohibited to prevent
+    token snooping. The party is identified by ownerId/ownerType (works for characters,
+    NPCs, guilds, etc.).
   request:
     escrowId: uuid
     ownerId: uuid                      # The party's ID
@@ -2763,11 +2819,59 @@ For the contract-driven fee and distribution model to work, lib-contract needs t
     - INVALID_TEMPLATE_KEY
 ```
 
+**Clause Type Registration** (for extensibility):
+
+```yaml
+/contract/clause-type/register:
+  method: POST
+  x-permissions:
+    - role: admin
+      states: {}
+  description: |
+    Register a new clause type with validation and/or execution handlers.
+    Built-in types (asset_requirement, currency_transfer, item_transfer) are
+    pre-registered. Custom types enable extensible contract clauses.
+  request:
+    typeCode: string                  # Unique identifier (e.g., "royalty_payment")
+    description: string
+    category: enum [validation, execution, both]
+    validationHandler:                # Called during /check-asset-requirements
+      service: string                 # Target service name
+      endpoint: string                # Endpoint path
+      requestMapping: object          # Template variable → request field mapping
+      responseMapping: object         # Response field → validation result mapping
+    executionHandler:                 # Called during /execute
+      service: string
+      endpoint: string
+      requestMapping: object
+      responseMapping: object
+  response:
+    registered: boolean
+  errors:
+    - TYPE_CODE_ALREADY_EXISTS
+    - INVALID_HANDLER_CONFIGURATION
+
+/contract/clause-type/list:
+  method: POST
+  x-permissions:
+    - role: developer
+      states: {}
+  description: List all registered clause types
+  response:
+    clauseTypes:
+      - typeCode: string
+        description: string
+        category: string
+        hasValidationHandler: boolean
+        hasExecutionHandler: boolean
+```
+
 These endpoints enable the "contract as brain, escrow as vault" model where:
 1. lib-escrow creates per-party escrow wallets/containers
 2. lib-escrow sets template values on the bound contract
 3. After deposits, lib-escrow queries contract for asset requirement status
 4. On fulfillment, lib-escrow calls contract to execute all distributions
+5. Clause types are extensible via prebound API handlers registered on the type
 
 ---
 

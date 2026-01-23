@@ -101,13 +101,13 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var realm = realmId ?? Guid.NewGuid();
         return new LocationService.LocationModel
         {
-            LocationId = id.ToString(),
-            RealmId = realm.ToString(),
+            LocationId = id,
+            RealmId = realm,
             Code = code,
             Name = name,
             Description = "Test Description",
             LocationType = locationType,
-            ParentLocationId = parentLocationId?.ToString(),
+            ParentLocationId = parentLocationId,
             Depth = depth,
             IsDeprecated = isDeprecated,
             DeprecatedAt = isDeprecated ? DateTimeOffset.UtcNow : null,

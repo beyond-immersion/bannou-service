@@ -278,7 +278,7 @@ public class AccountServiceTests
         var accountId = Guid.NewGuid();
         var accountModel = new AccountModel
         {
-            AccountId = accountId.ToString(),
+            AccountId = accountId,
             Email = "user@test.local",
             PasswordHash = "old",
             Roles = new List<string> { "user" },
@@ -325,7 +325,7 @@ public class AccountServiceTests
         var accountId = Guid.NewGuid();
         var accountModel = new AccountModel
         {
-            AccountId = accountId.ToString(),
+            AccountId = accountId,
             Email = "user@test.local",
             PasswordHash = "hash",
             IsVerified = false,

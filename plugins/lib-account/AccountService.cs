@@ -214,7 +214,7 @@ public partial class AccountService : IAccountService
 
         return new AccountResponse
         {
-            AccountId = Guid.Parse(account.AccountId),
+            AccountId = account.AccountId,
             Email = account.Email,
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
@@ -271,7 +271,7 @@ public partial class AccountService : IAccountService
 
             var account = new AccountModel
             {
-                AccountId = accountId.ToString(),
+                AccountId = accountId,
                 Email = body.Email,
                 DisplayName = body.DisplayName,
                 PasswordHash = body.PasswordHash, // Store pre-hashed password from Auth service
@@ -401,7 +401,7 @@ public partial class AccountService : IAccountService
 
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 EmailVerified = account.IsVerified,
@@ -499,7 +499,7 @@ public partial class AccountService : IAccountService
 
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 EmailVerified = account.IsVerified,
@@ -568,7 +568,7 @@ public partial class AccountService : IAccountService
             // Convert to response model
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 PasswordHash = account.PasswordHash, // Include password hash for auth service validation
@@ -785,7 +785,7 @@ public partial class AccountService : IAccountService
 
             var response = new AccountResponse
             {
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = account.AccountId,
                 Email = account.Email,
                 DisplayName = account.DisplayName,
                 EmailVerified = account.IsVerified,
@@ -876,7 +876,7 @@ public partial class AccountService : IAccountService
 
                 var response = new AccountResponse
                 {
-                    AccountId = Guid.Parse(account.AccountId),
+                    AccountId = account.AccountId,
                     Email = account.Email,
                     DisplayName = account.DisplayName,
                     EmailVerified = account.IsVerified,
@@ -1122,7 +1122,7 @@ public partial class AccountService : IAccountService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            AccountId = Guid.Parse(account.AccountId),
+            AccountId = account.AccountId,
             Email = account.Email,
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
@@ -1145,7 +1145,7 @@ public partial class AccountService : IAccountService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            AccountId = Guid.Parse(account.AccountId),
+            AccountId = account.AccountId,
             Email = account.Email,
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
@@ -1170,7 +1170,7 @@ public partial class AccountService : IAccountService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            AccountId = Guid.Parse(account.AccountId),
+            AccountId = account.AccountId,
             Email = account.Email,
             DisplayName = account.DisplayName,
             EmailVerified = account.IsVerified,
@@ -1431,7 +1431,7 @@ public partial class AccountService : IAccountService
 /// </summary>
 public class AccountModel
 {
-    public string AccountId { get; set; } = string.Empty;
+    public Guid AccountId { get; set; }
     public string Email { get; set; } = string.Empty;
     public string? DisplayName { get; set; }
     public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
