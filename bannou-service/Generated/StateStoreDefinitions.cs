@@ -56,12 +56,18 @@ public static class StateStoreDefinitions
     public const string AnalyticsSummary = "analytics-summary";
 
     // Asset Service
+    /// <summary>Processor pool node state and indexing</summary>
+    public const string AssetProcessorPool = "asset-processor-pool";
     /// <summary>Asset upload tracking and bundle state</summary>
     public const string Asset = "asset-statestore";
 
     // Auth Service
     /// <summary>Session and token state (ephemeral)</summary>
     public const string Auth = "auth-statestore";
+
+    // Behavior Service
+    /// <summary>Behavior metadata and compiled definitions</summary>
+    public const string Behavior = "behavior-statestore";
 
     // Character Service
     /// <summary>Persistent character data</summary>
@@ -275,8 +281,10 @@ public static class StateStoreDefinitions
             [AnalyticsHistory] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:hist" },
             [AnalyticsRating] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:rating" },
             [AnalyticsSummary] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:sum" },
+            [AssetProcessorPool] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset:pool" },
             [Asset] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset" },
             [Auth] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth" },
+            [Behavior] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "behavior" },
             [CharacterEncounter] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_encounter_statestore" },
             [CharacterHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_history_statestore" },
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
@@ -364,8 +372,10 @@ public static class StateStoreDefinitions
             [AnalyticsHistory] = new StoreMetadata("Analytics", "Controller possession history", "redis"),
             [AnalyticsRating] = new StoreMetadata("Analytics", "Glicko-2 skill ratings", "redis"),
             [AnalyticsSummary] = new StoreMetadata("Analytics", "Entity statistics summaries", "redis"),
+            [AssetProcessorPool] = new StoreMetadata("Asset", "Processor pool node state and indexing", "redis"),
             [Asset] = new StoreMetadata("Asset", "Asset upload tracking and bundle state", "redis"),
             [Auth] = new StoreMetadata("Auth", "Session and token state (ephemeral)", "redis"),
+            [Behavior] = new StoreMetadata("Behavior", "Behavior metadata and compiled definitions", "redis"),
             [CharacterEncounter] = new StoreMetadata("CharacterEncounter", "Encounter records and participant perspectives", "mysql"),
             [CharacterHistory] = new StoreMetadata("CharacterHistory", "Character historical events and backstory", "mysql"),
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql"),

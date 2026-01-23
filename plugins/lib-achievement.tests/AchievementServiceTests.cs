@@ -44,9 +44,6 @@ public class AchievementServiceTests
 
         _configuration = new AchievementServiceConfiguration
         {
-            DefinitionStoreName = "test-definition",
-            ProgressStoreName = "test-progress",
-            UnlockStoreName = "test-unlock",
             SteamApiKey = "test-steam-key",
             SteamAppId = "test-app-id",
             XboxClientId = "test-xbox-id",

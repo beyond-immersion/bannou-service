@@ -312,18 +312,6 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public int ProcessingRetryDelaySeconds { get; set; } = 30;
 
     /// <summary>
-    /// Name of the state store for asset metadata
-    /// Environment variable: ASSET_STATESTORE_NAME
-    /// </summary>
-    public string StatestoreName { get; set; } = "asset-statestore";
-
-    /// <summary>
-    /// Name of the state store for processor pool management
-    /// Environment variable: ASSET_PROCESSOR_POOL_STORE_NAME
-    /// </summary>
-    public string ProcessorPoolStoreName { get; set; } = "asset-processor-pool";
-
-    /// <summary>
     /// Key prefix for upload session entries in state store
     /// Environment variable: ASSET_UPLOAD_SESSION_KEY_PREFIX
     /// </summary>

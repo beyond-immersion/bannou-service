@@ -21,12 +21,15 @@ This document provides a compact reference of all Bannou services and their API 
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
-| [Contract](#contract) | 1.0.0 | 22 | Binding agreements between entities with milestone-based pro... |
+| [Contract](#contract) | 1.0.0 | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency](#currency) | 1.0.0 | 32 | Multi-currency management service for game economies. |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
+| [Escrow](#escrow) | 1.0.0 | 20 | Full-custody orchestration layer for multi-party asset excha... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Game Session](#game-session) | 2.0.0 | 11 | Minimal game session management for Arcadia and other games. |
+| [Inventory](#inventory) | 1.0.0 | 16 | Container and inventory management service for games. |
+| [Item](#item) | 1.0.0 | 13 | Item template and instance management service. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
 | [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for Arcadia game worlds. |
@@ -513,12 +516,35 @@ Binding agreements between entities with milestone-based progression.
 | `POST` | `/contract/breach/get` | Get breach details | user |
 | `POST` | `/contract/breach/report` | Report a contract breach | user |
 
+### ClauseTypes
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/clause-type/list` | List all registered clause types | developer |
+| `POST` | `/contract/clause-type/register` | Register a new clause type | admin |
+
 ### Constraints
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/contract/check-constraint` | Check if entity can take action given contracts | user |
 | `POST` | `/contract/query-active` | Query active contracts for entity | user |
+
+### Execution
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/instance/check-asset-requirements` | Check if asset requirement clauses are satisfied | developer |
+| `POST` | `/contract/instance/execute` | Execute all contract clauses (idempotent) | developer |
+| `POST` | `/contract/instance/set-template-values` | Set template values on contract instance | developer |
+
+### Guardian
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/contract/lock` | Lock contract under guardian custody | developer |
+| `POST` | `/contract/transfer-party` | Transfer party role to new entity | developer |
+| `POST` | `/contract/unlock` | Unlock contract from guardian custody | developer |
 
 ### Instances
 
@@ -706,6 +732,74 @@ All endpoints return voice-friendly summaries alongside detaile...
 
 ---
 
+## Escrow {#escrow}
+
+**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml`
+
+Full-custody orchestration layer for multi-party asset exchanges.
+
+### Arbiter
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/resolve` | Arbiter resolves disputed escrow | developer |
+
+### Completion
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/cancel` | Cancel escrow before fully funded | developer |
+| `POST` | `/escrow/dispute` | Raise a dispute on funded escrow | user |
+| `POST` | `/escrow/refund` | Trigger refund | developer |
+| `POST` | `/escrow/release` | Trigger release | developer |
+
+### Condition
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/verify-condition` | Verify condition for conditional escrow | developer |
+
+### Consent
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/consent` | Record party consent | user |
+| `POST` | `/escrow/consent/status` | Get consent status for escrow | user |
+
+### Deposits
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/deposit` | Deposit assets into escrow | user |
+| `POST` | `/escrow/deposit/status` | Get deposit status for a party | user |
+| `POST` | `/escrow/deposit/validate` | Validate a deposit without executing | user |
+
+### Handlers
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/handler/deregister` | Remove a custom asset handler registration | admin |
+| `POST` | `/escrow/handler/list` | List registered asset handlers | admin |
+| `POST` | `/escrow/handler/register` | Register a custom asset type handler | admin |
+
+### Lifecycle
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/create` | Create a new escrow agreement | developer |
+| `POST` | `/escrow/get` | Get escrow details | user |
+| `POST` | `/escrow/get-my-token` | Get deposit or release token for a party | authenticated |
+| `POST` | `/escrow/list` | List escrows for a party | user |
+
+### Validation
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/escrow/reaffirm` | Re-affirm after validation failure | user |
+| `POST` | `/escrow/validate` | Manually trigger validation | admin |
+
+---
+
 ## Game Service {#game-service}
 
 **Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml`
@@ -761,6 +855,81 @@ Minimal game session management for Arcadia and other games.
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/sessions/publish-join-shortcut` | Publish join shortcut for matchmade session | authenticated |
+
+---
+
+## Inventory {#inventory}
+
+**Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml`
+
+Container and inventory management service for games.
+
+### Container
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/inventory/container/create` | Create a new container | developer |
+| `POST` | `/inventory/container/delete` | Delete container | admin |
+| `POST` | `/inventory/container/get` | Get container with contents | user |
+| `POST` | `/inventory/container/get-or-create` | Get container or create if not exists | developer |
+| `POST` | `/inventory/container/list` | List containers for owner | user |
+| `POST` | `/inventory/container/update` | Update container properties | developer |
+
+### Inventory Operations
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/inventory/add` | Add item to container | developer |
+| `POST` | `/inventory/merge` | Merge two stacks | user |
+| `POST` | `/inventory/move` | Move item to different slot or container | user |
+| `POST` | `/inventory/remove` | Remove item from container | developer |
+| `POST` | `/inventory/split` | Split stack into two | user |
+| `POST` | `/inventory/transfer` | Transfer item to different owner | developer |
+
+### Inventory Queries
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/inventory/count` | Count items of a template | user |
+| `POST` | `/inventory/find-space` | Find where item would fit | user |
+| `POST` | `/inventory/has` | Check if entity has required items | user |
+| `POST` | `/inventory/query` | Find items across containers | user |
+
+---
+
+## Item {#item}
+
+**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml`
+
+Item template and instance management service.
+
+### Item Instance
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/item/instance/bind` | Bind item to character | developer |
+| `POST` | `/item/instance/create` | Create a new item instance | developer |
+| `POST` | `/item/instance/destroy` | Destroy item instance | developer |
+| `POST` | `/item/instance/get` | Get item instance by ID | user |
+| `POST` | `/item/instance/modify` | Modify item instance state | developer |
+
+### Item Query
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/item/instance/batch-get` | Get multiple item instances by ID | user |
+| `POST` | `/item/instance/list-by-container` | List items in a container | user |
+| `POST` | `/item/instance/list-by-template` | List instances of a template | admin |
+
+### Item Template
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/item/template/create` | Create a new item template | developer |
+| `POST` | `/item/template/deprecate` | Deprecate an item template | admin |
+| `POST` | `/item/template/get` | Get item template by ID or code | user |
+| `POST` | `/item/template/list` | List item templates with filters | user |
+| `POST` | `/item/template/update` | Update mutable fields of an item template | developer |
 
 ---
 
@@ -1483,8 +1652,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 37
-- **Total endpoints**: 479
+- **Total services**: 40
+- **Total endpoints**: 536
 
 ---
 

@@ -251,7 +251,7 @@ public partial class EscrowService : IEscrowService
     internal static bool IsValidTransition(EscrowStatus currentStatus, EscrowStatus newStatus)
     {
         return ValidTransitions.TryGetValue(currentStatus, out var validTargets) &&
-               validTargets.Contains(newStatus);
+                validTargets.Contains(newStatus);
     }
 
     /// <summary>

@@ -53,10 +53,4 @@ public class GameServiceServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public string? ForceServiceId { get; set; }
 
-    /// <summary>
-    /// State store name for game service data
-    /// Environment variable: GAME_SERVICE_STATE_STORE_NAME
-    /// </summary>
-    public string StateStoreName { get; set; } = "game-service-statestore";
-
 }

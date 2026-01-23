@@ -380,4 +380,133 @@ export class ContractProxy {
       Schemas['QueryActiveContractsResponse']
     >('POST', '/contract/query-active', request, channel, timeout);
   }
+
+  /**
+   * Lock contract under guardian custody
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async lockContractAsync(
+    request: Schemas['LockContractRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['LockContractResponse']>> {
+    return this.client.invokeAsync<Schemas['LockContractRequest'], Schemas['LockContractResponse']>(
+      'POST',
+      '/contract/lock',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Unlock contract from guardian custody
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async unlockContractAsync(
+    request: Schemas['UnlockContractRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['UnlockContractResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['UnlockContractRequest'],
+      Schemas['UnlockContractResponse']
+    >('POST', '/contract/unlock', request, channel, timeout);
+  }
+
+  /**
+   * Transfer party role to new entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async transferContractPartyAsync(
+    request: Schemas['TransferContractPartyRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['TransferContractPartyResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['TransferContractPartyRequest'],
+      Schemas['TransferContractPartyResponse']
+    >('POST', '/contract/transfer-party', request, channel, timeout);
+  }
+
+  /**
+   * List all registered clause types
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listClauseTypesAsync(
+    request: Schemas['ListClauseTypesRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ListClauseTypesResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ListClauseTypesRequest'],
+      Schemas['ListClauseTypesResponse']
+    >('POST', '/contract/clause-type/list', request, channel, timeout);
+  }
+
+  /**
+   * Set template values on contract instance
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async setContractTemplateValuesAsync(
+    request: Schemas['SetTemplateValuesRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['SetTemplateValuesResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['SetTemplateValuesRequest'],
+      Schemas['SetTemplateValuesResponse']
+    >('POST', '/contract/instance/set-template-values', request, channel, timeout);
+  }
+
+  /**
+   * Check if asset requirement clauses are satisfied
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async checkAssetRequirementsAsync(
+    request: Schemas['CheckAssetRequirementsRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CheckAssetRequirementsResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['CheckAssetRequirementsRequest'],
+      Schemas['CheckAssetRequirementsResponse']
+    >('POST', '/contract/instance/check-asset-requirements', request, channel, timeout);
+  }
+
+  /**
+   * Execute all contract clauses (idempotent)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async executeContractAsync(
+    request: Schemas['ExecuteContractRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ExecuteContractResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ExecuteContractRequest'],
+      Schemas['ExecuteContractResponse']
+    >('POST', '/contract/instance/execute', request, channel, timeout);
+  }
 }

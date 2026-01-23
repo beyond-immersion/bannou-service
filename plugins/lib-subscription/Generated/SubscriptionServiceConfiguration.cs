@@ -54,12 +54,6 @@ public class SubscriptionServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// State store name for subscription
-    /// Environment variable: SUBSCRIPTION_STATE_STORE_NAME
-    /// </summary>
-    public string StateStoreName { get; set; } = "subscription-statestore";
-
-    /// <summary>
     /// Suffix for authorization keys in state store
     /// Environment variable: SUBSCRIPTION_AUTHORIZATION_SUFFIX
     /// </summary>

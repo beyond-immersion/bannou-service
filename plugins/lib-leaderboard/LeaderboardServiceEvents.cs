@@ -1,6 +1,6 @@
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;

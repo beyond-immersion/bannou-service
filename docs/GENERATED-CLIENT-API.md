@@ -21,11 +21,14 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
-| [Contract Service API](#contract) | `client.Contract` | 22 | Binding agreements between entities with milestone-based pro... |
+| [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
+| [Escrow Service API](#escrow) | `client.Escrow` | 20 | Full-custody orchestration layer for multi-party asset excha... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for Arcadia and other games. |
+| [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
+| [Item Service API](#item) | `client.Item` | 13 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for Arcadia game world. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for Arcadia game worlds. |
@@ -529,12 +532,35 @@ Binding agreements between entities with milestone-based progression.
 | `CurebreachAsync` | `CureBreachRequest` | `BreachResponse` | Mark breach as cured (system/admin action) |
 | `GetBreachAsync` | `GetBreachRequest` | `BreachResponse` | Get breach details |
 
+### ClauseTypes
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterClausetypeAsync` | `RegisterClauseTypeRequest` | `RegisterClauseTypeResponse` | Register a new clause type |
+| `ListClausetypesAsync` | `ListClauseTypesRequest` | `ListClauseTypesResponse` | List all registered clause types |
+
 ### Constraints
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `CheckcontractconstraintAsync` | `CheckConstraintRequest` | `CheckConstraintResponse` | Check if entity can take action given contracts |
 | `QueryactivecontractsAsync` | `QueryActiveContractsRequest` | `QueryActiveContractsResponse` | Query active contracts for entity |
+
+### Execution
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetcontracttemplatevaluesAsync` | `SetTemplateValuesRequest` | `SetTemplateValuesResponse` | Set template values on contract instance |
+| `CheckassetrequirementsAsync` | `CheckAssetRequirementsRequest` | `CheckAssetRequirementsResponse` | Check if asset requirement clauses are satisfied |
+| `ExecutecontractAsync` | `ExecuteContractRequest` | `ExecuteContractResponse` | Execute all contract clauses (idempotent) |
+
+### Guardian
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `LockcontractAsync` | `LockContractRequest` | `LockContractResponse` | Lock contract under guardian custody |
+| `UnlockcontractAsync` | `UnlockContractRequest` | `UnlockContractResponse` | Unlock contract from guardian custody |
+| `TransfercontractpartyAsync` | `TransferContractPartyRequest` | `TransferContractPartyResponse` | Transfer party role to new entity |
 
 ### Instances
 
@@ -713,6 +739,74 @@ Knowledge base API for AI agents to query documentation. Designed for SignalWire
 
 ---
 
+## Escrow Service API {#escrow}
+
+**Proxy**: `client.Escrow` | **Version**: 1.0.0
+
+Full-custody orchestration layer for multi-party asset exchanges.
+
+### Arbiter
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ResolveAsync` | `ResolveRequest` | `ResolveResponse` | Arbiter resolves disputed escrow |
+
+### Completion
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReleaseAsync` | `ReleaseRequest` | `ReleaseResponse` | Trigger release |
+| `RefundAsync` | `RefundRequest` | `RefundResponse` | Trigger refund |
+| `CancelAsync` | `CancelRequest` | `CancelResponse` | Cancel escrow before fully funded |
+| `DisputeAsync` | `DisputeRequest` | `DisputeResponse` | Raise a dispute on funded escrow |
+
+### Condition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `VerifyconditionAsync` | `VerifyConditionRequest` | `VerifyConditionResponse` | Verify condition for conditional escrow |
+
+### Consent
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RecordconsentAsync` | `ConsentRequest` | `ConsentResponse` | Record party consent |
+| `GetConsentstatusAsync` | `GetConsentStatusRequest` | `GetConsentStatusResponse` | Get consent status for escrow |
+
+### Deposits
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DepositAsync` | `DepositRequest` | `DepositResponse` | Deposit assets into escrow |
+| `ValidateDepositAsync` | `ValidateDepositRequest` | `ValidateDepositResponse` | Validate a deposit without executing |
+| `GetDepositstatusAsync` | `GetDepositStatusRequest` | `GetDepositStatusResponse` | Get deposit status for a party |
+
+### Handlers
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterHandlerAsync` | `RegisterHandlerRequest` | `RegisterHandlerResponse` | Register a custom asset type handler |
+| `ListHandlersAsync` | `ListHandlersRequest` | `ListHandlersResponse` | List registered asset handlers |
+| `DeregisterhandlerAsync` | `DeregisterHandlerRequest` | `DeregisterHandlerResponse` | Remove a custom asset handler registration |
+
+### Lifecycle
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateEscrowAsync` | `CreateEscrowRequest` | `CreateEscrowResponse` | Create a new escrow agreement |
+| `GetEscrowAsync` | `GetEscrowRequest` | `GetEscrowResponse` | Get escrow details |
+| `ListEscrowsAsync` | `ListEscrowsRequest` | `ListEscrowsResponse` | List escrows for a party |
+| `GetMytokenAsync` | `GetMyTokenRequest` | `GetMyTokenResponse` | Get deposit or release token for a party |
+
+### Validation
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ValidateEscrowAsync` | `ValidateEscrowRequest` | `ValidateEscrowResponse` | Manually trigger validation |
+| `ReaffirmAsync` | `ReaffirmRequest` | `ReaffirmResponse` | Re-affirm after validation failure |
+
+---
+
 ## Bannou Game Service API {#game-service}
 
 **Proxy**: `client.GameService` | **Version**: 1.0.0
@@ -767,6 +861,81 @@ Minimal game session management for Arcadia and other games.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `PublishjoinshortcutAsync` | `PublishJoinShortcutRequest` | `PublishJoinShortcutResponse` | Publish join shortcut for matchmade session |
+
+---
+
+## Inventory Service API {#inventory}
+
+**Proxy**: `client.Inventory` | **Version**: 1.0.0
+
+Container and inventory management service for games.
+
+### Container
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateContainerAsync` | `CreateContainerRequest` | `ContainerResponse` | Create a new container |
+| `GetContainerAsync` | `GetContainerRequest` | `ContainerWithContentsResponse` | Get container with contents |
+| `GetOrcreatecontainerAsync` | `GetOrCreateContainerRequest` | `ContainerResponse` | Get container or create if not exists |
+| `ListContainersAsync` | `ListContainersRequest` | `ListContainersResponse` | List containers for owner |
+| `UpdateContainerAsync` | `UpdateContainerRequest` | `ContainerResponse` | Update container properties |
+| `DeleteContainerAsync` | `DeleteContainerRequest` | `DeleteContainerResponse` | Delete container |
+
+### Inventory Operations
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AdditemtocontainerAsync` | `AddItemRequest` | `AddItemResponse` | Add item to container |
+| `RemoveitemfromcontainerAsync` | `RemoveItemRequest` | `RemoveItemResponse` | Remove item from container |
+| `MoveitemAsync` | `MoveItemRequest` | `MoveItemResponse` | Move item to different slot or container |
+| `TransferitemAsync` | `TransferItemRequest` | `TransferItemResponse` | Transfer item to different owner |
+| `SplitstackAsync` | `SplitStackRequest` | `SplitStackResponse` | Split stack into two |
+| `MergestacksAsync` | `MergeStacksRequest` | `MergeStacksResponse` | Merge two stacks |
+
+### Inventory Queries
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `QueryitemsAsync` | `QueryItemsRequest` | `QueryItemsResponse` | Find items across containers |
+| `CountitemsAsync` | `CountItemsRequest` | `CountItemsResponse` | Count items of a template |
+| `HasitemsAsync` | `HasItemsRequest` | `HasItemsResponse` | Check if entity has required items |
+| `FindspaceAsync` | `FindSpaceRequest` | `FindSpaceResponse` | Find where item would fit |
+
+---
+
+## Item Service API {#item}
+
+**Proxy**: `client.Item` | **Version**: 1.0.0
+
+Item template and instance management service.
+
+### Item Instance
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateIteminstanceAsync` | `CreateItemInstanceRequest` | `ItemInstanceResponse` | Create a new item instance |
+| `GetIteminstanceAsync` | `GetItemInstanceRequest` | `ItemInstanceResponse` | Get item instance by ID |
+| `ModifyiteminstanceAsync` | `ModifyItemInstanceRequest` | `ItemInstanceResponse` | Modify item instance state |
+| `BinditeminstanceAsync` | `BindItemInstanceRequest` | `ItemInstanceResponse` | Bind item to character |
+| `DestroyiteminstanceAsync` | `DestroyItemInstanceRequest` | `DestroyItemInstanceResponse` | Destroy item instance |
+
+### Item Query
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListItemsbycontainerAsync` | `ListItemsByContainerRequest` | `ListItemsResponse` | List items in a container |
+| `ListItemsbytemplateAsync` | `ListItemsByTemplateRequest` | `ListItemsResponse` | List instances of a template |
+| `BatchgetiteminstancesAsync` | `BatchGetItemInstancesRequest` | `BatchGetItemInstancesResponse` | Get multiple item instances by ID |
+
+### Item Template
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateItemtemplateAsync` | `CreateItemTemplateRequest` | `ItemTemplateResponse` | Create a new item template |
+| `GetItemtemplateAsync` | `GetItemTemplateRequest` | `ItemTemplateResponse` | Get item template by ID or code |
+| `ListItemtemplatesAsync` | `ListItemTemplatesRequest` | `ListItemTemplatesResponse` | List item templates with filters |
+| `UpdateItemtemplateAsync` | `UpdateItemTemplateRequest` | `ItemTemplateResponse` | Update mutable fields of an item template |
+| `DeprecateitemtemplateAsync` | `DeprecateItemTemplateRequest` | `ItemTemplateResponse` | Deprecate an item template |
 
 ---
 
@@ -1483,8 +1652,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 37
-- **Total methods**: 473
+- **Total services**: 40
+- **Total methods**: 530
 
 ---
 

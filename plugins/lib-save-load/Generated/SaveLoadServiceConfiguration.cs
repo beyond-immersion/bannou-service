@@ -72,34 +72,10 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     public string DefaultCompressionType { get; set; } = "GZIP";
 
     /// <summary>
-    /// State store name for slot metadata (MySQL backend)
-    /// Environment variable: SAVE_LOAD_SLOT_METADATA_STORE_NAME
-    /// </summary>
-    public string SlotMetadataStoreName { get; set; } = "save-load-slots";
-
-    /// <summary>
-    /// State store name for version manifests (MySQL backend)
-    /// Environment variable: SAVE_LOAD_VERSION_MANIFEST_STORE_NAME
-    /// </summary>
-    public string VersionManifestStoreName { get; set; } = "save-load-versions";
-
-    /// <summary>
-    /// State store name for hot save cache (Redis backend)
-    /// Environment variable: SAVE_LOAD_HOT_CACHE_STORE_NAME
-    /// </summary>
-    public string HotCacheStoreName { get; set; } = "save-load-cache";
-
-    /// <summary>
     /// TTL for hot cache entries in minutes
     /// Environment variable: SAVE_LOAD_HOT_CACHE_TTL_MINUTES
     /// </summary>
     public int HotCacheTtlMinutes { get; set; } = 60;
-
-    /// <summary>
-    /// State store name for registered schemas
-    /// Environment variable: SAVE_LOAD_SCHEMA_STORE_NAME
-    /// </summary>
-    public string SchemaStoreName { get; set; } = "save-load-schemas";
 
     /// <summary>
     /// MinIO bucket for save assets
@@ -281,12 +257,6 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     /// Environment variable: SAVE_LOAD_ASYNC_UPLOAD_ENABLED
     /// </summary>
     public bool AsyncUploadEnabled { get; set; } = true;
-
-    /// <summary>
-    /// Redis store for pending uploads awaiting async processing
-    /// Environment variable: SAVE_LOAD_PENDING_UPLOAD_STORE_NAME
-    /// </summary>
-    public string PendingUploadStoreName { get; set; } = "save-load-pending";
 
     /// <summary>
     /// TTL for pending uploads in Redis. If upload fails repeatedly, entry expires and save is considered failed (event published).

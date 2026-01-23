@@ -556,7 +556,7 @@ Sent to remaining room participants when a peer leaves.
 | Property | Description |
 |----------|-------------|
 | `displayName` | Display name for UI notification |
-| `peerSessionId` | WebSocket session ID of the peer who left (ephemer |
+| `peerSessionId` | WebSocket session ID of the peer who left |
 | `remainingParticipantCount` | Participants remaining after departure |
 | `roomId` | Voice room ID |
 

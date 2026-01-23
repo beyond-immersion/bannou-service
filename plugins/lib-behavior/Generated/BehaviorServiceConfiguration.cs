@@ -234,18 +234,6 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
     public int CompilerMaxStrings { get; set; } = 65536;
 
     /// <summary>
-    /// Name of the state store for behavior metadata
-    /// Environment variable: BEHAVIOR_STATESTORE_NAME
-    /// </summary>
-    public string StatestoreName { get; set; } = "behavior-statestore";
-
-    /// <summary>
-    /// Name of the state store for actor memories
-    /// Environment variable: BEHAVIOR_MEMORY_STATESTORE_NAME
-    /// </summary>
-    public string MemoryStatestoreName { get; set; } = "agent-memories";
-
-    /// <summary>
     /// Key prefix for bundle membership entries
     /// Environment variable: BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX
     /// </summary>

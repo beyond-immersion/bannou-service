@@ -208,6 +208,24 @@ This document lists all events defined in Bannou's event schemas.
 | `DocumentationSyncCompletedEvent` | Custom | `documentation-sync-completed` | Published when a repository sync completes |
 | `DocumentationSyncStartedEvent` | Custom | `documentation-sync-started` | Published when a repository sync starts |
 
+### Escrow
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `EscrowCancelledEvent` | Custom | `escrow-cancelled` | Event published when escrow is cancelled |
+| `EscrowConsentReceivedEvent` | Custom | `escrow-consent-received` | Event published when a party consents |
+| `EscrowCreatedEvent` | Lifecycle (Created) | `escrow.created` | Event published when a new escrow agreement is cre... |
+| `EscrowDepositReceivedEvent` | Custom | `escrow-deposit-received` | Event published when a deposit is received |
+| `EscrowDisputedEvent` | Custom | `escrow-disputed` | Event published when a party raises a dispute |
+| `EscrowExpiredEvent` | Expiration | `escrow.expired` | Event published when escrow times out |
+| `EscrowFinalizingEvent` | Custom | `escrow-finalizing` | Event published when finalization begins |
+| `EscrowFundedEvent` | Custom | `escrow-funded` | Event published when all expected deposits are rec... |
+| `EscrowRefundedEvent` | Custom | `escrow-refunded` | Event published when assets are refunded |
+| `EscrowReleasedEvent` | Custom | `escrow-released` | Event published when assets are released |
+| `EscrowResolvedEvent` | Custom | `escrow-resolved` | Event published when an arbiter resolves a dispute |
+| `EscrowValidationFailedEvent` | Custom | `escrow-validation-failed` | Event published when validation detects asset chan... |
+| `EscrowValidationReaffirmedEvent` | Custom | `escrow-validation-reaffirmed` | Event published when a party reaffirms after valid... |
+
 ### Game Session
 
 | Event | Type | Likely Topic | Description |
@@ -227,6 +245,28 @@ This document lists all events defined in Bannou's event schemas.
 | `PlayerKickedEvent` | Custom | `player-kicked` | Sent to all session participants when a player is ... |
 | `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
 | `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
+
+### Inventory
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `InventoryContainerFullEvent` | Custom | `inventory-container-full` | Event when container reaches capacity |
+| `InventoryItemMovedEvent` | Custom | `inventory-item-moved` | Event when an item moves between slots or containe... |
+| `InventoryItemPlacedEvent` | Custom | `inventory-item-placed` | Event when an item is placed in a container |
+| `InventoryItemRemovedEvent` | Custom | `inventory-item-removed` | Event when an item is removed from a container |
+| `InventoryItemSplitEvent` | Custom | `inventory-item-split` | Event when a stack is split |
+| `InventoryItemStackedEvent` | Custom | `inventory-item-stacked` | Event when items are stacked together |
+| `InventoryItemTransferredEvent` | Custom | `inventory-item-transferred` | Event when item ownership transfers |
+
+### Item
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ItemInstanceBoundEvent` | Custom | `item-instance-bound` | Event published when an item is bound to a charact... |
+| `ItemInstanceDestroyedEvent` | Custom | `item-instance-destroyed` | Event published when an item instance is permanent... |
+| `ItemInstanceModifiedEvent` | Custom | `item-instance-modified` | Event published when an item instance is modified ... |
+| `ItemInstanceUnboundEvent` | Custom | `item-instance-unbound` | Event published when an item binding is removed (a... |
+| `ItemTemplateDeprecatedEvent` | Custom | `item-template-deprecated` | Event published when an item template is deprecate... |
 
 ### Leaderboard
 

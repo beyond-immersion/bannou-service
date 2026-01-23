@@ -54,24 +54,6 @@ public class LeaderboardServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Name of the state store for leaderboard definitions (MySQL recommended)
-    /// Environment variable: LEADERBOARD_DEFINITION_STORE_NAME
-    /// </summary>
-    public string DefinitionStoreName { get; set; } = "leaderboard-definition";
-
-    /// <summary>
-    /// Name of the state store for rankings (Redis required for sorted sets)
-    /// Environment variable: LEADERBOARD_RANKING_STORE_NAME
-    /// </summary>
-    public string RankingStoreName { get; set; } = "leaderboard-ranking";
-
-    /// <summary>
-    /// Name of the state store for season data (MySQL recommended)
-    /// Environment variable: LEADERBOARD_SEASON_STORE_NAME
-    /// </summary>
-    public string SeasonStoreName { get; set; } = "leaderboard-season";
-
-    /// <summary>
     /// Maximum entries returned per rank query
     /// Environment variable: LEADERBOARD_MAX_ENTRIES_PER_QUERY
     /// </summary>

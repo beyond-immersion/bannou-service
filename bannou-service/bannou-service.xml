@@ -75650,11 +75650,17 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsSummary">
             <summary>Entity statistics summaries</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AssetProcessorPool">
+            <summary>Processor pool node state and indexing</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Asset">
             <summary>Asset upload tracking and bundle state</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Auth">
             <summary>Session and token state (ephemeral)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Behavior">
+            <summary>Behavior metadata and compiled definitions</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Character">
             <summary>Persistent character data</summary>

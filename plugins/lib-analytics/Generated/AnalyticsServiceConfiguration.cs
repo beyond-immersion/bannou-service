@@ -54,24 +54,6 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Name of the state store for entity summaries (Redis recommended)
-    /// Environment variable: ANALYTICS_SUMMARY_STORE_NAME
-    /// </summary>
-    public string SummaryStoreName { get; set; } = "analytics-summary";
-
-    /// <summary>
-    /// Name of the state store for skill ratings (Redis recommended)
-    /// Environment variable: ANALYTICS_RATING_STORE_NAME
-    /// </summary>
-    public string RatingStoreName { get; set; } = "analytics-rating";
-
-    /// <summary>
-    /// Name of the state store for event history (MySQL recommended)
-    /// Environment variable: ANALYTICS_HISTORY_STORE_NAME
-    /// </summary>
-    public string HistoryStoreName { get; set; } = "analytics-history";
-
-    /// <summary>
     /// Maximum events to buffer before flushing to storage
     /// Environment variable: ANALYTICS_EVENT_BUFFER_SIZE
     /// </summary>

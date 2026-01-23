@@ -46,9 +46,6 @@ public class AnalyticsServiceTests
 
         _configuration = new AnalyticsServiceConfiguration
         {
-            SummaryStoreName = "test-summary",
-            RatingStoreName = "test-rating",
-            HistoryStoreName = "test-history",
             Glicko2DefaultRating = 1500.0,
             Glicko2DefaultDeviation = 350.0,
             Glicko2DefaultVolatility = 0.06,

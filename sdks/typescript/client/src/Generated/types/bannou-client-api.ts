@@ -1962,6 +1962,159 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/contract/lock': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Lock contract under guardian custody
+     * @description Locks a contract under guardian custody (e.g., escrow). A locked contract
+     *     cannot be modified, terminated, or have parties transferred except by the
+     *     guardian. Requires the contract template to have `transferable: true`.
+     */
+    post: operations['lockContract'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/unlock': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Unlock contract from guardian custody
+     * @description Unlocks a contract from guardian custody. Only the current guardian can
+     *     unlock a contract. Called on escrow refund to restore contract to original state.
+     */
+    post: operations['unlockContract'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/transfer-party': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Transfer party role to new entity
+     * @description Transfers a party role to a new entity. Used by escrow to reassign contract
+     *     roles on release (e.g., transfer landlord role to new property owner).
+     *     Contract must be locked and caller must be the guardian.
+     */
+    post: operations['transferContractParty'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/clause-type/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List all registered clause types
+     * @description Lists all registered clause types including built-in types and
+     *     custom-registered types.
+     */
+    post: operations['listClauseTypes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/set-template-values': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Set template values on contract instance
+     * @description Sets template values on a contract instance. Called by escrow when binding
+     *     a contract to an escrow agreement. Template values are used for variable
+     *     substitution in clause handlers (e.g., wallet IDs, container IDs).
+     */
+    post: operations['setContractTemplateValues'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/check-asset-requirements': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check if asset requirement clauses are satisfied
+     * @description Checks if all asset requirement clauses are satisfied. Uses template values
+     *     (e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+     *     via the registered clause type handlers.
+     */
+    post: operations['checkAssetRequirements'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contract/instance/execute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Execute all contract clauses (idempotent)
+     * @description Executes all contract distribution clauses - distribute assets per clauses,
+     *     collect fees, mark contract as executed. This is idempotent - calling twice
+     *     returns the same result without re-executing. Contract must be in fulfilled
+     *     status and all template values must be set.
+     */
+    post: operations['executeContract'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/currency/definition/get': {
     parameters: {
       query?: never;
@@ -2736,6 +2889,316 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/escrow/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new escrow agreement
+     * @description Create a new escrow agreement. For each party, creates a dedicated escrow wallet
+     *     and container (owned by escrow entity). Issues deposit tokens and returns ALL
+     *     tokens to the creating service, which is responsible for distributing them to
+     *     parties through appropriate channels. Sets template values on bound contract.
+     */
+    post: operations['createEscrow'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get escrow details
+     * @description Get escrow agreement details by ID.
+     */
+    post: operations['getEscrow'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List escrows for a party
+     * @description List escrow agreements with filtering options.
+     */
+    post: operations['listEscrows'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/deposit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deposit assets into escrow
+     * @description Deposit assets into escrow. Transfers currency from party's own wallet to that
+     *     party's escrow wallet. Moves items from party's own container to that party's
+     *     escrow container. Locks contracts with escrow as guardian.
+     *     Rejects soulbound/non-tradeable items. After each deposit, queries bound contract
+     *     to check if all asset requirements are satisfied.
+     */
+    post: operations['deposit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/deposit/validate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Validate a deposit without executing
+     * @description Validate a deposit without executing (dry run).
+     */
+    post: operations['validateDeposit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/deposit/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get deposit status for a party
+     * @description Get deposit status for a party in an escrow.
+     */
+    post: operations['getDepositStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/consent': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Record party consent
+     * @description Record party consent for release, refund, or re-affirmation.
+     */
+    post: operations['recordConsent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/consent/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get consent status for escrow
+     * @description Get consent status for all parties in an escrow.
+     */
+    post: operations['getConsentStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/release': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Trigger release
+     * @description Trigger release (for trusted modes or after consent).
+     *     If boundContractId is set, checks contract status first (must be fulfilled).
+     *     Runs finalization flow before releasing remaining assets.
+     */
+    post: operations['release'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/refund': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Trigger refund
+     * @description Trigger refund (for trusted modes or consent).
+     */
+    post: operations['refund'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cancel escrow before fully funded
+     * @description Cancel escrow before fully funded, refunding any deposits.
+     */
+    post: operations['cancel'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/dispute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Raise a dispute on funded escrow
+     * @description Raise a dispute on a funded escrow.
+     */
+    post: operations['dispute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/resolve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Arbiter resolves disputed escrow
+     * @description Arbiter resolves a disputed escrow.
+     */
+    post: operations['resolve'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/verify-condition': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Verify condition for conditional escrow
+     * @description Verify condition for conditional escrow (non-contract path).
+     *     For escrows with boundContractId, use contract milestones instead.
+     */
+    post: operations['verifyCondition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/escrow/reaffirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Re-affirm after validation failure
+     * @description Re-affirm after validation failure (party accepts changed state).
+     */
+    post: operations['reaffirm'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/game-service/services/list': {
     parameters: {
       query?: never;
@@ -2862,6 +3325,549 @@ export interface paths {
      *     to /sessions/leave which uses gameType. Useful for matchmade sessions.
      */
     post: operations['leaveGameSessionById'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/container/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new container
+     * @description Creates a new container with the specified constraint model and capacity.
+     *     Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
+     */
+    post: operations['createContainer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/container/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get container with contents
+     * @description Retrieves a container by ID, optionally including its contents.
+     */
+    post: operations['getContainer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/container/get-or-create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get container or create if not exists
+     * @description Enables lazy container creation for character inventories.
+     *     If a container doesn't exist for the owner/type combination, creates it
+     *     with the specified defaults.
+     */
+    post: operations['getOrCreateContainer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/container/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List containers for owner
+     * @description Returns all containers owned by the specified entity.
+     */
+    post: operations['listContainers'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/container/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update container properties
+     * @description Updates mutable container properties like capacity limits and filtering.
+     */
+    post: operations['updateContainer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/add': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Add item to container
+     * @description Adds an item instance to a container. Validates container constraints
+     *     (slots, weight, grid, category filters). For stackable items, may
+     *     merge with existing stacks.
+     */
+    post: operations['addItemToContainer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/remove': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove item from container
+     * @description Removes an item from its container. The item still exists but has no
+     *     container assignment. Use destroy via lib-item to permanently delete.
+     */
+    post: operations['removeItemFromContainer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/move': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Move item to different slot or container
+     * @description Moves an item within the same container (slot change) or to a different
+     *     container. Validates destination constraints. For equipment slots, this
+     *     effectively equips/unequips items.
+     */
+    post: operations['moveItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/transfer': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Transfer item to different owner
+     * @description Transfers an item to a container owned by a different entity.
+     *     Used for trades, gifts, and loot distribution.
+     */
+    post: operations['transferItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/split': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Split stack into two
+     * @description Splits a stack of items into two stacks. The original stack keeps the
+     *     remainder, and a new stack is created with the split quantity.
+     */
+    post: operations['splitStack'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/merge': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Merge two stacks
+     * @description Merges two stacks of the same item template. The source stack is
+     *     destroyed and its quantity added to the target stack.
+     */
+    post: operations['mergeStacks'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/query': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Find items across containers
+     * @description Searches for items across all containers owned by an entity.
+     *     Can filter by template, category, tags, and other criteria.
+     */
+    post: operations['queryItems'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/count': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Count items of a template
+     * @description Counts total quantity of a specific item template across containers.
+     */
+    post: operations['countItems'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/has': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check if entity has required items
+     * @description Checks if an entity has the required quantities of specified items.
+     *     Used for crafting and quest requirements validation.
+     */
+    post: operations['hasItems'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/find-space': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Find where item would fit
+     * @description Finds available space for an item in the owner's containers.
+     *     Returns candidate containers and slots where the item could be placed.
+     */
+    post: operations['findSpace'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/template/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new item template
+     * @description Creates a new item definition for a game. Code, gameId, quantityModel, and scope
+     *     are immutable after creation.
+     */
+    post: operations['createItemTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/template/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get item template by ID or code
+     * @description Retrieves an item template by its unique ID or by code+gameId combination.
+     *     At least one of templateId or (code + gameId) must be provided.
+     */
+    post: operations['getItemTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/template/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List item templates with filters
+     * @description Lists item templates with optional filtering by gameId, category, tags,
+     *     rarity, scope, and active status.
+     */
+    post: operations['listItemTemplates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/template/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update mutable fields of an item template
+     * @description Updates mutable fields of an item template. Code, gameId, quantityModel, and scope
+     *     are immutable after creation and cannot be changed.
+     */
+    post: operations['updateItemTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/instance/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new item instance
+     * @description Creates a new item instance from a template. The instance must be placed
+     *     in a container (containerId required). Use lib-inventory's /inventory/add
+     *     for most use cases - this endpoint is for low-level instance creation.
+     */
+    post: operations['createItemInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/instance/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get item instance by ID
+     * @description Retrieves an item instance by its unique ID.
+     */
+    post: operations['getItemInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/instance/modify': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Modify item instance state
+     * @description Modifies an item instance's mutable state: durability, custom stats,
+     *     custom name, and metadata. Cannot modify bound items unless admin.
+     */
+    post: operations['modifyItemInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/instance/bind': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bind item to character
+     * @description Binds an item instance to a character. The bind type must be allowed by
+     *     the template's soulboundType. Once bound, the item cannot be traded.
+     */
+    post: operations['bindItemInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/instance/destroy': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Destroy item instance
+     * @description Permanently destroys an item instance. The reason is recorded for audit.
+     *     Cannot destroy bound items unless admin or reason is 'admin'.
+     */
+    post: operations['destroyItemInstance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/instance/list-by-container': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List items in a container
+     * @description Returns all item instances in the specified container.
+     */
+    post: operations['listItemsByContainer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/item/instance/batch-get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get multiple item instances by ID
+     * @description Retrieves multiple item instances in a single request.
+     */
+    post: operations['batchGetItemInstances'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5636,6 +6642,58 @@ export interface components {
        */
       updatedAt: string;
     };
+    /** @description Request to add item to container */
+    AddItemRequest: {
+      /**
+       * Format: uuid
+       * @description Item instance ID to add
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Target container ID
+       */
+      containerId: string;
+      /** @description Specific slot (auto-assign if null) */
+      slotIndex?: number | null;
+      /** @description Grid X position */
+      slotX?: number | null;
+      /** @description Grid Y position */
+      slotY?: number | null;
+      /** @description Rotate in grid */
+      rotated?: boolean | null;
+      /**
+       * @description Auto-merge with existing stacks
+       * @default true
+       */
+      autoStack: boolean;
+    };
+    /** @description Response after adding item */
+    AddItemResponse: {
+      /** @description Whether add succeeded */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Added item ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Container ID
+       */
+      containerId: string;
+      /** @description Assigned slot */
+      slotIndex?: number | null;
+      /** @description Assigned X position */
+      slotX?: number | null;
+      /** @description Assigned Y position */
+      slotY?: number | null;
+      /**
+       * Format: uuid
+       * @description Instance merged into if stacked
+       */
+      mergedWithInstanceId?: string | null;
+    };
     /**
      * @description Describes a capability or interaction mode for a node.
      *     Used by AI systems to understand what actions are possible and by
@@ -5766,9 +6824,15 @@ export interface components {
        * @description Voice room ID
        */
       roomId: string;
-      /** @description Session ID of the answering peer (caller of this endpoint) */
+      /**
+       * Format: uuid
+       * @description Session ID of the answering peer (caller of this endpoint)
+       */
       senderSessionId: string;
-      /** @description Session ID of the peer whose offer we're answering */
+      /**
+       * Format: uuid
+       * @description Session ID of the peer whose offer we're answering
+       */
       targetSessionId: string;
       /** @description SDP answer generated by this client's WebRTC stack */
       sdpAnswer: string;
@@ -5878,6 +6942,15 @@ export interface components {
       assetId: string;
       /** @description Variant identifier (consumer interprets meaning) */
       variantId?: string | null;
+    };
+    /** @description Information about a required asset */
+    AssetRequirementInfo: {
+      /** @description Asset type (currency, item, item_stack) */
+      type: string;
+      /** @description Currency code or item template code */
+      code: string;
+      /** @description Amount or quantity required */
+      amount: number;
     };
     /** @description Search criteria for filtering assets with pagination */
     AssetSearchRequest: {
@@ -6418,6 +7491,18 @@ export interface components {
       /** @description Balance results (same order as queries) */
       balances: components['schemas']['BatchBalanceResult'][];
     };
+    /** @description Request to get multiple item instances */
+    BatchGetItemInstancesRequest: {
+      /** @description Instance IDs to retrieve */
+      instanceIds: string[];
+    };
+    /** @description Multiple item instances */
+    BatchGetItemInstancesResponse: {
+      /** @description Found items */
+      items: components['schemas']['ItemInstanceResponse'][];
+      /** @description Instance IDs that were not found */
+      notFound: string[];
+    };
     /** @description Compiled behavior tree data with bytecode or download reference */
     BehaviorTreeData: {
       /** @description Base64-encoded compiled bytecode for the behavior tree */
@@ -6426,6 +7511,21 @@ export interface components {
       bytecodeSize?: number;
       /** @description URL to download the compiled behavior asset */
       downloadUrl?: string | null;
+    };
+    /** @description Request to bind an item to a character */
+    BindItemInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Instance ID to bind
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Character to bind the item to
+       */
+      characterId: string;
+      /** @description Type of binding to apply */
+      bindType?: components['schemas']['SoulboundType'];
     };
     /** @description Request to bind a Git repository for automatic documentation sync */
     BindRepositoryRequest: {
@@ -6860,6 +7960,25 @@ export interface components {
       /** @description Additional context about the cancellation result */
       message?: string | null;
     };
+    /** @description Request to cancel escrow before fully funded */
+    CancelRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /** @description Reason for cancellation */
+      reason?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from cancelling an escrow */
+    CancelResponse: {
+      /** @description Cancelled escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Refund results for any deposits */
+      refunds: components['schemas']['RefundResult'][];
+    };
     /** @description Request to cancel a subscription */
     CancelSubscriptionRequest: {
       /**
@@ -7105,6 +8224,21 @@ export interface components {
        */
       targetPlayerId?: string | null;
     };
+    /** @description Request to check asset requirement clauses */
+    CheckAssetRequirementsRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractInstanceId: string;
+    };
+    /** @description Response from checking asset requirements */
+    CheckAssetRequirementsResponse: {
+      /** @description Whether all requirements across all parties are satisfied */
+      allSatisfied: boolean;
+      /** @description Status broken down by party */
+      byParty: components['schemas']['PartyAssetRequirementStatus'][];
+    };
     /** @description Request to check constraint */
     CheckConstraintRequest: {
       /**
@@ -7191,9 +8325,45 @@ export interface components {
       /** @description Chord extensions (e.g., "9", "11", "13") */
       extensions?: string[] | null;
     };
+    /** @description Status of a single clause's asset requirements */
+    ClauseAssetStatus: {
+      /** @description Clause identifier */
+      clauseId: string;
+      /** @description Whether requirement is satisfied */
+      satisfied: boolean;
+      /** @description What the clause requires */
+      required: components['schemas']['AssetRequirementInfo'];
+      /** @description Current amount present */
+      current: number;
+      /** @description Amount still needed (0 if satisfied) */
+      missing: number;
+    };
+    /**
+     * @description Category of clause type
+     * @enum {string}
+     */
+    ClauseCategory: 'validation' | 'execution' | 'both';
+    /** @description Summary of a clause type */
+    ClauseTypeSummary: {
+      /** @description Unique identifier */
+      typeCode: string;
+      /** @description Human-readable description */
+      description: string;
+      /** @description Clause category */
+      category: components['schemas']['ClauseCategory'];
+      /** @description Whether a validation handler is registered */
+      hasValidationHandler: boolean;
+      /** @description Whether an execution handler is registered */
+      hasExecutionHandler: boolean;
+      /** @description Whether this is a built-in type */
+      isBuiltIn: boolean;
+    };
     /** @description Response containing the client's capability manifest with available API endpoints and shortcuts */
     ClientCapabilitiesResponse: {
-      /** @description Session ID this capability manifest belongs to */
+      /**
+       * Format: uuid
+       * @description Session ID this capability manifest belongs to
+       */
       sessionId: string;
       /** @description Available API capabilities for this client */
       capabilities: components['schemas']['ClientCapability'][];
@@ -7575,6 +8745,40 @@ export interface components {
       /** @description Content hash of asset in this bundle */
       contentHash: string;
     };
+    /** @description Request to record party consent for release or refund */
+    ConsentRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Party giving consent
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description Type of consent being given */
+      consentType: components['schemas']['EscrowConsentType'];
+      /** @description Release token (required for full_consent) */
+      releaseToken?: string | null;
+      /** @description Optional notes */
+      notes?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from recording party consent */
+    ConsentResponse: {
+      /** @description Updated escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Whether consent was recorded */
+      consentRecorded: boolean;
+      /** @description Whether this consent triggered completion */
+      triggered: boolean;
+      /** @description New escrow status after consent */
+      newStatus: components['schemas']['EscrowStatus'];
+    };
     /**
      * @description Party's consent status
      * @enum {string}
@@ -7632,6 +8836,173 @@ export interface components {
        * @default Thank you for contacting us. We will respond within 24-48 hours.
        */
       message: string;
+    };
+    /**
+     * @description Container capacity constraint type
+     * @enum {string}
+     */
+    ContainerConstraintModel:
+      | 'slot_only'
+      | 'weight_only'
+      | 'slot_and_weight'
+      | 'grid'
+      | 'volumetric'
+      | 'unlimited';
+    /** @description Item in a container */
+    ContainerItem: {
+      /**
+       * Format: uuid
+       * @description Item instance ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Item template ID
+       */
+      templateId: string;
+      /**
+       * Format: double
+       * @description Item quantity
+       */
+      quantity: number;
+      /** @description Slot position */
+      slotIndex?: number | null;
+      /** @description Grid X position */
+      slotX?: number | null;
+      /** @description Grid Y position */
+      slotY?: number | null;
+      /** @description Rotated in grid */
+      rotated?: boolean | null;
+    };
+    /**
+     * @description Type of entity that owns this container
+     * @enum {string}
+     */
+    ContainerOwnerType:
+      | 'character'
+      | 'account'
+      | 'location'
+      | 'vehicle'
+      | 'guild'
+      | 'escrow'
+      | 'mail'
+      | 'other';
+    /** @description Container details */
+    ContainerResponse: {
+      /**
+       * Format: uuid
+       * @description Container unique identifier
+       */
+      containerId: string;
+      /**
+       * Format: uuid
+       * @description Owner entity ID
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /** @description Container type */
+      containerType: string;
+      /** @description Constraint model */
+      constraintModel: components['schemas']['ContainerConstraintModel'];
+      /** @description Whether this is an equipment slot */
+      isEquipmentSlot: boolean;
+      /** @description Equipment slot name */
+      equipmentSlotName?: string | null;
+      /** @description Maximum slots */
+      maxSlots?: number | null;
+      /** @description Current used slots */
+      usedSlots?: number | null;
+      /**
+       * Format: double
+       * @description Maximum weight
+       */
+      maxWeight?: number | null;
+      /** @description Internal grid width */
+      gridWidth?: number | null;
+      /** @description Internal grid height */
+      gridHeight?: number | null;
+      /**
+       * Format: double
+       * @description Maximum volume
+       */
+      maxVolume?: number | null;
+      /**
+       * Format: double
+       * @description Current volume used
+       */
+      currentVolume?: number | null;
+      /**
+       * Format: uuid
+       * @description Parent container ID
+       */
+      parentContainerId?: string | null;
+      /** @description Depth in container hierarchy */
+      nestingDepth: number;
+      /** @description Whether can hold containers */
+      canContainContainers: boolean;
+      /** @description Max nesting depth */
+      maxNestingDepth?: number | null;
+      /**
+       * Format: double
+       * @description Empty container weight
+       */
+      selfWeight: number;
+      /** @description Weight propagation mode */
+      weightContribution: components['schemas']['WeightContribution'];
+      /** @description Slots used in parent */
+      slotCost: number;
+      /** @description Width in parent grid */
+      parentGridWidth?: number | null;
+      /** @description Height in parent grid */
+      parentGridHeight?: number | null;
+      /**
+       * Format: double
+       * @description Volume in parent
+       */
+      parentVolume?: number | null;
+      /**
+       * Format: double
+       * @description Weight of direct contents
+       */
+      contentsWeight: number;
+      /**
+       * Format: double
+       * @description Total weight including self
+       */
+      totalWeight: number;
+      /** @description Allowed categories */
+      allowedCategories?: string[] | null;
+      /** @description Forbidden categories */
+      forbiddenCategories?: string[] | null;
+      /** @description Required tags */
+      allowedTags?: string[] | null;
+      /**
+       * Format: uuid
+       * @description Realm ID
+       */
+      realmId?: string | null;
+      /** @description Container tags */
+      tags?: string[];
+      /** @description Game-specific data */
+      metadata?: Record<string, never> | null;
+      /**
+       * Format: date-time
+       * @description Creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Last modification
+       */
+      modifiedAt?: string | null;
+    };
+    /** @description Container with item contents */
+    ContainerWithContentsResponse: {
+      /** @description Container details */
+      container: components['schemas']['ContainerResponse'];
+      /** @description Items in container */
+      items: components['schemas']['ContainerItem'][];
     };
     /** @description Schema defining required context variables for behavior execution */
     ContextSchemaData: {
@@ -7925,6 +9296,36 @@ export interface components {
       /** @description Category for new slot if auto-created */
       targetCategory?: components['schemas']['SaveCategory'];
     };
+    /** @description Request to count items */
+    CountItemsRequest: {
+      /**
+       * Format: uuid
+       * @description Owner to count for
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /**
+       * Format: uuid
+       * @description Template to count
+       */
+      templateId: string;
+    };
+    /** @description Count result */
+    CountItemsResponse: {
+      /**
+       * Format: uuid
+       * @description Counted template
+       */
+      templateId: string;
+      /**
+       * Format: double
+       * @description Total quantity
+       */
+      totalQuantity: number;
+      /** @description Number of stacks */
+      stackCount: number;
+    };
     /** @description Statistics about asset resolution coverage */
     CoverageAnalysis: {
       /** @description Total number of assets requested */
@@ -8104,6 +9505,92 @@ export interface components {
        */
       estimatedSize: number;
     };
+    /** @description Request to create a new container */
+    CreateContainerRequest: {
+      /**
+       * Format: uuid
+       * @description ID of the entity that owns this container
+       */
+      ownerId: string;
+      /** @description Type of the owning entity */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /** @description Game-defined container type (e.g., inventory, bank, equipment_slot) */
+      containerType: string;
+      /** @description Capacity constraint model */
+      constraintModel: components['schemas']['ContainerConstraintModel'];
+      /**
+       * @description Whether this container is an equipment slot
+       * @default false
+       */
+      isEquipmentSlot: boolean;
+      /** @description Equipment slot name if isEquipmentSlot is true */
+      equipmentSlotName?: string | null;
+      /** @description Maximum slots for slot-based containers */
+      maxSlots?: number | null;
+      /**
+       * Format: double
+       * @description Maximum weight capacity
+       */
+      maxWeight?: number | null;
+      /** @description Internal grid width for grid containers */
+      gridWidth?: number | null;
+      /** @description Internal grid height for grid containers */
+      gridHeight?: number | null;
+      /**
+       * Format: double
+       * @description Maximum volume for volumetric containers
+       */
+      maxVolume?: number | null;
+      /**
+       * Format: uuid
+       * @description Parent container ID for nested containers
+       */
+      parentContainerId?: string | null;
+      /**
+       * @description Whether this container can hold other containers
+       * @default false
+       */
+      canContainContainers: boolean;
+      /** @description Maximum nesting depth (null uses global default) */
+      maxNestingDepth?: number | null;
+      /**
+       * Format: double
+       * @description Empty container weight
+       * @default 0
+       */
+      selfWeight: number;
+      /** @description How weight propagates to parent */
+      weightContribution?: components['schemas']['WeightContribution'];
+      /**
+       * @description Slots used in slot-based parent
+       * @default 1
+       */
+      slotCost: number;
+      /** @description Width footprint in grid-based parent */
+      parentGridWidth?: number | null;
+      /** @description Height footprint in grid-based parent */
+      parentGridHeight?: number | null;
+      /**
+       * Format: double
+       * @description Volume footprint in volumetric parent
+       */
+      parentVolume?: number | null;
+      /** @description Allowed item categories (null allows all) */
+      allowedCategories?: string[] | null;
+      /** @description Forbidden item categories */
+      forbiddenCategories?: string[] | null;
+      /** @description Required item tags for placement */
+      allowedTags?: string[] | null;
+      /**
+       * Format: uuid
+       * @description Realm this container belongs to (null for account-level)
+       */
+      realmId?: string | null;
+      /** @description Container tags for filtering */
+      tags?: string[] | null;
+      /** @description Game-specific container data */
+      metadata?: Record<string, never> | null;
+    };
     /** @description Request to create a contract instance */
     CreateContractInstanceRequest: {
       /**
@@ -8147,6 +9634,86 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Input for defining a party in escrow creation */
+    CreateEscrowPartyInput: {
+      /**
+       * Format: uuid
+       * @description Party entity ID
+       */
+      partyId: string;
+      /** @description Party entity type */
+      partyType: string;
+      /** @description Display name */
+      displayName?: string | null;
+      /** @description Role of this party in the escrow */
+      role: components['schemas']['EscrowPartyRole'];
+      /** @description Whether consent is required (defaults based on role) */
+      consentRequired?: boolean | null;
+      /**
+       * Format: uuid
+       * @description Party wallet for currency operations
+       */
+      walletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Party container for item operations
+       */
+      containerId?: string | null;
+    };
+    /** @description Request to create a new escrow agreement */
+    CreateEscrowRequest: {
+      /** @description Type of escrow agreement */
+      escrowType: components['schemas']['EscrowType'];
+      /** @description Trust mode for the escrow */
+      trustMode: components['schemas']['EscrowTrustMode'];
+      /**
+       * Format: uuid
+       * @description For single_party_trusted mode
+       */
+      trustedPartyId?: string | null;
+      /** @description Type of the trusted party */
+      trustedPartyType?: string | null;
+      /** @description Parties in the escrow */
+      parties: components['schemas']['CreateEscrowPartyInput'][];
+      /** @description Expected deposits from parties */
+      expectedDeposits: components['schemas']['ExpectedDepositInput'][];
+      /** @description Optional explicit release allocations */
+      releaseAllocations?: components['schemas']['ReleaseAllocationInput'][] | null;
+      /**
+       * Format: uuid
+       * @description Contract governing this escrow
+       */
+      boundContractId?: string | null;
+      /** @description Number of consents required (-1 for all) */
+      requiredConsentsForRelease?: number | null;
+      /**
+       * Format: date-time
+       * @description Optional expiration time
+       */
+      expiresAt?: string | null;
+      /** @description Reference type (trade, auction, etc.) */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /** @description Human-readable description */
+      description?: string | null;
+      /** @description Application metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+      /** @description Idempotency key for this operation */
+      idempotencyKey: string;
+    };
+    /** @description Response from creating an escrow agreement */
+    CreateEscrowResponse: {
+      /** @description Created escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Deposit tokens for each party (full_consent mode) */
+      depositTokens: components['schemas']['PartyToken'][];
+    };
     /** @description Request to create an authorization hold */
     CreateHoldRequest: {
       /**
@@ -8178,6 +9745,133 @@ export interface components {
       referenceId?: string | null;
       /** @description Idempotency key */
       idempotencyKey: string;
+    };
+    /** @description Request to create a new item instance */
+    CreateItemInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Template to instantiate
+       */
+      templateId: string;
+      /**
+       * Format: uuid
+       * @description Container to place the item in
+       */
+      containerId: string;
+      /**
+       * Format: uuid
+       * @description Realm this instance exists in
+       */
+      realmId: string;
+      /**
+       * Format: double
+       * @description Item quantity (respects template's quantityModel)
+       */
+      quantity: number;
+      /** @description Slot position in slot-based containers */
+      slotIndex?: number | null;
+      /** @description X position in grid-based containers */
+      slotX?: number | null;
+      /** @description Y position in grid-based containers */
+      slotY?: number | null;
+      /** @description Whether item is rotated in grid */
+      rotated?: boolean | null;
+      /** @description Initial durability (defaults to template's maxDurability) */
+      currentDurability?: number | null;
+      /** @description Instance-specific stat modifications */
+      customStats?: Record<string, never> | null;
+      /** @description Player-assigned custom name */
+      customName?: string | null;
+      /** @description Any other instance-specific data */
+      instanceMetadata?: Record<string, never> | null;
+      /** @description How this item instance was created */
+      originType: components['schemas']['ItemOriginType'];
+      /**
+       * Format: uuid
+       * @description Source entity ID (quest ID, creature ID, etc.)
+       */
+      originId?: string | null;
+    };
+    /** @description Request to create a new item template */
+    CreateItemTemplateRequest: {
+      /** @description Unique code within the game (immutable after creation) */
+      code: string;
+      /** @description Game service this template belongs to (immutable after creation) */
+      gameId: string;
+      /** @description Human-readable display name */
+      name: string;
+      /** @description Detailed description of this item */
+      description?: string | null;
+      /** @description Item classification category */
+      category: components['schemas']['ItemCategory'];
+      /** @description Game-defined subcategory (e.g., sword, helmet) */
+      subcategory?: string | null;
+      /** @description Flexible filtering tags */
+      tags?: string[] | null;
+      /** @description Item rarity tier (defaults to config when not specified) */
+      rarity?: components['schemas']['ItemRarity'];
+      /** @description How quantities are tracked for this item */
+      quantityModel: components['schemas']['QuantityModel'];
+      /** @description Maximum stack size (1 for unique items) */
+      maxStackSize: number;
+      /** @description Unit for continuous quantities (e.g., liters, kg) */
+      unitOfMeasure?: string | null;
+      /** @description Precision for weight values (defaults to config when not specified) */
+      weightPrecision?: components['schemas']['WeightPrecision'];
+      /**
+       * Format: double
+       * @description Weight value (interpreted per weightPrecision)
+       */
+      weight?: number | null;
+      /**
+       * Format: double
+       * @description Volume for volumetric inventories
+       */
+      volume?: number | null;
+      /** @description Width in grid-based inventories */
+      gridWidth?: number | null;
+      /** @description Height in grid-based inventories */
+      gridHeight?: number | null;
+      /** @description Whether item can be rotated in grid */
+      canRotate?: boolean | null;
+      /**
+       * Format: double
+       * @description Reference price for vendors/markets
+       */
+      baseValue?: number | null;
+      /**
+       * @description Whether item can be traded/auctioned
+       * @default true
+       */
+      tradeable: boolean;
+      /**
+       * @description Whether item can be destroyed/discarded
+       * @default true
+       */
+      destroyable: boolean;
+      /** @description Binding behavior when item is acquired (defaults to config when not specified) */
+      soulboundType?: components['schemas']['SoulboundType'];
+      /**
+       * @description Whether item has durability tracking
+       * @default false
+       */
+      hasDurability: boolean;
+      /** @description Maximum durability value */
+      maxDurability?: number | null;
+      /** @description Realm availability scope */
+      scope: components['schemas']['ItemScope'];
+      /** @description Realm IDs where this template is available (for realm_specific or multi_realm) */
+      availableRealms?: string[] | null;
+      /** @description Game-defined stats (e.g., attack, defense) */
+      stats?: Record<string, never> | null;
+      /** @description Game-defined effects (e.g., on_use, on_equip) */
+      effects?: Record<string, never> | null;
+      /** @description Game-defined requirements (e.g., level, strength) */
+      requirements?: Record<string, never> | null;
+      /** @description Display properties (e.g., iconId, modelId) */
+      display?: Record<string, never> | null;
+      /** @description Any other game-specific data */
+      metadata?: Record<string, never> | null;
     };
     /** @description Request to create a new leaderboard */
     CreateLeaderboardDefinitionRequest: {
@@ -8901,6 +10595,63 @@ export interface components {
      * @enum {string}
      */
     DeltaAlgorithm: 'JSON_PATCH' | 'BSDIFF' | 'XDELTA';
+    /** @description Request to deposit assets into an escrow */
+    DepositRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Party depositing
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description Assets to deposit */
+      assets: components['schemas']['EscrowAssetBundleInput'];
+      /** @description Deposit token (required for full_consent) */
+      depositToken?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from depositing assets into an escrow */
+    DepositResponse: {
+      /** @description Updated escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Deposit record */
+      deposit: components['schemas']['EscrowDeposit'];
+      /** @description Whether escrow is now fully funded */
+      fullyFunded: boolean;
+      /** @description Release tokens (issued when fully funded) */
+      releaseTokens: components['schemas']['PartyToken'][];
+    };
+    /** @description Request to destroy an item instance */
+    DestroyItemInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Instance ID to destroy
+       */
+      instanceId: string;
+      /** @description Reason for destruction (consumed, destroyed, expired, admin) */
+      reason: string;
+    };
+    /** @description Response after destroying an item instance */
+    DestroyItemInstanceResponse: {
+      /** @description Whether destruction was successful */
+      destroyed: boolean;
+      /**
+       * Format: uuid
+       * @description Destroyed instance ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Template of destroyed instance
+       */
+      templateId: string;
+    };
     /** @description Information about the client device used for authentication or session tracking */
     DeviceInfo: {
       /**
@@ -8929,6 +10680,63 @@ export interface components {
     DiscardResponse: {
       /** @description Whether discard was successful */
       discarded: boolean;
+    };
+    /** @description Request to raise a dispute on a funded escrow */
+    DisputeRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Party raising dispute
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description Reason for dispute */
+      reason: string;
+      /** @description Release token (proves party identity) */
+      releaseToken?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from raising a dispute on an escrow */
+    DisputeResponse: {
+      /** @description Disputed escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+    };
+    /** @description Record of an asset distribution */
+    DistributionRecord: {
+      /** @description Clause that was executed */
+      clauseId: string;
+      /** @description Type of clause (fee, distribution) */
+      clauseType: string;
+      /** @description Type of asset (currency, item) */
+      assetType: string;
+      /** @description Amount transferred */
+      amount: number;
+      /**
+       * Format: uuid
+       * @description Source wallet ID (for currency)
+       */
+      sourceWalletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Destination wallet ID (for currency)
+       */
+      destinationWalletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Source container ID (for items)
+       */
+      sourceContainerId?: string | null;
+      /**
+       * Format: uuid
+       * @description Destination container ID (for items)
+       */
+      destinationContainerId?: string | null;
     };
     /** @description Complete document with all metadata and content */
     Document: {
@@ -9315,7 +11123,10 @@ export interface components {
     EndEncounterResponse: {
       /** @description ID of the actor */
       actorId: string;
-      /** @description ID of the ended encounter */
+      /**
+       * Format: uuid
+       * @description ID of the ended encounter
+       */
       encounterId: string;
       /** @description Duration of the encounter in milliseconds */
       durationMs?: number | null;
@@ -9413,16 +11224,301 @@ export interface components {
      * @enum {string}
      */
     EntityType: 'account' | 'character' | 'guild' | 'actor' | 'custom';
-    /** @description Standard error response with code and message */
+    /** @description Standard error response format */
     ErrorResponse: {
-      /** @description Error code identifying the type of error */
+      /** @description Error code */
       error: string;
       /** @description Human-readable error message */
       message: string;
-      /** @description Additional error details or context */
+      /** @description Additional error details */
       details?: {
         [key: string]: unknown;
       } | null;
+    };
+    /** @description Main escrow agreement record */
+    EscrowAgreement: {
+      /**
+       * Format: uuid
+       * @description Unique escrow agreement identifier
+       */
+      id: string;
+      /** @description Type of escrow agreement */
+      escrowType: components['schemas']['EscrowType'];
+      /** @description Trust mode for the escrow */
+      trustMode: components['schemas']['EscrowTrustMode'];
+      /**
+       * Format: uuid
+       * @description For single_party_trusted - which party has authority
+       */
+      trustedPartyId?: string | null;
+      /** @description Type of the trusted party */
+      trustedPartyType?: string | null;
+      /** @description For initiator_trusted - which service created this */
+      initiatorServiceId?: string | null;
+      /** @description All parties involved in the escrow */
+      parties: components['schemas']['EscrowParty'][];
+      /** @description What deposits are expected from each party */
+      expectedDeposits: components['schemas']['ExpectedDeposit'][];
+      /** @description Actual deposits received */
+      deposits: components['schemas']['EscrowDeposit'][];
+      /** @description How assets should be distributed on release */
+      releaseAllocations?: components['schemas']['ReleaseAllocation'][] | null;
+      /**
+       * Format: uuid
+       * @description Contract governing conditions for this escrow
+       */
+      boundContractId?: string | null;
+      /** @description Consent decisions from parties */
+      consents: components['schemas']['EscrowConsent'][];
+      /** @description Current escrow status */
+      status: components['schemas']['EscrowStatus'];
+      /** @description How many parties must consent for release (-1 = all required) */
+      requiredConsentsForRelease: number;
+      /**
+       * Format: date-time
+       * @description When the escrow was last validated
+       */
+      lastValidatedAt?: string | null;
+      /** @description Any validation failures detected */
+      validationFailures?: components['schemas']['ValidationFailure'][] | null;
+      /**
+       * Format: date-time
+       * @description When the escrow was created
+       */
+      createdAt: string;
+      /**
+       * Format: uuid
+       * @description Who created the escrow
+       */
+      createdBy: string;
+      /** @description Type of the creator entity */
+      createdByType: string;
+      /**
+       * Format: date-time
+       * @description When all expected deposits were received
+       */
+      fundedAt?: string | null;
+      /**
+       * Format: date-time
+       * @description Auto-refund if not completed by this time
+       */
+      expiresAt: string;
+      /**
+       * Format: date-time
+       * @description When the escrow reached terminal state
+       */
+      completedAt?: string | null;
+      /** @description What this escrow is for (e.g., trade, auction, contract) */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description ID of the referenced entity
+       */
+      referenceId?: string | null;
+      /** @description Human-readable description */
+      description?: string | null;
+      /** @description Game/application specific metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+      /** @description How the escrow was resolved */
+      resolution?: components['schemas']['EscrowResolution'];
+      /** @description Notes about the resolution */
+      resolutionNotes?: string | null;
+    };
+    /** @description An asset held in escrow */
+    EscrowAsset: {
+      /** @description Type of asset held in escrow */
+      assetType: components['schemas']['AssetType'];
+      /**
+       * Format: uuid
+       * @description For assetType=currency - currency definition ID
+       */
+      currencyDefinitionId?: string | null;
+      /** @description Denormalized currency code for display */
+      currencyCode?: string | null;
+      /** @description Amount of currency */
+      currencyAmount?: number | null;
+      /**
+       * Format: uuid
+       * @description For assetType=item - unique item instance ID
+       */
+      itemInstanceId?: string | null;
+      /** @description Denormalized item name for display */
+      itemName?: string | null;
+      /**
+       * Format: uuid
+       * @description For assetType=item_stack - stackable item template
+       */
+      itemTemplateId?: string | null;
+      /** @description Denormalized template name for display */
+      itemTemplateName?: string | null;
+      /** @description For assetType=item_stack - quantity */
+      itemQuantity?: number | null;
+      /**
+       * Format: uuid
+       * @description For assetType=contract - contract instance ID
+       */
+      contractInstanceId?: string | null;
+      /** @description Denormalized contract template code */
+      contractTemplateCode?: string | null;
+      /** @description Description of the contract */
+      contractDescription?: string | null;
+      /** @description Which party role in the contract is being escrowed */
+      contractPartyRole?: string | null;
+      /** @description For assetType=custom - registered handler type */
+      customAssetType?: string | null;
+      /** @description Custom asset identifier */
+      customAssetId?: string | null;
+      /** @description Handler-specific data */
+      customAssetData?: {
+        [key: string]: unknown;
+      } | null;
+      /**
+       * Format: uuid
+       * @description Where this asset came from (for refunds)
+       */
+      sourceOwnerId: string;
+      /** @description Type of the source owner */
+      sourceOwnerType: string;
+      /**
+       * Format: uuid
+       * @description Source wallet/container ID
+       */
+      sourceContainerId?: string | null;
+    };
+    /** @description Groups multiple assets for a single deposit or release */
+    EscrowAssetBundle: {
+      /**
+       * Format: uuid
+       * @description Bundle identifier
+       */
+      bundleId: string;
+      /** @description Assets in this bundle */
+      assets: components['schemas']['EscrowAsset'][];
+      /** @description Summary for display */
+      description?: string | null;
+      /** @description Optional valuation for UI display */
+      estimatedValue?: number | null;
+    };
+    /** @description Input for specifying a bundle of assets */
+    EscrowAssetBundleInput: {
+      /** @description Assets to deposit */
+      assets: components['schemas']['EscrowAssetInput'][];
+      /** @description Bundle description */
+      description?: string | null;
+      /** @description Estimated value */
+      estimatedValue?: number | null;
+    };
+    /** @description Input for specifying an asset in escrow operations */
+    EscrowAssetInput: {
+      /** @description Type of asset to deposit */
+      assetType: components['schemas']['AssetType'];
+      /**
+       * Format: uuid
+       * @description Currency definition ID
+       */
+      currencyDefinitionId?: string | null;
+      /** @description Currency code */
+      currencyCode?: string | null;
+      /** @description Currency amount */
+      currencyAmount?: number | null;
+      /**
+       * Format: uuid
+       * @description Item instance ID
+       */
+      itemInstanceId?: string | null;
+      /** @description Item name */
+      itemName?: string | null;
+      /**
+       * Format: uuid
+       * @description Item template ID (for stacks)
+       */
+      itemTemplateId?: string | null;
+      /** @description Item template name */
+      itemTemplateName?: string | null;
+      /** @description Item quantity (for stacks) */
+      itemQuantity?: number | null;
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractInstanceId?: string | null;
+      /** @description Contract template code */
+      contractTemplateCode?: string | null;
+      /** @description Contract description */
+      contractDescription?: string | null;
+      /** @description Contract party role being escrowed */
+      contractPartyRole?: string | null;
+      /** @description Custom asset type */
+      customAssetType?: string | null;
+      /** @description Custom asset ID */
+      customAssetId?: string | null;
+      /** @description Custom asset data */
+      customAssetData?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Records a party consent decision */
+    EscrowConsent: {
+      /**
+       * Format: uuid
+       * @description Party giving consent
+       */
+      partyId: string;
+      /** @description Type of the party */
+      partyType: string;
+      /** @description Type of consent given */
+      consentType: components['schemas']['EscrowConsentType'];
+      /**
+       * Format: date-time
+       * @description When consent was given
+       */
+      consentedAt: string;
+      /** @description Token used (for audit) */
+      releaseTokenUsed?: string | null;
+      /** @description Optional notes */
+      notes?: string | null;
+    };
+    /**
+     * @description Type of consent being given.
+     *     - release: Agrees to release assets to recipients
+     *     - refund: Agrees to refund assets to depositors
+     *     - dispute: Raises a dispute
+     *     - reaffirm: Re-affirms after validation failure
+     * @enum {string}
+     */
+    EscrowConsentType: 'release' | 'refund' | 'dispute' | 'reaffirm';
+    /** @description Records an actual deposit */
+    EscrowDeposit: {
+      /**
+       * Format: uuid
+       * @description Deposit record identifier
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @description Escrow this deposit belongs to
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Party who deposited
+       */
+      partyId: string;
+      /** @description Type of the depositing party */
+      partyType: string;
+      /** @description Assets deposited */
+      assets: components['schemas']['EscrowAssetBundle'];
+      /**
+       * Format: date-time
+       * @description When the deposit was made
+       */
+      depositedAt: string;
+      /** @description Token used (for audit) */
+      depositTokenUsed?: string | null;
+      /** @description Idempotency key for this deposit */
+      idempotencyKey: string;
     };
     /** @description Request from lib-escrow to debit wallet for deposit */
     EscrowDepositRequest: {
@@ -9459,6 +11555,70 @@ export interface components {
        */
       newBalance: number;
     };
+    /** @description A party in the escrow agreement */
+    EscrowParty: {
+      /**
+       * Format: uuid
+       * @description Party entity identifier
+       */
+      partyId: string;
+      /** @description Type of the party entity (account, character, npc, guild, system) */
+      partyType: string;
+      /** @description Display name for UI/logging */
+      displayName?: string | null;
+      /** @description Role of this party in the escrow */
+      role: components['schemas']['EscrowPartyRole'];
+      /** @description Whether this party consent is required for release */
+      consentRequired: boolean;
+      /**
+       * Format: uuid
+       * @description Party own wallet (where currency comes from/returns to)
+       */
+      walletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Party own container (where items come from/return to)
+       */
+      containerId?: string | null;
+      /**
+       * Format: uuid
+       * @description Escrow wallet for THIS party deposits (owned by escrow)
+       */
+      escrowWalletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Escrow container for THIS party deposits (owned by escrow)
+       */
+      escrowContainerId?: string | null;
+      /** @description Token for depositing (full_consent mode) */
+      depositToken?: string | null;
+      /** @description Whether the deposit token has been used */
+      depositTokenUsed: boolean;
+      /**
+       * Format: date-time
+       * @description When the deposit token was used
+       */
+      depositTokenUsedAt?: string | null;
+      /** @description Token for consenting to release */
+      releaseToken?: string | null;
+      /** @description Whether the release token has been used */
+      releaseTokenUsed: boolean;
+      /**
+       * Format: date-time
+       * @description When the release token was used
+       */
+      releaseTokenUsedAt?: string | null;
+    };
+    /**
+     * @description Role of a party in the escrow.
+     *     - depositor: Deposits assets into escrow
+     *     - recipient: Receives assets when released
+     *     - depositor_recipient: Both deposits and can receive (typical for trades)
+     *     - arbiter: Can resolve disputes, does not deposit or receive
+     *     - observer: Can view status but cannot act
+     * @enum {string}
+     */
+    EscrowPartyRole: 'depositor' | 'recipient' | 'depositor_recipient' | 'arbiter' | 'observer';
     /** @description Request from lib-escrow to credit depositor on refund */
     EscrowRefundRequest: {
       /**
@@ -9530,6 +11690,73 @@ export interface components {
       newBalance: number;
     };
     /**
+     * @description How the escrow was resolved.
+     *     - released: Assets went to designated recipients
+     *     - refunded: Assets returned to depositors
+     *     - split: Arbiter split assets between parties
+     *     - expired_refunded: Timed out, auto-refunded
+     *     - cancelled_refunded: Cancelled, deposits refunded
+     *     - violation_refunded: Validation failure caused refund
+     * @enum {string}
+     */
+    EscrowResolution:
+      | 'released'
+      | 'refunded'
+      | 'split'
+      | 'expired_refunded'
+      | 'cancelled_refunded'
+      | 'violation_refunded';
+    /**
+     * @description Current status of the escrow agreement.
+     *     - pending_deposits: Waiting for parties to deposit
+     *     - partially_funded: Some but not all deposits received
+     *     - funded: All deposits received, awaiting consent/condition
+     *     - pending_consent: Some consents received, waiting for more
+     *     - pending_condition: Waiting for contract fulfillment or external verification
+     *     - finalizing: Running contract finalizer prebound APIs (transient)
+     *     - releasing: Release in progress (transient)
+     *     - released: Assets transferred to recipients
+     *     - refunding: Refund in progress (transient)
+     *     - refunded: Assets returned to depositors
+     *     - disputed: In dispute, arbiter must resolve
+     *     - expired: Timed out without completion
+     *     - cancelled: Cancelled before funding complete
+     *     - validation_failed: Held assets changed, awaiting re-affirmation
+     * @enum {string}
+     */
+    EscrowStatus:
+      | 'pending_deposits'
+      | 'partially_funded'
+      | 'funded'
+      | 'pending_consent'
+      | 'pending_condition'
+      | 'finalizing'
+      | 'releasing'
+      | 'released'
+      | 'refunding'
+      | 'refunded'
+      | 'disputed'
+      | 'expired'
+      | 'cancelled'
+      | 'validation_failed';
+    /**
+     * @description Trust model for the escrow agreement.
+     *     - full_consent: All parties must explicitly consent using tokens
+     *     - initiator_trusted: The service that created the escrow can complete unilaterally
+     *     - single_party_trusted: A designated party can complete unilaterally
+     * @enum {string}
+     */
+    EscrowTrustMode: 'full_consent' | 'initiator_trusted' | 'single_party_trusted';
+    /**
+     * @description Type of escrow agreement.
+     *     - two_party: Simple trade escrow between Party A and Party B
+     *     - multi_party: N parties with complex deposit/receive rules
+     *     - conditional: Release based on external condition or contract fulfillment
+     *     - auction: Winner-takes-all with refunds to losers
+     * @enum {string}
+     */
+    EscrowType: 'two_party' | 'multi_party' | 'conditional' | 'auction';
+    /**
      * @description Categories of historical events that characters can participate in
      * @enum {string}
      */
@@ -9541,6 +11768,35 @@ export interface components {
       | 'RELIGIOUS'
       | 'CULTURAL'
       | 'PERSONAL';
+    /** @description Request to execute contract clauses */
+    ExecuteContractRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractInstanceId: string;
+      /** @description Idempotency key for the execution */
+      idempotencyKey?: string | null;
+    };
+    /** @description Response from executing a contract */
+    ExecuteContractResponse: {
+      /** @description Whether execution was successful */
+      executed: boolean;
+      /** @description True if this was a repeat call (idempotency) */
+      alreadyExecuted: boolean;
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId?: string;
+      /** @description Records of what was moved where */
+      distributions?: components['schemas']['DistributionRecord'][] | null;
+      /**
+       * Format: date-time
+       * @description When execution occurred
+       */
+      executedAt?: string | null;
+    };
     /** @description Request to execute a currency conversion */
     ExecuteConversionRequest: {
       /**
@@ -9598,6 +11854,46 @@ export interface components {
       } | null;
       /** @description Conditions that can interrupt behavior execution */
       interruptConditions?: string[] | null;
+    };
+    /** @description Defines what a party should deposit */
+    ExpectedDeposit: {
+      /**
+       * Format: uuid
+       * @description Party who should deposit
+       */
+      partyId: string;
+      /** @description Type of the party */
+      partyType: string;
+      /** @description Expected assets from this party */
+      expectedAssets: components['schemas']['EscrowAsset'][];
+      /** @description Is this deposit optional */
+      optional: boolean;
+      /**
+       * Format: date-time
+       * @description Deadline for this specific deposit
+       */
+      depositDeadline?: string | null;
+      /** @description Has this party fulfilled their deposit requirement */
+      fulfilled: boolean;
+    };
+    /** @description Input for defining expected deposits from a party */
+    ExpectedDepositInput: {
+      /**
+       * Format: uuid
+       * @description Party who should deposit
+       */
+      partyId: string;
+      /** @description Type of the party */
+      partyType: string;
+      /** @description Expected assets */
+      expectedAssets: components['schemas']['EscrowAssetInput'][];
+      /** @description Is this deposit optional */
+      optional?: boolean | null;
+      /**
+       * Format: date-time
+       * @description Specific deadline for this deposit
+       */
+      depositDeadline?: string | null;
     };
     /**
      * @description How currency expiration is determined
@@ -9675,6 +11971,15 @@ export interface components {
       /** @description Previous incarnations (if reincarnation tracked) */
       pastLives?: components['schemas']['PastLifeReference'][];
     };
+    /** @description Result from a contract finalizer API call */
+    FinalizerResult: {
+      /** @description Finalizer endpoint */
+      endpoint: string;
+      /** @description Whether it succeeded */
+      success: boolean;
+      /** @description Error message if failed */
+      error?: string | null;
+    };
     /** @description Request to find asset usage */
     FindAssetUsageRequest: {
       /**
@@ -9702,6 +12007,39 @@ export interface components {
     FindReferencesResponse: {
       /** @description Scenes containing references */
       referencingScenes: components['schemas']['ReferenceInfo'][];
+    };
+    /** @description Request to find space for item */
+    FindSpaceRequest: {
+      /**
+       * Format: uuid
+       * @description Owner to search
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /**
+       * Format: uuid
+       * @description Item template
+       */
+      templateId: string;
+      /**
+       * Format: double
+       * @description Quantity to place
+       * @default 1
+       */
+      quantity: number;
+      /**
+       * @description Prefer existing stacks
+       * @default true
+       */
+      preferStackable: boolean;
+    };
+    /** @description Find space result */
+    FindSpaceResponse: {
+      /** @description Whether space found */
+      hasSpace: boolean;
+      /** @description Potential placements */
+      candidates: components['schemas']['SpaceCandidate'][];
     };
     /** @description A musical form structure template */
     FormTemplate: {
@@ -9767,7 +12105,10 @@ export interface components {
        * @description Unique identifier for the player's account
        */
       accountId: string;
-      /** @description WebSocket session ID that joined the game. Chat and events are delivered to this specific session only. */
+      /**
+       * Format: uuid
+       * @description WebSocket session ID that joined the game. Chat and events are delivered to this specific session only.
+       */
       sessionId: string;
       /** @description Display name shown to other players */
       displayName?: string | null;
@@ -9785,7 +12126,10 @@ export interface components {
       characterData?: {
         [key: string]: unknown;
       } | null;
-      /** @description Voice participant session ID (if player has joined voice) */
+      /**
+       * Format: uuid
+       * @description Voice participant session ID (if player has joined voice)
+       */
       voiceSessionId?: string | null;
     };
     /** @description Complete details of a game session including players and settings */
@@ -10152,7 +12496,10 @@ export interface components {
     };
     /** @description Request to get capability manifest for a connected session (debugging endpoint) */
     GetClientCapabilitiesRequest: {
-      /** @description Session ID to retrieve capabilities for (must have active WebSocket connection) */
+      /**
+       * Format: uuid
+       * @description Session ID to retrieve capabilities for (must have active WebSocket connection)
+       */
       sessionId: string;
       /** @description Optional filter by service name prefix */
       serviceFilter?: string | null;
@@ -10169,6 +12516,40 @@ export interface components {
        * @description ID of the character to get combat preferences for
        */
       characterId: string;
+    };
+    /** @description Request to get consent status for all parties */
+    GetConsentStatusRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+    };
+    /** @description Response containing consent status for all parties */
+    GetConsentStatusResponse: {
+      /** @description Consent status per party */
+      partiesRequiringConsent: components['schemas']['PartyConsentStatus'][];
+      /** @description Number of consents received */
+      consentsReceived: number;
+      /** @description Number of consents required */
+      consentsRequired: number;
+      /** @description Whether release can proceed */
+      canRelease: boolean;
+      /** @description Whether refund can proceed */
+      canRefund: boolean;
+    };
+    /** @description Request to get a container */
+    GetContainerRequest: {
+      /**
+       * Format: uuid
+       * @description Container ID to retrieve
+       */
+      containerId: string;
+      /**
+       * @description Whether to include item contents
+       * @default true
+       */
+      includeContents: boolean;
     };
     /** @description Request to get a contract instance */
     GetContractInstanceRequest: {
@@ -10221,6 +12602,37 @@ export interface components {
        * @description Definition ID to retrieve
        */
       definitionId: string;
+    };
+    /** @description Request to get deposit status for a party */
+    GetDepositStatusRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Party ID
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+    };
+    /** @description Response containing party deposit status */
+    GetDepositStatusResponse: {
+      /** @description Expected assets from this party */
+      expectedAssets: components['schemas']['EscrowAsset'][];
+      /** @description Actually deposited assets */
+      depositedAssets: components['schemas']['EscrowAsset'][];
+      /** @description Whether deposit requirement is fulfilled */
+      fulfilled: boolean;
+      /** @description Deposit token (if not yet used) */
+      depositToken?: string | null;
+      /**
+       * Format: date-time
+       * @description Deposit deadline
+       */
+      depositDeadline?: string | null;
     };
     /** @description Request to retrieve a specific document by ID or slug */
     GetDocumentRequest: {
@@ -10315,6 +12727,19 @@ export interface components {
       entityId: string;
       /** @description Entity type whose rank is requested */
       entityType: components['schemas']['EntityType'];
+    };
+    /** @description Request to retrieve an escrow agreement by ID */
+    GetEscrowRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID to retrieve
+       */
+      escrowId: string;
+    };
+    /** @description Response containing escrow agreement details */
+    GetEscrowResponse: {
+      /** @description Escrow agreement details */
+      escrow: components['schemas']['EscrowAgreement'];
     };
     /** @description Request payload for getting participants of an event */
     GetEventParticipantsRequest: {
@@ -10435,6 +12860,26 @@ export interface components {
        * @description Hold ID
        */
       holdId: string;
+    };
+    /** @description Request to get an item instance */
+    GetItemInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Instance ID to retrieve
+       */
+      instanceId: string;
+    };
+    /** @description Request to get an item template */
+    GetItemTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Template ID (provide this or code+gameId)
+       */
+      templateId?: string | null;
+      /** @description Item code (provide with gameId) */
+      code?: string | null;
+      /** @description Game service ID (provide with code) */
+      gameId?: string | null;
     };
     /** @description Request to get the status of an async metabundle creation job */
     GetJobStatusRequest: {
@@ -10591,6 +13036,36 @@ export interface components {
       contractId: string;
       /** @description Milestone code */
       milestoneCode: string;
+    };
+    /** @description Request to get or create a container */
+    GetOrCreateContainerRequest: {
+      /**
+       * Format: uuid
+       * @description Owner entity ID
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /** @description Container type to find or create */
+      containerType: string;
+      /** @description Constraint model for new container */
+      constraintModel: components['schemas']['ContainerConstraintModel'];
+      /** @description Default max slots if creating */
+      maxSlots?: number | null;
+      /**
+       * Format: double
+       * @description Default max weight if creating
+       */
+      maxWeight?: number | null;
+      /** @description Default grid width if creating */
+      gridWidth?: number | null;
+      /** @description Default grid height if creating */
+      gridHeight?: number | null;
+      /**
+       * Format: uuid
+       * @description Realm for new container
+       */
+      realmId?: string | null;
     };
     /** @description Request to get or create a wallet */
     GetOrCreateWalletRequest: {
@@ -11171,6 +13646,45 @@ export interface components {
       /** @description Common chord progressions as roman numeral strings */
       commonProgressions?: string[] | null;
     };
+    /** @description Individual item check result */
+    HasItemResult: {
+      /**
+       * Format: uuid
+       * @description Template checked
+       */
+      templateId: string;
+      /**
+       * Format: double
+       * @description Required quantity
+       */
+      required: number;
+      /**
+       * Format: double
+       * @description Available quantity
+       */
+      available: number;
+      /** @description Whether requirement met */
+      satisfied: boolean;
+    };
+    /** @description Request to check for items */
+    HasItemsRequest: {
+      /**
+       * Format: uuid
+       * @description Owner to check
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /** @description Required items */
+      requirements: components['schemas']['ItemRequirement'][];
+    };
+    /** @description Has items result */
+    HasItemsResponse: {
+      /** @description Whether all requirements met */
+      hasAll: boolean;
+      /** @description Per-item results */
+      results: components['schemas']['HasItemResult'][];
+    };
     /** @description Request to check if two characters have met */
     HasMetRequest: {
       /**
@@ -11411,10 +13925,225 @@ export interface components {
       behaviorId: string;
     };
     /**
+     * @description Item classification category
+     * @enum {string}
+     */
+    ItemCategory:
+      | 'weapon'
+      | 'armor'
+      | 'accessory'
+      | 'consumable'
+      | 'material'
+      | 'container'
+      | 'quest'
+      | 'currency_like'
+      | 'misc'
+      | 'custom';
+    /** @description Item instance details */
+    ItemInstanceResponse: {
+      /**
+       * Format: uuid
+       * @description Unique instance identifier
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Reference to the item template
+       */
+      templateId: string;
+      /**
+       * Format: uuid
+       * @description Container holding this item
+       */
+      containerId: string;
+      /**
+       * Format: uuid
+       * @description Realm this instance exists in
+       */
+      realmId: string;
+      /**
+       * Format: double
+       * @description Item quantity
+       */
+      quantity: number;
+      /** @description Slot position in slot-based containers */
+      slotIndex?: number | null;
+      /** @description X position in grid-based containers */
+      slotX?: number | null;
+      /** @description Y position in grid-based containers */
+      slotY?: number | null;
+      /** @description Whether item is rotated in grid */
+      rotated?: boolean | null;
+      /** @description Current durability */
+      currentDurability?: number | null;
+      /**
+       * Format: uuid
+       * @description Character ID this item is bound to
+       */
+      boundToId?: string | null;
+      /**
+       * Format: date-time
+       * @description When item was bound
+       */
+      boundAt?: string | null;
+      /** @description Instance-specific stat modifications */
+      customStats?: Record<string, never> | null;
+      /** @description Player-assigned custom name */
+      customName?: string | null;
+      /** @description Other instance-specific data */
+      instanceMetadata?: Record<string, never> | null;
+      /** @description How this item instance was created */
+      originType: components['schemas']['ItemOriginType'];
+      /**
+       * Format: uuid
+       * @description Source entity ID
+       */
+      originId?: string | null;
+      /**
+       * Format: date-time
+       * @description Instance creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Last modification timestamp
+       */
+      modifiedAt?: string | null;
+    };
+    /**
      * @description How currency is linked to inventory items
      * @enum {string}
      */
     ItemLinkageMode: 'none' | 'visual_only' | 'reference_only';
+    /**
+     * @description How an item instance was created
+     * @enum {string}
+     */
+    ItemOriginType: 'loot' | 'quest' | 'craft' | 'trade' | 'purchase' | 'spawn' | 'other';
+    /**
+     * @description Item rarity tier
+     * @enum {string}
+     */
+    ItemRarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'custom';
+    /** @description Required item and quantity */
+    ItemRequirement: {
+      /**
+       * Format: uuid
+       * @description Required template
+       */
+      templateId: string;
+      /**
+       * Format: double
+       * @description Required quantity
+       */
+      quantity: number;
+    };
+    /**
+     * @description Realm availability scope (consistent with CurrencyScope)
+     * @enum {string}
+     */
+    ItemScope: 'global' | 'realm_specific' | 'multi_realm';
+    /** @description Item template details */
+    ItemTemplateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique template identifier
+       */
+      templateId: string;
+      /** @description Unique code within the game */
+      code: string;
+      /** @description Game service this template belongs to */
+      gameId: string;
+      /** @description Human-readable display name */
+      name: string;
+      /** @description Detailed description */
+      description?: string | null;
+      /** @description Item classification category */
+      category: components['schemas']['ItemCategory'];
+      /** @description Game-defined subcategory */
+      subcategory?: string | null;
+      /** @description Filtering tags */
+      tags?: string[];
+      /** @description Item rarity tier */
+      rarity?: components['schemas']['ItemRarity'];
+      /** @description How quantities are tracked */
+      quantityModel: components['schemas']['QuantityModel'];
+      /** @description Maximum stack size */
+      maxStackSize: number;
+      /** @description Unit for continuous quantities */
+      unitOfMeasure?: string | null;
+      /** @description Precision for weight values */
+      weightPrecision?: components['schemas']['WeightPrecision'];
+      /**
+       * Format: double
+       * @description Weight value
+       */
+      weight?: number | null;
+      /**
+       * Format: double
+       * @description Volume for volumetric inventories
+       */
+      volume?: number | null;
+      /** @description Width in grid-based inventories */
+      gridWidth?: number | null;
+      /** @description Height in grid-based inventories */
+      gridHeight?: number | null;
+      /** @description Whether item can be rotated in grid */
+      canRotate?: boolean | null;
+      /**
+       * Format: double
+       * @description Reference price
+       */
+      baseValue?: number | null;
+      /** @description Whether item can be traded */
+      tradeable: boolean;
+      /** @description Whether item can be destroyed */
+      destroyable: boolean;
+      /** @description Binding behavior type */
+      soulboundType: components['schemas']['SoulboundType'];
+      /** @description Whether item has durability */
+      hasDurability: boolean;
+      /** @description Maximum durability value */
+      maxDurability?: number | null;
+      /** @description Realm availability scope */
+      scope: components['schemas']['ItemScope'];
+      /** @description Available realms */
+      availableRealms?: string[] | null;
+      /** @description Game-defined stats */
+      stats?: Record<string, never> | null;
+      /** @description Game-defined effects */
+      effects?: Record<string, never> | null;
+      /** @description Game-defined requirements */
+      requirements?: Record<string, never> | null;
+      /** @description Display properties */
+      display?: Record<string, never> | null;
+      /** @description Other game-specific data */
+      metadata?: Record<string, never> | null;
+      /** @description Whether template is active */
+      isActive: boolean;
+      /** @description Whether template is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When template was deprecated
+       */
+      deprecatedAt?: string | null;
+      /**
+       * Format: uuid
+       * @description Migration target template
+       */
+      migrationTargetId?: string | null;
+      /**
+       * Format: date-time
+       * @description Creation timestamp
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description Last update timestamp
+       */
+      updatedAt: string;
+    };
     /** @description Request to join a matchmaking queue */
     JoinMatchmakingRequest: {
       /**
@@ -11756,6 +14485,50 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to list clause types */
+    ListClauseTypesRequest: {
+      /** @description Filter by category */
+      category?: components['schemas']['ClauseCategory'];
+      /**
+       * @description Include built-in types in response
+       * @default true
+       */
+      includeBuiltIn: boolean;
+    };
+    /** @description Response containing list of clause types */
+    ListClauseTypesResponse: {
+      /** @description List of registered clause types */
+      clauseTypes: components['schemas']['ClauseTypeSummary'][];
+    };
+    /** @description Request to list containers for an owner */
+    ListContainersRequest: {
+      /**
+       * Format: uuid
+       * @description Owner entity ID
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /** @description Filter by container type */
+      containerType?: string | null;
+      /**
+       * @description Include equipment slot containers
+       * @default true
+       */
+      includeEquipmentSlots: boolean;
+      /**
+       * Format: uuid
+       * @description Filter by realm
+       */
+      realmId?: string | null;
+    };
+    /** @description List of containers */
+    ListContainersResponse: {
+      /** @description List of containers */
+      containers: components['schemas']['ContainerResponse'][];
+      /** @description Total count */
+      totalCount: number;
+    };
     /** @description Request to list contract templates */
     ListContractTemplatesRequest: {
       /**
@@ -11929,6 +14702,110 @@ export interface components {
        * @default false
        */
       customOnly: boolean;
+    };
+    /** @description Request to list escrow agreements with optional filters */
+    ListEscrowsRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by party
+       */
+      partyId?: string | null;
+      /** @description Party type filter */
+      partyType?: string | null;
+      /** @description Filter by status */
+      status?: components['schemas']['EscrowStatus'][] | null;
+      /** @description Filter by reference type */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter by reference ID
+       */
+      referenceId?: string | null;
+      /**
+       * Format: date-time
+       * @description Filter from date
+       */
+      fromDate?: string | null;
+      /**
+       * Format: date-time
+       * @description Filter to date
+       */
+      toDate?: string | null;
+      /** @description Limit results */
+      limit?: number | null;
+      /** @description Offset for pagination */
+      offset?: number | null;
+    };
+    /** @description Response containing list of escrow agreements */
+    ListEscrowsResponse: {
+      /** @description List of escrow agreements matching the query */
+      escrows: components['schemas']['EscrowAgreement'][];
+      /** @description Total count for pagination */
+      totalCount: number;
+    };
+    /** @description Request to list item templates */
+    ListItemTemplatesRequest: {
+      /** @description Filter by game service */
+      gameId?: string;
+      /** @description Filter by item category */
+      category?: components['schemas']['ItemCategory'];
+      /** @description Filter by subcategory */
+      subcategory?: string | null;
+      /** @description Filter by tags (items must have all specified tags) */
+      tags?: string[] | null;
+      /** @description Filter by rarity tier */
+      rarity?: components['schemas']['ItemRarity'];
+      /** @description Filter by realm scope */
+      scope?: components['schemas']['ItemScope'];
+      /**
+       * Format: uuid
+       * @description Filter by realm availability
+       */
+      realmId?: string | null;
+      /**
+       * @description Include inactive templates
+       * @default false
+       */
+      includeInactive: boolean;
+      /**
+       * @description Include deprecated templates
+       * @default false
+       */
+      includeDeprecated: boolean;
+      /** @description Search in name and description */
+      search?: string | null;
+      /**
+       * @description Pagination offset
+       * @default 0
+       */
+      offset: number;
+      /**
+       * @description Maximum results to return
+       * @default 50
+       */
+      limit: number;
+    };
+    /** @description Paginated list of item templates */
+    ListItemTemplatesResponse: {
+      /** @description List of templates */
+      templates: components['schemas']['ItemTemplateResponse'][];
+      /** @description Total number of matching templates */
+      totalCount: number;
+    };
+    /** @description Request to list items in a container */
+    ListItemsByContainerRequest: {
+      /**
+       * Format: uuid
+       * @description Container to list items from
+       */
+      containerId: string;
+    };
+    /** @description List of item instances */
+    ListItemsResponse: {
+      /** @description List of items */
+      items: components['schemas']['ItemInstanceResponse'][];
+      /** @description Total number of matching items */
+      totalCount: number;
     };
     /** @description Request to list all child locations of a specified parent location */
     ListLocationsByParentRequest: {
@@ -12550,6 +15427,43 @@ export interface components {
       | 'WILDERNESS'
       | 'DUNGEON'
       | 'OTHER';
+    /** @description Request to lock a contract under guardian custody */
+    LockContractRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID to lock
+       */
+      contractInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Guardian entity ID (e.g., escrow agreement ID)
+       */
+      guardianId: string;
+      /** @description Guardian entity type (e.g., "escrow") */
+      guardianType: string;
+      /** @description Optional idempotency key for the operation */
+      idempotencyKey?: string | null;
+    };
+    /** @description Response from locking a contract */
+    LockContractResponse: {
+      /** @description Whether the contract was locked */
+      locked: boolean;
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /**
+       * Format: uuid
+       * @description Guardian entity ID
+       */
+      guardianId?: string;
+      /**
+       * Format: date-time
+       * @description When the contract was locked
+       */
+      lockedAt?: string;
+    };
     /** @description Request to authenticate a user with email and password credentials */
     LoginRequest: {
       /**
@@ -12764,6 +15678,41 @@ export interface components {
        * @description Average note duration in ticks
        */
       averageNoteDuration?: number | null;
+    };
+    /** @description Request to merge stacks */
+    MergeStacksRequest: {
+      /**
+       * Format: uuid
+       * @description Stack to merge from (destroyed)
+       */
+      sourceInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Stack to merge into
+       */
+      targetInstanceId: string;
+    };
+    /** @description Response after merging */
+    MergeStacksResponse: {
+      /** @description Whether merge succeeded */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Merged stack ID
+       */
+      targetInstanceId: string;
+      /**
+       * Format: double
+       * @description New quantity
+       */
+      newQuantity: number;
+      /** @description Whether source was destroyed */
+      sourceDestroyed: boolean;
+      /**
+       * Format: double
+       * @description Quantity that didn't fit
+       */
+      overflowQuantity?: number | null;
     };
     /**
      * @description Type of metadata to update
@@ -13012,6 +15961,74 @@ export interface components {
       | 'Blues'
       | 'WholeTone'
       | 'Chromatic';
+    /** @description Request to modify item instance state */
+    ModifyItemInstanceRequest: {
+      /**
+       * Format: uuid
+       * @description Instance ID to modify
+       */
+      instanceId: string;
+      /** @description Change to durability (positive to repair, negative for damage) */
+      durabilityDelta?: number | null;
+      /** @description New custom stats (merges with existing) */
+      customStats?: Record<string, never> | null;
+      /** @description New custom name */
+      customName?: string | null;
+      /**
+       * Format: double
+       * @description Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
+       */
+      quantityDelta?: number | null;
+      /** @description New instance metadata (merges with existing) */
+      instanceMetadata?: Record<string, never> | null;
+    };
+    /** @description Request to move item */
+    MoveItemRequest: {
+      /**
+       * Format: uuid
+       * @description Item instance ID to move
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Target container ID
+       */
+      targetContainerId: string;
+      /** @description Target slot */
+      targetSlotIndex?: number | null;
+      /** @description Target grid X */
+      targetSlotX?: number | null;
+      /** @description Target grid Y */
+      targetSlotY?: number | null;
+      /** @description Rotate in target */
+      rotated?: boolean | null;
+    };
+    /** @description Response after moving item */
+    MoveItemResponse: {
+      /** @description Whether move succeeded */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Moved item ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Previous container
+       */
+      sourceContainerId: string;
+      /**
+       * Format: uuid
+       * @description New container
+       */
+      targetContainerId: string;
+      /** @description New slot */
+      slotIndex?: number | null;
+      /** @description New grid X */
+      slotX?: number | null;
+      /** @description New grid Y */
+      slotY?: number | null;
+    };
     /** @description Configuration for multipart uploads of large files */
     MultipartConfig: {
       /** @description Whether multipart upload is required for this file size */
@@ -13267,6 +16284,36 @@ export interface components {
       | 'CONSPIRATOR'
       | 'HERO'
       | 'SURVIVOR';
+    /** @description Asset requirement status for a single party */
+    PartyAssetRequirementStatus: {
+      /** @description Party role (e.g., party_a, party_b) */
+      partyRole: string;
+      /** @description Whether all party's requirements are satisfied */
+      satisfied: boolean;
+      /** @description Status of each clause for this party */
+      clauses: components['schemas']['ClauseAssetStatus'][];
+    };
+    /** @description Consent status for a single party */
+    PartyConsentStatus: {
+      /**
+       * Format: uuid
+       * @description Party ID
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description Party display name */
+      displayName?: string | null;
+      /** @description Whether consent was given */
+      consentGiven: boolean;
+      /** @description Type of consent given (if any) */
+      consentType?: components['schemas']['EscrowConsentType'];
+      /**
+       * Format: date-time
+       * @description When consent was given
+       */
+      consentedAt?: string | null;
+    };
     /** @description Information about a party member for matchmaking */
     PartyMemberInfo: {
       /**
@@ -13298,6 +16345,18 @@ export interface components {
      * @enum {string}
      */
     PartySkillAggregation: 'highest' | 'average' | 'weighted';
+    /** @description Token issued to a party for deposit or release operations */
+    PartyToken: {
+      /**
+       * Format: uuid
+       * @description Party ID
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description The token */
+      token: string;
+    };
     /** @description Request to confirm a password reset using the emailed token and new password */
     PasswordResetConfirmRequest: {
       /** @description Password reset token received via email */
@@ -13601,6 +16660,11 @@ export interface components {
       /** @description Available authentication providers */
       providers: components['schemas']['ProviderInfo'][];
     };
+    /**
+     * @description How quantities are tracked for this item type
+     * @enum {string}
+     */
+    QuantityModel: 'discrete' | 'continuous' | 'unique';
     /** @description Rotation represented as a quaternion */
     Quaternion: {
       /**
@@ -13950,6 +17014,49 @@ export interface components {
       /** @description User-friendly message when no results found */
       noResultsMessage?: string;
     };
+    /** @description Request to query items */
+    QueryItemsRequest: {
+      /**
+       * Format: uuid
+       * @description Owner to search
+       */
+      ownerId: string;
+      /** @description Owner type */
+      ownerType: components['schemas']['ContainerOwnerType'];
+      /**
+       * Format: uuid
+       * @description Filter by template
+       */
+      templateId?: string | null;
+      /** @description Filter by category */
+      category?: string | null;
+      /** @description Filter by tags */
+      tags?: string[] | null;
+      /** @description Filter by container type */
+      containerType?: string | null;
+      /**
+       * @description Exclude equipment slots
+       * @default false
+       */
+      excludeEquipmentSlots: boolean;
+      /**
+       * @description Pagination offset
+       * @default 0
+       */
+      offset: number;
+      /**
+       * @description Max results
+       * @default 50
+       */
+      limit: number;
+    };
+    /** @description Query results */
+    QueryItemsResponse: {
+      /** @description Found items */
+      items: components['schemas']['QueryResultItem'][];
+      /** @description Total matching */
+      totalCount: number;
+    };
     /** @description Query objects by type */
     QueryObjectsByTypeRequest: {
       /**
@@ -13999,48 +17106,32 @@ export interface components {
       /** @description Applied radius filter */
       radius?: number | null;
     };
-    /** @description Single result item from a save query with slot and version metadata */
+    /** @description Item in query results */
     QueryResultItem: {
       /**
        * Format: uuid
-       * @description Slot identifier
+       * @description Item instance ID
        */
-      slotId: string;
-      /** @description Slot name */
-      slotName: string;
+      instanceId: string;
       /**
        * Format: uuid
-       * @description Owner ID
+       * @description Template ID
        */
-      ownerId: string;
-      /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
-      /** @description Save category of the slot */
-      category: components['schemas']['SaveCategory'];
-      /** @description Version number */
-      versionNumber: number;
+      templateId: string;
       /**
-       * Format: int64
-       * @description Size in bytes
+       * Format: uuid
+       * @description Container ID
        */
-      sizeBytes?: number;
-      /** @description Schema version */
-      schemaVersion?: string | null;
-      /** @description Display name */
-      displayName?: string | null;
-      /** @description Whether pinned */
-      pinned?: boolean;
-      /** @description Checkpoint name */
-      checkpointName?: string | null;
+      containerId: string;
+      /** @description Container type */
+      containerType?: string;
       /**
-       * Format: date-time
-       * @description Creation timestamp
+       * Format: double
+       * @description Quantity
        */
-      createdAt: string;
-      /** @description Custom metadata */
-      metadata?: {
-        [key: string]: string;
-      };
+      quantity: number;
+      /** @description Slot position */
+      slotIndex?: number | null;
     };
     /** @description Advanced query for saves across multiple owners with filtering and sorting */
     QuerySavesRequest: {
@@ -14213,6 +17304,32 @@ export interface components {
       currentTickets?: number | null;
       /** @description Average wait time in seconds (if available) */
       averageWaitSeconds?: number | null;
+    };
+    /** @description Request to re-affirm after validation failure */
+    ReaffirmRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Party reaffirming
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description Release token */
+      releaseToken?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from party re-affirming after validation failure */
+    ReaffirmResponse: {
+      /** @description Reaffirmed escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Whether all parties have reaffirmed */
+      allReaffirmed: boolean;
     };
     /**
      * @description Game realm the asset belongs to
@@ -14447,7 +17564,10 @@ export interface components {
     };
     /** @description Status and population information for a single game realm */
     RealmStatus: {
-      /** @description Unique identifier for the game realm */
+      /**
+       * Format: uuid
+       * @description Unique identifier for the game realm
+       */
       realmId: string;
       /** @description Display name of the game realm */
       name: string;
@@ -14489,6 +17609,41 @@ export interface components {
     RefreshRequest: {
       /** @description Refresh token issued during authentication to obtain a new access token */
       refreshToken: string;
+    };
+    /** @description Request to trigger escrow refund to depositors */
+    RefundRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /** @description For initiator_trusted mode */
+      initiatorServiceId?: string | null;
+      /** @description Reason for refund */
+      reason?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from refunding escrow assets to depositors */
+    RefundResponse: {
+      /** @description Refunded escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Refund results per depositor */
+      refunds: components['schemas']['RefundResult'][];
+    };
+    /** @description Result of refunding assets to a single depositor */
+    RefundResult: {
+      /**
+       * Format: uuid
+       * @description Depositor party ID
+       */
+      depositorPartyId: string;
+      /** @description Assets refunded (null if failed) */
+      assets?: components['schemas']['EscrowAssetBundle'];
+      /** @description Whether refund succeeded */
+      success: boolean;
+      /** @description Error message if failed */
+      error?: string | null;
     };
     /** @description Request to register a new user account */
     RegisterRequest: {
@@ -14688,6 +17843,50 @@ export interface components {
        */
       updatedAt: string;
     };
+    /** @description Defines who gets what on release */
+    ReleaseAllocation: {
+      /**
+       * Format: uuid
+       * @description Party receiving assets
+       */
+      recipientPartyId: string;
+      /** @description Type of the recipient party */
+      recipientPartyType: string;
+      /** @description Assets this recipient should receive */
+      assets: components['schemas']['EscrowAsset'][];
+      /**
+       * Format: uuid
+       * @description Where to deliver currency
+       */
+      destinationWalletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Where to deliver items
+       */
+      destinationContainerId?: string | null;
+    };
+    /** @description Input for specifying how assets should be allocated on release */
+    ReleaseAllocationInput: {
+      /**
+       * Format: uuid
+       * @description Recipient party ID
+       */
+      recipientPartyId: string;
+      /** @description Recipient party type */
+      recipientPartyType: string;
+      /** @description Assets to allocate */
+      assets: components['schemas']['EscrowAssetInput'][];
+      /**
+       * Format: uuid
+       * @description Destination wallet
+       */
+      destinationWalletId?: string | null;
+      /**
+       * Format: uuid
+       * @description Destination container
+       */
+      destinationContainerId?: string | null;
+    };
     /** @description Request to release a hold */
     ReleaseHoldRequest: {
       /**
@@ -14695,6 +17894,66 @@ export interface components {
        * @description Hold ID to release
        */
       holdId: string;
+    };
+    /** @description Request to trigger escrow release to recipients */
+    ReleaseRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /** @description For initiator_trusted mode */
+      initiatorServiceId?: string | null;
+      /** @description Optional notes */
+      notes?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from releasing escrow assets to recipients */
+    ReleaseResponse: {
+      /** @description Released escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Results of contract finalizer APIs */
+      finalizerResults: components['schemas']['FinalizerResult'][];
+      /** @description Release results per recipient */
+      releases: components['schemas']['ReleaseResult'][];
+    };
+    /** @description Result of releasing assets to a single recipient */
+    ReleaseResult: {
+      /**
+       * Format: uuid
+       * @description Recipient party ID
+       */
+      recipientPartyId: string;
+      /** @description Assets released (null if failed) */
+      assets?: components['schemas']['EscrowAssetBundle'];
+      /** @description Whether release succeeded */
+      success: boolean;
+      /** @description Error message if failed */
+      error?: string | null;
+    };
+    /** @description Request to remove item from container */
+    RemoveItemRequest: {
+      /**
+       * Format: uuid
+       * @description Item instance ID to remove
+       */
+      instanceId: string;
+    };
+    /** @description Response after removing item */
+    RemoveItemResponse: {
+      /** @description Whether remove succeeded */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Removed item ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Container removed from
+       */
+      previousContainerId: string;
     };
     /** @description Request to rename an existing save slot */
     RenameSlotRequest: {
@@ -14856,6 +18115,36 @@ export interface components {
       coverage: components['schemas']['CoverageAnalysis'];
       /** @description Asset IDs that couldn't be found (null if all resolved) */
       unresolved?: string[] | null;
+    };
+    /** @description Request for arbiter to resolve a disputed escrow */
+    ResolveRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Arbiter ID
+       */
+      arbiterId: string;
+      /** @description Arbiter type */
+      arbiterType: string;
+      /** @description Resolution decision for the dispute */
+      resolution: components['schemas']['EscrowResolution'];
+      /** @description For split resolution */
+      splitAllocations?: components['schemas']['SplitAllocation'][] | null;
+      /** @description Resolution notes */
+      notes?: string | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from arbiter resolving a disputed escrow */
+    ResolveResponse: {
+      /** @description Resolved escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Transfer results */
+      transfers: components['schemas']['TransferResult'][];
     };
     /** @description A standalone asset selected for download */
     ResolvedAsset: {
@@ -15586,6 +18875,33 @@ export interface components {
       /** @description List of active sessions for the account */
       sessions: components['schemas']['SessionInfo'][];
     };
+    /** @description Request to set template values on a contract */
+    SetTemplateValuesRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractInstanceId: string;
+      /**
+       * @description Key-value pairs for template substitution.
+       *     Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+       */
+      templateValues: {
+        [key: string]: string;
+      };
+    };
+    /** @description Response from setting template values */
+    SetTemplateValuesResponse: {
+      /** @description Whether values were updated */
+      updated: boolean;
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Number of template values set */
+      valueCount?: number;
+    };
     /** @description Global website configuration including branding, languages, and integrations */
     SiteSettings: {
       /** @description Display name of the website */
@@ -15685,6 +19001,11 @@ export interface components {
      * @enum {string}
      */
     SortOrder: 'descending' | 'ascending';
+    /**
+     * @description When item becomes bound to a character
+     * @enum {string}
+     */
+    SoulboundType: 'none' | 'on_pickup' | 'on_equip' | 'on_use';
     /** @description Provenance reference to a source bundle used in metabundle creation */
     SourceBundleReference: {
       /** @description Source bundle identifier */
@@ -15695,6 +19016,32 @@ export interface components {
       assetIds: string[];
       /** @description Hash of source bundle at composition time (for integrity verification) */
       contentHash: string;
+    };
+    /** @description Potential placement location */
+    SpaceCandidate: {
+      /**
+       * Format: uuid
+       * @description Container ID
+       */
+      containerId: string;
+      /** @description Container type */
+      containerType: string;
+      /**
+       * Format: double
+       * @description How much can fit
+       */
+      canFitQuantity: number;
+      /** @description Available slot */
+      slotIndex?: number | null;
+      /** @description Available grid X */
+      slotX?: number | null;
+      /** @description Available grid Y */
+      slotY?: number | null;
+      /**
+       * Format: uuid
+       * @description Stack to merge with
+       */
+      existingStackInstanceId?: string | null;
     };
     /**
      * @description Spatial context derived from game server's authoritative spatial state.
@@ -15809,11 +19156,70 @@ export interface components {
        */
       updatedAt: string;
     };
+    /** @description Allocation of assets to a party in a split resolution */
+    SplitAllocation: {
+      /**
+       * Format: uuid
+       * @description Party ID
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description Assets allocated to this party */
+      assets: components['schemas']['EscrowAssetInput'][];
+    };
+    /** @description Request to split a stack */
+    SplitStackRequest: {
+      /**
+       * Format: uuid
+       * @description Stack to split
+       */
+      instanceId: string;
+      /**
+       * Format: double
+       * @description Quantity to split off
+       */
+      quantity: number;
+      /** @description Slot for new stack */
+      targetSlotIndex?: number | null;
+      /** @description Grid X for new stack */
+      targetSlotX?: number | null;
+      /** @description Grid Y for new stack */
+      targetSlotY?: number | null;
+    };
+    /** @description Response after splitting */
+    SplitStackResponse: {
+      /** @description Whether split succeeded */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Original stack ID
+       */
+      originalInstanceId: string;
+      /**
+       * Format: uuid
+       * @description New stack ID
+       */
+      newInstanceId: string;
+      /**
+       * Format: double
+       * @description Remaining quantity
+       */
+      originalQuantity: number;
+      /**
+       * Format: double
+       * @description Split quantity
+       */
+      newQuantity: number;
+    };
     /** @description Request to start an encounter managed by an Event Brain actor */
     StartEncounterRequest: {
       /** @description ID of the Event Brain actor that will manage this encounter */
       actorId: string;
-      /** @description Unique identifier for this encounter */
+      /**
+       * Format: uuid
+       * @description Unique identifier for this encounter
+       */
       encounterId: string;
       /** @description Type of encounter (e.g., "combat", "conversation", "choreography") */
       encounterType: string;
@@ -16267,6 +19673,59 @@ export interface components {
       | 'escrow_deposit'
       | 'escrow_release'
       | 'escrow_refund';
+    /** @description Request to transfer a party role to a new entity */
+    TransferContractPartyRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Current party entity ID
+       */
+      fromEntityId: string;
+      /** @description Current party entity type */
+      fromEntityType: components['schemas']['EntityType'];
+      /**
+       * Format: uuid
+       * @description New entity ID to receive the role
+       */
+      toEntityId: string;
+      /** @description New entity type */
+      toEntityType: components['schemas']['EntityType'];
+      /**
+       * Format: uuid
+       * @description Guardian entity ID (must be current guardian)
+       */
+      guardianId: string;
+      /** @description Guardian entity type */
+      guardianType: string;
+      /** @description Optional idempotency key for the operation */
+      idempotencyKey?: string | null;
+    };
+    /** @description Response from transferring a party role */
+    TransferContractPartyResponse: {
+      /** @description Whether the transfer was successful */
+      transferred: boolean;
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
+      /** @description Role that was transferred */
+      role?: string;
+      /**
+       * Format: uuid
+       * @description Previous party entity ID
+       */
+      fromEntityId?: string;
+      /**
+       * Format: uuid
+       * @description New party entity ID
+       */
+      toEntityId?: string;
+    };
     /** @description Request to transfer currency between wallets */
     TransferCurrencyRequest: {
       /**
@@ -16327,6 +19786,63 @@ export interface components {
        */
       targetCapAmountLost?: number | null;
     };
+    /** @description Request to transfer item ownership */
+    TransferItemRequest: {
+      /**
+       * Format: uuid
+       * @description Item instance ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Target container ID
+       */
+      targetContainerId: string;
+      /**
+       * Format: double
+       * @description Quantity to transfer (all if null)
+       */
+      quantity?: number | null;
+    };
+    /** @description Response after transfer */
+    TransferItemResponse: {
+      /** @description Whether transfer succeeded */
+      success: boolean;
+      /**
+       * Format: uuid
+       * @description Transferred item ID
+       */
+      instanceId: string;
+      /**
+       * Format: uuid
+       * @description Previous container
+       */
+      sourceContainerId: string;
+      /**
+       * Format: uuid
+       * @description New container
+       */
+      targetContainerId: string;
+      /**
+       * Format: double
+       * @description Amount transferred
+       */
+      quantityTransferred: number;
+    };
+    /** @description Result of transferring assets to a party during resolution */
+    TransferResult: {
+      /**
+       * Format: uuid
+       * @description Party ID
+       */
+      partyId: string;
+      /** @description Assets transferred (null if failed) */
+      assets?: components['schemas']['EscrowAssetBundle'];
+      /** @description Whether transfer succeeded */
+      success: boolean;
+      /** @description Error message if failed */
+      error?: string | null;
+    };
     /** @description Position, rotation, and scale in 3D space */
     Transform: {
       /** @description Position relative to parent */
@@ -16348,6 +19864,33 @@ export interface components {
       defaultForm?: string | null;
       /** @description Rhythm pattern names to use */
       rhythmPatterns?: string[] | null;
+    };
+    /** @description Request to unlock a contract from guardian custody */
+    UnlockContractRequest: {
+      /**
+       * Format: uuid
+       * @description Contract instance ID to unlock
+       */
+      contractInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Guardian entity ID (must match current guardian)
+       */
+      guardianId: string;
+      /** @description Guardian entity type */
+      guardianType: string;
+      /** @description Optional idempotency key for the operation */
+      idempotencyKey?: string | null;
+    };
+    /** @description Response from unlocking a contract */
+    UnlockContractResponse: {
+      /** @description Whether the contract was unlocked */
+      unlocked: boolean;
+      /**
+       * Format: uuid
+       * @description Contract instance ID
+       */
+      contractId: string;
     };
     /** @description An unlocked achievement instance */
     UnlockedAchievement: {
@@ -16489,6 +20032,40 @@ export interface components {
        */
       updatedAt?: string;
     };
+    /** @description Request to update container properties */
+    UpdateContainerRequest: {
+      /**
+       * Format: uuid
+       * @description Container ID to update
+       */
+      containerId: string;
+      /** @description New max slots */
+      maxSlots?: number | null;
+      /**
+       * Format: double
+       * @description New max weight
+       */
+      maxWeight?: number | null;
+      /** @description New grid width */
+      gridWidth?: number | null;
+      /** @description New grid height */
+      gridHeight?: number | null;
+      /**
+       * Format: double
+       * @description New max volume
+       */
+      maxVolume?: number | null;
+      /** @description New allowed categories */
+      allowedCategories?: string[] | null;
+      /** @description New forbidden categories */
+      forbiddenCategories?: string[] | null;
+      /** @description New allowed tags */
+      allowedTags?: string[] | null;
+      /** @description New container tags */
+      tags?: string[] | null;
+      /** @description New metadata */
+      metadata?: Record<string, never> | null;
+    };
     /** @description Request to update contract metadata */
     UpdateContractMetadataRequest: {
       /**
@@ -16538,6 +20115,65 @@ export interface components {
       previousPhase?: string | null;
       /** @description Current phase name after update */
       currentPhase: string;
+    };
+    /** @description Request to update mutable fields of an item template */
+    UpdateItemTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Template ID to update
+       */
+      templateId: string;
+      /** @description New display name */
+      name?: string | null;
+      /** @description New description */
+      description?: string | null;
+      /** @description New subcategory */
+      subcategory?: string | null;
+      /** @description New tags (replaces existing) */
+      tags?: string[] | null;
+      /** @description New rarity tier */
+      rarity?: components['schemas']['ItemRarity'];
+      /**
+       * Format: double
+       * @description New weight value
+       */
+      weight?: number | null;
+      /**
+       * Format: double
+       * @description New volume value
+       */
+      volume?: number | null;
+      /** @description New grid width */
+      gridWidth?: number | null;
+      /** @description New grid height */
+      gridHeight?: number | null;
+      /** @description New rotation setting */
+      canRotate?: boolean | null;
+      /**
+       * Format: double
+       * @description New base value
+       */
+      baseValue?: number | null;
+      /** @description New tradeable setting */
+      tradeable?: boolean | null;
+      /** @description New destroyable setting */
+      destroyable?: boolean | null;
+      /** @description New max durability */
+      maxDurability?: number | null;
+      /** @description New available realms */
+      availableRealms?: string[] | null;
+      /** @description New stats */
+      stats?: Record<string, never> | null;
+      /** @description New effects */
+      effects?: Record<string, never> | null;
+      /** @description New requirements */
+      requirements?: Record<string, never> | null;
+      /** @description New display properties */
+      display?: Record<string, never> | null;
+      /** @description New metadata */
+      metadata?: Record<string, never> | null;
+      /** @description Active status */
+      isActive?: boolean | null;
     };
     /** @description Request to update a leaderboard definition */
     UpdateLeaderboardDefinitionRequest: {
@@ -16694,6 +20330,32 @@ export interface components {
       /** @description ABML schema version used for validation */
       schemaVersion?: string | null;
     };
+    /** @description Request to validate a deposit without executing */
+    ValidateDepositRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /**
+       * Format: uuid
+       * @description Party to validate
+       */
+      partyId: string;
+      /** @description Party type */
+      partyType: string;
+      /** @description Assets to validate */
+      assets: components['schemas']['EscrowAssetBundleInput'];
+    };
+    /** @description Response from deposit validation */
+    ValidateDepositResponse: {
+      /** @description Whether the deposit would be valid */
+      valid: boolean;
+      /** @description Validation errors */
+      errors: string[];
+      /** @description Validation warnings */
+      warnings: string[];
+    };
     /** @description Request to validate an existing GOAP plan against current world state */
     ValidateGoapPlanRequest: {
       /** @description The plan to validate */
@@ -16838,6 +20500,40 @@ export interface components {
        */
       yamlPath?: string | null;
     };
+    /** @description Records a validation check failure */
+    ValidationFailure: {
+      /**
+       * Format: date-time
+       * @description When the failure was detected
+       */
+      detectedAt: string;
+      /** @description Type of asset affected */
+      assetType: string;
+      /** @description Description of the affected asset */
+      assetDescription: string;
+      /** @description Type of validation failure */
+      failureType: components['schemas']['ValidationFailureType'];
+      /**
+       * Format: uuid
+       * @description Which party deposit is affected
+       */
+      affectedPartyId: string;
+      /** @description Type of the affected party */
+      affectedPartyType: string;
+      /** @description Additional failure details */
+      details?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * @description Type of validation failure detected.
+     *     - asset_missing: Asset no longer exists in escrow custody
+     *     - asset_mutated: Asset properties changed (e.g., item durability)
+     *     - asset_expired: Asset has a time-based expiration that triggered
+     *     - balance_mismatch: Wallet balance does not match expected held amount
+     * @enum {string}
+     */
+    ValidationFailureType: 'asset_missing' | 'asset_mutated' | 'asset_expired' | 'balance_mismatch';
     /** @description Result of scene validation */
     ValidationResult: {
       /** @description Whether the scene passed all validation checks */
@@ -16907,6 +20603,36 @@ export interface components {
        * @description Z coordinate
        */
       z: number;
+    };
+    /** @description Request to verify a condition for conditional escrow */
+    VerifyConditionRequest: {
+      /**
+       * Format: uuid
+       * @description Escrow ID
+       */
+      escrowId: string;
+      /** @description Whether the condition was met */
+      conditionMet: boolean;
+      /**
+       * Format: uuid
+       * @description Verifier entity ID
+       */
+      verifierId: string;
+      /** @description Verifier entity type */
+      verifierType: string;
+      /** @description Proof/evidence data */
+      verificationData?: {
+        [key: string]: unknown;
+      } | null;
+      /** @description Idempotency key */
+      idempotencyKey: string;
+    };
+    /** @description Response from verifying a condition on an escrow */
+    VerifyConditionResponse: {
+      /** @description Updated escrow agreement */
+      escrow: components['schemas']['EscrowAgreement'];
+      /** @description Whether this triggered release/refund */
+      triggered: boolean;
     };
     /** @description Request to verify data integrity of a save version via hash comparison */
     VerifyIntegrityRequest: {
@@ -17133,6 +20859,16 @@ export interface components {
       /** @description All non-zero balances in this wallet */
       balances: components['schemas']['BalanceSummary'][];
     };
+    /**
+     * @description How container weight propagates to parent
+     * @enum {string}
+     */
+    WeightContribution: 'none' | 'self_only' | 'self_plus_contents';
+    /**
+     * @description Precision for weight values (consistent with CurrencyPrecision)
+     * @enum {string}
+     */
+    WeightPrecision: 'integer' | 'decimal_1' | 'decimal_2' | 'decimal_3';
   };
   responses: never;
   parameters: never;
@@ -20042,6 +23778,272 @@ export interface operations {
       };
     };
   };
+  lockContract: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LockContractRequest'];
+      };
+    };
+    responses: {
+      /** @description Contract locked successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LockContractResponse'];
+        };
+      };
+      /** @description Contract not transferable */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract already locked */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  unlockContract: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnlockContractRequest'];
+      };
+    };
+    responses: {
+      /** @description Contract unlocked successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnlockContractResponse'];
+        };
+      };
+      /** @description Not the current guardian */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found or not locked */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transferContractParty: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransferContractPartyRequest'];
+      };
+    };
+    responses: {
+      /** @description Party transferred successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TransferContractPartyResponse'];
+        };
+      };
+      /** @description Party not found in contract */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Not the current guardian or contract not locked */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listClauseTypes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListClauseTypesRequest'];
+      };
+    };
+    responses: {
+      /** @description Clause types listed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListClauseTypesResponse'];
+        };
+      };
+    };
+  };
+  setContractTemplateValues: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetTemplateValuesRequest'];
+      };
+    };
+    responses: {
+      /** @description Template values set successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SetTemplateValuesResponse'];
+        };
+      };
+      /** @description Invalid template key format */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  checkAssetRequirements: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckAssetRequirementsRequest'];
+      };
+    };
+    responses: {
+      /** @description Asset requirements checked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckAssetRequirementsResponse'];
+        };
+      };
+      /** @description Template values not set */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  executeContract: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExecuteContractRequest'];
+      };
+    };
+    responses: {
+      /** @description Contract executed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecuteContractResponse'];
+        };
+      };
+      /** @description Contract not in fulfilled status or template values missing */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getCurrencyDefinition: {
     parameters: {
       query?: never;
@@ -21245,6 +25247,465 @@ export interface operations {
       };
     };
   };
+  createEscrow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateEscrowRequest'];
+      };
+    };
+    responses: {
+      /** @description Escrow created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreateEscrowResponse'];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  getEscrow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetEscrowRequest'];
+      };
+    };
+    responses: {
+      /** @description Escrow details */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetEscrowResponse'];
+        };
+      };
+      /** @description Escrow not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  listEscrows: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListEscrowsRequest'];
+      };
+    };
+    responses: {
+      /** @description List of escrows */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListEscrowsResponse'];
+        };
+      };
+    };
+  };
+  deposit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DepositRequest'];
+      };
+    };
+    responses: {
+      /** @description Deposit successful */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DepositResponse'];
+        };
+      };
+      /** @description Deposit failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  validateDeposit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ValidateDepositRequest'];
+      };
+    };
+    responses: {
+      /** @description Validation result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ValidateDepositResponse'];
+        };
+      };
+    };
+  };
+  getDepositStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetDepositStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Deposit status */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetDepositStatusResponse'];
+        };
+      };
+    };
+  };
+  recordConsent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConsentRequest'];
+      };
+    };
+    responses: {
+      /** @description Consent recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConsentResponse'];
+        };
+      };
+      /** @description Consent failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  getConsentStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetConsentStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Consent status */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetConsentStatusResponse'];
+        };
+      };
+    };
+  };
+  release: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReleaseRequest'];
+      };
+    };
+    responses: {
+      /** @description Release result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReleaseResponse'];
+        };
+      };
+      /** @description Release failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  refund: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RefundRequest'];
+      };
+    };
+    responses: {
+      /** @description Refund result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RefundResponse'];
+        };
+      };
+      /** @description Refund failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelRequest'];
+      };
+    };
+    responses: {
+      /** @description Cancel result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CancelResponse'];
+        };
+      };
+      /** @description Cancel failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  dispute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DisputeRequest'];
+      };
+    };
+    responses: {
+      /** @description Dispute raised */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DisputeResponse'];
+        };
+      };
+      /** @description Dispute failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  resolve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResolveRequest'];
+      };
+    };
+    responses: {
+      /** @description Resolution result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResolveResponse'];
+        };
+      };
+      /** @description Resolution failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  verifyCondition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VerifyConditionRequest'];
+      };
+    };
+    responses: {
+      /** @description Verification result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VerifyConditionResponse'];
+        };
+      };
+      /** @description Verification failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  reaffirm: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReaffirmRequest'];
+      };
+    };
+    responses: {
+      /** @description Reaffirmation result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReaffirmResponse'];
+        };
+      };
+      /** @description Reaffirmation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
   listServices: {
     parameters: {
       query?: never;
@@ -21453,6 +25914,854 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  createContainer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateContainerRequest'];
+      };
+    };
+    responses: {
+      /** @description Container created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContainerResponse'];
+        };
+      };
+      /** @description Invalid request (validation error) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getContainer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetContainerRequest'];
+      };
+    };
+    responses: {
+      /** @description Container retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContainerWithContentsResponse'];
+        };
+      };
+      /** @description Container not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getOrCreateContainer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetOrCreateContainerRequest'];
+      };
+    };
+    responses: {
+      /** @description Container retrieved or created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContainerResponse'];
+        };
+      };
+    };
+  };
+  listContainers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListContainersRequest'];
+      };
+    };
+    responses: {
+      /** @description Containers retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListContainersResponse'];
+        };
+      };
+    };
+  };
+  updateContainer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateContainerRequest'];
+      };
+    };
+    responses: {
+      /** @description Container updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContainerResponse'];
+        };
+      };
+      /** @description Container not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  addItemToContainer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddItemRequest'];
+      };
+    };
+    responses: {
+      /** @description Item added successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AddItemResponse'];
+        };
+      };
+      /** @description Constraint violation (full, overweight, wrong category) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Container or item not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  removeItemFromContainer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemoveItemRequest'];
+      };
+    };
+    responses: {
+      /** @description Item removed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RemoveItemResponse'];
+        };
+      };
+      /** @description Item not found in specified container */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  moveItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MoveItemRequest'];
+      };
+    };
+    responses: {
+      /** @description Item moved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MoveItemResponse'];
+        };
+      };
+      /** @description Constraint violation at destination */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item or container not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transferItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransferItemRequest'];
+      };
+    };
+    responses: {
+      /** @description Item transferred successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TransferItemResponse'];
+        };
+      };
+      /** @description Item is bound or not tradeable */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item or container not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  splitStack: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SplitStackRequest'];
+      };
+    };
+    responses: {
+      /** @description Stack split successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SplitStackResponse'];
+        };
+      };
+      /** @description Cannot split unique items or invalid quantity */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  mergeStacks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MergeStacksRequest'];
+      };
+    };
+    responses: {
+      /** @description Stacks merged successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MergeStacksResponse'];
+        };
+      };
+      /** @description Items are not the same template or target would exceed max stack */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  queryItems: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryItemsRequest'];
+      };
+    };
+    responses: {
+      /** @description Items found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QueryItemsResponse'];
+        };
+      };
+    };
+  };
+  countItems: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CountItemsRequest'];
+      };
+    };
+    responses: {
+      /** @description Count completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CountItemsResponse'];
+        };
+      };
+    };
+  };
+  hasItems: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['HasItemsRequest'];
+      };
+    };
+    responses: {
+      /** @description Check completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HasItemsResponse'];
+        };
+      };
+    };
+  };
+  findSpace: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FindSpaceRequest'];
+      };
+    };
+    responses: {
+      /** @description Space search completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FindSpaceResponse'];
+        };
+      };
+    };
+  };
+  createItemTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateItemTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Item template created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ItemTemplateResponse'];
+        };
+      };
+      /** @description Invalid request (validation error) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Code already exists for this gameId */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getItemTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetItemTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Item template retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ItemTemplateResponse'];
+        };
+      };
+      /** @description Neither templateId nor code+gameId provided */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listItemTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListItemTemplatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Item templates retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListItemTemplatesResponse'];
+        };
+      };
+    };
+  };
+  updateItemTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateItemTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Item template updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ItemTemplateResponse'];
+        };
+      };
+      /** @description Attempted to change immutable field */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  createItemInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateItemInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Item instance created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ItemInstanceResponse'];
+        };
+      };
+      /** @description Invalid request (validation error) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template is deprecated */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getItemInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetItemInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Item instance retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ItemInstanceResponse'];
+        };
+      };
+      /** @description Item instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  modifyItemInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ModifyItemInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Item instance modified successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ItemInstanceResponse'];
+        };
+      };
+      /** @description Invalid modification (e.g., negative durability) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item is corrupted/mirrored and cannot be modified */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  bindItemInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BindItemInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Item instance bound successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ItemInstanceResponse'];
+        };
+      };
+      /** @description Item cannot be bound (template doesn't allow binding) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item already bound */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  destroyItemInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DestroyItemInstanceRequest'];
+      };
+    };
+    responses: {
+      /** @description Item instance destroyed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DestroyItemInstanceResponse'];
+        };
+      };
+      /** @description Item instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Item is bound and cannot be destroyed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listItemsByContainer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListItemsByContainerRequest'];
+      };
+    };
+    responses: {
+      /** @description Items retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListItemsResponse'];
+        };
+      };
+    };
+  };
+  batchGetItemInstances: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchGetItemInstancesRequest'];
+      };
+    };
+    responses: {
+      /** @description Items retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchGetItemInstancesResponse'];
+        };
       };
     };
   };

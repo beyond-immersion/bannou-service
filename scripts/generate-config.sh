@@ -188,21 +188,13 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId {{ get; set; }}
 ''')
 
-    if config_properties:
-        for prop in config_properties:
-            required_attr = '    [Required(AllowEmptyStrings = false)]\n' if prop.get('is_required', False) else ''
-            print(f'''    /// <summary>
+    for prop in config_properties:
+        required_attr = '    [Required(AllowEmptyStrings = false)]\n' if prop.get('is_required', False) else ''
+        print(f'''    /// <summary>
     /// {prop['description']}
     /// Environment variable: {prop['env_var']}
     /// </summary>
 {required_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
-''')
-    else:
-        print(f'''    /// <summary>
-    /// Default configuration property - can be removed if not needed.
-    /// Environment variable: {service_name.upper()}_ENABLED
-    /// </summary>
-    public bool Enabled {{ get; set; }} = true;
 ''')
 
     print('}')

@@ -210,24 +210,6 @@ public class ActorServiceConfiguration : IServiceConfiguration
     public int DefaultMemoryExpirationMinutes { get; set; } = 60;
 
     /// <summary>
-    /// Name of the state store for actor templates
-    /// Environment variable: ACTOR_TEMPLATE_STATESTORE_NAME
-    /// </summary>
-    public string TemplateStatestoreName { get; set; } = "actor-templates";
-
-    /// <summary>
-    /// Name of the state store for actor instance tracking
-    /// Environment variable: ACTOR_INSTANCE_STATESTORE_NAME
-    /// </summary>
-    public string InstanceStatestoreName { get; set; } = "actor-instances";
-
-    /// <summary>
-    /// Name of the state store for actor state persistence
-    /// Environment variable: ACTOR_STATE_STORE_NAME
-    /// </summary>
-    public string ActorStateStoreName { get; set; } = "actor-state";
-
-    /// <summary>
     /// Interval in seconds between pool health check operations
     /// Environment variable: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
     /// </summary>

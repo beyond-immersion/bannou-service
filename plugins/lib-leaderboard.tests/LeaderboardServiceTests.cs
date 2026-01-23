@@ -39,9 +39,6 @@ public class LeaderboardServiceTests
 
         _configuration = new LeaderboardServiceConfiguration
         {
-            DefinitionStoreName = "test-definition",
-            RankingStoreName = "test-ranking",
-            SeasonStoreName = "test-season",
             MaxEntriesPerQuery = 100,
             ScoreUpdateBatchSize = 50,
             RankCacheTtlSeconds = 60

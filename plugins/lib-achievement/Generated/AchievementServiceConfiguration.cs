@@ -54,24 +54,6 @@ public class AchievementServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Name of the state store for achievement definitions (MySQL recommended)
-    /// Environment variable: ACHIEVEMENT_DEFINITION_STORE_NAME
-    /// </summary>
-    public string DefinitionStoreName { get; set; } = "achievement-definition";
-
-    /// <summary>
-    /// Name of the state store for progress tracking (Redis for hot data)
-    /// Environment variable: ACHIEVEMENT_PROGRESS_STORE_NAME
-    /// </summary>
-    public string ProgressStoreName { get; set; } = "achievement-progress";
-
-    /// <summary>
-    /// Name of the state store for unlock records (MySQL for persistence)
-    /// Environment variable: ACHIEVEMENT_UNLOCK_STORE_NAME
-    /// </summary>
-    public string UnlockStoreName { get; set; } = "achievement-unlock";
-
-    /// <summary>
     /// Steam Web API key for achievement sync (optional - Steam sync disabled if not set)
     /// Environment variable: ACHIEVEMENT_STEAM_API_KEY
     /// </summary>

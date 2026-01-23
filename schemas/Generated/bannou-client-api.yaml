@@ -2765,6 +2765,235 @@ paths:
       - role: user
         states: {}
 
+  # ===========================================================================
+  # Guardian System (3 endpoints) - for escrow to lock contracts as assets
+  # ===========================================================================
+
+  /contract/lock:
+    post:
+      operationId: lockContract
+      tags:
+      - Guardian
+      summary: Lock contract under guardian custody
+      description: |
+        Locks a contract under guardian custody (e.g., escrow). A locked contract
+        cannot be modified, terminated, or have parties transferred except by the
+        guardian. Requires the contract template to have `transferable: true`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LockContractRequest'
+      responses:
+        '200':
+          description: Contract locked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockContractResponse'
+        '400':
+          description: Contract not transferable
+        '404':
+          description: Contract not found
+        '409':
+          description: Contract already locked
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/unlock:
+    post:
+      operationId: unlockContract
+      tags:
+      - Guardian
+      summary: Unlock contract from guardian custody
+      description: |
+        Unlocks a contract from guardian custody. Only the current guardian can
+        unlock a contract. Called on escrow refund to restore contract to original state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockContractRequest'
+      responses:
+        '200':
+          description: Contract unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockContractResponse'
+        '403':
+          description: Not the current guardian
+        '404':
+          description: Contract not found or not locked
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/transfer-party:
+    post:
+      operationId: transferContractParty
+      tags:
+      - Guardian
+      summary: Transfer party role to new entity
+      description: |
+        Transfers a party role to a new entity. Used by escrow to reassign contract
+        roles on release (e.g., transfer landlord role to new property owner).
+        Contract must be locked and caller must be the guardian.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferContractPartyRequest'
+      responses:
+        '200':
+          description: Party transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferContractPartyResponse'
+        '400':
+          description: Party not found in contract
+        '403':
+          description: Not the current guardian or contract not locked
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Clause Types (2 endpoints) - extensible clause type registration
+  # ===========================================================================
+
+  /contract/clause-type/list:
+    post:
+      operationId: listClauseTypes
+      tags:
+      - ClauseTypes
+      summary: List all registered clause types
+      description: |
+        Lists all registered clause types including built-in types and
+        custom-registered types.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListClauseTypesRequest'
+      responses:
+        '200':
+          description: Clause types listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListClauseTypesResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Execution System (3 endpoints) - for escrow-driven contract execution
+  # ===========================================================================
+
+  /contract/instance/set-template-values:
+    post:
+      operationId: setContractTemplateValues
+      tags:
+      - Execution
+      summary: Set template values on contract instance
+      description: |
+        Sets template values on a contract instance. Called by escrow when binding
+        a contract to an escrow agreement. Template values are used for variable
+        substitution in clause handlers (e.g., wallet IDs, container IDs).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTemplateValuesRequest'
+      responses:
+        '200':
+          description: Template values set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetTemplateValuesResponse'
+        '400':
+          description: Invalid template key format
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/instance/check-asset-requirements:
+    post:
+      operationId: checkAssetRequirements
+      tags:
+      - Execution
+      summary: Check if asset requirement clauses are satisfied
+      description: |
+        Checks if all asset requirement clauses are satisfied. Uses template values
+        (e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
+        via the registered clause type handlers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAssetRequirementsRequest'
+      responses:
+        '200':
+          description: Asset requirements checked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckAssetRequirementsResponse'
+        '400':
+          description: Template values not set
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /contract/instance/execute:
+    post:
+      operationId: executeContract
+      tags:
+      - Execution
+      summary: Execute all contract clauses (idempotent)
+      description: |
+        Executes all contract distribution clauses - distribute assets per clauses,
+        collect fees, mark contract as executed. This is idempotent - calling twice
+        returns the same result without re-executing. Contract must be in fulfilled
+        status and all template values must be set.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteContractRequest'
+      responses:
+        '200':
+          description: Contract executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteContractResponse'
+        '400':
+          description: Contract not in fulfilled status or template values 
+            missing
+        '404':
+          description: Contract not found
+      x-permissions:
+      - role: developer
+        states: {}
+
   /currency/definition/get:
     post:
       operationId: getCurrencyDefinition
@@ -3828,6 +4057,471 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListArchivesResponse'
 
+  /escrow/create:
+    post:
+      operationId: createEscrow
+      tags:
+      - Lifecycle
+      summary: Create a new escrow agreement
+      description: |
+        Create a new escrow agreement. For each party, creates a dedicated escrow wallet
+        and container (owned by escrow entity). Issues deposit tokens and returns ALL
+        tokens to the creating service, which is responsible for distributing them to
+        parties through appropriate channels. Sets template values on bound contract.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEscrowRequest'
+      responses:
+        '200':
+          description: Escrow created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEscrowResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/get:
+    post:
+      operationId: getEscrow
+      tags:
+      - Lifecycle
+      summary: Get escrow details
+      description: Get escrow agreement details by ID.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEscrowRequest'
+      responses:
+        '200':
+          description: Escrow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEscrowResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/list:
+    post:
+      operationId: listEscrows
+      tags:
+      - Lifecycle
+      summary: List escrows for a party
+      description: List escrow agreements with filtering options.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEscrowsRequest'
+      responses:
+        '200':
+          description: List of escrows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEscrowsResponse'
+
+  /escrow/deposit:
+    post:
+      operationId: deposit
+      tags:
+      - Deposits
+      summary: Deposit assets into escrow
+      description: |
+        Deposit assets into escrow. Transfers currency from party's own wallet to that
+        party's escrow wallet. Moves items from party's own container to that party's
+        escrow container. Locks contracts with escrow as guardian.
+        Rejects soulbound/non-tradeable items. After each deposit, queries bound contract
+        to check if all asset requirements are satisfied.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+      responses:
+        '200':
+          description: Deposit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositResponse'
+        '400':
+          description: Deposit failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/deposit/validate:
+    post:
+      operationId: validateDeposit
+      tags:
+      - Deposits
+      summary: Validate a deposit without executing
+      description: Validate a deposit without executing (dry run).
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateDepositRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateDepositResponse'
+
+  /escrow/deposit/status:
+    post:
+      operationId: getDepositStatus
+      tags:
+      - Deposits
+      summary: Get deposit status for a party
+      description: Get deposit status for a party in an escrow.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDepositStatusRequest'
+      responses:
+        '200':
+          description: Deposit status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDepositStatusResponse'
+
+  # ===========================================================================
+  # Consent (2 endpoints)
+  # ===========================================================================
+
+  /escrow/consent:
+    post:
+      operationId: recordConsent
+      tags:
+      - Consent
+      summary: Record party consent
+      description: Record party consent for release, refund, or re-affirmation.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentRequest'
+      responses:
+        '200':
+          description: Consent recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentResponse'
+        '400':
+          description: Consent failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/consent/status:
+    post:
+      operationId: getConsentStatus
+      tags:
+      - Consent
+      summary: Get consent status for escrow
+      description: Get consent status for all parties in an escrow.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetConsentStatusRequest'
+      responses:
+        '200':
+          description: Consent status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConsentStatusResponse'
+
+  # ===========================================================================
+  # Completion (4 endpoints)
+  # ===========================================================================
+
+  /escrow/release:
+    post:
+      operationId: release
+      tags:
+      - Completion
+      summary: Trigger release
+      description: |
+        Trigger release (for trusted modes or after consent).
+        If boundContractId is set, checks contract status first (must be fulfilled).
+        Runs finalization flow before releasing remaining assets.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseRequest'
+      responses:
+        '200':
+          description: Release result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseResponse'
+        '400':
+          description: Release failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/refund:
+    post:
+      operationId: refund
+      tags:
+      - Completion
+      summary: Trigger refund
+      description: Trigger refund (for trusted modes or consent).
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        '200':
+          description: Refund result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+        '400':
+          description: Refund failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/cancel:
+    post:
+      operationId: cancel
+      tags:
+      - Completion
+      summary: Cancel escrow before fully funded
+      description: Cancel escrow before fully funded, refunding any deposits.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+      responses:
+        '200':
+          description: Cancel result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResponse'
+        '400':
+          description: Cancel failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escrow/dispute:
+    post:
+      operationId: dispute
+      tags:
+      - Completion
+      summary: Raise a dispute on funded escrow
+      description: Raise a dispute on a funded escrow.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeRequest'
+      responses:
+        '200':
+          description: Dispute raised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+        '400':
+          description: Dispute failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================================================
+  # Arbiter (1 endpoint)
+  # ===========================================================================
+
+  /escrow/resolve:
+    post:
+      operationId: resolve
+      tags:
+      - Arbiter
+      summary: Arbiter resolves disputed escrow
+      description: Arbiter resolves a disputed escrow.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveRequest'
+      responses:
+        '200':
+          description: Resolution result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveResponse'
+        '400':
+          description: Resolution failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================================================
+  # Condition (1 endpoint)
+  # ===========================================================================
+
+  /escrow/verify-condition:
+    post:
+      operationId: verifyCondition
+      tags:
+      - Condition
+      summary: Verify condition for conditional escrow
+      description: |
+        Verify condition for conditional escrow (non-contract path).
+        For escrows with boundContractId, use contract milestones instead.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyConditionRequest'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyConditionResponse'
+        '400':
+          description: Verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================================================
+  # Validation (2 endpoints)
+  # ===========================================================================
+
+  /escrow/reaffirm:
+    post:
+      operationId: reaffirm
+      tags:
+      - Validation
+      summary: Re-affirm after validation failure
+      description: Re-affirm after validation failure (party accepts changed 
+        state).
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReaffirmRequest'
+      responses:
+        '200':
+          description: Reaffirmation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReaffirmResponse'
+        '400':
+          description: Reaffirmation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================================================
+  # Handlers (3 endpoints)
+  # ===========================================================================
+
   /game-service/services/list:
     post:
       summary: List all registered game services
@@ -4009,6 +4703,748 @@ paths:
           description: Successfully left game session
         '404':
           description: Game session not found or player not in session
+  /inventory/container/create:
+    post:
+      operationId: createContainer
+      tags:
+      - Container
+      summary: Create a new container
+      description: |
+        Creates a new container with the specified constraint model and capacity.
+        Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContainerRequest'
+      responses:
+        '200':
+          description: Container created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+        '400':
+          description: Invalid request (validation error)
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/container/get:
+    post:
+      operationId: getContainer
+      tags:
+      - Container
+      summary: Get container with contents
+      description: Retrieves a container by ID, optionally including its 
+        contents.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContainerRequest'
+      responses:
+        '200':
+          description: Container retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerWithContentsResponse'
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/container/get-or-create:
+    post:
+      operationId: getOrCreateContainer
+      tags:
+      - Container
+      summary: Get container or create if not exists
+      description: |
+        Enables lazy container creation for character inventories.
+        If a container doesn't exist for the owner/type combination, creates it
+        with the specified defaults.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrCreateContainerRequest'
+      responses:
+        '200':
+          description: Container retrieved or created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/container/list:
+    post:
+      operationId: listContainers
+      tags:
+      - Container
+      summary: List containers for owner
+      description: Returns all containers owned by the specified entity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListContainersRequest'
+      responses:
+        '200':
+          description: Containers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListContainersResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/container/update:
+    post:
+      operationId: updateContainer
+      tags:
+      - Container
+      summary: Update container properties
+      description: Updates mutable container properties like capacity limits and
+        filtering.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContainerRequest'
+      responses:
+        '200':
+          description: Container updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/add:
+    post:
+      operationId: addItemToContainer
+      tags:
+      - Inventory Operations
+      summary: Add item to container
+      description: |
+        Adds an item instance to a container. Validates container constraints
+        (slots, weight, grid, category filters). For stackable items, may
+        merge with existing stacks.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemRequest'
+      responses:
+        '200':
+          description: Item added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddItemResponse'
+        '400':
+          description: Constraint violation (full, overweight, wrong category)
+        '404':
+          description: Container or item not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/remove:
+    post:
+      operationId: removeItemFromContainer
+      tags:
+      - Inventory Operations
+      summary: Remove item from container
+      description: |
+        Removes an item from its container. The item still exists but has no
+        container assignment. Use destroy via lib-item to permanently delete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveItemRequest'
+      responses:
+        '200':
+          description: Item removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveItemResponse'
+        '404':
+          description: Item not found in specified container
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/move:
+    post:
+      operationId: moveItem
+      tags:
+      - Inventory Operations
+      summary: Move item to different slot or container
+      description: |
+        Moves an item within the same container (slot change) or to a different
+        container. Validates destination constraints. For equipment slots, this
+        effectively equips/unequips items.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveItemRequest'
+      responses:
+        '200':
+          description: Item moved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveItemResponse'
+        '400':
+          description: Constraint violation at destination
+        '404':
+          description: Item or container not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/transfer:
+    post:
+      operationId: transferItem
+      tags:
+      - Inventory Operations
+      summary: Transfer item to different owner
+      description: |
+        Transfers an item to a container owned by a different entity.
+        Used for trades, gifts, and loot distribution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferItemRequest'
+      responses:
+        '200':
+          description: Item transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferItemResponse'
+        '400':
+          description: Item is bound or not tradeable
+        '404':
+          description: Item or container not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/split:
+    post:
+      operationId: splitStack
+      tags:
+      - Inventory Operations
+      summary: Split stack into two
+      description: |
+        Splits a stack of items into two stacks. The original stack keeps the
+        remainder, and a new stack is created with the split quantity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitStackRequest'
+      responses:
+        '200':
+          description: Stack split successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitStackResponse'
+        '400':
+          description: Cannot split unique items or invalid quantity
+        '404':
+          description: Item not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/merge:
+    post:
+      operationId: mergeStacks
+      tags:
+      - Inventory Operations
+      summary: Merge two stacks
+      description: |
+        Merges two stacks of the same item template. The source stack is
+        destroyed and its quantity added to the target stack.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeStacksRequest'
+      responses:
+        '200':
+          description: Stacks merged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeStacksResponse'
+        '400':
+          description: Items are not the same template or target would exceed 
+            max stack
+        '404':
+          description: Item not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  # ===========================================================================
+  # Inventory Queries (4 endpoints)
+  # ===========================================================================
+
+  /inventory/query:
+    post:
+      operationId: queryItems
+      tags:
+      - Inventory Queries
+      summary: Find items across containers
+      description: |
+        Searches for items across all containers owned by an entity.
+        Can filter by template, category, tags, and other criteria.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryItemsRequest'
+      responses:
+        '200':
+          description: Items found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/count:
+    post:
+      operationId: countItems
+      tags:
+      - Inventory Queries
+      summary: Count items of a template
+      description: Counts total quantity of a specific item template across 
+        containers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountItemsRequest'
+      responses:
+        '200':
+          description: Count completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/has:
+    post:
+      operationId: hasItems
+      tags:
+      - Inventory Queries
+      summary: Check if entity has required items
+      description: |
+        Checks if an entity has the required quantities of specified items.
+        Used for crafting and quest requirements validation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HasItemsRequest'
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HasItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/find-space:
+    post:
+      operationId: findSpace
+      tags:
+      - Inventory Queries
+      summary: Find where item would fit
+      description: |
+        Finds available space for an item in the owner's containers.
+        Returns candidate containers and slots where the item could be placed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindSpaceRequest'
+      responses:
+        '200':
+          description: Space search completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindSpaceResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/template/create:
+    post:
+      operationId: createItemTemplate
+      tags:
+      - Item Template
+      summary: Create a new item template
+      description: |
+        Creates a new item definition for a game. Code, gameId, quantityModel, and scope
+        are immutable after creation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemTemplateRequest'
+      responses:
+        '200':
+          description: Item template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemTemplateResponse'
+        '400':
+          description: Invalid request (validation error)
+        '409':
+          description: Code already exists for this gameId
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/template/get:
+    post:
+      operationId: getItemTemplate
+      tags:
+      - Item Template
+      summary: Get item template by ID or code
+      description: |
+        Retrieves an item template by its unique ID or by code+gameId combination.
+        At least one of templateId or (code + gameId) must be provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetItemTemplateRequest'
+      responses:
+        '200':
+          description: Item template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemTemplateResponse'
+        '400':
+          description: Neither templateId nor code+gameId provided
+        '404':
+          description: Item template not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/template/list:
+    post:
+      operationId: listItemTemplates
+      tags:
+      - Item Template
+      summary: List item templates with filters
+      description: |
+        Lists item templates with optional filtering by gameId, category, tags,
+        rarity, scope, and active status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListItemTemplatesRequest'
+      responses:
+        '200':
+          description: Item templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemTemplatesResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/template/update:
+    post:
+      operationId: updateItemTemplate
+      tags:
+      - Item Template
+      summary: Update mutable fields of an item template
+      description: |
+        Updates mutable fields of an item template. Code, gameId, quantityModel, and scope
+        are immutable after creation and cannot be changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemTemplateRequest'
+      responses:
+        '200':
+          description: Item template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemTemplateResponse'
+        '400':
+          description: Attempted to change immutable field
+        '404':
+          description: Item template not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/instance/create:
+    post:
+      operationId: createItemInstance
+      tags:
+      - Item Instance
+      summary: Create a new item instance
+      description: |
+        Creates a new item instance from a template. The instance must be placed
+        in a container (containerId required). Use lib-inventory's /inventory/add
+        for most use cases - this endpoint is for low-level instance creation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '400':
+          description: Invalid request (validation error)
+        '404':
+          description: Template not found
+        '409':
+          description: Template is deprecated
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/instance/get:
+    post:
+      operationId: getItemInstance
+      tags:
+      - Item Instance
+      summary: Get item instance by ID
+      description: Retrieves an item instance by its unique ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '404':
+          description: Item instance not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/instance/modify:
+    post:
+      operationId: modifyItemInstance
+      tags:
+      - Item Instance
+      summary: Modify item instance state
+      description: |
+        Modifies an item instance's mutable state: durability, custom stats,
+        custom name, and metadata. Cannot modify bound items unless admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModifyItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance modified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '400':
+          description: Invalid modification (e.g., negative durability)
+        '404':
+          description: Item instance not found
+        '409':
+          description: Item is corrupted/mirrored and cannot be modified
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/instance/bind:
+    post:
+      operationId: bindItemInstance
+      tags:
+      - Item Instance
+      summary: Bind item to character
+      description: |
+        Binds an item instance to a character. The bind type must be allowed by
+        the template's soulboundType. Once bound, the item cannot be traded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance bound successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '400':
+          description: Item cannot be bound (template doesn't allow binding)
+        '404':
+          description: Item instance not found
+        '409':
+          description: Item already bound
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/instance/destroy:
+    post:
+      operationId: destroyItemInstance
+      tags:
+      - Item Instance
+      summary: Destroy item instance
+      description: |
+        Permanently destroys an item instance. The reason is recorded for audit.
+        Cannot destroy bound items unless admin or reason is 'admin'.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DestroyItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance destroyed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DestroyItemInstanceResponse'
+        '404':
+          description: Item instance not found
+        '409':
+          description: Item is bound and cannot be destroyed
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Item Queries (3 endpoints)
+  # ===========================================================================
+
+  /item/instance/list-by-container:
+    post:
+      operationId: listItemsByContainer
+      tags:
+      - Item Query
+      summary: List items in a container
+      description: Returns all item instances in the specified container.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListItemsByContainerRequest'
+      responses:
+        '200':
+          description: Items retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/instance/batch-get:
+    post:
+      operationId: batchGetItemInstances
+      tags:
+      - Item Query
+      summary: Get multiple item instances by ID
+      description: Retrieves multiple item instances in a single request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetItemInstancesRequest'
+      responses:
+        '200':
+          description: Items retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGetItemInstancesResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
   /leaderboard/definition/create:
     post:
       summary: Create a new leaderboard definition
@@ -7807,6 +9243,81 @@ components:
           format: date-time
           description: When the template was last updated
 
+    AddItemRequest:
+      type: object
+      description: Request to add item to container
+      additionalProperties: false
+      required:
+      - instanceId
+      - containerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to add
+        containerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Specific slot (auto-assign if null)
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotate in grid
+        autoStack:
+          type: boolean
+          default: true
+          description: Auto-merge with existing stacks
+
+    AddItemResponse:
+      type: object
+      description: Response after adding item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - containerId
+      properties:
+        success:
+          type: boolean
+          description: Whether add succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Added item ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Assigned slot
+        slotX:
+          type: integer
+          nullable: true
+          description: Assigned X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Assigned Y position
+        mergedWithInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Instance merged into if stacked
+
     Affordance:
       type: object
       description: |
@@ -8013,10 +9524,12 @@ components:
           description: Voice room ID
         senderSessionId:
           type: string
+          format: uuid
           description: Session ID of the answering peer (caller of this 
             endpoint)
         targetSessionId:
           type: string
+          format: uuid
           description: Session ID of the peer whose offer we're answering
         sdpAnswer:
           type: string
@@ -8198,6 +9711,25 @@ components:
           description: Variant identifier (consumer interprets meaning)
 
     # ========== SCENE NODE ==========
+
+    AssetRequirementInfo:
+      type: object
+      description: Information about a required asset
+      additionalProperties: false
+      required:
+      - type
+      - code
+      - amount
+      properties:
+        type:
+          type: string
+          description: Asset type (currency, item, item_stack)
+        code:
+          type: string
+          description: Currency code or item template code
+        amount:
+          type: number
+          description: Amount or quantity required
 
     AssetSearchRequest:
       description: Search criteria for filtering assets with pagination
@@ -9061,6 +10593,40 @@ components:
             $ref: '#/components/schemas/BatchBalanceResult'
           description: Balance results (same order as queries)
 
+    BatchGetItemInstancesRequest:
+      type: object
+      description: Request to get multiple item instances
+      additionalProperties: false
+      required:
+      - instanceIds
+      properties:
+        instanceIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 100
+          description: Instance IDs to retrieve
+
+    BatchGetItemInstancesResponse:
+      type: object
+      description: Multiple item instances
+      additionalProperties: false
+      required:
+      - items
+      - notFound
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInstanceResponse'
+          description: Found items
+        notFound:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Instance IDs that were not found
     BehaviorTreeData:
       type: object
       additionalProperties: false
@@ -9080,6 +10646,26 @@ components:
           # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           description: URL to download the compiled behavior asset
+
+    BindItemInstanceRequest:
+      type: object
+      description: Request to bind an item to a character
+      additionalProperties: false
+      required:
+      - instanceId
+      - characterId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to bind
+        characterId:
+          type: string
+          format: uuid
+          description: Character to bind the item to
+        bindType:
+          $ref: '#/components/schemas/SoulboundType'
+          description: Type of binding to apply
 
     BindRepositoryRequest:
       description: Request to bind a Git repository for automatic documentation 
@@ -9769,6 +11355,41 @@ components:
     # Bundle Resolution
     # ==========================================================================
 
+    CancelRequest:
+      type: object
+      description: Request to cancel escrow before fully funded
+      required:
+      - escrowId
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        reason:
+          type: string
+          nullable: true
+          description: Reason for cancellation
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    CancelResponse:
+      type: object
+      description: Response from cancelling an escrow
+      required:
+      - escrow
+      - refunds
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Cancelled escrow agreement
+        refunds:
+          type: array
+          items:
+            $ref: '#/components/schemas/RefundResult'
+          description: Refund results for any deposits
+
     CancelSubscriptionRequest:
       type: object
       additionalProperties: false
@@ -10100,6 +11721,35 @@ components:
           nullable: true
           description: For whisper messages
 
+    CheckAssetRequirementsRequest:
+      type: object
+      description: Request to check asset requirement clauses
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+
+    CheckAssetRequirementsResponse:
+      type: object
+      description: Response from checking asset requirements
+      additionalProperties: false
+      required:
+      - allSatisfied
+      - byParty
+      properties:
+        allSatisfied:
+          type: boolean
+          description: Whether all requirements across all parties are satisfied
+        byParty:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAssetRequirementStatus'
+          description: Status broken down by party
+
     CheckConstraintRequest:
       type: object
       description: Request to check constraint
@@ -10236,6 +11886,72 @@ components:
           nullable: true
           description: Chord extensions (e.g., "9", "11", "13")
 
+    ClauseAssetStatus:
+      type: object
+      description: Status of a single clause's asset requirements
+      additionalProperties: false
+      required:
+      - clauseId
+      - satisfied
+      - required
+      - current
+      - missing
+      properties:
+        clauseId:
+          type: string
+          description: Clause identifier
+        satisfied:
+          type: boolean
+          description: Whether requirement is satisfied
+        required:
+          $ref: '#/components/schemas/AssetRequirementInfo'
+          description: What the clause requires
+        current:
+          type: number
+          description: Current amount present
+        missing:
+          type: number
+          description: Amount still needed (0 if satisfied)
+
+    ClauseCategory:
+      type: string
+      description: Category of clause type
+      enum:
+      - validation
+      - execution
+      - both
+
+    ClauseTypeSummary:
+      type: object
+      description: Summary of a clause type
+      additionalProperties: false
+      required:
+      - typeCode
+      - description
+      - category
+      - hasValidationHandler
+      - hasExecutionHandler
+      - isBuiltIn
+      properties:
+        typeCode:
+          type: string
+          description: Unique identifier
+        description:
+          type: string
+          description: Human-readable description
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          description: Clause category
+        hasValidationHandler:
+          type: boolean
+          description: Whether a validation handler is registered
+        hasExecutionHandler:
+          type: boolean
+          description: Whether an execution handler is registered
+        isBuiltIn:
+          type: boolean
+          description: Whether this is a built-in type
+
     ClientCapabilitiesResponse:
       description: Response containing the client's capability manifest with 
         available API endpoints and shortcuts
@@ -10249,6 +11965,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID this capability manifest belongs to
         capabilities:
           type: array
@@ -10571,7 +12288,10 @@ components:
       - lt
       - lte
 
-# Service Registration Information
+    # =========================================================================
+    # Guardian Models
+    # =========================================================================
+
     CompilationOptions:
       description: Options controlling the ABML compilation process including 
         optimizations and caching
@@ -10858,6 +12578,64 @@ components:
           type: string
           description: Content hash of asset in this bundle
 
+    ConsentRequest:
+      type: object
+      description: Request to record party consent for release or refund
+      required:
+      - escrowId
+      - partyId
+      - partyType
+      - consentType
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party giving consent
+        partyType:
+          type: string
+          description: Party type
+        consentType:
+          $ref: '#/components/schemas/EscrowConsentType'
+          description: Type of consent being given
+        releaseToken:
+          type: string
+          nullable: true
+          description: Release token (required for full_consent)
+        notes:
+          type: string
+          nullable: true
+          description: Optional notes
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    ConsentResponse:
+      type: object
+      description: Response from recording party consent
+      required:
+      - escrow
+      - consentRecorded
+      - triggered
+      - newStatus
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Updated escrow agreement
+        consentRecorded:
+          type: boolean
+          description: Whether consent was recorded
+        triggered:
+          type: boolean
+          description: Whether this consent triggered completion
+        newStatus:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: New escrow status after consent
+
     ConsentStatus:
       type: string
       description: Party's consent status
@@ -10946,6 +12724,248 @@ components:
           type: string
           default: "Thank you for contacting us. We will respond within 24-48 hours."
           description: Confirmation message displayed to the user
+
+    ContainerConstraintModel:
+      type: string
+      description: Container capacity constraint type
+      enum:
+      - slot_only
+      - weight_only
+      - slot_and_weight
+      - grid
+      - volumetric
+      - unlimited
+
+    ContainerItem:
+      type: object
+      description: Item in a container
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        quantity:
+          type: number
+          format: double
+          description: Item quantity
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotated in grid
+
+    ContainerOwnerType:
+      type: string
+      description: Type of entity that owns this container
+      enum:
+      - character
+      - account
+      - location
+      - vehicle
+      - guild
+      - escrow
+      - mail
+      - other
+
+    ContainerResponse:
+      type: object
+      description: Container details
+      additionalProperties: false
+      required:
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      - canContainContainers
+      - nestingDepth
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container unique identifier
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          description: Container type
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Constraint model
+        isEquipmentSlot:
+          type: boolean
+          description: Whether this is an equipment slot
+        equipmentSlotName:
+          type: string
+          nullable: true
+          description: Equipment slot name
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Maximum slots
+        usedSlots:
+          type: integer
+          nullable: true
+          description: Current used slots
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum weight
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Internal grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Internal grid height
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum volume
+        currentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Current volume used
+        parentContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent container ID
+        nestingDepth:
+          type: integer
+          description: Depth in container hierarchy
+        canContainContainers:
+          type: boolean
+          description: Whether can hold containers
+        maxNestingDepth:
+          type: integer
+          nullable: true
+          description: Max nesting depth
+        selfWeight:
+          type: number
+          format: double
+          description: Empty container weight
+        weightContribution:
+          $ref: '#/components/schemas/WeightContribution'
+          description: Weight propagation mode
+        slotCost:
+          type: integer
+          description: Slots used in parent
+        parentGridWidth:
+          type: integer
+          nullable: true
+          description: Width in parent grid
+        parentGridHeight:
+          type: integer
+          nullable: true
+          description: Height in parent grid
+        parentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume in parent
+        contentsWeight:
+          type: number
+          format: double
+          description: Weight of direct contents
+        totalWeight:
+          type: number
+          format: double
+          description: Total weight including self
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Allowed categories
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Forbidden categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Required tags
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID
+        tags:
+          type: array
+          items:
+            type: string
+          description: Container tags
+        metadata:
+          type: object
+          nullable: true
+          description: Game-specific data
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification
+
+    ContainerWithContentsResponse:
+      type: object
+      description: Container with item contents
+      additionalProperties: false
+      required:
+      - container
+      - items
+      properties:
+        container:
+          $ref: '#/components/schemas/ContainerResponse'
+          description: Container details
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerItem'
+          description: Items in container
 
     ContextSchemaData:
       type: object
@@ -11414,6 +13434,48 @@ components:
           $ref: '#/components/schemas/SaveCategory'
           description: Category for new slot if auto-created
 
+    CountItemsRequest:
+      type: object
+      description: Request to count items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - templateId
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to count for
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          description: Template to count
+
+    CountItemsResponse:
+      type: object
+      description: Count result
+      additionalProperties: false
+      required:
+      - templateId
+      - totalQuantity
+      - stackCount
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Counted template
+        totalQuantity:
+          type: number
+          format: double
+          description: Total quantity
+        stackCount:
+          type: integer
+          description: Number of stacks
+
     CoverageAnalysis:
       type: object
       additionalProperties: false
@@ -11698,6 +13760,134 @@ components:
           format: int64
           description: Estimated bundle size in bytes
 
+    CreateContainerRequest:
+      type: object
+      description: Request to create a new container
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity that owns this container
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Type of the owning entity
+        containerType:
+          type: string
+          maxLength: 64
+          description: Game-defined container type (e.g., inventory, bank, 
+            equipment_slot)
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Capacity constraint model
+        isEquipmentSlot:
+          type: boolean
+          default: false
+          description: Whether this container is an equipment slot
+        equipmentSlotName:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Equipment slot name if isEquipmentSlot is true
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Maximum slots for slot-based containers
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum weight capacity
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Internal grid width for grid containers
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Internal grid height for grid containers
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum volume for volumetric containers
+        parentContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent container ID for nested containers
+        canContainContainers:
+          type: boolean
+          default: false
+          description: Whether this container can hold other containers
+        maxNestingDepth:
+          type: integer
+          nullable: true
+          description: Maximum nesting depth (null uses global default)
+        selfWeight:
+          type: number
+          format: double
+          default: 0
+          description: Empty container weight
+        weightContribution:
+          $ref: '#/components/schemas/WeightContribution'
+          description: How weight propagates to parent
+        slotCost:
+          type: integer
+          default: 1
+          description: Slots used in slot-based parent
+        parentGridWidth:
+          type: integer
+          nullable: true
+          description: Width footprint in grid-based parent
+        parentGridHeight:
+          type: integer
+          nullable: true
+          description: Height footprint in grid-based parent
+        parentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume footprint in volumetric parent
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Allowed item categories (null allows all)
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Forbidden item categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Required item tags for placement
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm this container belongs to (null for account-level)
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Container tags for filtering
+        metadata:
+          type: object
+          nullable: true
+          description: Game-specific container data
+
     CreateContractInstanceRequest:
       type: object
       description: Request to create a contract instance
@@ -11772,6 +13962,136 @@ components:
           description: Additional metadata
           nullable: true
 
+    CreateEscrowPartyInput:
+      type: object
+      description: Input for defining a party in escrow creation
+      required:
+      - partyId
+      - partyType
+      - role
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party entity ID
+        partyType:
+          type: string
+          description: Party entity type
+        displayName:
+          type: string
+          nullable: true
+          description: Display name
+        role:
+          $ref: '#/components/schemas/EscrowPartyRole'
+          description: Role of this party in the escrow
+        consentRequired:
+          type: boolean
+          nullable: true
+          description: Whether consent is required (defaults based on role)
+        walletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Party wallet for currency operations
+        containerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Party container for item operations
+
+    CreateEscrowRequest:
+      type: object
+      description: Request to create a new escrow agreement
+      required:
+      - escrowType
+      - trustMode
+      - parties
+      - expectedDeposits
+      - idempotencyKey
+      properties:
+        escrowType:
+          $ref: '#/components/schemas/EscrowType'
+          description: Type of escrow agreement
+        trustMode:
+          $ref: '#/components/schemas/EscrowTrustMode'
+          description: Trust mode for the escrow
+        trustedPartyId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For single_party_trusted mode
+        trustedPartyType:
+          type: string
+          nullable: true
+          description: Type of the trusted party
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateEscrowPartyInput'
+          description: Parties in the escrow
+        expectedDeposits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedDepositInput'
+          description: Expected deposits from parties
+        releaseAllocations:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ReleaseAllocationInput'
+          description: Optional explicit release allocations
+        boundContractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract governing this escrow
+        requiredConsentsForRelease:
+          type: integer
+          nullable: true
+          description: Number of consents required (-1 for all)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional expiration time
+        referenceType:
+          type: string
+          nullable: true
+          description: Reference type (trade, auction, etc.)
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Application metadata
+        idempotencyKey:
+          type: string
+          description: Idempotency key for this operation
+
+    CreateEscrowResponse:
+      type: object
+      description: Response from creating an escrow agreement
+      required:
+      - escrow
+      - depositTokens
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Created escrow agreement
+        depositTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyToken'
+          description: Deposit tokens for each party (full_consent mode)
+
     CreateHoldRequest:
       type: object
       description: Request to create an authorization hold
@@ -11812,6 +14132,227 @@ components:
           type: string
           maxLength: 128
           description: Idempotency key
+
+    CreateItemInstanceRequest:
+      type: object
+      description: Request to create a new item instance
+      additionalProperties: false
+      required:
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template to instantiate
+        containerId:
+          type: string
+          format: uuid
+          description: Container to place the item in
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this instance exists in
+        quantity:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Item quantity (respects template's quantityModel)
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position in slot-based containers
+        slotX:
+          type: integer
+          nullable: true
+          description: X position in grid-based containers
+        slotY:
+          type: integer
+          nullable: true
+          description: Y position in grid-based containers
+        rotated:
+          type: boolean
+          nullable: true
+          description: Whether item is rotated in grid
+        currentDurability:
+          type: integer
+          nullable: true
+          description: Initial durability (defaults to template's maxDurability)
+        customStats:
+          type: object
+          nullable: true
+          description: Instance-specific stat modifications
+        customName:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: Player-assigned custom name
+        instanceMetadata:
+          type: object
+          nullable: true
+          description: Any other instance-specific data
+        originType:
+          $ref: '#/components/schemas/ItemOriginType'
+          description: How this item instance was created
+        originId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity ID (quest ID, creature ID, etc.)
+
+    CreateItemTemplateRequest:
+      type: object
+      description: Request to create a new item template
+      additionalProperties: false
+      required:
+      - code
+      - gameId
+      - name
+      - category
+      - quantityModel
+      - maxStackSize
+      - scope
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          pattern: "^[a-z][a-z0-9_]{1,63}$"
+          description: Unique code within the game (immutable after creation)
+        gameId:
+          type: string
+          maxLength: 64
+          description: Game service this template belongs to (immutable after 
+            creation)
+        name:
+          type: string
+          maxLength: 128
+          description: Human-readable display name
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Detailed description of this item
+        category:
+          $ref: '#/components/schemas/ItemCategory'
+          description: Item classification category
+        subcategory:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Game-defined subcategory (e.g., sword, helmet)
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+          nullable: true
+          description: Flexible filtering tags
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+          nullable: true
+          description: Item rarity tier (defaults to config when not specified)
+        quantityModel:
+          $ref: '#/components/schemas/QuantityModel'
+          description: How quantities are tracked for this item
+        maxStackSize:
+          type: integer
+          minimum: 1
+          description: Maximum stack size (1 for unique items)
+        unitOfMeasure:
+          type: string
+          maxLength: 32
+          nullable: true
+          description: Unit for continuous quantities (e.g., liters, kg)
+        weightPrecision:
+          $ref: '#/components/schemas/WeightPrecision'
+          nullable: true
+          description: Precision for weight values (defaults to config when not 
+            specified)
+        weight:
+          type: number
+          format: double
+          nullable: true
+          description: Weight value (interpreted per weightPrecision)
+        volume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume for volumetric inventories
+        gridWidth:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Width in grid-based inventories
+        gridHeight:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Height in grid-based inventories
+        canRotate:
+          type: boolean
+          nullable: true
+          description: Whether item can be rotated in grid
+        baseValue:
+          type: number
+          format: double
+          nullable: true
+          description: Reference price for vendors/markets
+        tradeable:
+          type: boolean
+          default: true
+          description: Whether item can be traded/auctioned
+        destroyable:
+          type: boolean
+          default: true
+          description: Whether item can be destroyed/discarded
+        soulboundType:
+          $ref: '#/components/schemas/SoulboundType'
+          nullable: true
+          description: Binding behavior when item is acquired (defaults to 
+            config when not specified)
+        hasDurability:
+          type: boolean
+          default: false
+          description: Whether item has durability tracking
+        maxDurability:
+          type: integer
+          nullable: true
+          description: Maximum durability value
+        scope:
+          $ref: '#/components/schemas/ItemScope'
+          description: Realm availability scope
+        availableRealms:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Realm IDs where this template is available (for 
+            realm_specific or multi_realm)
+        stats:
+          type: object
+          nullable: true
+          description: Game-defined stats (e.g., attack, defense)
+        effects:
+          type: object
+          nullable: true
+          description: Game-defined effects (e.g., on_use, on_equip)
+        requirements:
+          type: object
+          nullable: true
+          description: Game-defined requirements (e.g., level, strength)
+        display:
+          type: object
+          nullable: true
+          description: Display properties (e.g., iconId, modelId)
+        metadata:
+          type: object
+          nullable: true
+          description: Any other game-specific data
 
     CreateLeaderboardDefinitionRequest:
       type: object
@@ -12876,6 +15417,104 @@ components:
         BSDIFF: Binary diff, good for general binary data
         XDELTA: RFC 3284 VCDIFF, efficient for large binary files
 
+    DepositRequest:
+      type: object
+      description: Request to deposit assets into an escrow
+      required:
+      - escrowId
+      - partyId
+      - partyType
+      - assets
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party depositing
+        partyType:
+          type: string
+          description: Party type
+        assets:
+          $ref: '#/components/schemas/EscrowAssetBundleInput'
+          description: Assets to deposit
+        depositToken:
+          type: string
+          nullable: true
+          description: Deposit token (required for full_consent)
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    DepositResponse:
+      type: object
+      description: Response from depositing assets into an escrow
+      required:
+      - escrow
+      - deposit
+      - fullyFunded
+      - releaseTokens
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Updated escrow agreement
+        deposit:
+          $ref: '#/components/schemas/EscrowDeposit'
+          description: Deposit record
+        fullyFunded:
+          type: boolean
+          description: Whether escrow is now fully funded
+        releaseTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyToken'
+          description: Release tokens (issued when fully funded)
+
+    DestroyItemInstanceRequest:
+      type: object
+      description: Request to destroy an item instance
+      additionalProperties: false
+      required:
+      - instanceId
+      - reason
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to destroy
+        reason:
+          type: string
+          description: Reason for destruction (consumed, destroyed, expired, 
+            admin)
+
+    DestroyItemInstanceResponse:
+      type: object
+      description: Response after destroying an item instance
+      additionalProperties: false
+      required:
+      - destroyed
+      - instanceId
+      - templateId
+      properties:
+        destroyed:
+          type: boolean
+          description: Whether destruction was successful
+        instanceId:
+          type: string
+          format: uuid
+          description: Destroyed instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Template of destroyed instance
+
+    # =========================================================================
+    # Query Models
+    # =========================================================================
+
     DeviceInfo:
       description: Information about the client device used for authentication 
         or session tracking
@@ -12926,6 +15565,95 @@ components:
         discarded:
           type: boolean
           description: Whether discard was successful
+
+    DisputeRequest:
+      type: object
+      description: Request to raise a dispute on a funded escrow
+      required:
+      - escrowId
+      - partyId
+      - partyType
+      - reason
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party raising dispute
+        partyType:
+          type: string
+          description: Party type
+        reason:
+          type: string
+          description: Reason for dispute
+        releaseToken:
+          type: string
+          nullable: true
+          description: Release token (proves party identity)
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    DisputeResponse:
+      type: object
+      description: Response from raising a dispute on an escrow
+      required:
+      - escrow
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Disputed escrow agreement
+
+    # ==========================================================================
+    # Request/Response Models - Arbiter
+    # ==========================================================================
+
+    DistributionRecord:
+      type: object
+      description: Record of an asset distribution
+      additionalProperties: false
+      required:
+      - clauseId
+      - clauseType
+      - assetType
+      - amount
+      properties:
+        clauseId:
+          type: string
+          description: Clause that was executed
+        clauseType:
+          type: string
+          description: Type of clause (fee, distribution)
+        assetType:
+          type: string
+          description: Type of asset (currency, item)
+        amount:
+          type: number
+          description: Amount transferred
+        sourceWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source wallet ID (for currency)
+        destinationWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination wallet ID (for currency)
+        sourceContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source container ID (for items)
+        destinationContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination container ID (for items)
 
     Document:
       description: Complete document with all metadata and content
@@ -13568,6 +16296,7 @@ components:
           description: ID of the actor
         encounterId:
           type: string
+          format: uuid
           description: ID of the ended encounter
         durationMs:
           type: integer
@@ -13699,24 +16428,468 @@ components:
       - custom
 
     ErrorResponse:
-      description: Standard error response with code and message
       type: object
-      additionalProperties: false
+      description: Standard error response format
       required:
       - error
       - message
       properties:
         error:
           type: string
-          description: Error code identifying the type of error
+          description: Error code
         message:
           type: string
           description: Human-readable error message
         details:
           type: object
-          additionalProperties: true
           nullable: true
-          description: Additional error details or context
+          additionalProperties: true
+          description: Additional error details
+
+    EscrowAgreement:
+      type: object
+      description: Main escrow agreement record
+      required:
+      - id
+      - escrowType
+      - trustMode
+      - parties
+      - expectedDeposits
+      - deposits
+      - consents
+      - status
+      - requiredConsentsForRelease
+      - createdAt
+      - createdBy
+      - createdByType
+      - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique escrow agreement identifier
+        escrowType:
+          $ref: '#/components/schemas/EscrowType'
+          description: Type of escrow agreement
+        trustMode:
+          $ref: '#/components/schemas/EscrowTrustMode'
+          description: Trust mode for the escrow
+        trustedPartyId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For single_party_trusted - which party has authority
+        trustedPartyType:
+          type: string
+          nullable: true
+          description: Type of the trusted party
+        initiatorServiceId:
+          type: string
+          nullable: true
+          description: For initiator_trusted - which service created this
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowParty'
+          description: All parties involved in the escrow
+        expectedDeposits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpectedDeposit'
+          description: What deposits are expected from each party
+        deposits:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowDeposit'
+          description: Actual deposits received
+        releaseAllocations:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ReleaseAllocation'
+          description: How assets should be distributed on release
+        boundContractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract governing conditions for this escrow
+        consents:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowConsent'
+          description: Consent decisions from parties
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status
+        requiredConsentsForRelease:
+          type: integer
+          description: How many parties must consent for release (-1 = all 
+            required)
+        lastValidatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the escrow was last validated
+        validationFailures:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ValidationFailure'
+          description: Any validation failures detected
+        createdAt:
+          type: string
+          format: date-time
+          description: When the escrow was created
+        createdBy:
+          type: string
+          format: uuid
+          description: Who created the escrow
+        createdByType:
+          type: string
+          description: Type of the creator entity
+        fundedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When all expected deposits were received
+        expiresAt:
+          type: string
+          format: date-time
+          description: Auto-refund if not completed by this time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the escrow reached terminal state
+        referenceType:
+          type: string
+          nullable: true
+          description: What this escrow is for (e.g., trade, auction, contract)
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the referenced entity
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Game/application specific metadata
+        resolution:
+          $ref: '#/components/schemas/EscrowResolution'
+          description: How the escrow was resolved
+          nullable: true
+        resolutionNotes:
+          type: string
+          nullable: true
+          description: Notes about the resolution
+
+    EscrowAsset:
+      type: object
+      description: An asset held in escrow
+      required:
+      - assetType
+      - sourceOwnerId
+      - sourceOwnerType
+      properties:
+        assetType:
+          $ref: '#/components/schemas/AssetType'
+          description: Type of asset held in escrow
+        # Currency fields
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=currency - currency definition ID
+        currencyCode:
+          type: string
+          nullable: true
+          description: Denormalized currency code for display
+        currencyAmount:
+          type: number
+          nullable: true
+          description: Amount of currency
+        # Item fields
+        itemInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=item - unique item instance ID
+        itemName:
+          type: string
+          nullable: true
+          description: Denormalized item name for display
+        itemTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=item_stack - stackable item template
+        itemTemplateName:
+          type: string
+          nullable: true
+          description: Denormalized template name for display
+        itemQuantity:
+          type: integer
+          nullable: true
+          description: For assetType=item_stack - quantity
+        # Contract fields
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: For assetType=contract - contract instance ID
+        contractTemplateCode:
+          type: string
+          nullable: true
+          description: Denormalized contract template code
+        contractDescription:
+          type: string
+          nullable: true
+          description: Description of the contract
+        contractPartyRole:
+          type: string
+          nullable: true
+          description: Which party role in the contract is being escrowed
+        # Custom fields
+        customAssetType:
+          type: string
+          nullable: true
+          description: For assetType=custom - registered handler type
+        customAssetId:
+          type: string
+          nullable: true
+          description: Custom asset identifier
+        customAssetData:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Handler-specific data
+        # Source tracking
+        sourceOwnerId:
+          type: string
+          format: uuid
+          description: Where this asset came from (for refunds)
+        sourceOwnerType:
+          type: string
+          description: Type of the source owner
+        sourceContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source wallet/container ID
+
+    EscrowAssetBundle:
+      type: object
+      description: Groups multiple assets for a single deposit or release
+      required:
+      - bundleId
+      - assets
+      properties:
+        bundleId:
+          type: string
+          format: uuid
+          description: Bundle identifier
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAsset'
+          description: Assets in this bundle
+        description:
+          type: string
+          nullable: true
+          description: Summary for display
+        estimatedValue:
+          type: number
+          nullable: true
+          description: Optional valuation for UI display
+
+    EscrowAssetBundleInput:
+      type: object
+      description: Input for specifying a bundle of assets
+      required:
+      - assets
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAssetInput'
+          description: Assets to deposit
+        description:
+          type: string
+          nullable: true
+          description: Bundle description
+        estimatedValue:
+          type: number
+          nullable: true
+          description: Estimated value
+
+    EscrowAssetInput:
+      type: object
+      description: Input for specifying an asset in escrow operations
+      required:
+      - assetType
+      properties:
+        assetType:
+          $ref: '#/components/schemas/AssetType'
+          description: Type of asset to deposit
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Currency definition ID
+        currencyCode:
+          type: string
+          nullable: true
+          description: Currency code
+        currencyAmount:
+          type: number
+          nullable: true
+          description: Currency amount
+        itemInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Item instance ID
+        itemName:
+          type: string
+          nullable: true
+          description: Item name
+        itemTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Item template ID (for stacks)
+        itemTemplateName:
+          type: string
+          nullable: true
+          description: Item template name
+        itemQuantity:
+          type: integer
+          nullable: true
+          description: Item quantity (for stacks)
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract instance ID
+        contractTemplateCode:
+          type: string
+          nullable: true
+          description: Contract template code
+        contractDescription:
+          type: string
+          nullable: true
+          description: Contract description
+        contractPartyRole:
+          type: string
+          nullable: true
+          description: Contract party role being escrowed
+        customAssetType:
+          type: string
+          nullable: true
+          description: Custom asset type
+        customAssetId:
+          type: string
+          nullable: true
+          description: Custom asset ID
+        customAssetData:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Custom asset data
+
+    EscrowConsent:
+      type: object
+      description: Records a party consent decision
+      required:
+      - partyId
+      - partyType
+      - consentType
+      - consentedAt
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party giving consent
+        partyType:
+          type: string
+          description: Type of the party
+        consentType:
+          $ref: '#/components/schemas/EscrowConsentType'
+          description: Type of consent given
+        consentedAt:
+          type: string
+          format: date-time
+          description: When consent was given
+        releaseTokenUsed:
+          type: string
+          nullable: true
+          description: Token used (for audit)
+        notes:
+          type: string
+          nullable: true
+          description: Optional notes
+
+    EscrowConsentType:
+      type: string
+      description: |
+        Type of consent being given.
+        - release: Agrees to release assets to recipients
+        - refund: Agrees to refund assets to depositors
+        - dispute: Raises a dispute
+        - reaffirm: Re-affirms after validation failure
+      enum:
+      - release
+      - refund
+      - dispute
+      - reaffirm
+
+    EscrowDeposit:
+      type: object
+      description: Records an actual deposit
+      required:
+      - id
+      - escrowId
+      - partyId
+      - partyType
+      - assets
+      - depositedAt
+      - idempotencyKey
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Deposit record identifier
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow this deposit belongs to
+        partyId:
+          type: string
+          format: uuid
+          description: Party who deposited
+        partyType:
+          type: string
+          description: Type of the depositing party
+        assets:
+          $ref: '#/components/schemas/EscrowAssetBundle'
+          description: Assets deposited
+        depositedAt:
+          type: string
+          format: date-time
+          description: When the deposit was made
+        depositTokenUsed:
+          type: string
+          nullable: true
+          description: Token used (for audit)
+        idempotencyKey:
+          type: string
+          description: Idempotency key for this deposit
+
     EscrowDepositRequest:
       type: object
       description: Request from lib-escrow to debit wallet for deposit
@@ -13764,6 +16937,97 @@ components:
           type: number
           format: double
           description: Wallet balance after debit
+
+    EscrowParty:
+      type: object
+      description: A party in the escrow agreement
+      required:
+      - partyId
+      - partyType
+      - role
+      - consentRequired
+      - depositTokenUsed
+      - releaseTokenUsed
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party entity identifier
+        partyType:
+          type: string
+          description: Type of the party entity (account, character, npc, guild,
+            system)
+        displayName:
+          type: string
+          nullable: true
+          description: Display name for UI/logging
+        role:
+          $ref: '#/components/schemas/EscrowPartyRole'
+          description: Role of this party in the escrow
+        consentRequired:
+          type: boolean
+          description: Whether this party consent is required for release
+        walletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Party own wallet (where currency comes from/returns to)
+        containerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Party own container (where items come from/return to)
+        escrowWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Escrow wallet for THIS party deposits (owned by escrow)
+        escrowContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Escrow container for THIS party deposits (owned by 
+            escrow)
+        depositToken:
+          type: string
+          nullable: true
+          description: Token for depositing (full_consent mode)
+        depositTokenUsed:
+          type: boolean
+          description: Whether the deposit token has been used
+        depositTokenUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the deposit token was used
+        releaseToken:
+          type: string
+          nullable: true
+          description: Token for consenting to release
+        releaseTokenUsed:
+          type: boolean
+          description: Whether the release token has been used
+        releaseTokenUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the release token was used
+
+    EscrowPartyRole:
+      type: string
+      description: |
+        Role of a party in the escrow.
+        - depositor: Deposits assets into escrow
+        - recipient: Receives assets when released
+        - depositor_recipient: Both deposits and can receive (typical for trades)
+        - arbiter: Can resolve disputes, does not deposit or receive
+        - observer: Can view status but cannot act
+      enum:
+      - depositor
+      - recipient
+      - depositor_recipient
+      - arbiter
+      - observer
 
     EscrowRefundRequest:
       type: object
@@ -13865,6 +17129,84 @@ components:
           format: double
           description: Recipient balance after credit
 
+    EscrowResolution:
+      type: string
+      description: |
+        How the escrow was resolved.
+        - released: Assets went to designated recipients
+        - refunded: Assets returned to depositors
+        - split: Arbiter split assets between parties
+        - expired_refunded: Timed out, auto-refunded
+        - cancelled_refunded: Cancelled, deposits refunded
+        - violation_refunded: Validation failure caused refund
+      enum:
+      - released
+      - refunded
+      - split
+      - expired_refunded
+      - cancelled_refunded
+      - violation_refunded
+
+    EscrowStatus:
+      type: string
+      description: |
+        Current status of the escrow agreement.
+        - pending_deposits: Waiting for parties to deposit
+        - partially_funded: Some but not all deposits received
+        - funded: All deposits received, awaiting consent/condition
+        - pending_consent: Some consents received, waiting for more
+        - pending_condition: Waiting for contract fulfillment or external verification
+        - finalizing: Running contract finalizer prebound APIs (transient)
+        - releasing: Release in progress (transient)
+        - released: Assets transferred to recipients
+        - refunding: Refund in progress (transient)
+        - refunded: Assets returned to depositors
+        - disputed: In dispute, arbiter must resolve
+        - expired: Timed out without completion
+        - cancelled: Cancelled before funding complete
+        - validation_failed: Held assets changed, awaiting re-affirmation
+      enum:
+      - pending_deposits
+      - partially_funded
+      - funded
+      - pending_consent
+      - pending_condition
+      - finalizing
+      - releasing
+      - released
+      - refunding
+      - refunded
+      - disputed
+      - expired
+      - cancelled
+      - validation_failed
+
+    EscrowTrustMode:
+      type: string
+      description: |
+        Trust model for the escrow agreement.
+        - full_consent: All parties must explicitly consent using tokens
+        - initiator_trusted: The service that created the escrow can complete unilaterally
+        - single_party_trusted: A designated party can complete unilaterally
+      enum:
+      - full_consent
+      - initiator_trusted
+      - single_party_trusted
+
+    EscrowType:
+      type: string
+      description: |
+        Type of escrow agreement.
+        - two_party: Simple trade escrow between Party A and Party B
+        - multi_party: N parties with complex deposit/receive rules
+        - conditional: Release based on external condition or contract fulfillment
+        - auction: Winner-takes-all with refunds to losers
+      enum:
+      - two_party
+      - multi_party
+      - conditional
+      - auction
+
     EventCategory:
       type: string
       description: Categories of historical events that characters can 
@@ -13878,6 +17220,54 @@ components:
       - CULTURAL
       - PERSONAL
 
+    ExecuteContractRequest:
+      type: object
+      description: Request to execute contract clauses
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Idempotency key for the execution
+
+    ExecuteContractResponse:
+      type: object
+      description: Response from executing a contract
+      additionalProperties: false
+      required:
+      - executed
+      - alreadyExecuted
+      properties:
+        executed:
+          type: boolean
+          description: Whether execution was successful
+        alreadyExecuted:
+          type: boolean
+          description: True if this was a repeat call (idempotency)
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        distributions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistributionRecord'
+          nullable: true
+          description: Records of what was moved where
+        executedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When execution occurred
+
+# Service Registration Information
     ExecuteConversionRequest:
       type: object
       description: Request to execute a currency conversion
@@ -13963,6 +17353,70 @@ components:
           # NRT: Optional array MUST be nullable (Rule 2)
           nullable: true
           description: Conditions that can interrupt behavior execution
+
+    ExpectedDeposit:
+      type: object
+      description: Defines what a party should deposit
+      required:
+      - partyId
+      - partyType
+      - expectedAssets
+      - optional
+      - fulfilled
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party who should deposit
+        partyType:
+          type: string
+          description: Type of the party
+        expectedAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAsset'
+          description: Expected assets from this party
+        optional:
+          type: boolean
+          description: Is this deposit optional
+        depositDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline for this specific deposit
+        fulfilled:
+          type: boolean
+          description: Has this party fulfilled their deposit requirement
+
+    ExpectedDepositInput:
+      type: object
+      description: Input for defining expected deposits from a party
+      required:
+      - partyId
+      - partyType
+      - expectedAssets
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party who should deposit
+        partyType:
+          type: string
+          description: Type of the party
+        expectedAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAssetInput'
+          description: Expected assets
+        optional:
+          type: boolean
+          nullable: true
+          description: Is this deposit optional
+        depositDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Specific deadline for this deposit
 
     ExpirationPolicy:
       type: string
@@ -14088,6 +17542,24 @@ components:
             $ref: '#/components/schemas/PastLifeReference'
           description: Previous incarnations (if reincarnation tracked)
 
+    FinalizerResult:
+      type: object
+      description: Result from a contract finalizer API call
+      required:
+      - endpoint
+      - success
+      properties:
+        endpoint:
+          type: string
+          description: Finalizer endpoint
+        success:
+          type: boolean
+          description: Whether it succeeded
+        error:
+          type: string
+          nullable: true
+          description: Error message if failed
+
     FindAssetUsageRequest:
       type: object
       description: Request to find asset usage
@@ -14137,6 +17609,53 @@ components:
           items:
             $ref: '#/components/schemas/ReferenceInfo'
           description: Scenes containing references
+
+    FindSpaceRequest:
+      type: object
+      description: Request to find space for item
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - templateId
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to search
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          description: Item template
+        quantity:
+          type: number
+          format: double
+          default: 1
+          description: Quantity to place
+        preferStackable:
+          type: boolean
+          default: true
+          description: Prefer existing stacks
+
+    FindSpaceResponse:
+      type: object
+      description: Find space result
+      additionalProperties: false
+      required:
+      - hasSpace
+      - candidates
+      properties:
+        hasSpace:
+          type: boolean
+          description: Whether space found
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpaceCandidate'
+          description: Potential placements
 
     FormTemplate:
       description: A musical form structure template
@@ -14247,6 +17766,7 @@ components:
           description: Unique identifier for the player's account
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID that joined the game. Chat and 
             events are delivered to this specific session only.
         displayName:
@@ -14270,6 +17790,7 @@ components:
             none provided)
         voiceSessionId:
           type: string
+          format: uuid
           nullable: true
           description: Voice participant session ID (if player has joined voice)
 
@@ -14836,6 +18357,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID to retrieve capabilities for (must have active
             WebSocket connection)
         serviceFilter:
@@ -14858,6 +18380,61 @@ components:
           type: string
           format: uuid
           description: ID of the character to get combat preferences for
+
+    GetConsentStatusRequest:
+      type: object
+      description: Request to get consent status for all parties
+      required:
+      - escrowId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+
+    GetConsentStatusResponse:
+      type: object
+      description: Response containing consent status for all parties
+      required:
+      - partiesRequiringConsent
+      - consentsReceived
+      - consentsRequired
+      - canRelease
+      - canRefund
+      properties:
+        partiesRequiringConsent:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyConsentStatus'
+          description: Consent status per party
+        consentsReceived:
+          type: integer
+          description: Number of consents received
+        consentsRequired:
+          type: integer
+          description: Number of consents required
+        canRelease:
+          type: boolean
+          description: Whether release can proceed
+        canRefund:
+          type: boolean
+          description: Whether refund can proceed
+
+    GetContainerRequest:
+      type: object
+      description: Request to get a container
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to retrieve
+        includeContents:
+          type: boolean
+          default: true
+          description: Whether to include item contents
 
     GetContractInstanceRequest:
       type: object
@@ -14935,6 +18512,61 @@ components:
           type: string
           format: uuid
           description: Definition ID to retrieve
+
+    GetDepositStatusRequest:
+      type: object
+      description: Request to get deposit status for a party
+      required:
+      - escrowId
+      - partyId
+      - partyType
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party ID
+        partyType:
+          type: string
+          description: Party type
+
+    GetDepositStatusResponse:
+      type: object
+      description: Response containing party deposit status
+      required:
+      - expectedAssets
+      - depositedAssets
+      - fulfilled
+      properties:
+        expectedAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAsset'
+          description: Expected assets from this party
+        depositedAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAsset'
+          description: Actually deposited assets
+        fulfilled:
+          type: boolean
+          description: Whether deposit requirement is fulfilled
+        depositToken:
+          type: string
+          nullable: true
+          description: Deposit token (if not yet used)
+        depositDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deposit deadline
+
+    # ==========================================================================
+    # Request/Response Models - Consent
+    # ==========================================================================
 
     GetDocumentRequest:
       description: Request to retrieve a specific document by ID or slug
@@ -15072,6 +18704,27 @@ components:
         entityType:
           $ref: '#/components/schemas/EntityType'
           description: Entity type whose rank is requested
+
+    GetEscrowRequest:
+      type: object
+      description: Request to retrieve an escrow agreement by ID
+      required:
+      - escrowId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID to retrieve
+
+    GetEscrowResponse:
+      type: object
+      description: Response containing escrow agreement details
+      required:
+      - escrow
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Escrow agreement details
 
     GetEventParticipantsRequest:
       type: object
@@ -15225,6 +18878,37 @@ components:
           type: string
           format: uuid
           description: Hold ID
+
+    GetItemInstanceRequest:
+      type: object
+      description: Request to get an item instance
+      additionalProperties: false
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to retrieve
+
+    GetItemTemplateRequest:
+      type: object
+      description: Request to get an item template
+      additionalProperties: false
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Template ID (provide this or code+gameId)
+        code:
+          type: string
+          nullable: true
+          description: Item code (provide with gameId)
+        gameId:
+          type: string
+          nullable: true
+          description: Game service ID (provide with code)
 
     GetJobStatusRequest:
       type: object
@@ -15461,6 +19145,52 @@ components:
         milestoneCode:
           type: string
           description: Milestone code
+
+    GetOrCreateContainerRequest:
+      type: object
+      description: Request to get or create a container
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          description: Container type to find or create
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Constraint model for new container
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Default max slots if creating
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Default max weight if creating
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Default grid width if creating
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Default grid height if creating
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm for new container
 
     GetOrCreateWalletRequest:
       type: object
@@ -16368,6 +20098,71 @@ components:
           nullable: true
           description: Common chord progressions as roman numeral strings
 
+    HasItemResult:
+      type: object
+      description: Individual item check result
+      additionalProperties: false
+      required:
+      - templateId
+      - required
+      - available
+      - satisfied
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template checked
+        required:
+          type: number
+          format: double
+          description: Required quantity
+        available:
+          type: number
+          format: double
+          description: Available quantity
+        satisfied:
+          type: boolean
+          description: Whether requirement met
+
+    HasItemsRequest:
+      type: object
+      description: Request to check for items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - requirements
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to check
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequirement'
+          description: Required items
+
+    HasItemsResponse:
+      type: object
+      description: Has items result
+      additionalProperties: false
+      required:
+      - hasAll
+      - results
+      properties:
+        hasAll:
+          type: boolean
+          description: Whether all requirements met
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/HasItemResult'
+          description: Per-item results
+
     HasMetRequest:
       type: object
       description: Request to check if two characters have met
@@ -16710,6 +20505,114 @@ components:
           type: string
           description: Unique identifier for the cached behavior to invalidate
 
+    ItemCategory:
+      type: string
+      description: Item classification category
+      enum:
+      - weapon
+      - armor
+      - accessory
+      - consumable
+      - material
+      - container
+      - quest
+      - currency_like
+      - misc
+      - custom
+
+    ItemInstanceResponse:
+      type: object
+      description: Item instance details
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique instance identifier
+        templateId:
+          type: string
+          format: uuid
+          description: Reference to the item template
+        containerId:
+          type: string
+          format: uuid
+          description: Container holding this item
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this instance exists in
+        quantity:
+          type: number
+          format: double
+          description: Item quantity
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position in slot-based containers
+        slotX:
+          type: integer
+          nullable: true
+          description: X position in grid-based containers
+        slotY:
+          type: integer
+          nullable: true
+          description: Y position in grid-based containers
+        rotated:
+          type: boolean
+          nullable: true
+          description: Whether item is rotated in grid
+        currentDurability:
+          type: integer
+          nullable: true
+          description: Current durability
+        boundToId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character ID this item is bound to
+        boundAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When item was bound
+        customStats:
+          type: object
+          nullable: true
+          description: Instance-specific stat modifications
+        customName:
+          type: string
+          nullable: true
+          description: Player-assigned custom name
+        instanceMetadata:
+          type: object
+          nullable: true
+          description: Other instance-specific data
+        originType:
+          $ref: '#/components/schemas/ItemOriginType'
+          description: How this item instance was created
+        originId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity ID
+        createdAt:
+          type: string
+          format: date-time
+          description: Instance creation timestamp
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification timestamp
+
     ItemLinkageMode:
       type: string
       description: How currency is linked to inventory items
@@ -16717,6 +20620,224 @@ components:
       - none
       - visual_only
       - reference_only
+
+    ItemOriginType:
+      type: string
+      description: How an item instance was created
+      enum:
+      - loot
+      - quest
+      - craft
+      - trade
+      - purchase
+      - spawn
+      - other
+
+    # =========================================================================
+    # Item Template Models
+    # =========================================================================
+
+    ItemRarity:
+      type: string
+      description: Item rarity tier
+      enum:
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
+      - custom
+
+    ItemRequirement:
+      type: object
+      description: Required item and quantity
+      additionalProperties: false
+      required:
+      - templateId
+      - quantity
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Required template
+        quantity:
+          type: number
+          format: double
+          minimum: 1
+          description: Required quantity
+
+    ItemScope:
+      type: string
+      description: Realm availability scope (consistent with CurrencyScope)
+      enum:
+      - global
+      - realm_specific
+      - multi_realm
+
+    ItemTemplateResponse:
+      type: object
+      description: Item template details
+      additionalProperties: false
+      required:
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - quantityModel
+      - maxStackSize
+      - scope
+      - tradeable
+      - destroyable
+      - soulboundType
+      - hasDurability
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Unique template identifier
+        code:
+          type: string
+          description: Unique code within the game
+        gameId:
+          type: string
+          description: Game service this template belongs to
+        name:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          nullable: true
+          description: Detailed description
+        category:
+          $ref: '#/components/schemas/ItemCategory'
+          description: Item classification category
+        subcategory:
+          type: string
+          nullable: true
+          description: Game-defined subcategory
+        tags:
+          type: array
+          items:
+            type: string
+          description: Filtering tags
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+          description: Item rarity tier
+        quantityModel:
+          $ref: '#/components/schemas/QuantityModel'
+          description: How quantities are tracked
+        maxStackSize:
+          type: integer
+          description: Maximum stack size
+        unitOfMeasure:
+          type: string
+          nullable: true
+          description: Unit for continuous quantities
+        weightPrecision:
+          $ref: '#/components/schemas/WeightPrecision'
+          description: Precision for weight values
+        weight:
+          type: number
+          format: double
+          nullable: true
+          description: Weight value
+        volume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume for volumetric inventories
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Width in grid-based inventories
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Height in grid-based inventories
+        canRotate:
+          type: boolean
+          nullable: true
+          description: Whether item can be rotated in grid
+        baseValue:
+          type: number
+          format: double
+          nullable: true
+          description: Reference price
+        tradeable:
+          type: boolean
+          description: Whether item can be traded
+        destroyable:
+          type: boolean
+          description: Whether item can be destroyed
+        soulboundType:
+          $ref: '#/components/schemas/SoulboundType'
+          description: Binding behavior type
+        hasDurability:
+          type: boolean
+          description: Whether item has durability
+        maxDurability:
+          type: integer
+          nullable: true
+          description: Maximum durability value
+        scope:
+          $ref: '#/components/schemas/ItemScope'
+          description: Realm availability scope
+        availableRealms:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Available realms
+        stats:
+          type: object
+          nullable: true
+          description: Game-defined stats
+        effects:
+          type: object
+          nullable: true
+          description: Game-defined effects
+        requirements:
+          type: object
+          nullable: true
+          description: Game-defined requirements
+        display:
+          type: object
+          nullable: true
+          description: Display properties
+        metadata:
+          type: object
+          nullable: true
+          description: Other game-specific data
+        isActive:
+          type: boolean
+          description: Whether template is active
+        isDeprecated:
+          type: boolean
+          description: Whether template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When template was deprecated
+        migrationTargetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Migration target template
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
 
     JoinMatchmakingRequest:
       type: object
@@ -17247,6 +21368,83 @@ components:
           default: 20
           description: Number of results per page
 
+    ListClauseTypesRequest:
+      type: object
+      description: Request to list clause types
+      additionalProperties: false
+      properties:
+        category:
+          $ref: '#/components/schemas/ClauseCategory'
+          nullable: true
+          description: Filter by category
+        includeBuiltIn:
+          type: boolean
+          default: true
+          description: Include built-in types in response
+
+    ListClauseTypesResponse:
+      type: object
+      description: Response containing list of clause types
+      additionalProperties: false
+      required:
+      - clauseTypes
+      properties:
+        clauseTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseTypeSummary'
+          description: List of registered clause types
+
+    # =========================================================================
+    # Execution Models
+    # =========================================================================
+
+    ListContainersRequest:
+      type: object
+      description: Request to list containers for an owner
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          nullable: true
+          description: Filter by container type
+        includeEquipmentSlots:
+          type: boolean
+          default: true
+          description: Include equipment slot containers
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+
+    ListContainersResponse:
+      type: object
+      description: List of containers
+      additionalProperties: false
+      required:
+      - containers
+      - totalCount
+      properties:
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerResponse'
+          description: List of containers
+        totalCount:
+          type: integer
+          description: Total count
+
     ListContractTemplatesRequest:
       type: object
       description: Request to list contract templates
@@ -17503,6 +21701,173 @@ components:
           type: boolean
           default: false
           description: Only return custom types
+
+    ListEscrowsRequest:
+      type: object
+      description: Request to list escrow agreements with optional filters
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by party
+        partyType:
+          type: string
+          nullable: true
+          description: Party type filter
+        status:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EscrowStatus'
+          description: Filter by status
+        referenceType:
+          type: string
+          nullable: true
+          description: Filter by reference type
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by reference ID
+        fromDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Filter from date
+        toDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Filter to date
+        limit:
+          type: integer
+          nullable: true
+          description: Limit results
+        offset:
+          type: integer
+          nullable: true
+          description: Offset for pagination
+
+    ListEscrowsResponse:
+      type: object
+      description: Response containing list of escrow agreements
+      required:
+      - escrows
+      - totalCount
+      properties:
+        escrows:
+          type: array
+          description: List of escrow agreements matching the query
+          items:
+            $ref: '#/components/schemas/EscrowAgreement'
+        totalCount:
+          type: integer
+          description: Total count for pagination
+
+    ListItemTemplatesRequest:
+      type: object
+      description: Request to list item templates
+      additionalProperties: false
+      properties:
+        gameId:
+          type: string
+          description: Filter by game service
+        category:
+          $ref: '#/components/schemas/ItemCategory'
+          description: Filter by item category
+        subcategory:
+          type: string
+          nullable: true
+          description: Filter by subcategory
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by tags (items must have all specified tags)
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+          description: Filter by rarity tier
+        scope:
+          $ref: '#/components/schemas/ItemScope'
+          description: Filter by realm scope
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm availability
+        includeInactive:
+          type: boolean
+          default: false
+          description: Include inactive templates
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated templates
+        search:
+          type: string
+          nullable: true
+          description: Search in name and description
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          default: 50
+          maximum: 200
+          description: Maximum results to return
+
+    ListItemTemplatesResponse:
+      type: object
+      description: Paginated list of item templates
+      additionalProperties: false
+      required:
+      - templates
+      - totalCount
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemTemplateResponse'
+          description: List of templates
+        totalCount:
+          type: integer
+          description: Total number of matching templates
+
+    # =========================================================================
+    # Item Instance Models
+    # =========================================================================
+
+    ListItemsByContainerRequest:
+      type: object
+      description: Request to list items in a container
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container to list items from
+
+    ListItemsResponse:
+      type: object
+      description: List of item instances
+      additionalProperties: false
+      required:
+      - items
+      - totalCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInstanceResponse'
+          description: List of items
+        totalCount:
+          type: integer
+          description: Total number of matching items
 
     ListLocationsByParentRequest:
       description: Request to list all child locations of a specified parent 
@@ -18442,6 +22807,57 @@ components:
       - DUNGEON
       - OTHER
 
+    LockContractRequest:
+      type: object
+      description: Request to lock a contract under guardian custody
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID to lock
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (e.g., escrow agreement ID)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type (e.g., "escrow")
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    LockContractResponse:
+      type: object
+      description: Response from locking a contract
+      additionalProperties: false
+      required:
+      - locked
+      - contractId
+      properties:
+        locked:
+          type: boolean
+          description: Whether the contract was locked
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID
+        lockedAt:
+          type: string
+          format: date-time
+          description: When the contract was locked
+
     LoginRequest:
       description: Request to authenticate a user with email and password 
         credentials
@@ -18752,6 +23168,57 @@ components:
     # ============================================================================
     # Voice Leading Models
     # ============================================================================
+
+    MergeStacksRequest:
+      type: object
+      description: Request to merge stacks
+      additionalProperties: false
+      required:
+      - sourceInstanceId
+      - targetInstanceId
+      properties:
+        sourceInstanceId:
+          type: string
+          format: uuid
+          description: Stack to merge from (destroyed)
+        targetInstanceId:
+          type: string
+          format: uuid
+          description: Stack to merge into
+
+    MergeStacksResponse:
+      type: object
+      description: Response after merging
+      additionalProperties: false
+      required:
+      - success
+      - targetInstanceId
+      - newQuantity
+      - sourceDestroyed
+      properties:
+        success:
+          type: boolean
+          description: Whether merge succeeded
+        targetInstanceId:
+          type: string
+          format: uuid
+          description: Merged stack ID
+        newQuantity:
+          type: number
+          format: double
+          description: New quantity
+        sourceDestroyed:
+          type: boolean
+          description: Whether source was destroyed
+        overflowQuantity:
+          type: number
+          format: double
+          nullable: true
+          description: Quantity that didn't fit
+
+    # =========================================================================
+    # Query Models
+    # =========================================================================
 
     MetadataType:
       type: string
@@ -19194,6 +23661,113 @@ components:
       - WholeTone
       - Chromatic
 
+    ModifyItemInstanceRequest:
+      type: object
+      description: Request to modify item instance state
+      additionalProperties: false
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to modify
+        durabilityDelta:
+          type: integer
+          nullable: true
+          description: Change to durability (positive to repair, negative for 
+            damage)
+        customStats:
+          type: object
+          nullable: true
+          description: New custom stats (merges with existing)
+        customName:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: New custom name
+        quantityDelta:
+          type: number
+          format: double
+          nullable: true
+          description: Change to quantity (positive to add, negative to 
+            subtract). Only valid for stackable items.
+        instanceMetadata:
+          type: object
+          nullable: true
+          description: New instance metadata (merges with existing)
+
+    MoveItemRequest:
+      type: object
+      description: Request to move item
+      additionalProperties: false
+      required:
+      - instanceId
+      - targetContainerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to move
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        targetSlotIndex:
+          type: integer
+          nullable: true
+          description: Target slot
+        targetSlotX:
+          type: integer
+          nullable: true
+          description: Target grid X
+        targetSlotY:
+          type: integer
+          nullable: true
+          description: Target grid Y
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotate in target
+
+    MoveItemResponse:
+      type: object
+      description: Response after moving item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - sourceContainerId
+      - targetContainerId
+      properties:
+        success:
+          type: boolean
+          description: Whether move succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Moved item ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container
+        slotIndex:
+          type: integer
+          nullable: true
+          description: New slot
+        slotX:
+          type: integer
+          nullable: true
+          description: New grid X
+        slotY:
+          type: integer
+          nullable: true
+          description: New grid Y
+
     MultipartConfig:
       description: Configuration for multipart uploads of large files
       type: object
@@ -19594,6 +24168,63 @@ components:
       - HERO
       - SURVIVOR
 
+    PartyAssetRequirementStatus:
+      type: object
+      description: Asset requirement status for a single party
+      additionalProperties: false
+      required:
+      - partyRole
+      - satisfied
+      - clauses
+      properties:
+        partyRole:
+          type: string
+          description: Party role (e.g., party_a, party_b)
+        satisfied:
+          type: boolean
+          description: Whether all party's requirements are satisfied
+        clauses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClauseAssetStatus'
+          description: Status of each clause for this party
+
+    PartyConsentStatus:
+      type: object
+      description: Consent status for a single party
+      required:
+      - partyId
+      - partyType
+      - consentGiven
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party ID
+        partyType:
+          type: string
+          description: Party type
+        displayName:
+          type: string
+          nullable: true
+          description: Party display name
+        consentGiven:
+          type: boolean
+          description: Whether consent was given
+        consentType:
+          $ref: '#/components/schemas/EscrowConsentType'
+          description: Type of consent given (if any)
+          nullable: true
+        consentedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When consent was given
+
+    # ==========================================================================
+    # Request/Response Models - Completion
+    # ==========================================================================
+
     PartyMemberInfo:
       type: object
       description: Information about a party member for matchmaking
@@ -19648,6 +24279,25 @@ components:
       type: string
       description: Method for aggregating party member skills
       enum: [highest, average, weighted]
+    PartyToken:
+      type: object
+      description: Token issued to a party for deposit or release operations
+      required:
+      - partyId
+      - partyType
+      - token
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party ID
+        partyType:
+          type: string
+          description: Party type
+        token:
+          type: string
+          description: The token
+
     PasswordResetConfirmRequest:
       description: Request to confirm a password reset using the emailed token 
         and new password
@@ -20147,6 +24797,14 @@ components:
           description: Available authentication providers
           items:
             $ref: '#/components/schemas/ProviderInfo'
+
+    QuantityModel:
+      type: string
+      description: How quantities are tracked for this item type
+      enum:
+      - discrete
+      - continuous
+      - unique
 
     Quaternion:
       type: object
@@ -20691,6 +25349,71 @@ components:
           description: User-friendly message when no results found
 
     # ===== Get Document Endpoint =====
+    QueryItemsRequest:
+      type: object
+      description: Request to query items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to search
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by template
+        category:
+          type: string
+          nullable: true
+          description: Filter by category
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by tags
+        containerType:
+          type: string
+          nullable: true
+          description: Filter by container type
+        excludeEquipmentSlots:
+          type: boolean
+          default: false
+          description: Exclude equipment slots
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          default: 50
+          maximum: 200
+          description: Max results
+
+    QueryItemsResponse:
+      type: object
+      description: Query results
+      additionalProperties: false
+      required:
+      - items
+      - totalCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryResultItem'
+          description: Found items
+        totalCount:
+          type: integer
+          description: Total matching
+
     QueryObjectsByTypeRequest:
       type: object
       description: Query objects by type
@@ -20776,63 +25499,37 @@ components:
 
     QueryResultItem:
       type: object
-      description: Single result item from a save query with slot and version 
-        metadata
-      required: [slotId, slotName, ownerId, ownerType, category, versionNumber, 
-          createdAt]
+      description: Item in query results
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - containerId
+      - quantity
       properties:
-        slotId:
+        instanceId:
           type: string
           format: uuid
-          description: Slot identifier
-        slotName:
-          type: string
-          description: Slot name
-        ownerId:
+          description: Item instance ID
+        templateId:
           type: string
           format: uuid
-          description: Owner ID
-        ownerType:
-          $ref: '#/components/schemas/OwnerType'
-          description: Type of entity that owns this save slot
-        category:
-          $ref: '#/components/schemas/SaveCategory'
-          description: Save category of the slot
-        versionNumber:
+          description: Template ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        containerType:
+          type: string
+          description: Container type
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+        slotIndex:
           type: integer
-          description: Version number
-        sizeBytes:
-          type: integer
-          format: int64
-          description: Size in bytes
-        schemaVersion:
-          type: string
           nullable: true
-          description: Schema version
-        displayName:
-          type: string
-          nullable: true
-          description: Display name
-        pinned:
-          type: boolean
-          description: Whether pinned
-        checkpointName:
-          type: string
-          nullable: true
-          description: Checkpoint name
-        createdAt:
-          type: string
-          format: date-time
-          description: Creation timestamp
-        metadata:
-          type: object
-          additionalProperties:
-            type: string
-          description: Custom metadata
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # MIGRATION MODELS
-    # ═══════════════════════════════════════════════════════════════════════════
+          description: Slot position
 
     QuerySavesRequest:
       type: object
@@ -21109,6 +25806,52 @@ components:
           type: number
           nullable: true
           description: Average wait time in seconds (if available)
+
+    ReaffirmRequest:
+      type: object
+      description: Request to re-affirm after validation failure
+      required:
+      - escrowId
+      - partyId
+      - partyType
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party reaffirming
+        partyType:
+          type: string
+          description: Party type
+        releaseToken:
+          type: string
+          nullable: true
+          description: Release token
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    ReaffirmResponse:
+      type: object
+      description: Response from party re-affirming after validation failure
+      required:
+      - escrow
+      - allReaffirmed
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Reaffirmed escrow agreement
+        allReaffirmed:
+          type: boolean
+          description: Whether all parties have reaffirmed
+
+    # ==========================================================================
+    # Request/Response Models - Handlers
+    # ==========================================================================
 
     Realm:
       type: string
@@ -21467,6 +26210,7 @@ components:
       properties:
         realmId:
           type: string
+          format: uuid
           description: Unique identifier for the game realm
         name:
           type: string
@@ -21527,6 +26271,68 @@ components:
           type: string
           description: Refresh token issued during authentication to obtain a 
             new access token
+
+    RefundRequest:
+      type: object
+      description: Request to trigger escrow refund to depositors
+      required:
+      - escrowId
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        initiatorServiceId:
+          type: string
+          nullable: true
+          description: For initiator_trusted mode
+        reason:
+          type: string
+          nullable: true
+          description: Reason for refund
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    RefundResponse:
+      type: object
+      description: Response from refunding escrow assets to depositors
+      required:
+      - escrow
+      - refunds
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Refunded escrow agreement
+        refunds:
+          type: array
+          items:
+            $ref: '#/components/schemas/RefundResult'
+          description: Refund results per depositor
+
+    RefundResult:
+      type: object
+      description: Result of refunding assets to a single depositor
+      required:
+      - depositorPartyId
+      - success
+      properties:
+        depositorPartyId:
+          type: string
+          format: uuid
+          description: Depositor party ID
+        assets:
+          $ref: '#/components/schemas/EscrowAssetBundle'
+          description: Assets refunded (null if failed)
+          nullable: true
+        success:
+          type: boolean
+          description: Whether refund succeeded
+        error:
+          type: string
+          nullable: true
+          description: Error message if failed
 
     RegisterRequest:
       type: object
@@ -21823,6 +26629,69 @@ components:
           format: date-time
           description: Timestamp when the relationship type was last updated
 
+    ReleaseAllocation:
+      type: object
+      description: Defines who gets what on release
+      required:
+      - recipientPartyId
+      - recipientPartyType
+      - assets
+      properties:
+        recipientPartyId:
+          type: string
+          format: uuid
+          description: Party receiving assets
+        recipientPartyType:
+          type: string
+          description: Type of the recipient party
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAsset'
+          description: Assets this recipient should receive
+        destinationWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Where to deliver currency
+        destinationContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Where to deliver items
+
+    ReleaseAllocationInput:
+      type: object
+      description: Input for specifying how assets should be allocated on 
+        release
+      required:
+      - recipientPartyId
+      - recipientPartyType
+      - assets
+      properties:
+        recipientPartyId:
+          type: string
+          format: uuid
+          description: Recipient party ID
+        recipientPartyType:
+          type: string
+          description: Recipient party type
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAssetInput'
+          description: Assets to allocate
+        destinationWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination wallet
+        destinationContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Destination container
+
     ReleaseHoldRequest:
       type: object
       description: Request to release a hold
@@ -21834,6 +26703,107 @@ components:
           type: string
           format: uuid
           description: Hold ID to release
+
+    ReleaseRequest:
+      type: object
+      description: Request to trigger escrow release to recipients
+      required:
+      - escrowId
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        initiatorServiceId:
+          type: string
+          nullable: true
+          description: For initiator_trusted mode
+        notes:
+          type: string
+          nullable: true
+          description: Optional notes
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    ReleaseResponse:
+      type: object
+      description: Response from releasing escrow assets to recipients
+      required:
+      - escrow
+      - finalizerResults
+      - releases
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Released escrow agreement
+        finalizerResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinalizerResult'
+          description: Results of contract finalizer APIs
+        releases:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseResult'
+          description: Release results per recipient
+
+    ReleaseResult:
+      type: object
+      description: Result of releasing assets to a single recipient
+      required:
+      - recipientPartyId
+      - success
+      properties:
+        recipientPartyId:
+          type: string
+          format: uuid
+          description: Recipient party ID
+        assets:
+          $ref: '#/components/schemas/EscrowAssetBundle'
+          description: Assets released (null if failed)
+          nullable: true
+        success:
+          type: boolean
+          description: Whether release succeeded
+        error:
+          type: string
+          nullable: true
+          description: Error message if failed
+
+    RemoveItemRequest:
+      type: object
+      description: Request to remove item from container
+      additionalProperties: false
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to remove
+
+    RemoveItemResponse:
+      type: object
+      description: Response after removing item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - previousContainerId
+      properties:
+        success:
+          type: boolean
+          description: Whether remove succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Removed item ID
+        previousContainerId:
+          type: string
+          format: uuid
+          description: Container removed from
 
     RenameSlotRequest:
       type: object
@@ -22099,6 +27069,60 @@ components:
             type: string
           nullable: true
           description: Asset IDs that couldn't be found (null if all resolved)
+
+    ResolveRequest:
+      type: object
+      description: Request for arbiter to resolve a disputed escrow
+      required:
+      - escrowId
+      - arbiterId
+      - arbiterType
+      - resolution
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        arbiterId:
+          type: string
+          format: uuid
+          description: Arbiter ID
+        arbiterType:
+          type: string
+          description: Arbiter type
+        resolution:
+          $ref: '#/components/schemas/EscrowResolution'
+          description: Resolution decision for the dispute
+        splitAllocations:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SplitAllocation'
+          description: For split resolution
+        notes:
+          type: string
+          nullable: true
+          description: Resolution notes
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    ResolveResponse:
+      type: object
+      description: Response from arbiter resolving a disputed escrow
+      required:
+      - escrow
+      - transfers
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Resolved escrow agreement
+        transfers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferResult'
+          description: Transfer results
 
     ResolvedAsset:
       type: object
@@ -23169,6 +28193,45 @@ components:
             $ref: '#/components/schemas/SessionInfo'
           description: List of active sessions for the account
 
+    SetTemplateValuesRequest:
+      type: object
+      description: Request to set template values on a contract
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - templateValues
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateValues:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Key-value pairs for template substitution.
+            Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+
+    SetTemplateValuesResponse:
+      type: object
+      description: Response from setting template values
+      additionalProperties: false
+      required:
+      - updated
+      - contractId
+      properties:
+        updated:
+          type: boolean
+          description: Whether values were updated
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        valueCount:
+          type: integer
+          description: Number of template values set
+
     SiteSettings:
       description: Global website configuration including branding, languages, 
         and integrations
@@ -23306,6 +28369,15 @@ components:
       - descending
       - ascending
 
+    SoulboundType:
+      type: string
+      description: When item becomes bound to a character
+      enum:
+      - none
+      - on_pickup
+      - on_equip
+      - on_use
+
     SourceBundleReference:
       type: object
       additionalProperties: false
@@ -23333,6 +28405,43 @@ components:
           description: Hash of source bundle at composition time (for integrity 
             verification)
 
+    SpaceCandidate:
+      type: object
+      description: Potential placement location
+      additionalProperties: false
+      required:
+      - containerId
+      - containerType
+      - canFitQuantity
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        containerType:
+          type: string
+          description: Container type
+        canFitQuantity:
+          type: number
+          format: double
+          description: How much can fit
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Available slot
+        slotX:
+          type: integer
+          nullable: true
+          description: Available grid X
+        slotY:
+          type: integer
+          nullable: true
+          description: Available grid Y
+        existingStackInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Stack to merge with
     SpatialContext:
       type: object
       additionalProperties: true
@@ -23520,6 +28629,88 @@ components:
           format: date-time
           description: Timestamp when the species was last updated
 
+    SplitAllocation:
+      type: object
+      description: Allocation of assets to a party in a split resolution
+      required:
+      - partyId
+      - partyType
+      - assets
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party ID
+        partyType:
+          type: string
+          description: Party type
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowAssetInput'
+          description: Assets allocated to this party
+
+    SplitStackRequest:
+      type: object
+      description: Request to split a stack
+      additionalProperties: false
+      required:
+      - instanceId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Stack to split
+        quantity:
+          type: number
+          format: double
+          minimum: 1
+          description: Quantity to split off
+        targetSlotIndex:
+          type: integer
+          nullable: true
+          description: Slot for new stack
+        targetSlotX:
+          type: integer
+          nullable: true
+          description: Grid X for new stack
+        targetSlotY:
+          type: integer
+          nullable: true
+          description: Grid Y for new stack
+
+    SplitStackResponse:
+      type: object
+      description: Response after splitting
+      additionalProperties: false
+      required:
+      - success
+      - originalInstanceId
+      - newInstanceId
+      - originalQuantity
+      - newQuantity
+      properties:
+        success:
+          type: boolean
+          description: Whether split succeeded
+        originalInstanceId:
+          type: string
+          format: uuid
+          description: Original stack ID
+        newInstanceId:
+          type: string
+          format: uuid
+          description: New stack ID
+        originalQuantity:
+          type: number
+          format: double
+          description: Remaining quantity
+        newQuantity:
+          type: number
+          format: double
+          description: Split quantity
+
     StartEncounterRequest:
       type: object
       additionalProperties: false
@@ -23536,6 +28727,7 @@ components:
             encounter
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for this encounter
         encounterType:
           type: string
@@ -24268,6 +29460,82 @@ components:
       - escrow_release
       - escrow_refund
 
+    TransferContractPartyRequest:
+      type: object
+      description: Request to transfer a party role to a new entity
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - fromEntityId
+      - fromEntityType
+      - toEntityId
+      - toEntityType
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Current party entity ID
+        fromEntityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Current party entity type
+        toEntityId:
+          type: string
+          format: uuid
+          description: New entity ID to receive the role
+        toEntityType:
+          $ref: '#/components/schemas/EntityType'
+          description: New entity type
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (must be current guardian)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    TransferContractPartyResponse:
+      type: object
+      description: Response from transferring a party role
+      additionalProperties: false
+      required:
+      - transferred
+      - contractId
+      properties:
+        transferred:
+          type: boolean
+          description: Whether the transfer was successful
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        role:
+          type: string
+          description: Role that was transferred
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Previous party entity ID
+        toEntityId:
+          type: string
+          format: uuid
+          description: New party entity ID
+
+    # =========================================================================
+    # Clause Type Models
+    # =========================================================================
+
     TransferCurrencyRequest:
       type: object
       description: Request to transfer currency between wallets
@@ -24348,6 +29616,86 @@ components:
           nullable: true
           description: Amount lost due to target wallet cap
 
+    TransferItemRequest:
+      type: object
+      description: Request to transfer item ownership
+      additionalProperties: false
+      required:
+      - instanceId
+      - targetContainerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        quantity:
+          type: number
+          format: double
+          nullable: true
+          description: Quantity to transfer (all if null)
+
+    TransferItemResponse:
+      type: object
+      description: Response after transfer
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - sourceContainerId
+      - targetContainerId
+      - quantityTransferred
+      properties:
+        success:
+          type: boolean
+          description: Whether transfer succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Transferred item ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container
+        quantityTransferred:
+          type: number
+          format: double
+          description: Amount transferred
+
+    TransferResult:
+      type: object
+      description: Result of transferring assets to a party during resolution
+      required:
+      - partyId
+      - success
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          description: Party ID
+        assets:
+          $ref: '#/components/schemas/EscrowAssetBundle'
+          description: Assets transferred (null if failed)
+          nullable: true
+        success:
+          type: boolean
+          description: Whether transfer succeeded
+        error:
+          type: string
+          nullable: true
+          description: Error message if failed
+
+    # ==========================================================================
+    # Request/Response Models - Condition
+    # ==========================================================================
+
     Transform:
       type: object
       description: Position, rotation, and scale in 3D space
@@ -24396,6 +29744,49 @@ components:
             type: string
           nullable: true
           description: Rhythm pattern names to use
+
+    UnlockContractRequest:
+      type: object
+      description: Request to unlock a contract from guardian custody
+      additionalProperties: false
+      required:
+      - contractInstanceId
+      - guardianId
+      - guardianType
+      properties:
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance ID to unlock
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID (must match current guardian)
+        guardianType:
+          type: string
+          maxLength: 64
+          description: Guardian entity type
+        idempotencyKey:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional idempotency key for the operation
+
+    UnlockContractResponse:
+      type: object
+      description: Response from unlocking a contract
+      additionalProperties: false
+      required:
+      - unlocked
+      - contractId
+      properties:
+        unlocked:
+          type: boolean
+          description: Whether the contract was unlocked
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
 
     UnlockedAchievement:
       type: object
@@ -24633,6 +30024,68 @@ components:
           format: date-time
           description: When the update occurred
 
+    UpdateContainerRequest:
+      type: object
+      description: Request to update container properties
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to update
+        maxSlots:
+          type: integer
+          nullable: true
+          description: New max slots
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: New max weight
+        gridWidth:
+          type: integer
+          nullable: true
+          description: New grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: New grid height
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: New max volume
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New allowed categories
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New forbidden categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New allowed tags
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New container tags
+        metadata:
+          type: object
+          nullable: true
+          description: New metadata
+
     UpdateContractMetadataRequest:
       type: object
       description: Request to update contract metadata
@@ -24721,6 +30174,112 @@ components:
         currentPhase:
           type: string
           description: Current phase name after update
+
+    UpdateItemTemplateRequest:
+      type: object
+      description: Request to update mutable fields of an item template
+      additionalProperties: false
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID to update
+        name:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: New display name
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: New description
+        subcategory:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: New subcategory
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New tags (replaces existing)
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+          description: New rarity tier
+        weight:
+          type: number
+          format: double
+          nullable: true
+          description: New weight value
+        volume:
+          type: number
+          format: double
+          nullable: true
+          description: New volume value
+        gridWidth:
+          type: integer
+          nullable: true
+          description: New grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: New grid height
+        canRotate:
+          type: boolean
+          nullable: true
+          description: New rotation setting
+        baseValue:
+          type: number
+          format: double
+          nullable: true
+          description: New base value
+        tradeable:
+          type: boolean
+          nullable: true
+          description: New tradeable setting
+        destroyable:
+          type: boolean
+          nullable: true
+          description: New destroyable setting
+        maxDurability:
+          type: integer
+          nullable: true
+          description: New max durability
+        availableRealms:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: New available realms
+        stats:
+          type: object
+          nullable: true
+          description: New stats
+        effects:
+          type: object
+          nullable: true
+          description: New effects
+        requirements:
+          type: object
+          nullable: true
+          description: New requirements
+        display:
+          type: object
+          nullable: true
+          description: New display properties
+        metadata:
+          type: object
+          nullable: true
+          description: New metadata
+        isActive:
+          type: boolean
+          nullable: true
+          description: Active status
 
     UpdateLeaderboardDefinitionRequest:
       type: object
@@ -25009,6 +30568,52 @@ components:
           nullable: true
           description: ABML schema version used for validation
 
+    ValidateDepositRequest:
+      type: object
+      description: Request to validate a deposit without executing
+      required:
+      - escrowId
+      - partyId
+      - partyType
+      - assets
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        partyId:
+          type: string
+          format: uuid
+          description: Party to validate
+        partyType:
+          type: string
+          description: Party type
+        assets:
+          $ref: '#/components/schemas/EscrowAssetBundleInput'
+          description: Assets to validate
+
+    ValidateDepositResponse:
+      type: object
+      description: Response from deposit validation
+      required:
+      - valid
+      - errors
+      - warnings
+      properties:
+        valid:
+          type: boolean
+          description: Whether the deposit would be valid
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation errors
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Validation warnings
+
     ValidateGoapPlanRequest:
       description: Request to validate an existing GOAP plan against current 
         world state
@@ -25249,6 +30854,57 @@ components:
           description: YAML path to the problematic element
           example: "behaviors.morning_startup.actions[0]"
 
+    ValidationFailure:
+      type: object
+      description: Records a validation check failure
+      required:
+      - detectedAt
+      - assetType
+      - assetDescription
+      - failureType
+      - affectedPartyId
+      - affectedPartyType
+      properties:
+        detectedAt:
+          type: string
+          format: date-time
+          description: When the failure was detected
+        assetType:
+          type: string
+          description: Type of asset affected
+        assetDescription:
+          type: string
+          description: Description of the affected asset
+        failureType:
+          $ref: '#/components/schemas/ValidationFailureType'
+          description: Type of validation failure
+        affectedPartyId:
+          type: string
+          format: uuid
+          description: Which party deposit is affected
+        affectedPartyType:
+          type: string
+          description: Type of the affected party
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Additional failure details
+
+    ValidationFailureType:
+      type: string
+      description: |
+        Type of validation failure detected.
+        - asset_missing: Asset no longer exists in escrow custody
+        - asset_mutated: Asset properties changed (e.g., item durability)
+        - asset_expired: Asset has a time-based expiration that triggered
+        - balance_mismatch: Wallet balance does not match expected held amount
+      enum:
+      - asset_missing
+      - asset_mutated
+      - asset_expired
+      - balance_mismatch
+
     ValidationResult:
       type: object
       description: Result of scene validation
@@ -25366,6 +31022,57 @@ components:
           type: number
           format: double
           description: Z coordinate
+
+    VerifyConditionRequest:
+      type: object
+      description: Request to verify a condition for conditional escrow
+      required:
+      - escrowId
+      - conditionMet
+      - verifierId
+      - verifierType
+      - idempotencyKey
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: Escrow ID
+        conditionMet:
+          type: boolean
+          description: Whether the condition was met
+        verifierId:
+          type: string
+          format: uuid
+          description: Verifier entity ID
+        verifierType:
+          type: string
+          description: Verifier entity type
+        verificationData:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Proof/evidence data
+        idempotencyKey:
+          type: string
+          description: Idempotency key
+
+    VerifyConditionResponse:
+      type: object
+      description: Response from verifying a condition on an escrow
+      required:
+      - escrow
+      - triggered
+      properties:
+        escrow:
+          $ref: '#/components/schemas/EscrowAgreement'
+          description: Updated escrow agreement
+        triggered:
+          type: boolean
+          description: Whether this triggered release/refund
+
+    # ==========================================================================
+    # Request/Response Models - Validation
+    # ==========================================================================
 
     VerifyIntegrityRequest:
       type: object
@@ -25745,6 +31452,24 @@ components:
             $ref: '#/components/schemas/BalanceSummary'
           description: All non-zero balances in this wallet
 
+    WeightContribution:
+      type: string
+      description: How container weight propagates to parent
+      enum:
+      - none
+      - self_only
+      - self_plus_contents
+
+    WeightPrecision:
+      type: string
+      description: Precision for weight values (consistent with 
+        CurrencyPrecision)
+      enum:
+      - integer
+      - decimal_1
+      - decimal_2
+      - decimal_3
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -25820,6 +31545,12 @@ tags:
     progression.
 - name: Currency
   description: Multi-currency management service for game economies.
+- name: Escrow
+  description: Full-custody orchestration layer for multi-party asset exchanges.
+- name: Inventory
+  description: Container and inventory management service for games.
+- name: Item
+  description: Item template and instance management service.
 - name: Music Theory Engine
   description: Pure computation music generation using formal music theory 
     rules.
