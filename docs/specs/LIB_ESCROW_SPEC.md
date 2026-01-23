@@ -1,12 +1,13 @@
 # lib-escrow Service Specification
 
-> **Version**: 1.0.0
+> **Version**: 2.0.0
 > **Status**: Implementation Ready
 > **Created**: 2026-01-22
-> **Dependencies**: lib-state, lib-messaging
-> **Dependent Plugins**: lib-currency, lib-inventory (when implemented)
+> **Updated**: 2026-01-23
+> **Dependencies**: lib-state, lib-messaging, lib-currency, lib-inventory, lib-contract
+> **Dependent Plugins**: lib-market, lib-trade, lib-quest (future)
 
-This document is the implementation-ready specification for the `lib-escrow` service. It provides a generic multi-party escrow system that can hold currency, items, or both.
+This document is the implementation-ready specification for the `lib-escrow` service. It provides a generic multi-party escrow system with full asset custody, capable of holding currency, items, and contracts.
 
 ---
 
@@ -15,43 +16,48 @@ This document is the implementation-ready specification for the `lib-escrow` ser
 1. [Overview](#overview)
 2. [Plugin Configuration](#plugin-configuration)
 3. [Core Concepts](#core-concepts)
-4. [Asset Types](#asset-types)
+4. [Asset Types and Custody](#asset-types-and-custody)
 5. [Escrow Agreements](#escrow-agreements)
 6. [Parties and Roles](#parties-and-roles)
 7. [Trust Modes](#trust-modes)
 8. [Lifecycle and State Machine](#lifecycle-and-state-machine)
-9. [API Endpoints](#api-endpoints)
-10. [Events](#events)
-11. [State Stores](#state-stores)
-12. [Error Codes](#error-codes)
-13. [Integration Patterns](#integration-patterns)
+9. [Contract Integration](#contract-integration)
+10. [Finalization Flow](#finalization-flow)
+11. [Periodic Validation](#periodic-validation)
+12. [Dynamic Asset Handler Registration](#dynamic-asset-handler-registration)
+13. [API Endpoints](#api-endpoints)
+14. [Events](#events)
+15. [State Stores](#state-stores)
+16. [Error Codes](#error-codes)
+17. [Integration Examples](#integration-examples)
 
 ---
 
 ## 1. Overview
 
-lib-escrow provides a generic, multi-party escrow system that can hold any combination of assets:
-
-- **Currency amounts** - Via integration with lib-currency
-- **Item instances** - Via integration with lib-inventory (when implemented)
-- **Mixed deposits** - Currency AND items in the same escrow
+lib-escrow is a **full-custody orchestration layer** that sits ABOVE the foundational asset plugins. It creates its own wallets, containers, and contract locks to take complete possession of assets during multi-party agreements.
 
 ### Core Features
 
+- **Full custody**: Assets leave depositor possession entirely during escrow
+- **Entity-based ownership**: Escrow agreements own wallets and containers as first-class entities
+- **Contract integration**: Contracts can serve as conditions (terms), prizes (transferable assets), or both
 - **Flexible trust modes**: From full multi-party consent to trusted arbiters
 - **Token-based consent**: Cryptographic tokens prevent unauthorized actions
 - **Multi-party support**: 2-party trades, N-party deals, auction settlements
-- **Asset agnostic**: Works with any lockable/transferable asset type
-- **Resolution options**: Release, refund, split, arbiter-decided
+- **Periodic validation**: Ensures held assets remain valid throughout escrow lifetime
+- **Dynamic extensibility**: Custom asset types via handler registration
+- **Finalization hooks**: Contract prebound APIs can distribute fees before release
 
 ### What lib-escrow Does NOT Do
 
-- Manage currencies (lib-currency)
-- Manage inventories (lib-inventory)
+- Manage currencies (lib-currency provides wallets and transfers)
+- Manage inventories (lib-inventory provides containers and item movement)
+- Manage agreements (lib-contract provides milestones and terms)
 - Provide trade UI/UX (game layer)
-- Market/auction mechanics (lib-market)
+- Market/auction mechanics (lib-market, future)
 
-### Plugin Dependency Pattern
+### Plugin Dependency Diagram
 
 ```
 ┌─────────────────────────────────────────┐
@@ -60,25 +66,27 @@ lib-escrow provides a generic, multi-party escrow system that can hold any combi
                     │
          ┌──────────┼──────────┐
          ▼          ▼          ▼
-    lib-market  lib-trade  lib-quest
+    lib-market  lib-trade  lib-quest (future)
+         │          │          │
+         └──────────┼──────────┘
+                    │
+                    ▼
+             ┌────────────┐
+             │ lib-escrow │  ◄─── You are here (orchestration layer)
+             └──────┬─────┘
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+  lib-currency  lib-inventory  lib-contract (foundational plugins)
          │          │          │
          └──────────┼──────────┘
                     │
          ┌──────────┴──────────┐
          ▼                     ▼
-   lib-currency          lib-inventory
-         │                     │
-         └──────────┬──────────┘
-                    │
-                    ▼
-              lib-escrow  ◄─── You are here
-                    │
-         ┌──────────┴──────────┐
-         ▼                     ▼
-     lib-state          lib-messaging
+     lib-state          lib-messaging (infrastructure)
 ```
 
-lib-escrow sits BELOW lib-currency and lib-inventory, providing the foundational escrow mechanics that those plugins use to implement their locking/holding operations.
+lib-escrow sits ABOVE lib-currency, lib-inventory, and lib-contract. It orchestrates these foundational plugins by creating owned entities (wallets, containers) and performing standard transfers. The foundational plugins have no knowledge of lib-escrow.
 
 ---
 
@@ -146,6 +154,11 @@ EscrowPluginConfiguration:
   expirationBatchSize: integer
   default: 100
 
+  # How often to validate held assets
+  # Environment: ESCROW_VALIDATION_CHECK_INTERVAL
+  validationCheckInterval: duration
+  default: "PT5M"
+
   # ═══════════════════════════════════════════════════════════════
   # LIMITS
   # ═══════════════════════════════════════════════════════════════
@@ -170,47 +183,53 @@ EscrowPluginConfiguration:
 
 ## 3. Core Concepts
 
-### 3.1 Asset-Agnostic Design
+### 3.1 Full Custody Model
 
-lib-escrow doesn't know what currencies or items ARE - it only knows how to hold "asset references" and orchestrate multi-party agreements. The asset-owning plugins (lib-currency, lib-inventory) implement the actual lock/unlock/transfer operations.
+lib-escrow takes **complete physical possession** of assets. This is not locking or holds - assets are transferred entirely out of depositor ownership.
 
 ```
-Escrow creates agreement with asset requirements
-         │
-         ▼
-Party deposits asset reference
-         │
-         ▼
-Escrow calls asset plugin to LOCK the asset
-         │
-         ▼
-[...escrow lifecycle...]
-         │
-         ▼
-Escrow resolves → calls asset plugin to TRANSFER or UNLOCK
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│   Depositor     │         │   Escrow Entity  │         │   Recipient     │
+│                 │         │                  │         │                 │
+│  Wallet: 500g   │──debit──►│  Wallet: 500g    │──credit─►│  Wallet: +500g  │
+│  Inventory: ⚔️   │──move───►│  Container: ⚔️   │──move───►│  Inventory: ⚔️  │
+│  Contract: 📜   │──lock───►│  Locked: 📜      │──xfer───►│  Contract: 📜   │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+       DEPOSIT                  HELD IN ESCROW                 RELEASE
 ```
 
-### 3.2 Pull vs Push Model
+### 3.2 Escrow as Entity Owner
 
-lib-escrow uses a **callback/integration pattern** where asset plugins register handlers:
+Each escrow agreement is a first-class entity that owns infrastructure:
 
-```yaml
-AssetHandlerRegistration:
-  assetType: string          # "currency" | "item" | custom
-  lockHandler: delegate      # Called to lock assets on deposit
-  unlockHandler: delegate    # Called to unlock assets on refund
-  transferHandler: delegate  # Called to transfer assets on release
-```
+- **Wallet**: Created via `/currency/wallet/create` with `ownerType=escrow`, `ownerId=agreementId`
+- **Container**: Created via `/inventory/create-container` with `ownerType=escrow`, `ownerId=agreementId`
+- **Contract locks**: Established via lib-contract's locking mechanism
 
-### 3.3 Idempotency
+These are real, queryable entities in their respective systems. The escrow service orchestrates transfers into and out of them.
 
-All mutating operations require idempotency keys. lib-escrow maintains its own idempotency cache separate from asset plugins to prevent duplicate escrow operations.
+### 3.3 Asset Transfer Mechanics
+
+| Asset Type | Deposit Operation | Release Operation | Refund Operation |
+|-----------|-------------------|-------------------|------------------|
+| **Currency** | `/currency/transfer` (depositor wallet → escrow wallet) | `/currency/transfer` (escrow wallet → recipient wallet) | `/currency/transfer` (escrow wallet → depositor wallet) |
+| **Item** | `/inventory/transfer` (depositor container → escrow container) | `/inventory/transfer` (escrow container → recipient container) | `/inventory/transfer` (escrow container → depositor container) |
+| **Contract** | `/contract/lock` (escrow becomes guardian) | `/contract/transfer-party` (reassign to recipient) | `/contract/unlock` (return to original state) |
+| **Custom** | Registered deposit endpoint | Registered release endpoint | Registered refund endpoint |
+
+### 3.4 Idempotency
+
+All mutating operations require idempotency keys. lib-escrow maintains its own idempotency cache to prevent duplicate operations.
+
+### 3.5 Soulbound Item Rejection
+
+Items with `soulbound=true` or `tradeable=false` are **rejected at deposit time** with error `ASSET_DEPOSIT_REJECTED`. This is a hard rejection - soulbound items cannot enter escrow regardless of trust mode.
 
 ---
 
-## 4. Asset Types
+## 4. Asset Types and Custody
 
-Assets are represented as polymorphic references that the owning plugin can interpret.
+Assets are represented as polymorphic references identifying what is held in escrow.
 
 ```yaml
 # Schema: EscrowAsset
@@ -223,11 +242,15 @@ EscrowAsset:
   assetType: AssetType
   values:
     - currency:
-        description: "Currency amount from lib-currency"
+        description: "Currency amount held in escrow's wallet"
     - item:
-        description: "Item instance from lib-inventory"
+        description: "Item instance held in escrow's container"
     - item_stack:
-        description: "Stackable items (quantity from template)"
+        description: "Stackable items (quantity) held in escrow's container"
+    - contract:
+        description: "Contract instance locked under escrow guardianship"
+    - custom:
+        description: "Custom asset type via registered handler"
 
   # ═══════════════════════════════════════════════════════════════
   # CURRENCY ASSETS
@@ -268,6 +291,37 @@ EscrowAsset:
   nullable: true
 
   # ═══════════════════════════════════════════════════════════════
+  # CONTRACT ASSETS
+  # ═══════════════════════════════════════════════════════════════
+
+  # For assetType=contract
+  contractInstanceId: uuid
+  nullable: true
+
+  contractTemplateCode: string
+  nullable: true
+  notes: "Denormalized for display/logging"
+
+  contractDescription: string
+  nullable: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # CUSTOM ASSETS
+  # ═══════════════════════════════════════════════════════════════
+
+  # For assetType=custom
+  customAssetType: string
+  nullable: true
+  notes: "Registered handler type identifier"
+
+  customAssetId: string
+  nullable: true
+
+  customAssetData: object
+  nullable: true
+  notes: "Handler-specific data passed to deposit/release/refund endpoints"
+
+  # ═══════════════════════════════════════════════════════════════
   # SOURCE TRACKING
   # ═══════════════════════════════════════════════════════════════
 
@@ -275,8 +329,9 @@ EscrowAsset:
   sourceOwnerId: uuid
   sourceOwnerType: string
 
-  # For currency: wallet ID
-  # For items: inventory ID or container ID
+  # For currency: source wallet ID
+  # For items: source container ID
+  # For contracts: original party being reassigned
   sourceContainerId: uuid
   nullable: true
 ```
@@ -303,7 +358,7 @@ EscrowAssetBundle:
 
 ## 5. Escrow Agreements
 
-The central entity tracking a multi-party escrow.
+The central entity tracking a multi-party escrow with full custody.
 
 ```yaml
 # Schema: EscrowAgreement
@@ -321,7 +376,7 @@ EscrowAgreement:
     - multi_party:
         description: "N parties with complex deposit/receive rules"
     - conditional:
-        description: "Release based on external condition verification"
+        description: "Release based on external condition or contract fulfillment"
     - auction:
         description: "Winner-takes-all with refunds to losers"
 
@@ -358,6 +413,18 @@ EscrowAgreement:
   nullable: true
 
   # ═══════════════════════════════════════════════════════════════
+  # OWNED INFRASTRUCTURE
+  # ═══════════════════════════════════════════════════════════════
+
+  # Escrow's own wallet (created on agreement creation)
+  escrowWalletId: uuid
+  notes: "Created via /currency/wallet/create with ownerType=escrow"
+
+  # Escrow's own container (created on agreement creation)
+  escrowContainerId: uuid
+  notes: "Created via /inventory/create-container with ownerType=escrow"
+
+  # ═══════════════════════════════════════════════════════════════
   # PARTIES
   # ═══════════════════════════════════════════════════════════════
 
@@ -392,6 +459,19 @@ EscrowAgreement:
   nullable: true
 
   # ═══════════════════════════════════════════════════════════════
+  # CONTRACT BINDING
+  # ═══════════════════════════════════════════════════════════════
+
+  # If this escrow's conditions are governed by a contract
+  boundContractId: uuid
+  nullable: true
+  notes: |
+    When set, escrow listens to contract milestone events.
+    contract.fulfilled → triggers release.
+    contract.failed (permanent) → triggers refund.
+    Manual release checks contract completion status (not an override).
+
+  # ═══════════════════════════════════════════════════════════════
   # STATUS
   # ═══════════════════════════════════════════════════════════════
 
@@ -402,11 +482,13 @@ EscrowAgreement:
     - partially_funded:
         description: "Some but not all deposits received"
     - funded:
-        description: "All deposits received, awaiting consent"
+        description: "All deposits received, awaiting consent/condition"
     - pending_consent:
         description: "Some consents received, waiting for more"
     - pending_condition:
-        description: "For conditional: waiting for external verification"
+        description: "For conditional: waiting for contract fulfillment or external verification"
+    - finalizing:
+        description: "Running contract finalizer prebound APIs (transient)"
     - releasing:
         description: "Release in progress (transient)"
     - released:
@@ -421,6 +503,18 @@ EscrowAgreement:
         description: "Timed out without completion"
     - cancelled:
         description: "Cancelled before funding complete"
+    - validation_failed:
+        description: "Held assets changed, awaiting re-affirmation or violation resolution"
+
+  # ═══════════════════════════════════════════════════════════════
+  # VALIDATION
+  # ═══════════════════════════════════════════════════════════════
+
+  lastValidatedAt: timestamp
+  nullable: true
+
+  validationFailures: [ValidationFailure]
+  nullable: true
 
   # ═══════════════════════════════════════════════════════════════
   # CONSENTS
@@ -483,6 +577,8 @@ EscrowAgreement:
         description: "Timed out, auto-refunded"
     - cancelled_refunded:
         description: "Cancelled, deposits refunded"
+    - violation_refunded:
+        description: "Validation failure caused refund"
 
   resolutionNotes: string
   nullable: true
@@ -532,6 +628,18 @@ EscrowParty:
   consentRequired: boolean
   default: true
   notes: "Arbiters and observers typically have this false"
+
+  # ═══════════════════════════════════════════════════════════════
+  # PARTY INFRASTRUCTURE REFERENCES
+  # ═══════════════════════════════════════════════════════════════
+
+  # Party's wallet (for currency deposits/receipts)
+  walletId: uuid
+  nullable: true
+
+  # Party's container (for item deposits/receipts)
+  containerId: uuid
+  nullable: true
 
   # ═══════════════════════════════════════════════════════════════
   # TOKENS (for full_consent mode)
@@ -602,21 +710,6 @@ EscrowDeposit:
 
   # Idempotency key for this deposit
   idempotencyKey: string
-
-  # Lock references (for unlock on refund)
-  assetLockReferences: [AssetLockReference]
-```
-
-```yaml
-# Schema: AssetLockReference
-# Tracks locks placed on assets for refund/release
-AssetLockReference:
-  assetType: string
-  lockId: uuid
-
-  # Plugin-specific lock reference
-  pluginLockData: object
-  nullable: true
 ```
 
 ```yaml
@@ -629,7 +722,10 @@ ReleaseAllocation:
   # Which assets this recipient should receive
   assets: [EscrowAsset]
 
-  # Where to deliver (wallet ID, inventory ID, etc.)
+  # Where to deliver (wallet ID, container ID, etc.)
+  destinationWalletId: uuid
+  nullable: true
+
   destinationContainerId: uuid
   nullable: true
 ```
@@ -649,6 +745,8 @@ EscrowConsent:
         description: "Agrees to refund assets to depositors"
     - dispute:
         description: "Raises a dispute"
+    - reaffirm:
+        description: "Re-affirms after validation failure"
 
   consentedAt: timestamp
 
@@ -657,6 +755,34 @@ EscrowConsent:
   nullable: true
 
   notes: string
+  nullable: true
+```
+
+```yaml
+# Schema: ValidationFailure
+# Records a validation check failure
+ValidationFailure:
+  detectedAt: timestamp
+
+  assetType: string
+  assetDescription: string
+
+  failureType: ValidationFailureType
+  values:
+    - asset_missing:
+        description: "Asset no longer exists in escrow's custody"
+    - asset_mutated:
+        description: "Asset properties changed (e.g., item durability, contract terms)"
+    - asset_expired:
+        description: "Asset has a time-based expiration that triggered"
+    - balance_mismatch:
+        description: "Wallet balance doesn't match expected held amount"
+
+  # Which party's deposit is affected
+  affectedPartyId: uuid
+  affectedPartyType: string
+
+  details: object
   nullable: true
 ```
 
@@ -673,7 +799,7 @@ All parties must explicitly consent using cryptographic tokens.
 2. Each depositor uses their deposit token to deposit assets
 3. When fully funded → release tokens issued to parties with consentRequired=true
 4. Each required party uses their release token to consent
-5. When requiredConsentsForRelease reached → assets released
+5. When requiredConsentsForRelease reached → finalization begins
 
 **Security:**
 - Tokens are single-use
@@ -693,7 +819,7 @@ The service that created the escrow can complete it unilaterally.
 **Flow:**
 1. Service creates escrow with `trustMode: initiator_trusted`
 2. Service directs parties to deposit (may use deposit tokens or not)
-3. Service calls complete/refund directly with service credentials
+3. Service calls release/refund directly with service credentials
 
 ### 7.3 Single Party Trusted
 
@@ -717,7 +843,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
                                     ┌─────────────┐
                                     │   CREATED   │
                                     └──────┬──────┘
-                                           │
+                                           │ (wallet + container created)
                               ┌────────────┼────────────┐
                               │            │            │
                               ▼            ▼            ▼
@@ -739,58 +865,345 @@ A designated party (arbiter) can complete the escrow unilaterally.
                                     │   FUNDED    │
                                     └──────┬──────┘
                                            │
-              ┌────────────────────────────┼────────────────────────────┐
-              │                            │                            │
-              ▼                            ▼                            ▼
+              ┌────────────────────────────┼─────────────────────────────┐
+              │                            │                             │
+              ▼                            ▼                             ▼
+       ┌────────────┐              ┌─────────────┐              ┌────────────────┐
+       │  DISPUTED  │              │   PENDING   │              │    PENDING     │
+       │            │◄─────────────│   CONSENT   │              │   CONDITION    │
+       └──────┬─────┘              └──────┬──────┘              └───────┬────────┘
+              │                           │                             │
+              │    ┌──────────────────────┼────────────────────────┐    │
+              │    │                      │                        │    │
+              ▼    ▼                      ▼                        ▼    ▼
        ┌────────────┐              ┌─────────────┐              ┌────────────┐
-       │  DISPUTED  │              │   PENDING   │              │  PENDING   │
-       │            │◄─────────────│   CONSENT   │              │ CONDITION  │
-       └──────┬─────┘              └──────┬──────┘              └──────┬─────┘
-              │                           │                            │
-              │    ┌──────────────────────┼──────────────────────┐     │
-              │    │                      │                      │     │
-              ▼    ▼                      ▼                      ▼     ▼
-       ┌────────────┐              ┌─────────────┐              ┌────────────┐
-       │ REFUNDED   │              │  RELEASING  │              │ EXPIRED    │
+       │ REFUNDED   │              │ FINALIZING  │              │ EXPIRED    │
        │            │              │ (transient) │              │ (refunded) │
        └────────────┘              └──────┬──────┘              └────────────┘
                                           │
                                           ▼
                                    ┌─────────────┐
+                                   │  RELEASING  │
+                                   │ (transient) │
+                                   └──────┬──────┘
+                                          │
+                                          ▼
+                                   ┌─────────────┐
                                    │  RELEASED   │
                                    └─────────────┘
+
+
+Validation can interrupt any active state:
+
+       ┌─────────────────────┐
+       │  Any active state   │ (funded, pending_consent, pending_condition)
+       └──────────┬──────────┘
+                  │ (validation fails)
+                  ▼
+       ┌─────────────────────┐
+       │  VALIDATION_FAILED  │
+       └──────────┬──────────┘
+                  │
+         ┌────────┼────────┐
+         │        │        │
+         ▼        ▼        ▼
+    (reaffirm) (refund) (violation)
 ```
 
 ### State Transitions
 
 | From | To | Trigger |
 |------|-----|---------|
-| created | pending_deposits | Initial state |
+| created | pending_deposits | Initial state after wallet/container creation |
 | pending_deposits | partially_funded | First deposit received |
 | pending_deposits | cancelled | Cancel before deposits |
 | pending_deposits | expired | Timeout |
 | partially_funded | funded | All expected deposits received |
 | partially_funded | cancelled | Cancel (refunds partial) |
 | partially_funded | expired | Timeout (refunds partial) |
-| funded | pending_consent | Awaiting party consents |
+| funded | pending_consent | Awaiting party consents (non-conditional) |
 | funded | pending_condition | For conditional type |
 | funded | disputed | Party raises dispute |
-| pending_consent | released | Required consents reached |
+| pending_consent | finalizing | Required consents reached |
 | pending_consent | refunded | All consent to refund |
 | pending_consent | disputed | Party raises dispute |
 | pending_consent | expired | Timeout |
-| pending_condition | released | Condition verified |
-| pending_condition | refunded | Condition failed |
+| pending_condition | finalizing | Contract fulfilled or condition verified |
+| pending_condition | refunded | Contract permanently failed or condition failed |
 | pending_condition | expired | Timeout |
+| finalizing | releasing | Finalizer APIs complete successfully |
+| finalizing | refunded | Finalizer APIs indicate failure |
+| releasing | released | All transfers complete |
 | disputed | released | Arbiter releases |
 | disputed | refunded | Arbiter refunds |
 | disputed | split | Arbiter splits |
+| any active | validation_failed | Periodic validation detects change |
+| validation_failed | previous active | All parties re-affirm |
+| validation_failed | refunded | Violation resolution triggers refund |
 
 ---
 
-## 9. API Endpoints
+## 9. Contract Integration
 
-### 9.1 Escrow Lifecycle
+lib-escrow integrates with lib-contract in three distinct ways:
+
+### 9.1 Contract as Condition (Bound Contract)
+
+When `boundContractId` is set on an escrow, the contract governs release:
+
+```yaml
+# Escrow listens to these events for its bound contract:
+contract.fulfilled:
+  action: Transition to finalizing → releasing → released
+
+contract.breached (permanent):
+  action: Transition to refunding → refunded
+
+contract.terminated:
+  action: Transition to refunding → refunded
+```
+
+**Manual release with bound contract**: When a party triggers manual release on an escrow with `boundContractId`, the escrow checks the contract's current status via `/contract/instance/get-status`. If the contract is not in `fulfilled` status, the release is rejected. This is NOT an override - the manual trigger is a convenience for when the event was missed, not a way to bypass the contract.
+
+### 9.2 Contract as Prize (Deposited Asset)
+
+Contract instances can be deposited as `assetType=contract`. When deposited:
+
+1. lib-escrow calls `/contract/lock` with `guardianId=escrowId`, `guardianType=escrow`
+2. The contract becomes locked: no party can modify, terminate, or transfer it
+3. On release: lib-escrow calls `/contract/transfer-party` to reassign the relevant party role to the recipient
+4. On refund: lib-escrow calls `/contract/unlock` to restore the contract to its original state
+
+**Example**: Land deed (a contract between owner and realm) held in escrow during a property sale. The deed contract is locked so the seller can't void it, then transferred to the buyer on completion.
+
+### 9.3 Contract as Both Condition AND Prize
+
+An escrow can have a `boundContractId` (conditions) AND hold contracts as deposited assets (prizes). These are independent:
+
+- The bound contract governs WHEN release happens
+- The deposited contracts are WHAT gets released
+
+**Example**: A property sale where:
+- Bound contract: "Buyer pays X gold within 7 days" (milestones: payment_deposited, inspection_complete)
+- Deposited contract: The land deed itself (transferred to buyer on release)
+- Deposited currency: The purchase price (transferred to seller on release)
+
+---
+
+## 10. Finalization Flow
+
+When an escrow transitions to `finalizing`, a multi-step process runs before assets are released:
+
+### 10.1 Finalization Steps
+
+```
+1. Escrow conditions met (contract fulfilled / consent reached / condition verified)
+         │
+         ▼
+2. Status → FINALIZING
+         │
+         ▼
+3. If boundContractId exists:
+   - Read contract's finalizer prebound APIs (onFulfill/onTerminate)
+   - Substitute template variables including {{EscrowWalletId}} and {{EscrowContainerId}}
+   - Execute finalizer APIs (these can move fees/items to third parties)
+         │
+         ▼
+4. If any finalizer fails critically:
+   - Status → REFUNDING (abort release, return all assets)
+         │
+         ▼
+5. Status → RELEASING
+   - Transfer remaining assets from escrow wallet/container to recipients
+   - Transfer/unlock deposited contracts to recipients
+         │
+         ▼
+6. Status → RELEASED
+   - Cleanup: close wallet, delete container
+   - Publish escrow.released event
+```
+
+### 10.2 Template Variables for Finalizer APIs
+
+When executing a bound contract's finalizer prebound APIs, lib-escrow provides these additional context variables:
+
+| Variable | Description |
+|----------|-------------|
+| `{{EscrowWalletId}}` | The escrow agreement's wallet ID |
+| `{{EscrowContainerId}}` | The escrow agreement's container ID |
+| `{{EscrowAgreementId}}` | The escrow agreement's ID |
+
+This allows contract terms to specify fee distribution from the escrow's own holdings:
+
+```yaml
+# Example: Contract milestone onFulfill takes 5% broker fee
+serviceName: "currency"
+endpoint: "/currency/transfer"
+payloadTemplate: |
+  {
+    "source_wallet_id": "{{EscrowWalletId}}",
+    "target_wallet_id": "{{contract.terms.broker_wallet_id}}",
+    "currency_id": "{{contract.terms.fee_currency_id}}",
+    "amount": {{contract.terms.broker_fee_amount}},
+    "reference_id": "{{EscrowAgreementId}}",
+    "reference_type": "escrow_fee"
+  }
+```
+
+```yaml
+# Example: Move specific items to a third party (lawyer's cut)
+serviceName: "inventory"
+endpoint: "/inventory/transfer"
+payloadTemplate: |
+  {
+    "source_container_id": "{{EscrowContainerId}}",
+    "target_container_id": "{{contract.terms.lawyer_container_id}}",
+    "item_instance_id": "{{contract.terms.fee_item_id}}",
+    "reference_id": "{{EscrowAgreementId}}",
+    "reference_type": "escrow_fee"
+  }
+```
+
+### 10.3 Fee Handling Design
+
+Fees are NOT a built-in escrow feature. Instead, they are implemented through contract terms:
+
+1. The contract template specifies that each party must deposit X extra (fee amount) into escrow
+2. The contract's `onFulfill` prebound APIs specify where the fee goes (broker, lawyer, guild treasury, etc.)
+3. During finalization, these APIs execute FIRST, moving fees from the escrow's wallet/container to third parties
+4. The remaining assets in escrow are then released to the designated recipients
+
+This means:
+- lib-escrow has no fee logic
+- Fees are just contract terms
+- Fee distribution is just prebound API execution
+- Any fee structure is possible (flat, percentage, multi-party splits)
+
+---
+
+## 11. Periodic Validation
+
+lib-escrow periodically validates that held assets remain intact and unchanged.
+
+### 11.1 What Gets Validated
+
+| Asset Type | Validation Check |
+|-----------|-----------------|
+| **Currency** | Query escrow wallet balance matches expected total for each currency |
+| **Items** | Query escrow container, verify each expected item instance still exists |
+| **Item Stacks** | Verify stack quantity hasn't decreased |
+| **Contracts** | Query contract status, verify still locked and valid (not externally voided) |
+| **Custom** | Call registered validate endpoint |
+
+### 11.2 Validation Frequency
+
+Configured via `validationCheckInterval` (default: 5 minutes). Only active escrows are validated (status in: funded, pending_consent, pending_condition).
+
+### 11.3 Failure Handling
+
+When validation detects a discrepancy:
+
+1. Escrow transitions to `validation_failed` status
+2. A `ValidationFailure` record is created identifying:
+   - Which asset changed
+   - How it changed (missing, mutated, expired, balance mismatch)
+   - Which party's deposit is affected
+3. Event `escrow.validation.failed` is published
+4. Both parties receive notification
+
+### 11.4 Resolution Options
+
+After validation failure, two paths:
+
+**Re-affirmation**: All parties consent (type=reaffirm) to continue with the changed state. The escrow returns to its previous active state. This handles cases where both sides agree the change is acceptable.
+
+**Violation**: The party whose assets changed is considered in violation. The other party can:
+- Trigger refund (get their own deposits back)
+- The violating party's changed/missing assets are handled as-is (if items disappeared, they don't get refunded what no longer exists)
+
+### 11.5 What Causes Validation Failures
+
+- Item with durability reaching 0 (broken) while in escrow container
+- Item with time-limited existence expiring
+- External admin action removing funds from escrow wallet (shouldn't happen, but detected)
+- Contract being forcibly terminated by admin while locked
+- Custom asset handler reporting invalid state
+
+---
+
+## 12. Dynamic Asset Handler Registration
+
+### 12.1 Built-in Asset Types
+
+lib-escrow has hardcoded knowledge of three asset types:
+
+| Type | Deposit Mechanism | Release Mechanism | Validate Mechanism |
+|------|-------------------|-------------------|-------------------|
+| `currency` | `/currency/transfer` into escrow wallet | `/currency/transfer` out of escrow wallet | Check wallet balance |
+| `item` / `item_stack` | `/inventory/transfer` into escrow container | `/inventory/transfer` out of escrow container | Check container contents |
+| `contract` | `/contract/lock` with escrow as guardian | `/contract/transfer-party` to recipient | Check contract status |
+
+### 12.2 Custom Asset Types
+
+For games with asset types beyond currency/items/contracts, lib-escrow provides a handler registration system.
+
+```yaml
+# Schema: AssetHandlerRegistration
+AssetHandlerRegistration:
+  assetType: string
+  notes: "Unique identifier, e.g., 'guild_ownership', 'land_plot', 'character_slot'"
+
+  pluginId: string
+  notes: "Which plugin implements this handler"
+
+  # Called when depositing this asset type into escrow
+  depositEndpoint: string
+  notes: "Must accept: { assetId, assetData, escrowId, idempotencyKey } and take custody"
+
+  # Called when releasing this asset type to recipient
+  releaseEndpoint: string
+  notes: "Must accept: { assetId, assetData, recipientId, recipientType, escrowId, idempotencyKey }"
+
+  # Called when refunding this asset type to depositor
+  refundEndpoint: string
+  notes: "Must accept: { assetId, assetData, depositorId, depositorType, escrowId, idempotencyKey }"
+
+  # Called during periodic validation to check asset is still valid
+  validateEndpoint: string
+  notes: "Must accept: { assetId, assetData, escrowId } and return { valid, details }"
+```
+
+**Example: Guild Ownership Handler**
+
+```yaml
+assetType: "guild_ownership"
+pluginId: "lib-guild"
+depositEndpoint: "/guild/escrow/deposit"
+  # Takes custody: sets guild owner to escrow entity, prevents member changes
+releaseEndpoint: "/guild/escrow/release"
+  # Transfers: sets guild owner to recipient
+refundEndpoint: "/guild/escrow/refund"
+  # Returns: sets guild owner back to depositor
+validateEndpoint: "/guild/escrow/validate"
+  # Checks: guild still exists, hasn't been disbanded
+```
+
+### 12.3 Handler Contract
+
+All custom handlers must implement these guarantees:
+
+1. **Deposit**: Take full custody. The original owner loses all control.
+2. **Release**: Transfer custody to the specified recipient. Escrow loses control.
+3. **Refund**: Return custody to the original depositor. Escrow loses control.
+4. **Validate**: Report whether the asset is still in the expected state.
+5. **Idempotency**: All operations must be idempotent using the provided key.
+6. **Atomicity**: Each operation either fully succeeds or fully fails (no partial states).
+
+---
+
+## 13. API Endpoints
+
+### 13.1 Escrow Lifecycle
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
@@ -800,7 +1213,9 @@ A designated party (arbiter) can complete the escrow unilaterally.
 /escrow/create:
   method: POST
   access: authenticated
-  description: Create a new escrow agreement
+  description: |
+    Create a new escrow agreement. Creates the escrow's wallet and container,
+    issues deposit tokens, and begins accepting deposits.
   request:
     escrowType: EscrowType
     trustMode: EscrowTrustMode
@@ -813,6 +1228,8 @@ A designated party (arbiter) can complete the escrow unilaterally.
         displayName: string
         role: EscrowPartyRole
         consentRequired: boolean
+        walletId: uuid                # Party's wallet for currency ops
+        containerId: uuid             # Party's container for item ops
       }
     ]
     expectedDeposits: [
@@ -824,16 +1241,18 @@ A designated party (arbiter) can complete the escrow unilaterally.
         depositDeadline: timestamp
       }
     ]
-    releaseAllocations: [              # Optional, can derive from deposits
+    releaseAllocations: [             # Optional, can derive from deposits
       {
         recipientPartyId: uuid
         recipientPartyType: string
         assets: [EscrowAsset]
+        destinationWalletId: uuid
         destinationContainerId: uuid
       }
     ]
+    boundContractId: uuid             # Optional: contract governing conditions
     requiredConsentsForRelease: integer
-    expiresAt: timestamp               # Optional, uses default
+    expiresAt: timestamp              # Optional, uses default
     referenceType: string
     referenceId: uuid
     description: string
@@ -841,7 +1260,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
     idempotencyKey: string
   response:
     escrow: EscrowAgreement
-    depositTokens: [                   # For full_consent mode
+    depositTokens: [                  # For full_consent mode
       { partyId: uuid, partyType: string, depositToken: string }
     ]
   errors:
@@ -852,6 +1271,9 @@ A designated party (arbiter) can complete the escrow unilaterally.
     - EXPIRES_TOO_SOON
     - EXPIRES_TOO_LATE
     - MAX_PENDING_ESCROWS_EXCEEDED
+    - WALLET_CREATION_FAILED
+    - CONTAINER_CREATION_FAILED
+    - BOUND_CONTRACT_NOT_FOUND
 
 /escrow/get:
   method: POST
@@ -872,7 +1294,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
   request:
     partyId: uuid
     partyType: string
-    status: [EscrowStatus]             # Filter by status
+    status: [EscrowStatus]            # Filter by status
     referenceType: string
     referenceId: uuid
     fromDate: timestamp
@@ -884,7 +1306,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
     totalCount: integer
 ```
 
-### 9.2 Deposits
+### 13.2 Deposits
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
@@ -894,19 +1316,22 @@ A designated party (arbiter) can complete the escrow unilaterally.
 /escrow/deposit:
   method: POST
   access: authenticated
-  description: Deposit assets into escrow
+  description: |
+    Deposit assets into escrow. Transfers currency from party wallet to escrow wallet,
+    moves items from party container to escrow container, or locks contracts.
+    Rejects soulbound/non-tradeable items.
   request:
     escrowId: uuid
     partyId: uuid
     partyType: string
     assets: EscrowAssetBundle
-    depositToken: string               # Required for full_consent
+    depositToken: string              # Required for full_consent
     idempotencyKey: string
   response:
     escrow: EscrowAgreement
     deposit: EscrowDeposit
     fullyFunded: boolean
-    releaseTokens: [                   # Issued when fully funded
+    releaseTokens: [                  # Issued when fully funded
       { partyId: uuid, partyType: string, releaseToken: string }
     ]
   errors:
@@ -915,14 +1340,20 @@ A designated party (arbiter) can complete the escrow unilaterally.
     - ESCROW_NOT_ACCEPTING_DEPOSITS
     - INVALID_DEPOSIT_TOKEN
     - DEPOSIT_TOKEN_ALREADY_USED
-    - ASSET_LOCK_FAILED
+    - ASSET_DEPOSIT_REJECTED
     - DEPOSIT_EXCEEDS_EXPECTED
     - DEPOSIT_ASSETS_MISMATCH
+    - INSUFFICIENT_BALANCE
+    - ITEM_NOT_FOUND
+    - ITEM_SOULBOUND
+    - CONTRACT_NOT_FOUND
+    - CONTRACT_NOT_TRANSFERABLE
+    - TRANSFER_FAILED
 
 /escrow/deposit/validate:
   method: POST
   access: authenticated
-  description: Validate a deposit without executing
+  description: Validate a deposit without executing (dry run)
   request:
     escrowId: uuid
     partyId: uuid
@@ -945,11 +1376,11 @@ A designated party (arbiter) can complete the escrow unilaterally.
     expectedAssets: [EscrowAsset]
     depositedAssets: [EscrowAsset]
     fulfilled: boolean
-    depositToken: string               # If not yet used
+    depositToken: string              # If not yet used
     depositDeadline: timestamp
 ```
 
-### 9.3 Consent and Resolution
+### 13.3 Consent and Resolution
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
@@ -959,19 +1390,19 @@ A designated party (arbiter) can complete the escrow unilaterally.
 /escrow/consent:
   method: POST
   access: authenticated
-  description: Record party consent for release or refund
+  description: Record party consent for release, refund, or re-affirmation
   request:
     escrowId: uuid
     partyId: uuid
     partyType: string
     consentType: EscrowConsentType
-    releaseToken: string               # Required for full_consent
+    releaseToken: string              # Required for full_consent
     notes: string
     idempotencyKey: string
   response:
     escrow: EscrowAgreement
     consentRecorded: boolean
-    triggered: boolean                 # Did this consent trigger completion?
+    triggered: boolean                # Did this consent trigger completion?
     newStatus: EscrowStatus
   errors:
     - ESCROW_NOT_FOUND
@@ -981,6 +1412,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
     - RELEASE_TOKEN_ALREADY_USED
     - ALREADY_CONSENTED
     - CONSENT_NOT_REQUIRED
+    - BOUND_CONTRACT_NOT_FULFILLED
 
 /escrow/consent/status:
   method: POST
@@ -1005,7 +1437,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
     canRefund: boolean
 ```
 
-### 9.4 Completion
+### 13.4 Completion
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
@@ -1015,14 +1447,24 @@ A designated party (arbiter) can complete the escrow unilaterally.
 /escrow/release:
   method: POST
   access: authenticated
-  description: Force release (for trusted modes or after consent)
+  description: |
+    Trigger release (for trusted modes or after consent).
+    If boundContractId is set, checks contract status first (must be fulfilled).
+    Runs finalization flow before releasing remaining assets.
   request:
     escrowId: uuid
-    initiatorServiceId: string         # For initiator_trusted
+    initiatorServiceId: string        # For initiator_trusted
     notes: string
     idempotencyKey: string
   response:
     escrow: EscrowAgreement
+    finalizerResults: [               # Results of contract finalizer APIs
+      {
+        endpoint: string
+        success: boolean
+        error: string
+      }
+    ]
     releases: [
       {
         recipientPartyId: uuid
@@ -1035,12 +1477,14 @@ A designated party (arbiter) can complete the escrow unilaterally.
     - ESCROW_NOT_FOUND
     - ESCROW_NOT_RELEASABLE
     - NOT_AUTHORIZED_TO_RELEASE
+    - BOUND_CONTRACT_NOT_FULFILLED
+    - FINALIZATION_FAILED
     - RELEASE_FAILED
 
 /escrow/refund:
   method: POST
   access: authenticated
-  description: Force refund (for trusted modes or consent)
+  description: Trigger refund (for trusted modes or consent)
   request:
     escrowId: uuid
     initiatorServiceId: string
@@ -1094,7 +1538,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
     partyId: uuid
     partyType: string
     reason: string
-    releaseToken: string               # Proves party identity
+    releaseToken: string              # Proves party identity
     idempotencyKey: string
   response:
     escrow: EscrowAgreement
@@ -1105,7 +1549,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
     - ALREADY_DISPUTED
 ```
 
-### 9.5 Arbiter Operations
+### 13.5 Arbiter Operations
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
@@ -1121,7 +1565,7 @@ A designated party (arbiter) can complete the escrow unilaterally.
     arbiterId: uuid
     arbiterType: string
     resolution: EscrowResolution
-    splitAllocations: [                # For split resolution
+    splitAllocations: [               # For split resolution
       {
         partyId: uuid
         partyType: string
@@ -1148,76 +1592,135 @@ A designated party (arbiter) can complete the escrow unilaterally.
     - RESOLUTION_FAILED
 ```
 
-### 9.6 Condition Verification
+### 13.6 Condition Verification
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
-# CONDITIONAL ESCROW
+# CONDITIONAL ESCROW (for non-contract conditions)
 # ══════════════════════════════════════════════════════════════════
 
 /escrow/verify-condition:
   method: POST
   access: authenticated
-  description: Verify condition for conditional escrow
+  description: |
+    Verify condition for conditional escrow (non-contract path).
+    For escrows with boundContractId, use contract milestones instead.
   request:
     escrowId: uuid
     conditionMet: boolean
     verifierId: uuid
     verifierType: string
-    verificationData: object           # Proof/evidence
+    verificationData: object          # Proof/evidence
     idempotencyKey: string
   response:
     escrow: EscrowAgreement
-    triggered: boolean                 # Did this trigger release/refund?
+    triggered: boolean                # Did this trigger release/refund?
   errors:
     - ESCROW_NOT_FOUND
     - ESCROW_NOT_CONDITIONAL
+    - ESCROW_HAS_BOUND_CONTRACT
     - NOT_AUTHORIZED_TO_VERIFY
     - ALREADY_VERIFIED
 ```
 
-### 9.7 Asset Handler Registration
+### 13.7 Validation
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
-# ASSET HANDLER REGISTRATION (Internal)
+# VALIDATION OPERATIONS
+# ══════════════════════════════════════════════════════════════════
+
+/escrow/validate:
+  method: POST
+  access: admin
+  description: Manually trigger validation on an active escrow
+  request:
+    escrowId: uuid
+  response:
+    valid: boolean
+    failures: [ValidationFailure]
+    escrow: EscrowAgreement
+
+/escrow/reaffirm:
+  method: POST
+  access: authenticated
+  description: Re-affirm after validation failure (party accepts changed state)
+  request:
+    escrowId: uuid
+    partyId: uuid
+    partyType: string
+    releaseToken: string
+    idempotencyKey: string
+  response:
+    escrow: EscrowAgreement
+    allReaffirmed: boolean            # Did all parties reaffirm? Returns to active state
+  errors:
+    - ESCROW_NOT_FOUND
+    - ESCROW_NOT_VALIDATION_FAILED
+    - NOT_A_PARTY
+    - ALREADY_REAFFIRMED
+```
+
+### 13.8 Asset Handler Registration
+
+```yaml
+# ══════════════════════════════════════════════════════════════════
+# DYNAMIC ASSET HANDLER REGISTRATION
 # ══════════════════════════════════════════════════════════════════
 
 /escrow/handler/register:
   method: POST
   access: admin
-  description: Register asset type handler
+  description: Register a custom asset type handler
   request:
     assetType: string
     pluginId: string
-    lockEndpoint: string               # Called to lock assets
-    unlockEndpoint: string             # Called to unlock assets
-    transferEndpoint: string           # Called to transfer assets
+    depositEndpoint: string
+    releaseEndpoint: string
+    refundEndpoint: string
+    validateEndpoint: string
   response:
     registered: boolean
   errors:
     - ASSET_TYPE_ALREADY_REGISTERED
+    - ASSET_TYPE_RESERVED
+    - INVALID_ENDPOINT_CONFIGURATION
 
 /escrow/handler/list:
   method: POST
   access: admin
-  description: List registered asset handlers
+  description: List registered asset handlers (includes built-in)
   request: {}
   response:
     handlers: [
       {
         assetType: string
         pluginId: string
-        lockEndpoint: string
-        unlockEndpoint: string
-        transferEndpoint: string
+        builtIn: boolean
+        depositEndpoint: string
+        releaseEndpoint: string
+        refundEndpoint: string
+        validateEndpoint: string
       }
     ]
+
+/escrow/handler/deregister:
+  method: POST
+  access: admin
+  description: Remove a custom asset handler registration
+  request:
+    assetType: string
+  response:
+    deregistered: boolean
+  errors:
+    - ASSET_TYPE_NOT_FOUND
+    - ASSET_TYPE_RESERVED
+    - ACTIVE_ESCROWS_EXIST
 ```
 
 ---
 
-## 10. Events
+## 14. Events
 
 All events published to lib-messaging.
 
@@ -1235,18 +1738,19 @@ escrow.created:
     parties: [{ partyId, partyType, role }]
     expectedDepositCount: integer
     expiresAt: timestamp
+    boundContractId: uuid
     referenceType: string
     referenceId: uuid
     createdAt: timestamp
 
-escrow.deposit_received:
+escrow.deposit.received:
   topic: "escrow.deposit.received"
   payload:
     escrowId: uuid
     partyId: uuid
     partyType: string
     depositId: uuid
-    assetSummary: string              # Human-readable summary
+    assetSummary: string
     depositsReceived: integer
     depositsExpected: integer
     fullyFunded: boolean
@@ -1259,7 +1763,7 @@ escrow.funded:
     totalDeposits: integer
     fundedAt: timestamp
 
-escrow.consent_received:
+escrow.consent.received:
   topic: "escrow.consent.received"
   payload:
     escrowId: uuid
@@ -1269,6 +1773,14 @@ escrow.consent_received:
     consentsReceived: integer
     consentsRequired: integer
     consentedAt: timestamp
+
+escrow.finalizing:
+  topic: "escrow.finalizing"
+  payload:
+    escrowId: uuid
+    boundContractId: uuid
+    finalizerCount: integer
+    startedAt: timestamp
 
 escrow.released:
   topic: "escrow.released"
@@ -1283,7 +1795,7 @@ escrow.refunded:
   payload:
     escrowId: uuid
     depositors: [{ partyId, partyType, assetSummary }]
-    reason: string                    # consent | expired | cancelled | disputed
+    reason: string
     resolution: string
     completedAt: timestamp
 
@@ -1310,7 +1822,7 @@ escrow.expired:
   topic: "escrow.expired"
   payload:
     escrowId: uuid
-    status: string                    # Status when expired
+    status: string
     autoRefunded: boolean
     expiredAt: timestamp
 
@@ -1325,45 +1837,29 @@ escrow.cancelled:
     cancelledAt: timestamp
 
 # ══════════════════════════════════════════════════════════════════
-# ASSET OPERATION EVENTS
+# VALIDATION EVENTS
 # ══════════════════════════════════════════════════════════════════
 
-escrow.asset.locked:
-  topic: "escrow.asset.locked"
+escrow.validation.failed:
+  topic: "escrow.validation.failed"
   payload:
     escrowId: uuid
-    depositId: uuid
-    assetType: string
-    assetSummary: string
-    lockId: uuid
-    lockedAt: timestamp
+    failures: [{ assetType, failureType, affectedPartyId, details }]
+    detectedAt: timestamp
 
-escrow.asset.unlocked:
-  topic: "escrow.asset.unlocked"
+escrow.validation.reaffirmed:
+  topic: "escrow.validation.reaffirmed"
   payload:
     escrowId: uuid
-    assetType: string
-    assetSummary: string
-    lockId: uuid
-    reason: string                    # refund | cancel | expired
-    unlockedAt: timestamp
-
-escrow.asset.transferred:
-  topic: "escrow.asset.transferred"
-  payload:
-    escrowId: uuid
-    fromPartyId: uuid
-    fromPartyType: string
-    toPartyId: uuid
-    toPartyType: string
-    assetType: string
-    assetSummary: string
-    transferredAt: timestamp
+    reaffirmedBy: uuid
+    reaffirmedByType: string
+    allReaffirmed: boolean
+    reaffirmedAt: timestamp
 ```
 
 ---
 
-## 11. State Stores
+## 15. State Stores
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
@@ -1395,9 +1891,16 @@ escrow-status-index:
   backend: redis
   prefix: "escrow:status"
   key_pattern: "{status}"
-  purpose: Set of escrow IDs by status for expiration processing
+  purpose: Set of escrow IDs by status for expiration/validation processing
   type: sorted_set
   score: expiresAt
+
+escrow-active-validation:
+  backend: redis
+  prefix: "escrow:validate"
+  key_pattern: "{escrowId}"
+  purpose: Track active escrows requiring periodic validation
+  type: set
 
 # ══════════════════════════════════════════════════════════════════
 # MYSQL (Persistent)
@@ -1410,6 +1913,7 @@ escrow-agreements:
     - status, expiresAt
     - referenceType, referenceId
     - createdBy, createdByType
+    - boundContractId
 
 escrow-parties:
   backend: mysql
@@ -1440,13 +1944,12 @@ escrow-consents:
     - escrowId
     - partyId, partyType
 
-escrow-asset-locks:
+escrow-validation-failures:
   backend: mysql
-  table: escrow_asset_locks
+  table: escrow_validation_failures
   indexes:
     - escrowId
-    - depositId
-    - lockId (unique)
+    - detectedAt
 
 escrow-handler-registry:
   backend: mysql
@@ -1457,16 +1960,12 @@ escrow-handler-registry:
 
 ---
 
-## 12. Error Codes
+## 16. Error Codes
 
 ```yaml
 # ══════════════════════════════════════════════════════════════════
-# ESCROW ERRORS
+# CREATION ERRORS
 # ══════════════════════════════════════════════════════════════════
-
-ESCROW_NOT_FOUND:
-  message: "Escrow agreement not found"
-  details: { escrowId }
 
 INVALID_PARTY_CONFIGURATION:
   message: "Invalid party configuration"
@@ -1496,6 +1995,18 @@ MAX_PENDING_ESCROWS_EXCEEDED:
   message: "Party has too many pending escrows"
   details: { partyId, current, max }
 
+WALLET_CREATION_FAILED:
+  message: "Failed to create escrow wallet"
+  details: { error }
+
+CONTAINER_CREATION_FAILED:
+  message: "Failed to create escrow container"
+  details: { error }
+
+BOUND_CONTRACT_NOT_FOUND:
+  message: "Bound contract not found"
+  details: { contractId }
+
 # ══════════════════════════════════════════════════════════════════
 # DEPOSIT ERRORS
 # ══════════════════════════════════════════════════════════════════
@@ -1516,8 +2027,8 @@ DEPOSIT_TOKEN_ALREADY_USED:
   message: "Deposit token has already been used"
   details: { escrowId, usedAt }
 
-ASSET_LOCK_FAILED:
-  message: "Failed to lock asset for escrow"
+ASSET_DEPOSIT_REJECTED:
+  message: "Asset cannot be deposited into escrow"
   details: { assetType, reason }
 
 DEPOSIT_EXCEEDS_EXPECTED:
@@ -1527,6 +2038,30 @@ DEPOSIT_EXCEEDS_EXPECTED:
 DEPOSIT_ASSETS_MISMATCH:
   message: "Deposit assets do not match expected"
   details: { expected, provided }
+
+INSUFFICIENT_BALANCE:
+  message: "Insufficient currency balance for deposit"
+  details: { walletId, currencyId, available, required }
+
+ITEM_NOT_FOUND:
+  message: "Item instance not found in depositor's container"
+  details: { itemInstanceId, containerId }
+
+ITEM_SOULBOUND:
+  message: "Soulbound items cannot be deposited into escrow"
+  details: { itemInstanceId, templateCode }
+
+CONTRACT_NOT_FOUND:
+  message: "Contract instance not found"
+  details: { contractInstanceId }
+
+CONTRACT_NOT_TRANSFERABLE:
+  message: "Contract template does not allow transfers"
+  details: { contractInstanceId, templateCode }
+
+TRANSFER_FAILED:
+  message: "Asset transfer to escrow failed"
+  details: { assetType, error }
 
 # ══════════════════════════════════════════════════════════════════
 # CONSENT ERRORS
@@ -1556,6 +2091,10 @@ CONSENT_NOT_REQUIRED:
   message: "Consent is not required from this party"
   details: { partyId }
 
+BOUND_CONTRACT_NOT_FULFILLED:
+  message: "Bound contract is not in fulfilled status"
+  details: { contractId, currentStatus }
+
 # ══════════════════════════════════════════════════════════════════
 # COMPLETION ERRORS
 # ══════════════════════════════════════════════════════════════════
@@ -1567,6 +2106,10 @@ ESCROW_NOT_RELEASABLE:
 NOT_AUTHORIZED_TO_RELEASE:
   message: "Not authorized to release this escrow"
   details: { escrowId, trustMode }
+
+FINALIZATION_FAILED:
+  message: "Contract finalizer API execution failed"
+  details: { escrowId, failedEndpoint, error }
 
 RELEASE_FAILED:
   message: "Failed to release escrow assets"
@@ -1628,6 +2171,10 @@ ESCROW_NOT_CONDITIONAL:
   message: "Escrow is not a conditional type"
   details: { escrowId, escrowType }
 
+ESCROW_HAS_BOUND_CONTRACT:
+  message: "Cannot manually verify condition on contract-bound escrow"
+  details: { escrowId, boundContractId }
+
 NOT_AUTHORIZED_TO_VERIFY:
   message: "Not authorized to verify condition"
   details: { escrowId }
@@ -1637,12 +2184,40 @@ ALREADY_VERIFIED:
   details: { escrowId, verifiedAt }
 
 # ══════════════════════════════════════════════════════════════════
+# VALIDATION ERRORS
+# ══════════════════════════════════════════════════════════════════
+
+ESCROW_NOT_VALIDATION_FAILED:
+  message: "Escrow is not in validation_failed state"
+  details: { escrowId, currentStatus }
+
+ALREADY_REAFFIRMED:
+  message: "Party has already re-affirmed"
+  details: { partyId, reaffirmedAt }
+
+# ══════════════════════════════════════════════════════════════════
 # HANDLER ERRORS
 # ══════════════════════════════════════════════════════════════════
 
 ASSET_TYPE_ALREADY_REGISTERED:
   message: "Asset type handler already registered"
   details: { assetType, existingPluginId }
+
+ASSET_TYPE_RESERVED:
+  message: "Cannot register/deregister built-in asset type"
+  details: { assetType }
+
+INVALID_ENDPOINT_CONFIGURATION:
+  message: "Handler endpoint configuration is invalid"
+  details: { endpoint, issue }
+
+ASSET_TYPE_NOT_FOUND:
+  message: "No handler registered for asset type"
+  details: { assetType }
+
+ACTIVE_ESCROWS_EXIST:
+  message: "Cannot deregister handler with active escrows using this type"
+  details: { assetType, activeCount }
 
 ASSET_HANDLER_NOT_FOUND:
   message: "No handler registered for asset type"
@@ -1651,182 +2226,235 @@ ASSET_HANDLER_NOT_FOUND:
 
 ---
 
-## 13. Integration Patterns
+## 17. Integration Examples
 
-### 13.1 lib-currency Integration
-
-lib-currency registers as an asset handler and implements lock/unlock/transfer:
+### 17.1 Simple Player Trade (Currency for Item)
 
 ```yaml
-# lib-currency registers on startup
-assetType: "currency"
-pluginId: "lib-currency"
-
-# Lock handler (called on deposit)
-lockEndpoint: "/currency/escrow/lock"
-request:
-  walletId: uuid
-  currencyDefinitionId: uuid
-  amount: decimal
-  escrowId: uuid
-  idempotencyKey: string
-response:
-  lockId: uuid
-  success: boolean
-
-# Unlock handler (called on refund/cancel)
-unlockEndpoint: "/currency/escrow/unlock"
-request:
-  lockId: uuid
-  escrowId: uuid
-  idempotencyKey: string
-response:
-  success: boolean
-
-# Transfer handler (called on release)
-transferEndpoint: "/currency/escrow/transfer"
-request:
-  lockId: uuid
-  targetWalletId: uuid
-  escrowId: uuid
-  idempotencyKey: string
-response:
-  transactionId: uuid
-  success: boolean
-```
-
-### 13.2 lib-inventory Integration (Future)
-
-```yaml
-assetType: "item"
-pluginId: "lib-inventory"
-
-lockEndpoint: "/inventory/escrow/lock"
-unlockEndpoint: "/inventory/escrow/unlock"
-transferEndpoint: "/inventory/escrow/transfer"
-
-# Similar patterns but with item-specific fields
-```
-
-### 13.3 Mixed Escrow Example
-
-A player trade involving both currency and items:
-
-```yaml
-# Create escrow with mixed deposits
+# Player A has 500 gold, wants Player B's Iron Sword
 escrow:
   escrowType: two_party
   trustMode: full_consent
   parties:
-    - { partyId: player_a, role: depositor_recipient }
-    - { partyId: player_b, role: depositor_recipient }
+    - { partyId: player_a, partyType: character, role: depositor_recipient, walletId: wallet_a, containerId: inv_a }
+    - { partyId: player_b, partyType: character, role: depositor_recipient, walletId: wallet_b, containerId: inv_b }
   expectedDeposits:
     - partyId: player_a
       expectedAssets:
-        - { assetType: currency, currencyCode: gold, currencyAmount: 5000 }
+        - { assetType: currency, currencyCode: gold, currencyAmount: 500 }
     - partyId: player_b
       expectedAssets:
-        - { assetType: item, itemInstanceId: legendary_sword_123 }
-        - { assetType: item_stack, itemTemplateId: health_potion, itemQuantity: 10 }
+        - { assetType: item, itemInstanceId: iron_sword_123 }
   releaseAllocations:
     - recipientPartyId: player_a
       assets:
-        - { assetType: item, itemInstanceId: legendary_sword_123 }
-        - { assetType: item_stack, itemTemplateId: health_potion, itemQuantity: 10 }
+        - { assetType: item, itemInstanceId: iron_sword_123 }
     - recipientPartyId: player_b
       assets:
-        - { assetType: currency, currencyCode: gold, currencyAmount: 5000 }
+        - { assetType: currency, currencyCode: gold, currencyAmount: 500 }
 ```
 
-### 13.4 Sequence: Two-Party Trade
+### 17.2 Sequence: Two-Party Trade
 
 ```
-Player A                lib-escrow              lib-currency         lib-inventory
-    │                        │                        │                    │
-    │─── create trade ──────►│                        │                    │
-    │◄── depositTokens ──────│                        │                    │
-    │                        │                        │                    │
-    │─── deposit gold ──────►│                        │                    │
-    │                        │──── lock gold ────────►│                    │
-    │                        │◄─── lockId ────────────│                    │
-    │◄── deposit ok ─────────│                        │                    │
-    │                        │                        │                    │
-    │                   Player B deposits item        │                    │
-    │                        │                        │                    │
-    │                        │───────── lock item ────────────────────────►│
-    │                        │◄──────── lockId ───────────────────────────│
-    │                        │                        │                    │
-    │◄── fullyFunded ────────│ (releaseTokens issued) │                    │
-    │                        │                        │                    │
-    │─── consent release ───►│                        │                    │
-    │◄── consent recorded ───│                        │                    │
-    │                        │                        │                    │
-    │                   Player B consents             │                    │
-    │                        │                        │                    │
-    │                        │──── transfer gold ────►│ (A→B)              │
-    │                        │◄─── transactionId ─────│                    │
-    │                        │                        │                    │
-    │                        │───────── transfer item ────────────────────►│ (B→A)
-    │                        │◄──────── success ──────────────────────────│
-    │                        │                        │                    │
-    │◄── released ───────────│                        │                    │
+Player A              lib-escrow           lib-currency        lib-inventory
+    │                      │                     │                    │
+    │── create trade ─────►│                     │                    │
+    │                      │── create wallet ───►│ (ownerType=escrow) │
+    │                      │◄── walletId ────────│                    │
+    │                      │── create container ─────────────────────►│ (ownerType=escrow)
+    │                      │◄── containerId ─────────────────────────│
+    │◄── depositTokens ───│                     │                    │
+    │                      │                     │                    │
+    │── deposit 500g ─────►│                     │                    │
+    │                      │── transfer ────────►│ (A wallet → escrow wallet)
+    │                      │◄── success ─────────│                    │
+    │◄── deposit ok ───────│                     │                    │
+    │                      │                     │                    │
+    │                 Player B deposits sword    │                    │
+    │                      │                     │                    │
+    │                      │── transfer ─────────────────────────────►│ (B inv → escrow inv)
+    │                      │◄── success ─────────────────────────────│
+    │                      │                     │                    │
+    │◄── fullyFunded ──────│ (releaseTokens)    │                    │
+    │                      │                     │                    │
+    │── consent release ──►│                     │                    │
+    │                      │                     │                    │
+    │                 Player B consents          │                    │
+    │                      │                     │                    │
+    │                      │── transfer ────────►│ (escrow wallet → B wallet)
+    │                      │◄── success ─────────│                    │
+    │                      │── transfer ─────────────────────────────►│ (escrow inv → A inv)
+    │                      │◄── success ─────────────────────────────│
+    │                      │── close wallet ────►│                    │
+    │                      │── delete container ─────────────────────►│
+    │                      │                     │                    │
+    │◄── released ─────────│                     │                    │
+```
+
+### 17.3 Contract-Bound Escrow with Fees (Property Sale)
+
+```yaml
+# Seller has a land deed (contract). Buyer pays 10000 gold.
+# Broker takes 5% fee from escrow on completion.
+
+# Step 1: Contract created with escrow terms
+contract:
+  templateCode: "property_sale"
+  milestones:
+    - code: "buyer_deposits_payment"
+    - code: "seller_deposits_deed"
+    - code: "inspection_period"  # 3 days
+  onFulfill:
+    # Broker fee: 500 gold from escrow to broker's wallet
+    - serviceName: "currency"
+      endpoint: "/currency/transfer"
+      payloadTemplate: |
+        {
+          "source_wallet_id": "{{EscrowWalletId}}",
+          "target_wallet_id": "{{contract.terms.broker_wallet_id}}",
+          "currency_id": "{{contract.terms.currency_id}}",
+          "amount": 500,
+          "reference_type": "escrow_fee"
+        }
+
+# Step 2: Escrow created with bound contract
+escrow:
+  escrowType: conditional
+  trustMode: full_consent
+  boundContractId: contract_123
+  parties:
+    - { partyId: buyer, role: depositor_recipient, walletId: buyer_wallet }
+    - { partyId: seller, role: depositor_recipient, walletId: seller_wallet }
+  expectedDeposits:
+    - partyId: buyer
+      expectedAssets:
+        - { assetType: currency, currencyCode: gold, currencyAmount: 10000 }
+    - partyId: seller
+      expectedAssets:
+        - { assetType: contract, contractInstanceId: land_deed_456 }
+  releaseAllocations:
+    - recipientPartyId: buyer
+      assets:
+        - { assetType: contract, contractInstanceId: land_deed_456 }
+    - recipientPartyId: seller
+      assets:
+        # Seller gets 9500 (10000 - 500 broker fee, taken during finalization)
+        - { assetType: currency, currencyCode: gold, currencyAmount: 9500 }
+```
+
+**Flow:**
+1. Escrow created → wallet + container created
+2. Buyer deposits 10000 gold → transferred to escrow wallet
+3. Seller deposits land deed → contract locked under escrow guardianship
+4. All milestones complete → `contract.fulfilled` event received
+5. **Finalization**: Broker fee (500g) transferred from escrow wallet to broker
+6. **Release**: Remaining 9500g to seller, deed transferred to buyer
+7. Cleanup: wallet closed, container deleted
+
+### 17.4 Validation Failure Example
+
+```
+Escrow holds: 3x Health Potion (expires in 24h), 500 gold
+
+After 24h:
+  1. Validation check runs
+  2. Health Potions no longer exist in escrow container (expired)
+  3. Status → validation_failed
+  4. Event: escrow.validation.failed
+  5. Both parties notified
+
+Resolution options:
+  A) Both parties reaffirm (accept: "trade 500g for nothing" now)
+  B) Affected depositor is in violation, other party refunds their own deposit
+```
+
+### 17.5 Custom Asset Type: Guild Ownership
+
+```yaml
+# Register guild ownership handler
+/escrow/handler/register:
+  assetType: "guild_ownership"
+  pluginId: "lib-guild"
+  depositEndpoint: "/guild/escrow/deposit"
+  releaseEndpoint: "/guild/escrow/release"
+  refundEndpoint: "/guild/escrow/refund"
+  validateEndpoint: "/guild/escrow/validate"
+
+# Use in escrow
+escrow:
+  expectedDeposits:
+    - partyId: guild_leader
+      expectedAssets:
+        - assetType: custom
+          customAssetType: "guild_ownership"
+          customAssetId: guild_123
+          customAssetData: { guildName: "Iron Hawks" }
 ```
 
 ---
 
-## Appendix A: Example Escrow Types
+## Appendix A: Contract Lock/Unlock Requirements
 
-### A.1 Simple Player Trade
-
-```yaml
-escrowType: two_party
-trustMode: full_consent
-requiredConsentsForRelease: -1  # All parties
-```
-
-### A.2 NPC Vendor Sale
+For `assetType=contract` to work, lib-contract needs these capabilities (to be added to contract schema):
 
 ```yaml
-escrowType: two_party
-trustMode: initiator_trusted    # Game controls completion
-initiatorServiceId: "game-session"
-# Player deposits payment, NPC "deposits" item
-# Game verifies and completes atomically
+/contract/lock:
+  method: POST
+  access: developer
+  description: Lock a contract under guardian custody (prevents modification/termination)
+  request:
+    contractInstanceId: uuid
+    guardianId: uuid
+    guardianType: string              # "escrow"
+    idempotencyKey: string
+  response:
+    locked: boolean
+  errors:
+    - CONTRACT_NOT_FOUND
+    - CONTRACT_NOT_TRANSFERABLE
+    - CONTRACT_ALREADY_LOCKED
+
+/contract/unlock:
+  method: POST
+  access: developer
+  description: Unlock a contract from guardian custody
+  request:
+    contractInstanceId: uuid
+    guardianId: uuid
+    guardianType: string
+    idempotencyKey: string
+  response:
+    unlocked: boolean
+  errors:
+    - CONTRACT_NOT_FOUND
+    - CONTRACT_NOT_LOCKED
+    - NOT_GUARDIAN
+
+/contract/transfer-party:
+  method: POST
+  access: developer
+  description: Transfer a party role to a new entity (for escrow release)
+  request:
+    contractInstanceId: uuid
+    fromEntityId: uuid
+    fromEntityType: string
+    toEntityId: uuid
+    toEntityType: string
+    guardianId: uuid                  # Must be current guardian to transfer locked contracts
+    guardianType: string
+    idempotencyKey: string
+  response:
+    transferred: boolean
+  errors:
+    - CONTRACT_NOT_FOUND
+    - PARTY_NOT_FOUND
+    - CONTRACT_NOT_TRANSFERABLE
+    - NOT_GUARDIAN
 ```
 
-### A.3 Auction Settlement
-
-```yaml
-escrowType: auction
-trustMode: initiator_trusted
-initiatorServiceId: "lib-market"
-# Winner's bid already escrowed
-# On auction end: release to seller, refund others
-```
-
-### A.4 Arbitrated Trade
-
-```yaml
-escrowType: two_party
-trustMode: single_party_trusted
-trustedPartyId: gm_account_123
-trustedPartyType: account
-parties:
-  - { partyId: player_a, role: depositor_recipient }
-  - { partyId: player_b, role: depositor_recipient }
-  - { partyId: gm_account_123, role: arbiter }
-```
-
-### A.5 Quest Reward Escrow
-
-```yaml
-escrowType: conditional
-trustMode: initiator_trusted
-initiatorServiceId: "lib-quest"
-# Quest system creates escrow with reward
-# On quest completion: verifies condition, releases reward
-```
+These endpoints will need to be added to `schemas/contract-api.yaml` before lib-escrow can hold contract assets.
 
 ---
 
-*This specification is implementation-ready. lib-currency and lib-inventory should implement the asset handler interface to integrate with lib-escrow.*
+*This specification is implementation-ready. lib-currency and lib-inventory require no changes (escrow uses their existing transfer APIs). lib-contract requires the lock/unlock/transfer-party endpoints defined in Appendix A.*

@@ -1815,7 +1815,12 @@ public partial class CurrencyService : ICurrencyService
             };
 
             var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-            await holdStore.SaveAsync($"{HOLD_PREFIX}{holdId}", hold, cancellationToken: cancellationToken);
+            var holdKey = $"{HOLD_PREFIX}{holdId}";
+            await holdStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
+
+            // Update Redis cache after MySQL write
+            await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
+
             await AddToListAsync(StateStoreDefinitions.CurrencyHolds,
                 $"{HOLD_WALLET_INDEX}{body.WalletId}:{body.CurrencyDefinitionId}", holdId.ToString(), cancellationToken);
 
@@ -1863,9 +1868,16 @@ public partial class CurrencyService : ICurrencyService
             var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
             if (isDuplicate) return (StatusCodes.Conflict, null);
 
-            var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
             var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
-            var hold = await holdStore.GetAsync(holdKey, cancellationToken);
+
+            // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
+            var hold = await TryGetHoldFromCacheAsync(holdKey, cancellationToken);
+            if (hold is null)
+            {
+                // Cache miss - read from MySQL
+                var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
+                hold = await holdStore.GetAsync(holdKey, cancellationToken);
+            }
 
             if (hold is null) return (StatusCodes.NotFound, null);
             if (hold.Status != HoldStatus.Active.ToString()) return (StatusCodes.BadRequest, null);
@@ -1891,7 +1903,12 @@ public partial class CurrencyService : ICurrencyService
             hold.CapturedAmount = body.CaptureAmount;
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
-            await holdStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
+            var captureHoldStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
+            await captureHoldStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
+
+            // Update Redis cache after MySQL write
+            await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
+
             await RecordIdempotencyAsync(body.IdempotencyKey, hold.HoldId, cancellationToken);
 
             // Fetch wallet for event - data integrity issue if missing
@@ -1957,9 +1974,16 @@ public partial class CurrencyService : ICurrencyService
     {
         try
         {
-            var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
             var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
-            var hold = await holdStore.GetAsync(holdKey, cancellationToken);
+
+            // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
+            var hold = await TryGetHoldFromCacheAsync(holdKey, cancellationToken);
+            if (hold is null)
+            {
+                // Cache miss - read from MySQL
+                var holdReadStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
+                hold = await holdReadStore.GetAsync(holdKey, cancellationToken);
+            }
 
             if (hold is null) return (StatusCodes.NotFound, null);
             if (hold.Status != HoldStatus.Active.ToString()) return (StatusCodes.BadRequest, null);
@@ -1967,7 +1991,11 @@ public partial class CurrencyService : ICurrencyService
             hold.Status = HoldStatus.Released.ToString();
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
+            var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
             await holdStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
+
+            // Update Redis cache after MySQL write
+            await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
             // Fetch wallet for event - data integrity issue if missing
             var wallet = await GetWalletByIdAsync(hold.WalletId, cancellationToken);
@@ -2023,10 +2051,21 @@ public partial class CurrencyService : ICurrencyService
     {
         try
         {
+            var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
+
+            // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
+            var hold = await TryGetHoldFromCacheAsync(holdKey, cancellationToken);
+            if (hold != null)
+                return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
+
+            // Cache miss - read from MySQL
             var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-            var hold = await holdStore.GetAsync($"{HOLD_PREFIX}{body.HoldId}", cancellationToken);
+            hold = await holdStore.GetAsync(holdKey, cancellationToken);
 
             if (hold is null) return (StatusCodes.NotFound, null);
+
+            // Populate cache for future reads
+            await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
             return (StatusCodes.OK, new HoldResponse { Hold = MapHoldToRecord(hold) });
         }
@@ -2107,21 +2146,37 @@ public partial class CurrencyService : ICurrencyService
 
     private async Task<BalanceModel> GetOrCreateBalanceAsync(string walletId, string currencyDefId, CancellationToken ct)
     {
-        var store = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
         var key = $"{BALANCE_PREFIX}{walletId}:{currencyDefId}";
-        var balance = await store.GetAsync(key, ct) ?? new BalanceModel
-            {
-                WalletId = walletId,
-                CurrencyDefinitionId = currencyDefId,
-                Amount = 0,
-                DailyEarned = 0,
-                WeeklyEarned = 0,
-                DailyResetAt = DateTimeOffset.UtcNow.Date.AddDays(1),
-                WeeklyResetAt = GetNextWeeklyReset(),
-                CreatedAt = DateTimeOffset.UtcNow,
-                LastModifiedAt = DateTimeOffset.UtcNow
-            };
-        return balance;
+
+        // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
+        var cached = await TryGetBalanceFromCacheAsync(key, ct);
+        if (cached != null)
+            return cached;
+
+        // Cache miss - read from MySQL
+        var store = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
+        var balance = await store.GetAsync(key, ct);
+
+        if (balance != null)
+        {
+            // Populate cache for future reads
+            await UpdateBalanceCacheAsync(key, balance, ct);
+            return balance;
+        }
+
+        // Create new balance (don't cache until saved)
+        return new BalanceModel
+        {
+            WalletId = walletId,
+            CurrencyDefinitionId = currencyDefId,
+            Amount = 0,
+            DailyEarned = 0,
+            WeeklyEarned = 0,
+            DailyResetAt = DateTimeOffset.UtcNow.Date.AddDays(1),
+            WeeklyResetAt = GetNextWeeklyReset(),
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastModifiedAt = DateTimeOffset.UtcNow
+        };
     }
 
     private async Task SaveBalanceAsync(BalanceModel balance, CancellationToken ct)
@@ -2129,6 +2184,9 @@ public partial class CurrencyService : ICurrencyService
         var store = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
         var key = $"{BALANCE_PREFIX}{balance.WalletId}:{balance.CurrencyDefinitionId}";
         await store.SaveAsync(key, balance, cancellationToken: ct);
+
+        // Update Redis cache after MySQL write
+        await UpdateBalanceCacheAsync(key, balance, ct);
 
         // Maintain wallet-balance index for efficient wallet queries
         await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_WALLET_INDEX}{balance.WalletId}", balance.CurrencyDefinitionId, ct);
@@ -2351,7 +2409,21 @@ public partial class CurrencyService : ICurrencyService
         double total = 0;
         foreach (var holdId in holdIds)
         {
-            var hold = await holdStore.GetAsync($"{HOLD_PREFIX}{holdId}", ct);
+            var holdKey = $"{HOLD_PREFIX}{holdId}";
+
+            // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
+            var hold = await TryGetHoldFromCacheAsync(holdKey, ct);
+            if (hold is null)
+            {
+                // Cache miss - read from MySQL
+                hold = await holdStore.GetAsync(holdKey, ct);
+                if (hold != null)
+                {
+                    // Populate cache for future reads
+                    await UpdateHoldCacheAsync(holdKey, hold, ct);
+                }
+            }
+
             if (hold is not null && hold.Status == HoldStatus.Active.ToString())
             {
                 total += hold.Amount;
@@ -2697,6 +2769,115 @@ public partial class CurrencyService : ICurrencyService
         public string? ReferenceId { get; set; }
         public double? CapturedAmount { get; set; }
         public DateTimeOffset? CompletedAt { get; set; }
+    }
+
+    #endregion
+
+    #region Balance Cache Helpers
+
+    /// <summary>
+    /// Balance cache TTL in seconds (60 seconds - balances change frequently).
+    /// </summary>
+    private const int BALANCE_CACHE_TTL_SECONDS = 60;
+
+    /// <summary>
+    /// Attempts to retrieve a balance from the Redis cache.
+    /// Uses StateStoreDefinitions.CurrencyBalanceCache directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task<BalanceModel?> TryGetBalanceFromCacheAsync(string key, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
+            return await cache.GetAsync(key, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache error is non-fatal - proceed to MySQL
+            _logger.LogDebug(ex, "Balance cache lookup failed for {Key}", key);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Updates the balance cache after a read or write.
+    /// Uses StateStoreDefinitions.CurrencyBalanceCache directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task UpdateBalanceCacheAsync(string key, BalanceModel balance, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
+            await cache.SaveAsync(key, balance, new StateOptions { Ttl = BALANCE_CACHE_TTL_SECONDS }, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache write failure is non-fatal
+            _logger.LogWarning(ex, "Failed to update balance cache for {Key}", key);
+        }
+    }
+
+    #endregion
+
+    #region Hold Cache Helpers
+
+    /// <summary>
+    /// Hold cache TTL in seconds (120 seconds - holds change less frequently than balances).
+    /// </summary>
+    private const int HOLD_CACHE_TTL_SECONDS = 120;
+
+    /// <summary>
+    /// Attempts to retrieve a hold from the Redis cache.
+    /// Uses StateStoreDefinitions.CurrencyHoldsCache directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task<HoldModel?> TryGetHoldFromCacheAsync(string key, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
+            return await cache.GetAsync(key, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache error is non-fatal - proceed to MySQL
+            _logger.LogDebug(ex, "Hold cache lookup failed for {Key}", key);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Updates the hold cache after a read or write.
+    /// Uses StateStoreDefinitions.CurrencyHoldsCache directly per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task UpdateHoldCacheAsync(string key, HoldModel hold, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
+            await cache.SaveAsync(key, hold, new StateOptions { Ttl = HOLD_CACHE_TTL_SECONDS }, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache write failure is non-fatal
+            _logger.LogWarning(ex, "Failed to update hold cache for {Key}", key);
+        }
+    }
+
+    /// <summary>
+    /// Invalidates a hold from the cache (for terminal states).
+    /// </summary>
+    private async Task InvalidateHoldCacheAsync(string key, CancellationToken ct)
+    {
+        try
+        {
+            var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
+            await cache.DeleteAsync(key, ct);
+        }
+        catch (Exception ex)
+        {
+            // Cache invalidation failure is non-fatal
+            _logger.LogDebug(ex, "Failed to invalidate hold cache for {Key}", key);
+        }
     }
 
     #endregion
