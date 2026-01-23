@@ -216,6 +216,12 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         MigrateSaveRequest body,
         CancellationToken cancellationToken)
     {
+        if (!_configuration.MigrationsEnabled)
+        {
+            _logger.LogWarning("Schema migrations are disabled by configuration");
+            return (StatusCodes.BadRequest, null);
+        }
+
         _logger.LogDebug(
             "Migrating save {SlotName} to schema version {TargetVersion}",
             body.SlotName, body.TargetSchemaVersion);
@@ -336,7 +342,12 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
 
             // Compress data
             var compressionType = Enum.TryParse<CompressionType>(slot.CompressionType, out var ct) ? ct : CompressionType.GZIP;
-            var compressedData = CompressionHelper.Compress(migrationResult.Data, compressionType);
+            var migrationCompressionLevel = compressionType == CompressionType.BROTLI
+                ? _configuration.BrotliCompressionLevel
+                : compressionType == CompressionType.GZIP
+                    ? _configuration.GzipCompressionLevel
+                    : (int?)null;
+            var compressedData = CompressionHelper.Compress(migrationResult.Data, compressionType, migrationCompressionLevel);
 
             // Upload to storage
             var uploadRequest = new UploadRequest

@@ -1029,7 +1029,10 @@ public partial class AssetService : IAssetService
                 Owner = body.Owner
             };
 
-            await bundleStore.SaveAsync(bundleKey, bundleMetadata, cancellationToken: cancellationToken);
+            var bundleCacheTtlSeconds = _configuration.DefaultBundleCacheTtlHours * 3600;
+            await bundleStore.SaveAsync(bundleKey, bundleMetadata,
+                new StateOptions { Ttl = bundleCacheTtlSeconds },
+                cancellationToken);
 
             // Populate reverse indexes for asset → bundle lookups
             await IndexBundleAssetsAsync(bundleMetadata, cancellationToken).ConfigureAwait(false);
@@ -1744,7 +1747,10 @@ public partial class AssetService : IAssetService
                 Metadata = body.Metadata != null ? MetadataHelper.ConvertToDictionary(body.Metadata) : null
             };
 
-            await bundleStore.SaveAsync(metabundleKey, metabundleMetadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var metabundleCacheTtlSeconds = _configuration.DefaultBundleCacheTtlHours * 3600;
+            await bundleStore.SaveAsync(metabundleKey, metabundleMetadata,
+                new StateOptions { Ttl = metabundleCacheTtlSeconds },
+                cancellationToken).ConfigureAwait(false);
 
             // Populate reverse indexes
             await IndexBundleAssetsAsync(metabundleMetadata, cancellationToken).ConfigureAwait(false);
@@ -2180,7 +2186,9 @@ public partial class AssetService : IAssetService
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ErrorCode = MetabundleErrorCode.CANCELLED.ToString();
             job.ErrorMessage = "Job cancelled by user request";
-            await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await jobStore.SaveAsync(jobKey, job,
+                new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+                cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CancelJob: Job {JobId} cancelled (was {PreviousStatus})", body.JobId, previousStatus);
 
@@ -3595,10 +3603,12 @@ public partial class AssetService : IAssetService
             UpdatedAt = now
         };
 
-        // Save job to state store
+        // Save job to state store with TTL for automatic cleanup
         var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(StateStoreDefinitions.Asset);
         var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{jobId}";
-        await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await jobStore.SaveAsync(jobKey, job,
+            new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
+            cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
             "CreateMetabundle: Created async job {JobId} for metabundle {MetabundleId} with {AssetCount} assets",

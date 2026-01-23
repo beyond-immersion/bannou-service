@@ -76,9 +76,15 @@ public class StorageCircuitBreaker
     /// <summary>
     /// Checks if an operation is allowed based on circuit state.
     /// Returns true if allowed, false if circuit is open.
+    /// Always allows if circuit breaker is disabled.
     /// </summary>
     public async Task<bool> IsAllowedAsync(CancellationToken cancellationToken = default)
     {
+        if (!_configuration.StorageCircuitBreakerEnabled)
+        {
+            return true;
+        }
+
         var state = await GetOrCreateStateAsync(cancellationToken);
         var currentState = ParseState(state.State);
 

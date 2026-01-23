@@ -15,6 +15,16 @@ public sealed class ConstantPoolBuilder
 {
     private readonly List<double> _constants = new(64);
     private readonly Dictionary<double, byte> _constantLookup = new(64);
+    private readonly int _maxConstants;
+
+    /// <summary>
+    /// Creates a new constant pool builder with configurable limit.
+    /// </summary>
+    /// <param name="maxConstants">Maximum constants allowed. Defaults to VmConfig.MaxConstants.</param>
+    public ConstantPoolBuilder(int maxConstants = 0)
+    {
+        _maxConstants = maxConstants > 0 ? maxConstants : VmConfig.MaxConstants;
+    }
 
     /// <summary>
     /// Number of constants in the pool.
@@ -22,12 +32,9 @@ public sealed class ConstantPoolBuilder
     public int Count => _constants.Count;
 
     /// <summary>
-    /// Maximum number of constants (byte index limit).
+    /// Maximum number of constants for this builder instance.
     /// </summary>
-    /// <remarks>
-    /// References <see cref="VmConfig.MaxConstants"/> as the authoritative value.
-    /// </remarks>
-    public static int MaxConstants => VmConfig.MaxConstants;
+    public int MaxConstants => _maxConstants;
 
     /// <summary>
     /// Adds or retrieves an existing constant from the pool.
@@ -52,10 +59,10 @@ public sealed class ConstantPoolBuilder
             }
         }
 
-        if (_constants.Count >= MaxConstants)
+        if (_constants.Count >= _maxConstants)
         {
             throw new InvalidOperationException(
-                $"Constant pool overflow. Maximum {MaxConstants} constants supported.");
+                $"Constant pool overflow. Maximum {_maxConstants} constants supported.");
         }
 
         var newIndex = (byte)_constants.Count;

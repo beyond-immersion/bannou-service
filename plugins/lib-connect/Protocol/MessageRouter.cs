@@ -180,15 +180,15 @@ public static class MessageRouter
     /// </summary>
     public static RateLimitResult CheckRateLimit(
         ConnectionState connectionState,
-        int maxMessagesPerMinute = 1000)
+        int maxMessagesPerMinute = 1000,
+        int rateLimitWindowMinutes = 1)
     {
-        // This is a simplified rate limiting - in production you'd want more sophisticated logic
         var now = DateTimeOffset.UtcNow;
-        var oneMinuteAgo = now.AddMinutes(-1);
+        var windowStart = now.AddMinutes(-rateLimitWindowMinutes);
 
-        // Count recent messages (this would be more efficient with a sliding window)
+        // Count recent messages within the configured window
         var recentMessageCount = connectionState.PendingMessages.Values
-            .Count(p => p.SentAt > oneMinuteAgo);
+            .Count(p => p.SentAt > windowStart);
 
         if (recentMessageCount >= maxMessagesPerMinute)
         {
@@ -196,7 +196,7 @@ public static class MessageRouter
             {
                 IsAllowed = false,
                 RemainingQuota = 0,
-                ResetTime = now.AddMinutes(1)
+                ResetTime = now.AddMinutes(rateLimitWindowMinutes)
             };
         }
 
@@ -204,7 +204,7 @@ public static class MessageRouter
         {
             IsAllowed = true,
             RemainingQuota = maxMessagesPerMinute - recentMessageCount,
-            ResetTime = now.AddMinutes(1)
+            ResetTime = now.AddMinutes(rateLimitWindowMinutes)
         };
     }
 

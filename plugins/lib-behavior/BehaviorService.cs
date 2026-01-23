@@ -305,18 +305,24 @@ public partial class BehaviorService : IBehaviorService
     /// <summary>
     /// Maps API compilation options to internal compiler options.
     /// </summary>
-    private static InternalCompilationOptions MapCompilationOptions(CompilationOptions? apiOptions)
+    private InternalCompilationOptions MapCompilationOptions(CompilationOptions? apiOptions)
     {
         if (apiOptions == null)
         {
-            return InternalCompilationOptions.Default;
+            return new InternalCompilationOptions
+            {
+                MaxConstants = _configuration.CompilerMaxConstants,
+                MaxStrings = _configuration.CompilerMaxStrings
+            };
         }
 
         return new InternalCompilationOptions
         {
             EnableOptimizations = apiOptions.EnableOptimizations,
-            IncludeDebugInfo = !apiOptions.EnableOptimizations, // Debug info when not optimizing
-            SkipSemanticAnalysis = !apiOptions.StrictValidation
+            IncludeDebugInfo = !apiOptions.EnableOptimizations,
+            SkipSemanticAnalysis = !apiOptions.StrictValidation,
+            MaxConstants = _configuration.CompilerMaxConstants,
+            MaxStrings = _configuration.CompilerMaxStrings
         };
     }
 
@@ -497,10 +503,11 @@ public partial class BehaviorService : IBehaviorService
 
             _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.AbmlContent.Length);
 
-            // Configure options for validation only (skip bytecode generation)
             var options = new InternalCompilationOptions
             {
-                SkipSemanticAnalysis = !body.StrictMode
+                SkipSemanticAnalysis = !body.StrictMode,
+                MaxConstants = _configuration.CompilerMaxConstants,
+                MaxStrings = _configuration.CompilerMaxStrings
             };
 
             // Use the compiler's validation path

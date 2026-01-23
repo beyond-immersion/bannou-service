@@ -34,6 +34,35 @@ public class MinioWebhookHandler
     }
 
     /// <summary>
+    /// Validates the webhook secret token if configured.
+    /// Returns true if validation passes (or no secret is configured).
+    /// </summary>
+    /// <param name="token">The authorization token from the webhook request.</param>
+    /// <returns>True if the token is valid or no secret is configured.</returns>
+    public bool ValidateWebhookSecret(string? token)
+    {
+        var secret = _configuration.MinioWebhookSecret;
+        if (string.IsNullOrEmpty(secret))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrEmpty(token))
+        {
+            _logger.LogWarning("MinIO webhook: Missing authorization token");
+            return false;
+        }
+
+        if (!string.Equals(token, secret, StringComparison.Ordinal))
+        {
+            _logger.LogWarning("MinIO webhook: Invalid authorization token");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Handles MinIO S3 event notification webhook.
     /// </summary>
     /// <param name="payload">Raw JSON payload from MinIO webhook</param>

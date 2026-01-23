@@ -707,8 +707,15 @@ public class ActorRunner : IActorRunner
         // Working memory (perception-derived data)
         scope.SetValue("working_memory", _state.GetAllWorkingMemory());
 
-        // Template configuration
-        scope.SetValue("config", _template.Configuration);
+        // Template configuration merged with actor service GOAP parameters
+        var templateConfig = _template.Configuration as IDictionary<string, object?>;
+        var mergedConfig = templateConfig != null
+            ? new Dictionary<string, object?>(templateConfig)
+            : new Dictionary<string, object?>();
+        mergedConfig["goap_replan_threshold"] = _config.GoapReplanThreshold;
+        mergedConfig["goap_max_plan_depth"] = _config.GoapMaxPlanDepth;
+        mergedConfig["goap_plan_timeout_ms"] = _config.GoapPlanTimeoutMs;
+        scope.SetValue("config", mergedConfig);
 
         // Current perceptions (collected from queue this tick)
         scope.SetValue("perceptions", CollectCurrentPerceptions());
@@ -851,7 +858,7 @@ public class ActorRunner : IActorRunner
                         var value = memDict.TryGetValue("value", out var v) ? v : null;
                         var expiresMinutes = memDict.TryGetValue("expires_minutes", out var e) && e is double exp
                             ? (int)exp
-                            : 60; // Default 1 hour
+                            : _config.DefaultMemoryExpirationMinutes;
 
                         if (!string.IsNullOrEmpty(key))
                         {
@@ -943,33 +950,48 @@ public class ActorRunner : IActorRunner
     {
         var snapshot = GetStateSnapshot();
 
-        try
+        for (int attempt = 0; attempt <= _config.MemoryStoreMaxRetries; attempt++)
         {
-            await _stateStore.SaveAsync(ActorId, snapshot, cancellationToken: ct);
-            _logger.LogDebug("Actor {ActorId} persisted state", ActorId);
-
-            // Publish state persisted event
-            await _messageBus.TryPublishAsync(ACTOR_STATE_PERSISTED_TOPIC, new ActorStatePersistedEvent
+            try
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ActorId = ActorId,
-                NodeId = NodeId,
-                LoopIterations = LoopIterations
-            }, cancellationToken: ct);
-        }
-        catch (Exception ex)
-        {
-            // Log but don't throw - persistence failure shouldn't kill the actor
-            _logger.LogError(ex, "Actor {ActorId} failed to persist state", ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "PersistState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state",
-                details: new { ActorId },
-                stack: ex.StackTrace);
+                await _stateStore.SaveAsync(ActorId, snapshot, cancellationToken: ct);
+                _logger.LogDebug("Actor {ActorId} persisted state", ActorId);
+
+                // Publish state persisted event
+                await _messageBus.TryPublishAsync(ACTOR_STATE_PERSISTED_TOPIC, new ActorStatePersistedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ActorId = ActorId,
+                    NodeId = NodeId,
+                    LoopIterations = LoopIterations
+                }, cancellationToken: ct);
+                return;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (attempt < _config.MemoryStoreMaxRetries)
+            {
+                _logger.LogWarning(ex, "Actor {ActorId} state persist attempt {Attempt} failed, retrying",
+                    ActorId, attempt + 1);
+                await Task.Delay(50 * (attempt + 1), ct);
+            }
+            catch (Exception ex)
+            {
+                // Final attempt failed - log but don't throw, persistence failure shouldn't kill the actor
+                _logger.LogError(ex, "Actor {ActorId} failed to persist state after {MaxRetries} retries",
+                    ActorId, _config.MemoryStoreMaxRetries);
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "PersistState",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "state",
+                    details: new { ActorId, Retries = _config.MemoryStoreMaxRetries },
+                    stack: ex.StackTrace);
+            }
         }
     }
 

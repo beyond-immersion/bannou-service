@@ -116,8 +116,17 @@ public class CleanupService : BackgroundService
         var totalSlotsDeleted = 0;
         long totalBytesFreed = 0;
 
+        var sessionGracePeriod = TimeSpan.FromMinutes(_configuration.SessionCleanupGracePeriodMinutes);
+
         foreach (var slot in slotList)
         {
+            // Skip SESSION-owned slots that are within the grace period
+            if (string.Equals(slot.OwnerType, "SESSION", StringComparison.OrdinalIgnoreCase) &&
+                DateTimeOffset.UtcNow - slot.UpdatedAt < sessionGracePeriod)
+            {
+                continue;
+            }
+
             var (versionsDeleted, bytesFreed) = await CleanupSlotAsync(
                 slot, versionStore, assetClient, cancellationToken);
 
@@ -239,6 +248,19 @@ public class CleanupService : BackgroundService
                     ex,
                     "Failed to delete version {Version} for slot {SlotId}",
                     version.VersionNumber, slot.SlotId);
+            }
+        }
+
+        // Log delta chains that need collapsing (only when auto-collapse is enabled)
+        if (_configuration.AutoCollapseEnabled && versionsDeleted > 0)
+        {
+            var remainingVersions = versionList.Except(versionsToDelete).ToList();
+            var deltaVersions = remainingVersions.Where(v => v.IsDelta).ToList();
+            if (deltaVersions.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Slot {SlotId} has {DeltaCount} delta versions that could be collapsed",
+                    slot.SlotId, deltaVersions.Count);
             }
         }
 

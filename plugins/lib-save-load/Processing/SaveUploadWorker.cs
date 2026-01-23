@@ -26,6 +26,7 @@ public class SaveUploadWorker : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly ILogger<SaveUploadWorker> _logger;
+    private readonly SemaphoreSlim _uploadSemaphore;
 
     /// <summary>
     /// Creates a new SaveUploadWorker instance.
@@ -38,6 +39,7 @@ public class SaveUploadWorker : BackgroundService
         _serviceProvider = serviceProvider;
         _configuration = configuration;
         _logger = logger;
+        _uploadSemaphore = new SemaphoreSlim(_configuration.MaxConcurrentUploads);
     }
 
     /// <summary>
@@ -103,8 +105,8 @@ public class SaveUploadWorker : BackgroundService
             _configuration,
             serviceProvider.GetRequiredService<ILogger<StorageCircuitBreaker>>());
 
-        // Check circuit breaker
-        if (!await circuitBreaker.IsAllowedAsync(cancellationToken))
+        // Check circuit breaker (only when enabled)
+        if (_configuration.StorageCircuitBreakerEnabled && !await circuitBreaker.IsAllowedAsync(cancellationToken))
         {
             _logger.LogDebug("Circuit breaker is open, skipping upload processing");
             return;
@@ -147,6 +149,7 @@ public class SaveUploadWorker : BackgroundService
 
         foreach (var entry in pendingEntries)
         {
+            await _uploadSemaphore.WaitAsync(cancellationToken);
             try
             {
                 await ProcessUploadAsync(entry, pendingStore, versionStore, assetClient, messageBus, circuitBreaker, httpClientFactory, cancellationToken);
@@ -155,6 +158,14 @@ public class SaveUploadWorker : BackgroundService
             {
                 _logger.LogError(ex, "Error processing upload {UploadId}", entry.UploadId);
                 await RecordUploadFailureAsync(entry, pendingStore, messageBus, ex.Message, circuitBreaker, cancellationToken);
+
+                // Delay between retries using configured value with exponential backoff
+                var retryDelay = TimeSpan.FromMilliseconds(_configuration.UploadRetryDelayMs * entry.AttemptCount);
+                await Task.Delay(retryDelay, cancellationToken);
+            }
+            finally
+            {
+                _uploadSemaphore.Release();
             }
         }
     }
@@ -183,11 +194,11 @@ public class SaveUploadWorker : BackgroundService
         {
             Owner = $"{entry.OwnerType}:{entry.OwnerId}",
             ContentType = "application/octet-stream",
-            Filename = $"save_{entry.SlotId}_{entry.VersionNumber}.dat",
+            Filename = $"{_configuration.AssetBucket}/save_{entry.SlotId}_{entry.VersionNumber}.dat",
             Size = entry.CompressedSizeBytes,
             Metadata = new AssetMetadataInput
             {
-                Tags = new List<string> { "save-data", entry.GameId, entry.SlotId, entry.VersionNumber.ToString() }
+                Tags = new List<string> { "save-data", _configuration.AssetBucket, entry.GameId, entry.SlotId, entry.VersionNumber.ToString() }
             }
         };
 

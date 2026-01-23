@@ -149,7 +149,8 @@ public sealed class HeartbeatEmitter : IDisposable
             Timestamp = DateTimeOffset.UtcNow,
             NodeId = nodeId,
             AppId = appId,
-            CurrentLoad = runningCount
+            CurrentLoad = runningCount,
+            Capacity = _configuration.PoolNodeCapacity
         };
 
         await _messageBus.TryPublishAsync("actor.pool-node.heartbeat", heartbeat, cancellationToken: ct);

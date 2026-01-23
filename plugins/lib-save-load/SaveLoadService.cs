@@ -99,6 +99,19 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Check max slots per owner limit
+            var queryableSlotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            var ownerSlots = await queryableSlotStore.QueryAsync(
+                s => s.OwnerId == ownerId && s.OwnerType == ownerType,
+                cancellationToken);
+            if (ownerSlots.Count() >= _configuration.MaxSlotsPerOwner)
+            {
+                _logger.LogWarning(
+                    "Owner {OwnerId} has reached maximum slot limit of {MaxSlots}",
+                    ownerId, _configuration.MaxSlotsPerOwner);
+                return (StatusCodes.BadRequest, null);
+            }
+
             // Get category defaults
             var category = body.Category;
             var maxVersions = body.MaxVersions > 0 ? body.MaxVersions : GetDefaultMaxVersions(category);
@@ -451,6 +464,27 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
+            // Validate save data size against configured maximum
+            if (body.Data.Length > _configuration.MaxSaveSizeBytes)
+            {
+                _logger.LogWarning(
+                    "Save data size {Size} bytes exceeds maximum {MaxSize} bytes",
+                    body.Data.Length, _configuration.MaxSaveSizeBytes);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate thumbnail if provided
+            if (body.Thumbnail != null && body.Thumbnail.Length > 0)
+            {
+                if (body.Thumbnail.Length > _configuration.ThumbnailMaxSizeBytes)
+                {
+                    _logger.LogWarning(
+                        "Thumbnail size {Size} bytes exceeds maximum {MaxSize} bytes",
+                        body.Thumbnail.Length, _configuration.ThumbnailMaxSizeBytes);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
@@ -491,6 +525,34 @@ public partial class SaveLoadService : ISaveLoadService
                 _logger.LogInformation("Auto-created slot {SlotId} for {SlotName}", slot.SlotId, body.SlotName);
             }
 
+            // Check total storage quota per owner
+            if (slot.TotalSizeBytes + body.Data.Length > _configuration.MaxTotalSizeBytesPerOwner)
+            {
+                _logger.LogWarning(
+                    "Owner {OwnerId} would exceed storage quota: current {CurrentBytes} + new {NewBytes} > max {MaxBytes}",
+                    ownerId, slot.TotalSizeBytes, body.Data.Length, _configuration.MaxTotalSizeBytesPerOwner);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Conflict detection: check if another device saved within the detection window
+            if (_configuration.ConflictDetectionEnabled && !string.IsNullOrEmpty(body.DeviceId) && slot.LatestVersion.HasValue)
+            {
+                var latestVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, slot.LatestVersion.Value);
+                var latestVersion = await versionStore.GetAsync(latestVersionKey, cancellationToken);
+                if (latestVersion != null &&
+                    !string.IsNullOrEmpty(latestVersion.DeviceId) &&
+                    latestVersion.DeviceId != body.DeviceId)
+                {
+                    var timeSinceLastSave = now - latestVersion.CreatedAt;
+                    if (timeSinceLastSave < TimeSpan.FromMinutes(_configuration.ConflictDetectionWindowMinutes))
+                    {
+                        _logger.LogWarning(
+                            "Potential save conflict detected: device {NewDevice} saving within {Minutes} minutes of device {OldDevice}",
+                            body.DeviceId, _configuration.ConflictDetectionWindowMinutes, latestVersion.DeviceId);
+                    }
+                }
+            }
+
             // Get raw data
             var rawData = body.Data;
             var originalSize = rawData.Length;
@@ -505,7 +567,12 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (Compression.CompressionHelper.ShouldCompress(originalSize, _configuration.AutoCompressThresholdBytes))
             {
-                compressedData = Compression.CompressionHelper.Compress(rawData, compressionType);
+                var compressionLevel = compressionType == CompressionType.BROTLI
+                    ? _configuration.BrotliCompressionLevel
+                    : compressionType == CompressionType.GZIP
+                        ? _configuration.GzipCompressionLevel
+                        : (int?)null;
+                compressedData = Compression.CompressionHelper.Compress(rawData, compressionType, compressionLevel);
                 compressedSize = compressedData.Length;
             }
             else
@@ -955,7 +1022,12 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct)
                     ? ct : CompressionType.GZIP;
-                compressedDelta = Compression.CompressionHelper.Compress(body.Delta, compressionTypeEnum);
+                var deltaCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+                    ? _configuration.BrotliCompressionLevel
+                    : compressionTypeEnum == CompressionType.GZIP
+                        ? _configuration.GzipCompressionLevel
+                        : (int?)null;
+                compressedDelta = Compression.CompressionHelper.Compress(body.Delta, compressionTypeEnum, deltaCompressionLevel);
             }
 
             // Store in hot cache
@@ -1291,7 +1363,12 @@ public partial class SaveLoadService : ISaveLoadService
 
             // Compress the reconstructed data
             var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
-            var compressedData = Compression.CompressionHelper.Compress(reconstructedData, compressionTypeEnum);
+            var collapseCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+                ? _configuration.BrotliCompressionLevel
+                : compressionTypeEnum == CompressionType.GZIP
+                    ? _configuration.GzipCompressionLevel
+                    : (int?)null;
+            var compressedData = Compression.CompressionHelper.Compress(reconstructedData, compressionTypeEnum, collapseCompressionLevel);
 
             // Update the target version to be a full snapshot
             var contentHash = Hashing.ContentHasher.ComputeHash(reconstructedData);
@@ -1993,7 +2070,12 @@ public partial class SaveLoadService : ISaveLoadService
             var newVersionNumber = (targetSlot.LatestVersion ?? 0) + 1;
             var contentHash = Hashing.ContentHasher.ComputeHash(sourceData);
             var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
-            var compressedData = Compression.CompressionHelper.Compress(sourceData, compressionTypeEnum);
+            var copyCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+                ? _configuration.BrotliCompressionLevel
+                : compressionTypeEnum == CompressionType.GZIP
+                    ? _configuration.GzipCompressionLevel
+                    : (int?)null;
+            var compressedData = Compression.CompressionHelper.Compress(sourceData, compressionTypeEnum, copyCompressionLevel);
 
             var newVersion = new SaveVersionManifest
             {

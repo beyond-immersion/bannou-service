@@ -113,7 +113,7 @@ public partial class ConnectService : IConnectService
         _manifestBuilder = manifestBuilder;
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
-        _connectionManager = new WebSocketConnectionManager();
+        _connectionManager = new WebSocketConnectionManager(configuration.ConnectionShutdownTimeoutSeconds);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly
@@ -590,6 +590,16 @@ public partial class ConnectService : IConnectService
         // Create connection state with service mappings from discovery
         var connectionState = new ConnectionState(sessionId);
 
+        // Check connection limit before accepting
+        if (_connectionManager.ConnectionCount >= _configuration.MaxConcurrentConnections)
+        {
+            _logger.LogWarning("Maximum concurrent connections ({MaxConnections}) reached, rejecting session {SessionId}",
+                _configuration.MaxConcurrentConnections, sessionId);
+            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation,
+                "Maximum connections exceeded", cancellationToken);
+            return;
+        }
+
         // INTERNAL MODE: Skip all capability initialization - just peer routing
         if (_connectionMode == "internal")
         {
@@ -1033,7 +1043,7 @@ public partial class ConnectService : IConnectService
             }
 
             // Check rate limiting
-            var rateLimitResult = MessageRouter.CheckRateLimit(connectionState, _configuration.MaxMessagesPerMinute);
+            var rateLimitResult = MessageRouter.CheckRateLimit(connectionState, _configuration.MaxMessagesPerMinute, _configuration.RateLimitWindowMinutes);
             if (!rateLimitResult.IsAllowed)
             {
                 _logger.LogWarning("Rate limit exceeded for session {SessionId}", sessionId);

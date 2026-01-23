@@ -88,9 +88,11 @@ public sealed class AssetProcessingWorker : BackgroundService
 
     /// <summary>
     /// Gets the pool type this processor handles.
-    /// Configured via ASSET_PROCESSING_POOL_TYPE (default: "asset-processor").
+    /// Uses WorkerPool override if configured, otherwise falls back to ProcessingPoolType.
     /// </summary>
-    private string PoolType => _configuration.ProcessingPoolType;
+    private string PoolType => !string.IsNullOrEmpty(_configuration.WorkerPool)
+        ? _configuration.WorkerPool
+        : _configuration.ProcessingPoolType;
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -159,11 +161,13 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// </summary>
     private async Task KeepAliveAsync(CancellationToken stoppingToken)
     {
+        var checkInterval = TimeSpan.FromSeconds(_configuration.ProcessingQueueCheckIntervalSeconds);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                await Task.Delay(checkInterval, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -274,7 +278,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 // Wait before retrying
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(_configuration.ProcessingBatchIntervalSeconds), stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {

@@ -150,6 +150,27 @@ public sealed class PoolHealthMonitor : BackgroundService
             _logger.LogInformation(
                 "Pool capacity after health check: {HealthyNodes} healthy, {TotalCapacity} capacity, {TotalLoad} load",
                 summary.HealthyNodes, summary.TotalCapacity, summary.TotalLoad);
+
+            if (summary.HealthyNodes < _configuration.MinPoolNodes)
+            {
+                _logger.LogError(
+                    "Pool below minimum node threshold: {HealthyNodes} healthy < {MinPoolNodes} minimum (image: {PoolNodeImage})",
+                    summary.HealthyNodes, _configuration.MinPoolNodes, _configuration.PoolNodeImage);
+
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "PoolHealthCheck",
+                    "InsufficientPoolNodes",
+                    $"Pool has {summary.HealthyNodes} healthy nodes, minimum is {_configuration.MinPoolNodes}",
+                    details: new
+                    {
+                        summary.HealthyNodes,
+                        _configuration.MinPoolNodes,
+                        _configuration.MaxPoolNodes,
+                        _configuration.PoolNodeImage
+                    },
+                    cancellationToken: ct);
+            }
         }
     }
 }

@@ -34,6 +34,9 @@ public class AchievementServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
+        // Background service for periodic rarity percentage recalculation
+        services.AddHostedService<RarityCalculationService>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 

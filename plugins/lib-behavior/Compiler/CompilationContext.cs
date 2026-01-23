@@ -23,12 +23,12 @@ public sealed class CompilationContext
     /// <summary>
     /// Constant pool builder for numeric literals.
     /// </summary>
-    public ConstantPoolBuilder Constants { get; } = new();
+    public ConstantPoolBuilder Constants { get; }
 
     /// <summary>
     /// String table builder for string literals.
     /// </summary>
-    public StringTableBuilder Strings { get; } = new();
+    public StringTableBuilder Strings { get; }
 
     /// <summary>
     /// Label manager for jump targets and flow offsets.
@@ -76,6 +76,8 @@ public sealed class CompilationContext
     public CompilationContext(CompilationOptions? options = null)
     {
         Options = options ?? CompilationOptions.Default;
+        Constants = new ConstantPoolBuilder(Options.MaxConstants);
+        Strings = new StringTableBuilder(Options.MaxStrings);
         Constants.AddCommonConstants(); // Pre-add 0, 1, -1
     }
 
@@ -265,6 +267,16 @@ public sealed class CompilationOptions
     /// Whether to skip semantic analysis.
     /// </summary>
     public bool SkipSemanticAnalysis { get; init; }
+
+    /// <summary>
+    /// Maximum constants in the constant pool. Zero uses VmConfig default.
+    /// </summary>
+    public int MaxConstants { get; init; }
+
+    /// <summary>
+    /// Maximum strings in the string table. Zero uses VmConfig default.
+    /// </summary>
+    public int MaxStrings { get; init; }
 
     /// <summary>
     /// Model ID to use (null for auto-generated).

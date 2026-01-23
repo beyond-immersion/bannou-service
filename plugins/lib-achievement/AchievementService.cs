@@ -42,6 +42,7 @@ public partial class AchievementService : IAchievementService
 
     // State store key prefixes
     private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
+    private const string GAME_SERVICE_INDEX_KEY = "achievement-game-services";
 
     /// <summary>
     /// Initializes a new instance of the AchievementService.
@@ -138,6 +139,12 @@ public partial class AchievementService : IAchievementService
             await definitionStore.AddToSetAsync(
                 GetDefinitionIndexKey(body.GameServiceId),
                 body.AchievementId,
+                cancellationToken: cancellationToken);
+
+            // Track the game service ID for background rarity recalculation
+            await definitionStore.AddToSetAsync(
+                GAME_SERVICE_INDEX_KEY,
+                body.GameServiceId.ToString(),
                 cancellationToken: cancellationToken);
 
             // Publish definition created event
@@ -1109,6 +1116,19 @@ public partial class AchievementService : IAchievementService
         int totalPoints,
         CancellationToken cancellationToken)
     {
+        var isRare = definition.EarnedCount < _configuration.RarityThresholdEarnedCount;
+        double? rarityPercent = definition.RarityPercent;
+
+        if (rarityPercent.HasValue)
+        {
+            isRare = isRare || rarityPercent.Value < _configuration.RareThresholdPercent;
+        }
+        else if (definition.TotalEligibleEntities > 0)
+        {
+            rarityPercent = (double)definition.EarnedCount / definition.TotalEligibleEntities * 100.0;
+            isRare = isRare || rarityPercent.Value < _configuration.RareThresholdPercent;
+        }
+
         var unlockEvent = new AchievementUnlockedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1122,8 +1142,8 @@ public partial class AchievementService : IAchievementService
             Points = definition.Points,
             TotalPoints = totalPoints,
             IconUrl = definition.IconUrl,
-            IsRare = definition.EarnedCount < _configuration.RarityThresholdEarnedCount,
-            Rarity = null // Would need total player count to calculate
+            IsRare = isRare,
+            Rarity = rarityPercent
         };
         await _messageBus.TryPublishAsync("achievement.unlocked", unlockEvent, cancellationToken: cancellationToken);
     }
@@ -1253,6 +1273,21 @@ public partial class AchievementService : IAchievementService
         string platformAchievementId,
         CancellationToken cancellationToken)
     {
+        if (_configuration.MockPlatformSync)
+        {
+            _logger.LogInformation(
+                "Mock mode enabled - returning success without API call for {Platform} achievement {AchievementId}",
+                syncProvider.Platform,
+                platformAchievementId);
+
+            var mockResult = new PlatformSyncResult
+            {
+                Success = true,
+                SyncId = $"mock-{Guid.NewGuid():N}"
+            };
+            return (mockResult, null);
+        }
+
         var attempts = Math.Max(1, _configuration.SyncRetryAttempts);
         var delaySeconds = Math.Max(0, _configuration.SyncRetryDelaySeconds);
         PlatformSyncResult? lastResult = null;
@@ -1560,6 +1595,9 @@ internal class AchievementDefinitionData
     public List<string>? Prerequisites { get; set; }
     public bool IsActive { get; set; }
     public long EarnedCount { get; set; }
+    public long TotalEligibleEntities { get; set; }
+    public double? RarityPercent { get; set; }
+    public DateTimeOffset? RarityCalculatedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public object? Metadata { get; set; }
 }

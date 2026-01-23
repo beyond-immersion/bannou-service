@@ -14,11 +14,13 @@ public class WebSocketConnectionManager
     private readonly ConcurrentDictionary<Guid, string> _peerGuidToSessionId;
     private readonly Timer _cleanupTimer;
     private readonly object _lockObject = new();
+    private readonly int _connectionShutdownTimeoutSeconds;
 
-    public WebSocketConnectionManager()
+    public WebSocketConnectionManager(int connectionShutdownTimeoutSeconds = 5)
     {
         _connections = new ConcurrentDictionary<string, WebSocketConnection>();
         _peerGuidToSessionId = new ConcurrentDictionary<Guid, string>();
+        _connectionShutdownTimeoutSeconds = connectionShutdownTimeoutSeconds;
 
         // Start cleanup timer (runs every 30 seconds)
         _cleanupTimer = new Timer(CleanupExpiredConnections, null,
@@ -308,7 +310,7 @@ public class WebSocketConnectionManager
                 if (connection.WebSocket.State == WebSocketState.Open)
                 {
                     connection.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
-                        "Server shutdown", CancellationToken.None).Wait(TimeSpan.FromSeconds(5));
+                        "Server shutdown", CancellationToken.None).Wait(TimeSpan.FromSeconds(_connectionShutdownTimeoutSeconds));
                 }
             }
             catch

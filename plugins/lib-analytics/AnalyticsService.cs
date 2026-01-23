@@ -891,7 +891,7 @@ public partial class AnalyticsService : IAnalyticsService
         var fA = f(lowerBound);
         var fB = f(upperBound);
 
-        while (Math.Abs(upperBound - lowerBound) > 0.000001)
+        while (Math.Abs(upperBound - lowerBound) > _configuration.Glicko2VolatilityConvergenceTolerance)
         {
             var c = lowerBound + (lowerBound - upperBound) * fA / (fB - fA);
             var fC = f(c);
@@ -1356,7 +1356,7 @@ public partial class AnalyticsService : IAnalyticsService
             return;
         }
 
-        var lockExpirySeconds = Math.Max(10, flushIntervalSeconds > 0 ? flushIntervalSeconds * 2 : 10);
+        var lockExpirySeconds = Math.Max(_configuration.EventBufferLockExpiryBaseSeconds, flushIntervalSeconds > 0 ? flushIntervalSeconds * 2 : _configuration.EventBufferLockExpiryBaseSeconds);
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.AnalyticsSummary,
             BUFFER_LOCK_RESOURCE,

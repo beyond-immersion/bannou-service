@@ -210,8 +210,13 @@ public sealed class VersionDataLoader : IVersionDataLoader
         {
             // Re-compress for storage efficiency
             var compressionType = Enum.TryParse<CompressionType>(manifest.CompressionType, out var ct) ? ct : CompressionType.NONE;
+            var cacheCompressionLevel = compressionType == CompressionType.BROTLI
+                ? _configuration.BrotliCompressionLevel
+                : compressionType == CompressionType.GZIP
+                    ? _configuration.GzipCompressionLevel
+                    : (int?)null;
             var dataToStore = compressionType != CompressionType.NONE
-                ? CompressionHelper.Compress(decompressedData, compressionType)
+                ? CompressionHelper.Compress(decompressedData, compressionType, cacheCompressionLevel)
                 : decompressedData;
 
             var hotEntry = new HotSaveEntry

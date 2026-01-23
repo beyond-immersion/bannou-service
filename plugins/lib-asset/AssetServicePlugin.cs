@@ -95,10 +95,11 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             var logger = sp.GetService<ILogger<MinioStorageProvider>>();
 
             var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
+            var assetConfig = sp.GetRequiredService<AssetServiceConfiguration>();
             var config = new AmazonS3Config
             {
                 ServiceURL = $"{(options.UseSSL ? "https" : "http")}://{options.Endpoint}",
-                ForcePathStyle = true, // Required for MinIO
+                ForcePathStyle = assetConfig.StorageForcePathStyle,
                 UseHttp = !options.UseSSL
             };
 
@@ -115,8 +116,16 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Register event emitter for client notifications
         services.AddScoped<IAssetEventEmitter, AssetEventEmitter>();
 
-        // Register bundle services
-        services.AddSingleton<IBundleConverter, BundleConverter>();
+        // Register bundle services with configuration-driven cache TTL
+        services.AddSingleton<IBundleConverter>(sp =>
+        {
+            var bundleLogger = sp.GetRequiredService<ILogger<BundleConverter>>();
+            var assetConf = sp.GetRequiredService<AssetServiceConfiguration>();
+            return new BundleConverter(
+                bundleLogger,
+                cacheDirectory: null,
+                cacheTtl: TimeSpan.FromHours(assetConf.ZipCacheTtlHours));
+        });
         services.AddSingleton<BundleValidator>();
 
         // Register metrics

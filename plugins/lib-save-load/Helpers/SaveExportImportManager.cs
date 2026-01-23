@@ -397,7 +397,12 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 // Create version
                 var contentHash = Hashing.ContentHasher.ComputeHash(data);
                 var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
-                var compressedData = CompressionHelper.Compress(data, compressionTypeEnum);
+                var importCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
+                    ? _configuration.BrotliCompressionLevel
+                    : compressionTypeEnum == CompressionType.GZIP
+                        ? _configuration.GzipCompressionLevel
+                        : (int?)null;
+                var compressedData = CompressionHelper.Compress(data, compressionTypeEnum, importCompressionLevel);
 
                 var newVersion = new SaveVersionManifest
                 {

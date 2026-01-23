@@ -257,7 +257,9 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             if (healthyNodes.Count == 0)
             {
-                _logger.LogWarning("No pool nodes with capacity available for category {Category}", category);
+                _logger.LogWarning(
+                    "No pool nodes with capacity available for category {Category} (image: {PoolNodeImage}, max nodes: {MaxPoolNodes})",
+                    category, _configuration.PoolNodeImage, _configuration.MaxPoolNodes);
                 return null;
             }
         }
