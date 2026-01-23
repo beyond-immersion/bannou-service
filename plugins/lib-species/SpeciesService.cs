@@ -1028,7 +1028,7 @@ public partial class SpeciesService : ISpeciesService
             var migratedCount = 0;
             var failedCount = 0;
             var page = 1;
-            const int pageSize = 100;
+            var pageSize = _configuration.SeedPageSize;
             var hasMorePages = true;
 
             while (hasMorePages)

@@ -708,7 +708,7 @@ public partial class MappingService : IMappingService
             .Select(c => c.ObjectType)
             .Where(t => t != null)
             .Distinct()
-            .Take(5);
+            .Take(_configuration.MaxSpatialQueryResults);
         var payloadSummary = alertConfig?.IncludePayloadSummary == true
             ? $"{changes.Count} objects ({string.Join(", ", objectTypes)})"
             : null;

@@ -1043,9 +1043,6 @@ public partial class ActorService : IActorService
 
     #region Query Options
 
-    // Default tick interval for waiting on fresh queries (matches ActorRunner default)
-    private const int DefaultTickIntervalMs = 100;
-
     /// <summary>
     /// Queries an actor for its available options.
     /// </summary>
@@ -1106,7 +1103,7 @@ public partial class ActorService : IActorService
                 runner.InjectPerception(queryPerception);
 
                 // Wait briefly for actor to process (one tick)
-                await Task.Delay(DefaultTickIntervalMs, cancellationToken);
+                await Task.Delay(_configuration.DefaultTickIntervalMs, cancellationToken);
 
                 // Re-fetch state after processing
                 stateSnapshot = runner.GetStateSnapshot();

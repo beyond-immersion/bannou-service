@@ -11,26 +11,22 @@ public sealed class MessagingSubscriptionRecoveryService : BackgroundService
 {
     private readonly ILogger<MessagingSubscriptionRecoveryService> _logger;
     private readonly MessagingService _messagingService;
-
-    /// <summary>
-    /// Interval for refreshing subscription TTL (6 hours).
-    /// This should be significantly less than the 24-hour TTL to ensure
-    /// subscriptions don't expire while the service is running.
-    /// </summary>
-    private static readonly TimeSpan TtlRefreshInterval = TimeSpan.FromHours(6);
+    private readonly MessagingServiceConfiguration _configuration;
 
     public MessagingSubscriptionRecoveryService(
         ILogger<MessagingSubscriptionRecoveryService> logger,
-        MessagingService messagingService)
+        MessagingService messagingService,
+        MessagingServiceConfiguration configuration)
     {
         _logger = logger;
         _messagingService = messagingService;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Wait briefly for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(_configuration.SubscriptionRecoveryStartupDelaySeconds), stoppingToken);
 
         try
         {
@@ -48,7 +44,7 @@ public sealed class MessagingSubscriptionRecoveryService : BackgroundService
         {
             try
             {
-                await Task.Delay(TtlRefreshInterval, stoppingToken);
+                await Task.Delay(TimeSpan.FromHours(_configuration.SubscriptionTtlRefreshIntervalHours), stoppingToken);
                 await _messagingService.RefreshSubscriptionTtlAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

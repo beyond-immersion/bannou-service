@@ -130,7 +130,7 @@ public partial class AccountService : IAccountService
             // Filtered path: Need to load accounts to apply filters
             // For efficiency, we scan accounts and apply filters in batches
             var filteredAccounts = new List<AccountResponse>();
-            var batchSize = 100; // Process 100 accounts at a time to reduce memory
+            var batchSize = _configuration.ListBatchSize;
 
             // Scan in reverse order (newest first) for consistent ordering
             var reversedIds = accountIds.AsEnumerable().Reverse().ToList();
@@ -1192,7 +1192,7 @@ public partial class AccountService : IAccountService
     /// </summary>
     private async Task AddAccountToIndexAsync(string accountId, CancellationToken cancellationToken)
     {
-        const int maxRetries = 3;
+        var maxRetries = _configuration.IndexUpdateMaxRetries;
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
@@ -1240,7 +1240,7 @@ public partial class AccountService : IAccountService
     /// </summary>
     private async Task RemoveAccountFromIndexAsync(string accountId, CancellationToken cancellationToken)
     {
-        const int maxRetries = 3;
+        var maxRetries = _configuration.IndexUpdateMaxRetries;
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
 
         for (var attempt = 0; attempt < maxRetries; attempt++)

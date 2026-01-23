@@ -15,26 +15,34 @@ public class SubscriptionExpirationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SubscriptionExpirationService> _logger;
-
-    /// <summary>
-    /// Interval between expiration checks (default: 5 minutes).
-    /// </summary>
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(5);
-
-    /// <summary>
-    /// Grace period after which a subscription is considered expired (to avoid race conditions).
-    /// </summary>
-    private static readonly TimeSpan ExpirationGracePeriod = TimeSpan.FromSeconds(30);
+    private readonly SubscriptionServiceConfiguration _configuration;
 
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
     private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
+    /// <summary>
+    /// Interval between expiration checks, from configuration.
+    /// </summary>
+    private TimeSpan CheckInterval => TimeSpan.FromMinutes(_configuration.ExpirationCheckIntervalMinutes);
+
+    /// <summary>
+    /// Grace period after which a subscription is considered expired (to avoid race conditions).
+    /// </summary>
+    private TimeSpan ExpirationGracePeriod => TimeSpan.FromSeconds(_configuration.ExpirationGracePeriodSeconds);
+
+    /// <summary>
+    /// Startup delay before first check, from configuration.
+    /// </summary>
+    private TimeSpan StartupDelay => TimeSpan.FromSeconds(_configuration.StartupDelaySeconds);
+
     public SubscriptionExpirationService(
         IServiceProvider serviceProvider,
-        ILogger<SubscriptionExpirationService> logger)
+        ILogger<SubscriptionExpirationService> logger,
+        SubscriptionServiceConfiguration configuration)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -44,7 +52,7 @@ public class SubscriptionExpirationService : BackgroundService
         // Wait a bit before first check to allow other services to start
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(StartupDelay, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

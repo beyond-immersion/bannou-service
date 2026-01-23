@@ -860,7 +860,7 @@ public partial class OrchestratorService : IOrchestratorService
                     expectedAppIds.Count, string.Join(", ", expectedAppIds));
 
                 var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
-                var pollInterval = TimeSpan.FromSeconds(2);
+                var pollInterval = TimeSpan.FromSeconds(_configuration.ContainerStatusPollIntervalSeconds);
                 var heartbeatWaitStart = DateTime.UtcNow;
                 var receivedHeartbeats = new HashSet<string>();
 
@@ -3130,7 +3130,7 @@ public partial class OrchestratorService : IOrchestratorService
             var openRestyPort = _configuration.OpenRestyPort;
             var invalidateUrl = $"http://{openRestyHost}:{openRestyPort}/internal/cache/invalidate";
 
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(_configuration.OpenRestyRequestTimeoutSeconds) };
             var response = await httpClient.PostAsync(invalidateUrl, null);
 
             if (response.IsSuccessStatusCode)

@@ -60,7 +60,7 @@ public class CleanupService : BackgroundService
         }
 
         // Wait for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(_configuration.CleanupStartupDelaySeconds), stoppingToken);
 
         _logger.LogInformation(
             "CleanupService starting with interval of {IntervalMinutes} minutes",

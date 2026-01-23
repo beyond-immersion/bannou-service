@@ -49,8 +49,7 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_REALM_LEFT_TOPIC = "character.realm.left";
     private const string CHARACTER_COMPRESSED_TOPIC = "character.compressed";
 
-    // Grace period for cleanup eligibility (30 days in seconds)
-    private const int CLEANUP_GRACE_PERIOD_SECONDS = 30 * 24 * 60 * 60;
+    // Grace period for cleanup eligibility - from configuration in days, converted to seconds at usage
 
     public CharacterService(
         IStateStoreFactory stateStoreFactory,
@@ -825,9 +824,10 @@ public partial class CharacterService : ICharacterService
                     .SaveAsync(refCountKey, refData, cancellationToken: cancellationToken);
             }
 
-            // Determine cleanup eligibility
+            // Determine cleanup eligibility - grace period from configuration in days, converted to seconds
+            var cleanupGracePeriodSeconds = _configuration.CleanupGracePeriodDays * 24 * 60 * 60;
             var isEligibleForCleanup = isCompressed && referenceCount == 0 && refData.ZeroRefSinceUnix != null &&
-                (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - refData.ZeroRefSinceUnix.Value) >= CLEANUP_GRACE_PERIOD_SECONDS;
+                (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - refData.ZeroRefSinceUnix.Value) >= cleanupGracePeriodSeconds;
 
             var response = new CharacterRefCount
             {
@@ -1294,7 +1294,7 @@ public partial class CharacterService : ICharacterService
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
         // Retry loop for optimistic concurrency
-        const int maxRetries = 3;
+        var maxRetries = _configuration.RealmIndexUpdateMaxRetries;
         for (int retry = 0; retry < maxRetries; retry++)
         {
             var (characterIds, etag) = await store.GetWithETagAsync(realmIndexKey, cancellationToken);
@@ -1342,7 +1342,7 @@ public partial class CharacterService : ICharacterService
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
         // Retry loop for optimistic concurrency
-        const int maxRetries = 3;
+        var maxRetries = _configuration.RealmIndexUpdateMaxRetries;
         for (int retry = 0; retry < maxRetries; retry++)
         {
             var (characterIds, etag) = await store.GetWithETagAsync(realmIndexKey, cancellationToken);

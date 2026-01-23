@@ -26,6 +26,7 @@ public class SubscriptionExpirationServiceTests
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<SubscriptionExpirationService>> _mockLogger;
+    private readonly SubscriptionServiceConfiguration _configuration;
 
     public SubscriptionExpirationServiceTests()
     {
@@ -37,6 +38,7 @@ public class SubscriptionExpirationServiceTests
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<SubscriptionExpirationService>>();
+        _configuration = new SubscriptionServiceConfiguration();
 
         // Setup the service provider chain for DI scopes
         _mockServiceProvider.Setup(sp => sp.GetService(typeof(IServiceScopeFactory)))
@@ -67,7 +69,8 @@ public class SubscriptionExpirationServiceTests
         // Arrange & Act
         using var service = new SubscriptionExpirationService(
             _mockServiceProvider.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _configuration);
 
         // Assert
         Assert.NotNull(service);
@@ -86,7 +89,8 @@ public class SubscriptionExpirationServiceTests
         // Arrange
         using var service = new SubscriptionExpirationService(
             _mockServiceProvider.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _configuration);
 
         using var cts = new CancellationTokenSource();
 
@@ -107,7 +111,8 @@ public class SubscriptionExpirationServiceTests
 
         using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _configuration);
 
         // Act
         await service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None);
@@ -125,7 +130,8 @@ public class SubscriptionExpirationServiceTests
 
         using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _configuration);
 
         // Act & Assert - Required dependency missing should throw
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -141,7 +147,8 @@ public class SubscriptionExpirationServiceTests
 
         using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _configuration);
 
         // Act & Assert - Required dependency missing should throw
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -157,7 +164,8 @@ public class SubscriptionExpirationServiceTests
 
         using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _configuration);
 
         // Act
         await service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None);
@@ -180,8 +188,9 @@ public class SubscriptionExpirationServiceTests
     {
         public TestableSubscriptionExpirationService(
             IServiceProvider serviceProvider,
-            ILogger<SubscriptionExpirationService> logger)
-            : base(serviceProvider, logger)
+            ILogger<SubscriptionExpirationService> logger,
+            SubscriptionServiceConfiguration configuration)
+            : base(serviceProvider, logger, configuration)
         {
         }
 

@@ -35,11 +35,8 @@ public partial class InventoryService : IInventoryService
     private const string CONT_OWNER_INDEX = "cont-owner:";
     private const string CONT_TYPE_INDEX = "cont-type:";
 
-    // Pagination limit matching schema maximum
-    private const int QUERY_PAGE_SIZE = 200;
-
-    // Lock configuration
-    private const int LOCK_EXPIRY_SECONDS = 30;
+    // Query page size and lock configuration now use _configuration properties
+    // (QueryPageSize, LockTimeoutSeconds, ContainerCacheTtlSeconds)
 
     /// <summary>
     /// Initializes a new instance of the InventoryService.
@@ -406,7 +403,7 @@ public partial class InventoryService : IInventoryService
                 StateStoreDefinitions.InventoryLock,
                 body.ContainerId.ToString(),
                 lockOwner,
-                LOCK_EXPIRY_SECONDS,
+                _configuration.LockTimeoutSeconds,
                 cancellationToken);
 
             if (!lockResponse.Success)
@@ -606,7 +603,7 @@ public partial class InventoryService : IInventoryService
                 StateStoreDefinitions.InventoryLock,
                 body.ContainerId.ToString(),
                 lockOwner,
-                LOCK_EXPIRY_SECONDS,
+                _configuration.LockTimeoutSeconds,
                 cancellationToken);
 
             if (!lockResponse.Success)
@@ -766,7 +763,7 @@ public partial class InventoryService : IInventoryService
                 StateStoreDefinitions.InventoryLock,
                 item.ContainerId.ToString(),
                 lockOwner,
-                LOCK_EXPIRY_SECONDS,
+                _configuration.LockTimeoutSeconds,
                 cancellationToken);
 
             if (!lockResponse.Success)
@@ -1497,7 +1494,7 @@ public partial class InventoryService : IInventoryService
                         OwnerType = body.OwnerType,
                         TemplateId = body.TemplateId,
                         Offset = offset,
-                        Limit = QUERY_PAGE_SIZE
+                        Limit = _configuration.QueryPageSize
                     }, cancellationToken);
 
                 if (queryStatus != StatusCodes.OK || queryResponse is null)
@@ -1508,12 +1505,12 @@ public partial class InventoryService : IInventoryService
                 allItems.AddRange(queryResponse.Items);
 
                 // If we got fewer items than the page size, we've reached the end
-                if (queryResponse.Items.Count < QUERY_PAGE_SIZE)
+                if (queryResponse.Items.Count < _configuration.QueryPageSize)
                 {
                     break;
                 }
 
-                offset += QUERY_PAGE_SIZE;
+                offset += _configuration.QueryPageSize;
             }
 
             var totalQuantity = allItems.Sum(i => i.Quantity);
@@ -1984,11 +1981,6 @@ public partial class InventoryService : IInventoryService
     #region Container Cache Helpers
 
     /// <summary>
-    /// Container cache TTL in seconds (300 seconds - containers change less frequently).
-    /// </summary>
-    private const int CONTAINER_CACHE_TTL_SECONDS = 300;
-
-    /// <summary>
     /// Attempts to retrieve a container from the Redis cache.
     /// Uses StateStoreDefinitions.InventoryContainerCache directly per IMPLEMENTATION TENETS.
     /// </summary>
@@ -2016,7 +2008,7 @@ public partial class InventoryService : IInventoryService
         try
         {
             var cache = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
-            await cache.SaveAsync(key, container, new StateOptions { Ttl = CONTAINER_CACHE_TTL_SECONDS }, ct);
+            await cache.SaveAsync(key, container, new StateOptions { Ttl = _configuration.ContainerCacheTtlSeconds }, ct);
         }
         catch (Exception ex)
         {

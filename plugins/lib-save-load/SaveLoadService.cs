@@ -929,8 +929,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Check delta size threshold (only for base saves large enough for threshold to be meaningful)
             var deltaSize = body.Delta.Length;
             var estimatedFullSize = baseVersion.SizeBytes;
-            const int MinBaseSizeForThreshold = 1024; // 1KB minimum before applying threshold
-            if (estimatedFullSize >= MinBaseSizeForThreshold)
+            if (estimatedFullSize >= _configuration.MinBaseSizeForDeltaThresholdBytes)
             {
                 var deltaPercent = (double)deltaSize / estimatedFullSize * 100;
                 if (deltaPercent > _configuration.DeltaSizeThresholdPercent)

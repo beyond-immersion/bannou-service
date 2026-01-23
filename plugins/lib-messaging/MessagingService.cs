@@ -73,12 +73,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     /// </summary>
     internal const string ExternalSubscriptionStoreName = "messaging-external-subs";
 
-    /// <summary>
-    /// Default TTL for external subscription sets (24 hours).
-    /// If a node doesn't come back online within this period, its subscriptions expire.
-    /// </summary>
-    private const int ExternalSubscriptionTtlSeconds = 86400;
-
     private readonly ILogger<MessagingService> _logger;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
@@ -293,7 +287,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             await _subscriptionStore.AddToSetAsync(
                 _appId,
                 subscriptionData,
-                new StateOptions { Ttl = ExternalSubscriptionTtlSeconds },
+                new StateOptions { Ttl = _configuration.ExternalSubscriptionTtlSeconds },
                 cancellationToken);
 
             _logger.LogInformation("Created subscription {SubscriptionId} to topic {Topic} (persisted for app-id: {AppId})",
@@ -528,7 +522,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         }
 
         // Refresh TTL on the set to keep it alive
-        await _subscriptionStore.RefreshSetTtlAsync(_appId, ExternalSubscriptionTtlSeconds, cancellationToken);
+        await _subscriptionStore.RefreshSetTtlAsync(_appId, _configuration.ExternalSubscriptionTtlSeconds, cancellationToken);
 
         _logger.LogInformation("Recovered {Recovered} subscriptions for app-id {AppId} ({Failed} failed)",
             recovered, _appId, failed);
@@ -545,7 +539,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     {
         if (_activeSubscriptions.Count > 0)
         {
-            await _subscriptionStore.RefreshSetTtlAsync(_appId, ExternalSubscriptionTtlSeconds, cancellationToken);
+            await _subscriptionStore.RefreshSetTtlAsync(_appId, _configuration.ExternalSubscriptionTtlSeconds, cancellationToken);
             _logger.LogDebug("Refreshed TTL on subscription set for app-id {AppId}", _appId);
         }
     }

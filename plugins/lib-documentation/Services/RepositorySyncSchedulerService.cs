@@ -52,7 +52,7 @@ public class RepositorySyncSchedulerService : BackgroundService
         // Wait a bit before first check to allow other services to start
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.RepositorySyncCheckIntervalSeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

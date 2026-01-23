@@ -30,8 +30,7 @@ public partial class MeshService : IMeshService
     // Track service start time for uptime
     private static readonly DateTimeOffset _serviceStartTime = DateTimeOffset.UtcNow;
 
-    // Default TTL for endpoint registrations (90 seconds)
-    private const int DEFAULT_TTL_SECONDS = 90;
+    // TTL for endpoint registrations comes from _configuration.EndpointTtlSeconds
 
     /// <summary>
     /// Initializes a new instance of the MeshService class.
@@ -186,7 +185,7 @@ public partial class MeshService : IMeshService
                 LastSeen = now
             };
 
-            var success = await _stateManager.RegisterEndpointAsync(endpoint, DEFAULT_TTL_SECONDS);
+            var success = await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
 
             if (!success)
             {
@@ -200,7 +199,7 @@ public partial class MeshService : IMeshService
             var response = new RegisterEndpointResponse
             {
                 Endpoint = endpoint,
-                TtlSeconds = DEFAULT_TTL_SECONDS
+                TtlSeconds = _configuration.EndpointTtlSeconds
             };
 
             return (StatusCodes.OK, response);
@@ -300,7 +299,7 @@ public partial class MeshService : IMeshService
                 body.Status ?? EndpointStatus.Healthy,
                 body.LoadPercent ?? 0,
                 body.CurrentConnections ?? 0,
-                DEFAULT_TTL_SECONDS);
+                _configuration.EndpointTtlSeconds);
 
             if (!success)
             {
@@ -312,8 +311,8 @@ public partial class MeshService : IMeshService
 
             var response = new HeartbeatResponse
             {
-                NextHeartbeatSeconds = Math.Max(DEFAULT_TTL_SECONDS / 3, 10),
-                TtlSeconds = DEFAULT_TTL_SECONDS
+                NextHeartbeatSeconds = Math.Max(_configuration.EndpointTtlSeconds / 3, 10),
+                TtlSeconds = _configuration.EndpointTtlSeconds
             };
 
             return (StatusCodes.OK, response);
@@ -374,7 +373,7 @@ public partial class MeshService : IMeshService
             // Get alternates (other healthy endpoints)
             var alternates = endpoints
                 .Where(e => e.InstanceId != selectedEndpoint.InstanceId)
-                .Take(2)
+                .Take(_configuration.MaxTopEndpointsReturned)
                 .ToList();
 
             var response = new GetRouteResponse

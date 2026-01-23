@@ -157,7 +157,7 @@ public class TokenService : ITokenService
         await stringStore.SaveAsync(
             redisKey,
             accountId,
-            new StateOptions { Ttl = (int)TimeSpan.FromDays(7).TotalSeconds }, // 7 days
+            new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.SessionTokenTtlDays).TotalSeconds },
             cancellationToken);
     }
 

@@ -2776,11 +2776,6 @@ public partial class CurrencyService : ICurrencyService
     #region Balance Cache Helpers
 
     /// <summary>
-    /// Balance cache TTL in seconds (60 seconds - balances change frequently).
-    /// </summary>
-    private const int BALANCE_CACHE_TTL_SECONDS = 60;
-
-    /// <summary>
     /// Attempts to retrieve a balance from the Redis cache.
     /// Uses StateStoreDefinitions.CurrencyBalanceCache directly per IMPLEMENTATION TENETS.
     /// </summary>
@@ -2808,7 +2803,7 @@ public partial class CurrencyService : ICurrencyService
         try
         {
             var cache = _stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalanceCache);
-            await cache.SaveAsync(key, balance, new StateOptions { Ttl = BALANCE_CACHE_TTL_SECONDS }, ct);
+            await cache.SaveAsync(key, balance, new StateOptions { Ttl = _configuration.BalanceCacheTtlSeconds }, ct);
         }
         catch (Exception ex)
         {
@@ -2820,11 +2815,6 @@ public partial class CurrencyService : ICurrencyService
     #endregion
 
     #region Hold Cache Helpers
-
-    /// <summary>
-    /// Hold cache TTL in seconds (120 seconds - holds change less frequently than balances).
-    /// </summary>
-    private const int HOLD_CACHE_TTL_SECONDS = 120;
 
     /// <summary>
     /// Attempts to retrieve a hold from the Redis cache.
@@ -2854,7 +2844,7 @@ public partial class CurrencyService : ICurrencyService
         try
         {
             var cache = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHoldsCache);
-            await cache.SaveAsync(key, hold, new StateOptions { Ttl = HOLD_CACHE_TTL_SECONDS }, ct);
+            await cache.SaveAsync(key, hold, new StateOptions { Ttl = _configuration.HoldCacheTtlSeconds }, ct);
         }
         catch (Exception ex)
         {

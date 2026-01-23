@@ -926,7 +926,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var migrationErrors = new List<MigrationError>();
             const int maxErrorsToTrack = 100;
             var page = 1;
-            const int pageSize = 100;
+            var pageSize = _configuration.SeedPageSize;
             var hasMorePages = true;
 
             while (hasMorePages)

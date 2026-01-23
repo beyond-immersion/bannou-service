@@ -892,7 +892,7 @@ public partial class ItemService : IItemService
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
-        const int maxRetries = 3;
+        var maxRetries = _configuration.ListOperationMaxRetries;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
@@ -929,7 +929,7 @@ public partial class ItemService : IItemService
     private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
-        const int maxRetries = 3;
+        var maxRetries = _configuration.ListOperationMaxRetries;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {

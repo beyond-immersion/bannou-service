@@ -205,7 +205,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 BehaviorRef = command.BehaviorRef,
                 Configuration = command.Configuration,
                 Category = _configuration.PoolNodeType,
-                TickIntervalMs = command.TickIntervalMs > 0 ? command.TickIntervalMs : 100
+                TickIntervalMs = command.TickIntervalMs > 0 ? command.TickIntervalMs : _configuration.DefaultTickIntervalMs
             };
 
             // Create and start the actor runner
