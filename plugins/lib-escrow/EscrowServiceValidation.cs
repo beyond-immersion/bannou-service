@@ -22,20 +22,12 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new VerifyConditionResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             if (agreementModel.BoundContractId == null)
             {
-                return (StatusCodes.Status400BadRequest, new VerifyConditionResponse
-                {
-                    Success = false,
-                    Error = "Escrow does not have a bound contract for condition verification"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var validStates = new HashSet<EscrowStatus>
@@ -46,11 +38,7 @@ public partial class EscrowService
 
             if (!validStates.Contains(agreementModel.Status))
             {
-                return (StatusCodes.Status400BadRequest, new VerifyConditionResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state and cannot verify conditions"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -65,12 +53,14 @@ public partial class EscrowService
 
             EscrowStatus newStatus;
             var previousStatus = agreementModel.Status;
+            var triggered = false;
 
             if (conditionMet)
             {
                 newStatus = EscrowStatus.Finalizing;
                 validationTracking.FailedValidationCount = 0;
                 agreementModel.ValidationFailures = null;
+                triggered = true;
             }
             else
             {
@@ -84,9 +74,8 @@ public partial class EscrowService
                     AssetType = AssetType.Custom,
                     AssetDescription = "Contract condition",
                     FailureType = ValidationFailureType.Asset_missing,
-                    AffectedPartyId = body.VerifiedBy ?? Guid.Empty,
-                    AffectedPartyType = body.VerifiedByType ?? "system",
-                    Details = body.FailureDetails
+                    AffectedPartyId = body.VerifierId,
+                    AffectedPartyType = body.VerifierType
                 });
 
                 var failedEvent = new EscrowValidationFailedEvent
@@ -100,8 +89,8 @@ public partial class EscrowService
                         {
                             AssetType = "contract_condition",
                             FailureType = "condition_not_met",
-                            AffectedPartyId = body.VerifiedBy ?? Guid.Empty,
-                            Details = body.FailureDetails
+                            AffectedPartyId = body.VerifierId,
+                            Details = body.VerificationData?.ToString()
                         }
                     },
                     DetectedAt = now
@@ -110,8 +99,8 @@ public partial class EscrowService
             }
 
             agreementModel.Status = newStatus;
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
-            await ValidationStore.SaveAsync(validationKey, validationTracking, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
+            await ValidationStore.SaveAsync(validationKey, validationTracking, cancellationToken: cancellationToken);
 
             if (previousStatus != newStatus)
             {
@@ -126,7 +115,7 @@ public partial class EscrowService
                     ExpiresAt = agreementModel.ExpiresAt,
                     AddedAt = now
                 };
-                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
             }
 
             if (newStatus == EscrowStatus.Finalizing)
@@ -146,23 +135,17 @@ public partial class EscrowService
             _logger.LogInformation("Condition verified for escrow {EscrowId}: met={ConditionMet}, status={Status}",
                 body.EscrowId, conditionMet, newStatus);
 
-            return (StatusCodes.Status200OK, new VerifyConditionResponse
+            return (StatusCodes.OK, new VerifyConditionResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
-                ConditionMet = conditionMet,
-                NewStatus = newStatus
+                Triggered = triggered
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to verify condition for escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("VerifyCondition", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new VerifyConditionResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while verifying the condition"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -180,20 +163,12 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new ValidateEscrowResponse
-                {
-                    Valid = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             if (IsTerminalState(agreementModel.Status))
             {
-                return (StatusCodes.Status400BadRequest, new ValidateEscrowResponse
-                {
-                    Valid = false,
-                    Error = $"Escrow is in terminal state {agreementModel.Status}"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -221,8 +196,7 @@ public partial class EscrowService
                         AssetDescription = f.AssetDescription,
                         FailureType = f.FailureType,
                         AffectedPartyId = f.AffectedPartyId,
-                        AffectedPartyType = f.AffectedPartyType,
-                        Details = f.Details
+                        AffectedPartyType = f.AffectedPartyType
                     })
                     .ToList();
 
@@ -242,7 +216,7 @@ public partial class EscrowService
                         ExpiresAt = agreementModel.ExpiresAt,
                         AddedAt = now
                     };
-                    await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+                    await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
                 }
 
                 var failedEvent = new EscrowValidationFailedEvent
@@ -255,7 +229,7 @@ public partial class EscrowService
                         AssetType = f.AssetType,
                         FailureType = f.FailureType.ToString(),
                         AffectedPartyId = f.AffectedPartyId,
-                        Details = f.Details
+                        Details = null
                     }).ToList(),
                     DetectedAt = now
                 };
@@ -266,28 +240,24 @@ public partial class EscrowService
                 agreementModel.ValidationFailures = null;
             }
 
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
-            await ValidationStore.SaveAsync(validationKey, validationTracking, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
+            await ValidationStore.SaveAsync(validationKey, validationTracking, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Validation completed for escrow {EscrowId}: valid={IsValid}",
                 body.EscrowId, isValid);
 
-            return (StatusCodes.Status200OK, new ValidateEscrowResponse
+            return (StatusCodes.OK, new ValidateEscrowResponse
             {
                 Valid = isValid,
                 Escrow = MapToApiModel(agreementModel),
-                Failures = failures.Count > 0 ? failures : null
+                Failures = failures
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("ValidateEscrow", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ValidateEscrowResponse
-            {
-                Valid = false,
-                Error = "An unexpected error occurred while validating the escrow"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -305,20 +275,12 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new ReaffirmResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             if (agreementModel.Status != EscrowStatus.Validation_failed)
             {
-                return (StatusCodes.Status400BadRequest, new ReaffirmResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state, not validation_failed"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var party = agreementModel.Parties?.FirstOrDefault(p =>
@@ -326,11 +288,7 @@ public partial class EscrowService
 
             if (party == null)
             {
-                return (StatusCodes.Status404NotFound, new ReaffirmResponse
-                {
-                    Success = false,
-                    Error = "Party not found in this escrow"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -341,8 +299,7 @@ public partial class EscrowService
                 PartyId = body.PartyId,
                 PartyType = body.PartyType,
                 ConsentType = EscrowConsentType.Reaffirm,
-                ConsentedAt = now,
-                Notes = body.Notes
+                ConsentedAt = now
             });
 
             var affectedPartyIds = agreementModel.ValidationFailures?
@@ -370,7 +327,7 @@ public partial class EscrowService
                 if (validationTracking != null)
                 {
                     validationTracking.FailedValidationCount = 0;
-                    await ValidationStore.SaveAsync(validationKey, validationTracking, cancellationToken);
+                    await ValidationStore.SaveAsync(validationKey, validationTracking, cancellationToken: cancellationToken);
                 }
 
                 var reaffirmedEvent = new EscrowValidationReaffirmedEvent
@@ -391,7 +348,7 @@ public partial class EscrowService
             }
 
             agreementModel.Status = newStatus;
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             if (previousStatus != newStatus)
             {
@@ -406,31 +363,23 @@ public partial class EscrowService
                     ExpiresAt = agreementModel.ExpiresAt,
                     AddedAt = now
                 };
-                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
             }
-
-            var remainingReaffirmations = affectedPartyIds.Except(reaffirmations).ToList();
 
             _logger.LogInformation("Reaffirmation recorded for escrow {EscrowId} by party {PartyId}",
                 body.EscrowId, body.PartyId);
 
-            return (StatusCodes.Status200OK, new ReaffirmResponse
+            return (StatusCodes.OK, new ReaffirmResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
-                AllPartiesReaffirmed = allReaffirmed,
-                RemainingReaffirmations = remainingReaffirmations
+                AllReaffirmed = allReaffirmed
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to reaffirm escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("Reaffirm", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ReaffirmResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while processing the reaffirmation"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 }

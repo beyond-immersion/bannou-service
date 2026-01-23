@@ -24,7 +24,7 @@ public partial class EscrowService
             {
                 _logger.LogWarning("Handler for asset type {AssetType} already registered by plugin {PluginId}",
                     body.AssetType, existing.PluginId);
-                return (StatusCodes.Status400BadRequest, new RegisterHandlerResponse
+                return (StatusCodes.BadRequest, new RegisterHandlerResponse
                 {
                     Registered = false
                 });
@@ -44,12 +44,12 @@ public partial class EscrowService
                 RegisteredAt = now
             };
 
-            await HandlerStore.SaveAsync(handlerKey, handlerModel, cancellationToken);
+            await HandlerStore.SaveAsync(handlerKey, handlerModel, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Registered handler for asset type {AssetType} from plugin {PluginId}",
                 body.AssetType, body.PluginId);
 
-            return (StatusCodes.Status200OK, new RegisterHandlerResponse
+            return (StatusCodes.OK, new RegisterHandlerResponse
             {
                 Registered = true
             });
@@ -58,10 +58,7 @@ public partial class EscrowService
         {
             _logger.LogError(ex, "Failed to register handler for asset type {AssetType}", body.AssetType);
             await EmitErrorAsync("RegisterHandler", ex.Message, new { body.AssetType, body.PluginId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new RegisterHandlerResponse
-            {
-                Registered = false
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -91,7 +88,7 @@ public partial class EscrowService
                 });
             }
 
-            return (StatusCodes.Status200OK, new ListHandlersResponse
+            return (StatusCodes.OK, new ListHandlersResponse
             {
                 Handlers = handlerInfos
             });
@@ -99,11 +96,8 @@ public partial class EscrowService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list asset handlers");
-            await EmitErrorAsync("ListHandlers", ex.Message, new { }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ListHandlersResponse
-            {
-                Handlers = new List<AssetHandlerInfo>()
-            });
+            await EmitErrorAsync("ListHandlers", ex.Message, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -121,7 +115,7 @@ public partial class EscrowService
 
             if (existing == null)
             {
-                return (StatusCodes.Status404NotFound, new DeregisterHandlerResponse
+                return (StatusCodes.NotFound, new DeregisterHandlerResponse
                 {
                     Deregistered = false
                 });
@@ -130,7 +124,7 @@ public partial class EscrowService
             if (existing.BuiltIn)
             {
                 _logger.LogWarning("Cannot deregister built-in handler for asset type {AssetType}", body.AssetType);
-                return (StatusCodes.Status400BadRequest, new DeregisterHandlerResponse
+                return (StatusCodes.BadRequest, new DeregisterHandlerResponse
                 {
                     Deregistered = false
                 });
@@ -140,7 +134,7 @@ public partial class EscrowService
 
             _logger.LogInformation("Deregistered handler for asset type {AssetType}", body.AssetType);
 
-            return (StatusCodes.Status200OK, new DeregisterHandlerResponse
+            return (StatusCodes.OK, new DeregisterHandlerResponse
             {
                 Deregistered = true
             });
@@ -149,10 +143,7 @@ public partial class EscrowService
         {
             _logger.LogError(ex, "Failed to deregister handler for asset type {AssetType}", body.AssetType);
             await EmitErrorAsync("DeregisterHandler", ex.Message, new { body.AssetType }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new DeregisterHandlerResponse
-            {
-                Deregistered = false
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 }

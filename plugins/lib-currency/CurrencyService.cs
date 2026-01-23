@@ -1461,6 +1461,11 @@ public partial class CurrencyService : ICurrencyService
             var indexJson = await stringStore.GetAsync($"{TX_WALLET_INDEX}{body.WalletId}", cancellationToken);
             var txIds = string.IsNullOrEmpty(indexJson) ? new List<string>() : BannouJson.Deserialize<List<string>>(indexJson) ?? new List<string>();
 
+            var retentionFloor = DateTimeOffset.UtcNow - TimeSpan.FromDays(_configuration.TransactionRetentionDays);
+            var effectiveFromDate = body.FromDate is not null && body.FromDate > retentionFloor
+                ? body.FromDate
+                : retentionFloor;
+
             var transactions = new List<CurrencyTransactionRecord>();
             foreach (var txId in txIds.AsEnumerable().Reverse())
             {
@@ -1471,7 +1476,7 @@ public partial class CurrencyService : ICurrencyService
                 if (body.CurrencyDefinitionId is not null && tx.CurrencyDefinitionId != body.CurrencyDefinitionId.ToString()) continue;
                 if (body.TransactionTypes is not null && body.TransactionTypes.Count > 0 &&
                     !body.TransactionTypes.Any(t => t.ToString() == tx.TransactionType)) continue;
-                if (body.FromDate is not null && tx.Timestamp < body.FromDate) continue;
+                if (tx.Timestamp < effectiveFromDate) continue;
                 if (body.ToDate is not null && tx.Timestamp > body.ToDate) continue;
 
                 transactions.Add(MapTransactionToRecord(tx));
@@ -1801,6 +1806,15 @@ public partial class CurrencyService : ICurrencyService
             var holdId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
+            var maxExpiry = now + TimeSpan.FromDays(_configuration.HoldMaxDurationDays);
+            if (body.ExpiresAt > maxExpiry)
+            {
+                _logger.LogWarning("Hold expiry {ExpiresAt} exceeds max duration of {MaxDays} days, clamping",
+                    body.ExpiresAt, _configuration.HoldMaxDurationDays);
+            }
+
+            var clampedExpiry = body.ExpiresAt > maxExpiry ? maxExpiry : body.ExpiresAt;
+
             var hold = new HoldModel
             {
                 HoldId = holdId.ToString(),
@@ -1809,7 +1823,7 @@ public partial class CurrencyService : ICurrencyService
                 Amount = body.Amount,
                 Status = HoldStatus.Active,
                 CreatedAt = now,
-                ExpiresAt = body.ExpiresAt,
+                ExpiresAt = clampedExpiry,
                 ReferenceType = body.ReferenceType,
                 ReferenceId = body.ReferenceId?.ToString()
             };
@@ -2378,7 +2392,7 @@ public partial class CurrencyService : ICurrencyService
     private async Task RecordIdempotencyAsync(string key, string transactionId, CancellationToken ct)
     {
         var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyIdempotency);
-        await store.SaveAsync(key, transactionId, cancellationToken: ct);
+        await store.SaveAsync(key, transactionId, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, ct);
     }
 
     private async Task InternalCreditAsync(string walletId, string currencyDefId, double amount,
@@ -2483,9 +2497,9 @@ public partial class CurrencyService : ICurrencyService
         return result;
     }
 
-    private static bool IsNegativeAllowed(CurrencyDefinitionModel definition, bool? transactionOverride)
+    private bool IsNegativeAllowed(CurrencyDefinitionModel definition, bool? transactionOverride)
     {
-        return transactionOverride ?? definition.AllowNegative ?? false;
+        return transactionOverride ?? definition.AllowNegative ?? _configuration.DefaultAllowNegative;
     }
 
     private static EarnCapInfo? BuildEarnCapInfo(BalanceModel balance, CurrencyDefinitionModel definition)

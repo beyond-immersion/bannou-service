@@ -22,11 +22,7 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new ConsentResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var validConsentStates = new HashSet<EscrowStatus>
@@ -38,20 +34,12 @@ public partial class EscrowService
 
             if (!validConsentStates.Contains(agreementModel.Status))
             {
-                return (StatusCodes.Status400BadRequest, new ConsentResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state and cannot accept consent"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             if (agreementModel.ExpiresAt <= DateTimeOffset.UtcNow)
             {
-                return (StatusCodes.Status400BadRequest, new ConsentResponse
-                {
-                    Success = false,
-                    Error = "Escrow has expired"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var party = agreementModel.Parties?.FirstOrDefault(p =>
@@ -59,11 +47,7 @@ public partial class EscrowService
 
             if (party == null)
             {
-                return (StatusCodes.Status404NotFound, new ConsentResponse
-                {
-                    Success = false,
-                    Error = "Party not found in this escrow"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             // Validate release token if in full_consent mode
@@ -72,20 +56,12 @@ public partial class EscrowService
             {
                 if (string.IsNullOrEmpty(body.ReleaseToken))
                 {
-                    return (StatusCodes.Status400BadRequest, new ConsentResponse
-                    {
-                        Success = false,
-                        Error = "Release token is required in full_consent mode"
-                    });
+                    return (StatusCodes.BadRequest, null);
                 }
 
                 if (party.ReleaseTokenUsed)
                 {
-                    return (StatusCodes.Status400BadRequest, new ConsentResponse
-                    {
-                        Success = false,
-                        Error = "Release token has already been used"
-                    });
+                    return (StatusCodes.BadRequest, null);
                 }
 
                 var tokenHash = HashToken(body.ReleaseToken);
@@ -97,25 +73,17 @@ public partial class EscrowService
                     tokenRecord.PartyId != body.PartyId ||
                     tokenRecord.TokenType != TokenType.Release)
                 {
-                    return (StatusCodes.Status401Unauthorized, new ConsentResponse
-                    {
-                        Success = false,
-                        Error = "Invalid release token"
-                    });
+                    return (StatusCodes.Unauthorized, null);
                 }
 
                 if (tokenRecord.Used)
                 {
-                    return (StatusCodes.Status400BadRequest, new ConsentResponse
-                    {
-                        Success = false,
-                        Error = "Release token has already been used"
-                    });
+                    return (StatusCodes.BadRequest, null);
                 }
 
                 tokenRecord.Used = true;
                 tokenRecord.UsedAt = DateTimeOffset.UtcNow;
-                await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken);
+                await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -127,11 +95,7 @@ public partial class EscrowService
 
             if (existingConsent != null)
             {
-                return (StatusCodes.Status400BadRequest, new ConsentResponse
-                {
-                    Success = false,
-                    Error = $"Party has already recorded {body.ConsentType} consent"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var consentModel = new EscrowConsentModel
@@ -155,6 +119,7 @@ public partial class EscrowService
 
             var previousStatus = agreementModel.Status;
             EscrowStatus newStatus = previousStatus;
+            var triggered = false;
 
             switch (body.ConsentType)
             {
@@ -174,6 +139,7 @@ public partial class EscrowService
                         newStatus = agreementModel.BoundContractId != null
                             ? EscrowStatus.Pending_condition
                             : EscrowStatus.Finalizing;
+                        triggered = true;
                     }
                     else if (previousStatus == EscrowStatus.Funded)
                     {
@@ -185,16 +151,18 @@ public partial class EscrowService
                     if (party.ConsentRequired)
                     {
                         newStatus = EscrowStatus.Refunding;
+                        triggered = true;
                     }
                     break;
 
                 case EscrowConsentType.Dispute:
                     newStatus = EscrowStatus.Disputed;
+                    triggered = true;
                     break;
             }
 
             agreementModel.Status = newStatus;
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             if (previousStatus != newStatus)
             {
@@ -209,7 +177,7 @@ public partial class EscrowService
                     ExpiresAt = agreementModel.ExpiresAt,
                     AddedAt = now
                 };
-                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
             }
 
             // Publish consent event
@@ -259,10 +227,11 @@ public partial class EscrowService
                 "Consent {ConsentType} recorded for escrow {EscrowId} by party {PartyId}, new status: {Status}",
                 body.ConsentType, body.EscrowId, body.PartyId, newStatus);
 
-            return (StatusCodes.Status200OK, new ConsentResponse
+            return (StatusCodes.OK, new ConsentResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
+                ConsentRecorded = true,
+                Triggered = triggered,
                 NewStatus = newStatus
             });
         }
@@ -270,11 +239,7 @@ public partial class EscrowService
         {
             _logger.LogError(ex, "Failed to record consent for escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("RecordConsent", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ConsentResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while recording consent"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -292,32 +257,28 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new GetConsentStatusResponse
-                {
-                    Found = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var partyStatuses = new List<PartyConsentStatus>();
             foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
             {
-                var consents = agreementModel.Consents?
-                    .Where(c => c.PartyId == party.PartyId && c.PartyType == party.PartyType)
-                    .ToList() ?? new List<EscrowConsentModel>();
+                if (!party.ConsentRequired) continue;
 
-                var hasReleaseConsent = consents.Any(c => c.ConsentType == EscrowConsentType.Release);
+                var consent = agreementModel.Consents?.FirstOrDefault(c =>
+                    c.PartyId == party.PartyId &&
+                    c.PartyType == party.PartyType &&
+                    c.ConsentType == EscrowConsentType.Release);
 
-                var partyStatus = new PartyConsentStatus
+                partyStatuses.Add(new PartyConsentStatus
                 {
                     PartyId = party.PartyId,
                     PartyType = party.PartyType,
-                    ConsentRequired = party.ConsentRequired,
-                    HasConsented = hasReleaseConsent,
-                    ConsentType = consents.FirstOrDefault()?.ConsentType,
-                    ConsentedAt = consents.FirstOrDefault()?.ConsentedAt
-                };
-                partyStatuses.Add(partyStatus);
+                    DisplayName = party.DisplayName,
+                    ConsentGiven = consent != null,
+                    ConsentType = consent?.ConsentType,
+                    ConsentedAt = consent?.ConsentedAt
+                });
             }
 
             var releaseConsents = agreementModel.Consents?
@@ -330,27 +291,23 @@ public partial class EscrowService
                     .Count(p => p.ConsentRequired) ?? 0;
             }
 
-            var remainingConsents = Math.Max(0, requiredConsents - releaseConsents);
+            var hasRefundConsent = agreementModel.Consents?
+                .Any(c => c.ConsentType == EscrowConsentType.Refund) ?? false;
 
-            return (StatusCodes.Status200OK, new GetConsentStatusResponse
+            return (StatusCodes.OK, new GetConsentStatusResponse
             {
-                Found = true,
-                PartyStatuses = partyStatuses,
-                TotalConsentsRequired = requiredConsents,
-                TotalConsentsReceived = releaseConsents,
-                RemainingConsentsNeeded = remainingConsents,
-                IsReadyForRelease = remainingConsents == 0
+                PartiesRequiringConsent = partyStatuses,
+                ConsentsReceived = releaseConsents,
+                ConsentsRequired = requiredConsents,
+                CanRelease = releaseConsents >= requiredConsents,
+                CanRefund = hasRefundConsent
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get consent status for escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("GetConsentStatus", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new GetConsentStatusResponse
-            {
-                Found = false,
-                Error = "An unexpected error occurred while retrieving consent status"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 }

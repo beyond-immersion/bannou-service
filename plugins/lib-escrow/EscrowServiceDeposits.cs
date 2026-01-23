@@ -26,7 +26,7 @@ public partial class EscrowService
                 _logger.LogInformation("Idempotent deposit request {IdempotencyKey} already processed", body.IdempotencyKey);
                 if (existingRecord.Result is DepositResponse cachedResponse)
                 {
-                    return (StatusCodes.Status200OK, cachedResponse);
+                    return (StatusCodes.OK, cachedResponse);
                 }
             }
 
@@ -35,30 +35,18 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new DepositResponse
-                {
-                    Success = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             if (agreementModel.Status != EscrowStatus.Pending_deposits &&
                 agreementModel.Status != EscrowStatus.Partially_funded)
             {
-                return (StatusCodes.Status400BadRequest, new DepositResponse
-                {
-                    Success = false,
-                    Error = $"Escrow is in {agreementModel.Status} state and cannot accept deposits"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             if (agreementModel.ExpiresAt <= DateTimeOffset.UtcNow)
             {
-                return (StatusCodes.Status400BadRequest, new DepositResponse
-                {
-                    Success = false,
-                    Error = "Escrow has expired"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             var party = agreementModel.Parties?.FirstOrDefault(p =>
@@ -66,11 +54,7 @@ public partial class EscrowService
 
             if (party == null)
             {
-                return (StatusCodes.Status404NotFound, new DepositResponse
-                {
-                    Success = false,
-                    Error = "Party not found in this escrow"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             // Validate deposit token if in full_consent mode
@@ -78,20 +62,12 @@ public partial class EscrowService
             {
                 if (string.IsNullOrEmpty(body.DepositToken))
                 {
-                    return (StatusCodes.Status400BadRequest, new DepositResponse
-                    {
-                        Success = false,
-                        Error = "Deposit token is required in full_consent mode"
-                    });
+                    return (StatusCodes.BadRequest, null);
                 }
 
                 if (party.DepositTokenUsed)
                 {
-                    return (StatusCodes.Status400BadRequest, new DepositResponse
-                    {
-                        Success = false,
-                        Error = "Deposit token has already been used"
-                    });
+                    return (StatusCodes.BadRequest, null);
                 }
 
                 var tokenHash = HashToken(body.DepositToken);
@@ -103,32 +79,24 @@ public partial class EscrowService
                     tokenRecord.PartyId != body.PartyId ||
                     tokenRecord.TokenType != TokenType.Deposit)
                 {
-                    return (StatusCodes.Status401Unauthorized, new DepositResponse
-                    {
-                        Success = false,
-                        Error = "Invalid deposit token"
-                    });
+                    return (StatusCodes.Unauthorized, null);
                 }
 
                 if (tokenRecord.Used)
                 {
-                    return (StatusCodes.Status400BadRequest, new DepositResponse
-                    {
-                        Success = false,
-                        Error = "Deposit token has already been used"
-                    });
+                    return (StatusCodes.BadRequest, null);
                 }
 
                 tokenRecord.Used = true;
                 tokenRecord.UsedAt = DateTimeOffset.UtcNow;
-                await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken);
+                await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
             }
 
             var now = DateTimeOffset.UtcNow;
             var depositId = Guid.NewGuid();
             var bundleId = Guid.NewGuid();
 
-            var assetModels = body.Assets?.Select(MapAssetInputToModel).ToList()
+            var assetModels = body.Assets?.Assets?.Select(MapAssetInputToModel).ToList()
                 ?? new List<EscrowAssetModel>();
 
             var depositModel = new EscrowDepositModel
@@ -141,8 +109,8 @@ public partial class EscrowService
                 {
                     BundleId = bundleId,
                     Assets = assetModels,
-                    Description = body.BundleDescription,
-                    EstimatedValue = body.EstimatedValue
+                    Description = body.Assets?.Description,
+                    EstimatedValue = body.Assets?.EstimatedValue
                 },
                 DepositedAt = now,
                 DepositTokenUsed = body.DepositToken,
@@ -169,12 +137,14 @@ public partial class EscrowService
 
             var previousStatus = agreementModel.Status;
             EscrowStatus newStatus;
+            var fullyFunded = false;
 
             if (allRequiredFulfilled)
             {
                 newStatus = EscrowStatus.Funded;
                 agreementModel.Status = newStatus;
                 agreementModel.FundedAt = now;
+                fullyFunded = true;
             }
             else
             {
@@ -182,7 +152,7 @@ public partial class EscrowService
                 agreementModel.Status = newStatus;
             }
 
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
             if (previousStatus != newStatus)
             {
@@ -197,23 +167,33 @@ public partial class EscrowService
                     ExpiresAt = agreementModel.ExpiresAt,
                     AddedAt = now
                 };
-                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken);
+                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
+            }
+
+            // Build release tokens if fully funded
+            var releaseTokens = new List<PartyToken>();
+            if (fullyFunded)
+            {
+                foreach (var p in agreementModel.Parties ?? new List<EscrowPartyModel>())
+                {
+                    if (p.ReleaseToken != null)
+                    {
+                        releaseTokens.Add(new PartyToken
+                        {
+                            PartyId = p.PartyId,
+                            PartyType = p.PartyType,
+                            Token = p.ReleaseToken
+                        });
+                    }
+                }
             }
 
             var response = new DepositResponse
             {
-                Success = true,
                 Escrow = MapToApiModel(agreementModel),
                 Deposit = MapDepositToApiModel(depositModel),
-                NewStatus = newStatus,
-                RemainingDeposits = agreementModel.ExpectedDeposits?
-                    .Where(ed => !ed.Fulfilled && !ed.Optional)
-                    .Select(ed => new PartyToken
-                    {
-                        PartyId = ed.PartyId,
-                        PartyType = ed.PartyType
-                    })
-                    .ToList()
+                FullyFunded = fullyFunded,
+                ReleaseTokens = releaseTokens
             };
 
             var idempotencyRecord = new IdempotencyRecord
@@ -225,7 +205,7 @@ public partial class EscrowService
                 ExpiresAt = now.AddHours(24),
                 Result = response
             };
-            await IdempotencyStore.SaveAsync(idempotencyKey, idempotencyRecord, cancellationToken);
+            await IdempotencyStore.SaveAsync(idempotencyKey, idempotencyRecord, cancellationToken: cancellationToken);
 
             // Publish deposit received event
             var depositEvent = new EscrowDepositReceivedEvent
@@ -239,12 +219,12 @@ public partial class EscrowService
                 AssetSummary = GenerateAssetSummary(assetModels),
                 DepositsReceived = agreementModel.Deposits?.Count ?? 0,
                 DepositsExpected = agreementModel.ExpectedDeposits?.Count ?? 0,
-                FullyFunded = newStatus == EscrowStatus.Funded,
+                FullyFunded = fullyFunded,
                 DepositedAt = now
             };
             await _messageBus.TryPublishAsync(EscrowTopics.EscrowDepositReceived, depositEvent, cancellationToken);
 
-            if (newStatus == EscrowStatus.Funded)
+            if (fullyFunded)
             {
                 var fundedEvent = new EscrowFundedEvent
                 {
@@ -261,17 +241,13 @@ public partial class EscrowService
                 "Deposit {DepositId} received for escrow {EscrowId} from party {PartyId}, new status: {Status}",
                 depositId, body.EscrowId, body.PartyId, newStatus);
 
-            return (StatusCodes.Status200OK, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process deposit for escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("Deposit", ex.Message, new { body.EscrowId, body.PartyId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new DepositResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while processing the deposit"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -292,11 +268,7 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new ValidateDepositResponse
-                {
-                    Valid = false,
-                    Errors = new List<string> { $"Escrow {body.EscrowId} not found" }
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             if (agreementModel.Status != EscrowStatus.Pending_deposits &&
@@ -322,22 +294,18 @@ public partial class EscrowService
                 validationErrors.Add("Party has already made a deposit");
             }
 
-            return (StatusCodes.Status200OK, new ValidateDepositResponse
+            return (StatusCodes.OK, new ValidateDepositResponse
             {
                 Valid = validationErrors.Count == 0,
-                Errors = validationErrors.Count > 0 ? validationErrors : null,
-                Warnings = warnings.Count > 0 ? warnings : null
+                Errors = validationErrors.Count > 0 ? validationErrors : new List<string>(),
+                Warnings = warnings.Count > 0 ? warnings : new List<string>()
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate deposit for escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("ValidateDeposit", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ValidateDepositResponse
-            {
-                Valid = false,
-                Errors = new List<string> { "An unexpected error occurred during validation" }
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -355,11 +323,7 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new GetDepositStatusResponse
-                {
-                    Found = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             var expectedDeposit = agreementModel.ExpectedDeposits?.FirstOrDefault(ed =>
@@ -369,33 +333,27 @@ public partial class EscrowService
                 .Where(d => d.PartyId == body.PartyId && d.PartyType == body.PartyType)
                 .ToList() ?? new List<EscrowDepositModel>();
 
-            var hasDeposited = actualDeposits.Count > 0;
-            var isRequired = expectedDeposit != null && !expectedDeposit.Optional;
+            var party = agreementModel.Parties?.FirstOrDefault(p =>
+                p.PartyId == body.PartyId && p.PartyType == body.PartyType);
 
-            return (StatusCodes.Status200OK, new GetDepositStatusResponse
+            return (StatusCodes.OK, new GetDepositStatusResponse
             {
-                Found = true,
-                HasDeposited = hasDeposited,
-                IsRequired = isRequired,
-                IsFulfilled = expectedDeposit?.Fulfilled ?? false,
-                DepositDeadline = expectedDeposit?.DepositDeadline,
                 ExpectedAssets = expectedDeposit?.ExpectedAssets?
                     .Select(MapAssetToApiModel)
+                    .ToList() ?? new List<EscrowAsset>(),
+                DepositedAssets = actualDeposits
+                    .SelectMany(d => d.Assets?.Assets?.Select(MapAssetToApiModel) ?? Enumerable.Empty<EscrowAsset>())
                     .ToList(),
-                ActualDeposits = actualDeposits
-                    .Select(MapDepositToApiModel)
-                    .ToList()
+                Fulfilled = expectedDeposit?.Fulfilled ?? false,
+                DepositToken = party?.DepositToken,
+                DepositDeadline = expectedDeposit?.DepositDeadline
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get deposit status for escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("GetDepositStatus", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new GetDepositStatusResponse
-            {
-                Found = false,
-                Error = "An unexpected error occurred while retrieving deposit status"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 }

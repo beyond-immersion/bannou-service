@@ -581,8 +581,9 @@ public partial class EscrowService : IEscrowService
             "escrow",
             operation,
             error,
-            context,
-            cancellationToken);
+            error,
+            details: context,
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>

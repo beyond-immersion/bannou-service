@@ -12,54 +12,33 @@ public partial class EscrowService
     /// <summary>
     /// Creates a new escrow agreement.
     /// </summary>
-    /// <param name="body">The create escrow request.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Status code and response with the created escrow.</returns>
     public async Task<(StatusCodes, CreateEscrowResponse?)> CreateEscrowAsync(
         CreateEscrowRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // Validate request
             if (body.Parties == null || body.Parties.Count < 2)
             {
-                return (StatusCodes.Status400BadRequest, new CreateEscrowResponse
-                {
-                    Success = false,
-                    Error = "At least two parties are required for an escrow agreement"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             if (body.ExpectedDeposits == null || body.ExpectedDeposits.Count == 0)
             {
-                return (StatusCodes.Status400BadRequest, new CreateEscrowResponse
-                {
-                    Success = false,
-                    Error = "At least one expected deposit is required"
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
-            // Generate escrow ID
             var escrowId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
-            // Validate trust mode configuration
-            if (body.TrustMode == EscrowTrustMode.Single_party_trusted)
+            if (body.TrustMode == EscrowTrustMode.Single_party_trusted && body.TrustedPartyId == null)
             {
-                if (body.TrustedPartyId == null)
-                {
-                    return (StatusCodes.Status400BadRequest, new CreateEscrowResponse
-                    {
-                        Success = false,
-                        Error = "TrustedPartyId is required for single_party_trusted mode"
-                    });
-                }
+                return (StatusCodes.BadRequest, null);
             }
 
-            // Build internal party models with token generation for full_consent mode
             var partyModels = new List<EscrowPartyModel>();
             var tokenRecordsToSave = new List<TokenHashModel>();
+            var depositTokens = new List<PartyToken>();
 
             foreach (var partyInput in body.Parties)
             {
@@ -76,10 +55,8 @@ public partial class EscrowService
                     ReleaseTokenUsed = false
                 };
 
-                // Generate tokens for full_consent mode
                 if (body.TrustMode == EscrowTrustMode.Full_consent)
                 {
-                    // Generate deposit token if party has expected deposits
                     var hasExpectedDeposit = body.ExpectedDeposits.Any(ed =>
                         ed.PartyId == partyInput.PartyId && ed.PartyType == partyInput.PartyType);
 
@@ -88,7 +65,6 @@ public partial class EscrowService
                         var depositToken = GenerateToken(escrowId, partyInput.PartyId, TokenType.Deposit);
                         partyModel.DepositToken = depositToken;
 
-                        // Store token hash for validation
                         var tokenHash = HashToken(depositToken);
                         tokenRecordsToSave.Add(new TokenHashModel
                         {
@@ -100,9 +76,15 @@ public partial class EscrowService
                             ExpiresAt = body.ExpiresAt,
                             Used = false
                         });
+
+                        depositTokens.Add(new PartyToken
+                        {
+                            PartyId = partyInput.PartyId,
+                            PartyType = partyInput.PartyType,
+                            Token = depositToken
+                        });
                     }
 
-                    // Generate release token if party requires consent
                     if (partyModel.ConsentRequired)
                     {
                         var releaseToken = GenerateToken(escrowId, partyInput.PartyId, TokenType.Release);
@@ -125,7 +107,6 @@ public partial class EscrowService
                 partyModels.Add(partyModel);
             }
 
-            // Build expected deposit models
             var expectedDepositModels = body.ExpectedDeposits.Select(ed => new ExpectedDepositModel
             {
                 PartyId = ed.PartyId,
@@ -136,7 +117,6 @@ public partial class EscrowService
                 Fulfilled = false
             }).ToList();
 
-            // Build release allocation models if provided
             List<ReleaseAllocationModel>? releaseAllocationModels = null;
             if (body.ReleaseAllocations != null && body.ReleaseAllocations.Count > 0)
             {
@@ -150,15 +130,14 @@ public partial class EscrowService
                 }).ToList();
             }
 
-            // Calculate required consents
             var requiredConsents = body.RequiredConsentsForRelease ?? -1;
             if (requiredConsents == -1)
             {
-                // All parties with consentRequired=true must consent
                 requiredConsents = partyModels.Count(p => p.ConsentRequired);
             }
 
-            // Build the agreement model
+            var expiresAt = body.ExpiresAt ?? now.AddDays(7);
+
             var agreementModel = new EscrowAgreementModel
             {
                 EscrowId = escrowId,
@@ -166,7 +145,6 @@ public partial class EscrowService
                 TrustMode = body.TrustMode,
                 TrustedPartyId = body.TrustedPartyId,
                 TrustedPartyType = body.TrustedPartyType,
-                InitiatorServiceId = body.InitiatorServiceId,
                 Parties = partyModels,
                 ExpectedDeposits = expectedDepositModels,
                 Deposits = new List<EscrowDepositModel>(),
@@ -176,38 +154,32 @@ public partial class EscrowService
                 Status = EscrowStatus.Pending_deposits,
                 RequiredConsentsForRelease = requiredConsents,
                 CreatedAt = now,
-                CreatedBy = body.CreatedBy,
-                CreatedByType = body.CreatedByType,
-                ExpiresAt = body.ExpiresAt,
+                ExpiresAt = expiresAt,
                 ReferenceType = body.ReferenceType,
                 ReferenceId = body.ReferenceId,
                 Description = body.Description,
                 Metadata = body.Metadata
             };
 
-            // Save the agreement
             var agreementKey = GetAgreementKey(escrowId);
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken);
+            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
 
-            // Save token records
             foreach (var tokenRecord in tokenRecordsToSave)
             {
                 var tokenKey = GetTokenKey(tokenRecord.TokenHash);
-                await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken);
+                await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
             }
 
-            // Update status index
-            var statusIndexKey = GetStatusIndexKey(EscrowStatus.Pending_deposits);
+            var statusIndexKey = $"{GetStatusIndexKey(EscrowStatus.Pending_deposits)}:{escrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = escrowId,
                 Status = EscrowStatus.Pending_deposits,
-                ExpiresAt = body.ExpiresAt,
+                ExpiresAt = expiresAt,
                 AddedAt = now
             };
-            await StatusIndexStore.SaveAsync($"{statusIndexKey}:{escrowId}", statusEntry, cancellationToken);
+            await StatusIndexStore.SaveAsync(statusIndexKey, statusEntry, cancellationToken: cancellationToken);
 
-            // Update party pending counts
             foreach (var party in partyModels)
             {
                 var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
@@ -219,25 +191,9 @@ public partial class EscrowService
                     PendingCount = (existingCount?.PendingCount ?? 0) + 1,
                     LastUpdated = now
                 };
-                await PartyPendingStore.SaveAsync(partyKey, newCount, cancellationToken);
+                await PartyPendingStore.SaveAsync(partyKey, newCount, cancellationToken: cancellationToken);
             }
 
-            // Build party tokens for response
-            var partyTokens = partyModels
-                .Where(p => p.DepositToken != null || p.ReleaseToken != null)
-                .Select(p => new PartyToken
-                {
-                    PartyId = p.PartyId,
-                    PartyType = p.PartyType,
-                    DepositToken = p.DepositToken,
-                    ReleaseToken = p.ReleaseToken
-                })
-                .ToList();
-
-            // Map to API model
-            var escrowAgreement = MapToApiModel(agreementModel);
-
-            // Publish creation event
             var createdEvent = new EscrowCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -252,7 +208,7 @@ public partial class EscrowService
                     Role = p.Role.ToString()
                 }).ToList(),
                 ExpectedDepositCount = expectedDepositModels.Count,
-                ExpiresAt = body.ExpiresAt,
+                ExpiresAt = expiresAt,
                 BoundContractId = body.BoundContractId,
                 ReferenceType = body.ReferenceType,
                 ReferenceId = body.ReferenceId,
@@ -264,31 +220,23 @@ public partial class EscrowService
                 "Created escrow {EscrowId} with {PartyCount} parties, type {EscrowType}, trust mode {TrustMode}",
                 escrowId, partyModels.Count, body.EscrowType, body.TrustMode);
 
-            return (StatusCodes.Status200OK, new CreateEscrowResponse
+            return (StatusCodes.OK, new CreateEscrowResponse
             {
-                Success = true,
-                Escrow = escrowAgreement,
-                PartyTokens = partyTokens
+                Escrow = MapToApiModel(agreementModel),
+                DepositTokens = depositTokens
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create escrow");
             await EmitErrorAsync("CreateEscrow", ex.Message, cancellationToken: cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new CreateEscrowResponse
-            {
-                Success = false,
-                Error = "An unexpected error occurred while creating the escrow"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Gets an escrow agreement by ID.
     /// </summary>
-    /// <param name="body">The get escrow request.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Status code and response with the escrow.</returns>
     public async Task<(StatusCodes, GetEscrowResponse?)> GetEscrowAsync(
         GetEscrowRequest body,
         CancellationToken cancellationToken = default)
@@ -300,39 +248,25 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new GetEscrowResponse
-                {
-                    Found = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
-            var escrowAgreement = MapToApiModel(agreementModel);
-
-            return (StatusCodes.Status200OK, new GetEscrowResponse
+            return (StatusCodes.OK, new GetEscrowResponse
             {
-                Found = true,
-                Escrow = escrowAgreement
+                Escrow = MapToApiModel(agreementModel)
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("GetEscrow", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new GetEscrowResponse
-            {
-                Found = false,
-                Error = "An unexpected error occurred while retrieving the escrow"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Lists escrow agreements with optional filtering.
     /// </summary>
-    /// <param name="body">The list escrows request.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Status code and response with the list of escrows.</returns>
     public async Task<(StatusCodes, ListEscrowsResponse?)> ListEscrowsAsync(
         ListEscrowsRequest body,
         CancellationToken cancellationToken = default)
@@ -343,108 +277,71 @@ public partial class EscrowService
             var limit = body.Limit ?? 50;
             var offset = body.Offset ?? 0;
 
-            // If filtering by status, use the status index
-            if (body.StatusFilter != null && body.StatusFilter.Count > 0)
+            if (body.PartyId != null)
             {
-                foreach (var status in body.StatusFilter)
+                var allAgreements = await AgreementStore.QueryAsync(
+                    a => a.Parties != null && a.Parties.Any(p =>
+                        p.PartyId == body.PartyId.Value &&
+                        (body.PartyType == null || p.PartyType == body.PartyType)),
+                    cancellationToken);
+
+                var filtered = allAgreements.AsEnumerable();
+
+                if (body.Status != null && body.Status.Count > 0)
                 {
-                    var statusIndexKey = GetStatusIndexKey(status);
-                    // Query status index entries - this is a simplified approach
-                    // In production, we'd use a proper query with pagination
-                    var entries = await StatusIndexStore.QueryAsync<StatusIndexEntry>(
-                        $"$.Status == \"{status}\"",
-                        limit,
-                        offset,
-                        cancellationToken);
-
-                    foreach (var entry in entries)
-                    {
-                        var agreementKey = GetAgreementKey(entry.EscrowId);
-                        var model = await AgreementStore.GetAsync(agreementKey, cancellationToken);
-                        if (model != null)
-                        {
-                            // Apply party filter if specified
-                            if (body.PartyId != null)
-                            {
-                                var hasParty = model.Parties?.Any(p =>
-                                    p.PartyId == body.PartyId &&
-                                    (body.PartyType == null || p.PartyType == body.PartyType)) ?? false;
-
-                                if (!hasParty) continue;
-                            }
-
-                            results.Add(MapToApiModel(model));
-                        }
-                    }
+                    var statusSet = body.Status.ToHashSet();
+                    filtered = filtered.Where(a => statusSet.Contains(a.Status));
                 }
+
+                results = filtered
+                    .Skip(offset)
+                    .Take(limit)
+                    .Select(MapToApiModel)
+                    .ToList();
             }
-            else if (body.PartyId != null)
+            else if (body.Status != null && body.Status.Count > 0)
             {
-                // Query by party - use party pending index or full scan
-                // This is a simplified implementation
-                var partyKey = GetPartyPendingKey(body.PartyId.Value, body.PartyType ?? "account");
-                var partyPending = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
+                var statusSet = body.Status.ToHashSet();
+                var allAgreements = await AgreementStore.QueryAsync(
+                    a => statusSet.Contains(a.Status),
+                    cancellationToken);
 
-                if (partyPending != null && partyPending.PendingCount > 0)
-                {
-                    // Need to scan agreements - in production use proper indexing
-                    var allAgreements = await AgreementStore.QueryAsync<EscrowAgreementModel>(
-                        "$",
-                        limit + offset,
-                        0,
-                        cancellationToken);
-
-                    foreach (var model in allAgreements.Skip(offset).Take(limit))
-                    {
-                        var hasParty = model.Parties?.Any(p =>
-                            p.PartyId == body.PartyId &&
-                            (body.PartyType == null || p.PartyType == body.PartyType)) ?? false;
-
-                        if (hasParty)
-                        {
-                            results.Add(MapToApiModel(model));
-                        }
-                    }
-                }
+                results = allAgreements
+                    .Skip(offset)
+                    .Take(limit)
+                    .Select(MapToApiModel)
+                    .ToList();
             }
             else
             {
-                // No filters - return all with pagination
-                var allAgreements = await AgreementStore.QueryAsync<EscrowAgreementModel>(
-                    "$",
-                    limit,
-                    offset,
+                var allAgreements = await AgreementStore.QueryAsync(
+                    a => true,
                     cancellationToken);
 
-                results = allAgreements.Select(MapToApiModel).ToList();
+                results = allAgreements
+                    .Skip(offset)
+                    .Take(limit)
+                    .Select(MapToApiModel)
+                    .ToList();
             }
 
-            return (StatusCodes.Status200OK, new ListEscrowsResponse
+            return (StatusCodes.OK, new ListEscrowsResponse
             {
                 Escrows = results,
-                TotalCount = results.Count,
-                HasMore = results.Count >= limit
+                TotalCount = results.Count
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list escrows");
             await EmitErrorAsync("ListEscrows", ex.Message, cancellationToken: cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new ListEscrowsResponse
-            {
-                Escrows = new List<EscrowAgreement>(),
-                TotalCount = 0,
-                HasMore = false
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Gets a party's token for an escrow (if they have permission).
+    /// Gets a party's token for an escrow.
     /// </summary>
-    /// <param name="body">The get token request.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Status code and response with the token.</returns>
     public async Task<(StatusCodes, GetMyTokenResponse?)> GetMyTokenAsync(
         GetMyTokenRequest body,
         CancellationToken cancellationToken = default)
@@ -456,27 +353,17 @@ public partial class EscrowService
 
             if (agreementModel == null)
             {
-                return (StatusCodes.Status404NotFound, new GetMyTokenResponse
-                {
-                    Found = false,
-                    Error = $"Escrow {body.EscrowId} not found"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
-            // Find the party
             var party = agreementModel.Parties?.FirstOrDefault(p =>
-                p.PartyId == body.PartyId && p.PartyType == body.PartyType);
+                p.PartyId == body.OwnerId && p.PartyType == body.OwnerType);
 
             if (party == null)
             {
-                return (StatusCodes.Status404NotFound, new GetMyTokenResponse
-                {
-                    Found = false,
-                    Error = "Party not found in this escrow"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
-            // Get the requested token
             string? token = body.TokenType switch
             {
                 TokenType.Deposit => party.DepositToken,
@@ -486,38 +373,35 @@ public partial class EscrowService
 
             if (token == null)
             {
-                return (StatusCodes.Status404NotFound, new GetMyTokenResponse
-                {
-                    Found = false,
-                    Error = $"No {body.TokenType} token exists for this party"
-                });
+                return (StatusCodes.NotFound, null);
             }
 
-            // Check if already used
-            var alreadyUsed = body.TokenType switch
+            var tokenUsed = body.TokenType switch
             {
                 TokenType.Deposit => party.DepositTokenUsed,
                 TokenType.Release => party.ReleaseTokenUsed,
                 _ => false
             };
 
-            return (StatusCodes.Status200OK, new GetMyTokenResponse
+            var tokenUsedAt = body.TokenType switch
             {
-                Found = true,
+                TokenType.Deposit => party.DepositTokenUsedAt,
+                TokenType.Release => party.ReleaseTokenUsedAt,
+                _ => (DateTimeOffset?)null
+            };
+
+            return (StatusCodes.OK, new GetMyTokenResponse
+            {
                 Token = token,
-                TokenType = body.TokenType,
-                AlreadyUsed = alreadyUsed
+                TokenUsed = tokenUsed,
+                TokenUsedAt = tokenUsedAt
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get token for escrow {EscrowId}", body.EscrowId);
             await EmitErrorAsync("GetMyToken", ex.Message, new { body.EscrowId }, cancellationToken);
-            return (StatusCodes.Status500InternalServerError, new GetMyTokenResponse
-            {
-                Found = false,
-                Error = "An unexpected error occurred while retrieving the token"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -545,10 +429,7 @@ public partial class EscrowService
             ContractPartyRole = input.ContractPartyRole,
             CustomAssetType = input.CustomAssetType,
             CustomAssetId = input.CustomAssetId,
-            CustomAssetData = input.CustomAssetData,
-            SourceOwnerId = input.SourceOwnerId,
-            SourceOwnerType = input.SourceOwnerType,
-            SourceContainerId = input.SourceContainerId
+            CustomAssetData = input.CustomAssetData
         };
     }
 

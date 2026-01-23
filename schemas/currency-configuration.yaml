@@ -18,11 +18,13 @@ x-service-configuration:
       description: Default for currencies that do not specify allowNegative
     defaultPrecision:
       type: string
+      enum: ["integer", "decimal_2", "decimal_4", "decimal_8", "decimal_full", "big_integer"]
       env: CURRENCY_DEFAULT_PRECISION
       default: decimal_2
-      description: Default precision for currencies that do not specify (integer, decimal_2, decimal_4, decimal_8, decimal_full, big_integer)
+      description: Default precision for currencies that do not specify
     autogainProcessingMode:
       type: string
+      enum: ["lazy", "task"]
       env: CURRENCY_AUTOGAIN_PROCESSING_MODE
       default: lazy
       description: How autogain is calculated (lazy = on-demand at query time, task = background processing)
