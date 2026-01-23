@@ -14,7 +14,8 @@ x-service-configuration:
     # Storage Provider Configuration
     StorageProvider:
       type: string
-      description: Storage backend type (minio, s3, r2, azure, filesystem)
+      enum: ["minio", "s3", "r2", "azure", "filesystem"]
+      description: Storage backend type
       env: ASSET_STORAGE_PROVIDER
       default: minio
 
@@ -127,7 +128,8 @@ x-service-configuration:
 
     ProcessingMode:
       type: string
-      description: Service mode (api, worker, both)
+      enum: ["api", "worker", "both"]
+      description: Service mode
       env: ASSET_PROCESSING_MODE
       default: both
 
@@ -187,7 +189,8 @@ x-service-configuration:
     # Audio Processing Configuration
     AudioOutputFormat:
       type: string
-      description: Default audio output format (mp3, opus, aac)
+      enum: ["mp3", "opus", "aac"]
+      description: Default audio output format
       env: ASSET_AUDIO_OUTPUT_FORMAT
       default: mp3
 
@@ -206,7 +209,8 @@ x-service-configuration:
     # Bundle Configuration
     BundleCompressionDefault:
       type: string
-      description: Default compression for bundles (lz4, lzma, none)
+      enum: ["lz4", "lzma", "none"]
+      description: Default compression for bundles
       env: ASSET_BUNDLE_COMPRESSION_DEFAULT
       default: lz4
 

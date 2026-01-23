@@ -28,7 +28,8 @@ x-service-configuration:
     # Backend Configuration
     DefaultBackend:
       type: string
-      description: Default container orchestration backend when not specified in deploy request (compose, swarm, portainer, kubernetes)
+      enum: ["compose", "swarm", "portainer", "kubernetes"]
+      description: Default container orchestration backend when not specified in deploy request
       env: ORCHESTRATOR_DEFAULT_BACKEND
       default: "compose"
 

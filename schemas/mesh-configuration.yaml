@@ -69,7 +69,8 @@ x-service-configuration:
     # =========================================================================
     DefaultLoadBalancer:
       type: string
-      description: Default load balancing algorithm (RoundRobin, LeastConnections, Weighted, Random)
+      enum: ["RoundRobin", "LeastConnections", "Weighted", "Random"]
+      description: Default load balancing algorithm
       env: MESH_DEFAULT_LOAD_BALANCER
       default: "RoundRobin"
 

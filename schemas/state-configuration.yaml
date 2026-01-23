@@ -46,7 +46,8 @@ x-service-configuration:
       default: 5
     DefaultConsistency:
       type: string
-      description: Default consistency level for state operations (strong or eventual)
+      enum: ["strong", "eventual"]
+      description: Default consistency level for state operations
       env: STATE_DEFAULT_CONSISTENCY
       default: "strong"
     EnableMetrics:
