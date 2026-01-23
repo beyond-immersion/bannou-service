@@ -1,0 +1,1751 @@
+openapi: 3.0.0
+info:
+  title: Inventory Service API
+  version: 1.0.0
+  description: |
+    Container and inventory management service for games.
+
+    lib-inventory provides container management and item placement operations.
+    Containers hold item instances from lib-item. Ownership is tracked at the
+    container level, and items inherit ownership from their container.
+
+    **What lib-inventory Does**:
+    - Container CRUD (create, read, update, delete)
+    - Container capacity management (slots, weight, grid, volume)
+    - Item placement and movement between containers
+    - Stack splitting and merging
+    - Nested container support with weight propagation
+    - Equipment slots as specialized containers
+
+    **What lib-inventory Does NOT Do**:
+    - Item template/instance management (lib-item)
+    - Crafting, trading, or market operations (future plugins)
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Container Management (6 endpoints)
+  # ===========================================================================
+
+  /inventory/container/create:
+    post:
+      operationId: createContainer
+      tags:
+      - Container
+      summary: Create a new container
+      description: |
+        Creates a new container with the specified constraint model and capacity.
+        Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContainerRequest'
+      responses:
+        '200':
+          description: Container created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+        '400':
+          description: Invalid request (validation error)
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/container/get:
+    post:
+      operationId: getContainer
+      tags:
+      - Container
+      summary: Get container with contents
+      description: Retrieves a container by ID, optionally including its contents.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContainerRequest'
+      responses:
+        '200':
+          description: Container retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerWithContentsResponse'
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/container/get-or-create:
+    post:
+      operationId: getOrCreateContainer
+      tags:
+      - Container
+      summary: Get container or create if not exists
+      description: |
+        Enables lazy container creation for character inventories.
+        If a container doesn't exist for the owner/type combination, creates it
+        with the specified defaults.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrCreateContainerRequest'
+      responses:
+        '200':
+          description: Container retrieved or created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/container/list:
+    post:
+      operationId: listContainers
+      tags:
+      - Container
+      summary: List containers for owner
+      description: Returns all containers owned by the specified entity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListContainersRequest'
+      responses:
+        '200':
+          description: Containers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListContainersResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/container/update:
+    post:
+      operationId: updateContainer
+      tags:
+      - Container
+      summary: Update container properties
+      description: Updates mutable container properties like capacity limits and filtering.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContainerRequest'
+      responses:
+        '200':
+          description: Container updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/container/delete:
+    post:
+      operationId: deleteContainer
+      tags:
+      - Container
+      summary: Delete container
+      description: |
+        Deletes a container. Must specify how to handle existing contents:
+        destroy, transfer to another container, or error if not empty.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteContainerRequest'
+      responses:
+        '200':
+          description: Container deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteContainerResponse'
+        '400':
+          description: Container not empty and itemHandling is error
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: admin
+        states: {}
+
+  # ===========================================================================
+  # Inventory Operations (6 endpoints)
+  # ===========================================================================
+
+  /inventory/add:
+    post:
+      operationId: addItemToContainer
+      tags:
+      - Inventory Operations
+      summary: Add item to container
+      description: |
+        Adds an item instance to a container. Validates container constraints
+        (slots, weight, grid, category filters). For stackable items, may
+        merge with existing stacks.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemRequest'
+      responses:
+        '200':
+          description: Item added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddItemResponse'
+        '400':
+          description: Constraint violation (full, overweight, wrong category)
+        '404':
+          description: Container or item not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/remove:
+    post:
+      operationId: removeItemFromContainer
+      tags:
+      - Inventory Operations
+      summary: Remove item from container
+      description: |
+        Removes an item from its container. The item still exists but has no
+        container assignment. Use destroy via lib-item to permanently delete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveItemRequest'
+      responses:
+        '200':
+          description: Item removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveItemResponse'
+        '404':
+          description: Item not found in specified container
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/move:
+    post:
+      operationId: moveItem
+      tags:
+      - Inventory Operations
+      summary: Move item to different slot or container
+      description: |
+        Moves an item within the same container (slot change) or to a different
+        container. Validates destination constraints. For equipment slots, this
+        effectively equips/unequips items.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveItemRequest'
+      responses:
+        '200':
+          description: Item moved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveItemResponse'
+        '400':
+          description: Constraint violation at destination
+        '404':
+          description: Item or container not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/transfer:
+    post:
+      operationId: transferItem
+      tags:
+      - Inventory Operations
+      summary: Transfer item to different owner
+      description: |
+        Transfers an item to a container owned by a different entity.
+        Used for trades, gifts, and loot distribution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferItemRequest'
+      responses:
+        '200':
+          description: Item transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferItemResponse'
+        '400':
+          description: Item is bound or not tradeable
+        '404':
+          description: Item or container not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /inventory/split:
+    post:
+      operationId: splitStack
+      tags:
+      - Inventory Operations
+      summary: Split stack into two
+      description: |
+        Splits a stack of items into two stacks. The original stack keeps the
+        remainder, and a new stack is created with the split quantity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitStackRequest'
+      responses:
+        '200':
+          description: Stack split successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitStackResponse'
+        '400':
+          description: Cannot split unique items or invalid quantity
+        '404':
+          description: Item not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/merge:
+    post:
+      operationId: mergeStacks
+      tags:
+      - Inventory Operations
+      summary: Merge two stacks
+      description: |
+        Merges two stacks of the same item template. The source stack is
+        destroyed and its quantity added to the target stack.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeStacksRequest'
+      responses:
+        '200':
+          description: Stacks merged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeStacksResponse'
+        '400':
+          description: Items are not the same template or target would exceed max stack
+        '404':
+          description: Item not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  # ===========================================================================
+  # Inventory Queries (4 endpoints)
+  # ===========================================================================
+
+  /inventory/query:
+    post:
+      operationId: queryItems
+      tags:
+      - Inventory Queries
+      summary: Find items across containers
+      description: |
+        Searches for items across all containers owned by an entity.
+        Can filter by template, category, tags, and other criteria.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryItemsRequest'
+      responses:
+        '200':
+          description: Items found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/count:
+    post:
+      operationId: countItems
+      tags:
+      - Inventory Queries
+      summary: Count items of a template
+      description: Counts total quantity of a specific item template across containers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountItemsRequest'
+      responses:
+        '200':
+          description: Count completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/has:
+    post:
+      operationId: hasItems
+      tags:
+      - Inventory Queries
+      summary: Check if entity has required items
+      description: |
+        Checks if an entity has the required quantities of specified items.
+        Used for crafting and quest requirements validation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HasItemsRequest'
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HasItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /inventory/find-space:
+    post:
+      operationId: findSpace
+      tags:
+      - Inventory Queries
+      summary: Find where item would fit
+      description: |
+        Finds available space for an item in the owner's containers.
+        Returns candidate containers and slots where the item could be placed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindSpaceRequest'
+      responses:
+        '200':
+          description: Space search completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindSpaceResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    ContainerConstraintModel:
+      type: string
+      description: Container capacity constraint type
+      enum:
+      - slot_only
+      - weight_only
+      - slot_and_weight
+      - grid
+      - volumetric
+      - unlimited
+
+    WeightContribution:
+      type: string
+      description: How container weight propagates to parent
+      enum:
+      - none
+      - self_only
+      - self_plus_contents
+
+    ContainerOwnerType:
+      type: string
+      description: Type of entity that owns this container
+      enum:
+      - character
+      - account
+      - location
+      - vehicle
+      - guild
+      - escrow
+      - mail
+      - other
+
+    ItemHandling:
+      type: string
+      description: How to handle items when deleting a container
+      enum:
+      - destroy
+      - transfer
+      - error
+
+    # =========================================================================
+    # Container Models
+    # =========================================================================
+
+    CreateContainerRequest:
+      type: object
+      description: Request to create a new container
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity that owns this container
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Type of the owning entity
+        containerType:
+          type: string
+          maxLength: 64
+          description: Game-defined container type (e.g., inventory, bank, equipment_slot)
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Capacity constraint model
+        isEquipmentSlot:
+          type: boolean
+          default: false
+          description: Whether this container is an equipment slot
+        equipmentSlotName:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Equipment slot name if isEquipmentSlot is true
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Maximum slots for slot-based containers
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum weight capacity
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Internal grid width for grid containers
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Internal grid height for grid containers
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum volume for volumetric containers
+        parentContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent container ID for nested containers
+        canContainContainers:
+          type: boolean
+          default: false
+          description: Whether this container can hold other containers
+        maxNestingDepth:
+          type: integer
+          nullable: true
+          description: Maximum nesting depth (null uses global default)
+        selfWeight:
+          type: number
+          format: double
+          default: 0
+          description: Empty container weight
+        weightContribution:
+          $ref: '#/components/schemas/WeightContribution'
+          description: How weight propagates to parent
+        slotCost:
+          type: integer
+          default: 1
+          description: Slots used in slot-based parent
+        parentGridWidth:
+          type: integer
+          nullable: true
+          description: Width footprint in grid-based parent
+        parentGridHeight:
+          type: integer
+          nullable: true
+          description: Height footprint in grid-based parent
+        parentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume footprint in volumetric parent
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Allowed item categories (null allows all)
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Forbidden item categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Required item tags for placement
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm this container belongs to (null for account-level)
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Container tags for filtering
+        metadata:
+          type: object
+          nullable: true
+          description: Game-specific container data
+
+    GetContainerRequest:
+      type: object
+      description: Request to get a container
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to retrieve
+        includeContents:
+          type: boolean
+          default: true
+          description: Whether to include item contents
+
+    GetOrCreateContainerRequest:
+      type: object
+      description: Request to get or create a container
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          description: Container type to find or create
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Constraint model for new container
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Default max slots if creating
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Default max weight if creating
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Default grid width if creating
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Default grid height if creating
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm for new container
+
+    ListContainersRequest:
+      type: object
+      description: Request to list containers for an owner
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          nullable: true
+          description: Filter by container type
+        includeEquipmentSlots:
+          type: boolean
+          default: true
+          description: Include equipment slot containers
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+
+    UpdateContainerRequest:
+      type: object
+      description: Request to update container properties
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to update
+        maxSlots:
+          type: integer
+          nullable: true
+          description: New max slots
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: New max weight
+        gridWidth:
+          type: integer
+          nullable: true
+          description: New grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: New grid height
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: New max volume
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New allowed categories
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New forbidden categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New allowed tags
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New container tags
+        metadata:
+          type: object
+          nullable: true
+          description: New metadata
+
+    DeleteContainerRequest:
+      type: object
+      description: Request to delete a container
+      additionalProperties: false
+      required:
+      - containerId
+      - itemHandling
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to delete
+        itemHandling:
+          $ref: '#/components/schemas/ItemHandling'
+          description: How to handle existing items
+        transferToContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Container to transfer items to (required if itemHandling is transfer)
+
+    ContainerResponse:
+      type: object
+      description: Container details
+      additionalProperties: false
+      required:
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      - canContainContainers
+      - nestingDepth
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container unique identifier
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          description: Container type
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Constraint model
+        isEquipmentSlot:
+          type: boolean
+          description: Whether this is an equipment slot
+        equipmentSlotName:
+          type: string
+          nullable: true
+          description: Equipment slot name
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Maximum slots
+        usedSlots:
+          type: integer
+          nullable: true
+          description: Current used slots
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum weight
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Internal grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Internal grid height
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum volume
+        currentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Current volume used
+        parentContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent container ID
+        nestingDepth:
+          type: integer
+          description: Depth in container hierarchy
+        canContainContainers:
+          type: boolean
+          description: Whether can hold containers
+        maxNestingDepth:
+          type: integer
+          nullable: true
+          description: Max nesting depth
+        selfWeight:
+          type: number
+          format: double
+          description: Empty container weight
+        weightContribution:
+          $ref: '#/components/schemas/WeightContribution'
+          description: Weight propagation mode
+        slotCost:
+          type: integer
+          description: Slots used in parent
+        parentGridWidth:
+          type: integer
+          nullable: true
+          description: Width in parent grid
+        parentGridHeight:
+          type: integer
+          nullable: true
+          description: Height in parent grid
+        parentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume in parent
+        contentsWeight:
+          type: number
+          format: double
+          description: Weight of direct contents
+        totalWeight:
+          type: number
+          format: double
+          description: Total weight including self
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Allowed categories
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Forbidden categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Required tags
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID
+        tags:
+          type: array
+          items:
+            type: string
+          description: Container tags
+        metadata:
+          type: object
+          nullable: true
+          description: Game-specific data
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification
+
+    ContainerWithContentsResponse:
+      type: object
+      description: Container with item contents
+      additionalProperties: false
+      required:
+      - container
+      - items
+      properties:
+        container:
+          $ref: '#/components/schemas/ContainerResponse'
+          description: Container details
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerItem'
+          description: Items in container
+
+    ContainerItem:
+      type: object
+      description: Item in a container
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        quantity:
+          type: number
+          format: double
+          description: Item quantity
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotated in grid
+
+    ListContainersResponse:
+      type: object
+      description: List of containers
+      additionalProperties: false
+      required:
+      - containers
+      - totalCount
+      properties:
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerResponse'
+          description: List of containers
+        totalCount:
+          type: integer
+          description: Total count
+
+    DeleteContainerResponse:
+      type: object
+      description: Response after deleting container
+      additionalProperties: false
+      required:
+      - deleted
+      - containerId
+      - itemsHandled
+      properties:
+        deleted:
+          type: boolean
+          description: Whether deletion succeeded
+        containerId:
+          type: string
+          format: uuid
+          description: Deleted container ID
+        itemsHandled:
+          type: integer
+          description: Number of items handled
+
+    # =========================================================================
+    # Inventory Operation Models
+    # =========================================================================
+
+    AddItemRequest:
+      type: object
+      description: Request to add item to container
+      additionalProperties: false
+      required:
+      - instanceId
+      - containerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to add
+        containerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Specific slot (auto-assign if null)
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotate in grid
+        autoStack:
+          type: boolean
+          default: true
+          description: Auto-merge with existing stacks
+
+    AddItemResponse:
+      type: object
+      description: Response after adding item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - containerId
+      properties:
+        success:
+          type: boolean
+          description: Whether add succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Added item ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Assigned slot
+        slotX:
+          type: integer
+          nullable: true
+          description: Assigned X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Assigned Y position
+        mergedWithInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Instance merged into if stacked
+
+    RemoveItemRequest:
+      type: object
+      description: Request to remove item from container
+      additionalProperties: false
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to remove
+
+    RemoveItemResponse:
+      type: object
+      description: Response after removing item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - previousContainerId
+      properties:
+        success:
+          type: boolean
+          description: Whether remove succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Removed item ID
+        previousContainerId:
+          type: string
+          format: uuid
+          description: Container removed from
+
+    MoveItemRequest:
+      type: object
+      description: Request to move item
+      additionalProperties: false
+      required:
+      - instanceId
+      - targetContainerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to move
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        targetSlotIndex:
+          type: integer
+          nullable: true
+          description: Target slot
+        targetSlotX:
+          type: integer
+          nullable: true
+          description: Target grid X
+        targetSlotY:
+          type: integer
+          nullable: true
+          description: Target grid Y
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotate in target
+
+    MoveItemResponse:
+      type: object
+      description: Response after moving item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - sourceContainerId
+      - targetContainerId
+      properties:
+        success:
+          type: boolean
+          description: Whether move succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Moved item ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container
+        slotIndex:
+          type: integer
+          nullable: true
+          description: New slot
+        slotX:
+          type: integer
+          nullable: true
+          description: New grid X
+        slotY:
+          type: integer
+          nullable: true
+          description: New grid Y
+
+    TransferItemRequest:
+      type: object
+      description: Request to transfer item ownership
+      additionalProperties: false
+      required:
+      - instanceId
+      - targetContainerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        quantity:
+          type: number
+          format: double
+          nullable: true
+          description: Quantity to transfer (all if null)
+
+    TransferItemResponse:
+      type: object
+      description: Response after transfer
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - sourceContainerId
+      - targetContainerId
+      - quantityTransferred
+      properties:
+        success:
+          type: boolean
+          description: Whether transfer succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Transferred item ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container
+        quantityTransferred:
+          type: number
+          format: double
+          description: Amount transferred
+
+    SplitStackRequest:
+      type: object
+      description: Request to split a stack
+      additionalProperties: false
+      required:
+      - instanceId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Stack to split
+        quantity:
+          type: number
+          format: double
+          minimum: 1
+          description: Quantity to split off
+        targetSlotIndex:
+          type: integer
+          nullable: true
+          description: Slot for new stack
+        targetSlotX:
+          type: integer
+          nullable: true
+          description: Grid X for new stack
+        targetSlotY:
+          type: integer
+          nullable: true
+          description: Grid Y for new stack
+
+    SplitStackResponse:
+      type: object
+      description: Response after splitting
+      additionalProperties: false
+      required:
+      - success
+      - originalInstanceId
+      - newInstanceId
+      - originalQuantity
+      - newQuantity
+      properties:
+        success:
+          type: boolean
+          description: Whether split succeeded
+        originalInstanceId:
+          type: string
+          format: uuid
+          description: Original stack ID
+        newInstanceId:
+          type: string
+          format: uuid
+          description: New stack ID
+        originalQuantity:
+          type: number
+          format: double
+          description: Remaining quantity
+        newQuantity:
+          type: number
+          format: double
+          description: Split quantity
+
+    MergeStacksRequest:
+      type: object
+      description: Request to merge stacks
+      additionalProperties: false
+      required:
+      - sourceInstanceId
+      - targetInstanceId
+      properties:
+        sourceInstanceId:
+          type: string
+          format: uuid
+          description: Stack to merge from (destroyed)
+        targetInstanceId:
+          type: string
+          format: uuid
+          description: Stack to merge into
+
+    MergeStacksResponse:
+      type: object
+      description: Response after merging
+      additionalProperties: false
+      required:
+      - success
+      - targetInstanceId
+      - newQuantity
+      - sourceDestroyed
+      properties:
+        success:
+          type: boolean
+          description: Whether merge succeeded
+        targetInstanceId:
+          type: string
+          format: uuid
+          description: Merged stack ID
+        newQuantity:
+          type: number
+          format: double
+          description: New quantity
+        sourceDestroyed:
+          type: boolean
+          description: Whether source was destroyed
+        overflowQuantity:
+          type: number
+          format: double
+          nullable: true
+          description: Quantity that didn't fit
+
+    # =========================================================================
+    # Query Models
+    # =========================================================================
+
+    QueryItemsRequest:
+      type: object
+      description: Request to query items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to search
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by template
+        category:
+          type: string
+          nullable: true
+          description: Filter by category
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by tags
+        containerType:
+          type: string
+          nullable: true
+          description: Filter by container type
+        excludeEquipmentSlots:
+          type: boolean
+          default: false
+          description: Exclude equipment slots
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          default: 50
+          maximum: 200
+          description: Max results
+
+    QueryItemsResponse:
+      type: object
+      description: Query results
+      additionalProperties: false
+      required:
+      - items
+      - totalCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryResultItem'
+          description: Found items
+        totalCount:
+          type: integer
+          description: Total matching
+
+    QueryResultItem:
+      type: object
+      description: Item in query results
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - containerId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        containerType:
+          type: string
+          description: Container type
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position
+
+    CountItemsRequest:
+      type: object
+      description: Request to count items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - templateId
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to count for
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          description: Template to count
+
+    CountItemsResponse:
+      type: object
+      description: Count result
+      additionalProperties: false
+      required:
+      - templateId
+      - totalQuantity
+      - stackCount
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Counted template
+        totalQuantity:
+          type: number
+          format: double
+          description: Total quantity
+        stackCount:
+          type: integer
+          description: Number of stacks
+
+    HasItemsRequest:
+      type: object
+      description: Request to check for items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - requirements
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to check
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequirement'
+          description: Required items
+
+    ItemRequirement:
+      type: object
+      description: Required item and quantity
+      additionalProperties: false
+      required:
+      - templateId
+      - quantity
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Required template
+        quantity:
+          type: number
+          format: double
+          minimum: 1
+          description: Required quantity
+
+    HasItemsResponse:
+      type: object
+      description: Has items result
+      additionalProperties: false
+      required:
+      - hasAll
+      - results
+      properties:
+        hasAll:
+          type: boolean
+          description: Whether all requirements met
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/HasItemResult'
+          description: Per-item results
+
+    HasItemResult:
+      type: object
+      description: Individual item check result
+      additionalProperties: false
+      required:
+      - templateId
+      - required
+      - available
+      - satisfied
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template checked
+        required:
+          type: number
+          format: double
+          description: Required quantity
+        available:
+          type: number
+          format: double
+          description: Available quantity
+        satisfied:
+          type: boolean
+          description: Whether requirement met
+
+    FindSpaceRequest:
+      type: object
+      description: Request to find space for item
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - templateId
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to search
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          description: Item template
+        quantity:
+          type: number
+          format: double
+          default: 1
+          description: Quantity to place
+        preferStackable:
+          type: boolean
+          default: true
+          description: Prefer existing stacks
+
+    FindSpaceResponse:
+      type: object
+      description: Find space result
+      additionalProperties: false
+      required:
+      - hasSpace
+      - candidates
+      properties:
+        hasSpace:
+          type: boolean
+          description: Whether space found
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpaceCandidate'
+          description: Potential placements
+
+    SpaceCandidate:
+      type: object
+      description: Potential placement location
+      additionalProperties: false
+      required:
+      - containerId
+      - containerType
+      - canFitQuantity
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        containerType:
+          type: string
+          description: Container type
+        canFitQuantity:
+          type: number
+          format: double
+          description: How much can fit
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Available slot
+        slotX:
+          type: integer
+          nullable: true
+          description: Available grid X
+        slotY:
+          type: integer
+          nullable: true
+          description: Available grid Y
+        existingStackInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Stack to merge with

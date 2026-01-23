@@ -111,6 +111,14 @@ public static class StateStoreDefinitions
     /// <summary>Game session state and history</summary>
     public const string GameSession = "game-session-statestore";
 
+    // Inventory Service
+    /// <summary>Container state and item list cache</summary>
+    public const string InventoryContainerCache = "inventory-container-cache";
+    /// <summary>Container definitions (persistent)</summary>
+    public const string InventoryContainerStore = "inventory-container-store";
+    /// <summary>Distributed locks for concurrent modifications</summary>
+    public const string InventoryLock = "inventory-lock";
+
     // Item Service
     /// <summary>Hot item instance data for active gameplay</summary>
     public const string ItemInstanceCache = "item-instance-cache";
@@ -264,6 +272,9 @@ public static class StateStoreDefinitions
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
+            [InventoryContainerCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:cont" },
+            [InventoryContainerStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "inventory_container_store" },
+            [InventoryLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:lock" },
             [ItemInstanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "item:inst" },
             [ItemInstanceStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "item_instance_store" },
             [ItemTemplateCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "item:tpl" },
@@ -343,6 +354,9 @@ public static class StateStoreDefinitions
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
+            [InventoryContainerCache] = new StoreMetadata("Inventory", "Container state and item list cache", "redis"),
+            [InventoryContainerStore] = new StoreMetadata("Inventory", "Container definitions (persistent)", "mysql"),
+            [InventoryLock] = new StoreMetadata("Inventory", "Distributed locks for concurrent modifications", "redis"),
             [ItemInstanceCache] = new StoreMetadata("Item", "Hot item instance data for active gameplay", "redis"),
             [ItemInstanceStore] = new StoreMetadata("Item", "Item instances (persistent, realm-partitioned)", "mysql"),
             [ItemTemplateCache] = new StoreMetadata("Item", "Template lookup cache (global, aggressive caching)", "redis"),

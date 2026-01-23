@@ -1,0 +1,2654 @@
+openapi: 3.0.0
+info:
+  title: Inventory Service API
+  version: 1.0.0
+  description: |
+    Container and inventory management service for games.
+
+    lib-inventory provides container management and item placement operations.
+    Containers hold item instances from lib-item. Ownership is tracked at the
+    container level, and items inherit ownership from their container.
+
+    **What lib-inventory Does**:
+    - Container CRUD (create, read, update, delete)
+    - Container capacity management (slots, weight, grid, volume)
+    - Item placement and movement between containers
+    - Stack splitting and merging
+    - Nested container support with weight propagation
+    - Equipment slots as specialized containers
+
+    **What lib-inventory Does NOT Do**:
+    - Item template/instance management (lib-item)
+    - Crafting, trading, or market operations (future plugins)
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+paths:
+  /inventory/container/create:
+    post:
+      operationId: createContainer
+      tags:
+      - Container
+      summary: Create a new container
+      description: |
+        Creates a new container with the specified constraint model and capacity.
+        Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContainerRequest'
+      responses:
+        '200':
+          description: Container created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+        '400':
+          description: Invalid request (validation error)
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateContainerRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to create a new container\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"ownerId\",\n                \"ownerType\",\n                \"containerType\",\n            \
+        \    \"constraintModel\"\n            ],\n            \"properties\": {\n                \"ownerId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the entity that owns this container\"\n                },\n                \"ownerType\": {\n          \
+        \          \"$ref\": \"#/$defs/ContainerOwnerType\",\n                    \"description\": \"Type of the owning entity\"\
+        \n                },\n                \"containerType\": {\n                    \"type\": \"string\",\n          \
+        \          \"maxLength\": 64,\n                    \"description\": \"Game-defined container type (e.g., inventory,
+        bank, equipment_slot)\"\n                },\n                \"constraintModel\": {\n                    \"$ref\"\
+        : \"#/$defs/ContainerConstraintModel\",\n                    \"description\": \"Capacity constraint model\"\n    \
+        \            },\n                \"isEquipmentSlot\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"default\": false,\n                    \"description\": \"Whether this container is an equipment slot\"\
+        \n                },\n                \"equipmentSlotName\": {\n                    \"type\": \"string\",\n      \
+        \              \"maxLength\": 64,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Equipment slot name if isEquipmentSlot is true\"\n                },\n                \"maxSlots\": {\n          \
+        \          \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Maximum slots for slot-based containers\"\n                },\n                \"maxWeight\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Maximum weight capacity\"\n                },\n                \"gridWidth\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Internal grid width for grid containers\"\n                },\n                \"gridHeight\": {\n           \
+        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Internal grid height for grid containers\"\n                },\n                \"maxVolume\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Maximum volume for volumetric containers\"\n                },\n         \
+        \       \"parentContainerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Parent container ID for nested
+        containers\"\n                },\n                \"canContainContainers\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Whether this container can hold
+        other containers\"\n                },\n                \"maxNestingDepth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Maximum nesting depth (null uses
+        global default)\"\n                },\n                \"selfWeight\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"default\": 0,\n                    \"description\"\
+        : \"Empty container weight\"\n                },\n                \"weightContribution\": {\n                    \"\
+        $ref\": \"#/$defs/WeightContribution\",\n                    \"description\": \"How weight propagates to parent\"\n\
+        \                },\n                \"slotCost\": {\n                    \"type\": \"integer\",\n               \
+        \     \"default\": 1,\n                    \"description\": \"Slots used in slot-based parent\"\n                },\n\
+        \                \"parentGridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Width footprint in grid-based parent\"\n                },\n     \
+        \           \"parentGridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Height footprint in grid-based parent\"\n                },\n    \
+        \            \"parentVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Volume footprint in volumetric
+        parent\"\n                },\n                \"allowedCategories\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Allowed item categories (null allows all)\"\
+        \n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\",\n     \
+        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Forbidden item categories\"\n                },\n\
+        \                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Required item tags for placement\"\n                },\n                \"\
+        realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Realm this container belongs to (null for account-level)\"\
+        \n                },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Container tags for filtering\"\n                },\n             \
+        \   \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Game-specific container data\"\n                }\n            }\n        },\n   \
+        \     \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
+        that owns this container\",\n            \"enum\": [\n                \"character\",\n                \"account\"\
+        ,\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n                \"escrow\"\
+        ,\n                \"mail\",\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Container capacity constraint type\",\n   \
+        \         \"enum\": [\n                \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\"\
+        ,\n                \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n    \
+        \    },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        container weight propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\"\
+        ,\n                \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
+        ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"containerId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"containerType\"\
+        ,\n                \"constraintModel\",\n                \"isEquipmentSlot\",\n                \"canContainContainers\"\
+        ,\n                \"nestingDepth\",\n                \"selfWeight\",\n                \"weightContribution\",\n \
+        \               \"slotCost\",\n                \"contentsWeight\",\n                \"totalWeight\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"containerId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Container unique identifier\"\n                },\n                \"ownerId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\
+        \n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\"\
+        ,\n                    \"description\": \"Owner type\"\n                },\n                \"containerType\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Container type\"\n            \
+        \    },\n                \"constraintModel\": {\n                    \"$ref\": \"#/$defs/ContainerConstraintModel\"\
+        ,\n                    \"description\": \"Constraint model\"\n                },\n                \"isEquipmentSlot\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an equipment
+        slot\"\n                },\n                \"equipmentSlotName\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Equipment slot name\"\n         \
+        \       },\n                \"maxSlots\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum slots\"\n                },\n                \"usedSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current used slots\"\n                },\n                \"maxWeight\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum weight\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Internal grid width\"\n       \
+        \         },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Internal grid height\"\n                },\n           \
+        \     \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Maximum volume\"\n               \
+        \ },\n                \"currentVolume\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Current volume used\"\
+        \n                },\n                \"parentContainerId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent container ID\"\n                },\n                \"nestingDepth\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Depth in container hierarchy\"\n                },\n        \
+        \        \"canContainContainers\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether can hold containers\"\n                },\n                \"maxNestingDepth\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Max nesting
+        depth\"\n                },\n                \"selfWeight\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"double\",\n                    \"description\": \"Empty container weight\"\n        \
+        \        },\n                \"weightContribution\": {\n                    \"$ref\": \"#/$defs/WeightContribution\"\
+        ,\n                    \"description\": \"Weight propagation mode\"\n                },\n                \"slotCost\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Slots used in parent\"\n \
+        \               },\n                \"parentGridWidth\": {\n                    \"type\": \"integer\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Width in parent grid\"\n                },\n\
+        \                \"parentGridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Height in parent grid\"\n                },\n                \"parentVolume\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Volume in parent\"\n                },\n               \
+        \ \"contentsWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
+        \                    \"description\": \"Weight of direct contents\"\n                },\n                \"totalWeight\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Total weight including self\"\n                },\n                \"allowedCategories\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Allowed
+        categories\"\n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Forbidden categories\"\n              \
+        \  },\n                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required tags\"\n                },\n                \"realmId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
+        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
+        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
+        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
+        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
+        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
+        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
+        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create a new container\",\n    \"description\": \"Creates a new container
+        with the specified constraint model and capacity.\\nContainer types are game-defined strings (e.g., \\\"inventory\\\
+        \", \\\"bank\\\", \\\"equipment_slot\\\").\\n\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"createContainer\"\n}"
+  /inventory/container/get:
+    post:
+      operationId: getContainer
+      tags:
+      - Container
+      summary: Get container with contents
+      description: Retrieves a container by ID, optionally including its contents.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContainerRequest'
+      responses:
+        '200':
+          description: Container retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerWithContentsResponse'
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetContainerRequest\"\
+        ,\n    \"$defs\": {\n        \"GetContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get a container\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"containerId\"\n            ],\n            \"properties\": {\n                \"containerId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Container ID to retrieve\"\n                },\n                \"includeContents\": {\n                    \"\
+        type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether to include
+        item contents\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerWithContentsResponse\"\
+        ,\n    \"$defs\": {\n        \"ContainerWithContentsResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Container with item contents\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"container\",\n                \"items\"\n            ],\n            \"properties\"\
+        : {\n                \"container\": {\n                    \"$ref\": \"#/$defs/ContainerResponse\",\n            \
+        \        \"description\": \"Container details\"\n                },\n                \"items\": {\n              \
+        \      \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ContainerItem\"\
+        \n                    },\n                    \"description\": \"Items in container\"\n                }\n       \
+        \     }\n        },\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"containerId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"containerType\"\
+        ,\n                \"constraintModel\",\n                \"isEquipmentSlot\",\n                \"canContainContainers\"\
+        ,\n                \"nestingDepth\",\n                \"selfWeight\",\n                \"weightContribution\",\n \
+        \               \"slotCost\",\n                \"contentsWeight\",\n                \"totalWeight\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"containerId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Container unique identifier\"\n                },\n                \"ownerId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\
+        \n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\"\
+        ,\n                    \"description\": \"Owner type\"\n                },\n                \"containerType\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Container type\"\n            \
+        \    },\n                \"constraintModel\": {\n                    \"$ref\": \"#/$defs/ContainerConstraintModel\"\
+        ,\n                    \"description\": \"Constraint model\"\n                },\n                \"isEquipmentSlot\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an equipment
+        slot\"\n                },\n                \"equipmentSlotName\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Equipment slot name\"\n         \
+        \       },\n                \"maxSlots\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum slots\"\n                },\n                \"usedSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current used slots\"\n                },\n                \"maxWeight\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum weight\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Internal grid width\"\n       \
+        \         },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Internal grid height\"\n                },\n           \
+        \     \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Maximum volume\"\n               \
+        \ },\n                \"currentVolume\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Current volume used\"\
+        \n                },\n                \"parentContainerId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent container ID\"\n                },\n                \"nestingDepth\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Depth in container hierarchy\"\n                },\n        \
+        \        \"canContainContainers\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether can hold containers\"\n                },\n                \"maxNestingDepth\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Max nesting
+        depth\"\n                },\n                \"selfWeight\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"double\",\n                    \"description\": \"Empty container weight\"\n        \
+        \        },\n                \"weightContribution\": {\n                    \"$ref\": \"#/$defs/WeightContribution\"\
+        ,\n                    \"description\": \"Weight propagation mode\"\n                },\n                \"slotCost\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Slots used in parent\"\n \
+        \               },\n                \"parentGridWidth\": {\n                    \"type\": \"integer\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Width in parent grid\"\n                },\n\
+        \                \"parentGridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Height in parent grid\"\n                },\n                \"parentVolume\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Volume in parent\"\n                },\n               \
+        \ \"contentsWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
+        \                    \"description\": \"Weight of direct contents\"\n                },\n                \"totalWeight\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Total weight including self\"\n                },\n                \"allowedCategories\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Allowed
+        categories\"\n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Forbidden categories\"\n              \
+        \  },\n                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required tags\"\n                },\n                \"realmId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
+        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
+        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
+        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
+        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
+        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
+        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
+        \            \"self_plus_contents\"\n            ]\n        },\n        \"ContainerItem\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Item in a container\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"instanceId\",\n                \"templateId\",\n                \"\
+        quantity\"\n            ],\n            \"properties\": {\n                \"instanceId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item instance
+        ID\"\n                },\n                \"templateId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Item template ID\"\n                },\n\
+        \                \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"Item quantity\"\n                },\n                \"slotIndex\": {\n\
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Slot position\"\n                },\n                \"slotX\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Grid X position\"\n             \
+        \   },\n                \"slotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Grid Y position\"\n                },\n                \"rotated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Rotated in grid\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get container with contents\",\n    \"description\": \"Retrieves a container
+        by ID, optionally including its contents.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\":
+        false,\n    \"operationId\": \"getContainer\"\n}"
+  /inventory/container/get-or-create:
+    post:
+      operationId: getOrCreateContainer
+      tags:
+      - Container
+      summary: Get container or create if not exists
+      description: |
+        Enables lazy container creation for character inventories.
+        If a container doesn't exist for the owner/type combination, creates it
+        with the specified defaults.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOrCreateContainerRequest'
+      responses:
+        '200':
+          description: Container retrieved or created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetOrCreateContainerRequest\"\
+        ,\n    \"$defs\": {\n        \"GetOrCreateContainerRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to get or create a container\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"ownerId\",\n                \"ownerType\",\n                \"containerType\"\
+        ,\n                \"constraintModel\"\n            ],\n            \"properties\": {\n                \"ownerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Owner entity ID\"\n                },\n                \"ownerType\": {\n                    \"$ref\"\
+        : \"#/$defs/ContainerOwnerType\",\n                    \"description\": \"Owner type\"\n                },\n     \
+        \           \"containerType\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Container type to find or create\"\n                },\n                \"constraintModel\": {\n               \
+        \     \"$ref\": \"#/$defs/ContainerConstraintModel\",\n                    \"description\": \"Constraint model for
+        new container\"\n                },\n                \"maxSlots\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Default max slots if creating\"\n\
+        \                },\n                \"maxWeight\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Default
+        max weight if creating\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Default grid width if creating\"\
+        \n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Default grid height if creating\"\n         \
+        \       },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Realm for new container\"\
+        \n                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
+        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
+        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
+        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
+        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
+        ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"containerId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"containerType\"\
+        ,\n                \"constraintModel\",\n                \"isEquipmentSlot\",\n                \"canContainContainers\"\
+        ,\n                \"nestingDepth\",\n                \"selfWeight\",\n                \"weightContribution\",\n \
+        \               \"slotCost\",\n                \"contentsWeight\",\n                \"totalWeight\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"containerId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Container unique identifier\"\n                },\n                \"ownerId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\
+        \n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\"\
+        ,\n                    \"description\": \"Owner type\"\n                },\n                \"containerType\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Container type\"\n            \
+        \    },\n                \"constraintModel\": {\n                    \"$ref\": \"#/$defs/ContainerConstraintModel\"\
+        ,\n                    \"description\": \"Constraint model\"\n                },\n                \"isEquipmentSlot\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an equipment
+        slot\"\n                },\n                \"equipmentSlotName\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Equipment slot name\"\n         \
+        \       },\n                \"maxSlots\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum slots\"\n                },\n                \"usedSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current used slots\"\n                },\n                \"maxWeight\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum weight\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Internal grid width\"\n       \
+        \         },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Internal grid height\"\n                },\n           \
+        \     \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Maximum volume\"\n               \
+        \ },\n                \"currentVolume\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Current volume used\"\
+        \n                },\n                \"parentContainerId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent container ID\"\n                },\n                \"nestingDepth\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Depth in container hierarchy\"\n                },\n        \
+        \        \"canContainContainers\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether can hold containers\"\n                },\n                \"maxNestingDepth\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Max nesting
+        depth\"\n                },\n                \"selfWeight\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"double\",\n                    \"description\": \"Empty container weight\"\n        \
+        \        },\n                \"weightContribution\": {\n                    \"$ref\": \"#/$defs/WeightContribution\"\
+        ,\n                    \"description\": \"Weight propagation mode\"\n                },\n                \"slotCost\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Slots used in parent\"\n \
+        \               },\n                \"parentGridWidth\": {\n                    \"type\": \"integer\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Width in parent grid\"\n                },\n\
+        \                \"parentGridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Height in parent grid\"\n                },\n                \"parentVolume\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Volume in parent\"\n                },\n               \
+        \ \"contentsWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
+        \                    \"description\": \"Weight of direct contents\"\n                },\n                \"totalWeight\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Total weight including self\"\n                },\n                \"allowedCategories\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Allowed
+        categories\"\n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Forbidden categories\"\n              \
+        \  },\n                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required tags\"\n                },\n                \"realmId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
+        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
+        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
+        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
+        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
+        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
+        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
+        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get container or create if not exists\",\n    \"description\": \"Enables
+        lazy container creation for character inventories.\\nIf a container doesn't exist for the owner/type combination,
+        creates it\\nwith the specified defaults.\\n\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"getOrCreateContainer\"\n}"
+  /inventory/container/list:
+    post:
+      operationId: listContainers
+      tags:
+      - Container
+      summary: List containers for owner
+      description: Returns all containers owned by the specified entity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListContainersRequest'
+      responses:
+        '200':
+          description: Containers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListContainersResponse'
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContainersRequest\"\
+        ,\n    \"$defs\": {\n        \"ListContainersRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to list containers for an owner\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"ownerId\",\n                \"ownerType\"\n            ],\n            \"properties\": {\n\
+        \                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Owner entity ID\"\n                },\n                \"ownerType\": {\n\
+        \                    \"$ref\": \"#/$defs/ContainerOwnerType\",\n                    \"description\": \"Owner type\"\
+        \n                },\n                \"containerType\": {\n                    \"type\": \"string\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"Filter by container type\"\n              \
+        \  },\n                \"includeEquipmentSlots\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"default\": true,\n                    \"description\": \"Include equipment slot containers\"\n            \
+        \    },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by realm\"\n \
+        \               }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
+        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
+        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \           ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListContainersResponse\"\
+        ,\n    \"$defs\": {\n        \"ListContainersResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"List of containers\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
+        \     \"containers\",\n                \"totalCount\"\n            ],\n            \"properties\": {\n           \
+        \     \"containers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/ContainerResponse\"\n                    },\n                    \"description\"\
+        : \"List of containers\"\n                },\n                \"totalCount\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Total count\"\n                }\n            }\n        },\n \
+        \       \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Container details\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"containerId\",\n \
+        \               \"ownerId\",\n                \"ownerType\",\n                \"containerType\",\n               \
+        \ \"constraintModel\",\n                \"isEquipmentSlot\",\n                \"canContainContainers\",\n        \
+        \        \"nestingDepth\",\n                \"selfWeight\",\n                \"weightContribution\",\n           \
+        \     \"slotCost\",\n                \"contentsWeight\",\n                \"totalWeight\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"containerId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Container unique
+        identifier\"\n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\n               \
+        \ },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\",\n          \
+        \          \"description\": \"Owner type\"\n                },\n                \"containerType\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"Container type\"\n                },\n   \
+        \             \"constraintModel\": {\n                    \"$ref\": \"#/$defs/ContainerConstraintModel\",\n      \
+        \              \"description\": \"Constraint model\"\n                },\n                \"isEquipmentSlot\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an equipment slot\"\
+        \n                },\n                \"equipmentSlotName\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Equipment slot name\"\n               \
+        \ },\n                \"maxSlots\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum slots\"\n                },\n                \"usedSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current used slots\"\n                },\n                \"maxWeight\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum weight\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Internal grid width\"\n       \
+        \         },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Internal grid height\"\n                },\n           \
+        \     \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Maximum volume\"\n               \
+        \ },\n                \"currentVolume\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Current volume used\"\
+        \n                },\n                \"parentContainerId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent container ID\"\n                },\n                \"nestingDepth\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Depth in container hierarchy\"\n                },\n        \
+        \        \"canContainContainers\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether can hold containers\"\n                },\n                \"maxNestingDepth\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Max nesting
+        depth\"\n                },\n                \"selfWeight\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"double\",\n                    \"description\": \"Empty container weight\"\n        \
+        \        },\n                \"weightContribution\": {\n                    \"$ref\": \"#/$defs/WeightContribution\"\
+        ,\n                    \"description\": \"Weight propagation mode\"\n                },\n                \"slotCost\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Slots used in parent\"\n \
+        \               },\n                \"parentGridWidth\": {\n                    \"type\": \"integer\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Width in parent grid\"\n                },\n\
+        \                \"parentGridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Height in parent grid\"\n                },\n                \"parentVolume\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Volume in parent\"\n                },\n               \
+        \ \"contentsWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
+        \                    \"description\": \"Weight of direct contents\"\n                },\n                \"totalWeight\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Total weight including self\"\n                },\n                \"allowedCategories\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Allowed
+        categories\"\n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Forbidden categories\"\n              \
+        \  },\n                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required tags\"\n                },\n                \"realmId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
+        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
+        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
+        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
+        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
+        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
+        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
+        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List containers for owner\",\n    \"description\": \"Returns all containers
+        owned by the specified entity.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\": false,\n  \
+        \  \"operationId\": \"listContainers\"\n}"
+  /inventory/container/update:
+    post:
+      operationId: updateContainer
+      tags:
+      - Container
+      summary: Update container properties
+      description: Updates mutable container properties like capacity limits and filtering.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContainerRequest'
+      responses:
+        '200':
+          description: Container updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerResponse'
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateContainerRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update container properties\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"containerId\"\n            ],\n            \"properties\": {\n                \"containerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Container ID to update\"\n                },\n                \"maxSlots\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"New max
+        slots\"\n                },\n                \"maxWeight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New max weight\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"New grid width\"\n            \
+        \    },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New grid height\"\n                },\n                \"maxVolume\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"New max volume\"\n                },\n                \"\
+        allowedCategories\": {\n                    \"type\": \"array\",\n                    \"items\": {\n             \
+        \           \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n              \
+        \      \"description\": \"New allowed categories\"\n                },\n                \"forbiddenCategories\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
+        New forbidden categories\"\n                },\n                \"allowedTags\": {\n                    \"type\":
+        \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"nullable\": true,\n                    \"description\": \"New allowed tags\"\n            \
+        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"New container tags\"\n                },\n                \"metadata\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New metadata\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
+        ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"containerId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"containerType\"\
+        ,\n                \"constraintModel\",\n                \"isEquipmentSlot\",\n                \"canContainContainers\"\
+        ,\n                \"nestingDepth\",\n                \"selfWeight\",\n                \"weightContribution\",\n \
+        \               \"slotCost\",\n                \"contentsWeight\",\n                \"totalWeight\",\n           \
+        \     \"createdAt\"\n            ],\n            \"properties\": {\n                \"containerId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Container unique identifier\"\n                },\n                \"ownerId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\
+        \n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\"\
+        ,\n                    \"description\": \"Owner type\"\n                },\n                \"containerType\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Container type\"\n            \
+        \    },\n                \"constraintModel\": {\n                    \"$ref\": \"#/$defs/ContainerConstraintModel\"\
+        ,\n                    \"description\": \"Constraint model\"\n                },\n                \"isEquipmentSlot\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an equipment
+        slot\"\n                },\n                \"equipmentSlotName\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Equipment slot name\"\n         \
+        \       },\n                \"maxSlots\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum slots\"\n                },\n                \"usedSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current used slots\"\n                },\n                \"maxWeight\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum weight\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Internal grid width\"\n       \
+        \         },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Internal grid height\"\n                },\n           \
+        \     \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Maximum volume\"\n               \
+        \ },\n                \"currentVolume\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Current volume used\"\
+        \n                },\n                \"parentContainerId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Parent container ID\"\n                },\n                \"nestingDepth\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Depth in container hierarchy\"\n                },\n        \
+        \        \"canContainContainers\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether can hold containers\"\n                },\n                \"maxNestingDepth\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Max nesting
+        depth\"\n                },\n                \"selfWeight\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"double\",\n                    \"description\": \"Empty container weight\"\n        \
+        \        },\n                \"weightContribution\": {\n                    \"$ref\": \"#/$defs/WeightContribution\"\
+        ,\n                    \"description\": \"Weight propagation mode\"\n                },\n                \"slotCost\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Slots used in parent\"\n \
+        \               },\n                \"parentGridWidth\": {\n                    \"type\": \"integer\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Width in parent grid\"\n                },\n\
+        \                \"parentGridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Height in parent grid\"\n                },\n                \"parentVolume\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Volume in parent\"\n                },\n               \
+        \ \"contentsWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
+        \                    \"description\": \"Weight of direct contents\"\n                },\n                \"totalWeight\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Total weight including self\"\n                },\n                \"allowedCategories\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Allowed
+        categories\"\n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Forbidden categories\"\n              \
+        \  },\n                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required tags\"\n                },\n                \"realmId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
+        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
+        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
+        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
+        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
+        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
+        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
+        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update container properties\",\n    \"description\": \"Updates mutable
+        container properties like capacity limits and filtering.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"updateContainer\"\n}"
+  /inventory/container/delete:
+    post:
+      operationId: deleteContainer
+      tags:
+      - Container
+      summary: Delete container
+      description: |
+        Deletes a container. Must specify how to handle existing contents:
+        destroy, transfer to another container, or error if not empty.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteContainerRequest'
+      responses:
+        '200':
+          description: Container deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteContainerResponse'
+        '400':
+          description: Container not empty and itemHandling is error
+        '404':
+          description: Container not found
+      x-permissions:
+      - role: admin
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContainerRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteContainerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to delete a container\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"containerId\",\n                \"itemHandling\"\n            ],\n            \"properties\": {\n\
+        \                \"containerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Container ID to delete\"\n                },\n                \"itemHandling\"\
+        : {\n                    \"$ref\": \"#/$defs/ItemHandling\",\n                    \"description\": \"How to handle
+        existing items\"\n                },\n                \"transferToContainerId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Container to transfer items to (required if itemHandling is transfer)\"\n                }\n\
+        \            }\n        },\n        \"ItemHandling\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How to handle items when deleting a container\",\n            \"enum\": [\n                \"destroy\",\n    \
+        \            \"transfer\",\n                \"error\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContainerResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after deleting container\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"deleted\",\n                \"containerId\",\n                \"itemsHandled\"\n            ],\n\
+        \            \"properties\": {\n                \"deleted\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"description\": \"Whether deletion succeeded\"\n                },\n                \"containerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Deleted container ID\"\n                },\n                \"itemsHandled\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"Number of items handled\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete container\",\n    \"description\": \"Deletes a container. Must specify
+        how to handle existing contents:\\ndestroy, transfer to another container, or error if not empty.\\n\",\n    \"tags\"\
+        : [\n        \"Container\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteContainer\"\n}"
+  /inventory/add:
+    post:
+      operationId: addItemToContainer
+      tags:
+      - Inventory Operations
+      summary: Add item to container
+      description: |
+        Adds an item instance to a container. Validates container constraints
+        (slots, weight, grid, category filters). For stackable items, may
+        merge with existing stacks.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemRequest'
+      responses:
+        '200':
+          description: Item added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddItemResponse'
+        '400':
+          description: Constraint violation (full, overweight, wrong category)
+        '404':
+          description: Container or item not found
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddItemRequest\"\
+        ,\n    \"$defs\": {\n        \"AddItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to add item to container\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"instanceId\",\n                \"containerId\"\n            ],\n            \"properties\": {\n\
+        \                \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Item instance ID to add\"\n                },\n                \"\
+        containerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
+        \           \"description\": \"Target container ID\"\n                },\n                \"slotIndex\": {\n     \
+        \               \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Specific slot (auto-assign if null)\"\n                },\n                \"slotX\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Grid X position\"\
+        \n                },\n                \"slotY\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Grid Y position\"\n                },\n          \
+        \      \"rotated\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Rotate in grid\"\n                },\n                \"autoStack\": {\n      \
+        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Auto-merge with existing stacks\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddItemResponse\"\
+        ,\n    \"$defs\": {\n        \"AddItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after adding item\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"success\",\n                \"instanceId\",\n                \"containerId\"\n            ],\n   \
+        \         \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n        \
+        \            \"description\": \"Whether add succeeded\"\n                },\n                \"instanceId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Added item ID\"\n                },\n                \"containerId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Container ID\"\n            \
+        \    },\n                \"slotIndex\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Assigned slot\"\n                },\n                \"slotX\": {\n\
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Assigned X position\"\n                },\n                \"slotY\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Assigned Y position\"\n       \
+        \         },\n                \"mergedWithInstanceId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Instance merged into if stacked\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Add item to container\",\n    \"description\": \"Adds an item instance
+        to a container. Validates container constraints\\n(slots, weight, grid, category filters). For stackable items, may\\
+        nmerge with existing stacks.\\n\",\n    \"tags\": [\n        \"Inventory Operations\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"addItemToContainer\"\n}"
+  /inventory/remove:
+    post:
+      operationId: removeItemFromContainer
+      tags:
+      - Inventory Operations
+      summary: Remove item from container
+      description: |
+        Removes an item from its container. The item still exists but has no
+        container assignment. Use destroy via lib-item to permanently delete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveItemRequest'
+      responses:
+        '200':
+          description: Item removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveItemResponse'
+        '404':
+          description: Item not found in specified container
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveItemRequest\"\
+        ,\n    \"$defs\": {\n        \"RemoveItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to remove item from container\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"instanceId\"\n            ],\n            \"properties\": {\n                \"instanceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item instance ID to remove\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveItemResponse\"\
+        ,\n    \"$defs\": {\n        \"RemoveItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after removing item\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"success\",\n                \"instanceId\",\n                \"previousContainerId\"\n         \
+        \   ],\n            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether remove succeeded\"\n                },\n                \"instanceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Removed item ID\"\n                },\n                \"previousContainerId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Container removed from\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Remove item from container\",\n    \"description\": \"Removes an item from
+        its container. The item still exists but has no\\ncontainer assignment. Use destroy via lib-item to permanently delete.\\\
+        n\",\n    \"tags\": [\n        \"Inventory Operations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\":
+        \"removeItemFromContainer\"\n}"
+  /inventory/move:
+    post:
+      operationId: moveItem
+      tags:
+      - Inventory Operations
+      summary: Move item to different slot or container
+      description: |
+        Moves an item within the same container (slot change) or to a different
+        container. Validates destination constraints. For equipment slots, this
+        effectively equips/unequips items.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveItemRequest'
+      responses:
+        '200':
+          description: Item moved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveItemResponse'
+        '400':
+          description: Constraint violation at destination
+        '404':
+          description: Item or container not found
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MoveItemRequest\"\
+        ,\n    \"$defs\": {\n        \"MoveItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to move item\",\n            \"additionalProperties\": false,\n            \"required\": [\n         \
+        \       \"instanceId\",\n                \"targetContainerId\"\n            ],\n            \"properties\": {\n  \
+        \              \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Item instance ID to move\"\n                },\n                \"targetContainerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Target container ID\"\n                },\n                \"targetSlotIndex\": {\n             \
+        \       \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Target
+        slot\"\n                },\n                \"targetSlotX\": {\n                    \"type\": \"integer\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Target grid X\"\n                },\n\
+        \                \"targetSlotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Target grid Y\"\n                },\n                \"rotated\":
+        {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Rotate in target\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MoveItemResponse\"\
+        ,\n    \"$defs\": {\n        \"MoveItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after moving item\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"success\",\n                \"instanceId\",\n                \"sourceContainerId\",\n            \
+        \    \"targetContainerId\"\n            ],\n            \"properties\": {\n                \"success\": {\n      \
+        \              \"type\": \"boolean\",\n                    \"description\": \"Whether move succeeded\"\n         \
+        \       },\n                \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Moved item ID\"\n                },\n                \"sourceContainerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Previous container\"\n                },\n                \"targetContainerId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        New container\"\n                },\n                \"slotIndex\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"New slot\"\n                },\n\
+        \                \"slotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"New grid X\"\n                },\n                \"slotY\": {\n         \
+        \           \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\":
+        \"New grid Y\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Move item to different slot or container\",\n    \"description\": \"Moves
+        an item within the same container (slot change) or to a different\\ncontainer. Validates destination constraints.
+        For equipment slots, this\\neffectively equips/unequips items.\\n\",\n    \"tags\": [\n        \"Inventory Operations\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"moveItem\"\n}"
+  /inventory/transfer:
+    post:
+      operationId: transferItem
+      tags:
+      - Inventory Operations
+      summary: Transfer item to different owner
+      description: |
+        Transfers an item to a container owned by a different entity.
+        Used for trades, gifts, and loot distribution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferItemRequest'
+      responses:
+        '200':
+          description: Item transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferItemResponse'
+        '400':
+          description: Item is bound or not tradeable
+        '404':
+          description: Item or container not found
+      x-permissions:
+      - role: developer
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferItemRequest\"\
+        ,\n    \"$defs\": {\n        \"TransferItemRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to transfer item ownership\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"instanceId\",\n                \"targetContainerId\"\n            ],\n            \"properties\"\
+        : {\n                \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Item instance ID\"\n                },\n                \"targetContainerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Target container ID\"\n                },\n                \"quantity\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Quantity to transfer (all if null)\"\n                }\n            }\n       \
+        \ }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferItemResponse\"\
+        ,\n    \"$defs\": {\n        \"TransferItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after transfer\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
+        \          \"success\",\n                \"instanceId\",\n                \"sourceContainerId\",\n               \
+        \ \"targetContainerId\",\n                \"quantityTransferred\"\n            ],\n            \"properties\": {\n\
+        \                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\":
+        \"Whether transfer succeeded\"\n                },\n                \"instanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Transferred item
+        ID\"\n                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"uuid\",\n                    \"description\": \"Previous container\"\n          \
+        \      },\n                \"targetContainerId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"New container\"\n                },\n          \
+        \      \"quantityTransferred\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"Amount transferred\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Transfer item to different owner\",\n    \"description\": \"Transfers an
+        item to a container owned by a different entity.\\nUsed for trades, gifts, and loot distribution.\\n\",\n    \"tags\"\
+        : [\n        \"Inventory Operations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"transferItem\"\n\
+        }"
+  /inventory/split:
+    post:
+      operationId: splitStack
+      tags:
+      - Inventory Operations
+      summary: Split stack into two
+      description: |
+        Splits a stack of items into two stacks. The original stack keeps the
+        remainder, and a new stack is created with the split quantity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitStackRequest'
+      responses:
+        '200':
+          description: Stack split successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitStackResponse'
+        '400':
+          description: Cannot split unique items or invalid quantity
+        '404':
+          description: Item not found
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SplitStackRequest\"\
+        ,\n    \"$defs\": {\n        \"SplitStackRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to split a stack\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
+        \           \"instanceId\",\n                \"quantity\"\n            ],\n            \"properties\": {\n       \
+        \         \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Stack to split\"\n                },\n                \"quantity\": {\n  \
+        \                  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Quantity to split off\"\n                },\n                \"targetSlotIndex\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Slot for new stack\"\n                },\n                \"targetSlotX\": {\n                    \"type\": \"\
+        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Grid X for new stack\"\
+        \n                },\n                \"targetSlotY\": {\n                    \"type\": \"integer\",\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Grid Y for new stack\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SplitStackResponse\"\
+        ,\n    \"$defs\": {\n        \"SplitStackResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after splitting\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
+        \           \"success\",\n                \"originalInstanceId\",\n                \"newInstanceId\",\n          \
+        \      \"originalQuantity\",\n                \"newQuantity\"\n            ],\n            \"properties\": {\n   \
+        \             \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
+        Whether split succeeded\"\n                },\n                \"originalInstanceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Original stack ID\"\
+        \n                },\n                \"newInstanceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"New stack ID\"\n                },\n    \
+        \            \"originalQuantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"description\": \"Remaining quantity\"\n                },\n                \"newQuantity\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Split quantity\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Split stack into two\",\n    \"description\": \"Splits a stack of items
+        into two stacks. The original stack keeps the\\nremainder, and a new stack is created with the split quantity.\\n\"\
+        ,\n    \"tags\": [\n        \"Inventory Operations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        splitStack\"\n}"
+  /inventory/merge:
+    post:
+      operationId: mergeStacks
+      tags:
+      - Inventory Operations
+      summary: Merge two stacks
+      description: |
+        Merges two stacks of the same item template. The source stack is
+        destroyed and its quantity added to the target stack.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeStacksRequest'
+      responses:
+        '200':
+          description: Stacks merged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeStacksResponse'
+        '400':
+          description: Items are not the same template or target would exceed max stack
+        '404':
+          description: Item not found
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MergeStacksRequest\"\
+        ,\n    \"$defs\": {\n        \"MergeStacksRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to merge stacks\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
+        \          \"sourceInstanceId\",\n                \"targetInstanceId\"\n            ],\n            \"properties\"\
+        : {\n                \"sourceInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Stack to merge from (destroyed)\"\n                },\n      \
+        \          \"targetInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Stack to merge into\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MergeStacksResponse\"\
+        ,\n    \"$defs\": {\n        \"MergeStacksResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after merging\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"success\",\n                \"targetInstanceId\",\n                \"newQuantity\",\n                \"\
+        sourceDestroyed\"\n            ],\n            \"properties\": {\n                \"success\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"description\": \"Whether merge succeeded\"\n                },\n\
+        \                \"targetInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Merged stack ID\"\n                },\n                \"newQuantity\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"New quantity\"\n                },\n                \"sourceDestroyed\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether source was destroyed\"\n                },\n\
+        \                \"overflowQuantity\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Quantity that didn't
+        fit\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Merge two stacks\",\n    \"description\": \"Merges two stacks of the same
+        item template. The source stack is\\ndestroyed and its quantity added to the target stack.\\n\",\n    \"tags\": [\n\
+        \        \"Inventory Operations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"mergeStacks\"\n}"
+  /inventory/query:
+    post:
+      operationId: queryItems
+      tags:
+      - Inventory Queries
+      summary: Find items across containers
+      description: |
+        Searches for items across all containers owned by an entity.
+        Can filter by template, category, tags, and other criteria.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryItemsRequest'
+      responses:
+        '200':
+          description: Items found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryItemsRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryItemsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to query items\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"ownerId\",\n                \"ownerType\"\n            ],\n            \"properties\": {\n           \
+        \     \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Owner to search\"\n                },\n                \"ownerType\": {\n     \
+        \               \"$ref\": \"#/$defs/ContainerOwnerType\",\n                    \"description\": \"Owner type\"\n \
+        \               },\n                \"templateId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter
+        by template\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Filter by category\"\n            \
+        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Filter by tags\"\n                },\n                \"containerType\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by container type\"\n                },\n                \"excludeEquipmentSlots\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Exclude
+        equipment slots\"\n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n\
+        \                    \"default\": 0,\n                    \"description\": \"Pagination offset\"\n               \
+        \ },\n                \"limit\": {\n                    \"type\": \"integer\",\n                    \"default\": 50,\n\
+        \                    \"maximum\": 200,\n                    \"description\": \"Max results\"\n                }\n\
+        \            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of entity that owns this container\",\n            \"enum\": [\n                \"character\",\n        \
+        \        \"account\",\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n \
+        \               \"escrow\",\n                \"mail\",\n                \"other\"\n            ]\n        }\n    }\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryItemsResponse\"\
+        ,\n    \"$defs\": {\n        \"QueryItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Query results\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
+        items\",\n                \"totalCount\"\n            ],\n            \"properties\": {\n                \"items\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/QueryResultItem\"\n                    },\n                    \"description\": \"Found items\"\n    \
+        \            },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Total matching\"\n                }\n            }\n        },\n        \"QueryResultItem\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Item in query results\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"instanceId\",\n                \"templateId\",\n        \
+        \        \"containerId\",\n                \"quantity\"\n            ],\n            \"properties\": {\n         \
+        \       \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Item instance ID\"\n                },\n                \"templateId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Template ID\"\n                },\n                \"containerId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Container ID\"\n            \
+        \    },\n                \"containerType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Container type\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"description\": \"Quantity\"\n              \
+        \  },\n                \"slotIndex\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Slot position\"\n                }\n            }\n        }\n   \
+        \ }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Find items across containers\",\n    \"description\": \"Searches for items
+        across all containers owned by an entity.\\nCan filter by template, category, tags, and other criteria.\\n\",\n  \
+        \  \"tags\": [\n        \"Inventory Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryItems\"\
+        \n}"
+  /inventory/count:
+    post:
+      operationId: countItems
+      tags:
+      - Inventory Queries
+      summary: Count items of a template
+      description: Counts total quantity of a specific item template across containers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountItemsRequest'
+      responses:
+        '200':
+          description: Count completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CountItemsRequest\"\
+        ,\n    \"$defs\": {\n        \"CountItemsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to count items\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"ownerId\",\n                \"ownerType\",\n                \"templateId\"\n            ],\n         \
+        \   \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"Owner to count for\"\n                },\n   \
+        \             \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\",\n                  \
+        \  \"description\": \"Owner type\"\n                },\n                \"templateId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template to
+        count\"\n                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n  \
+        \              \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\"\
+        ,\n                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n\
+        \            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CountItemsResponse\"\
+        ,\n    \"$defs\": {\n        \"CountItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Count result\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
+        templateId\",\n                \"totalQuantity\",\n                \"stackCount\"\n            ],\n            \"\
+        properties\": {\n                \"templateId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"description\": \"Counted template\"\n                },\n        \
+        \        \"totalQuantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"Total quantity\"\n                },\n                \"stackCount\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Number of stacks\"\n         \
+        \       }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Count items of a template\",\n    \"description\": \"Counts total quantity
+        of a specific item template across containers.\",\n    \"tags\": [\n        \"Inventory Queries\"\n    ],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"countItems\"\n}"
+  /inventory/has:
+    post:
+      operationId: hasItems
+      tags:
+      - Inventory Queries
+      summary: Check if entity has required items
+      description: |
+        Checks if an entity has the required quantities of specified items.
+        Used for crafting and quest requirements validation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HasItemsRequest'
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HasItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasItemsRequest\"\
+        ,\n    \"$defs\": {\n        \"HasItemsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to check for items\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"ownerId\",\n                \"ownerType\",\n                \"requirements\"\n            ],\n   \
+        \         \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Owner to check\"\n                },\n \
+        \               \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\",\n                \
+        \    \"description\": \"Owner type\"\n                },\n                \"requirements\": {\n                  \
+        \  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ItemRequirement\"\
+        \n                    },\n                    \"description\": \"Required items\"\n                }\n           \
+        \ }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of entity that owns this container\",\n            \"enum\": [\n                \"character\",\n        \
+        \        \"account\",\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n \
+        \               \"escrow\",\n                \"mail\",\n                \"other\"\n            ]\n        },\n   \
+        \     \"ItemRequirement\": {\n            \"type\": \"object\",\n            \"description\": \"Required item and
+        quantity\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"templateId\"\
+        ,\n                \"quantity\"\n            ],\n            \"properties\": {\n                \"templateId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Required template\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Required quantity\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasItemsResponse\"\
+        ,\n    \"$defs\": {\n        \"HasItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Has items result\",\n            \"additionalProperties\": false,\n            \"required\": [\n             \
+        \   \"hasAll\",\n                \"results\"\n            ],\n            \"properties\": {\n                \"hasAll\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether all requirements met\"\
+        \n                },\n                \"results\": {\n                    \"type\": \"array\",\n                 \
+        \   \"items\": {\n                        \"$ref\": \"#/$defs/HasItemResult\"\n                    },\n          \
+        \          \"description\": \"Per-item results\"\n                }\n            }\n        },\n        \"HasItemResult\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Individual item check result\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"templateId\",\n             \
+        \   \"required\",\n                \"available\",\n                \"satisfied\"\n            ],\n            \"properties\"\
+        : {\n                \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Template checked\"\n                },\n                \"required\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Required quantity\"\n                },\n                \"available\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Available
+        quantity\"\n                },\n                \"satisfied\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether requirement met\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Check if entity has required items\",\n    \"description\": \"Checks if
+        an entity has the required quantities of specified items.\\nUsed for crafting and quest requirements validation.\\\
+        n\",\n    \"tags\": [\n        \"Inventory Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        hasItems\"\n}"
+  /inventory/find-space:
+    post:
+      operationId: findSpace
+      tags:
+      - Inventory Queries
+      summary: Find where item would fit
+      description: |
+        Finds available space for an item in the owner's containers.
+        Returns candidate containers and slots where the item could be placed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindSpaceRequest'
+      responses:
+        '200':
+          description: Space search completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindSpaceResponse'
+      x-permissions:
+      - role: user
+        states: {}
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/FindSpaceRequest\"\
+        ,\n    \"$defs\": {\n        \"FindSpaceRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to find space for item\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"ownerId\",\n                \"ownerType\",\n                \"templateId\"\n            ],\n  \
+        \          \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Owner to search\"\n                },\n\
+        \                \"ownerType\": {\n                    \"$ref\": \"#/$defs/ContainerOwnerType\",\n               \
+        \     \"description\": \"Owner type\"\n                },\n                \"templateId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item template\"\
+        \n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"double\",\n                    \"default\": 1,\n                    \"description\": \"Quantity
+        to place\"\n                },\n                \"preferStackable\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": true,\n                    \"description\": \"Prefer existing stacks\"\n     \
+        \           }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n             \
+        \   \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n  \
+        \              \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n   \
+        \         ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/FindSpaceResponse\"\
+        ,\n    \"$defs\": {\n        \"FindSpaceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Find space result\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"hasSpace\",\n                \"candidates\"\n            ],\n            \"properties\": {\n              \
+        \  \"hasSpace\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether space
+        found\"\n                },\n                \"candidates\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"$ref\": \"#/$defs/SpaceCandidate\"\n                    },\n\
+        \                    \"description\": \"Potential placements\"\n                }\n            }\n        },\n   \
+        \     \"SpaceCandidate\": {\n            \"type\": \"object\",\n            \"description\": \"Potential placement
+        location\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"containerId\"\
+        ,\n                \"containerType\",\n                \"canFitQuantity\"\n            ],\n            \"properties\"\
+        : {\n                \"containerId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Container ID\"\n                },\n                \"containerType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Container type\"\n        \
+        \        },\n                \"canFitQuantity\": {\n                    \"type\": \"number\",\n                  \
+        \  \"format\": \"double\",\n                    \"description\": \"How much can fit\"\n                },\n      \
+        \          \"slotIndex\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available slot\"\n                },\n                \"slotX\": {\n     \
+        \               \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Available grid X\"\n                },\n                \"slotY\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Available grid Y\"\n          \
+        \      },\n                \"existingStackInstanceId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Stack to merge with\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Find where item would fit\",\n    \"description\": \"Finds available space
+        for an item in the owner's containers.\\nReturns candidate containers and slots where the item could be placed.\\\
+        n\",\n    \"tags\": [\n        \"Inventory Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        findSpace\"\n}"
+components:
+  schemas:
+    ContainerConstraintModel:
+      type: string
+      description: Container capacity constraint type
+      enum:
+      - slot_only
+      - weight_only
+      - slot_and_weight
+      - grid
+      - volumetric
+      - unlimited
+    WeightContribution:
+      type: string
+      description: How container weight propagates to parent
+      enum:
+      - none
+      - self_only
+      - self_plus_contents
+    ContainerOwnerType:
+      type: string
+      description: Type of entity that owns this container
+      enum:
+      - character
+      - account
+      - location
+      - vehicle
+      - guild
+      - escrow
+      - mail
+      - other
+    ItemHandling:
+      type: string
+      description: How to handle items when deleting a container
+      enum:
+      - destroy
+      - transfer
+      - error
+    CreateContainerRequest:
+      type: object
+      description: Request to create a new container
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity that owns this container
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Type of the owning entity
+        containerType:
+          type: string
+          maxLength: 64
+          description: Game-defined container type (e.g., inventory, bank, equipment_slot)
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Capacity constraint model
+        isEquipmentSlot:
+          type: boolean
+          default: false
+          description: Whether this container is an equipment slot
+        equipmentSlotName:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Equipment slot name if isEquipmentSlot is true
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Maximum slots for slot-based containers
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum weight capacity
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Internal grid width for grid containers
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Internal grid height for grid containers
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum volume for volumetric containers
+        parentContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent container ID for nested containers
+        canContainContainers:
+          type: boolean
+          default: false
+          description: Whether this container can hold other containers
+        maxNestingDepth:
+          type: integer
+          nullable: true
+          description: Maximum nesting depth (null uses global default)
+        selfWeight:
+          type: number
+          format: double
+          default: 0
+          description: Empty container weight
+        weightContribution:
+          $ref: '#/components/schemas/WeightContribution'
+          description: How weight propagates to parent
+        slotCost:
+          type: integer
+          default: 1
+          description: Slots used in slot-based parent
+        parentGridWidth:
+          type: integer
+          nullable: true
+          description: Width footprint in grid-based parent
+        parentGridHeight:
+          type: integer
+          nullable: true
+          description: Height footprint in grid-based parent
+        parentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume footprint in volumetric parent
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Allowed item categories (null allows all)
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Forbidden item categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Required item tags for placement
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm this container belongs to (null for account-level)
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Container tags for filtering
+        metadata:
+          type: object
+          nullable: true
+          description: Game-specific container data
+    GetContainerRequest:
+      type: object
+      description: Request to get a container
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to retrieve
+        includeContents:
+          type: boolean
+          default: true
+          description: Whether to include item contents
+    GetOrCreateContainerRequest:
+      type: object
+      description: Request to get or create a container
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          description: Container type to find or create
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Constraint model for new container
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Default max slots if creating
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Default max weight if creating
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Default grid width if creating
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Default grid height if creating
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm for new container
+    ListContainersRequest:
+      type: object
+      description: Request to list containers for an owner
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          nullable: true
+          description: Filter by container type
+        includeEquipmentSlots:
+          type: boolean
+          default: true
+          description: Include equipment slot containers
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+    UpdateContainerRequest:
+      type: object
+      description: Request to update container properties
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to update
+        maxSlots:
+          type: integer
+          nullable: true
+          description: New max slots
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: New max weight
+        gridWidth:
+          type: integer
+          nullable: true
+          description: New grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: New grid height
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: New max volume
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New allowed categories
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New forbidden categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New allowed tags
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New container tags
+        metadata:
+          type: object
+          nullable: true
+          description: New metadata
+    DeleteContainerRequest:
+      type: object
+      description: Request to delete a container
+      additionalProperties: false
+      required:
+      - containerId
+      - itemHandling
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID to delete
+        itemHandling:
+          $ref: '#/components/schemas/ItemHandling'
+          description: How to handle existing items
+        transferToContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Container to transfer items to (required if itemHandling is transfer)
+    ContainerResponse:
+      type: object
+      description: Container details
+      additionalProperties: false
+      required:
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      - canContainContainers
+      - nestingDepth
+      - selfWeight
+      - weightContribution
+      - slotCost
+      - contentsWeight
+      - totalWeight
+      - createdAt
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container unique identifier
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        containerType:
+          type: string
+          description: Container type
+        constraintModel:
+          $ref: '#/components/schemas/ContainerConstraintModel'
+          description: Constraint model
+        isEquipmentSlot:
+          type: boolean
+          description: Whether this is an equipment slot
+        equipmentSlotName:
+          type: string
+          nullable: true
+          description: Equipment slot name
+        maxSlots:
+          type: integer
+          nullable: true
+          description: Maximum slots
+        usedSlots:
+          type: integer
+          nullable: true
+          description: Current used slots
+        maxWeight:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum weight
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Internal grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Internal grid height
+        maxVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum volume
+        currentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Current volume used
+        parentContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent container ID
+        nestingDepth:
+          type: integer
+          description: Depth in container hierarchy
+        canContainContainers:
+          type: boolean
+          description: Whether can hold containers
+        maxNestingDepth:
+          type: integer
+          nullable: true
+          description: Max nesting depth
+        selfWeight:
+          type: number
+          format: double
+          description: Empty container weight
+        weightContribution:
+          $ref: '#/components/schemas/WeightContribution'
+          description: Weight propagation mode
+        slotCost:
+          type: integer
+          description: Slots used in parent
+        parentGridWidth:
+          type: integer
+          nullable: true
+          description: Width in parent grid
+        parentGridHeight:
+          type: integer
+          nullable: true
+          description: Height in parent grid
+        parentVolume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume in parent
+        contentsWeight:
+          type: number
+          format: double
+          description: Weight of direct contents
+        totalWeight:
+          type: number
+          format: double
+          description: Total weight including self
+        allowedCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Allowed categories
+        forbiddenCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Forbidden categories
+        allowedTags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Required tags
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID
+        tags:
+          type: array
+          items:
+            type: string
+          description: Container tags
+        metadata:
+          type: object
+          nullable: true
+          description: Game-specific data
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification
+    ContainerWithContentsResponse:
+      type: object
+      description: Container with item contents
+      additionalProperties: false
+      required:
+      - container
+      - items
+      properties:
+        container:
+          $ref: '#/components/schemas/ContainerResponse'
+          description: Container details
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerItem'
+          description: Items in container
+    ContainerItem:
+      type: object
+      description: Item in a container
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        quantity:
+          type: number
+          format: double
+          description: Item quantity
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotated in grid
+    ListContainersResponse:
+      type: object
+      description: List of containers
+      additionalProperties: false
+      required:
+      - containers
+      - totalCount
+      properties:
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerResponse'
+          description: List of containers
+        totalCount:
+          type: integer
+          description: Total count
+    DeleteContainerResponse:
+      type: object
+      description: Response after deleting container
+      additionalProperties: false
+      required:
+      - deleted
+      - containerId
+      - itemsHandled
+      properties:
+        deleted:
+          type: boolean
+          description: Whether deletion succeeded
+        containerId:
+          type: string
+          format: uuid
+          description: Deleted container ID
+        itemsHandled:
+          type: integer
+          description: Number of items handled
+    AddItemRequest:
+      type: object
+      description: Request to add item to container
+      additionalProperties: false
+      required:
+      - instanceId
+      - containerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to add
+        containerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Specific slot (auto-assign if null)
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotate in grid
+        autoStack:
+          type: boolean
+          default: true
+          description: Auto-merge with existing stacks
+    AddItemResponse:
+      type: object
+      description: Response after adding item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - containerId
+      properties:
+        success:
+          type: boolean
+          description: Whether add succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Added item ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Assigned slot
+        slotX:
+          type: integer
+          nullable: true
+          description: Assigned X position
+        slotY:
+          type: integer
+          nullable: true
+          description: Assigned Y position
+        mergedWithInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Instance merged into if stacked
+    RemoveItemRequest:
+      type: object
+      description: Request to remove item from container
+      additionalProperties: false
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to remove
+    RemoveItemResponse:
+      type: object
+      description: Response after removing item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - previousContainerId
+      properties:
+        success:
+          type: boolean
+          description: Whether remove succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Removed item ID
+        previousContainerId:
+          type: string
+          format: uuid
+          description: Container removed from
+    MoveItemRequest:
+      type: object
+      description: Request to move item
+      additionalProperties: false
+      required:
+      - instanceId
+      - targetContainerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID to move
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        targetSlotIndex:
+          type: integer
+          nullable: true
+          description: Target slot
+        targetSlotX:
+          type: integer
+          nullable: true
+          description: Target grid X
+        targetSlotY:
+          type: integer
+          nullable: true
+          description: Target grid Y
+        rotated:
+          type: boolean
+          nullable: true
+          description: Rotate in target
+    MoveItemResponse:
+      type: object
+      description: Response after moving item
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - sourceContainerId
+      - targetContainerId
+      properties:
+        success:
+          type: boolean
+          description: Whether move succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Moved item ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container
+        slotIndex:
+          type: integer
+          nullable: true
+          description: New slot
+        slotX:
+          type: integer
+          nullable: true
+          description: New grid X
+        slotY:
+          type: integer
+          nullable: true
+          description: New grid Y
+    TransferItemRequest:
+      type: object
+      description: Request to transfer item ownership
+      additionalProperties: false
+      required:
+      - instanceId
+      - targetContainerId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Target container ID
+        quantity:
+          type: number
+          format: double
+          nullable: true
+          description: Quantity to transfer (all if null)
+    TransferItemResponse:
+      type: object
+      description: Response after transfer
+      additionalProperties: false
+      required:
+      - success
+      - instanceId
+      - sourceContainerId
+      - targetContainerId
+      - quantityTransferred
+      properties:
+        success:
+          type: boolean
+          description: Whether transfer succeeded
+        instanceId:
+          type: string
+          format: uuid
+          description: Transferred item ID
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Previous container
+        targetContainerId:
+          type: string
+          format: uuid
+          description: New container
+        quantityTransferred:
+          type: number
+          format: double
+          description: Amount transferred
+    SplitStackRequest:
+      type: object
+      description: Request to split a stack
+      additionalProperties: false
+      required:
+      - instanceId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Stack to split
+        quantity:
+          type: number
+          format: double
+          minimum: 1
+          description: Quantity to split off
+        targetSlotIndex:
+          type: integer
+          nullable: true
+          description: Slot for new stack
+        targetSlotX:
+          type: integer
+          nullable: true
+          description: Grid X for new stack
+        targetSlotY:
+          type: integer
+          nullable: true
+          description: Grid Y for new stack
+    SplitStackResponse:
+      type: object
+      description: Response after splitting
+      additionalProperties: false
+      required:
+      - success
+      - originalInstanceId
+      - newInstanceId
+      - originalQuantity
+      - newQuantity
+      properties:
+        success:
+          type: boolean
+          description: Whether split succeeded
+        originalInstanceId:
+          type: string
+          format: uuid
+          description: Original stack ID
+        newInstanceId:
+          type: string
+          format: uuid
+          description: New stack ID
+        originalQuantity:
+          type: number
+          format: double
+          description: Remaining quantity
+        newQuantity:
+          type: number
+          format: double
+          description: Split quantity
+    MergeStacksRequest:
+      type: object
+      description: Request to merge stacks
+      additionalProperties: false
+      required:
+      - sourceInstanceId
+      - targetInstanceId
+      properties:
+        sourceInstanceId:
+          type: string
+          format: uuid
+          description: Stack to merge from (destroyed)
+        targetInstanceId:
+          type: string
+          format: uuid
+          description: Stack to merge into
+    MergeStacksResponse:
+      type: object
+      description: Response after merging
+      additionalProperties: false
+      required:
+      - success
+      - targetInstanceId
+      - newQuantity
+      - sourceDestroyed
+      properties:
+        success:
+          type: boolean
+          description: Whether merge succeeded
+        targetInstanceId:
+          type: string
+          format: uuid
+          description: Merged stack ID
+        newQuantity:
+          type: number
+          format: double
+          description: New quantity
+        sourceDestroyed:
+          type: boolean
+          description: Whether source was destroyed
+        overflowQuantity:
+          type: number
+          format: double
+          nullable: true
+          description: Quantity that didn't fit
+    QueryItemsRequest:
+      type: object
+      description: Request to query items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to search
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by template
+        category:
+          type: string
+          nullable: true
+          description: Filter by category
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by tags
+        containerType:
+          type: string
+          nullable: true
+          description: Filter by container type
+        excludeEquipmentSlots:
+          type: boolean
+          default: false
+          description: Exclude equipment slots
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          default: 50
+          maximum: 200
+          description: Max results
+    QueryItemsResponse:
+      type: object
+      description: Query results
+      additionalProperties: false
+      required:
+      - items
+      - totalCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryResultItem'
+          description: Found items
+        totalCount:
+          type: integer
+          description: Total matching
+    QueryResultItem:
+      type: object
+      description: Item in query results
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - containerId
+      - quantity
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        containerType:
+          type: string
+          description: Container type
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position
+    CountItemsRequest:
+      type: object
+      description: Request to count items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - templateId
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to count for
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          description: Template to count
+    CountItemsResponse:
+      type: object
+      description: Count result
+      additionalProperties: false
+      required:
+      - templateId
+      - totalQuantity
+      - stackCount
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Counted template
+        totalQuantity:
+          type: number
+          format: double
+          description: Total quantity
+        stackCount:
+          type: integer
+          description: Number of stacks
+    HasItemsRequest:
+      type: object
+      description: Request to check for items
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - requirements
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to check
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequirement'
+          description: Required items
+    ItemRequirement:
+      type: object
+      description: Required item and quantity
+      additionalProperties: false
+      required:
+      - templateId
+      - quantity
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Required template
+        quantity:
+          type: number
+          format: double
+          minimum: 1
+          description: Required quantity
+    HasItemsResponse:
+      type: object
+      description: Has items result
+      additionalProperties: false
+      required:
+      - hasAll
+      - results
+      properties:
+        hasAll:
+          type: boolean
+          description: Whether all requirements met
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/HasItemResult'
+          description: Per-item results
+    HasItemResult:
+      type: object
+      description: Individual item check result
+      additionalProperties: false
+      required:
+      - templateId
+      - required
+      - available
+      - satisfied
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template checked
+        required:
+          type: number
+          format: double
+          description: Required quantity
+        available:
+          type: number
+          format: double
+          description: Available quantity
+        satisfied:
+          type: boolean
+          description: Whether requirement met
+    FindSpaceRequest:
+      type: object
+      description: Request to find space for item
+      additionalProperties: false
+      required:
+      - ownerId
+      - ownerType
+      - templateId
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to search
+        ownerType:
+          $ref: '#/components/schemas/ContainerOwnerType'
+          description: Owner type
+        templateId:
+          type: string
+          format: uuid
+          description: Item template
+        quantity:
+          type: number
+          format: double
+          default: 1
+          description: Quantity to place
+        preferStackable:
+          type: boolean
+          default: true
+          description: Prefer existing stacks
+    FindSpaceResponse:
+      type: object
+      description: Find space result
+      additionalProperties: false
+      required:
+      - hasSpace
+      - candidates
+      properties:
+        hasSpace:
+          type: boolean
+          description: Whether space found
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpaceCandidate'
+          description: Potential placements
+    SpaceCandidate:
+      type: object
+      description: Potential placement location
+      additionalProperties: false
+      required:
+      - containerId
+      - containerType
+      - canFitQuantity
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container ID
+        containerType:
+          type: string
+          description: Container type
+        canFitQuantity:
+          type: number
+          format: double
+          description: How much can fit
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Available slot
+        slotX:
+          type: integer
+          nullable: true
+          description: Available grid X
+        slotY:
+          type: integer
+          nullable: true
+          description: Available grid Y
+        existingStackInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Stack to merge with

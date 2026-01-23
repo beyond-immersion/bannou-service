@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Inventory Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for inventory service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: inventory-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    InventoryContainerCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to inventory-container.created when a inventorycontainer is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      properties:
+        eventName:
+          type: string
+          default: inventory-container.created
+          description: 'Event type identifier: inventory-container.created'
+        containerId: &id001
+          type: string
+          format: uuid
+          description: "Container unique identifier"
+        ownerId: &id002
+          type: string
+          format: uuid
+          description: "Owner entity ID"
+        ownerType: &id003
+          type: string
+          description: "Owner type (character, account, location, etc.)"
+        containerType: &id004
+          type: string
+          description: "Game-defined container type"
+        constraintModel: &id005
+          type: string
+          description: "Capacity constraint model"
+        isEquipmentSlot: &id006
+          type: boolean
+          description: "Whether this is an equipment slot"
+    InventoryContainerUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to inventory-container.updated when a inventorycontainer is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: inventory-container.updated
+          description: 'Event type identifier: inventory-container.updated'
+        containerId: *id001
+        ownerId: *id002
+        ownerType: *id003
+        containerType: *id004
+        constraintModel: *id005
+        isEquipmentSlot: *id006
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    InventoryContainerDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to inventory-container.deleted when a inventorycontainer is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - containerId
+      - ownerId
+      - ownerType
+      - containerType
+      - constraintModel
+      - isEquipmentSlot
+      properties:
+        eventName:
+          type: string
+          default: inventory-container.deleted
+          description: 'Event type identifier: inventory-container.deleted'
+        containerId: *id001
+        ownerId: *id002
+        ownerType: *id003
+        containerType: *id004
+        constraintModel: *id005
+        isEquipmentSlot: *id006
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

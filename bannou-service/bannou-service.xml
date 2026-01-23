@@ -16821,6 +16821,546 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent">
+            <summary>
+            Event when an item is placed in a container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.InstanceId">
+            <summary>
+            Placed item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.ContainerId">
+            <summary>
+            Container the item was placed in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.OwnerId">
+            <summary>
+            Container owner ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.OwnerType">
+            <summary>
+            Container owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.Quantity">
+            <summary>
+            Quantity placed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.SlotIndex">
+            <summary>
+            Slot position if applicable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.SlotX">
+            <summary>
+            Grid X position if applicable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.SlotY">
+            <summary>
+            Grid Y position if applicable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemPlacedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent">
+            <summary>
+            Event when an item is removed from a container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.InstanceId">
+            <summary>
+            Removed item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.ContainerId">
+            <summary>
+            Container the item was removed from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.OwnerId">
+            <summary>
+            Container owner ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.OwnerType">
+            <summary>
+            Container owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.Reason">
+            <summary>
+            Reason for removal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemRemovedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent">
+            <summary>
+            Event when an item moves between slots or containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.InstanceId">
+            <summary>
+            Moved item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.SourceContainerId">
+            <summary>
+            Previous container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.TargetContainerId">
+            <summary>
+            New container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.SourceContainerType">
+            <summary>
+            Previous container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.TargetContainerType">
+            <summary>
+            New container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.Quantity">
+            <summary>
+            Quantity moved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.PreviousSlotIndex">
+            <summary>
+            Previous slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.NewSlotIndex">
+            <summary>
+            New slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.PreviousSlotX">
+            <summary>
+            Previous grid X
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.PreviousSlotY">
+            <summary>
+            Previous grid Y
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.NewSlotX">
+            <summary>
+            New grid X
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.NewSlotY">
+            <summary>
+            New grid Y
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemMovedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent">
+            <summary>
+            Event when item ownership transfers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.InstanceId">
+            <summary>
+            Transferred item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.SourceContainerId">
+            <summary>
+            Previous container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.SourceOwnerId">
+            <summary>
+            Previous owner ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.SourceOwnerType">
+            <summary>
+            Previous owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.TargetContainerId">
+            <summary>
+            New container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.TargetOwnerId">
+            <summary>
+            New owner ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.TargetOwnerType">
+            <summary>
+            New owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.QuantityTransferred">
+            <summary>
+            Quantity transferred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemTransferredEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent">
+            <summary>
+            Event when items are stacked together
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.SourceInstanceId">
+            <summary>
+            Source stack that was merged (destroyed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.TargetInstanceId">
+            <summary>
+            Target stack that received items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.ContainerId">
+            <summary>
+            Container where merge occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.QuantityAdded">
+            <summary>
+            Quantity added to target
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.NewTotalQuantity">
+            <summary>
+            New total in target stack
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemStackedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent">
+            <summary>
+            Event when a stack is split
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.OriginalInstanceId">
+            <summary>
+            Original stack ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.NewInstanceId">
+            <summary>
+            New stack ID created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.ContainerId">
+            <summary>
+            Container where split occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.QuantitySplit">
+            <summary>
+            Quantity moved to new stack
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.OriginalRemaining">
+            <summary>
+            Quantity remaining in original
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryItemSplitEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent">
+            <summary>
+            Event when container reaches capacity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.ContainerId">
+            <summary>
+            Full container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.OwnerId">
+            <summary>
+            Container owner ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.OwnerType">
+            <summary>
+            Container owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.ContainerType">
+            <summary>
+            Container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.ConstraintType">
+            <summary>
+            Which constraint was reached (slots, weight, volume)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerFullEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent">
+            <summary>
+            Published to inventory-container.created when a inventorycontainer is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.EventName">
+            <summary>
+            Event type identifier: inventory-container.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.ContainerId">
+            <summary>
+            Container unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.OwnerType">
+            <summary>
+            Owner type (character, account, location, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.ContainerType">
+            <summary>
+            Game-defined container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.ConstraintModel">
+            <summary>
+            Capacity constraint model
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerCreatedEvent.IsEquipmentSlot">
+            <summary>
+            Whether this is an equipment slot
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent">
+            <summary>
+            Published to inventory-container.updated when a inventorycontainer is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: inventory-container.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ContainerId">
+            <summary>
+            Container unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.OwnerType">
+            <summary>
+            Owner type (character, account, location, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ContainerType">
+            <summary>
+            Game-defined container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ConstraintModel">
+            <summary>
+            Capacity constraint model
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.IsEquipmentSlot">
+            <summary>
+            Whether this is an equipment slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent">
+            <summary>
+            Published to inventory-container.deleted when a inventorycontainer is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.EventName">
+            <summary>
+            Event type identifier: inventory-container.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.ContainerId">
+            <summary>
+            Container unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.OwnerType">
+            <summary>
+            Owner type (character, account, location, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.ContainerType">
+            <summary>
+            Game-defined container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.ConstraintModel">
+            <summary>
+            Capacity constraint model
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.IsEquipmentSlot">
+            <summary>
+            Whether this is an equipment slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InventoryContainerDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent">
             <summary>
             Event published when an item template is deprecated (soft-disable with optional migration)
@@ -43515,6 +44055,1773 @@
             ID of the game session to leave.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.IInventoryClient">
+            <summary>
+            Client interface for the Inventory service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.CreateContainerAsync(BeyondImmersion.BannouService.Inventory.CreateContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new container
+            </summary>
+            <remarks>
+            Creates a new container with the specified constraint model and capacity.
+            <br/>Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
+            </remarks>
+            <returns>Container created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.GetContainerAsync(BeyondImmersion.BannouService.Inventory.GetContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get container with contents
+            </summary>
+            <remarks>
+            Retrieves a container by ID, optionally including its contents.
+            </remarks>
+            <returns>Container retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.GetOrCreateContainerAsync(BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get container or create if not exists
+            </summary>
+            <remarks>
+            Enables lazy container creation for character inventories.
+            <br/>If a container doesn't exist for the owner/type combination, creates it
+            <br/>with the specified defaults.
+            </remarks>
+            <returns>Container retrieved or created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.ListContainersAsync(BeyondImmersion.BannouService.Inventory.ListContainersRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List containers for owner
+            </summary>
+            <remarks>
+            Returns all containers owned by the specified entity.
+            </remarks>
+            <returns>Containers retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.UpdateContainerAsync(BeyondImmersion.BannouService.Inventory.UpdateContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update container properties
+            </summary>
+            <remarks>
+            Updates mutable container properties like capacity limits and filtering.
+            </remarks>
+            <returns>Container updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.DeleteContainerAsync(BeyondImmersion.BannouService.Inventory.DeleteContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete container
+            </summary>
+            <remarks>
+            Deletes a container. Must specify how to handle existing contents:
+            <br/>destroy, transfer to another container, or error if not empty.
+            </remarks>
+            <returns>Container deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.AddItemToContainerAsync(BeyondImmersion.BannouService.Inventory.AddItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Add item to container
+            </summary>
+            <remarks>
+            Adds an item instance to a container. Validates container constraints
+            <br/>(slots, weight, grid, category filters). For stackable items, may
+            <br/>merge with existing stacks.
+            </remarks>
+            <returns>Item added successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.RemoveItemFromContainerAsync(BeyondImmersion.BannouService.Inventory.RemoveItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Remove item from container
+            </summary>
+            <remarks>
+            Removes an item from its container. The item still exists but has no
+            <br/>container assignment. Use destroy via lib-item to permanently delete.
+            </remarks>
+            <returns>Item removed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.MoveItemAsync(BeyondImmersion.BannouService.Inventory.MoveItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Move item to different slot or container
+            </summary>
+            <remarks>
+            Moves an item within the same container (slot change) or to a different
+            <br/>container. Validates destination constraints. For equipment slots, this
+            <br/>effectively equips/unequips items.
+            </remarks>
+            <returns>Item moved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.TransferItemAsync(BeyondImmersion.BannouService.Inventory.TransferItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Transfer item to different owner
+            </summary>
+            <remarks>
+            Transfers an item to a container owned by a different entity.
+            <br/>Used for trades, gifts, and loot distribution.
+            </remarks>
+            <returns>Item transferred successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.SplitStackAsync(BeyondImmersion.BannouService.Inventory.SplitStackRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Split stack into two
+            </summary>
+            <remarks>
+            Splits a stack of items into two stacks. The original stack keeps the
+            <br/>remainder, and a new stack is created with the split quantity.
+            </remarks>
+            <returns>Stack split successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.MergeStacksAsync(BeyondImmersion.BannouService.Inventory.MergeStacksRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Merge two stacks
+            </summary>
+            <remarks>
+            Merges two stacks of the same item template. The source stack is
+            <br/>destroyed and its quantity added to the target stack.
+            </remarks>
+            <returns>Stacks merged successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.QueryItemsAsync(BeyondImmersion.BannouService.Inventory.QueryItemsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find items across containers
+            </summary>
+            <remarks>
+            Searches for items across all containers owned by an entity.
+            <br/>Can filter by template, category, tags, and other criteria.
+            </remarks>
+            <returns>Items found</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.CountItemsAsync(BeyondImmersion.BannouService.Inventory.CountItemsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Count items of a template
+            </summary>
+            <remarks>
+            Counts total quantity of a specific item template across containers.
+            </remarks>
+            <returns>Count completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.HasItemsAsync(BeyondImmersion.BannouService.Inventory.HasItemsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if entity has required items
+            </summary>
+            <remarks>
+            Checks if an entity has the required quantities of specified items.
+            <br/>Used for crafting and quest requirements validation.
+            </remarks>
+            <returns>Check completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.IInventoryClient.FindSpaceAsync(BeyondImmersion.BannouService.Inventory.FindSpaceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find where item would fit
+            </summary>
+            <remarks>
+            Finds available space for an item in the owner's containers.
+            <br/>Returns candidate containers and slots where the item could be placed.
+            </remarks>
+            <returns>Space search completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.InventoryClient">
+            <summary>
+            Client implementation for the Inventory service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Inventory.InventoryClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.InventoryClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Inventory.InventoryClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Inventory.InventoryClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.InventoryClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Inventory.InventoryClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Inventory.InventoryClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.CreateContainerAsync(BeyondImmersion.BannouService.Inventory.CreateContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new container
+            </summary>
+            <remarks>
+            Creates a new container with the specified constraint model and capacity.
+            <br/>Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
+            </remarks>
+            <returns>Container created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.GetContainerAsync(BeyondImmersion.BannouService.Inventory.GetContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get container with contents
+            </summary>
+            <remarks>
+            Retrieves a container by ID, optionally including its contents.
+            </remarks>
+            <returns>Container retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.GetOrCreateContainerAsync(BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get container or create if not exists
+            </summary>
+            <remarks>
+            Enables lazy container creation for character inventories.
+            <br/>If a container doesn't exist for the owner/type combination, creates it
+            <br/>with the specified defaults.
+            </remarks>
+            <returns>Container retrieved or created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.ListContainersAsync(BeyondImmersion.BannouService.Inventory.ListContainersRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List containers for owner
+            </summary>
+            <remarks>
+            Returns all containers owned by the specified entity.
+            </remarks>
+            <returns>Containers retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.UpdateContainerAsync(BeyondImmersion.BannouService.Inventory.UpdateContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update container properties
+            </summary>
+            <remarks>
+            Updates mutable container properties like capacity limits and filtering.
+            </remarks>
+            <returns>Container updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.DeleteContainerAsync(BeyondImmersion.BannouService.Inventory.DeleteContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete container
+            </summary>
+            <remarks>
+            Deletes a container. Must specify how to handle existing contents:
+            <br/>destroy, transfer to another container, or error if not empty.
+            </remarks>
+            <returns>Container deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.AddItemToContainerAsync(BeyondImmersion.BannouService.Inventory.AddItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Add item to container
+            </summary>
+            <remarks>
+            Adds an item instance to a container. Validates container constraints
+            <br/>(slots, weight, grid, category filters). For stackable items, may
+            <br/>merge with existing stacks.
+            </remarks>
+            <returns>Item added successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.RemoveItemFromContainerAsync(BeyondImmersion.BannouService.Inventory.RemoveItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Remove item from container
+            </summary>
+            <remarks>
+            Removes an item from its container. The item still exists but has no
+            <br/>container assignment. Use destroy via lib-item to permanently delete.
+            </remarks>
+            <returns>Item removed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.MoveItemAsync(BeyondImmersion.BannouService.Inventory.MoveItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Move item to different slot or container
+            </summary>
+            <remarks>
+            Moves an item within the same container (slot change) or to a different
+            <br/>container. Validates destination constraints. For equipment slots, this
+            <br/>effectively equips/unequips items.
+            </remarks>
+            <returns>Item moved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.TransferItemAsync(BeyondImmersion.BannouService.Inventory.TransferItemRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Transfer item to different owner
+            </summary>
+            <remarks>
+            Transfers an item to a container owned by a different entity.
+            <br/>Used for trades, gifts, and loot distribution.
+            </remarks>
+            <returns>Item transferred successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.SplitStackAsync(BeyondImmersion.BannouService.Inventory.SplitStackRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Split stack into two
+            </summary>
+            <remarks>
+            Splits a stack of items into two stacks. The original stack keeps the
+            <br/>remainder, and a new stack is created with the split quantity.
+            </remarks>
+            <returns>Stack split successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.MergeStacksAsync(BeyondImmersion.BannouService.Inventory.MergeStacksRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Merge two stacks
+            </summary>
+            <remarks>
+            Merges two stacks of the same item template. The source stack is
+            <br/>destroyed and its quantity added to the target stack.
+            </remarks>
+            <returns>Stacks merged successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.QueryItemsAsync(BeyondImmersion.BannouService.Inventory.QueryItemsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find items across containers
+            </summary>
+            <remarks>
+            Searches for items across all containers owned by an entity.
+            <br/>Can filter by template, category, tags, and other criteria.
+            </remarks>
+            <returns>Items found</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.CountItemsAsync(BeyondImmersion.BannouService.Inventory.CountItemsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Count items of a template
+            </summary>
+            <remarks>
+            Counts total quantity of a specific item template across containers.
+            </remarks>
+            <returns>Count completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.HasItemsAsync(BeyondImmersion.BannouService.Inventory.HasItemsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check if entity has required items
+            </summary>
+            <remarks>
+            Checks if an entity has the required quantities of specified items.
+            <br/>Used for crafting and quest requirements validation.
+            </remarks>
+            <returns>Check completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.FindSpaceAsync(BeyondImmersion.BannouService.Inventory.FindSpaceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find where item would fit
+            </summary>
+            <remarks>
+            Finds available space for an item in the owner's containers.
+            <br/>Returns candidate containers and slots where the item could be placed.
+            </remarks>
+            <returns>Space search completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.InventoryClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Inventory.InventoryClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.InventoryClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.InventoryClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.InventoryClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Inventory.InventoryClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ContainerConstraintModel">
+            <summary>
+            Container capacity constraint type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.WeightContribution">
+            <summary>
+            How container weight propagates to parent
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ContainerOwnerType">
+            <summary>
+            Type of entity that owns this container
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ItemHandling">
+            <summary>
+            How to handle items when deleting a container
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.CreateContainerRequest">
+            <summary>
+            Request to create a new container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.OwnerId">
+            <summary>
+            ID of the entity that owns this container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.OwnerType">
+            <summary>
+            Type of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.ContainerType">
+            <summary>
+            Game-defined container type (e.g., inventory, bank, equipment_slot)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.ConstraintModel">
+            <summary>
+            Capacity constraint model
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.IsEquipmentSlot">
+            <summary>
+            Whether this container is an equipment slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.EquipmentSlotName">
+            <summary>
+            Equipment slot name if isEquipmentSlot is true
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.MaxSlots">
+            <summary>
+            Maximum slots for slot-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.MaxWeight">
+            <summary>
+            Maximum weight capacity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.GridWidth">
+            <summary>
+            Internal grid width for grid containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.GridHeight">
+            <summary>
+            Internal grid height for grid containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.MaxVolume">
+            <summary>
+            Maximum volume for volumetric containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.ParentContainerId">
+            <summary>
+            Parent container ID for nested containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.CanContainContainers">
+            <summary>
+            Whether this container can hold other containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.MaxNestingDepth">
+            <summary>
+            Maximum nesting depth (null uses global default)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.SelfWeight">
+            <summary>
+            Empty container weight
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.WeightContribution">
+            <summary>
+            How weight propagates to parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.SlotCost">
+            <summary>
+            Slots used in slot-based parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.ParentGridWidth">
+            <summary>
+            Width footprint in grid-based parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.ParentGridHeight">
+            <summary>
+            Height footprint in grid-based parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.ParentVolume">
+            <summary>
+            Volume footprint in volumetric parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.AllowedCategories">
+            <summary>
+            Allowed item categories (null allows all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.ForbiddenCategories">
+            <summary>
+            Forbidden item categories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.AllowedTags">
+            <summary>
+            Required item tags for placement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.RealmId">
+            <summary>
+            Realm this container belongs to (null for account-level)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.Tags">
+            <summary>
+            Container tags for filtering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CreateContainerRequest.Metadata">
+            <summary>
+            Game-specific container data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.GetContainerRequest">
+            <summary>
+            Request to get a container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetContainerRequest.ContainerId">
+            <summary>
+            Container ID to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetContainerRequest.IncludeContents">
+            <summary>
+            Whether to include item contents
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest">
+            <summary>
+            Request to get or create a container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.OwnerType">
+            <summary>
+            Owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.ContainerType">
+            <summary>
+            Container type to find or create
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.ConstraintModel">
+            <summary>
+            Constraint model for new container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.MaxSlots">
+            <summary>
+            Default max slots if creating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.MaxWeight">
+            <summary>
+            Default max weight if creating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.GridWidth">
+            <summary>
+            Default grid width if creating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.GridHeight">
+            <summary>
+            Default grid height if creating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.GetOrCreateContainerRequest.RealmId">
+            <summary>
+            Realm for new container
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ListContainersRequest">
+            <summary>
+            Request to list containers for an owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ListContainersRequest.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ListContainersRequest.OwnerType">
+            <summary>
+            Owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ListContainersRequest.ContainerType">
+            <summary>
+            Filter by container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ListContainersRequest.IncludeEquipmentSlots">
+            <summary>
+            Include equipment slot containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ListContainersRequest.RealmId">
+            <summary>
+            Filter by realm
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest">
+            <summary>
+            Request to update container properties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.ContainerId">
+            <summary>
+            Container ID to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.MaxSlots">
+            <summary>
+            New max slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.MaxWeight">
+            <summary>
+            New max weight
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.GridWidth">
+            <summary>
+            New grid width
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.GridHeight">
+            <summary>
+            New grid height
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.MaxVolume">
+            <summary>
+            New max volume
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.AllowedCategories">
+            <summary>
+            New allowed categories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.ForbiddenCategories">
+            <summary>
+            New forbidden categories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.AllowedTags">
+            <summary>
+            New allowed tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.Tags">
+            <summary>
+            New container tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.UpdateContainerRequest.Metadata">
+            <summary>
+            New metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.DeleteContainerRequest">
+            <summary>
+            Request to delete a container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.DeleteContainerRequest.ContainerId">
+            <summary>
+            Container ID to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.DeleteContainerRequest.ItemHandling">
+            <summary>
+            How to handle existing items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.DeleteContainerRequest.TransferToContainerId">
+            <summary>
+            Container to transfer items to (required if itemHandling is transfer)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ContainerResponse">
+            <summary>
+            Container details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ContainerId">
+            <summary>
+            Container unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.OwnerType">
+            <summary>
+            Owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ContainerType">
+            <summary>
+            Container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ConstraintModel">
+            <summary>
+            Constraint model
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.IsEquipmentSlot">
+            <summary>
+            Whether this is an equipment slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.EquipmentSlotName">
+            <summary>
+            Equipment slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.MaxSlots">
+            <summary>
+            Maximum slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.UsedSlots">
+            <summary>
+            Current used slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.MaxWeight">
+            <summary>
+            Maximum weight
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.GridWidth">
+            <summary>
+            Internal grid width
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.GridHeight">
+            <summary>
+            Internal grid height
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.MaxVolume">
+            <summary>
+            Maximum volume
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.CurrentVolume">
+            <summary>
+            Current volume used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ParentContainerId">
+            <summary>
+            Parent container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.NestingDepth">
+            <summary>
+            Depth in container hierarchy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.CanContainContainers">
+            <summary>
+            Whether can hold containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.MaxNestingDepth">
+            <summary>
+            Max nesting depth
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.SelfWeight">
+            <summary>
+            Empty container weight
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.WeightContribution">
+            <summary>
+            Weight propagation mode
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.SlotCost">
+            <summary>
+            Slots used in parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ParentGridWidth">
+            <summary>
+            Width in parent grid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ParentGridHeight">
+            <summary>
+            Height in parent grid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ParentVolume">
+            <summary>
+            Volume in parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ContentsWeight">
+            <summary>
+            Weight of direct contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.TotalWeight">
+            <summary>
+            Total weight including self
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.AllowedCategories">
+            <summary>
+            Allowed categories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ForbiddenCategories">
+            <summary>
+            Forbidden categories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.AllowedTags">
+            <summary>
+            Required tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.RealmId">
+            <summary>
+            Realm ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.Tags">
+            <summary>
+            Container tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.Metadata">
+            <summary>
+            Game-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerResponse.ModifiedAt">
+            <summary>
+            Last modification
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ContainerWithContentsResponse">
+            <summary>
+            Container with item contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerWithContentsResponse.Container">
+            <summary>
+            Container details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerWithContentsResponse.Items">
+            <summary>
+            Items in container
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ContainerItem">
+            <summary>
+            Item in a container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerItem.InstanceId">
+            <summary>
+            Item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerItem.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerItem.Quantity">
+            <summary>
+            Item quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerItem.SlotIndex">
+            <summary>
+            Slot position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerItem.SlotX">
+            <summary>
+            Grid X position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerItem.SlotY">
+            <summary>
+            Grid Y position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ContainerItem.Rotated">
+            <summary>
+            Rotated in grid
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ListContainersResponse">
+            <summary>
+            List of containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ListContainersResponse.Containers">
+            <summary>
+            List of containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ListContainersResponse.TotalCount">
+            <summary>
+            Total count
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.DeleteContainerResponse">
+            <summary>
+            Response after deleting container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.DeleteContainerResponse.Deleted">
+            <summary>
+            Whether deletion succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.DeleteContainerResponse.ContainerId">
+            <summary>
+            Deleted container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.DeleteContainerResponse.ItemsHandled">
+            <summary>
+            Number of items handled
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.AddItemRequest">
+            <summary>
+            Request to add item to container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemRequest.InstanceId">
+            <summary>
+            Item instance ID to add
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemRequest.ContainerId">
+            <summary>
+            Target container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemRequest.SlotIndex">
+            <summary>
+            Specific slot (auto-assign if null)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemRequest.SlotX">
+            <summary>
+            Grid X position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemRequest.SlotY">
+            <summary>
+            Grid Y position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemRequest.Rotated">
+            <summary>
+            Rotate in grid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemRequest.AutoStack">
+            <summary>
+            Auto-merge with existing stacks
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.AddItemResponse">
+            <summary>
+            Response after adding item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemResponse.Success">
+            <summary>
+            Whether add succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemResponse.InstanceId">
+            <summary>
+            Added item ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemResponse.ContainerId">
+            <summary>
+            Container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemResponse.SlotIndex">
+            <summary>
+            Assigned slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemResponse.SlotX">
+            <summary>
+            Assigned X position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemResponse.SlotY">
+            <summary>
+            Assigned Y position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.AddItemResponse.MergedWithInstanceId">
+            <summary>
+            Instance merged into if stacked
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.RemoveItemRequest">
+            <summary>
+            Request to remove item from container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.RemoveItemRequest.InstanceId">
+            <summary>
+            Item instance ID to remove
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.RemoveItemResponse">
+            <summary>
+            Response after removing item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.RemoveItemResponse.Success">
+            <summary>
+            Whether remove succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.RemoveItemResponse.InstanceId">
+            <summary>
+            Removed item ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.RemoveItemResponse.PreviousContainerId">
+            <summary>
+            Container removed from
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.MoveItemRequest">
+            <summary>
+            Request to move item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemRequest.InstanceId">
+            <summary>
+            Item instance ID to move
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemRequest.TargetContainerId">
+            <summary>
+            Target container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemRequest.TargetSlotIndex">
+            <summary>
+            Target slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemRequest.TargetSlotX">
+            <summary>
+            Target grid X
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemRequest.TargetSlotY">
+            <summary>
+            Target grid Y
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemRequest.Rotated">
+            <summary>
+            Rotate in target
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.MoveItemResponse">
+            <summary>
+            Response after moving item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemResponse.Success">
+            <summary>
+            Whether move succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemResponse.InstanceId">
+            <summary>
+            Moved item ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemResponse.SourceContainerId">
+            <summary>
+            Previous container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemResponse.TargetContainerId">
+            <summary>
+            New container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemResponse.SlotIndex">
+            <summary>
+            New slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemResponse.SlotX">
+            <summary>
+            New grid X
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MoveItemResponse.SlotY">
+            <summary>
+            New grid Y
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.TransferItemRequest">
+            <summary>
+            Request to transfer item ownership
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemRequest.InstanceId">
+            <summary>
+            Item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemRequest.TargetContainerId">
+            <summary>
+            Target container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemRequest.Quantity">
+            <summary>
+            Quantity to transfer (all if null)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.TransferItemResponse">
+            <summary>
+            Response after transfer
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemResponse.Success">
+            <summary>
+            Whether transfer succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemResponse.InstanceId">
+            <summary>
+            Transferred item ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemResponse.SourceContainerId">
+            <summary>
+            Previous container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemResponse.TargetContainerId">
+            <summary>
+            New container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.TransferItemResponse.QuantityTransferred">
+            <summary>
+            Amount transferred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.SplitStackRequest">
+            <summary>
+            Request to split a stack
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackRequest.InstanceId">
+            <summary>
+            Stack to split
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackRequest.Quantity">
+            <summary>
+            Quantity to split off
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackRequest.TargetSlotIndex">
+            <summary>
+            Slot for new stack
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackRequest.TargetSlotX">
+            <summary>
+            Grid X for new stack
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackRequest.TargetSlotY">
+            <summary>
+            Grid Y for new stack
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.SplitStackResponse">
+            <summary>
+            Response after splitting
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackResponse.Success">
+            <summary>
+            Whether split succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackResponse.OriginalInstanceId">
+            <summary>
+            Original stack ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackResponse.NewInstanceId">
+            <summary>
+            New stack ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackResponse.OriginalQuantity">
+            <summary>
+            Remaining quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SplitStackResponse.NewQuantity">
+            <summary>
+            Split quantity
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.MergeStacksRequest">
+            <summary>
+            Request to merge stacks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MergeStacksRequest.SourceInstanceId">
+            <summary>
+            Stack to merge from (destroyed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MergeStacksRequest.TargetInstanceId">
+            <summary>
+            Stack to merge into
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.MergeStacksResponse">
+            <summary>
+            Response after merging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MergeStacksResponse.Success">
+            <summary>
+            Whether merge succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MergeStacksResponse.TargetInstanceId">
+            <summary>
+            Merged stack ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MergeStacksResponse.NewQuantity">
+            <summary>
+            New quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MergeStacksResponse.SourceDestroyed">
+            <summary>
+            Whether source was destroyed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.MergeStacksResponse.OverflowQuantity">
+            <summary>
+            Quantity that didn't fit
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.QueryItemsRequest">
+            <summary>
+            Request to query items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.OwnerId">
+            <summary>
+            Owner to search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.OwnerType">
+            <summary>
+            Owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.TemplateId">
+            <summary>
+            Filter by template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.Category">
+            <summary>
+            Filter by category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.Tags">
+            <summary>
+            Filter by tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.ContainerType">
+            <summary>
+            Filter by container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.ExcludeEquipmentSlots">
+            <summary>
+            Exclude equipment slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsRequest.Limit">
+            <summary>
+            Max results
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.QueryItemsResponse">
+            <summary>
+            Query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsResponse.Items">
+            <summary>
+            Found items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryItemsResponse.TotalCount">
+            <summary>
+            Total matching
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.QueryResultItem">
+            <summary>
+            Item in query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryResultItem.InstanceId">
+            <summary>
+            Item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryResultItem.TemplateId">
+            <summary>
+            Template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryResultItem.ContainerId">
+            <summary>
+            Container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryResultItem.ContainerType">
+            <summary>
+            Container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryResultItem.Quantity">
+            <summary>
+            Quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.QueryResultItem.SlotIndex">
+            <summary>
+            Slot position
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.CountItemsRequest">
+            <summary>
+            Request to count items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CountItemsRequest.OwnerId">
+            <summary>
+            Owner to count for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CountItemsRequest.OwnerType">
+            <summary>
+            Owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CountItemsRequest.TemplateId">
+            <summary>
+            Template to count
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.CountItemsResponse">
+            <summary>
+            Count result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CountItemsResponse.TemplateId">
+            <summary>
+            Counted template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CountItemsResponse.TotalQuantity">
+            <summary>
+            Total quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.CountItemsResponse.StackCount">
+            <summary>
+            Number of stacks
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.HasItemsRequest">
+            <summary>
+            Request to check for items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemsRequest.OwnerId">
+            <summary>
+            Owner to check
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemsRequest.OwnerType">
+            <summary>
+            Owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemsRequest.Requirements">
+            <summary>
+            Required items
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ItemRequirement">
+            <summary>
+            Required item and quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ItemRequirement.TemplateId">
+            <summary>
+            Required template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.ItemRequirement.Quantity">
+            <summary>
+            Required quantity
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.HasItemsResponse">
+            <summary>
+            Has items result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemsResponse.HasAll">
+            <summary>
+            Whether all requirements met
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemsResponse.Results">
+            <summary>
+            Per-item results
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.HasItemResult">
+            <summary>
+            Individual item check result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemResult.TemplateId">
+            <summary>
+            Template checked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemResult.Required">
+            <summary>
+            Required quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemResult.Available">
+            <summary>
+            Available quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.HasItemResult.Satisfied">
+            <summary>
+            Whether requirement met
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.FindSpaceRequest">
+            <summary>
+            Request to find space for item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.FindSpaceRequest.OwnerId">
+            <summary>
+            Owner to search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.FindSpaceRequest.OwnerType">
+            <summary>
+            Owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.FindSpaceRequest.TemplateId">
+            <summary>
+            Item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.FindSpaceRequest.Quantity">
+            <summary>
+            Quantity to place
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.FindSpaceRequest.PreferStackable">
+            <summary>
+            Prefer existing stacks
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.FindSpaceResponse">
+            <summary>
+            Find space result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.FindSpaceResponse.HasSpace">
+            <summary>
+            Whether space found
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.FindSpaceResponse.Candidates">
+            <summary>
+            Potential placements
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.SpaceCandidate">
+            <summary>
+            Potential placement location
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SpaceCandidate.ContainerId">
+            <summary>
+            Container ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SpaceCandidate.ContainerType">
+            <summary>
+            Container type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SpaceCandidate.CanFitQuantity">
+            <summary>
+            How much can fit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SpaceCandidate.SlotIndex">
+            <summary>
+            Available slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SpaceCandidate.SlotX">
+            <summary>
+            Available grid X
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SpaceCandidate.SlotY">
+            <summary>
+            Available grid Y
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Inventory.SpaceCandidate.ExistingStackInstanceId">
+            <summary>
+            Stack to merge with
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Item.IItemClient">
             <summary>
             Client interface for the Item service.
@@ -68186,6 +70493,11 @@
             Gets the GameSession service client.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Inventory">
+            <summary>
+            Gets the Inventory service client.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Item">
             <summary>
             Gets the Item service client.
@@ -68399,7 +70711,7 @@
             and zero-copy byte forwarding for Connect service routing.
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,System.Net.Http.IHttpClientFactory,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Currency.ICurrencyClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Item.IItemClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,System.Net.Http.IHttpClientFactory,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Currency.ICurrencyClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Inventory.IInventoryClient,BeyondImmersion.BannouService.Item.IItemClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
             <summary>
             Creates a new ServiceNavigator with all service client dependencies.
             </summary>
@@ -68468,6 +70780,9 @@
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GameSession">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Inventory">
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Item">
@@ -69069,6 +71384,15 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.GameSession">
             <summary>Game session state and history</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.InventoryContainerCache">
+            <summary>Container state and item list cache</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.InventoryContainerStore">
+            <summary>Container definitions (persistent)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.InventoryLock">
+            <summary>Distributed locks for concurrent modifications</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemInstanceCache">
             <summary>Hot item instance data for active gameplay</summary>

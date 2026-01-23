@@ -1,0 +1,49 @@
+openapi: 3.0.0
+info:
+  title: Inventory Service Configuration
+  version: 1.0.0
+  description: Configuration schema for the Inventory service.
+
+x-service-configuration:
+  properties:
+    DefaultMaxNestingDepth:
+      type: integer
+      default: 3
+      env: INVENTORY_DEFAULT_MAX_NESTING_DEPTH
+      description: Default maximum nesting depth for containers
+
+    DefaultWeightContribution:
+      type: string
+      default: self_plus_contents
+      env: INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION
+      description: Default weight contribution mode for containers
+
+    ContainerCacheTtlSeconds:
+      type: integer
+      default: 300
+      env: INVENTORY_CONTAINER_CACHE_TTL_SECONDS
+      description: TTL for container cache entries
+
+    LockTimeoutSeconds:
+      type: integer
+      default: 30
+      env: INVENTORY_LOCK_TIMEOUT_SECONDS
+      description: Timeout for container modification locks
+
+    EnableLazyContainerCreation:
+      type: boolean
+      default: true
+      env: INVENTORY_ENABLE_LAZY_CONTAINER_CREATION
+      description: Whether to enable lazy container creation for characters
+
+    DefaultMaxSlots:
+      type: integer
+      default: 20
+      env: INVENTORY_DEFAULT_MAX_SLOTS
+      description: Default max slots for new slot-based containers
+
+    DefaultMaxWeight:
+      type: number
+      default: 100.0
+      env: INVENTORY_DEFAULT_MAX_WEIGHT
+      description: Default max weight for new weight-based containers

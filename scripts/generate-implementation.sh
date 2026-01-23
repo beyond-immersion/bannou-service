@@ -231,6 +231,7 @@ try:
 
             # Generate implementation method stub
             params_str = ', '.join(param_parts)
+            path_clean = path.lstrip('/')
 
             print(f'''    /// <summary>
     /// Implementation of {method_name} operation.
@@ -289,7 +290,7 @@ try:
                 \"unexpected_exception\",
                 ex.Message,
                 dependency: null,
-                endpoint: \"{http_method}:/{path.strip('/')}\",
+                endpoint: \"{http_method}:/{path.lstrip('/')}\",
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
