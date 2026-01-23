@@ -21,9 +21,12 @@ public partial class MeshService
             "bannou.service-heartbeats",
             async (svc, evt) => await ((MeshService)svc).HandleServiceHeartbeatAsync(evt));
 
-        eventConsumer.RegisterHandler<IMeshService, FullServiceMappingsEvent>(
-            "bannou.full-service-mappings",
-            async (svc, evt) => await ((MeshService)svc).HandleServiceMappingsAsync(evt));
+        if (_configuration.EnableServiceMappingSync)
+        {
+            eventConsumer.RegisterHandler<IMeshService, FullServiceMappingsEvent>(
+                "bannou.full-service-mappings",
+                async (svc, evt) => await ((MeshService)svc).HandleServiceMappingsAsync(evt));
+        }
     }
 
     /// <summary>
@@ -53,7 +56,7 @@ public partial class MeshService
                     status,
                     evt.Capacity?.CpuUsage ?? 0,
                     evt.Capacity?.CurrentConnections ?? 0,
-                    90); // Default TTL
+                    _configuration.EndpointTtlSeconds);
 
                 _logger.LogDebug(
                     "Updated heartbeat for existing endpoint {InstanceId}",
@@ -69,7 +72,7 @@ public partial class MeshService
                     InstanceId = instanceId,
                     AppId = evt.AppId,
                     Host = evt.AppId, // Use app-id as host for mesh-style routing
-                    Port = 80,
+                    Port = _configuration.EndpointPort,
                     Status = MapHeartbeatStatus(evt.Status),
                     Services = evt.Services?.Select(s => s.ServiceName).ToList() ?? new List<string>(),
                     MaxConnections = evt.Capacity?.MaxConnections ?? 1000,
@@ -79,7 +82,7 @@ public partial class MeshService
                     LastSeen = DateTimeOffset.UtcNow
                 };
 
-                await _stateManager.RegisterEndpointAsync(endpoint, 90);
+                await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
 
                 _logger.LogInformation(
                     "Auto-registered endpoint {InstanceId} for app {AppId} from heartbeat",
@@ -137,13 +140,14 @@ public partial class MeshService
                         mappingsDict.Count);
 
                     // Log the mappings for debugging
-                    foreach (var mapping in mappingsDict.Take(10))
+                    var displayLimit = _configuration.MaxServiceMappingsDisplayed;
+                    foreach (var mapping in mappingsDict.Take(displayLimit))
                     {
                         _logger.LogDebug("  {Service} -> {AppId}", mapping.Key, mapping.Value);
                     }
-                    if (mappingsDict.Count > 10)
+                    if (mappingsDict.Count > displayLimit)
                     {
-                        _logger.LogDebug("  ... and {Count} more", mappingsDict.Count - 10);
+                        _logger.LogDebug("  ... and {Count} more", mappingsDict.Count - displayLimit);
                     }
                 }
             }

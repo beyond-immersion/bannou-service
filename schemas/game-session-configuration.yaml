@@ -23,8 +23,8 @@ x-service-configuration:
       env: GAME_SESSION_MAX_PLAYERS_PER_SESSION
     DefaultSessionTimeoutSeconds:
       type: integer
-      description: Default session timeout in seconds
-      default: 7200
+      description: Default session timeout in seconds (0 = no timeout)
+      default: 0
       env: GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS
     DefaultReservationTtlSeconds:
       type: integer

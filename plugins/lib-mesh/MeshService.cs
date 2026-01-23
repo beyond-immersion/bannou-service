@@ -311,7 +311,7 @@ public partial class MeshService : IMeshService
 
             var response = new HeartbeatResponse
             {
-                NextHeartbeatSeconds = Math.Max(_configuration.EndpointTtlSeconds / 3, 10),
+                NextHeartbeatSeconds = _configuration.HeartbeatIntervalSeconds,
                 TtlSeconds = _configuration.EndpointTtlSeconds
             };
 
