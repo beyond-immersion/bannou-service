@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: Item Service Configuration
+  description: |
+    Configuration schema for Item service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    defaultMaxStackSize:
+      type: integer
+      env: ITEM_DEFAULT_MAX_STACK_SIZE
+      default: 99
+      description: Default max stack size for new templates when not specified
+    defaultWeightPrecision:
+      type: string
+      env: ITEM_DEFAULT_WEIGHT_PRECISION
+      default: decimal_2
+      description: Default weight precision for new templates (integer, decimal_1, decimal_2, decimal_3)
+    templateCacheTtlSeconds:
+      type: integer
+      env: ITEM_TEMPLATE_CACHE_TTL_SECONDS
+      default: 3600
+      description: TTL for template cache entries in seconds (templates change infrequently)
+    instanceCacheTtlSeconds:
+      type: integer
+      env: ITEM_INSTANCE_CACHE_TTL_SECONDS
+      default: 900
+      description: TTL for instance cache entries in seconds (15 minutes for active gameplay)
+    maxInstancesPerQuery:
+      type: integer
+      env: ITEM_MAX_INSTANCES_PER_QUERY
+      default: 1000
+      description: Maximum item instances returned in a single query
+    bindingAllowAdminOverride:
+      type: boolean
+      env: ITEM_BINDING_ALLOW_ADMIN_OVERRIDE
+      default: true
+      description: Whether admins can unbind soulbound items
+    defaultRarity:
+      type: string
+      env: ITEM_DEFAULT_RARITY
+      default: common
+      description: Default rarity for new templates when not specified (common, uncommon, rare, epic, legendary, custom)
+    defaultSoulboundType:
+      type: string
+      env: ITEM_DEFAULT_SOULBOUND_TYPE
+      default: none
+      description: Default soulbound type for new templates (none, on_pickup, on_equip, on_use)

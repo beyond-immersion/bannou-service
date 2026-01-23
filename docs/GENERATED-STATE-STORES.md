@@ -41,6 +41,10 @@ This document lists all state store components used in Bannou.
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
+| `item-instance-cache` | Redis | Item | Hot item instance data for active gameplay |
+| `item-instance-store` | MySQL | Item | Item instances (persistent, realm-partitioned) |
+| `item-template-cache` | Redis | Item | Template lookup cache (global, aggressive caching) |
+| `item-template-store` | MySQL | Item | Item template definitions (persistent, queryable) |
 | `leaderboard-definition` | Redis | Leaderboard | Leaderboard definitions and metadata |
 | `leaderboard-ranking` | Redis | Leaderboard | Real-time ranking data (sorted sets) |
 | `leaderboard-season` | MySQL | Leaderboard | Season history and archives |
@@ -73,7 +77,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 63 stores (38 Redis, 25 MySQL)
+**Total**: 67 stores (40 Redis, 27 MySQL)
 
 ## Naming Conventions
 

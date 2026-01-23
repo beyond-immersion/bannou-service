@@ -1046,7 +1046,7 @@ WeightPrecision:
 ```yaml
 ItemInstance:
   type: object
-  required: [instanceId, templateId, ownerId, ownerType, realmId, quantity, originType, createdAt]
+  required: [instanceId, templateId, containerId, realmId, quantity, originType, createdAt]
   properties:
     instanceId:
       type: string
@@ -1057,20 +1057,11 @@ ItemInstance:
       format: uuid
       description: Reference to the item template
 
-    # Ownership (polymorphic)
-    ownerId:
-      type: string
-      format: uuid
-      description: ID of the owning entity
-    ownerType:
-      $ref: '#/components/schemas/ItemOwnerType'
-
-    # Location in container
+    # Location - items ALWAYS belong to a container (ownership derived from container)
     containerId:
       type: string
       format: uuid
-      nullable: true
-      description: Container holding this item (null if not in a container)
+      description: Container holding this item (ownership derived from container's owner)
     slotIndex:
       type: integer
       nullable: true
@@ -1147,17 +1138,6 @@ ItemInstance:
       format: date-time
       nullable: true
       description: Last modification timestamp
-
-ItemOwnerType:
-  type: string
-  enum:
-    - character       # Character owns the item (in inventory, equipped, etc.)
-    - location        # Item is "on the ground" at a location
-    - escrow          # Item is held in escrow for trade/market
-    - mail            # Item is in mail system
-    - container       # Owned by a container (for nested containers)
-    - other           # Game-defined owner type
-  description: Type of entity that owns this item instance
 
 ItemOriginType:
   type: string
@@ -1707,8 +1687,7 @@ x-lifecycle:
     model:
       instanceId: { type: string, format: uuid, primary: true, required: true, description: "Instance ID" }
       templateId: { type: string, format: uuid, required: true, description: "Template reference" }
-      ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
-      ownerType: { type: string, required: true, description: "Owner type" }
+      containerId: { type: string, format: uuid, required: true, description: "Container holding item" }
       realmId: { type: string, format: uuid, required: true, description: "Realm ID" }
       quantity: { type: number, required: true, description: "Item quantity" }
     sensitive: []
@@ -1874,10 +1853,10 @@ components:
 
 **Item dropped on ground:**
 ```
-1. Client: POST /inventory/transfer { instanceId, targetOwnerType: location, targetOwnerId: locationId }
-2. lib-inventory validates transfer
-3. lib-inventory publishes: inventory-item.transferred
-4. Item now has ownerId: locationId, ownerType: location, containerId: location's ground container
+1. Client: POST /inventory/move { instanceId, targetContainerId: location's ground container }
+2. lib-inventory validates move (container constraints, etc.)
+3. lib-inventory publishes: inventory-item.moved
+4. Item now has containerId: location's ground container (ownership derived from container)
 ```
 
 ---
@@ -2329,7 +2308,6 @@ player_backpack:
 - [ ] ItemCategory enum
 - [ ] ItemScope enum (consistent with CurrencyScope)
 - [ ] WeightPrecision enum (consistent with CurrencyPrecision)
-- [ ] ItemOwnerType enum
 - [ ] ItemOriginType enum
 - [ ] Template CRUD endpoints with x-permissions
 - [ ] Instance lifecycle endpoints with x-permissions

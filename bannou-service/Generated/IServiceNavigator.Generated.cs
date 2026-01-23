@@ -22,6 +22,7 @@ using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
@@ -134,6 +135,11 @@ public partial interface IServiceNavigator
     /// Gets the GameSession service client.
     /// </summary>
     IGameSessionClient GameSession { get; }
+
+    /// <summary>
+    /// Gets the Item service client.
+    /// </summary>
+    IItemClient Item { get; }
 
     /// <summary>
     /// Gets the Leaderboard service client.

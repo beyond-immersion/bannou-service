@@ -26,6 +26,7 @@ using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
@@ -87,6 +88,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IDocumentationClient _documentation;
     private readonly IGameServiceClient _gameService;
     private readonly IGameSessionClient _gameSession;
+    private readonly IItemClient _item;
     private readonly ILeaderboardClient _leaderboard;
     private readonly ILocationClient _location;
     private readonly IMappingClient _mapping;
@@ -133,6 +135,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IDocumentationClient documentation,
         IGameServiceClient gameService,
         IGameSessionClient gameSession,
+        IItemClient item,
         ILeaderboardClient leaderboard,
         ILocationClient location,
         IMappingClient mapping,
@@ -175,6 +178,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _documentation = documentation;
         _gameService = gameService;
         _gameSession = gameSession;
+        _item = item;
         _leaderboard = leaderboard;
         _location = location;
         _mapping = mapping;
@@ -291,6 +295,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IGameSessionClient GameSession => _gameSession;
+
+    /// <inheritdoc />
+    public IItemClient Item => _item;
 
     /// <inheritdoc />
     public ILeaderboardClient Leaderboard => _leaderboard;

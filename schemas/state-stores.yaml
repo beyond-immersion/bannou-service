@@ -449,3 +449,29 @@ x-state-stores:
     backend: mysql
     service: Currency
     purpose: Authorization hold records
+
+  # ============================================================================
+  # Item Stores
+  # ============================================================================
+
+  item-template-cache:
+    backend: redis
+    prefix: "item:tpl"
+    service: Item
+    purpose: Template lookup cache (global, aggressive caching)
+
+  item-template-store:
+    backend: mysql
+    service: Item
+    purpose: Item template definitions (persistent, queryable)
+
+  item-instance-cache:
+    backend: redis
+    prefix: "item:inst"
+    service: Item
+    purpose: Hot item instance data for active gameplay
+
+  item-instance-store:
+    backend: mysql
+    service: Item
+    purpose: Item instances (persistent, realm-partitioned)

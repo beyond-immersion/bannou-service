@@ -111,6 +111,16 @@ public static class StateStoreDefinitions
     /// <summary>Game session state and history</summary>
     public const string GameSession = "game-session-statestore";
 
+    // Item Service
+    /// <summary>Hot item instance data for active gameplay</summary>
+    public const string ItemInstanceCache = "item-instance-cache";
+    /// <summary>Item instances (persistent, realm-partitioned)</summary>
+    public const string ItemInstanceStore = "item-instance-store";
+    /// <summary>Template lookup cache (global, aggressive caching)</summary>
+    public const string ItemTemplateCache = "item-template-cache";
+    /// <summary>Item template definitions (persistent, queryable)</summary>
+    public const string ItemTemplateStore = "item-template-store";
+
     // Leaderboard Service
     /// <summary>Leaderboard definitions and metadata</summary>
     public const string LeaderboardDefinition = "leaderboard-definition";
@@ -254,6 +264,10 @@ public static class StateStoreDefinitions
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
+            [ItemInstanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "item:inst" },
+            [ItemInstanceStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "item_instance_store" },
+            [ItemTemplateCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "item:tpl" },
+            [ItemTemplateStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "item_template_store" },
             [LeaderboardDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:def" },
             [LeaderboardRanking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:rank" },
             [LeaderboardSeason] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "leaderboard_season" },
@@ -329,6 +343,10 @@ public static class StateStoreDefinitions
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
+            [ItemInstanceCache] = new StoreMetadata("Item", "Hot item instance data for active gameplay", "redis"),
+            [ItemInstanceStore] = new StoreMetadata("Item", "Item instances (persistent, realm-partitioned)", "mysql"),
+            [ItemTemplateCache] = new StoreMetadata("Item", "Template lookup cache (global, aggressive caching)", "redis"),
+            [ItemTemplateStore] = new StoreMetadata("Item", "Item template definitions (persistent, queryable)", "mysql"),
             [LeaderboardDefinition] = new StoreMetadata("Leaderboard", "Leaderboard definitions and metadata", "redis"),
             [LeaderboardRanking] = new StoreMetadata("Leaderboard", "Real-time ranking data (sorted sets)", "redis"),
             [LeaderboardSeason] = new StoreMetadata("Leaderboard", "Season history and archives", "mysql"),

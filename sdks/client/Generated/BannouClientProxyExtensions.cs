@@ -31,6 +31,7 @@ public partial class BannouClient
     private DocumentationProxy? _documentation;
     private GameServiceProxy? _gameService;
     private GameSessionProxy? _gameSession;
+    private ItemProxy? _item;
     private LeaderboardProxy? _leaderboard;
     private LocationProxy? _location;
     private MappingProxy? _mapping;
@@ -153,6 +154,12 @@ public partial class BannouClient
     /// </summary>
     public GameSessionProxy GameSession =>
         _gameSession ??= new GameSessionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Item Service API operations.
+    /// </summary>
+    public ItemProxy Item =>
+        _item ??= new ItemProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Leaderboard Service API operations.

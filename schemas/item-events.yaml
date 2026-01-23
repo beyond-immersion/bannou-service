@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+  title: Item Service Events
+  description: |
+    Event models for Item service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **Event Categories**:
+    - Template lifecycle: created, updated, deprecated
+    - Instance lifecycle: created, modified, destroyed
+    - Binding events: bound, unbound
+
+    **Topic Naming**: Uses kebab-case for multi-word entities (item-template, item-instance).
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []
+  x-event-publications:
+    # Template lifecycle events (auto-generated from x-lifecycle)
+    - topic: item-template.created
+      event: ItemTemplateCreatedEvent
+      description: Published when a new item template is created
+    - topic: item-template.updated
+      event: ItemTemplateUpdatedEvent
+      description: Published when an item template is updated
+    - topic: item-template.deprecated
+      event: ItemTemplateDeprecatedEvent
+      description: Published when an item template is deprecated
+
+    # Instance lifecycle events (auto-generated from x-lifecycle)
+    - topic: item-instance.created
+      event: ItemInstanceCreatedEvent
+      description: Published when a new item instance is created
+    - topic: item-instance.modified
+      event: ItemInstanceModifiedEvent
+      description: Published when an item instance is modified (durability, stats, etc.)
+    - topic: item-instance.destroyed
+      event: ItemInstanceDestroyedEvent
+      description: Published when an item instance is destroyed
+
+    # Binding events (non-lifecycle)
+    - topic: item-instance.bound
+      event: ItemInstanceBoundEvent
+      description: Published when an item is bound to a character (soulbound)
+    - topic: item-instance.unbound
+      event: ItemInstanceUnboundEvent
+      description: Published when an item binding is removed (admin action, expiration)
+
+# Lifecycle events auto-generated from this definition
+x-lifecycle:
+  ItemTemplate:
+    model:
+      templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the item template" }
+      code: { type: string, required: true, description: "Unique item code within game" }
+      gameId: { type: string, required: true, description: "Game service this template belongs to" }
+      name: { type: string, required: true, description: "Human-readable display name" }
+      category: { type: string, required: true, description: "Item classification category" }
+      rarity: { type: string, required: true, description: "Item rarity tier" }
+      quantityModel: { type: string, required: true, description: "How quantities are tracked (discrete, continuous, unique)" }
+      scope: { type: string, required: true, description: "Realm availability scope" }
+      isActive: { type: boolean, required: true, description: "Whether template is currently active" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "When the template was last modified" }
+    sensitive: []
+
+  ItemInstance:
+    model:
+      instanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this item instance" }
+      templateId: { type: string, format: uuid, required: true, description: "Reference to the item template" }
+      containerId: { type: string, format: uuid, required: true, description: "Container holding this item (ownership derived from container)" }
+      realmId: { type: string, format: uuid, required: true, description: "Realm this instance exists in" }
+      quantity: { type: number, format: double, required: true, description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)" }
+      originType: { type: string, required: true, description: "How this item instance was created" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the instance was created" }
+      modifiedAt: { type: string, format: date-time, nullable: true, description: "When the instance was last modified" }
+    sensitive: []
+
+paths: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Binding Events (non-lifecycle)
+    # =========================================================================
+
+    ItemInstanceBoundEvent:
+      type: object
+      description: Event published when an item is bound to a character (soulbound)
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - templateCode
+      - realmId
+      - characterId
+      - bindType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        instanceId:
+          type: string
+          format: uuid
+          description: Bound item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          description: Item template code for debugging
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where binding occurred
+        characterId:
+          type: string
+          format: uuid
+          description: Character the item is bound to
+        bindType:
+          type: string
+          description: Type of binding (on_pickup, on_equip, on_use)
+
+    ItemInstanceUnboundEvent:
+      type: object
+      description: Event published when an item binding is removed (admin action, expiration)
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - templateCode
+      - realmId
+      - previousCharacterId
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        instanceId:
+          type: string
+          format: uuid
+          description: Unbound item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          description: Item template code for debugging
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where unbinding occurred
+        previousCharacterId:
+          type: string
+          format: uuid
+          description: Character the item was previously bound to
+        reason:
+          type: string
+          description: Reason for unbinding (admin, expiration, transfer_override)
+        unboundBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID of admin who performed unbinding (if admin action)

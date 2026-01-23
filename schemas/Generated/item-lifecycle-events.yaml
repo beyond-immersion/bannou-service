@@ -1,0 +1,277 @@
+openapi: 3.0.3
+info:
+  title: Item Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for item service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: item-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ItemTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item-template.created when a itemtemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - rarity
+      - quantityModel
+      - scope
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item-template.created
+          description: 'Event type identifier: item-template.created'
+        templateId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the item template"
+        code: &id002
+          type: string
+          description: "Unique item code within game"
+        gameId: &id003
+          type: string
+          description: "Game service this template belongs to"
+        name: &id004
+          type: string
+          description: "Human-readable display name"
+        category: &id005
+          type: string
+          description: "Item classification category"
+        rarity: &id006
+          type: string
+          description: "Item rarity tier"
+        quantityModel: &id007
+          type: string
+          description: "How quantities are tracked (discrete, continuous, unique)"
+        scope: &id008
+          type: string
+          description: "Realm availability scope"
+        isActive: &id009
+          type: boolean
+          description: "Whether template is currently active"
+        createdAt: &id010
+          type: string
+          format: date-time
+          description: "When the template was created"
+        updatedAt: &id011
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the template was last modified"
+    ItemTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item-template.updated when a itemtemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - rarity
+      - quantityModel
+      - scope
+      - isActive
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: item-template.updated
+          description: 'Event type identifier: item-template.updated'
+        templateId: *id001
+        code: *id002
+        gameId: *id003
+        name: *id004
+        category: *id005
+        rarity: *id006
+        quantityModel: *id007
+        scope: *id008
+        isActive: *id009
+        createdAt: *id010
+        updatedAt: *id011
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ItemTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item-template.deleted when a itemtemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - rarity
+      - quantityModel
+      - scope
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item-template.deleted
+          description: 'Event type identifier: item-template.deleted'
+        templateId: *id001
+        code: *id002
+        gameId: *id003
+        name: *id004
+        category: *id005
+        rarity: *id006
+        quantityModel: *id007
+        scope: *id008
+        isActive: *id009
+        createdAt: *id010
+        updatedAt: *id011
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ItemInstanceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item-instance.created when a iteminstance is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item-instance.created
+          description: 'Event type identifier: item-instance.created'
+        instanceId: &id012
+          type: string
+          format: uuid
+          description: "Unique identifier for this item instance"
+        templateId: &id013
+          type: string
+          format: uuid
+          description: "Reference to the item template"
+        containerId: &id014
+          type: string
+          format: uuid
+          description: "Container holding this item (ownership derived from container)"
+        realmId: &id015
+          type: string
+          format: uuid
+          description: "Realm this instance exists in"
+        quantity: &id016
+          type: number
+          format: double
+          description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)"
+        originType: &id017
+          type: string
+          description: "How this item instance was created"
+        createdAt: &id018
+          type: string
+          format: date-time
+          description: "When the instance was created"
+        modifiedAt: &id019
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the instance was last modified"
+    ItemInstanceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item-instance.updated when a iteminstance is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: item-instance.updated
+          description: 'Event type identifier: item-instance.updated'
+        instanceId: *id012
+        templateId: *id013
+        containerId: *id014
+        realmId: *id015
+        quantity: *id016
+        originType: *id017
+        createdAt: *id018
+        modifiedAt: *id019
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ItemInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to item-instance.deleted when a iteminstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: item-instance.deleted
+          description: 'Event type identifier: item-instance.deleted'
+        instanceId: *id012
+        templateId: *id013
+        containerId: *id014
+        realmId: *id015
+        quantity: *id016
+        originType: *id017
+        createdAt: *id018
+        modifiedAt: *id019
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

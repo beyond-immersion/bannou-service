@@ -1,0 +1,1370 @@
+openapi: 3.0.0
+info:
+  title: Item Service API
+  version: 1.0.0
+  description: |
+    Item template and instance management service.
+
+    lib-item provides foundational item management with templates (definitions) and instances
+    (occurrences). Items are always contained in containers managed by lib-inventory.
+    Ownership is derived from the container - items do not track their own owner.
+
+    **What lib-item Does**:
+    - Item template CRUD (create, read, update, deprecate)
+    - Item instance lifecycle (create, modify, destroy)
+    - Durability tracking
+    - Soulbound/binding system
+    - Multiple quantity models (discrete, continuous, unique)
+
+    **What lib-item Does NOT Do**:
+    - Container/inventory management (lib-inventory)
+    - Item placement and movement (lib-inventory)
+    - Affixes and modifiers (future lib-affix)
+    - Sockets and gems (future lib-socket)
+    - Crafting (future lib-crafting)
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Item Template (5 endpoints)
+  # ===========================================================================
+
+  /item/template/create:
+    post:
+      operationId: createItemTemplate
+      tags:
+      - Item Template
+      summary: Create a new item template
+      description: |
+        Creates a new item definition for a game. Code, gameId, quantityModel, and scope
+        are immutable after creation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemTemplateRequest'
+      responses:
+        '200':
+          description: Item template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemTemplateResponse'
+        '400':
+          description: Invalid request (validation error)
+        '409':
+          description: Code already exists for this gameId
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/template/get:
+    post:
+      operationId: getItemTemplate
+      tags:
+      - Item Template
+      summary: Get item template by ID or code
+      description: |
+        Retrieves an item template by its unique ID or by code+gameId combination.
+        At least one of templateId or (code + gameId) must be provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetItemTemplateRequest'
+      responses:
+        '200':
+          description: Item template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemTemplateResponse'
+        '400':
+          description: Neither templateId nor code+gameId provided
+        '404':
+          description: Item template not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/template/list:
+    post:
+      operationId: listItemTemplates
+      tags:
+      - Item Template
+      summary: List item templates with filters
+      description: |
+        Lists item templates with optional filtering by gameId, category, tags,
+        rarity, scope, and active status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListItemTemplatesRequest'
+      responses:
+        '200':
+          description: Item templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemTemplatesResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/template/update:
+    post:
+      operationId: updateItemTemplate
+      tags:
+      - Item Template
+      summary: Update mutable fields of an item template
+      description: |
+        Updates mutable fields of an item template. Code, gameId, quantityModel, and scope
+        are immutable after creation and cannot be changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemTemplateRequest'
+      responses:
+        '200':
+          description: Item template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemTemplateResponse'
+        '400':
+          description: Attempted to change immutable field
+        '404':
+          description: Item template not found
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/template/deprecate:
+    post:
+      operationId: deprecateItemTemplate
+      tags:
+      - Item Template
+      summary: Deprecate an item template
+      description: |
+        Marks an item template as deprecated. Deprecated templates cannot be used
+        to create new instances but existing instances remain valid. Optionally
+        specify a migration target template.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateItemTemplateRequest'
+      responses:
+        '200':
+          description: Item template deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemTemplateResponse'
+        '404':
+          description: Item template not found
+        '409':
+          description: Template already deprecated
+      x-permissions:
+      - role: admin
+        states: {}
+
+  # ===========================================================================
+  # Item Instance (5 endpoints)
+  # ===========================================================================
+
+  /item/instance/create:
+    post:
+      operationId: createItemInstance
+      tags:
+      - Item Instance
+      summary: Create a new item instance
+      description: |
+        Creates a new item instance from a template. The instance must be placed
+        in a container (containerId required). Use lib-inventory's /inventory/add
+        for most use cases - this endpoint is for low-level instance creation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '400':
+          description: Invalid request (validation error)
+        '404':
+          description: Template not found
+        '409':
+          description: Template is deprecated
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/instance/get:
+    post:
+      operationId: getItemInstance
+      tags:
+      - Item Instance
+      summary: Get item instance by ID
+      description: Retrieves an item instance by its unique ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '404':
+          description: Item instance not found
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/instance/modify:
+    post:
+      operationId: modifyItemInstance
+      tags:
+      - Item Instance
+      summary: Modify item instance state
+      description: |
+        Modifies an item instance's mutable state: durability, custom stats,
+        custom name, and metadata. Cannot modify bound items unless admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModifyItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance modified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '400':
+          description: Invalid modification (e.g., negative durability)
+        '404':
+          description: Item instance not found
+        '409':
+          description: Item is corrupted/mirrored and cannot be modified
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/instance/bind:
+    post:
+      operationId: bindItemInstance
+      tags:
+      - Item Instance
+      summary: Bind item to character
+      description: |
+        Binds an item instance to a character. The bind type must be allowed by
+        the template's soulboundType. Once bound, the item cannot be traded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance bound successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemInstanceResponse'
+        '400':
+          description: Item cannot be bound (template doesn't allow binding)
+        '404':
+          description: Item instance not found
+        '409':
+          description: Item already bound
+      x-permissions:
+      - role: developer
+        states: {}
+
+  /item/instance/destroy:
+    post:
+      operationId: destroyItemInstance
+      tags:
+      - Item Instance
+      summary: Destroy item instance
+      description: |
+        Permanently destroys an item instance. The reason is recorded for audit.
+        Cannot destroy bound items unless admin or reason is 'admin'.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DestroyItemInstanceRequest'
+      responses:
+        '200':
+          description: Item instance destroyed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DestroyItemInstanceResponse'
+        '404':
+          description: Item instance not found
+        '409':
+          description: Item is bound and cannot be destroyed
+      x-permissions:
+      - role: developer
+        states: {}
+
+  # ===========================================================================
+  # Item Queries (3 endpoints)
+  # ===========================================================================
+
+  /item/instance/list-by-container:
+    post:
+      operationId: listItemsByContainer
+      tags:
+      - Item Query
+      summary: List items in a container
+      description: Returns all item instances in the specified container.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListItemsByContainerRequest'
+      responses:
+        '200':
+          description: Items retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemsResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+  /item/instance/list-by-template:
+    post:
+      operationId: listItemsByTemplate
+      tags:
+      - Item Query
+      summary: List instances of a template
+      description: |
+        Returns item instances of the specified template, optionally filtered by realm.
+        Useful for admin queries and analytics.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListItemsByTemplateRequest'
+      responses:
+        '200':
+          description: Items retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemsResponse'
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /item/instance/batch-get:
+    post:
+      operationId: batchGetItemInstances
+      tags:
+      - Item Query
+      summary: Get multiple item instances by ID
+      description: Retrieves multiple item instances in a single request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetItemInstancesRequest'
+      responses:
+        '200':
+          description: Items retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGetItemInstancesResponse'
+      x-permissions:
+      - role: user
+        states: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    ItemCategory:
+      type: string
+      description: Item classification category
+      enum:
+      - weapon
+      - armor
+      - accessory
+      - consumable
+      - material
+      - container
+      - quest
+      - currency_like
+      - misc
+      - custom
+
+    QuantityModel:
+      type: string
+      description: How quantities are tracked for this item type
+      enum:
+      - discrete
+      - continuous
+      - unique
+
+    ItemRarity:
+      type: string
+      description: Item rarity tier
+      enum:
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
+      - custom
+
+    SoulboundType:
+      type: string
+      description: When item becomes bound to a character
+      enum:
+      - none
+      - on_pickup
+      - on_equip
+      - on_use
+
+    ItemScope:
+      type: string
+      description: Realm availability scope (consistent with CurrencyScope)
+      enum:
+      - global
+      - realm_specific
+      - multi_realm
+
+    WeightPrecision:
+      type: string
+      description: Precision for weight values (consistent with CurrencyPrecision)
+      enum:
+      - integer
+      - decimal_1
+      - decimal_2
+      - decimal_3
+
+    ItemOriginType:
+      type: string
+      description: How an item instance was created
+      enum:
+      - loot
+      - quest
+      - craft
+      - trade
+      - purchase
+      - spawn
+      - other
+
+    # =========================================================================
+    # Item Template Models
+    # =========================================================================
+
+    CreateItemTemplateRequest:
+      type: object
+      description: Request to create a new item template
+      additionalProperties: false
+      required:
+      - code
+      - gameId
+      - name
+      - category
+      - quantityModel
+      - maxStackSize
+      - scope
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          pattern: "^[a-z][a-z0-9_]{1,63}$"
+          description: Unique code within the game (immutable after creation)
+        gameId:
+          type: string
+          maxLength: 64
+          description: Game service this template belongs to (immutable after creation)
+        name:
+          type: string
+          maxLength: 128
+          description: Human-readable display name
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Detailed description of this item
+        category:
+          $ref: '#/components/schemas/ItemCategory'
+        subcategory:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Game-defined subcategory (e.g., sword, helmet)
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+          nullable: true
+          description: Flexible filtering tags
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+        quantityModel:
+          $ref: '#/components/schemas/QuantityModel'
+        maxStackSize:
+          type: integer
+          minimum: 1
+          description: Maximum stack size (1 for unique items)
+        unitOfMeasure:
+          type: string
+          maxLength: 32
+          nullable: true
+          description: Unit for continuous quantities (e.g., liters, kg)
+        weightPrecision:
+          $ref: '#/components/schemas/WeightPrecision'
+        weight:
+          type: number
+          format: double
+          nullable: true
+          description: Weight value (interpreted per weightPrecision)
+        volume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume for volumetric inventories
+        gridWidth:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Width in grid-based inventories
+        gridHeight:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Height in grid-based inventories
+        canRotate:
+          type: boolean
+          nullable: true
+          description: Whether item can be rotated in grid
+        baseValue:
+          type: number
+          format: double
+          nullable: true
+          description: Reference price for vendors/markets
+        tradeable:
+          type: boolean
+          default: true
+          description: Whether item can be traded/auctioned
+        destroyable:
+          type: boolean
+          default: true
+          description: Whether item can be destroyed/discarded
+        soulboundType:
+          $ref: '#/components/schemas/SoulboundType'
+        hasDurability:
+          type: boolean
+          default: false
+          description: Whether item has durability tracking
+        maxDurability:
+          type: integer
+          nullable: true
+          description: Maximum durability value
+        scope:
+          $ref: '#/components/schemas/ItemScope'
+        availableRealms:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Realm IDs where this template is available (for realm_specific or multi_realm)
+        stats:
+          type: object
+          nullable: true
+          description: Game-defined stats (e.g., attack, defense)
+        effects:
+          type: object
+          nullable: true
+          description: Game-defined effects (e.g., on_use, on_equip)
+        requirements:
+          type: object
+          nullable: true
+          description: Game-defined requirements (e.g., level, strength)
+        display:
+          type: object
+          nullable: true
+          description: Display properties (e.g., iconId, modelId)
+        metadata:
+          type: object
+          nullable: true
+          description: Any other game-specific data
+
+    GetItemTemplateRequest:
+      type: object
+      description: Request to get an item template
+      additionalProperties: false
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Template ID (provide this or code+gameId)
+        code:
+          type: string
+          nullable: true
+          description: Item code (provide with gameId)
+        gameId:
+          type: string
+          nullable: true
+          description: Game service ID (provide with code)
+
+    ListItemTemplatesRequest:
+      type: object
+      description: Request to list item templates
+      additionalProperties: false
+      properties:
+        gameId:
+          type: string
+          description: Filter by game service
+        category:
+          $ref: '#/components/schemas/ItemCategory'
+        subcategory:
+          type: string
+          nullable: true
+          description: Filter by subcategory
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by tags (items must have all specified tags)
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+        scope:
+          $ref: '#/components/schemas/ItemScope'
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm availability
+        includeInactive:
+          type: boolean
+          default: false
+          description: Include inactive templates
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated templates
+        search:
+          type: string
+          nullable: true
+          description: Search in name and description
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          default: 50
+          maximum: 200
+          description: Maximum results to return
+
+    UpdateItemTemplateRequest:
+      type: object
+      description: Request to update mutable fields of an item template
+      additionalProperties: false
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID to update
+        name:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: New display name
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: New description
+        subcategory:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: New subcategory
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: New tags (replaces existing)
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+        weight:
+          type: number
+          format: double
+          nullable: true
+          description: New weight value
+        volume:
+          type: number
+          format: double
+          nullable: true
+          description: New volume value
+        gridWidth:
+          type: integer
+          nullable: true
+          description: New grid width
+        gridHeight:
+          type: integer
+          nullable: true
+          description: New grid height
+        canRotate:
+          type: boolean
+          nullable: true
+          description: New rotation setting
+        baseValue:
+          type: number
+          format: double
+          nullable: true
+          description: New base value
+        tradeable:
+          type: boolean
+          nullable: true
+          description: New tradeable setting
+        destroyable:
+          type: boolean
+          nullable: true
+          description: New destroyable setting
+        maxDurability:
+          type: integer
+          nullable: true
+          description: New max durability
+        availableRealms:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: New available realms
+        stats:
+          type: object
+          nullable: true
+          description: New stats
+        effects:
+          type: object
+          nullable: true
+          description: New effects
+        requirements:
+          type: object
+          nullable: true
+          description: New requirements
+        display:
+          type: object
+          nullable: true
+          description: New display properties
+        metadata:
+          type: object
+          nullable: true
+          description: New metadata
+        isActive:
+          type: boolean
+          nullable: true
+          description: Active status
+
+    DeprecateItemTemplateRequest:
+      type: object
+      description: Request to deprecate an item template
+      additionalProperties: false
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID to deprecate
+        migrationTargetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional template to migrate existing instances to
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Reason for deprecation
+
+    ItemTemplateResponse:
+      type: object
+      description: Item template details
+      additionalProperties: false
+      required:
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - quantityModel
+      - maxStackSize
+      - scope
+      - tradeable
+      - destroyable
+      - soulboundType
+      - hasDurability
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Unique template identifier
+        code:
+          type: string
+          description: Unique code within the game
+        gameId:
+          type: string
+          description: Game service this template belongs to
+        name:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          nullable: true
+          description: Detailed description
+        category:
+          $ref: '#/components/schemas/ItemCategory'
+        subcategory:
+          type: string
+          nullable: true
+          description: Game-defined subcategory
+        tags:
+          type: array
+          items:
+            type: string
+          description: Filtering tags
+        rarity:
+          $ref: '#/components/schemas/ItemRarity'
+        quantityModel:
+          $ref: '#/components/schemas/QuantityModel'
+        maxStackSize:
+          type: integer
+          description: Maximum stack size
+        unitOfMeasure:
+          type: string
+          nullable: true
+          description: Unit for continuous quantities
+        weightPrecision:
+          $ref: '#/components/schemas/WeightPrecision'
+        weight:
+          type: number
+          format: double
+          nullable: true
+          description: Weight value
+        volume:
+          type: number
+          format: double
+          nullable: true
+          description: Volume for volumetric inventories
+        gridWidth:
+          type: integer
+          nullable: true
+          description: Width in grid-based inventories
+        gridHeight:
+          type: integer
+          nullable: true
+          description: Height in grid-based inventories
+        canRotate:
+          type: boolean
+          nullable: true
+          description: Whether item can be rotated in grid
+        baseValue:
+          type: number
+          format: double
+          nullable: true
+          description: Reference price
+        tradeable:
+          type: boolean
+          description: Whether item can be traded
+        destroyable:
+          type: boolean
+          description: Whether item can be destroyed
+        soulboundType:
+          $ref: '#/components/schemas/SoulboundType'
+        hasDurability:
+          type: boolean
+          description: Whether item has durability
+        maxDurability:
+          type: integer
+          nullable: true
+          description: Maximum durability value
+        scope:
+          $ref: '#/components/schemas/ItemScope'
+        availableRealms:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Available realms
+        stats:
+          type: object
+          nullable: true
+          description: Game-defined stats
+        effects:
+          type: object
+          nullable: true
+          description: Game-defined effects
+        requirements:
+          type: object
+          nullable: true
+          description: Game-defined requirements
+        display:
+          type: object
+          nullable: true
+          description: Display properties
+        metadata:
+          type: object
+          nullable: true
+          description: Other game-specific data
+        isActive:
+          type: boolean
+          description: Whether template is active
+        isDeprecated:
+          type: boolean
+          description: Whether template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When template was deprecated
+        migrationTargetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Migration target template
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    ListItemTemplatesResponse:
+      type: object
+      description: Paginated list of item templates
+      additionalProperties: false
+      required:
+      - templates
+      - totalCount
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemTemplateResponse'
+          description: List of templates
+        totalCount:
+          type: integer
+          description: Total number of matching templates
+
+    # =========================================================================
+    # Item Instance Models
+    # =========================================================================
+
+    CreateItemInstanceRequest:
+      type: object
+      description: Request to create a new item instance
+      additionalProperties: false
+      required:
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template to instantiate
+        containerId:
+          type: string
+          format: uuid
+          description: Container to place the item in
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this instance exists in
+        quantity:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Item quantity (respects template's quantityModel)
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position in slot-based containers
+        slotX:
+          type: integer
+          nullable: true
+          description: X position in grid-based containers
+        slotY:
+          type: integer
+          nullable: true
+          description: Y position in grid-based containers
+        rotated:
+          type: boolean
+          nullable: true
+          description: Whether item is rotated in grid
+        currentDurability:
+          type: integer
+          nullable: true
+          description: Initial durability (defaults to template's maxDurability)
+        customStats:
+          type: object
+          nullable: true
+          description: Instance-specific stat modifications
+        customName:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: Player-assigned custom name
+        instanceMetadata:
+          type: object
+          nullable: true
+          description: Any other instance-specific data
+        originType:
+          $ref: '#/components/schemas/ItemOriginType'
+        originId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity ID (quest ID, creature ID, etc.)
+
+    GetItemInstanceRequest:
+      type: object
+      description: Request to get an item instance
+      additionalProperties: false
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to retrieve
+
+    ModifyItemInstanceRequest:
+      type: object
+      description: Request to modify item instance state
+      additionalProperties: false
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to modify
+        durabilityDelta:
+          type: integer
+          nullable: true
+          description: Change to durability (positive to repair, negative for damage)
+        customStats:
+          type: object
+          nullable: true
+          description: New custom stats (merges with existing)
+        customName:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: New custom name
+        instanceMetadata:
+          type: object
+          nullable: true
+          description: New instance metadata (merges with existing)
+
+    BindItemInstanceRequest:
+      type: object
+      description: Request to bind an item to a character
+      additionalProperties: false
+      required:
+      - instanceId
+      - characterId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to bind
+        characterId:
+          type: string
+          format: uuid
+          description: Character to bind the item to
+        bindType:
+          $ref: '#/components/schemas/SoulboundType'
+
+    DestroyItemInstanceRequest:
+      type: object
+      description: Request to destroy an item instance
+      additionalProperties: false
+      required:
+      - instanceId
+      - reason
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID to destroy
+        reason:
+          type: string
+          description: Reason for destruction (consumed, destroyed, expired, admin)
+
+    ItemInstanceResponse:
+      type: object
+      description: Item instance details
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique instance identifier
+        templateId:
+          type: string
+          format: uuid
+          description: Reference to the item template
+        containerId:
+          type: string
+          format: uuid
+          description: Container holding this item
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this instance exists in
+        quantity:
+          type: number
+          format: double
+          description: Item quantity
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position in slot-based containers
+        slotX:
+          type: integer
+          nullable: true
+          description: X position in grid-based containers
+        slotY:
+          type: integer
+          nullable: true
+          description: Y position in grid-based containers
+        rotated:
+          type: boolean
+          nullable: true
+          description: Whether item is rotated in grid
+        currentDurability:
+          type: integer
+          nullable: true
+          description: Current durability
+        boundToId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character ID this item is bound to
+        boundAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When item was bound
+        customStats:
+          type: object
+          nullable: true
+          description: Instance-specific stat modifications
+        customName:
+          type: string
+          nullable: true
+          description: Player-assigned custom name
+        instanceMetadata:
+          type: object
+          nullable: true
+          description: Other instance-specific data
+        originType:
+          $ref: '#/components/schemas/ItemOriginType'
+        originId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity ID
+        createdAt:
+          type: string
+          format: date-time
+          description: Instance creation timestamp
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification timestamp
+
+    DestroyItemInstanceResponse:
+      type: object
+      description: Response after destroying an item instance
+      additionalProperties: false
+      required:
+      - destroyed
+      - instanceId
+      - templateId
+      properties:
+        destroyed:
+          type: boolean
+          description: Whether destruction was successful
+        instanceId:
+          type: string
+          format: uuid
+          description: Destroyed instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Template of destroyed instance
+
+    # =========================================================================
+    # Query Models
+    # =========================================================================
+
+    ListItemsByContainerRequest:
+      type: object
+      description: Request to list items in a container
+      additionalProperties: false
+      required:
+      - containerId
+      properties:
+        containerId:
+          type: string
+          format: uuid
+          description: Container to list items from
+
+    ListItemsByTemplateRequest:
+      type: object
+      description: Request to list instances of a template
+      additionalProperties: false
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template to find instances of
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          default: 50
+          maximum: 200
+          description: Maximum results to return
+
+    ListItemsResponse:
+      type: object
+      description: List of item instances
+      additionalProperties: false
+      required:
+      - items
+      - totalCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInstanceResponse'
+          description: List of items
+        totalCount:
+          type: integer
+          description: Total number of matching items
+
+    BatchGetItemInstancesRequest:
+      type: object
+      description: Request to get multiple item instances
+      additionalProperties: false
+      required:
+      - instanceIds
+      properties:
+        instanceIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 100
+          description: Instance IDs to retrieve
+
+    BatchGetItemInstancesResponse:
+      type: object
+      description: Multiple item instances
+      additionalProperties: false
+      required:
+      - items
+      - notFound
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInstanceResponse'
+          description: Found items
+        notFound:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Instance IDs that were not found
