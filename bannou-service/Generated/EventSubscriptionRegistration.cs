@@ -59,6 +59,10 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionInvalidatedEvent>("session.invalidated");
         EventSubscriptionRegistry.Register<ServiceErrorEvent>("service.error");
 
+        // From escrow-events.yaml
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+
         // From game-session-events.yaml
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");

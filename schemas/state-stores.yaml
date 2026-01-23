@@ -496,3 +496,47 @@ x-state-stores:
     prefix: "inv:lock"
     service: Inventory
     purpose: Distributed locks for concurrent modifications
+
+  # ============================================================================
+  # Escrow Stores
+  # ============================================================================
+
+  escrow-tokens:
+    backend: redis
+    prefix: "escrow:token"
+    service: Escrow
+    purpose: Token hash validation (hashed tokens to escrow/party info)
+
+  escrow-idempotency:
+    backend: redis
+    prefix: "escrow:idemp"
+    service: Escrow
+    purpose: Idempotency key deduplication cache
+
+  escrow-status-index:
+    backend: redis
+    prefix: "escrow:status"
+    service: Escrow
+    purpose: Escrow IDs by status (sorted set for expiration/validation)
+
+  escrow-party-pending:
+    backend: redis
+    prefix: "escrow:pending"
+    service: Escrow
+    purpose: Count pending escrows per party for limits
+
+  escrow-active-validation:
+    backend: redis
+    prefix: "escrow:validate"
+    service: Escrow
+    purpose: Track active escrows requiring periodic validation
+
+  escrow-agreements:
+    backend: mysql
+    service: Escrow
+    purpose: Main escrow agreement records
+
+  escrow-handler-registry:
+    backend: mysql
+    service: Escrow
+    purpose: Custom asset type handler registrations

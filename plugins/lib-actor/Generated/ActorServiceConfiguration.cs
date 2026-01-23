@@ -57,7 +57,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
     /// Environment variable: ACTOR_DEPLOYMENT_MODE
     /// </summary>
-    public string DeploymentMode { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DeploymentMode { get; set; } = "bannou";
 
     /// <summary>
     /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
@@ -87,7 +87,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// App-id of control plane for pool node registration. Pool nodes only.
     /// Environment variable: ACTOR_CONTROL_PLANE_APP_ID
     /// </summary>
-    public string ControlPlaneAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string ControlPlaneAppId { get; set; } = "bannou";
 
     /// <summary>
     /// Docker image for pool nodes (pool-per-type, shared-pool, auto-scale modes)
@@ -231,7 +231,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Interval in seconds between pool health check operations
     /// Environment variable: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
     /// </summary>
-    public int PoolHealthCheckIntervalSeconds { get; set; } = 5;
+    public int PoolHealthCheckIntervalSeconds { get; set; } = 15;
 
     /// <summary>
     /// Interval in milliseconds for checking scheduled events
@@ -261,7 +261,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Maximum encounter results returned per query
     /// Environment variable: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
     /// </summary>
-    public int MaxEncounterResultsPerQuery { get; set; } = 10;
+    public int MaxEncounterResultsPerQuery { get; set; } = 50;
 
     /// <summary>
     /// Maximum retry attempts for memory store operations

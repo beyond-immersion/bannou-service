@@ -28,9 +28,9 @@ public sealed class PoolHealthMonitor : BackgroundService
     private readonly ActorServiceConfiguration _configuration;
 
     /// <summary>
-    /// Check interval for scanning heartbeats (half of timeout for faster detection).
+    /// Check interval for scanning heartbeats.
     /// </summary>
-    private TimeSpan CheckInterval => TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds / 2.0);
+    private TimeSpan CheckInterval => TimeSpan.FromSeconds(_configuration.PoolHealthCheckIntervalSeconds);
 
     /// <summary>
     /// Heartbeat timeout - nodes without heartbeat for this duration are marked unhealthy.

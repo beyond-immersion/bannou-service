@@ -29,6 +29,7 @@ public partial class BannouClient
     private ContractProxy? _contract;
     private CurrencyProxy? _currency;
     private DocumentationProxy? _documentation;
+    private EscrowProxy? _escrow;
     private GameServiceProxy? _gameService;
     private GameSessionProxy? _gameSession;
     private InventoryProxy? _inventory;
@@ -143,6 +144,12 @@ public partial class BannouClient
     /// </summary>
     public DocumentationProxy Documentation =>
         _documentation ??= new DocumentationProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Escrow Service API operations.
+    /// </summary>
+    public EscrowProxy Escrow =>
+        _escrow ??= new EscrowProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Game Service API operations.

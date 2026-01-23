@@ -204,7 +204,7 @@ x-service-configuration:
     PoolHealthCheckIntervalSeconds:
       type: integer
       env: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
-      default: 5
+      default: 15
       description: Interval in seconds between pool health check operations
 
     # === Scheduled Events (Tier 2) ===
@@ -235,7 +235,7 @@ x-service-configuration:
     MaxEncounterResultsPerQuery:
       type: integer
       env: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
-      default: 10
+      default: 50
       description: Maximum encounter results returned per query
 
     # === Memory Store Retry Configuration (Tier 3) ===

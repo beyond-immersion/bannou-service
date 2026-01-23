@@ -39,6 +39,13 @@ This document lists all state store components used in Bannou.
 | `currency-transactions` | MySQL | Currency | Immutable transaction history |
 | `currency-wallets` | MySQL | Currency | Wallet ownership and status |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
+| `escrow-active-validation` | Redis | Escrow | Track active escrows requiring periodic validation |
+| `escrow-agreements` | MySQL | Escrow | Main escrow agreement records |
+| `escrow-handler-registry` | MySQL | Escrow | Custom asset type handler registrations |
+| `escrow-idempotency` | Redis | Escrow | Idempotency key deduplication cache |
+| `escrow-party-pending` | Redis | Escrow | Count pending escrows per party for limits |
+| `escrow-status-index` | Redis | Escrow | Escrow IDs by status (sorted set for expiration/validation) |
+| `escrow-tokens` | Redis | Escrow | Token hash validation (hashed tokens to escrow/party info) |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
 | `inventory-container-cache` | Redis | Inventory | Container state and item list cache |
@@ -80,7 +87,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 70 stores (42 Redis, 28 MySQL)
+**Total**: 77 stores (47 Redis, 30 MySQL)
 
 ## Naming Conventions
 

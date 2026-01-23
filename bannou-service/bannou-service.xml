@@ -72130,6 +72130,27 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.Documentation">
             <summary>Documentation content and metadata</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EscrowActiveValidation">
+            <summary>Track active escrows requiring periodic validation</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EscrowAgreements">
+            <summary>Main escrow agreement records</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EscrowHandlerRegistry">
+            <summary>Custom asset type handler registrations</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EscrowIdempotency">
+            <summary>Idempotency key deduplication cache</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EscrowPartyPending">
+            <summary>Count pending escrows per party for limits</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EscrowStatusIndex">
+            <summary>Escrow IDs by status (sorted set for expiration/validation)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.EscrowTokens">
+            <summary>Token hash validation (hashed tokens to escrow/party info)</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.GameService">
             <summary>Game service registry</summary>
         </member>

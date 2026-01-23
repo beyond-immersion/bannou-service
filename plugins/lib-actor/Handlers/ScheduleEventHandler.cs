@@ -258,15 +258,17 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     /// </summary>
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Actor service configuration.</param>
     public ScheduledEventManager(
         IMessageBus messageBus,
-        ILogger<ScheduledEventManager> logger)
+        ILogger<ScheduledEventManager> logger,
+        ActorServiceConfiguration configuration)
     {
         _messageBus = messageBus;
         _logger = logger;
 
-        // Check for events to fire every 100ms
-        _timer = new Timer(CheckEvents, null, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+        var checkInterval = TimeSpan.FromMilliseconds(configuration.ScheduledEventCheckIntervalMilliseconds);
+        _timer = new Timer(CheckEvents, null, checkInterval, checkInterval);
     }
 
     /// <inheritdoc/>

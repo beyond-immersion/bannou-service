@@ -45,10 +45,10 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Event published when a contract is proposed to parties
+/// Event published when a new escrow agreement is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractProposedEvent
+public partial class EscrowCreatedEvent
 {
 
     /// <summary>
@@ -68,44 +68,84 @@ public partial class ContractProposedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Source template ID
+    /// Type of escrow (two_party, multi_party, conditional, auction)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
+    public string EscrowType { get; set; } = default!;
 
     /// <summary>
-    /// Source template code
+    /// Trust mode (full_consent, initiator_trusted, single_party_trusted)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("trustMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
+    public string TrustMode { get; set; } = default!;
 
     /// <summary>
-    /// Parties awaiting consent
+    /// Parties in the escrow
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parties")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<PartyInfo> Parties { get; set; } = new System.Collections.ObjectModel.Collection<PartyInfo>();
+    public System.Collections.Generic.ICollection<EscrowPartyInfo> Parties { get; set; } = new System.Collections.ObjectModel.Collection<EscrowPartyInfo>();
+
+    /// <summary>
+    /// Number of expected deposits
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expectedDepositCount")]
+    public int ExpectedDepositCount { get; set; } = default!;
+
+    /// <summary>
+    /// When the escrow expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Bound contract ID if applicable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundContractId")]
+    public System.Guid? BoundContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Reference type (trade, auction, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    public string? ReferenceType { get; set; } = default!;
+
+    /// <summary>
+    /// Reference ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceId")]
+    public System.Guid? ReferenceId { get; set; } = default!;
+
+    /// <summary>
+    /// When the escrow was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when one party consents
+/// Event published when a deposit is received
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractConsentReceivedEvent
+public partial class EscrowDepositReceivedEvent
 {
 
     /// <summary>
@@ -125,50 +165,78 @@ public partial class ContractConsentReceivedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Entity that consented
+    /// Party who deposited
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("consentingEntityId")]
+    [System.Text.Json.Serialization.JsonPropertyName("partyId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ConsentingEntityId { get; set; } = default!;
+    public System.Guid PartyId { get; set; } = default!;
 
     /// <summary>
-    /// Entity type
+    /// Type of the depositing party
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("consentingEntityType")]
+    [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ConsentingEntityType { get; set; } = default!;
+    public string PartyType { get; set; } = default!;
 
     /// <summary>
-    /// Party's role in the contract
+    /// Deposit record ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    [System.Text.Json.Serialization.JsonPropertyName("depositId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Role { get; set; } = default!;
+    public System.Guid DepositId { get; set; } = default!;
 
     /// <summary>
-    /// How many more consents are needed
+    /// Human-readable summary of deposited assets
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("remainingConsentsNeeded")]
-    public int RemainingConsentsNeeded { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetSummary")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetSummary { get; set; } = default!;
+
+    /// <summary>
+    /// Number of deposits received so far
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depositsReceived")]
+    public int DepositsReceived { get; set; } = default!;
+
+    /// <summary>
+    /// Total deposits expected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depositsExpected")]
+    public int DepositsExpected { get; set; } = default!;
+
+    /// <summary>
+    /// Whether escrow is now fully funded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fullyFunded")]
+    public bool FullyFunded { get; set; } = default!;
+
+    /// <summary>
+    /// When the deposit was made
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depositedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset DepositedAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when all required parties consent
+/// Event published when all expected deposits are received
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractAcceptedEvent
+public partial class EscrowFundedEvent
 {
 
     /// <summary>
@@ -188,42 +256,221 @@ public partial class ContractAcceptedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Template code
+    /// Total number of deposits received
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("totalDeposits")]
+    public int TotalDeposits { get; set; } = default!;
+
+    /// <summary>
+    /// When funding completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fundedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
+    public System.DateTimeOffset FundedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a party consents
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EscrowConsentReceivedEvent
+{
 
     /// <summary>
-    /// All contract parties
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parties")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Escrow agreement ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// Party who consented
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PartyId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the consenting party
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PartyType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of consent (release, refund, dispute, reaffirm)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consentType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ConsentType { get; set; } = default!;
+
+    /// <summary>
+    /// Number of consents received
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consentsReceived")]
+    public int ConsentsReceived { get; set; } = default!;
+
+    /// <summary>
+    /// Number of consents required
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consentsRequired")]
+    public int ConsentsRequired { get; set; } = default!;
+
+    /// <summary>
+    /// When consent was given
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consentedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ConsentedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when finalization begins
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EscrowFinalizingEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Escrow agreement ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// Bound contract ID if applicable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundContractId")]
+    public System.Guid? BoundContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of finalizer APIs to execute
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("finalizerCount")]
+    public int FinalizerCount { get; set; } = default!;
+
+    /// <summary>
+    /// When finalization started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when assets are released
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EscrowReleasedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Escrow agreement ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// Recipients and what they received
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipients")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<PartyInfo> Parties { get; set; } = new System.Collections.ObjectModel.Collection<PartyInfo>();
+    public System.Collections.Generic.ICollection<RecipientInfo> Recipients { get; set; } = new System.Collections.ObjectModel.Collection<RecipientInfo>();
 
     /// <summary>
-    /// When contract will become active
+    /// Resolution type (released)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effectiveFrom")]
-    public System.DateTimeOffset? EffectiveFrom { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("resolution")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Resolution { get; set; } = default!;
+
+    /// <summary>
+    /// When release completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CompletedAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when contract becomes active
+/// Event published when assets are refunded
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractActivatedEvent
+public partial class EscrowRefundedEvent
 {
 
     /// <summary>
@@ -243,42 +490,50 @@ public partial class ContractActivatedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Template code
+    /// Depositors and what was refunded
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// All contract parties
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parties")]
+    [System.Text.Json.Serialization.JsonPropertyName("depositors")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<PartyInfo> Parties { get; set; } = new System.Collections.ObjectModel.Collection<PartyInfo>();
+    public System.Collections.Generic.ICollection<DepositorInfo> Depositors { get; set; } = new System.Collections.ObjectModel.Collection<DepositorInfo>();
 
     /// <summary>
-    /// When contract expires
+    /// Reason for refund
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
-    public System.DateTimeOffset? EffectiveUntil { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Resolution type (refunded, expired_refunded, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resolution")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Resolution { get; set; } = default!;
+
+    /// <summary>
+    /// When refund completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CompletedAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when a milestone is completed
+/// Event published when a party raises a dispute
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractMilestoneCompletedEvent
+public partial class EscrowDisputedEvent
 {
 
     /// <summary>
@@ -298,92 +553,31 @@ public partial class ContractMilestoneCompletedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Completed milestone code
+    /// Party who raised the dispute
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestoneCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("disputedBy")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string MilestoneCode { get; set; } = default!;
+    public System.Guid DisputedBy { get; set; } = default!;
 
     /// <summary>
-    /// Milestone display name
+    /// Type of the disputing party
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    [System.Text.Json.Serialization.JsonPropertyName("disputedByType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string MilestoneName { get; set; } = default!;
+    public string DisputedByType { get; set; } = default!;
 
     /// <summary>
-    /// Evidence of completion
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("evidence")]
-    public object? Evidence { get; set; } = default!;
-
-    /// <summary>
-    /// Number of prebound APIs executed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("preboundApisExecuted")]
-    public int PreboundApisExecuted { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Event published when a milestone fails
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractMilestoneFailedEvent
-{
-
-    /// <summary>
-    /// Unique event identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Contract instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
-
-    /// <summary>
-    /// Failed milestone code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestoneCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string MilestoneCode { get; set; } = default!;
-
-    /// <summary>
-    /// Milestone display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string MilestoneName { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for failure
+    /// Reason for dispute
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -391,24 +585,20 @@ public partial class ContractMilestoneFailedEvent
     public string Reason { get; set; } = default!;
 
     /// <summary>
-    /// Whether this was a required milestone
+    /// When dispute was raised
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("wasRequired")]
-    public bool WasRequired { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this failure triggered a breach
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("triggeredBreach")]
-    public bool TriggeredBreach { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("disputedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset DisputedAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when a breach is recorded
+/// Event published when an arbiter resolves a dispute
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractBreachDetectedEvent
+public partial class EscrowResolvedEvent
 {
 
     /// <summary>
@@ -428,64 +618,58 @@ public partial class ContractBreachDetectedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Breach record ID
+    /// Arbiter ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("breachId")]
+    [System.Text.Json.Serialization.JsonPropertyName("arbiterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BreachId { get; set; } = default!;
+    public System.Guid ArbiterId { get; set; } = default!;
 
     /// <summary>
-    /// Entity that breached
+    /// Arbiter type
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("breachingEntityId")]
+    [System.Text.Json.Serialization.JsonPropertyName("arbiterType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BreachingEntityId { get; set; } = default!;
+    public string ArbiterType { get; set; } = default!;
 
     /// <summary>
-    /// Entity type
+    /// Resolution type (released, refunded, split)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("breachingEntityType")]
+    [System.Text.Json.Serialization.JsonPropertyName("resolution")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BreachingEntityType { get; set; } = default!;
+    public string Resolution { get; set; } = default!;
 
     /// <summary>
-    /// Type of breach
+    /// Arbiter notes
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("breachType")]
+    [System.Text.Json.Serialization.JsonPropertyName("notes")]
+    public string? Notes { get; set; } = default!;
+
+    /// <summary>
+    /// When dispute was resolved
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resolvedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BreachType { get; set; } = default!;
-
-    /// <summary>
-    /// What was breached
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("breachedTermOrMilestone")]
-    public string? BreachedTermOrMilestone { get; set; } = default!;
-
-    /// <summary>
-    /// Deadline to cure the breach
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cureDeadline")]
-    public System.DateTimeOffset? CureDeadline { get; set; } = default!;
+    public System.DateTimeOffset ResolvedAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when a breach is cured
+/// Event published when escrow times out
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractBreachCuredEvent
+public partial class EscrowExpiredEvent
 {
 
     /// <summary>
@@ -505,34 +689,42 @@ public partial class ContractBreachCuredEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Breach record ID
+    /// Status when expiration occurred
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("breachId")]
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BreachId { get; set; } = default!;
+    public string Status { get; set; } = default!;
 
     /// <summary>
-    /// Evidence of cure
+    /// Whether deposits were automatically refunded
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cureEvidence")]
-    public string? CureEvidence { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("autoRefunded")]
+    public bool AutoRefunded { get; set; } = default!;
+
+    /// <summary>
+    /// When expiration occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiredAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when all required milestones complete
+/// Event published when escrow is cancelled
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractFulfilledEvent
+public partial class EscrowCancelledEvent
 {
 
     /// <summary>
@@ -552,103 +744,52 @@ public partial class ContractFulfilledEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Template code
+    /// Entity that cancelled
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("cancelledBy")]
+    public System.Guid? CancelledBy { get; set; } = default!;
 
     /// <summary>
-    /// All contract parties
+    /// Type of cancelling entity
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parties")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<PartyInfo> Parties { get; set; } = new System.Collections.ObjectModel.Collection<PartyInfo>();
+    [System.Text.Json.Serialization.JsonPropertyName("cancelledByType")]
+    public string? CancelledByType { get; set; } = default!;
 
     /// <summary>
-    /// Number of milestones completed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestonesCompleted")]
-    public int MilestonesCompleted { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Event published when contract is terminated early
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractTerminatedEvent
-{
-
-    /// <summary>
-    /// Unique event identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Contract instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
-
-    /// <summary>
-    /// Entity that requested termination
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("terminatedByEntityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TerminatedByEntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Entity type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("terminatedByEntityType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TerminatedByEntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for termination
+    /// Reason for cancellation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string? Reason { get; set; } = default!;
 
     /// <summary>
-    /// Whether termination was due to breach
+    /// Number of deposits refunded
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("wasBreachRelated")]
-    public bool WasBreachRelated { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("depositsRefunded")]
+    public int DepositsRefunded { get; set; } = default!;
+
+    /// <summary>
+    /// When cancellation occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cancelledAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CancelledAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when contract reaches natural expiration
+/// Event published when validation detects asset changes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractExpiredEvent
+public partial class EscrowValidationFailedEvent
 {
 
     /// <summary>
@@ -668,34 +809,36 @@ public partial class ContractExpiredEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Template code
+    /// Detected failures
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.Text.Json.Serialization.JsonPropertyName("failures")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ValidationFailureInfo> Failures { get; set; } = new System.Collections.ObjectModel.Collection<ValidationFailureInfo>();
+
+    /// <summary>
+    /// When failures were detected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("detectedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// When contract was set to expire
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
-    public System.DateTimeOffset EffectiveUntil { get; set; } = default!;
+    public System.DateTimeOffset DetectedAt { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Event published when a prebound API is executed
+/// Event published when a party reaffirms after validation failure
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractPreboundApiExecutedEvent
+public partial class EscrowValidationReaffirmedEvent
 {
 
     /// <summary>
@@ -715,184 +858,42 @@ public partial class ContractPreboundApiExecutedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Contract instance ID
+    /// Escrow agreement ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// What triggered the API call (milestone.completed, breach.detected, etc.)
+    /// Party who reaffirmed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("trigger")]
-    public string Trigger { get; set; } = default!;
-
-    /// <summary>
-    /// Target service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.Text.Json.Serialization.JsonPropertyName("reaffirmedBy")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
+    public System.Guid ReaffirmedBy { get; set; } = default!;
 
     /// <summary>
-    /// Target endpoint
+    /// Type of reaffirming party
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    [System.Text.Json.Serialization.JsonPropertyName("reaffirmedByType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Endpoint { get; set; } = default!;
+    public string ReaffirmedByType { get; set; } = default!;
 
     /// <summary>
-    /// HTTP status code returned
+    /// Whether all parties have reaffirmed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
-    public int StatusCode { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Event published when a prebound API call fails
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractPreboundApiFailedEvent
-{
+    [System.Text.Json.Serialization.JsonPropertyName("allReaffirmed")]
+    public bool AllReaffirmed { get; set; } = default!;
 
     /// <summary>
-    /// Unique event identifier
+    /// When reaffirmation occurred
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("reaffirmedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Contract instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
-
-    /// <summary>
-    /// What triggered the API call
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("trigger")]
-    public string Trigger { get; set; } = default!;
-
-    /// <summary>
-    /// Target service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
-
-    /// <summary>
-    /// Target endpoint
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Endpoint { get; set; } = default!;
-
-    /// <summary>
-    /// Error message from failure
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ErrorMessage { get; set; } = default!;
-
-    /// <summary>
-    /// HTTP status code if available
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
-    public int? StatusCode { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Event published when a prebound API response fails validation
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractPreboundApiValidationFailedEvent
-{
-
-    /// <summary>
-    /// Unique event identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Contract instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
-
-    /// <summary>
-    /// What triggered the API call
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("trigger")]
-    public string Trigger { get; set; } = default!;
-
-    /// <summary>
-    /// Target service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
-
-    /// <summary>
-    /// Target endpoint
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Endpoint { get; set; } = default!;
-
-    /// <summary>
-    /// HTTP status code from the API response
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
-    public int StatusCode { get; set; } = default!;
-
-    /// <summary>
-    /// Validation outcome (PermanentFailure, TransientFailure)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("validationOutcome")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ValidationOutcome { get; set; } = default!;
-
-    /// <summary>
-    /// Description of why validation failed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("failureReason")]
-    public string? FailureReason { get; set; } = default!;
+    public System.DateTimeOffset ReaffirmedAt { get; set; } = default!;
 
 }
 
@@ -900,32 +901,137 @@ public partial class ContractPreboundApiValidationFailedEvent
 /// Brief party information for events
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PartyInfo
+public partial class EscrowPartyInfo
 {
 
     /// <summary>
-    /// Entity ID
+    /// Party ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.Text.Json.Serialization.JsonPropertyName("partyId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
+    public System.Guid PartyId { get; set; } = default!;
 
     /// <summary>
-    /// Entity type
+    /// Party type
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    public string PartyType { get; set; } = default!;
 
     /// <summary>
-    /// Role in contract
+    /// Role in escrow (depositor, recipient, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Role { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Recipient information for release events
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RecipientInfo
+{
+
+    /// <summary>
+    /// Recipient party ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PartyId { get; set; } = default!;
+
+    /// <summary>
+    /// Recipient party type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PartyType { get; set; } = default!;
+
+    /// <summary>
+    /// Summary of assets received
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetSummary")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetSummary { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Depositor information for refund events
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DepositorInfo
+{
+
+    /// <summary>
+    /// Depositor party ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PartyId { get; set; } = default!;
+
+    /// <summary>
+    /// Depositor party type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PartyType { get; set; } = default!;
+
+    /// <summary>
+    /// Summary of assets refunded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetSummary")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetSummary { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Validation failure information for events
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidationFailureInfo
+{
+
+    /// <summary>
+    /// Type of asset affected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of failure (asset_missing, asset_mutated, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failureType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string FailureType { get; set; } = default!;
+
+    /// <summary>
+    /// Party whose deposit is affected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("affectedPartyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AffectedPartyId { get; set; } = default!;
+
+    /// <summary>
+    /// Additional failure details
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("details")]
+    public object? Details { get; set; } = default!;
 
 }
 

@@ -109,6 +109,22 @@ public static class StateStoreDefinitions
     /// <summary>Documentation content and metadata</summary>
     public const string Documentation = "documentation-statestore";
 
+    // Escrow Service
+    /// <summary>Track active escrows requiring periodic validation</summary>
+    public const string EscrowActiveValidation = "escrow-active-validation";
+    /// <summary>Main escrow agreement records</summary>
+    public const string EscrowAgreements = "escrow-agreements";
+    /// <summary>Custom asset type handler registrations</summary>
+    public const string EscrowHandlerRegistry = "escrow-handler-registry";
+    /// <summary>Idempotency key deduplication cache</summary>
+    public const string EscrowIdempotency = "escrow-idempotency";
+    /// <summary>Count pending escrows per party for limits</summary>
+    public const string EscrowPartyPending = "escrow-party-pending";
+    /// <summary>Escrow IDs by status (sorted set for expiration/validation)</summary>
+    public const string EscrowStatusIndex = "escrow-status-index";
+    /// <summary>Token hash validation (hashed tokens to escrow/party info)</summary>
+    public const string EscrowTokens = "escrow-tokens";
+
     // GameService Service
     /// <summary>Game service registry</summary>
     public const string GameService = "game-service-statestore";
@@ -276,6 +292,13 @@ public static class StateStoreDefinitions
             [CurrencyTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_transactions" },
             [CurrencyWallets] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_wallets" },
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
+            [EscrowActiveValidation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:validate" },
+            [EscrowAgreements] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_agreements" },
+            [EscrowHandlerRegistry] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_handler_registry" },
+            [EscrowIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:idemp" },
+            [EscrowPartyPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:pending" },
+            [EscrowStatusIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:status" },
+            [EscrowTokens] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:token" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
             [InventoryContainerCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:cont" },
@@ -358,6 +381,13 @@ public static class StateStoreDefinitions
             [CurrencyTransactions] = new StoreMetadata("Currency", "Immutable transaction history", "mysql"),
             [CurrencyWallets] = new StoreMetadata("Currency", "Wallet ownership and status", "mysql"),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
+            [EscrowActiveValidation] = new StoreMetadata("Escrow", "Track active escrows requiring periodic validation", "redis"),
+            [EscrowAgreements] = new StoreMetadata("Escrow", "Main escrow agreement records", "mysql"),
+            [EscrowHandlerRegistry] = new StoreMetadata("Escrow", "Custom asset type handler registrations", "mysql"),
+            [EscrowIdempotency] = new StoreMetadata("Escrow", "Idempotency key deduplication cache", "redis"),
+            [EscrowPartyPending] = new StoreMetadata("Escrow", "Count pending escrows per party for limits", "redis"),
+            [EscrowStatusIndex] = new StoreMetadata("Escrow", "Escrow IDs by status (sorted set for expiration/validation)", "redis"),
+            [EscrowTokens] = new StoreMetadata("Escrow", "Token hash validation (hashed tokens to escrow/party info)", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
             [InventoryContainerCache] = new StoreMetadata("Inventory", "Container state and item list cache", "redis"),

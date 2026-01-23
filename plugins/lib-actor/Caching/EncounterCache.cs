@@ -65,7 +65,7 @@ public sealed class EncounterCache : IEncounterCache
                 new QueryByCharacterRequest
                 {
                     CharacterId = characterId,
-                    PageSize = 50 // Get recent encounters
+                    PageSize = _configuration.MaxEncounterResultsPerQuery
                 },
                 ct);
 
@@ -223,7 +223,7 @@ public sealed class EncounterCache : IEncounterCache
                 {
                     CharacterIdA = characterIdA,
                     CharacterIdB = characterIdB,
-                    PageSize = 50
+                    PageSize = _configuration.MaxEncounterResultsPerQuery
                 },
                 ct);
 
