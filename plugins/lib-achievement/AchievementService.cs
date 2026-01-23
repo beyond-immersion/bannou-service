@@ -39,6 +39,7 @@ public partial class AchievementService : IAchievementService
     private readonly ILogger<AchievementService> _logger;
     private readonly AchievementServiceConfiguration _configuration;
     private readonly IEnumerable<IPlatformAchievementSync> _platformSyncs;
+    private readonly IDistributedLockProvider _lockProvider;
 
     // State store key prefixes
     private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
@@ -53,13 +54,15 @@ public partial class AchievementService : IAchievementService
         ILogger<AchievementService> logger,
         AchievementServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IEnumerable<IPlatformAchievementSync> platformSyncs)
+        IEnumerable<IPlatformAchievementSync> platformSyncs,
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _platformSyncs = platformSyncs;
+        _lockProvider = lockProvider;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -304,7 +307,7 @@ public partial class AchievementService : IAchievementService
             var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
-            var definition = await definitionStore.GetAsync(key, cancellationToken);
+            var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
             if (definition == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -341,7 +344,12 @@ public partial class AchievementService : IAchievementService
                 return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
             }
 
-            await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+            var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for achievement definition {AchievementId}", body.AchievementId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish definition updated event
             await PublishDefinitionUpdatedEventAsync(definition, changedFields, cancellationToken);
@@ -512,9 +520,19 @@ public partial class AchievementService : IAchievementService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Get/create entity progress
+            // Acquire lock on progress key (compound operation: modifies both progress and definition)
             var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+
+            await using var progressLock = await _lockProvider.LockAsync(
+                "achievement-progress", progressKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!progressLock.Success)
+            {
+                _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", progressKey);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Re-read under lock
             var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
             {
                 EntityId = body.EntityId,
@@ -565,9 +583,13 @@ public partial class AchievementService : IAchievementService
                 unlockedAt = achievementProgress.UnlockedAt;
                 entityProgress.TotalPoints += definition.Points;
 
-                // Increment earned count on definition
-                definition.EarnedCount++;
-                await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
+                // Increment earned count on definition (use ETag for this secondary write)
+                var (freshDef, defEtag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
+                if (freshDef != null)
+                {
+                    freshDef.EarnedCount++;
+                    await definitionStore.TrySaveAsync(defKey, freshDef, defEtag ?? string.Empty, cancellationToken);
+                }
             }
 
             // Save progress with cache TTL
@@ -675,9 +697,19 @@ public partial class AchievementService : IAchievementService
                 }
             }
 
-            // Get/create entity progress
+            // Acquire lock on progress key (compound operation: modifies both progress and definition)
             var store = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
             var key = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+
+            await using var progressLock = await _lockProvider.LockAsync(
+                "achievement-progress", key, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!progressLock.Success)
+            {
+                _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", key);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Re-read under lock
             var progress = await store.GetAsync(key, cancellationToken) ?? new EntityProgressData
             {
                 EntityId = body.EntityId,
@@ -708,9 +740,13 @@ public partial class AchievementService : IAchievementService
             };
             progress.TotalPoints += definition.Points;
 
-            // Increment earned count
-            definition.EarnedCount++;
-            await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
+            // Increment earned count (use ETag for this secondary write)
+            var (freshDef, defEtag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
+            if (freshDef != null)
+            {
+                freshDef.EarnedCount++;
+                await definitionStore.TrySaveAsync(defKey, freshDef, defEtag ?? string.Empty, cancellationToken);
+            }
 
             await store.SaveAsync(key, progress,
                 new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds }, cancellationToken);

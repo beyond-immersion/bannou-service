@@ -33,6 +33,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<BeyondImmersion.BannouService.Voice.IVoiceClient> _mockVoiceClient;
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
     private readonly Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient> _mockSubscriptionClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -56,6 +57,15 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockVoiceClient = new Mock<BeyondImmersion.BannouService.Voice.IVoiceClient>();
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
         _mockSubscriptionClient = new Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<GameSessionModel>(STATE_STORE)).Returns(_mockGameSessionStore.Object);
@@ -85,7 +95,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockClientEventPublisher.Object,
             _mockVoiceClient.Object,
             _mockPermissionClient.Object,
-            _mockSubscriptionClient.Object);
+            _mockSubscriptionClient.Object,
+            _mockLockProvider.Object);
     }
 
     /// <summary>

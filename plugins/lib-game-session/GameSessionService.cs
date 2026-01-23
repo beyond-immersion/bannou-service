@@ -38,6 +38,7 @@ public partial class GameSessionService : IGameSessionService
     private readonly IPermissionClient _permissionClient;
     private readonly ISubscriptionClient _subscriptionClient;
     private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IDistributedLockProvider _lockProvider;
 
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
@@ -131,7 +132,8 @@ public partial class GameSessionService : IGameSessionService
         IClientEventPublisher clientEventPublisher,
         IVoiceClient voiceClient,
         IPermissionClient permissionClient,
-        ISubscriptionClient subscriptionClient)
+        ISubscriptionClient subscriptionClient,
+        IDistributedLockProvider lockProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -141,6 +143,7 @@ public partial class GameSessionService : IGameSessionService
         _voiceClient = voiceClient;
         _permissionClient = permissionClient;
         _subscriptionClient = subscriptionClient;
+        _lockProvider = lockProvider;
 
         // Initialize supported game services from configuration
         var configuredServices = configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -435,8 +438,18 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Acquire lock on session (multiple players may join concurrently)
+            var sessionKey = SESSION_KEY_PREFIX + lobbyId.ToString();
+            await using var sessionLock = await _lockProvider.LockAsync(
+                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!sessionLock.Success)
+            {
+                _logger.LogWarning("Could not acquire session lock for lobby {LobbyId}", lobbyId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
+            var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
 
             if (model == null)
             {
@@ -509,7 +522,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, SessionTtlOptions, cancellationToken);
+            await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
             // Publish event (SessionId in event = lobby ID for game session identification)
             await _messageBus.TryPublishAsync(
@@ -678,8 +691,18 @@ public partial class GameSessionService : IGameSessionService
                 return StatusCodes.NotFound;
             }
 
+            // Acquire lock on session (multiple players may leave concurrently)
+            var sessionKey = SESSION_KEY_PREFIX + lobbyId.ToString();
+            await using var sessionLock = await _lockProvider.LockAsync(
+                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!sessionLock.Success)
+            {
+                _logger.LogWarning("Could not acquire session lock for lobby {LobbyId}", lobbyId);
+                return StatusCodes.Conflict;
+            }
+
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
+            var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
 
             if (model == null)
             {
@@ -787,7 +810,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, SessionTtlOptions, cancellationToken);
+            await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(
@@ -840,8 +863,18 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Player {AccountId} joining game session {GameSessionId} from WebSocket session {SessionId}",
                 accountId, gameSessionId, clientSessionId);
 
+            // Acquire lock on session (multiple players may join concurrently)
+            var sessionKey = SESSION_KEY_PREFIX + gameSessionId;
+            await using var sessionLock = await _lockProvider.LockAsync(
+                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!sessionLock.Success)
+            {
+                _logger.LogWarning("Could not acquire session lock for {GameSessionId}", gameSessionId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
+            var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
 
             if (model == null)
             {
@@ -965,7 +998,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, SessionTtlOptions, cancellationToken);
+            await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(
@@ -1028,8 +1061,18 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Player {AccountId} leaving game session {GameSessionId} from WebSocket session {SessionId}",
                 accountId, gameSessionId, clientSessionId);
 
+            // Acquire lock on session (multiple players may leave concurrently)
+            var sessionKey = SESSION_KEY_PREFIX + gameSessionId;
+            await using var sessionLock = await _lockProvider.LockAsync(
+                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!sessionLock.Success)
+            {
+                _logger.LogWarning("Could not acquire session lock for {GameSessionId}", gameSessionId);
+                return StatusCodes.Conflict;
+            }
+
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
+            var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
 
             if (model == null)
             {
@@ -1118,7 +1161,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, SessionTtlOptions, cancellationToken);
+            await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(
@@ -1281,8 +1324,18 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Kicking player {TargetAccountId} from session {SessionId}. Reason: {Reason}",
                 targetAccountId, sessionId, body.Reason);
 
+            // Acquire lock on session (concurrent modification protection)
+            var sessionKey = SESSION_KEY_PREFIX + sessionId;
+            await using var sessionLock = await _lockProvider.LockAsync(
+                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!sessionLock.Success)
+            {
+                _logger.LogWarning("Could not acquire session lock for {SessionId}", sessionId);
+                return StatusCodes.Conflict;
+            }
+
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
-            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            var model = await sessionStore.GetAsync(sessionKey, cancellationToken);
 
             if (model == null)
             {
@@ -1309,7 +1362,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, SessionTtlOptions, cancellationToken);
+            await sessionStore.SaveAsync(sessionKey, model, SessionTtlOptions, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(

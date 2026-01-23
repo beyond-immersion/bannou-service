@@ -2852,7 +2852,7 @@ public partial class AssetService : IAssetService
             var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
-            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
             if (bundle == null)
             {
                 _logger.LogWarning("UpdateBundle: Bundle {BundleId} not found", body.BundleId);
@@ -2951,8 +2951,13 @@ public partial class AssetService : IAssetService
             var versionIndexKey = $"bundle-version-index:{body.BundleId}";
             await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
-            // Save updated bundle
-            await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+            // Save updated bundle with ETag
+            var newBundleEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+            if (newBundleEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for bundle {BundleId}", body.BundleId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync("asset.bundle.updated", new BeyondImmersion.BannouService.Events.BundleUpdatedEvent
@@ -3015,7 +3020,7 @@ public partial class AssetService : IAssetService
             var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
-            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
             if (bundle == null)
             {
                 _logger.LogWarning("DeleteBundle: Bundle {BundleId} not found", body.BundleId);
@@ -3082,7 +3087,12 @@ public partial class AssetService : IAssetService
                 var versionIndexKey = $"bundle-version-index:{body.BundleId}";
                 await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
-                await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+                var deleteEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+                if (deleteEtag == null)
+                {
+                    _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during delete", body.BundleId);
+                    return (StatusCodes.Conflict, null);
+                }
 
                 _logger.LogInformation("DeleteBundle: Soft-deleted bundle {BundleId}, retention until {RetentionUntil}",
                     body.BundleId, retentionUntil);
@@ -3146,7 +3156,7 @@ public partial class AssetService : IAssetService
             var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(StateStoreDefinitions.Asset);
             var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
-            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            var (bundle, bundleEtag) = await bundleStore.GetWithETagAsync(bundleKey, cancellationToken);
             if (bundle == null)
             {
                 _logger.LogWarning("RestoreBundle: Bundle {BundleId} not found", body.BundleId);
@@ -3187,7 +3197,12 @@ public partial class AssetService : IAssetService
             var versionIndexKey = $"bundle-version-index:{body.BundleId}";
             await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
-            await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+            var restoreEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
+            if (restoreEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during restore", body.BundleId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync("asset.bundle.restored", new BeyondImmersion.BannouService.Events.BundleRestoredEvent

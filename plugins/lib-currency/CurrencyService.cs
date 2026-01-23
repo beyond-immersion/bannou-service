@@ -520,7 +520,7 @@ public partial class CurrencyService : ICurrencyService
         {
             var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
             var key = $"{WALLET_PREFIX}{body.WalletId}";
-            var wallet = await store.GetAsync(key, cancellationToken);
+            var (wallet, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
             if (wallet is null) return (StatusCodes.NotFound, null);
             if (wallet.Status == WalletStatus.Frozen) return (StatusCodes.Conflict, null);
@@ -529,7 +529,12 @@ public partial class CurrencyService : ICurrencyService
             wallet.FrozenReason = body.Reason;
             wallet.FrozenAt = DateTimeOffset.UtcNow;
 
-            await store.SaveAsync(key, wallet, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected freezing wallet {WalletId}", body.WalletId);
+                return (StatusCodes.Conflict, null);
+            }
 
             await _messageBus.TryPublishAsync("currency.wallet.frozen", new CurrencyWalletFrozenEvent
             {
@@ -567,7 +572,7 @@ public partial class CurrencyService : ICurrencyService
         {
             var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
             var key = $"{WALLET_PREFIX}{body.WalletId}";
-            var wallet = await store.GetAsync(key, cancellationToken);
+            var (wallet, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
             if (wallet is null) return (StatusCodes.NotFound, null);
             if (wallet.Status != WalletStatus.Frozen) return (StatusCodes.BadRequest, null);
@@ -576,7 +581,12 @@ public partial class CurrencyService : ICurrencyService
             wallet.FrozenReason = null;
             wallet.FrozenAt = null;
 
-            await store.SaveAsync(key, wallet, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected unfreezing wallet {WalletId}", body.WalletId);
+                return (StatusCodes.Conflict, null);
+            }
 
             await _messageBus.TryPublishAsync("currency.wallet.unfrozen", new CurrencyWalletUnfrozenEvent
             {
@@ -2609,6 +2619,14 @@ public partial class CurrencyService : ICurrencyService
 
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "currency-index", key, Guid.NewGuid().ToString(), 15, ct);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire index lock for key {Key} in store {Store}", key, storeName);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<string>(storeName);
         var existing = await store.GetAsync(key, ct);
         var list = string.IsNullOrEmpty(existing) ? new List<string>() : BannouJson.Deserialize<List<string>>(existing) ?? new List<string>();

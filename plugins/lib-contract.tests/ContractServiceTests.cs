@@ -34,6 +34,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     private readonly Mock<IStateStore<ExecuteContractResponse>> _mockExecuteResponseStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IServiceNavigator> _mockNavigator;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<ContractService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -54,6 +55,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockExecuteResponseStore = new Mock<IStateStore<ExecuteContractResponse>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockNavigator = new Mock<IServiceNavigator>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<ContractService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -72,6 +74,18 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Default message bus setup
         _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private ContractService CreateService()
@@ -80,6 +94,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             _mockMessageBus.Object,
             _mockNavigator.Object,
             _mockStateStoreFactory.Object,
+            _mockLockProvider.Object,
             _mockLogger.Object,
             Configuration,
             _mockEventConsumer.Object);

@@ -1063,7 +1063,16 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         try
         {
-            var perspective = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
+            var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
+            if (found == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Re-load with ETag for concurrency safety
+            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+            var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
+            var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
             if (perspective == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -1078,8 +1087,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (body.RememberedAs != null) perspective.RememberedAs = body.RememberedAs;
             perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            await perspectiveStore.SaveAsync($"{PERSPECTIVE_KEY_PREFIX}{perspective.PerspectiveId}", perspective, cancellationToken: cancellationToken);
+            var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync(ENCOUNTER_PERSPECTIVE_UPDATED_TOPIC, new EncounterPerspectiveUpdatedEvent
@@ -1130,7 +1143,16 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
         try
         {
-            var perspective = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
+            var found = await FindPerspectiveAsync(body.EncounterId, body.CharacterId, cancellationToken);
+            if (found == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Re-load with ETag for concurrency safety
+            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+            var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{found.PerspectiveId}";
+            var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
             if (perspective == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -1141,8 +1163,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0f, 1f);
             perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            await perspectiveStore.SaveAsync($"{PERSPECTIVE_KEY_PREFIX}{perspective.PerspectiveId}", perspective, cancellationToken: cancellationToken);
+            var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for perspective {PerspectiveId}", found.PerspectiveId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_REFRESHED_TOPIC, new EncounterMemoryRefreshedEvent
@@ -1393,7 +1419,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             foreach (var perspectiveId in perspectiveIds)
             {
-                var perspective = await perspectiveStore.GetAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", cancellationToken);
+                var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}";
+                var (perspective, pEtag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
                 if (perspective == null) continue;
 
                 var (decayed, faded) = CalculateDecay(perspective);
@@ -1406,7 +1433,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     {
                         perspective.MemoryStrength = Math.Max(0, perspective.MemoryStrength - GetDecayAmount(perspective));
                         perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                        await perspectiveStore.SaveAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", perspective, cancellationToken: cancellationToken);
+                        var decayResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, pEtag ?? string.Empty, cancellationToken);
+                        if (decayResult == null)
+                        {
+                            _logger.LogWarning("Concurrent modification during decay for perspective {PerspectiveId}, skipping", perspectiveId);
+                            continue;
+                        }
                     }
 
                     if (faded)

@@ -319,7 +319,7 @@ public partial class LeaderboardService : ILeaderboardService
             var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
-            var definition = await definitionStore.GetAsync(key, cancellationToken);
+            var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
             if (definition == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -339,7 +339,12 @@ public partial class LeaderboardService : ILeaderboardService
                 definition.IsPublic = body.IsPublic.Value;
             }
 
-            await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+            var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId}", body.LeaderboardId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Get entry count
             var rankingStore = _stateStoreFactory.GetStore<object>(StateStoreDefinitions.LeaderboardRanking);
@@ -901,7 +906,7 @@ public partial class LeaderboardService : ILeaderboardService
         {
             var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
             var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+            var (definition, defEtag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
 
             if (definition == null)
             {
@@ -929,9 +934,14 @@ public partial class LeaderboardService : ILeaderboardService
                     cancellationToken: cancellationToken);
             }
 
-            // Update definition with new season
+            // Update definition with new season using optimistic concurrency
             definition.CurrentSeason = newSeasonNumber;
-            await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
+            var newDefEtag = await definitionStore.TrySaveAsync(defKey, definition, defEtag ?? string.Empty, cancellationToken);
+            if (newDefEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId} season creation", body.LeaderboardId);
+                return (StatusCodes.Conflict, null);
+            }
             await definitionStore.AddToSetAsync(
                 GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId),
                 newSeasonNumber,

@@ -42,6 +42,7 @@ public partial class SaveLoadService : ISaveLoadService
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<SaveLoadService> _logger;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
@@ -54,6 +55,7 @@ public partial class SaveLoadService : ISaveLoadService
     public SaveLoadService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
+        IDistributedLockProvider lockProvider,
         ILogger<SaveLoadService> logger,
         SaveLoadServiceConfiguration configuration,
         IAssetClient assetClient,
@@ -65,6 +67,7 @@ public partial class SaveLoadService : ISaveLoadService
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
+        _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
         _assetClient = assetClient;
@@ -515,8 +518,17 @@ public partial class SaveLoadService : ISaveLoadService
             var ownerId = body.OwnerId.ToString();
             var now = DateTimeOffset.UtcNow;
 
-            // Get or create slot
+            // Lock the slot to prevent concurrent version number allocation
             var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+            await using var slotLock = await _lockProvider.LockAsync(
+                "save-load-slot", slotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!slotLock.Success)
+            {
+                _logger.LogWarning("Could not acquire slot lock for {SlotKey}", slotKey);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Get or create slot
             var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
             if (slot == null)
@@ -964,6 +976,18 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Lock the slot to prevent concurrent version number allocation
+            await using var slotLock = await _lockProvider.LockAsync(
+                "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!slotLock.Success)
+            {
+                _logger.LogWarning("Could not acquire slot lock for {SlotId}", slot.SlotId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Re-read slot under lock for accurate version number
+            slot = await slotStore.GetAsync(slotKey, cancellationToken) ?? slot;
+
             // Get the base version
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var baseVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.BaseVersion);
@@ -1322,7 +1346,7 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get the target version
+            // Get the target version with ETag for optimistic concurrency
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionToFetch = body.VersionNumber ?? slot.LatestVersion;
             if (!versionToFetch.HasValue)
@@ -1331,7 +1355,7 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionToFetch.Value);
-            var targetVersion = await versionStore.GetAsync(versionKey, cancellationToken);
+            var (targetVersion, versionEtag) = await versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
             if (targetVersion == null)
             {
@@ -1402,8 +1426,14 @@ public partial class SaveLoadService : ISaveLoadService
             targetVersion.ContentHash = contentHash;
             targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE";
 
-            // Save updated manifest
-            await versionStore.SaveAsync(targetVersion.GetStateKey(), targetVersion, cancellationToken: cancellationToken);
+            // Save updated manifest with optimistic concurrency
+            var newEtag = await versionStore.TrySaveAsync(targetVersion.GetStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for version {Version} in slot {SlotId}",
+                    targetVersion.VersionNumber, slot.SlotId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Store in hot cache
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
@@ -1599,10 +1629,10 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get the version
+            // Get the version with ETag for optimistic concurrency
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.VersionNumber);
-            var version = await versionStore.GetAsync(versionKey, cancellationToken);
+            var (version, versionEtag) = await versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
             if (version == null)
             {
@@ -1612,7 +1642,13 @@ public partial class SaveLoadService : ISaveLoadService
             // Pin the version
             version.IsPinned = true;
             version.CheckpointName = body.CheckpointName;
-            await versionStore.SaveAsync(versionKey, version, cancellationToken: cancellationToken);
+            var newEtag = await versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for version {Version} in slot {SlotId}",
+                    body.VersionNumber, slot.SlotId);
+                return (StatusCodes.Conflict, null);
+            }
 
             _logger.LogInformation(
                 "Pinned version {Version} in slot {SlotId} with checkpoint name {CheckpointName}",
@@ -1671,10 +1707,10 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get the version
+            // Get the version with ETag for optimistic concurrency
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.VersionNumber);
-            var version = await versionStore.GetAsync(versionKey, cancellationToken);
+            var (version, versionEtag) = await versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
             if (version == null)
             {
@@ -1685,7 +1721,13 @@ public partial class SaveLoadService : ISaveLoadService
             var previousCheckpointName = version.CheckpointName;
             version.IsPinned = false;
             version.CheckpointName = null;
-            await versionStore.SaveAsync(versionKey, version, cancellationToken: cancellationToken);
+            var newEtag = await versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for version {Version} in slot {SlotId}",
+                    body.VersionNumber, slot.SlotId);
+                return (StatusCodes.Conflict, null);
+            }
 
             _logger.LogInformation(
                 "Unpinned version {Version} in slot {SlotId}",
@@ -1744,6 +1786,15 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Lock the slot to prevent concurrent metadata modifications
+            await using var slotLock = await _lockProvider.LockAsync(
+                "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!slotLock.Success)
+            {
+                _logger.LogWarning("Could not acquire slot lock for {SlotId}", slot.SlotId);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Get the version
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.VersionNumber);
@@ -1787,8 +1838,9 @@ public partial class SaveLoadService : ISaveLoadService
             var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId, body.VersionNumber);
             await hotStore.DeleteAsync(hotCacheKey, cancellationToken);
 
-            // Update slot metadata
+            // Re-read slot metadata under lock for accurate update
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
+            slot = await slotStore.GetAsync(slot.GetStateKey(), cancellationToken) ?? slot;
             slot.VersionCount = Math.Max(0, slot.VersionCount - 1);
             slot.TotalSizeBytes = Math.Max(0, slot.TotalSizeBytes - bytesFreed);
             slot.UpdatedAt = DateTimeOffset.UtcNow;
@@ -2061,10 +2113,19 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // Find or create target slot
+            // Find or create target slot (lock to prevent concurrent version number allocation)
             var targetOwnerType = body.TargetOwnerType.ToString();
             var targetOwnerId = body.TargetOwnerId.ToString();
             var targetSlotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerType, targetOwnerId, body.TargetSlotName);
+
+            await using var targetSlotLock = await _lockProvider.LockAsync(
+                "save-load-slot", targetSlotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!targetSlotLock.Success)
+            {
+                _logger.LogWarning("Could not acquire target slot lock for {SlotKey}", targetSlotKey);
+                return (StatusCodes.Conflict, null);
+            }
+
             var targetSlot = await slotStore.GetAsync(targetSlotKey, cancellationToken);
 
             if (targetSlot == null)
@@ -2334,6 +2395,18 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 return (StatusCodes.NotFound, null);
             }
+
+            // Lock the slot to prevent concurrent version number allocation
+            await using var slotLock = await _lockProvider.LockAsync(
+                "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!slotLock.Success)
+            {
+                _logger.LogWarning("Could not acquire slot lock for {SlotId}", slot.SlotId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Re-read slot under lock for accurate version number
+            slot = await slotStore.GetAsync(slotKey, cancellationToken) ?? slot;
 
             // Get the source version
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);

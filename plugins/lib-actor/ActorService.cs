@@ -309,7 +309,7 @@ public partial class ActorService : IActorService
         try
         {
             var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
+            var (existing, etag) = await templateStore.GetWithETagAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
             {
@@ -352,8 +352,13 @@ public partial class ActorService : IActorService
 
             existing.UpdatedAt = now;
 
-            // Save updates
-            await templateStore.SaveAsync(body.TemplateId.ToString(), existing, cancellationToken: cancellationToken);
+            // Save updates with optimistic concurrency
+            var newEtag = await templateStore.TrySaveAsync(body.TemplateId.ToString(), existing, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for actor template {TemplateId}", body.TemplateId);
+                return (StatusCodes.Conflict, null);
+            }
             await templateStore.SaveAsync($"category:{existing.Category}", existing, cancellationToken: cancellationToken);
 
             // Publish updated event
@@ -434,12 +439,17 @@ public partial class ActorService : IActorService
             await templateStore.DeleteAsync(body.TemplateId.ToString(), cancellationToken);
             await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
 
-            // Remove from template index
+            // Remove from template index with optimistic concurrency
             var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+            var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
+            allIds ??= new List<string>();
             if (allIds.Remove(body.TemplateId.ToString()))
             {
-                await indexStore.SaveAsync(ALL_TEMPLATES_KEY, allIds, cancellationToken: cancellationToken);
+                var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
+                if (indexResult == null)
+                {
+                    _logger.LogWarning("Concurrent modification on template index during delete of {TemplateId}", body.TemplateId);
+                }
             }
 
             // Publish deleted event

@@ -1326,12 +1326,17 @@ public partial class InventoryService : IInventoryService
 
                 // Update container slot count since source is gone
                 var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-                var container = await containerStore.GetAsync($"{CONT_PREFIX}{source.ContainerId}", cancellationToken);
+                var containerKey = $"{CONT_PREFIX}{source.ContainerId}";
+                var (container, containerEtag) = await containerStore.GetWithETagAsync(containerKey, cancellationToken);
                 if (container is not null)
                 {
                     container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
                     container.ModifiedAt = now;
-                    await containerStore.SaveAsync($"{CONT_PREFIX}{source.ContainerId}", container, cancellationToken: cancellationToken);
+                    var containerResult = await containerStore.TrySaveAsync(containerKey, container, containerEtag ?? string.Empty, cancellationToken);
+                    if (containerResult == null)
+                    {
+                        _logger.LogWarning("Concurrent modification on container {ContainerId} during merge, slot count may be stale", source.ContainerId);
+                    }
                 }
             }
 
@@ -1903,6 +1908,14 @@ public partial class InventoryService : IInventoryService
     /// </summary>
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            storeName, key, Guid.NewGuid().ToString(), 15, ct);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire list lock for {StoreName}:{Key}", storeName, key);
+            return;
+        }
+
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
         var json = await stringStore.GetAsync(key, ct);
         var list = string.IsNullOrEmpty(json)
@@ -1921,6 +1934,14 @@ public partial class InventoryService : IInventoryService
     /// </summary>
     private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            storeName, key, Guid.NewGuid().ToString(), 15, ct);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire list lock for {StoreName}:{Key}", storeName, key);
+            return;
+        }
+
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
         var json = await stringStore.GetAsync(key, ct);
         if (string.IsNullOrEmpty(json)) return;

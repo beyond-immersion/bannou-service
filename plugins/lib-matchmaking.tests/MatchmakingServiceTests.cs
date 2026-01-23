@@ -37,6 +37,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
     private readonly Mock<BeyondImmersion.BannouService.Permission.IPermissionClient> _mockPermissionClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     private const string STATE_STORE = "matchmaking-statestore";
     private const string QUEUE_PREFIX = "queue:";
@@ -66,6 +67,15 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockGameSessionClient = new Mock<IGameSessionClient>();
         _mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<QueueModel>(STATE_STORE)).Returns(_mockQueueStore.Object);
@@ -106,7 +116,8 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
             _mockGameSessionClient.Object,
-            _mockPermissionClient.Object);
+            _mockPermissionClient.Object,
+            _mockLockProvider.Object);
     }
 
     /// <summary>

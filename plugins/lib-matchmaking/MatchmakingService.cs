@@ -45,6 +45,7 @@ public partial class MatchmakingService : IMatchmakingService
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IPermissionClient _permissionClient;
     private readonly IMatchmakingAlgorithm _algorithm;
+    private readonly IDistributedLockProvider _lockProvider;
 
     private const string QUEUE_KEY_PREFIX = "queue:";
     private const string QUEUE_LIST_KEY = "queue-list";
@@ -74,7 +75,8 @@ public partial class MatchmakingService : IMatchmakingService
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
         IGameSessionClient gameSessionClient,
-        IPermissionClient permissionClient)
+        IPermissionClient permissionClient,
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -83,6 +85,7 @@ public partial class MatchmakingService : IMatchmakingService
         _clientEventPublisher = clientEventPublisher;
         _gameSessionClient = gameSessionClient;
         _permissionClient = permissionClient;
+        _lockProvider = lockProvider;
         // Instantiate directly since internal types are used
         // Tests can access via InternalsVisibleTo
         _algorithm = new MatchmakingAlgorithm();
@@ -286,7 +289,9 @@ public partial class MatchmakingService : IMatchmakingService
         {
             _logger.LogInformation("Updating queue {QueueId}", body.QueueId);
 
-            var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
+            var queueStore = _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking);
+            var queueKey = QUEUE_KEY_PREFIX + body.QueueId;
+            var (queue, etag) = await queueStore.GetWithETagAsync(queueKey, cancellationToken);
             if (queue == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -315,8 +320,13 @@ public partial class MatchmakingService : IMatchmakingService
 
             queue.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save queue
-            await SaveQueueAsync(queue, cancellationToken);
+            // Save queue with ETag
+            var newEtag = await queueStore.TrySaveAsync(queueKey, queue, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for queue {QueueId}", body.QueueId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await _messageBus.TryPublishAsync("matchmaking.queue-updated", new MatchmakingQueueUpdatedEvent
@@ -712,6 +722,15 @@ public partial class MatchmakingService : IMatchmakingService
             var sessionId = body.WebSocketSessionId;
 
             _logger.LogInformation("Player {AccountId} accepting match {MatchId}", accountId, matchId);
+
+            // Acquire lock on match (multiple players accept concurrently)
+            await using var matchLock = await _lockProvider.LockAsync(
+                "matchmaking-match", matchId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!matchLock.Success)
+            {
+                _logger.LogWarning("Could not acquire match lock for {MatchId}", matchId);
+                return (StatusCodes.Conflict, null);
+            }
 
             var match = await LoadMatchAsync(matchId, cancellationToken);
             if (match == null)
@@ -1492,6 +1511,14 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue list lock");
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (!list.Contains(queueId))
@@ -1503,6 +1530,14 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue list lock");
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (list.Remove(queueId))
@@ -1567,22 +1602,40 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = PLAYER_TICKETS_PREFIX + accountId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
             list.Add(ticketId);
-            await store.SaveAsync(PLAYER_TICKETS_PREFIX + accountId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = PLAYER_TICKETS_PREFIX + accountId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
-            await store.SaveAsync(PLAYER_TICKETS_PREFIX + accountId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 
@@ -1600,22 +1653,40 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = QUEUE_TICKETS_PREFIX + queueId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
             list.Add(ticketId);
-            await store.SaveAsync(QUEUE_TICKETS_PREFIX + queueId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
+        var key = QUEUE_TICKETS_PREFIX + queueId;
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
-        var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
+        var list = await store.GetAsync(key, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
-            await store.SaveAsync(QUEUE_TICKETS_PREFIX + queueId, list, cancellationToken: cancellationToken);
+            await store.SaveAsync(key, list, cancellationToken: cancellationToken);
         }
     }
 

@@ -31,6 +31,7 @@ public class AchievementServiceTests
     private readonly Mock<IStateStore<AchievementDefinitionData>> _mockDefinitionStore;
     private readonly Mock<IStateStore<EntityProgressData>> _mockProgressStore;
     private readonly List<IPlatformAchievementSync> _platformSyncs;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     public AchievementServiceTests()
     {
@@ -41,6 +42,15 @@ public class AchievementServiceTests
         _mockDefinitionStore = new Mock<IStateStore<AchievementDefinitionData>>();
         _mockProgressStore = new Mock<IStateStore<EntityProgressData>>();
         _platformSyncs = new List<IPlatformAchievementSync>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         _configuration = new AchievementServiceConfiguration
         {
@@ -90,7 +100,8 @@ public class AchievementServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            _platformSyncs);
+            _platformSyncs,
+            _mockLockProvider.Object);
     }
 
     #region Constructor Validation

@@ -33,6 +33,7 @@ public partial class ContractService : IContractService
     private readonly IMessageBus _messageBus;
     private readonly IServiceNavigator _navigator;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ContractService> _logger;
     private readonly ContractServiceConfiguration _configuration;
 
@@ -86,6 +87,7 @@ public partial class ContractService : IContractService
         IMessageBus messageBus,
         IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
+        IDistributedLockProvider lockProvider,
         ILogger<ContractService> logger,
         ContractServiceConfiguration configuration,
         IEventConsumer eventConsumer)
@@ -93,6 +95,7 @@ public partial class ContractService : IContractService
         _messageBus = messageBus;
         _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
+        _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
 
@@ -563,8 +566,8 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Proposing contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -585,8 +588,12 @@ public partial class ContractService : IContractService
             model.ProposedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
 
             await AddToListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
 
@@ -615,8 +622,8 @@ public partial class ContractService : IContractService
                 body.ContractId, body.PartyEntityId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -696,8 +703,12 @@ public partial class ContractService : IContractService
                 await PublishContractAcceptedEventAsync(model, cancellationToken);
             }
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
 
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
@@ -847,8 +858,8 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Terminating contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -881,8 +892,12 @@ public partial class ContractService : IContractService
             model.TerminatedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
 
             await AddToListAsync($"{STATUS_INDEX_PREFIX}terminated", body.ContractId.ToString(), cancellationToken);
 
@@ -992,8 +1007,8 @@ public partial class ContractService : IContractService
                 body.MilestoneCode, body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -1050,8 +1065,12 @@ public partial class ContractService : IContractService
                 await PublishContractFulfilledEventAsync(model, cancellationToken);
             }
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish milestone completed event
             await PublishMilestoneCompletedEventAsync(model, milestone, body.Evidence, apisExecuted, cancellationToken);
@@ -1081,8 +1100,8 @@ public partial class ContractService : IContractService
                 body.MilestoneCode, body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -1124,8 +1143,12 @@ public partial class ContractService : IContractService
                 }
             }
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
 
             await PublishMilestoneFailedEventAsync(model, milestone, body.Reason ?? "Milestone failed",
                 milestone.Required, triggeredBreach, cancellationToken);
@@ -1194,8 +1217,8 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Reporting breach for contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var instanceStore = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -1234,7 +1257,7 @@ public partial class ContractService : IContractService
                 CureDeadline = cureDeadline
             };
 
-            // Save breach
+            // Save breach (new entity, no concurrency concern)
             var breachKey = $"{BREACH_PREFIX}{breachId}";
             await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
                 .SaveAsync(breachKey, breachModel, cancellationToken: cancellationToken);
@@ -1244,8 +1267,12 @@ public partial class ContractService : IContractService
             model.BreachIds.Add(breachId);
             model.UpdatedAt = now;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await instanceStore.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await PublishBreachDetectedEventAsync(model, breachModel, cancellationToken);
@@ -1270,8 +1297,8 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Curing breach: {BreachId}", body.BreachId);
 
             var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
-            var breachModel = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
-                .GetAsync(breachKey, cancellationToken);
+            var breachStore = _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract);
+            var (breachModel, etag) = await breachStore.GetWithETagAsync(breachKey, cancellationToken);
 
             if (breachModel == null)
             {
@@ -1287,8 +1314,12 @@ public partial class ContractService : IContractService
             breachModel.Status = BreachStatus.Cured;
             breachModel.CuredAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(breachKey, breachModel, cancellationToken: cancellationToken);
+            var newEtag = await breachStore.TrySaveAsync(breachKey, breachModel, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for breach: {BreachId}", body.BreachId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             await PublishBreachCuredEventAsync(breachModel, body.CureEvidence, cancellationToken);
@@ -1343,8 +1374,8 @@ public partial class ContractService : IContractService
             _logger.LogInformation("Updating metadata for contract: {ContractId}", body.ContractId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -1364,8 +1395,12 @@ public partial class ContractService : IContractService
 
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
 
             return (StatusCodes.OK, new ContractMetadataResponse
             {
@@ -1615,6 +1650,14 @@ public partial class ContractService : IContractService
 
     private async Task AddToListAsync(string key, string value, CancellationToken ct)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "contract-index", key, Guid.NewGuid().ToString(), 15, ct);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire index lock for key {Key}", key);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract);
         var list = await store.GetAsync(key, ct) ?? new List<string>();
         if (!list.Contains(value))
@@ -1626,6 +1669,14 @@ public partial class ContractService : IContractService
 
     private async Task RemoveFromListAsync(string key, string value, CancellationToken ct)
     {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "contract-index", key, Guid.NewGuid().ToString(), 15, ct);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire index lock for key {Key}", key);
+            return;
+        }
+
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract);
         var list = await store.GetAsync(key, ct) ?? new List<string>();
         if (list.Remove(value))
