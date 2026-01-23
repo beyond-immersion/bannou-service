@@ -410,7 +410,7 @@ public partial class ContractService : IContractService
                 var instances = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
                     .GetBulkAsync(instanceKeys, cancellationToken);
 
-                var activeStatuses = new[] { "draft", "proposed", "pending", "active" };
+                var activeStatuses = new[] { ContractStatus.Draft, ContractStatus.Proposed, ContractStatus.Pending, ContractStatus.Active };
                 if (instances.Any(i => i.Value != null && activeStatuses.Contains(i.Value.Status)))
                 {
                     _logger.LogWarning("Cannot delete template with active instances: {TemplateId}", body.TemplateId);
@@ -484,7 +484,7 @@ public partial class ContractService : IContractService
                 EntityId = p.EntityId.ToString(),
                 EntityType = p.EntityType.ToString(),
                 Role = p.Role,
-                ConsentStatus = "pending",
+                ConsentStatus = ConsentStatus.Pending,
                 ConsentedAt = null
             }).ToList();
 
@@ -499,7 +499,7 @@ public partial class ContractService : IContractService
                 Description = m.Description,
                 Sequence = m.Sequence,
                 Required = m.Required,
-                Status = "pending",
+                Status = MilestoneStatus.Pending,
                 Deadline = m.Deadline,
                 OnComplete = m.OnComplete,
                 OnExpire = m.OnExpire
@@ -510,7 +510,7 @@ public partial class ContractService : IContractService
                 ContractId = contractId.ToString(),
                 TemplateId = body.TemplateId.ToString(),
                 TemplateCode = template.Code,
-                Status = "draft",
+                Status = ContractStatus.Draft,
                 Parties = parties,
                 Terms = mergedTerms,
                 Milestones = milestones,
@@ -572,7 +572,7 @@ public partial class ContractService : IContractService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (model.Status != "draft")
+            if (model.Status != ContractStatus.Draft)
             {
                 _logger.LogWarning("Contract not in draft status: {ContractId}, status: {Status}",
                     body.ContractId, model.Status);
@@ -582,7 +582,7 @@ public partial class ContractService : IContractService
             // Update status
             await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}draft", body.ContractId.ToString(), cancellationToken);
 
-            model.Status = "proposed";
+            model.Status = ContractStatus.Proposed;
             model.ProposedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -624,7 +624,7 @@ public partial class ContractService : IContractService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (model.Status != "proposed")
+            if (model.Status != ContractStatus.Proposed)
             {
                 _logger.LogWarning("Contract not in proposed status: {ContractId}", body.ContractId);
                 return (StatusCodes.BadRequest, null);
@@ -641,23 +641,23 @@ public partial class ContractService : IContractService
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (party.ConsentStatus == "consented")
+            if (party.ConsentStatus == ConsentStatus.Consented)
             {
                 _logger.LogWarning("Party already consented: {EntityId}", body.PartyEntityId);
                 return (StatusCodes.BadRequest, null);
             }
 
             // Record consent
-            party.ConsentStatus = "consented";
+            party.ConsentStatus = ConsentStatus.Consented;
             party.ConsentedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Publish consent received event
-            var remainingConsents = model.Parties?.Count(p => p.ConsentStatus != "consented") ?? 0;
+            var remainingConsents = model.Parties?.Count(p => p.ConsentStatus != ConsentStatus.Consented) ?? 0;
             await PublishConsentReceivedEventAsync(model, party, remainingConsents, cancellationToken);
 
             // Check if all parties have consented
-            var allConsented = model.Parties?.All(p => p.ConsentStatus == "consented") ?? false;
+            var allConsented = model.Parties?.All(p => p.ConsentStatus == ConsentStatus.Consented) ?? false;
 
             if (allConsented)
             {
@@ -668,21 +668,21 @@ public partial class ContractService : IContractService
                 // Check if we should activate immediately or wait for effectiveFrom
                 if (model.EffectiveFrom == null || model.EffectiveFrom <= DateTimeOffset.UtcNow)
                 {
-                    model.Status = "active";
+                    model.Status = ContractStatus.Active;
                     model.EffectiveFrom = DateTimeOffset.UtcNow;
                     await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
 
                     // Activate first milestone if any
                     if (model.Milestones?.Count > 0)
                     {
-                        model.Milestones[0].Status = "active";
+                        model.Milestones[0].Status = MilestoneStatus.Active;
                     }
 
                     await PublishContractActivatedEventAsync(model, cancellationToken);
                 }
                 else
                 {
-                    model.Status = "pending";
+                    model.Status = ContractStatus.Pending;
                     await AddToListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
                 }
 
@@ -795,8 +795,8 @@ public partial class ContractService : IContractService
 
             if (body.Statuses?.Count > 0)
             {
-                var statusStrings = body.Statuses.Select(s => s.ToString().ToLowerInvariant()).ToHashSet();
-                filtered = filtered.Where(c => statusStrings.Contains(c.Status.ToLowerInvariant()));
+                var statusSet = body.Statuses.ToHashSet();
+                filtered = filtered.Where(c => statusSet.Contains(c.Status));
             }
 
             if (body.TemplateId.HasValue)
@@ -860,9 +860,9 @@ public partial class ContractService : IContractService
             }
 
             // Remove from current status index
-            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}{model.Status}", body.ContractId.ToString(), cancellationToken);
+            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}{model.Status.ToString().ToLowerInvariant()}", body.ContractId.ToString(), cancellationToken);
 
-            model.Status = "terminated";
+            model.Status = ContractStatus.Terminated;
             model.TerminatedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -905,11 +905,11 @@ public partial class ContractService : IContractService
             var milestoneProgress = model.Milestones?.Select(m => new MilestoneProgressSummary
             {
                 Code = m.Code,
-                Status = Enum.TryParse<MilestoneStatus>(m.Status, true, out var ms) ? ms : MilestoneStatus.Pending
+                Status = m.Status
             }).ToList();
 
             var pendingConsents = model.Parties?
-                .Where(p => p.ConsentStatus == "pending")
+                .Where(p => p.ConsentStatus == ConsentStatus.Pending)
                 .Select(p => new PendingConsentSummary
                 {
                     EntityId = Guid.Parse(p.EntityId),
@@ -925,14 +925,14 @@ public partial class ContractService : IContractService
                 var breaches = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
                     .GetBulkAsync(breachKeys, cancellationToken);
 
-                var activeStatuses = new[] { "detected", "cure_period" };
+                var activeStatuses = new[] { BreachStatus.Detected, BreachStatus.Cure_period };
                 activeBreaches = breaches
                     .Where(b => b.Value != null && activeStatuses.Contains(b.Value.Status))
                     .Select(b => new BreachSummary
                     {
                         BreachId = Guid.Parse(b.Value!.BreachId),
                         BreachType = Enum.TryParse<BreachType>(b.Value.BreachType, true, out var bt) ? bt : BreachType.Term_violation,
-                        Status = Enum.TryParse<BreachStatus>(b.Value.Status, true, out var bs) ? bs : BreachStatus.Detected
+                        Status = b.Value.Status
                     }).ToList();
             }
 
@@ -946,7 +946,7 @@ public partial class ContractService : IContractService
             return (StatusCodes.OK, new ContractInstanceStatusResponse
             {
                 ContractId = Guid.Parse(model.ContractId),
-                Status = Enum.TryParse<ContractStatus>(model.Status, true, out var cs) ? cs : ContractStatus.Draft,
+                Status = model.Status,
                 MilestoneProgress = milestoneProgress ?? new List<MilestoneProgressSummary>(),
                 PendingConsents = pendingConsents?.Count > 0 ? pendingConsents : null,
                 ActiveBreaches = activeBreaches?.Count > 0 ? activeBreaches : null,
@@ -991,14 +991,14 @@ public partial class ContractService : IContractService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (milestone.Status != "active" && milestone.Status != "pending")
+            if (milestone.Status != MilestoneStatus.Active && milestone.Status != MilestoneStatus.Pending)
             {
                 _logger.LogWarning("Milestone not in completable state: {Status}", milestone.Status);
                 return (StatusCodes.BadRequest, null);
             }
 
             // Mark completed
-            milestone.Status = "completed";
+            milestone.Status = MilestoneStatus.Completed;
             milestone.CompletedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1017,19 +1017,19 @@ public partial class ContractService : IContractService
             var currentIndex = model.Milestones?.FindIndex(m => m.Code == body.MilestoneCode) ?? -1;
             if (currentIndex >= 0 && currentIndex + 1 < (model.Milestones?.Count ?? 0))
             {
-                model.Milestones![currentIndex + 1].Status = "active";
+                model.Milestones![currentIndex + 1].Status = MilestoneStatus.Active;
                 model.CurrentMilestoneIndex = currentIndex + 1;
             }
 
             // Check if all required milestones are complete
             var allRequiredComplete = model.Milestones?
                 .Where(m => m.Required)
-                .All(m => m.Status == "completed") ?? true;
+                .All(m => m.Status == MilestoneStatus.Completed) ?? true;
 
-            if (allRequiredComplete && model.Status == "active")
+            if (allRequiredComplete && model.Status == ContractStatus.Active)
             {
                 await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
-                model.Status = "fulfilled";
+                model.Status = ContractStatus.Fulfilled;
                 await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
                 await PublishContractFulfilledEventAsync(model, cancellationToken);
             }
@@ -1079,7 +1079,7 @@ public partial class ContractService : IContractService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (milestone.Status != "active" && milestone.Status != "pending")
+            if (milestone.Status != MilestoneStatus.Active && milestone.Status != MilestoneStatus.Pending)
             {
                 _logger.LogWarning("Milestone not in failable state: {Status}", milestone.Status);
                 return (StatusCodes.BadRequest, null);
@@ -1089,12 +1089,12 @@ public partial class ContractService : IContractService
             var triggeredBreach = false;
             if (milestone.Required)
             {
-                milestone.Status = "failed";
+                milestone.Status = MilestoneStatus.Failed;
                 triggeredBreach = true;
             }
             else
             {
-                milestone.Status = "skipped";
+                milestone.Status = MilestoneStatus.Skipped;
             }
             milestone.FailedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
@@ -1213,7 +1213,7 @@ public partial class ContractService : IContractService
                 BreachType = body.BreachType.ToString(),
                 BreachedTermOrMilestone = body.BreachedTermOrMilestone,
                 Description = body.Description,
-                Status = cureDeadline.HasValue ? "cure_period" : "detected",
+                Status = cureDeadline.HasValue ? BreachStatus.Cure_period : BreachStatus.Detected,
                 DetectedAt = now,
                 CureDeadline = cureDeadline
             };
@@ -1262,13 +1262,13 @@ public partial class ContractService : IContractService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (breachModel.Status != "detected" && breachModel.Status != "cure_period")
+            if (breachModel.Status != BreachStatus.Detected && breachModel.Status != BreachStatus.Cure_period)
             {
                 _logger.LogWarning("Breach not in curable state: {Status}", breachModel.Status);
                 return (StatusCodes.BadRequest, null);
             }
 
-            breachModel.Status = "cured";
+            breachModel.Status = BreachStatus.Cured;
             breachModel.CuredAt = DateTimeOffset.UtcNow;
 
             await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
@@ -1431,7 +1431,7 @@ public partial class ContractService : IContractService
                 .GetBulkAsync(keys, cancellationToken);
 
             var activeContracts = bulkResults
-                .Where(r => r.Value != null && r.Value.Status == "active")
+                .Where(r => r.Value != null && r.Value.Status == ContractStatus.Active)
                 .Select(r => r.Value!)
                 .ToList();
 
@@ -1488,8 +1488,7 @@ public partial class ContractService : IContractService
                         ContractId = Guid.Parse(contract.ContractId),
                         TemplateCode = contract.TemplateCode,
                         TemplateName = null, // Would need to load template
-                        Status = Enum.TryParse<ContractStatus>(contract.Status, true, out var cs)
-                            ? cs : ContractStatus.Active,
+                        Status = contract.Status,
                         Role = party.Role,
                         EffectiveUntil = contract.EffectiveUntil
                     });
@@ -1537,7 +1536,7 @@ public partial class ContractService : IContractService
                 .GetBulkAsync(keys, cancellationToken);
 
             var activeContracts = bulkResults
-                .Where(r => r.Value != null && r.Value.Status == "active")
+                .Where(r => r.Value != null && r.Value.Status == ContractStatus.Active)
                 .Select(r => r.Value!)
                 .ToList();
 
@@ -1562,8 +1561,7 @@ public partial class ContractService : IContractService
                     ContractId = Guid.Parse(c.ContractId),
                     TemplateCode = c.TemplateCode,
                     TemplateName = null,
-                    Status = Enum.TryParse<ContractStatus>(c.Status, true, out var cs)
-                        ? cs : ContractStatus.Active,
+                    Status = c.Status,
                     Role = party?.Role ?? "unknown",
                     EffectiveUntil = c.EffectiveUntil
                 };
@@ -1681,7 +1679,7 @@ public partial class ContractService : IContractService
             Endpoint = api.Endpoint,
             PayloadTemplate = api.PayloadTemplate,
             Description = api.Description,
-            ExecutionMode = api.ExecutionMode.ToString(),
+            ExecutionMode = api.ExecutionMode,
             ResponseValidation = api.ResponseValidation
         };
     }
@@ -1856,15 +1854,15 @@ public partial class ContractService : IContractService
     }
 
     /// <summary>
-    /// Converts execution mode string to ExecutionMode enum.
+    /// Converts PreboundApiExecutionMode to ServiceClients.ExecutionMode.
     /// </summary>
-    private static ServiceClients.ExecutionMode ConvertExecutionMode(string? mode)
+    private static ServiceClients.ExecutionMode ConvertExecutionMode(PreboundApiExecutionMode mode)
     {
-        return mode?.ToLowerInvariant() switch
+        return mode switch
         {
-            "sync" => ServiceClients.ExecutionMode.Sync,
-            "async" => ServiceClients.ExecutionMode.Async,
-            "fire_and_forget" => ServiceClients.ExecutionMode.FireAndForget,
+            PreboundApiExecutionMode.Sync => ServiceClients.ExecutionMode.Sync,
+            PreboundApiExecutionMode.Async => ServiceClients.ExecutionMode.Async,
+            PreboundApiExecutionMode.Fire_and_forget => ServiceClients.ExecutionMode.FireAndForget,
             _ => ServiceClients.ExecutionMode.Sync
         };
     }
@@ -1954,8 +1952,7 @@ public partial class ContractService : IContractService
             Endpoint = model.Endpoint,
             PayloadTemplate = model.PayloadTemplate,
             Description = model.Description,
-            ExecutionMode = string.IsNullOrEmpty(model.ExecutionMode) ? PreboundApiExecutionMode.Sync :
-                Enum.TryParse<PreboundApiExecutionMode>(model.ExecutionMode, true, out var em) ? em : PreboundApiExecutionMode.Sync,
+            ExecutionMode = model.ExecutionMode,
             ResponseValidation = model.ResponseValidation
         };
     }
@@ -1967,13 +1964,13 @@ public partial class ContractService : IContractService
             ContractId = Guid.Parse(model.ContractId),
             TemplateId = Guid.Parse(model.TemplateId),
             TemplateCode = model.TemplateCode,
-            Status = Enum.TryParse<ContractStatus>(model.Status, true, out var cs) ? cs : ContractStatus.Draft,
+            Status = model.Status,
             Parties = model.Parties?.Select(p => new ContractPartyResponse
             {
                 EntityId = Guid.Parse(p.EntityId),
                 EntityType = Enum.TryParse<EntityType>(p.EntityType, true, out var et) ? et : EntityType.Character,
                 Role = p.Role,
-                ConsentStatus = Enum.TryParse<ConsentStatus>(p.ConsentStatus, true, out var cos) ? cos : ConsentStatus.Pending,
+                ConsentStatus = p.ConsentStatus,
                 ConsentedAt = p.ConsentedAt
             }).ToList() ?? new List<ContractPartyResponse>(),
             Terms = MapTermsToResponse(model.Terms),
@@ -1999,7 +1996,7 @@ public partial class ContractService : IContractService
             Name = model.Name,
             Sequence = model.Sequence,
             Required = model.Required,
-            Status = Enum.TryParse<MilestoneStatus>(model.Status, true, out var ms) ? ms : MilestoneStatus.Pending,
+            Status = model.Status,
             CompletedAt = model.CompletedAt,
             FailedAt = model.FailedAt,
             Deadline = null // Would need to compute absolute deadline
@@ -2019,8 +2016,7 @@ public partial class ContractService : IContractService
                 ? bt : BreachType.Term_violation,
             BreachedTermOrMilestone = model.BreachedTermOrMilestone,
             Description = model.Description,
-            Status = Enum.TryParse<BreachStatus>(model.Status, true, out var bs)
-                ? bs : BreachStatus.Detected,
+            Status = model.Status,
             DetectedAt = model.DetectedAt,
             CureDeadline = model.CureDeadline,
             CuredAt = model.CuredAt,
@@ -2106,7 +2102,7 @@ public partial class ContractService : IContractService
             ContractId = Guid.Parse(model.ContractId),
             TemplateId = Guid.Parse(model.TemplateId),
             TemplateCode = model.TemplateCode,
-            Status = model.Status,
+            Status = model.Status.ToString(),
             CreatedAt = model.CreatedAt
         });
     }
@@ -2264,7 +2260,7 @@ public partial class ContractService : IContractService
             ContractId = Guid.Parse(model.ContractId),
             TemplateCode = model.TemplateCode,
             Parties = parties,
-            MilestonesCompleted = model.Milestones?.Count(m => m.Status == "completed") ?? 0
+            MilestonesCompleted = model.Milestones?.Count(m => m.Status == MilestoneStatus.Completed) ?? 0
         });
     }
 
@@ -2362,7 +2358,7 @@ internal class PreboundApiModel
     public string Endpoint { get; set; } = string.Empty;
     public string PayloadTemplate { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string ExecutionMode { get; set; } = "sync";
+    public PreboundApiExecutionMode ExecutionMode { get; set; } = PreboundApiExecutionMode.Sync;
     public ResponseValidation? ResponseValidation { get; set; }
 }
 
@@ -2374,7 +2370,7 @@ internal class ContractInstanceModel
     public string ContractId { get; set; } = string.Empty;
     public string TemplateId { get; set; } = string.Empty;
     public string TemplateCode { get; set; } = string.Empty;
-    public string Status { get; set; } = "draft";
+    public ContractStatus Status { get; set; } = ContractStatus.Draft;
     public List<ContractPartyModel>? Parties { get; set; }
     public ContractTermsModel? Terms { get; set; }
     public List<MilestoneInstanceModel>? Milestones { get; set; }
@@ -2399,7 +2395,7 @@ internal class ContractPartyModel
     public string EntityId { get; set; } = string.Empty;
     public string EntityType { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
-    public string ConsentStatus { get; set; } = "pending";
+    public ConsentStatus ConsentStatus { get; set; } = ConsentStatus.Pending;
     public DateTimeOffset? ConsentedAt { get; set; }
 }
 
@@ -2413,7 +2409,7 @@ internal class MilestoneInstanceModel
     public string? Description { get; set; }
     public int Sequence { get; set; }
     public bool Required { get; set; }
-    public string Status { get; set; } = "pending";
+    public MilestoneStatus Status { get; set; } = MilestoneStatus.Pending;
     public string? Deadline { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
     public DateTimeOffset? FailedAt { get; set; }
@@ -2442,7 +2438,7 @@ internal class BreachModel
     public string BreachType { get; set; } = string.Empty;
     public string? BreachedTermOrMilestone { get; set; }
     public string? Description { get; set; }
-    public string Status { get; set; } = "detected";
+    public BreachStatus Status { get; set; } = BreachStatus.Detected;
     public DateTimeOffset DetectedAt { get; set; }
     public DateTimeOffset? CureDeadline { get; set; }
     public DateTimeOffset? CuredAt { get; set; }

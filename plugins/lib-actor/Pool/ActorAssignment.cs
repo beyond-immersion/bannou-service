@@ -3,6 +3,8 @@
 // Tracks which pool node is running a specific actor.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Actor;
+
 namespace BeyondImmersion.BannouService.Actor.Pool;
 
 /// <summary>
@@ -40,7 +42,7 @@ public class ActorAssignment
     /// <summary>
     /// Actor status (running, stopped, etc.).
     /// </summary>
-    public string Status { get; set; } = "pending";
+    public ActorStatus Status { get; set; } = ActorStatus.Pending;
 
     /// <summary>
     /// When the actor was assigned to this node.

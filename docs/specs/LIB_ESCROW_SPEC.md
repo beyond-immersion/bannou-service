@@ -185,28 +185,62 @@ EscrowPluginConfiguration:
 
 ### 3.1 Full Custody Model
 
-lib-escrow takes **complete physical possession** of assets. This is not locking or holds - assets are transferred entirely out of depositor ownership.
+lib-escrow takes **complete physical possession** of assets. This is not locking or holds - assets are transferred entirely out of depositor ownership into **per-party escrow containers**.
+
+Each party in the escrow gets their own dedicated wallet and container owned by the escrow entity. This enables:
+- **Clear refund paths**: Party A's deposits return to Party A, Party B's to Party B
+- **Contribution verification**: Each party's deposits tracked separately
+- **Ownership validation**: Parties can only withdraw from their own escrow container
+- **Extra item handling**: Non-term items stay in depositor's escrow container
 
 ```
-┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
-│   Depositor     │         │   Escrow Entity  │         │   Recipient     │
-│                 │         │                  │         │                 │
-│  Wallet: 500g   │──debit──►│  Wallet: 500g    │──credit─►│  Wallet: +500g  │
-│  Inventory: ⚔️   │──move───►│  Container: ⚔️   │──move───►│  Inventory: ⚔️  │
-│  Contract: 📜   │──lock───►│  Locked: 📜      │──xfer───►│  Contract: 📜   │
-└─────────────────┘         └─────────────────┘         └─────────────────┘
-       DEPOSIT                  HELD IN ESCROW                 RELEASE
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            ESCROW CUSTODY                                   │
+│  ┌─────────────────────────────┐    ┌─────────────────────────────┐         │
+│  │  Party A Escrow Wallet      │    │  Party B Escrow Wallet      │         │
+│  │  ─────────────────────      │    │  ─────────────────────      │         │
+│  │  Gold: 10,000               │    │  Gold: 0                    │         │
+│  └─────────────────────────────┘    └─────────────────────────────┘         │
+│  ┌─────────────────────────────┐    ┌─────────────────────────────┐         │
+│  │  Party A Escrow Container   │    │  Party B Escrow Container   │         │
+│  │  ───────────────────────    │    │  ───────────────────────    │         │
+│  │  (empty)                    │    │  Rare Sword x1              │         │
+│  └─────────────────────────────┘    └─────────────────────────────┘         │
+│         ▲                                    ▲                              │
+│         │ DEPOSIT                            │ DEPOSIT                      │
+└─────────┼────────────────────────────────────┼──────────────────────────────┘
+          │                                    │
+    ┌─────┴─────┐                        ┌─────┴─────┐
+    │  Party A  │                        │  Party B  │
+    │  deposits │                        │  deposits │
+    │  gold     │                        │  sword    │
+    └───────────┘                        └───────────┘
+
+On RELEASE (via contract execution):
+  - Gold (minus fees) from Party A's escrow wallet → Party B's wallet
+  - Fees from Party A's escrow wallet → Fee recipient wallets
+  - Sword from Party B's escrow container → Party A's container
+
+On REFUND:
+  - Party A's escrow wallet → Party A's wallet (simple, no confusion)
+  - Party B's escrow container → Party B's container
 ```
 
-### 3.2 Escrow as Entity Owner
+### 3.2 Escrow as Entity Owner (Per-Party Infrastructure)
 
-Each escrow agreement is a first-class entity that owns infrastructure:
+Each escrow agreement is a first-class entity that owns **per-party infrastructure**:
 
-- **Wallet**: Created via `/currency/wallet/create` with `ownerType=escrow`, `ownerId=agreementId`
-- **Container**: Created via `/inventory/create-container` with `ownerType=escrow`, `ownerId=agreementId`
-- **Contract locks**: Established via lib-contract's locking mechanism
+For each party in the escrow:
+- **Party Escrow Wallet**: Created via `/currency/wallet/create` with `ownerType=escrow`, `ownerId=agreementId`, tagged with party identifier
+- **Party Escrow Container**: Created via `/inventory/create-container` with `ownerType=escrow`, `ownerId=agreementId`, tagged with party identifier
 
-These are real, queryable entities in their respective systems. The escrow service orchestrates transfers into and out of them.
+Additionally:
+- **Contract locks**: Established via lib-contract's locking mechanism (shared across parties)
+
+These are real, queryable entities in their respective systems. The escrow service orchestrates:
+- Deposits INTO each party's escrow wallet/container
+- Release distributions FROM escrow wallets/containers TO recipients (via contract execution)
+- Refunds FROM each party's escrow wallet/container back to that same party
 
 ### 3.3 Asset Transfer Mechanics
 
@@ -2439,7 +2473,9 @@ For `assetType=contract` to work, lib-contract needs these capabilities (to be a
 ```yaml
 /contract/lock:
   method: POST
-  access: developer
+  x-permissions:
+    - role: developer
+      states: {}
   description: Lock a contract under guardian custody (prevents modification/termination)
   request:
     contractInstanceId: uuid
@@ -2455,7 +2491,9 @@ For `assetType=contract` to work, lib-contract needs these capabilities (to be a
 
 /contract/unlock:
   method: POST
-  access: developer
+  x-permissions:
+    - role: developer
+      states: {}
   description: Unlock a contract from guardian custody
   request:
     contractInstanceId: uuid
@@ -2471,7 +2509,9 @@ For `assetType=contract` to work, lib-contract needs these capabilities (to be a
 
 /contract/transfer-party:
   method: POST
-  access: developer
+  x-permissions:
+    - role: developer
+      states: {}
   description: Transfer a party role to a new entity (for escrow release)
   request:
     contractInstanceId: uuid

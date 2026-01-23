@@ -2609,7 +2609,7 @@ public partial class OrchestratorService : IOrchestratorService
                 ProcessorId = lease.ProcessorId,
                 AppId = lease.AppId,
                 PoolType = poolType,
-                Status = "available",
+                Status = ProcessorStatus.Available,
                 LastUpdated = DateTimeOffset.UtcNow
             });
 
@@ -2807,7 +2807,7 @@ public partial class OrchestratorService : IOrchestratorService
                             ProcessorId = processorId,
                             AppId = appId,
                             PoolType = body.PoolType,
-                            Status = "pending", // Will become "available" after self-registration
+                            Status = ProcessorStatus.Pending, // Will become Available after self-registration
                             CreatedAt = DateTimeOffset.UtcNow,
                             LastUpdated = DateTimeOffset.UtcNow
                         };
@@ -3164,6 +3164,17 @@ public partial class OrchestratorService : IOrchestratorService
     #region Processing Pool Internal Models
 
     /// <summary>
+    /// Status of a processor instance in the pool.
+    /// </summary>
+    internal enum ProcessorStatus
+    {
+        /// <summary>Processor is ready to handle requests.</summary>
+        Available,
+        /// <summary>Processor is starting up and not yet ready.</summary>
+        Pending
+    }
+
+    /// <summary>
     /// Represents a processor instance in the pool.
     /// </summary>
     internal sealed class ProcessorInstance
@@ -3171,7 +3182,7 @@ public partial class OrchestratorService : IOrchestratorService
         public string ProcessorId { get; set; } = string.Empty;
         public string AppId { get; set; } = string.Empty;
         public string PoolType { get; set; } = string.Empty;
-        public string Status { get; set; } = "available";
+        public ProcessorStatus Status { get; set; } = ProcessorStatus.Available;
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset LastUpdated { get; set; }
     }

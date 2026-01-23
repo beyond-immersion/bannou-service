@@ -3,6 +3,7 @@
 // Redis-backed pool node and actor assignment management.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -376,10 +377,14 @@ public sealed class ActorPoolManager : IActorPoolManager
 
         if (assignment != null)
         {
-            assignment.Status = newStatus;
+            // Parse string status to enum (event models use strings for serialization)
+            if (Enum.TryParse<ActorStatus>(newStatus, ignoreCase: true, out var status))
+            {
+                assignment.Status = status;
+            }
 
             // Set StartedAt when status transitions to running
-            if (newStatus == "running" && assignment.StartedAt == null)
+            if (assignment.Status == ActorStatus.Running && assignment.StartedAt == null)
             {
                 assignment.StartedAt = DateTimeOffset.UtcNow;
             }

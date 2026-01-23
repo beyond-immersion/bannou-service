@@ -475,7 +475,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "draft";
+        instance.Status = ContractStatus.Draft;
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
@@ -503,7 +503,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
@@ -531,11 +531,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var contractId = Guid.NewGuid();
         var partyEntityId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "proposed";
+        instance.Status = ContractStatus.Proposed;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "pending" },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "pending" }
+            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = MilestoneStatus.Pending },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = MilestoneStatus.Pending }
         };
 
         _mockInstanceStore
@@ -568,7 +568,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "draft";
+        instance.Status = ContractStatus.Draft;
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
@@ -597,11 +597,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var contractId = Guid.NewGuid();
         var partyEntityId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "proposed";
+        instance.Status = ContractStatus.Proposed;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "pending" },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented", ConsentedAt = DateTimeOffset.UtcNow }
+            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = MilestoneStatus.Pending },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented, ConsentedAt = DateTimeOffset.UtcNow }
         };
 
         ContractInstanceModel? savedInstance = null;
@@ -692,11 +692,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var contractId = Guid.NewGuid();
         var requestingEntityId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = requestingEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+            new() { EntityId = requestingEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
 
         _mockInstanceStore
@@ -732,11 +732,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var contractId = Guid.NewGuid();
         var nonPartyEntityId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
 
         _mockInstanceStore
@@ -797,10 +797,10 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
-            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = true, Sequence = 1 }
+            new() { Code = "milestone_1", Name = "First Milestone", Status = MilestoneStatus.Pending, Required = true, Sequence = 1 }
         };
 
         _mockInstanceStore
@@ -833,10 +833,10 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
-            new() { Code = "milestone_1", Name = "First Milestone", Status = "completed", Required = true, Sequence = 1, CompletedAt = DateTimeOffset.UtcNow }
+            new() { Code = "milestone_1", Name = "First Milestone", Status = MilestoneStatus.Completed, Required = true, Sequence = 1, CompletedAt = DateTimeOffset.UtcNow }
         };
 
         _mockInstanceStore
@@ -868,10 +868,10 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
-            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = true, Sequence = 1 }
+            new() { Code = "milestone_1", Name = "First Milestone", Status = MilestoneStatus.Pending, Required = true, Sequence = 1 }
         };
 
         _mockInstanceStore
@@ -905,10 +905,10 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
-            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = false, Sequence = 1 }
+            new() { Code = "milestone_1", Name = "First Milestone", Status = MilestoneStatus.Pending, Required = false, Sequence = 1 }
         };
 
         _mockInstanceStore
@@ -948,7 +948,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var instance = CreateTestInstanceModel(contractId);
         instance.Milestones = new List<MilestoneInstanceModel>
         {
-            new() { Code = "milestone_1", Name = "First Milestone", Status = "pending", Required = true, Sequence = 1 }
+            new() { Code = "milestone_1", Name = "First Milestone", Status = MilestoneStatus.Pending, Required = true, Sequence = 1 }
         };
 
         _mockInstanceStore
@@ -1008,7 +1008,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
@@ -1087,7 +1087,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             BreachingEntityId = Guid.NewGuid().ToString(),
             BreachingEntityType = "Character",
             BreachType = "term_violation",
-            Status = "detected",
+            Status = BreachStatus.Detected,
             DetectedAt = DateTimeOffset.UtcNow
         };
 
@@ -1153,7 +1153,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             BreachingEntityId = Guid.NewGuid().ToString(),
             BreachingEntityType = "Character",
             BreachType = "term_violation",
-            Status = "detected",
+            Status = BreachStatus.Detected,
             DetectedAt = DateTimeOffset.UtcNow
         };
 
@@ -1370,10 +1370,10 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var entityId = Guid.NewGuid();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = entityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" }
+            new() { EntityId = entityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented }
         };
 
         _mockListStore
@@ -1452,11 +1452,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             ContractId = contractId.ToString(),
             TemplateId = Guid.NewGuid().ToString(),
             TemplateCode = "test_template",
-            Status = "draft",
+            Status = ContractStatus.Draft,
             Parties = new List<ContractPartyModel>
             {
-                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "pending" },
-                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "pending" }
+                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = MilestoneStatus.Pending },
+                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = MilestoneStatus.Pending }
             },
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -1475,11 +1475,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var employerId = Guid.NewGuid();
         var employeeId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
-            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
         instance.Milestones = new List<MilestoneInstanceModel>
         {
@@ -1487,7 +1487,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "payment_milestone",
                 Name = "Payment Milestone",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1498,7 +1498,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         Endpoint = "/currency/transfer",
                         PayloadTemplate = """{"fromEntityId": "{{contract.party.employer.entityId}}", "toEntityId": "{{contract.party.employee.entityId}}", "amount": 100}""",
                         Description = "Transfer payment on completion",
-                        ExecutionMode = "sync"
+                        ExecutionMode = PreboundApiExecutionMode.Sync
                     }
                 }
             }
@@ -1569,14 +1569,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
             new()
             {
                 Code = "payment_milestone",
                 Name = "Payment Milestone",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1586,7 +1586,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "currency",
                         Endpoint = "/currency/transfer",
                         PayloadTemplate = """{"amount": "{{missing.variable}}"}""",
-                        ExecutionMode = "sync"
+                        ExecutionMode = PreboundApiExecutionMode.Sync
                     }
                 }
             }
@@ -1646,14 +1646,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
             new()
             {
                 Code = "payment_milestone",
                 Name = "Payment Milestone",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1663,7 +1663,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "currency",
                         Endpoint = "/currency/transfer",
                         PayloadTemplate = """{"amount": 100}""",
-                        ExecutionMode = "sync",
+                        ExecutionMode = PreboundApiExecutionMode.Sync,
                         ResponseValidation = new ResponseValidation
                         {
                             SuccessConditions = new List<ValidationCondition>
@@ -1734,14 +1734,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
             new()
             {
                 Code = "multi_action_milestone",
                 Name = "Multi Action Milestone",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1751,7 +1751,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "currency",
                         Endpoint = "/currency/transfer",
                         PayloadTemplate = """{"amount": 100}""",
-                        ExecutionMode = "sync"
+                        ExecutionMode = PreboundApiExecutionMode.Sync
                     },
                     new()
                     {
@@ -1822,14 +1822,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
             new()
             {
                 Code = "deadline_milestone",
                 Name = "Deadline Milestone",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1,
                 OnExpire = new List<PreboundApiModel>
@@ -1900,14 +1900,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
             new()
             {
                 Code = "milestone_1",
                 Name = "Test Milestone",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1917,7 +1917,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "unreachable",
                         Endpoint = "/api/call",
                         PayloadTemplate = """{}""",
-                        ExecutionMode = "sync"
+                        ExecutionMode = PreboundApiExecutionMode.Sync
                     }
                 }
             }
@@ -1971,14 +1971,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var service = CreateService();
         var contractId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Milestones = new List<MilestoneInstanceModel>
         {
             new()
             {
                 Code = "simple_milestone",
                 Name = "Simple Milestone",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1
                 // No OnComplete or OnExpire APIs
@@ -2027,11 +2027,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var instance = CreateTestInstanceModel(contractId);
         instance.TemplateId = templateId.ToString();
         instance.TemplateCode = "employment_contract";
-        instance.Status = "active";
+        instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = "consented" },
-            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = "consented" }
+            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
         instance.Terms = new ContractTermsModel
         {
@@ -2048,7 +2048,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "payment",
                 Name = "Payment",
-                Status = "active",
+                Status = ContractStatus.Active,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -2058,7 +2058,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "test",
                         Endpoint = "/test",
                         PayloadTemplate = """{}""",
-                        ExecutionMode = "sync"
+                        ExecutionMode = PreboundApiExecutionMode.Sync
                     }
                 }
             }

@@ -368,7 +368,7 @@ public partial class CurrencyService : ICurrencyService
                 OwnerId = body.OwnerId.ToString(),
                 OwnerType = body.OwnerType.ToString(),
                 RealmId = body.RealmId?.ToString(),
-                Status = WalletStatus.Active.ToString(),
+                Status = WalletStatus.Active,
                 CreatedAt = now,
                 LastActivityAt = now
             };
@@ -520,9 +520,9 @@ public partial class CurrencyService : ICurrencyService
             var wallet = await store.GetAsync(key, cancellationToken);
 
             if (wallet is null) return (StatusCodes.NotFound, null);
-            if (wallet.Status == WalletStatus.Frozen.ToString()) return (StatusCodes.Conflict, null);
+            if (wallet.Status == WalletStatus.Frozen) return (StatusCodes.Conflict, null);
 
-            wallet.Status = WalletStatus.Frozen.ToString();
+            wallet.Status = WalletStatus.Frozen;
             wallet.FrozenReason = body.Reason;
             wallet.FrozenAt = DateTimeOffset.UtcNow;
 
@@ -567,9 +567,9 @@ public partial class CurrencyService : ICurrencyService
             var wallet = await store.GetAsync(key, cancellationToken);
 
             if (wallet is null) return (StatusCodes.NotFound, null);
-            if (wallet.Status != WalletStatus.Frozen.ToString()) return (StatusCodes.BadRequest, null);
+            if (wallet.Status != WalletStatus.Frozen) return (StatusCodes.BadRequest, null);
 
-            wallet.Status = WalletStatus.Active.ToString();
+            wallet.Status = WalletStatus.Active;
             wallet.FrozenReason = null;
             wallet.FrozenAt = null;
 
@@ -613,7 +613,7 @@ public partial class CurrencyService : ICurrencyService
             var wallet = await store.GetAsync(walletKey, cancellationToken);
 
             if (wallet is null) return (StatusCodes.NotFound, null);
-            if (wallet.Status == WalletStatus.Closed.ToString()) return (StatusCodes.BadRequest, null);
+            if (wallet.Status == WalletStatus.Closed) return (StatusCodes.BadRequest, null);
 
             var destKey = $"{WALLET_PREFIX}{body.TransferRemainingTo}";
             var destWallet = await store.GetAsync(destKey, cancellationToken);
@@ -638,7 +638,7 @@ public partial class CurrencyService : ICurrencyService
                 }
             }
 
-            wallet.Status = WalletStatus.Closed.ToString();
+            wallet.Status = WalletStatus.Closed;
             await store.SaveAsync(walletKey, wallet, cancellationToken: cancellationToken);
 
             await _messageBus.TryPublishAsync("currency.wallet.closed", new CurrencyWalletClosedEvent
@@ -797,7 +797,7 @@ public partial class CurrencyService : ICurrencyService
 
             var wallet = await GetWalletByIdAsync(body.WalletId.ToString(), cancellationToken);
             if (wallet is null) return (StatusCodes.NotFound, null);
-            if (wallet.Status == WalletStatus.Frozen.ToString()) return ((StatusCodes)422, null);
+            if (wallet.Status == WalletStatus.Frozen) return ((StatusCodes)422, null);
 
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
@@ -948,7 +948,7 @@ public partial class CurrencyService : ICurrencyService
 
             var wallet = await GetWalletByIdAsync(body.WalletId.ToString(), cancellationToken);
             if (wallet is null) return (StatusCodes.NotFound, null);
-            if (wallet.Status == WalletStatus.Frozen.ToString()) return ((StatusCodes)422, null);
+            if (wallet.Status == WalletStatus.Frozen) return ((StatusCodes)422, null);
 
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
@@ -1028,11 +1028,11 @@ public partial class CurrencyService : ICurrencyService
 
             var sourceWallet = await GetWalletByIdAsync(body.SourceWalletId.ToString(), cancellationToken);
             if (sourceWallet is null) return (StatusCodes.NotFound, null);
-            if (sourceWallet.Status == WalletStatus.Frozen.ToString()) return ((StatusCodes)422, null);
+            if (sourceWallet.Status == WalletStatus.Frozen) return ((StatusCodes)422, null);
 
             var targetWallet = await GetWalletByIdAsync(body.TargetWalletId.ToString(), cancellationToken);
             if (targetWallet is null) return (StatusCodes.NotFound, null);
-            if (targetWallet.Status == WalletStatus.Frozen.ToString()) return ((StatusCodes)422, null);
+            if (targetWallet.Status == WalletStatus.Frozen) return ((StatusCodes)422, null);
 
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
@@ -1248,7 +1248,7 @@ public partial class CurrencyService : ICurrencyService
 
             var wallet = await GetWalletByIdAsync(body.WalletId.ToString(), cancellationToken);
             if (wallet is null) return (StatusCodes.NotFound, null);
-            if (wallet.Status == WalletStatus.Frozen.ToString()) return ((StatusCodes)422, null);
+            if (wallet.Status == WalletStatus.Frozen) return ((StatusCodes)422, null);
 
             var fromDef = await GetDefinitionByIdAsync(body.FromCurrencyId.ToString(), cancellationToken);
             if (fromDef is null) return (StatusCodes.NotFound, null);
@@ -1807,7 +1807,7 @@ public partial class CurrencyService : ICurrencyService
                 WalletId = body.WalletId.ToString(),
                 CurrencyDefinitionId = body.CurrencyDefinitionId.ToString(),
                 Amount = body.Amount,
-                Status = HoldStatus.Active.ToString(),
+                Status = HoldStatus.Active,
                 CreatedAt = now,
                 ExpiresAt = body.ExpiresAt,
                 ReferenceType = body.ReferenceType,
@@ -1880,7 +1880,7 @@ public partial class CurrencyService : ICurrencyService
             }
 
             if (hold is null) return (StatusCodes.NotFound, null);
-            if (hold.Status != HoldStatus.Active.ToString()) return (StatusCodes.BadRequest, null);
+            if (hold.Status != HoldStatus.Active) return (StatusCodes.BadRequest, null);
             if (body.CaptureAmount > hold.Amount) return (StatusCodes.BadRequest, null);
 
             // Debit the captured amount
@@ -1899,7 +1899,7 @@ public partial class CurrencyService : ICurrencyService
             if (debitStatus != StatusCodes.OK || debitResp is null) return (debitStatus, null);
 
             var amountReleased = hold.Amount - body.CaptureAmount;
-            hold.Status = HoldStatus.Captured.ToString();
+            hold.Status = HoldStatus.Captured;
             hold.CapturedAmount = body.CaptureAmount;
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
@@ -1986,9 +1986,9 @@ public partial class CurrencyService : ICurrencyService
             }
 
             if (hold is null) return (StatusCodes.NotFound, null);
-            if (hold.Status != HoldStatus.Active.ToString()) return (StatusCodes.BadRequest, null);
+            if (hold.Status != HoldStatus.Active) return (StatusCodes.BadRequest, null);
 
-            hold.Status = HoldStatus.Released.ToString();
+            hold.Status = HoldStatus.Released;
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
             var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
@@ -2424,7 +2424,7 @@ public partial class CurrencyService : ICurrencyService
                 }
             }
 
-            if (hold is not null && hold.Status == HoldStatus.Active.ToString())
+            if (hold is not null && hold.Status == HoldStatus.Active)
             {
                 total += hold.Amount;
             }
@@ -2616,7 +2616,7 @@ public partial class CurrencyService : ICurrencyService
             OwnerId = Guid.Parse(m.OwnerId),
             OwnerType = Enum.TryParse<WalletOwnerType>(m.OwnerType, out var ot) ? ot : WalletOwnerType.Account,
             RealmId = m.RealmId is not null ? Guid.Parse(m.RealmId) : null,
-            Status = Enum.TryParse<WalletStatus>(m.Status, out var ws) ? ws : WalletStatus.Active,
+            Status = m.Status,
             FrozenReason = m.FrozenReason,
             FrozenAt = m.FrozenAt,
             CreatedAt = m.CreatedAt,
@@ -2654,7 +2654,7 @@ public partial class CurrencyService : ICurrencyService
             WalletId = Guid.Parse(m.WalletId),
             CurrencyDefinitionId = Guid.Parse(m.CurrencyDefinitionId),
             Amount = m.Amount,
-            Status = Enum.TryParse<HoldStatus>(m.Status, out var hs) ? hs : HoldStatus.Active,
+            Status = m.Status,
             CreatedAt = m.CreatedAt,
             ExpiresAt = m.ExpiresAt,
             ReferenceType = m.ReferenceType,
@@ -2715,7 +2715,7 @@ public partial class CurrencyService : ICurrencyService
         public string OwnerId { get; set; } = "";
         public string OwnerType { get; set; } = "";
         public string? RealmId { get; set; }
-        public string Status { get; set; } = "Active";
+        public WalletStatus Status { get; set; } = WalletStatus.Active;
         public string? FrozenReason { get; set; }
         public DateTimeOffset? FrozenAt { get; set; }
         public string? FrozenBy { get; set; }
@@ -2762,7 +2762,7 @@ public partial class CurrencyService : ICurrencyService
         public string WalletId { get; set; } = "";
         public string CurrencyDefinitionId { get; set; } = "";
         public double Amount { get; set; }
-        public string Status { get; set; } = "Active";
+        public HoldStatus Status { get; set; } = HoldStatus.Active;
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset ExpiresAt { get; set; }
         public string? ReferenceType { get; set; }

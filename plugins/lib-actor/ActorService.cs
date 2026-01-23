@@ -571,7 +571,7 @@ public partial class ActorService : IActorService
                     NodeAppId = poolNode.AppId,
                     TemplateId = body.TemplateId.ToString(),
                     Category = template.Category,
-                    Status = "pending",
+                    Status = ActorStatus.Pending,
                     CharacterId = body.CharacterId
                 };
                 await _poolManager.RecordActorAssignmentAsync(assignment, cancellationToken);
@@ -680,9 +680,7 @@ public partial class ActorService : IActorService
                         CharacterId = assignment.CharacterId,
                         NodeId = assignment.NodeId,
                         NodeAppId = assignment.NodeAppId,
-                        Status = assignment.Status == "running" ? ActorStatus.Running :
-                                assignment.Status == "stopping" ? ActorStatus.Stopping :
-                                ActorStatus.Pending,
+                        Status = assignment.Status,
                         StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
                         LoopIterations = 0
                     });
