@@ -417,13 +417,13 @@ public sealed class AssetProcessingWorker : BackgroundService
             // Create processing context
             var context = new AssetProcessingContext
             {
-                AssetId = job.AssetId,
+                AssetId = job.AssetId.ToString(),
                 StorageKey = job.StorageKey,
                 ContentType = job.ContentType,
                 SizeBytes = job.SizeBytes,
                 Filename = job.Filename,
                 Owner = job.Owner,
-                RealmId = job.RealmId,
+                RealmId = job.RealmId?.ToString(),
                 Tags = job.Tags,
                 ProcessingOptions = job.ProcessingOptions
             };
@@ -432,7 +432,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             var result = await processor.ProcessAsync(context, cancellationToken);
 
             // Update asset metadata with processing results
-            await UpdateAssetMetadataAsync(job.AssetId, result, cancellationToken);
+            await UpdateAssetMetadataAsync(job.AssetId.ToString(), result, cancellationToken);
 
             // Release the processor lease
             if (job.LeaseId != Guid.Empty)
@@ -558,7 +558,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AssetId = job.AssetId,
+                AssetId = job.AssetId.ToString(),
                 ProcessingType = MapProcessingType(job.ContentType),
                 Success = result.Success,
                 ErrorMessage = result.ErrorMessage,
@@ -610,7 +610,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AssetId = job.AssetId,
+                AssetId = job.AssetId.ToString(),
                 ProcessingType = MapProcessingType(job.ContentType),
                 Success = false,
                 ErrorMessage = errorMessage

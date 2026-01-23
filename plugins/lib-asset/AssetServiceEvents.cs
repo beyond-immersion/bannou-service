@@ -384,9 +384,9 @@ public partial class AssetService
             StorageKey = metabundlePath,
             SourceBundles = sourceBundleRefs.Select(sb => new SourceBundleReferenceInternal
             {
-                BundleId = sb.BundleId,
+                BundleId = Guid.Parse(sb.BundleId),
                 Version = sb.Version,
-                AssetIds = sb.AssetIds,
+                AssetIds = sb.AssetIds.Select(Guid.Parse).ToList(),
                 ContentHash = sb.ContentHash
             }).ToList()
         };
@@ -460,7 +460,7 @@ public partial class AssetService
         await _eventEmitter.EmitMetabundleCreationCompleteAsync(
             sessionId,
             job.JobId,
-            job.MetabundleId,
+            job.MetabundleId.ToString(),
             success,
             clientStatus,
             downloadUrl,

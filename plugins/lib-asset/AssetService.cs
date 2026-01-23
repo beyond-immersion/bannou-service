@@ -1882,7 +1882,7 @@ public partial class AssetService : IAssetService
             while (remainingAssets.Count > 0 && selectedBundles.Count < maxBundles)
             {
                 // Find bundle with best coverage
-                string? bestBundleId = null;
+                Guid? bestBundleId = null;
                 int bestCoverage = 0;
                 bool bestIsMetabundle = false;
 
@@ -1915,19 +1915,19 @@ public partial class AssetService : IAssetService
                 }
 
                 // Add selected bundle
-                var selectedMeta = bundleMetadataCache[bestBundleId];
+                var selectedMeta = bundleMetadataCache[bestBundleId.Value];
                 var downloadUrl = await _storageProvider.GenerateDownloadUrlAsync(
                     selectedMeta.Bucket ?? bucket,
                     selectedMeta.StorageKey,
                     expiration: tokenTtl).ConfigureAwait(false);
 
-                var providedAssets = bundleCoverage[bestBundleId]
+                var providedAssets = bundleCoverage[bestBundleId.Value]
                     .Where(a => remainingAssets.Contains(a))
                     .ToList();
 
                 selectedBundles.Add(new ResolvedBundle
                 {
-                    BundleId = bestBundleId,
+                    BundleId = bestBundleId.Value.ToString(),
                     BundleType = selectedMeta.BundleType,
                     Version = selectedMeta.Version,
                     DownloadUrl = new Uri(downloadUrl.DownloadUrl),
@@ -2738,7 +2738,7 @@ public partial class AssetService : IAssetService
                 // Publish delayed retry event
                 var retryEvent = new AssetProcessingRetryEvent
                 {
-                    AssetId = assetId,
+                    AssetId = Guid.Parse(assetId),
                     StorageKey = storageKey,
                     ContentType = metadata.ContentType,
                     PoolType = poolType,
@@ -2777,7 +2777,7 @@ public partial class AssetService : IAssetService
             // Publish processing job event for the processor to pick up
             var processingJob = new AssetProcessingJobEvent
             {
-                AssetId = assetId,
+                AssetId = Guid.Parse(assetId),
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
                 ProcessorId = processorResponse.ProcessorId,
@@ -2798,7 +2798,7 @@ public partial class AssetService : IAssetService
             // Publish delayed retry event
             var retryEvent = new AssetProcessingRetryEvent
             {
-                AssetId = assetId,
+                AssetId = Guid.Parse(assetId),
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
                 PoolType = poolType,
@@ -3587,10 +3587,10 @@ public partial class AssetService : IAssetService
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = request.MetabundleId,
+            MetabundleId = Guid.Parse(request.MetabundleId),
             Status = InternalJobStatus.Queued,
             Request = request,
-            RequesterSessionId = requesterSessionId,
+            RequesterSessionId = !string.IsNullOrEmpty(requesterSessionId) ? Guid.Parse(requesterSessionId) : null,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -3610,7 +3610,7 @@ public partial class AssetService : IAssetService
             new MetabundleJobQueuedEvent
             {
                 JobId = jobId,
-                MetabundleId = request.MetabundleId,
+                MetabundleId = Guid.Parse(request.MetabundleId),
                 SourceBundleCount = sourceBundles.Count,
                 AssetCount = totalAssetCount,
                 EstimatedSizeBytes = totalSizeBytes,

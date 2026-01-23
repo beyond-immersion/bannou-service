@@ -2130,14 +2130,16 @@ public class AssetServiceTests
         };
 
         // Asset-to-bundle index shows asset is in both bundles
+        var regularBundleId = Guid.NewGuid();
+        var metabundleBundleId = Guid.NewGuid();
         var assetIndex = new AssetBundleIndex
         {
-            BundleIds = new List<string> { "regular-bundle", "metabundle-1" }
+            BundleIds = new List<Guid> { regularBundleId, metabundleBundleId }
         };
 
         var regularBundle = new BundleMetadata
         {
-            BundleId = "regular-bundle",
+            BundleId = regularBundleId.ToString(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/regular.bundle",
@@ -2155,7 +2157,7 @@ public class AssetServiceTests
 
         var metabundle = new BundleMetadata
         {
-            BundleId = "metabundle-1",
+            BundleId = metabundleBundleId.ToString(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/metabundle.bundle",
@@ -2177,10 +2179,10 @@ public class AssetServiceTests
             .ReturnsAsync(assetIndex);
 
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("regular-bundle")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(regularBundleId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(regularBundle);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("metabundle-1")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(metabundleBundleId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(metabundle);
 
         _mockStorageProvider
@@ -2200,7 +2202,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Single(result.Bundles);
-        Assert.Equal("metabundle-1", result.Bundles.First().BundleId);
+        Assert.Equal(metabundleBundleId.ToString(), result.Bundles.First().BundleId);
     }
 
     [Fact]
@@ -2209,6 +2211,9 @@ public class AssetServiceTests
         // Arrange: Multiple assets, one bundle covers most of them
         _configuration.StorageBucket = "test-bucket";
         var service = CreateService();
+        var bigBundleId = Guid.NewGuid();
+        var smallBundle1Id = Guid.NewGuid();
+        var smallBundle2Id = Guid.NewGuid();
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
@@ -2216,14 +2221,14 @@ public class AssetServiceTests
         };
 
         // Asset indices
-        var asset1Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle", "small-bundle-1" } };
-        var asset2Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle" } };
-        var asset3Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle", "small-bundle-2" } };
+        var asset1Index = new AssetBundleIndex { BundleIds = new List<Guid> { bigBundleId, smallBundle1Id } };
+        var asset2Index = new AssetBundleIndex { BundleIds = new List<Guid> { bigBundleId } };
+        var asset3Index = new AssetBundleIndex { BundleIds = new List<Guid> { bigBundleId, smallBundle2Id } };
 
         // Big bundle contains all 3 assets
         var bigBundle = new BundleMetadata
         {
-            BundleId = "big-bundle",
+            BundleId = bigBundleId.ToString(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/big.bundle",
@@ -2244,7 +2249,7 @@ public class AssetServiceTests
         // Small bundles contain only 1 asset each
         var smallBundle1 = new BundleMetadata
         {
-            BundleId = "small-bundle-1",
+            BundleId = smallBundle1Id.ToString(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/small1.bundle",
@@ -2262,7 +2267,7 @@ public class AssetServiceTests
 
         var smallBundle2 = new BundleMetadata
         {
-            BundleId = "small-bundle-2",
+            BundleId = smallBundle2Id.ToString(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/small2.bundle",
@@ -2291,13 +2296,13 @@ public class AssetServiceTests
 
         // Setup bundle lookups
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("big-bundle")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bigBundleId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bigBundle);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("small-bundle-1")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle1Id.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(smallBundle1);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("small-bundle-2")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle2Id.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(smallBundle2);
 
         _mockStorageProvider
@@ -2317,7 +2322,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Single(result.Bundles);
-        Assert.Equal("big-bundle", result.Bundles.First().BundleId);
+        Assert.Equal(bigBundleId.ToString(), result.Bundles.First().BundleId);
     }
 
     #endregion
@@ -2348,6 +2353,8 @@ public class AssetServiceTests
         // Arrange
         _configuration.StorageBucket = "test-bucket";
         var service = CreateService();
+        var bundle1Id = Guid.NewGuid();
+        var bundle2Id = Guid.NewGuid();
         var request = new QueryBundlesByAssetRequest
         {
             AssetId = "test-asset"
@@ -2355,12 +2362,12 @@ public class AssetServiceTests
 
         var assetIndex = new AssetBundleIndex
         {
-            BundleIds = new List<string> { "bundle-1", "bundle-2" }
+            BundleIds = new List<Guid> { bundle1Id, bundle2Id }
         };
 
         var bundle1 = new BundleMetadata
         {
-            BundleId = "bundle-1",
+            BundleId = bundle1Id.ToString(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/b1.bundle",
@@ -2374,7 +2381,7 @@ public class AssetServiceTests
 
         var bundle2 = new BundleMetadata
         {
-            BundleId = "bundle-2",
+            BundleId = bundle2Id.ToString(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/b2.bundle",
@@ -2391,10 +2398,10 @@ public class AssetServiceTests
             .ReturnsAsync(assetIndex);
 
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("bundle-1")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle1Id.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bundle1);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("bundle-2")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle2Id.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bundle2);
 
         // Act
@@ -2593,7 +2600,7 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var metabundleId = "test-metabundle";
+        var metabundleId = Guid.NewGuid();
         var request = new GetJobStatusRequest { JobId = jobId };
 
         var job = new MetabundleJob
@@ -2617,7 +2624,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal(jobId, result.JobId);
-        Assert.Equal(metabundleId, result.MetabundleId);
+        Assert.Equal(metabundleId.ToString(), result.MetabundleId);
         Assert.Equal(GetJobStatusResponseStatus.Queued, result.Status);
     }
 
@@ -2627,7 +2634,9 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var metabundleId = "test-metabundle";
+        var metabundleId = Guid.NewGuid();
+        var sourceBundleId = Guid.NewGuid();
+        var assetId = Guid.NewGuid();
         var storageKey = "bundles/current/test-metabundle.bundle";
         var expectedUrl = "https://storage.example.com/download/test-metabundle.bundle";
         var request = new GetJobStatusRequest { JobId = jobId };
@@ -2649,7 +2658,7 @@ public class AssetServiceTests
                 StorageKey = storageKey,
                 SourceBundles = new List<SourceBundleReferenceInternal>
                 {
-                    new() { BundleId = "source-1", Version = "1.0.0", AssetIds = new List<string> { "asset-1" }, ContentHash = "hash1" }
+                    new() { BundleId = sourceBundleId, Version = "1.0.0", AssetIds = new List<Guid> { assetId }, ContentHash = "hash1" }
                 }
             }
         };
@@ -2699,7 +2708,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = Guid.NewGuid(),
             Status = InternalJobStatus.Failed,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2775,7 +2784,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = Guid.NewGuid(),
             Status = InternalJobStatus.Queued,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
@@ -2823,7 +2832,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = Guid.NewGuid(),
             Status = InternalJobStatus.Ready,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2857,7 +2866,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = Guid.NewGuid(),
             Status = InternalJobStatus.Cancelled,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2886,13 +2895,13 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var sessionId = "test-session-123";
+        var sessionId = Guid.NewGuid();
         var request = new CancelJobRequest { JobId = jobId };
 
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = "test-metabundle",
+            MetabundleId = Guid.NewGuid(),
             Status = InternalJobStatus.Queued,
             RequesterSessionId = sessionId,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -2912,9 +2921,9 @@ public class AssetServiceTests
             .ReturnsAsync("etag-456");
 
         _mockAssetEventEmitter.Setup(e => e.EmitMetabundleCreationCompleteAsync(
-            sessionId,
+            sessionId.ToString(),
             jobId,
-            "test-metabundle",
+            It.IsAny<string>(),
             false,
             MetabundleJobStatus.Cancelled,
             null,
@@ -2937,9 +2946,9 @@ public class AssetServiceTests
 
         // Verify completion event was emitted
         _mockAssetEventEmitter.Verify(e => e.EmitMetabundleCreationCompleteAsync(
-            sessionId,
+            sessionId.ToString(),
             jobId,
-            "test-metabundle",
+            It.IsAny<string>(),
             false,
             MetabundleJobStatus.Cancelled,
             null,

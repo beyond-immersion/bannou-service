@@ -1,7 +1,7 @@
 # ABML/GOAP Expansion Opportunities
 
 > **Created**: 2026-01-19
-> **Last Updated**: 2026-01-19
+> **Last Updated**: 2026-01-23
 > **Purpose**: Strategic analysis of future applications for Arcadia Behavior Markup Language (ABML) and Goal-Oriented Action Planning (GOAP)
 > **Scope**: New services, SDKs, and system integrations that leverage behavioral intelligence
 
@@ -1436,6 +1436,7 @@ flows:
 | **Data** | Currency/Wallets | ✅ **Implemented** | Multi-currency, autogain, holds, caps, exchange, full audit |
 | **Data** | Contracts/Agreements | ✅ **Implemented** | Reactive milestones, guardians, breach/cure, clause extensibility |
 | **Data** | Character-Encounters | ✅ **Implemented** | Multi-participant, per-perspective emotions, memory decay |
+| **Orchestration** | Escrow Service | 📋 **Spec Complete** | Full-custody vault, per-party infrastructure, contract-driven finalization |
 | **Core** | Quest Service | ❌ Missing | Objective tracking, prerequisites, rewards distribution |
 | **Intelligence** | Quest Generation GOAP | ❌ Design only | Procedurally generated quests from character/world state |
 | **Foundation** | Character/Personality/History | ✅ Complete | - |
@@ -1818,6 +1819,250 @@ This suggests **lib-quest is a thin orchestration layer** that generates and man
 
 ---
 
+## Part 9: lib-escrow - The Missing Custody Layer (2026-01-23)
+
+> **Context**: The spec for lib-escrow (`docs/specs/LIB_ESCROW_SPEC.md`) reveals a critical architectural layer between application logic (trades, quests, markets) and the foundational services (contracts, currency, inventory). This section captures that architecture.
+
+### 9.1 The Key Insight: "Contract is Brain, Escrow is Vault"
+
+The spec's core design philosophy:
+
+```
+"lib-escrow is a full-custody orchestration layer that sits ABOVE the
+foundational asset plugins. It creates its own wallets, containers, and
+contract locks to take complete possession of assets during multi-party
+agreements."
+```
+
+This separation is elegant:
+
+| Component | Responsibility | What It Knows |
+|-----------|---------------|---------------|
+| **lib-escrow** | Physical custody, consent flows, tokens | How to hold, release, and refund assets |
+| **lib-contract** | Terms, conditions, distribution rules | What assets are needed, when to release, how to split |
+| **lib-currency** | Currency operations | Nothing about escrow or contracts |
+| **lib-inventory** | Item operations | Nothing about escrow or contracts |
+
+### 9.2 How It Works
+
+**Per-Party Infrastructure**: When an escrow is created, it generates dedicated wallets and containers for EACH party:
+
+```
+Escrow Agreement (entity owner)
+├── Party A Escrow Wallet (created by escrow, owned by escrow)
+├── Party A Escrow Container (created by escrow, owned by escrow)
+├── Party B Escrow Wallet (created by escrow, owned by escrow)
+└── Party B Escrow Container (created by escrow, owned by escrow)
+```
+
+This enables:
+- **Clean refunds**: Party A's escrow → Party A (no cross-party confusion)
+- **Contribution tracking**: Verify each party deposited their share
+- **Ownership validation**: Parties can only withdraw from their own escrow
+
+**Contract-Driven Finalization**: When conditions are met:
+
+```
+1. Escrow transitions to FINALIZING
+2. Calls POST /contract/instance/execute on bound contract
+3. Contract handles ALL distribution:
+   - Fee clauses: Move fees from escrow wallets to fee recipients
+   - Distribution clauses: Move remaining assets to recipients
+4. Escrow verifies all escrow wallets/containers are empty
+5. Escrow transitions to RELEASED
+```
+
+**Template Variables**: The escrow sets template values on the bound contract:
+
+```yaml
+templateValues:
+  EscrowId: "{{agreementId}}"
+  PartyA_EscrowWalletId: "{{partyA.escrowWalletId}}"
+  PartyA_EscrowContainerId: "{{partyA.escrowContainerId}}"
+  PartyB_WalletId: "{{partyB.walletId}}"  # Destination
+  PartyB_ContainerId: "{{partyB.containerId}}"  # Destination
+```
+
+The contract's clauses reference these variables, enabling fully dynamic distribution rules.
+
+### 9.3 The Full Plugin Stack
+
+The spec shows the complete dependency hierarchy:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    APPLICATION LAYER                         │
+│  lib-market (auctions)  |  lib-trade (P2P)  |  lib-quest    │
+│  (All thin orchestrators that generate escrows)              │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    CUSTODY LAYER                             │
+│                                                              │
+│                      lib-escrow                              │
+│  ├── Full-custody orchestration ("the vault")                │
+│  ├── Per-party wallets and containers                        │
+│  ├── Token-based consent flows                               │
+│  ├── Trust modes (full_consent, initiator_trusted, etc.)     │
+│  ├── Periodic asset validation                               │
+│  └── Contract-driven finalization                            │
+│                                                              │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    LOGIC LAYER                               │
+│                                                              │
+│                     lib-contract                             │
+│  ├── Agreement terms ("the brain")                           │
+│  ├── Milestone tracking                                      │
+│  ├── Asset requirement clauses (validation)                  │
+│  ├── Fee/distribution clauses (execution)                    │
+│  └── Prebound API handlers                                   │
+│                                                              │
+└─────────────────────────────────┬───────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    ASSET LAYER                               │
+│                                                              │
+│  lib-currency        lib-inventory        lib-item           │
+│  (wallets,           (containers,         (templates,        │
+│   transfers)          movement)            instances)         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 9.4 Why This Matters for Quests
+
+With lib-escrow in the picture, the quest architecture becomes clearer:
+
+**A quest reward escrow**:
+1. Quest service creates escrow with `trustMode: initiator_trusted`
+2. Quest giver (NPC) deposits reward gold/items into their escrow container
+3. Bound contract defines: "distribute when 'kill_target' milestone completes"
+4. Player completes quest objective → contract milestone fulfilled
+5. Contract executes → rewards flow from NPC escrow to player inventory
+6. Escrow closes, infrastructure cleaned up
+
+**A player trade**:
+1. Trade service creates escrow with `trustMode: full_consent`
+2. Each party deposits their side into their escrow container
+3. Bound contract defines: "swap when both parties consent"
+4. Both use release tokens → contract executes cross-distribution
+5. Each party receives the other's deposits
+
+**A guild tax collection**:
+1. Guild creates escrow for monthly dues with `trustMode: initiator_trusted`
+2. Bound contract defines fee clauses (5% to realm treasury, 95% to guild)
+3. Members deposit dues → contract executes automatic fee distribution
+
+### 9.5 ABML/GOAP Integration with Escrow
+
+**NPC Trade Negotiation (GOAP + Escrow)**:
+
+```yaml
+# NPC Brain decides to trade
+goals:
+  - id: acquire_rare_item
+    conditions:
+      - has_rare_item: true
+    priority: 75
+
+actions:
+  - id: propose_trade
+    preconditions:
+      - has_item_npc_wants: true
+      - known_trader_nearby: true
+    effects:
+      - has_rare_item: true
+      - gold: -500
+    cost: 10
+    abml_behavior: "trade_negotiation"
+```
+
+**Trade Behavior Execution (ABML + Escrow)**:
+
+```yaml
+# trade_negotiation.behavior.yaml
+document_type: behavior
+
+flows:
+  main:
+    # Create escrow via Shortcut API
+    - shortcut:
+        api: escrow.create
+        request:
+          escrow_type: two_party
+          trust_mode: full_consent
+          parties:
+            - party_id: "${actor.id}"
+              party_type: character
+              role: depositor_recipient
+            - party_id: "${target.id}"
+              party_type: character
+              role: depositor_recipient
+          bound_contract_id: "${contract_templates.simple_trade}"
+        response_var: escrow
+
+    # Get our deposit token via shortcut
+    - shortcut:
+        api: escrow.get_my_token
+        request:
+          escrow_id: "${escrow.id}"
+          token_type: deposit
+        response_var: our_token
+
+    # Deposit our side
+    - shortcut:
+        api: escrow.deposit
+        request:
+          escrow_id: "${escrow.id}"
+          deposit_token: "${our_token.token}"
+          assets:
+            - asset_type: currency
+              currency_code: gold
+              amount: 500
+
+    # Wait for other party
+    - wait_for:
+        event: escrow.fully_funded
+        timeout: PT5M
+        on_timeout:
+          - call: abort_trade
+
+    # Consent to release
+    - shortcut:
+        api: escrow.consent
+        request:
+          escrow_id: "${escrow.id}"
+          consent_type: release
+          release_token: "${release_token}"
+```
+
+### 9.6 Status Summary
+
+| Service | Status | Role |
+|---------|--------|------|
+| lib-escrow | 📋 Spec Complete (v3.0.0) | Custody orchestration, consent flows, vault |
+| lib-contract | ✅ Implemented | Agreement logic, distribution rules, brain |
+| lib-currency | ✅ Implemented | Currency operations |
+| lib-inventory | ✅ Implemented | Item container operations |
+| lib-item | ✅ Implemented | Item template/instance |
+| lib-quest | ❌ Not Started | Quest discovery, logs, GOAP generation |
+| lib-trade | ❌ Not Started | P2P trade UI orchestration |
+| lib-market | ❌ Not Started | Auction/marketplace orchestration |
+
+**Implementation Order Recommendation**:
+1. ✅ Foundation layer (currency, item, inventory) - DONE
+2. ✅ Logic layer (contract) - DONE
+3. **lib-escrow** - Next priority (enables everything above it)
+4. lib-quest (thin layer over escrow+contract)
+5. lib-trade / lib-market (thin layers over escrow)
+
+---
+
 ## Appendix C: Service Dependency Graph (Updated 2026-01-23)
 
 ```
@@ -1828,14 +2073,43 @@ This suggests **lib-quest is a thin orchestration layer** that generates and man
                                  │ queries / drives
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      QUEST / ORCHESTRATION LAYER                     │
-│  lib-quest (planned) | lib-contract                                  │
+│                   APPLICATION / THIN ORCHESTRATION                   │
+│  lib-quest (❌)    lib-trade (❌)    lib-market (❌)                  │
+│  Quest discovery,  P2P trade UI,     Auction/listing               │
+│  logs, GOAP gen    negotiation       management                     │
 └────────────────────────────────┬────────────────────────────────────┘
-                                 │ rewards / validates / tracks
+                                 │ creates / manages
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        VALUE & MEMORY LAYER                          │
-│  lib-currency | lib-item | lib-inventory | lib-character-encounter   │
+│                        CUSTODY LAYER                                 │
+│  lib-escrow (📋 Spec Complete)                                       │
+│  Full custody, per-party wallets/containers, consent tokens,        │
+│  trust modes, periodic validation, contract-driven finalization     │
+│  "THE VAULT"                                                        │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ delegates logic to
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        LOGIC LAYER                                   │
+│  lib-contract (✅ Implemented)                                       │
+│  Templates, instances, milestones, breaches, guardians,             │
+│  clause types with prebound API execution                           │
+│  "THE BRAIN"                                                        │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ operates on
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        ASSET LAYER                                   │
+│  lib-currency (✅)   lib-item (✅)    lib-inventory (✅)             │
+│  Wallets, transfers, Templates,       Containers,                   │
+│  holds, autogain     instances        equipment, nesting            │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │ + memory layer
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        MEMORY LAYER                                  │
+│  lib-character-encounter (✅ Implemented)                            │
+│  Multi-participant records, per-perspective emotions, decay         │
 └────────────────────────────────┬────────────────────────────────────┘
                                  │ references / scoped by
                                  ▼
@@ -1851,6 +2125,14 @@ This suggests **lib-quest is a thin orchestration layer** that generates and man
 │  State | Messaging | Mesh | Connect | Save-Load | Asset             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+### Implementation Status Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| ✅ | Implemented and working |
+| 📋 | Spec complete, not yet implemented |
+| ❌ | Not started |
 
 ---
 
