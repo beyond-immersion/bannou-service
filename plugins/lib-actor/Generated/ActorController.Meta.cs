@@ -2317,6 +2317,7 @@ public partial class ActorController
                 },
                 "encounterId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for this encounter"
                 },
                 "encounterType": {
@@ -2559,6 +2560,7 @@ public partial class ActorController
                 },
                 "encounterId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "ID of the ended encounter"
                 },
                 "durationMs": {
@@ -2692,6 +2694,7 @@ public partial class ActorController
             "properties": {
                 "encounterId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for this encounter"
                 },
                 "encounterType": {

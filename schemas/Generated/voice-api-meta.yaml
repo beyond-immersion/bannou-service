@@ -104,13 +104,14 @@ paths:
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"Participant in a voice room\",\n            \"required\": [\n                \"sessionId\",\n                \"\
         joinedAt\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"WebSocket session ID (unique participant identifier)\"\
-        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Display name\"\n                },\n        \
-        \        \"joinedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the participant joined\"\n                },\n                \"isMuted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether participant is muted\"\n                }\n            }\n        }\n    }\n}"
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
+        ID (unique participant identifier)\"\n                },\n                \"displayName\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name\"\
+        \n                },\n                \"joinedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the participant joined\"\n         \
+        \       },\n                \"isMuted\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether participant is muted\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create voice room for a game session\",\n    \"description\": \"Creates
         a new voice room associated with a game session.\\nCalled by GameSession service when creating a session with voice
         enabled.\\nReturns room ID and initial configuration.\\n\",\n    \"tags\": [\n        \"Voice Rooms\"\n    ],\n  \
@@ -177,13 +178,14 @@ paths:
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"Participant in a voice room\",\n            \"required\": [\n                \"sessionId\",\n                \"\
         joinedAt\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"WebSocket session ID (unique participant identifier)\"\
-        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Display name\"\n                },\n        \
-        \        \"joinedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the participant joined\"\n                },\n                \"isMuted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether participant is muted\"\n                }\n            }\n        }\n    }\n}"
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
+        ID (unique participant identifier)\"\n                },\n                \"displayName\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name\"\
+        \n                },\n                \"joinedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the participant joined\"\n         \
+        \       },\n                \"isMuted\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether participant is muted\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get voice room details\",\n    \"description\": \"Retrieves current state
         of a voice room including participant list.\\nCalled by GameSession service to check room status.\\n\",\n    \"tags\"\
         : [\n        \"Voice Rooms\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getVoiceRoom\"\n}"
@@ -224,22 +226,22 @@ paths:
         \      \"roomId\",\n                \"sessionId\",\n                \"sipEndpoint\"\n            ],\n            \"\
         properties\": {\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"\
         format\": \"uuid\",\n                    \"description\": \"Voice room ID to join\"\n                },\n        \
-        \        \"sessionId\": {\n                    \"type\": \"string\",\n                    \"description\": \"WebSocket
-        session ID (unique participant identifier)\"\n                },\n                \"sipEndpoint\": {\n           \
-        \         \"$ref\": \"#/$defs/SipEndpoint\",\n                    \"description\": \"Participant's SIP endpoint details\"\
-        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
-        \        \"maxLength\": 50,\n                    \"description\": \"Display name for UI\"\n                }\n   \
-        \         }\n        },\n        \"SipEndpoint\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"SIP/WebRTC endpoint details for a participant\",\n            \"required\"\
-        : [\n                \"sdpOffer\"\n            ],\n            \"properties\": {\n                \"sdpOffer\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"SDP offer for WebRTC negotiation\"\
-        \n                },\n                \"iceCandidates\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
-        \ \"description\": \"ICE candidates for NAT traversal\"\n                },\n                \"publicIp\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Public IP address if known\"\n                },\n                \"port\": {\n                    \"type\": \"\
-        integer\",\n                    \"nullable\": true,\n                    \"description\": \"UDP port for RTP\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        \        \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"WebSocket session ID (unique participant identifier)\"\n                },\n\
+        \                \"sipEndpoint\": {\n                    \"$ref\": \"#/$defs/SipEndpoint\",\n                    \"\
+        description\": \"Participant's SIP endpoint details\"\n                },\n                \"displayName\": {\n  \
+        \                  \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"description\"\
+        : \"Display name for UI\"\n                }\n            }\n        },\n        \"SipEndpoint\": {\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"SIP/WebRTC endpoint
+        details for a participant\",\n            \"required\": [\n                \"sdpOffer\"\n            ],\n        \
+        \    \"properties\": {\n                \"sdpOffer\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"SDP offer for WebRTC negotiation\"\n                },\n                \"iceCandidates\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"ICE candidates for NAT traversal\"\n\
+        \                },\n                \"publicIp\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Public IP address if known\"\n                },\n\
+        \                \"port\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"UDP port for RTP\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinVoiceRoomResponse\"\
         ,\n    \"$defs\": {\n        \"JoinVoiceRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after joining a voice room\",\n            \"required\": [\n   \
@@ -266,22 +268,22 @@ paths:
         voice communication\"\n        },\n        \"VoicePeer\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Peer endpoint details for P2P connection\",\n            \"required\": [\n\
         \                \"sessionId\",\n                \"sipEndpoint\"\n            ],\n            \"properties\": {\n\
-        \                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"WebSocket session ID for this peer (ephemeral identifier)\"\n                },\n                \"displayName\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name\"\n                },\n                \"sipEndpoint\": {\n                    \"$ref\": \"#/$defs/SipEndpoint\"\
-        ,\n                    \"description\": \"Peer's SIP endpoint for direct connection\"\n                }\n       \
-        \     }\n        },\n        \"SipEndpoint\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"SIP/WebRTC endpoint details for a participant\",\n            \"required\"\
-        : [\n                \"sdpOffer\"\n            ],\n            \"properties\": {\n                \"sdpOffer\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"SDP offer for WebRTC negotiation\"\
-        \n                },\n                \"iceCandidates\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
-        \ \"description\": \"ICE candidates for NAT traversal\"\n                },\n                \"publicIp\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Public IP address if known\"\n                },\n                \"port\": {\n                    \"type\": \"\
-        integer\",\n                    \"nullable\": true,\n                    \"description\": \"UDP port for RTP\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        \                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"WebSocket session ID for this peer (ephemeral identifier)\"\n          \
+        \      },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Display name\"\n                },\n                \"sipEndpoint\"\
+        : {\n                    \"$ref\": \"#/$defs/SipEndpoint\",\n                    \"description\": \"Peer's SIP endpoint
+        for direct connection\"\n                }\n            }\n        },\n        \"SipEndpoint\": {\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"SIP/WebRTC endpoint
+        details for a participant\",\n            \"required\": [\n                \"sdpOffer\"\n            ],\n        \
+        \    \"properties\": {\n                \"sdpOffer\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"SDP offer for WebRTC negotiation\"\n                },\n                \"iceCandidates\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"ICE candidates for NAT traversal\"\n\
+        \                },\n                \"publicIp\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Public IP address if known\"\n                },\n\
+        \                \"port\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"UDP port for RTP\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join voice room and register SIP endpoint\",\n    \"description\": \"Registers
         a participant's SIP endpoint with the voice room.\\nCalled by GameSession service when a player joins a session.\\
         nReturns connection info and current peer list for P2P mode,\\nor RTP server details for scaled mode.\\n\",\n    \"\
@@ -313,8 +315,8 @@ paths:
         \       \"roomId\",\n                \"sessionId\"\n            ],\n            \"properties\": {\n              \
         \  \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
         \           \"description\": \"Voice room ID to leave\"\n                },\n                \"sessionId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"WebSocket session ID of the leaving
-        participant\"\n                }\n            }\n        }\n    }\n}"
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"WebSocket session ID of the leaving participant\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Leave voice room\",\n    \"description\": \"Removes a participant from
         the voice room and notifies other peers.\\nCalled by GameSession service when a player leaves a session.\\n\",\n \
@@ -382,8 +384,8 @@ paths:
         [\n                \"roomId\",\n                \"sessionId\"\n            ],\n            \"properties\": {\n   \
         \             \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"Voice room ID\"\n                },\n                \"sessionId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"WebSocket session ID of the peer\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"WebSocket session ID of the peer\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Update peer endpoint TTL\",\n    \"description\": \"Refreshes the TTL for
         a participant's endpoint registration.\\nShould be called periodically to prevent endpoint expiration.\\n\",\n   \
@@ -428,14 +430,14 @@ paths:
         \         ],\n            \"properties\": {\n                \"roomId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Voice room ID\"\n           \
         \     },\n                \"senderSessionId\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Session ID of the answering peer (caller of this endpoint)\"\n                },\n              \
-        \  \"targetSessionId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Session
-        ID of the peer whose offer we're answering\"\n                },\n                \"sdpAnswer\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"SDP answer generated by this client's WebRTC
-        stack\"\n                },\n                \"iceCandidates\": {\n                    \"type\": \"array\",\n    \
-        \                \"items\": {\n                        \"type\": \"string\"\n                    },\n            \
-        \        \"description\": \"ICE candidates for NAT traversal (can be trickled later)\"\n                }\n      \
-        \      }\n        }\n    }\n}"
+        format\": \"uuid\",\n                    \"description\": \"Session ID of the answering peer (caller of this endpoint)\"\
+        \n                },\n                \"targetSessionId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Session ID of the peer whose offer we're
+        answering\"\n                },\n                \"sdpAnswer\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"SDP answer generated by this client's WebRTC stack\"\n                },\n  \
+        \              \"iceCandidates\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"ICE
+        candidates for NAT traversal (can be trickled later)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Send SDP answer to complete WebRTC handshake\",\n    \"description\": \"\
         Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.\\nThe client generates an SDP answer
@@ -510,6 +512,7 @@ components:
           description: Voice room ID to join
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID (unique participant identifier)
         sipEndpoint:
           $ref: '#/components/schemas/SipEndpoint'
@@ -532,6 +535,7 @@ components:
           description: Voice room ID to leave
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID of the leaving participant
     DeleteVoiceRoomRequest:
       type: object
@@ -561,6 +565,7 @@ components:
           description: Voice room ID
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID of the peer
     AnswerPeerRequest:
       type: object
@@ -580,9 +585,11 @@ components:
           description: Voice room ID
         senderSessionId:
           type: string
+          format: uuid
           description: Session ID of the answering peer (caller of this endpoint)
         targetSessionId:
           type: string
+          format: uuid
           description: Session ID of the peer whose offer we're answering
         sdpAnswer:
           type: string
@@ -704,6 +711,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID (unique participant identifier)
         displayName:
           type: string
@@ -727,6 +735,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID for this peer (ephemeral identifier)
         displayName:
           type: string

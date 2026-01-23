@@ -209,20 +209,20 @@ paths:
         information for a single game realm\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"realmId\",\n                \"name\",\n                \"status\"\
         ,\n                \"population\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the game
-        realm\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n            \
-        \        \"description\": \"Display name of the game realm\"\n                },\n                \"status\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"online\",\n\
-        \                        \"offline\",\n                        \"maintenance\",\n                        \"full\"\n\
-        \                    ],\n                    \"description\": \"Current operational status of the realm\"\n      \
-        \          },\n                \"population\": {\n                    \"type\": \"string\",\n                    \"\
-        enum\": [\n                        \"low\",\n                        \"medium\",\n                        \"high\"\
-        ,\n                        \"full\"\n                    ],\n                    \"description\": \"Current player
-        population level\"\n                },\n                \"playerCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Current number of players online\"\
-        \n                },\n                \"ping\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"description\": \"Latency in milliseconds\",\n                    \"nullable\": true\n                }\n    \
-        \        }\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the game realm\"\n                },\n                \"name\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Display name of the game realm\"\n                },\n\
+        \                \"status\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n     \
+        \                   \"online\",\n                        \"offline\",\n                        \"maintenance\",\n\
+        \                        \"full\"\n                    ],\n                    \"description\": \"Current operational
+        status of the realm\"\n                },\n                \"population\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"low\",\n                        \"medium\",\n      \
+        \                  \"high\",\n                        \"full\"\n                    ],\n                    \"description\"\
+        : \"Current player population level\"\n                },\n                \"playerCount\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Current
+        number of players online\"\n                },\n                \"ping\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Latency in milliseconds\",\n                    \"nullable\": true\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get game server status for all realms\",\n    \"description\": \"\",\n\
         \    \"tags\": [\n        \"Status\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getServerStatus\"\
         \n}"
@@ -1472,6 +1472,7 @@ components:
       properties:
         realmId:
           type: string
+          format: uuid
           description: Unique identifier for the game realm
         name:
           type: string

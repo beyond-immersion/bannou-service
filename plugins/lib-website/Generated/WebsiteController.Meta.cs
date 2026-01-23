@@ -493,6 +493,7 @@ public partial class WebsiteController
             "properties": {
                 "realmId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for the game realm"
                 },
                 "name": {

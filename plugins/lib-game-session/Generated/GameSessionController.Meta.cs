@@ -197,6 +197,7 @@ public partial class GameSessionController
                 },
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID that joined the game. Chat and events are delivered to this specific session only."
                 },
                 "displayName": {
@@ -527,6 +528,7 @@ public partial class GameSessionController
                 },
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID that joined the game. Chat and events are delivered to this specific session only."
                 },
                 "displayName": {
@@ -797,6 +799,7 @@ public partial class GameSessionController
                 },
                 "sessionId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "WebSocket session ID that joined the game. Chat and events are delivered to this specific session only."
                 },
                 "displayName": {

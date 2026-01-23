@@ -24,21 +24,6 @@
 
 using BeyondImmersion.Bannou.Core;
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -57,13 +42,14 @@ public partial class PoolNodeHeartbeatEvent : BaseServiceEvent
     /// Event type identifier for pool node heartbeats
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.pool-node.heartbeat";
+    public override string EventName { get; set; } = "actor.pool-node.heartbeat";
 
     /// <summary>
     /// Unique identifier for this pool node
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -105,13 +91,14 @@ public partial class PoolNodeRegisteredEvent : BaseServiceEvent
     /// Event type identifier for pool node registration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.pool-node.registered";
+    public override string EventName { get; set; } = "actor.pool-node.registered";
 
     /// <summary>
     /// Unique identifier for this pool node
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -119,6 +106,7 @@ public partial class PoolNodeRegisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -126,6 +114,7 @@ public partial class PoolNodeRegisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -149,13 +138,14 @@ public partial class PoolNodeDrainingEvent : BaseServiceEvent
     /// Event type identifier for pool node draining
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.pool-node.draining";
+    public override string EventName { get; set; } = "actor.pool-node.draining";
 
     /// <summary>
     /// Unique identifier of the draining pool node
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -185,13 +175,14 @@ public partial class PoolNodeUnhealthyEvent : BaseServiceEvent
     /// Event type identifier for unhealthy pool node detection
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.pool-node.unhealthy";
+    public override string EventName { get; set; } = "actor.pool-node.unhealthy";
 
     /// <summary>
     /// Unique identifier of the unhealthy pool node
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -205,6 +196,7 @@ public partial class PoolNodeUnhealthyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
     /// <summary>
@@ -212,6 +204,7 @@ public partial class PoolNodeUnhealthyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastHeartbeat")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LastHeartbeat { get; set; } = default!;
 
     /// <summary>
@@ -235,13 +228,14 @@ public partial class ActorStatusChangedEvent : BaseServiceEvent
     /// Event type identifier for actor status changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.instance.status-changed";
+    public override string EventName { get; set; } = "actor.instance.status-changed";
 
     /// <summary>
     /// Unique identifier of the actor whose status changed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -249,6 +243,7 @@ public partial class ActorStatusChangedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -256,6 +251,7 @@ public partial class ActorStatusChangedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousStatus")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PreviousStatus { get; set; } = default!;
 
     /// <summary>
@@ -263,6 +259,7 @@ public partial class ActorStatusChangedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newStatus")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NewStatus { get; set; } = default!;
 
     /// <summary>
@@ -286,13 +283,14 @@ public partial class ActorCompletedEvent : BaseServiceEvent
     /// Event type identifier for actor completion
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.instance.completed";
+    public override string EventName { get; set; } = "actor.instance.completed";
 
     /// <summary>
     /// Unique identifier of the completed actor
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -300,6 +298,7 @@ public partial class ActorCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -307,6 +306,7 @@ public partial class ActorCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exitReason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ActorCompletedEventExitReason ExitReason { get; set; } = default!;
 
@@ -343,13 +343,14 @@ public partial class ActorInstanceStartedEvent : BaseServiceEvent
     /// Event type identifier for actor instance started
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.instance.started";
+    public override string EventName { get; set; } = "actor.instance.started";
 
     /// <summary>
     /// Unique identifier of the actor that started
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -357,6 +358,7 @@ public partial class ActorInstanceStartedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -364,6 +366,7 @@ public partial class ActorInstanceStartedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
@@ -393,13 +396,14 @@ public partial class ActorStatePersistedEvent : BaseServiceEvent
     /// Event type identifier for actor state persistence
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.instance.state-persisted";
+    public override string EventName { get; set; } = "actor.instance.state-persisted";
 
     /// <summary>
     /// Unique identifier of the actor whose state was persisted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -407,6 +411,7 @@ public partial class ActorStatePersistedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
     /// <summary>
@@ -430,13 +435,14 @@ public partial class ActorEncounterStartedEvent : BaseServiceEvent
     /// Event type identifier for encounter started
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.encounter.started";
+    public override string EventName { get; set; } = "actor.encounter.started";
 
     /// <summary>
     /// Actor managing this encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -444,6 +450,7 @@ public partial class ActorEncounterStartedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EncounterId { get; set; } = default!;
 
     /// <summary>
@@ -451,6 +458,7 @@ public partial class ActorEncounterStartedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EncounterType { get; set; } = default!;
 
     /// <summary>
@@ -458,6 +466,7 @@ public partial class ActorEncounterStartedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participants")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> Participants { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }
@@ -475,13 +484,14 @@ public partial class ActorEncounterEndedEvent : BaseServiceEvent
     /// Event type identifier for encounter ended
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.encounter.ended";
+    public override string EventName { get; set; } = "actor.encounter.ended";
 
     /// <summary>
     /// Actor that was managing this encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -489,6 +499,7 @@ public partial class ActorEncounterEndedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EncounterId { get; set; } = default!;
 
     /// <summary>
@@ -518,13 +529,14 @@ public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
     /// Event type identifier for encounter phase change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "actor.encounter.phase-changed";
+    public override string EventName { get; set; } = "actor.encounter.phase-changed";
 
     /// <summary>
     /// Actor managing this encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -532,6 +544,7 @@ public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EncounterId { get; set; } = default!;
 
     /// <summary>
@@ -539,6 +552,7 @@ public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousPhase")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PreviousPhase { get; set; } = default!;
 
     /// <summary>
@@ -546,6 +560,7 @@ public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newPhase")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NewPhase { get; set; } = default!;
 
 }
@@ -564,6 +579,7 @@ public partial class SpawnActorCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -571,6 +587,7 @@ public partial class SpawnActorCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
@@ -578,6 +595,7 @@ public partial class SpawnActorCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
@@ -626,6 +644,7 @@ public partial class StopActorCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -650,6 +669,7 @@ public partial class SendMessageCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -657,6 +677,7 @@ public partial class SendMessageCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string MessageType { get; set; } = default!;
 
     /// <summary>
@@ -690,6 +711,7 @@ public partial class ReloadBehaviorCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
@@ -697,6 +719,7 @@ public partial class ReloadBehaviorCommand
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newBehaviorRef")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NewBehaviorRef { get; set; } = default!;
 
 }
@@ -715,13 +738,14 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
     /// Event type identifier for character perception events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "character.perception";
+    public override string EventName { get; set; } = "character.perception";
 
     /// <summary>
     /// Character this perception applies to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
@@ -729,6 +753,7 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SourceAppId { get; set; } = default!;
 
     /// <summary>
@@ -736,6 +761,7 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perception")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public PerceptionData Perception { get; set; } = new PerceptionData();
 
 }
@@ -762,6 +788,7 @@ public partial class PerceptionData
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perceptionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PerceptionType { get; set; } = default!;
 
     /// <summary>
@@ -769,6 +796,7 @@ public partial class PerceptionData
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SourceId { get; set; } = default!;
 
     /// <summary>
@@ -859,10 +887,13 @@ public partial class SpatialContext
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -907,10 +938,13 @@ public partial class NearbyObject
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -950,10 +984,13 @@ public partial class HazardInfo
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -986,6 +1023,7 @@ public partial class Position3D
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ActorCompletedEventExitReason
 {
@@ -1003,6 +1041,7 @@ public enum ActorCompletedEventExitReason
     External_stop = 3,
 
 }
+#pragma warning restore CS1591
 
 
 

@@ -324,6 +324,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID to retrieve capabilities for (must have active WebSocket connection)
         serviceFilter:
           type: string
@@ -346,6 +347,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID this capability manifest belongs to
         capabilities:
           type: array
@@ -472,6 +474,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: WebSocket session ID making the request
         targetService:
           type: string
@@ -732,6 +735,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID affected by the auth event
         eventType:
           $ref: '#/components/schemas/AuthEventType'

@@ -1201,6 +1201,7 @@ components:
       properties:
         encounterId:
           type: string
+          format: uuid
           description: ID of the coordinated encounter this instruction belongs to
         sequenceId:
           type: string
@@ -1377,6 +1378,7 @@ components:
           description: ID of the Event Brain actor that will manage this encounter
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for this encounter
         encounterType:
           type: string
@@ -1451,6 +1453,7 @@ components:
           description: ID of the actor
         encounterId:
           type: string
+          format: uuid
           description: ID of the ended encounter
         durationMs:
           type: integer
@@ -1500,6 +1503,7 @@ components:
       properties:
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for this encounter
         encounterType:
           type: string

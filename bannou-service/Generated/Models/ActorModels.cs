@@ -1298,7 +1298,7 @@ public partial class ChoreographyInstruction
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Unique ID for this sequence within the choreography.
@@ -1582,7 +1582,7 @@ public partial class StartEncounterRequest
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Type of encounter (e.g., "combat", "conversation", "choreography")
@@ -1702,7 +1702,7 @@ public partial class EndEncounterResponse
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Duration of the encounter in milliseconds
@@ -1771,7 +1771,7 @@ public partial class EncounterState
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Type of encounter

@@ -2385,6 +2385,19 @@ internal class ContractInstanceModel
     public GameMetadataModel? GameMetadata { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
+
+    // Guardian state (for escrow integration)
+    public string? GuardianId { get; set; }
+    public string? GuardianType { get; set; }
+    public DateTimeOffset? LockedAt { get; set; }
+
+    // Template values for clause execution (escrow integration)
+    public Dictionary<string, string>? TemplateValues { get; set; }
+
+    // Execution tracking (idempotency for escrow integration)
+    public DateTimeOffset? ExecutedAt { get; set; }
+    public string? ExecutionIdempotencyKey { get; set; }
+    public List<DistributionRecordModel>? ExecutionDistributions { get; set; }
 }
 
 /// <summary>

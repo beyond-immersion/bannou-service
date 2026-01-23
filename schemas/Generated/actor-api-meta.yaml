@@ -896,15 +896,15 @@ paths:
         ,\n                \"participants\"\n            ],\n            \"properties\": {\n                \"actorId\": {\n\
         \                    \"type\": \"string\",\n                    \"description\": \"ID of the Event Brain actor that
         will manage this encounter\"\n                },\n                \"encounterId\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Unique identifier for this encounter\"\n                },\n\
-        \                \"encounterType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Type of encounter (e.g., \\\"combat\\\", \\\"conversation\\\", \\\"choreography\\\")\"\n                },\n \
-        \               \"participants\": {\n                    \"type\": \"array\",\n                    \"description\"\
-        : \"Character IDs of participants in the encounter\",\n                    \"items\": {\n                        \"\
-        type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n                },\n   \
-        \             \"initialData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Optional initial data for
-        the encounter\"\n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
+        for this encounter\"\n                },\n                \"encounterType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Type of encounter (e.g., \\\"combat\\\", \\\"conversation\\\", \\\"choreography\\\
+        \")\"\n                },\n                \"participants\": {\n                    \"type\": \"array\",\n       \
+        \             \"description\": \"Character IDs of participants in the encounter\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n               \
+        \     }\n                },\n                \"initialData\": {\n                    \"type\": \"object\",\n     \
+        \               \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional initial data for the encounter\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Start an encounter managed by an Event Brain actor\",\n    \"description\"\
         : \"Initializes an encounter with the specified participants. The Event Brain actor\\nwill coordinate the encounter,
@@ -988,9 +988,10 @@ paths:
         \            \"actorId\",\n                \"encounterId\"\n            ],\n            \"properties\": {\n      \
         \          \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of
         the actor\"\n                },\n                \"encounterId\": {\n                    \"type\": \"string\",\n \
-        \                   \"description\": \"ID of the ended encounter\"\n                },\n                \"durationMs\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Duration of the encounter in milliseconds\"\n                }\n            }\n        }\n    }\n}"
+        \                   \"format\": \"uuid\",\n                    \"description\": \"ID of the ended encounter\"\n  \
+        \              },\n                \"durationMs\": {\n                    \"type\": \"integer\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Duration of the encounter in milliseconds\"\n  \
+        \              }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"End an active encounter\",\n    \"description\": \"Ends an encounter being
         managed by an Event Brain actor. This clears the\\nencounter state and allows the actor to manage a new encounter.\\\
         n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"EndEncounter\"\n}"
@@ -1037,18 +1038,18 @@ paths:
         active encounter being managed by an Event Brain actor\",\n            \"required\": [\n                \"encounterId\"\
         ,\n                \"encounterType\",\n                \"participants\",\n                \"phase\",\n           \
         \     \"startedAt\"\n            ],\n            \"properties\": {\n                \"encounterId\": {\n         \
-        \           \"type\": \"string\",\n                    \"description\": \"Unique identifier for this encounter\"\n\
-        \                },\n                \"encounterType\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"Type of encounter\"\n                },\n                \"participants\": {\n      \
-        \              \"type\": \"array\",\n                    \"description\": \"Character IDs participating in the encounter\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    }\n                },\n                \"phase\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Current phase of the encounter\"\n                },\n     \
-        \           \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the encounter started\"\n                },\n                \"data\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Custom encounter-specific data\"\n          \
-        \      }\n            }\n        }\n    }\n}"
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for this encounter\"\n                },\n                \"encounterType\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"Type of encounter\"\n                },\n\
+        \                \"participants\": {\n                    \"type\": \"array\",\n                    \"description\"\
+        : \"Character IDs participating in the encounter\",\n                    \"items\": {\n                        \"\
+        type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n                },\n   \
+        \             \"phase\": {\n                    \"type\": \"string\",\n                    \"description\": \"Current
+        phase of the encounter\"\n                },\n                \"startedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the encounter started\"\
+        \n                },\n                \"data\": {\n                    \"type\": \"object\",\n                   \
+        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Custom encounter-specific data\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get the current encounter state for an actor\",\n    \"description\": \"\
         Retrieves the current encounter state for an Event Brain actor. Returns\\nnull encounter data if the actor is not
         managing an encounter.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetEncounter\"\
@@ -1864,6 +1865,7 @@ components:
       properties:
         encounterId:
           type: string
+          format: uuid
           description: ID of the coordinated encounter this instruction belongs to
         sequenceId:
           type: string
@@ -2033,6 +2035,7 @@ components:
           description: ID of the Event Brain actor that will manage this encounter
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for this encounter
         encounterType:
           type: string
@@ -2103,6 +2106,7 @@ components:
           description: ID of the actor
         encounterId:
           type: string
+          format: uuid
           description: ID of the ended encounter
         durationMs:
           type: integer
@@ -2149,6 +2153,7 @@ components:
       properties:
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for this encounter
         encounterType:
           type: string

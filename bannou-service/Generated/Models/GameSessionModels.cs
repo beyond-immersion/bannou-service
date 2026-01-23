@@ -418,7 +418,7 @@ public partial class GamePlayer
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Display name shown to other players

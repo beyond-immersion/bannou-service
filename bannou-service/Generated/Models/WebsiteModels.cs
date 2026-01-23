@@ -645,7 +645,7 @@ public partial class RealmStatus
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string RealmId { get; set; } = default!;
+    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// Display name of the game realm
