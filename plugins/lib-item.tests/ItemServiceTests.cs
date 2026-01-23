@@ -1201,7 +1201,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Single(response.Items);
-        Assert.Equal(matchId, response.Items[0].InstanceId);
+        Assert.Equal(matchId, response.Items.First().InstanceId);
     }
 
     #endregion
@@ -1235,7 +1235,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Single(response.Items);
-        Assert.Equal(foundId, response.Items[0].InstanceId);
+        Assert.Equal(foundId, response.Items.First().InstanceId);
         Assert.Single(response.NotFound);
         Assert.Contains(notFoundId, response.NotFound);
     }

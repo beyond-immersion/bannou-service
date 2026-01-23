@@ -290,7 +290,7 @@ try:
                 \"unexpected_exception\",
                 ex.Message,
                 dependency: null,
-                endpoint: \"{http_method}:/{path.lstrip('/')}\",
+                endpoint: \"{http_method}:/{path_clean}\",
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
