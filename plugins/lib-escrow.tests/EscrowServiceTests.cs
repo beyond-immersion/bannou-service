@@ -73,7 +73,9 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         _mockMessageBus
             .Setup(m => m.TryPublishErrorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<ServiceErrorEventSeverity>(), It.IsAny<object?>(),
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Default save returns etag
@@ -346,7 +348,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var service = CreateService();
         var request = new CreateEscrowRequest
         {
-            Parties = new List<EscrowPartyInput> { CreatePartyInput(Guid.NewGuid(), EscrowPartyRole.Depositor) },
+            Parties = new List<CreateEscrowPartyInput> { CreatePartyInput(Guid.NewGuid(), EscrowPartyRole.Depositor) },
             ExpectedDeposits = new List<ExpectedDepositInput> { CreateExpectedDepositInput(Guid.NewGuid()) },
             EscrowType = EscrowType.Two_party,
             TrustMode = EscrowTrustMode.Initiator_trusted
@@ -369,7 +371,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var partyB = Guid.NewGuid();
         var request = new CreateEscrowRequest
         {
-            Parties = new List<EscrowPartyInput>
+            Parties = new List<CreateEscrowPartyInput>
             {
                 CreatePartyInput(partyA, EscrowPartyRole.Depositor),
                 CreatePartyInput(partyB, EscrowPartyRole.Recipient)
@@ -396,7 +398,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var partyB = Guid.NewGuid();
         var request = new CreateEscrowRequest
         {
-            Parties = new List<EscrowPartyInput>
+            Parties = new List<CreateEscrowPartyInput>
             {
                 CreatePartyInput(partyA, EscrowPartyRole.Depositor),
                 CreatePartyInput(partyB, EscrowPartyRole.Recipient)
@@ -424,7 +426,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var recipientId = Guid.NewGuid();
         var request = new CreateEscrowRequest
         {
-            Parties = new List<EscrowPartyInput>
+            Parties = new List<CreateEscrowPartyInput>
             {
                 CreatePartyInput(depositorId, EscrowPartyRole.Depositor),
                 CreatePartyInput(recipientId, EscrowPartyRole.Recipient)
@@ -449,8 +451,9 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         Assert.NotNull(response);
         Assert.NotNull(response.DepositTokens);
         Assert.Single(response.DepositTokens);
-        Assert.Equal(depositorId, response.DepositTokens[0].PartyId);
-        Assert.False(string.IsNullOrEmpty(response.DepositTokens[0].Token));
+        var firstToken = response.DepositTokens.First();
+        Assert.Equal(depositorId, firstToken.PartyId);
+        Assert.False(string.IsNullOrEmpty(firstToken.Token));
     }
 
     [Fact]
@@ -1449,7 +1452,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
 
         return new CreateEscrowRequest
         {
-            Parties = new List<EscrowPartyInput>
+            Parties = new List<CreateEscrowPartyInput>
             {
                 CreatePartyInput(depositorId, EscrowPartyRole.Depositor),
                 CreatePartyInput(recipientId, EscrowPartyRole.Recipient)
@@ -1463,9 +1466,9 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         };
     }
 
-    private static EscrowPartyInput CreatePartyInput(Guid partyId, EscrowPartyRole role)
+    private static CreateEscrowPartyInput CreatePartyInput(Guid partyId, EscrowPartyRole role)
     {
-        return new EscrowPartyInput
+        return new CreateEscrowPartyInput
         {
             PartyId = partyId,
             PartyType = "player",
