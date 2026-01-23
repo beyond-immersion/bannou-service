@@ -2679,8 +2679,8 @@ public partial class AssetService : IAssetService
                 poolType, scaleResponse.PreviousInstances, scaleResponse.CurrentInstances);
 
             // Wait for the new processor to register (poll state)
-            var maxWait = TimeSpan.FromSeconds(60);
-            var pollInterval = TimeSpan.FromSeconds(2);
+            var maxWait = TimeSpan.FromSeconds(_configuration.ProcessorAvailabilityMaxWaitSeconds);
+            var pollInterval = TimeSpan.FromSeconds(_configuration.ProcessorAvailabilityPollIntervalSeconds);
             var elapsed = TimeSpan.Zero;
 
             while (elapsed < maxWait)
@@ -2743,8 +2743,8 @@ public partial class AssetService : IAssetService
                     ContentType = metadata.ContentType,
                     PoolType = poolType,
                     RetryCount = 0,
-                    MaxRetries = 5,
-                    RetryDelaySeconds = 30
+                    MaxRetries = _configuration.ProcessingMaxRetries,
+                    RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
                 };
 
                 await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
@@ -2803,8 +2803,8 @@ public partial class AssetService : IAssetService
                 ContentType = metadata.ContentType,
                 PoolType = poolType,
                 RetryCount = 0,
-                MaxRetries = 5,
-                RetryDelaySeconds = 30
+                MaxRetries = _configuration.ProcessingMaxRetries,
+                RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
             };
 
             await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);

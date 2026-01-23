@@ -648,21 +648,36 @@ components:
 
     EscrowType:
       type: string
-      description: Type of escrow agreement
+      description: |
+        Type of escrow agreement.
+        - two_party: Simple trade escrow between Party A and Party B
+        - multi_party: N parties with complex deposit/receive rules
+        - conditional: Release based on external condition or contract fulfillment
+        - auction: Winner-takes-all with refunds to losers
       enum:
       - two_party
       - multi_party
       - conditional
       - auction
-      x-enum-descriptions:
-        two_party: Simple trade escrow between Party A and Party B
-        multi_party: N parties with complex deposit/receive rules
-        conditional: Release based on external condition or contract fulfillment
-        auction: Winner-takes-all with refunds to losers
 
     EscrowStatus:
       type: string
-      description: Current status of the escrow agreement
+      description: |
+        Current status of the escrow agreement.
+        - pending_deposits: Waiting for parties to deposit
+        - partially_funded: Some but not all deposits received
+        - funded: All deposits received, awaiting consent/condition
+        - pending_consent: Some consents received, waiting for more
+        - pending_condition: Waiting for contract fulfillment or external verification
+        - finalizing: Running contract finalizer prebound APIs (transient)
+        - releasing: Release in progress (transient)
+        - released: Assets transferred to recipients
+        - refunding: Refund in progress (transient)
+        - refunded: Assets returned to depositors
+        - disputed: In dispute, arbiter must resolve
+        - expired: Timed out without completion
+        - cancelled: Cancelled before funding complete
+        - validation_failed: Held assets changed, awaiting re-affirmation
       enum:
       - pending_deposits
       - partially_funded
@@ -678,21 +693,6 @@ components:
       - expired
       - cancelled
       - validation_failed
-      x-enum-descriptions:
-        pending_deposits: Waiting for parties to deposit
-        partially_funded: Some but not all deposits received
-        funded: All deposits received, awaiting consent/condition
-        pending_consent: Some consents received, waiting for more
-        pending_condition: For conditional type - waiting for contract fulfillment or external verification
-        finalizing: Running contract finalizer prebound APIs (transient)
-        releasing: Release in progress (transient)
-        released: Assets transferred to recipients
-        refunding: Refund in progress (transient)
-        refunded: Assets returned to depositors
-        disputed: In dispute, arbiter must resolve
-        expired: Timed out without completion
-        cancelled: Cancelled before funding complete
-        validation_failed: Held assets changed, awaiting re-affirmation or violation resolution
 
     EscrowTrustMode:
       type: string

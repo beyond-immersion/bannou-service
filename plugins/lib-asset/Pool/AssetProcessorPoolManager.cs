@@ -346,7 +346,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     {
         var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(_configuration.ProcessorPoolStoreName);
         var indexKey = GetIndexKey(poolType);
-        const int maxRetries = 5;
+        var maxRetries = _configuration.ProcessingMaxRetries;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {

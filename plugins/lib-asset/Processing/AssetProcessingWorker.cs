@@ -314,7 +314,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             await _poolManager.SetDrainingAsync(nodeId, PoolType);
 
             // Wait for current jobs to complete (with timeout)
-            var drainTimeout = TimeSpan.FromMinutes(2);
+            var drainTimeout = TimeSpan.FromMinutes(_configuration.ShutdownDrainTimeoutMinutes);
             var drainStart = DateTimeOffset.UtcNow;
 
             while (GetCurrentJobCount() > 0)
@@ -331,7 +331,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                     "Waiting for {JobCount} jobs to complete before shutdown",
                     GetCurrentJobCount());
 
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                await Task.Delay(TimeSpan.FromSeconds(_configuration.ShutdownDrainIntervalSeconds));
             }
 
             // Remove node state
