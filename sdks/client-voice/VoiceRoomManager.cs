@@ -44,9 +44,9 @@ namespace BeyondImmersion.Bannou.Client.Voice;
 public sealed class VoiceRoomManager : IDisposable
 {
     private readonly BannouClient _client;
-    private readonly Func<string, string?, IEnumerable<string>?, IVoicePeerConnection> _peerFactory;
+    private readonly Func<Guid, string?, IEnumerable<string>?, IVoicePeerConnection> _peerFactory;
     private readonly Func<Guid, IScaledVoiceConnection>? _scaledConnectionFactory;
-    private readonly ConcurrentDictionary<string, IVoicePeerConnection> _peers = new();
+    private readonly ConcurrentDictionary<Guid, IVoicePeerConnection> _peers = new();
     private readonly object _lock = new();
     private bool _disposed;
 
@@ -75,7 +75,7 @@ public sealed class VoiceRoomManager : IDisposable
     /// <summary>
     /// Gets all active peer connections by peer session ID.
     /// </summary>
-    public IReadOnlyDictionary<string, IVoicePeerConnection> Peers => _peers;
+    public IReadOnlyDictionary<Guid, IVoicePeerConnection> Peers => _peers;
 
     /// <summary>
     /// Gets the scaled voice connection when in scaled mode.

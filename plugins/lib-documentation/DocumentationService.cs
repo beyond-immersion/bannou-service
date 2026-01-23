@@ -201,8 +201,8 @@ public partial class DocumentationService : IDocumentationService
             }
 
             var namespaceId = body.Namespace;
-            var maxResults = body.MaxResults;
-            var minRelevance = body.MinRelevanceScore;
+            var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
+            var minRelevance = Math.Max(body.MinRelevanceScore, _configuration.MinRelevanceScore);
 
             // Perform natural language query using search index
             // Pass category as string for filtering (or null if default enum value)
@@ -400,7 +400,7 @@ public partial class DocumentationService : IDocumentationService
             }
 
             var namespaceId = body.Namespace;
-            var maxResults = body.MaxResults;
+            var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
 
             // Perform keyword search using search index
             var categoryFilter = body.Category == default ? null : body.Category.ToString();
@@ -433,6 +433,14 @@ public partial class DocumentationService : IDocumentationService
                         MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm) }
                     }, doc.CreatedAt));
                 }
+            }
+
+            // Filter out results below minimum relevance score
+            if (_configuration.MinRelevanceScore > 0)
+            {
+                resultsWithMetadata = resultsWithMetadata
+                    .Where(r => r.Result.RelevanceScore >= _configuration.MinRelevanceScore)
+                    .ToList();
             }
 
             // Apply sorting based on request
@@ -665,6 +673,14 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Validate content size against configuration limit
+            if (body.Content != null && System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
+            {
+                _logger.LogWarning("CreateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
+                    _configuration.MaxContentSizeBytes);
+                return (StatusCodes.BadRequest, null);
+            }
+
             // Check if namespace is bound to a repository (403 for manual modifications)
             var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
             if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
@@ -701,7 +717,7 @@ public partial class DocumentationService : IDocumentationService
                 Category = body.Category.ToString(),
                 Content = body.Content,
                 Summary = body.Summary,
-                VoiceSummary = body.VoiceSummary,
+                VoiceSummary = TruncateVoiceSummary(body.VoiceSummary),
                 Tags = body.Tags?.ToList() ?? [],
                 RelatedDocuments = body.RelatedDocuments?.ToList() ?? [],
                 Metadata = body.Metadata,
@@ -821,6 +837,12 @@ public partial class DocumentationService : IDocumentationService
 
             if (!string.IsNullOrEmpty(body.Content) && body.Content != storedDoc.Content)
             {
+                if (System.Text.Encoding.UTF8.GetByteCount(body.Content) > _configuration.MaxContentSizeBytes)
+                {
+                    _logger.LogWarning("UpdateDocument failed: Content size exceeds maximum of {MaxBytes} bytes",
+                        _configuration.MaxContentSizeBytes);
+                    return (StatusCodes.BadRequest, null);
+                }
                 storedDoc.Content = body.Content;
                 changedFields.Add("content");
             }
@@ -833,7 +855,7 @@ public partial class DocumentationService : IDocumentationService
 
             if (body.VoiceSummary != null && body.VoiceSummary != storedDoc.VoiceSummary)
             {
-                storedDoc.VoiceSummary = body.VoiceSummary;
+                storedDoc.VoiceSummary = TruncateVoiceSummary(body.VoiceSummary);
                 changedFields.Add("voiceSummary");
             }
 
@@ -1313,6 +1335,18 @@ public partial class DocumentationService : IDocumentationService
             {
                 try
                 {
+                    // Validate content size
+                    if (importDoc.Content != null &&
+                        System.Text.Encoding.UTF8.GetByteCount(importDoc.Content) > _configuration.MaxContentSizeBytes)
+                    {
+                        failed.Add(new ImportFailure
+                        {
+                            Slug = importDoc.Slug,
+                            Error = $"Content exceeds maximum size of {_configuration.MaxContentSizeBytes} bytes"
+                        });
+                        continue;
+                    }
+
                     // Check if slug exists
                     var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{importDoc.Slug}";
                     var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
@@ -1340,7 +1374,7 @@ public partial class DocumentationService : IDocumentationService
                                     existingDoc.Category = importDoc.Category.ToString();
                                     existingDoc.Content = importDoc.Content;
                                     existingDoc.Summary = importDoc.Summary;
-                                    existingDoc.VoiceSummary = importDoc.VoiceSummary;
+                                    existingDoc.VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary);
                                     existingDoc.Tags = importDoc.Tags?.ToList() ?? [];
                                     existingDoc.Metadata = importDoc.Metadata;
                                     existingDoc.UpdatedAt = now;
@@ -1366,7 +1400,7 @@ public partial class DocumentationService : IDocumentationService
                         Category = importDoc.Category.ToString(),
                         Content = importDoc.Content,
                         Summary = importDoc.Summary,
-                        VoiceSummary = importDoc.VoiceSummary,
+                        VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary),
                         Tags = importDoc.Tags?.ToList() ?? [],
                         RelatedDocuments = [],
                         Metadata = importDoc.Metadata,
@@ -1693,6 +1727,17 @@ public partial class DocumentationService : IDocumentationService
                 await guidListStore.DeleteAsync(trashListKey, cancellationToken);
             }
         }
+    }
+
+    /// <summary>
+    /// Truncates a voice summary to the configured maximum length.
+    /// </summary>
+    private string? TruncateVoiceSummary(string? voiceSummary)
+    {
+        if (voiceSummary == null || voiceSummary.Length <= _configuration.VoiceSummaryMaxLength)
+            return voiceSummary;
+
+        return voiceSummary[.._configuration.VoiceSummaryMaxLength];
     }
 
     /// <summary>

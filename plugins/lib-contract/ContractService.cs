@@ -183,7 +183,9 @@ public partial class ContractService : IContractService
                     OnComplete = m.OnComplete?.Select(MapPreboundApiToModel).ToList(),
                     OnExpire = m.OnExpire?.Select(MapPreboundApiToModel).ToList()
                 }).ToList(),
-                DefaultEnforcementMode = body.DefaultEnforcementMode,
+                DefaultEnforcementMode = body.DefaultEnforcementMode != default
+                    ? body.DefaultEnforcementMode
+                    : ParseEnforcementMode(_configuration.DefaultEnforcementMode),
                 Transferable = body.Transferable,
                 GameMetadata = body.GameMetadata,
                 IsActive = true,
@@ -696,6 +698,27 @@ public partial class ContractService : IContractService
             {
                 _logger.LogWarning("Contract not in proposed status: {ContractId}", body.ContractId);
                 return (StatusCodes.BadRequest, null);
+            }
+
+            // Check consent deadline (lazy expiration)
+            if (model.ProposedAt.HasValue && _configuration.DefaultConsentTimeoutDays > 0)
+            {
+                var deadline = model.ProposedAt.Value.AddDays(_configuration.DefaultConsentTimeoutDays);
+                if (DateTimeOffset.UtcNow > deadline)
+                {
+                    _logger.LogWarning(
+                        "Consent deadline expired for contract {ContractId}: proposed {ProposedAt}, deadline {Deadline}",
+                        body.ContractId, model.ProposedAt, deadline);
+
+                    // Transition to expired
+                    await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+                    model.Status = ContractStatus.Expired;
+                    model.UpdatedAt = DateTimeOffset.UtcNow;
+                    await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+
+                    return (StatusCodes.BadRequest, null);
+                }
             }
 
             // Find party
@@ -2010,6 +2033,22 @@ public partial class ContractService : IContractService
             PreboundApiExecutionMode.Async => ServiceClients.ExecutionMode.Async,
             PreboundApiExecutionMode.Fire_and_forget => ServiceClients.ExecutionMode.FireAndForget,
             _ => ServiceClients.ExecutionMode.Sync
+        };
+    }
+
+    /// <summary>
+    /// Parses the configured enforcement mode string to the enum.
+    /// Falls back to Event_only if the string is unrecognized.
+    /// </summary>
+    private static EnforcementMode ParseEnforcementMode(string mode)
+    {
+        return mode switch
+        {
+            "advisory" => EnforcementMode.Advisory,
+            "event_only" => EnforcementMode.Event_only,
+            "consequence_based" => EnforcementMode.Consequence_based,
+            "community" => EnforcementMode.Community,
+            _ => EnforcementMode.Event_only
         };
     }
 
