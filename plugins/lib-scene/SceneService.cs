@@ -132,6 +132,14 @@ public partial class SceneService : ISceneService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Validate tag counts per IMPLEMENTATION TENETS (configuration-first)
+            var tagError = ValidateTagCounts(scene);
+            if (tagError != null)
+            {
+                _logger.LogWarning("CreateScene failed tag validation: {Error}", tagError);
+                return (StatusCodes.BadRequest, null);
+            }
+
             // Check if scene already exists
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
@@ -231,7 +239,8 @@ public partial class SceneService : ISceneService
             // Resolve references if requested
             if (body.ResolveReferences)
             {
-                var maxDepth = Math.Min(body.MaxReferenceDepth, _configuration.MaxReferenceDepthLimit);
+                var requestedDepth = body.MaxReferenceDepth > 0 ? body.MaxReferenceDepth : _configuration.DefaultMaxReferenceDepth;
+                var maxDepth = Math.Min(requestedDepth, _configuration.MaxReferenceDepthLimit);
 
                 var (resolved, unresolved, errors) = await ResolveReferencesAsync(scene, maxDepth, cancellationToken);
                 response.ResolvedReferences = resolved.Count > 0 ? resolved : null;
@@ -411,6 +420,14 @@ public partial class SceneService : ISceneService
             if (!validationResult.Valid)
             {
                 _logger.LogWarning("UpdateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate tag counts per IMPLEMENTATION TENETS (configuration-first)
+            var tagError = ValidateTagCounts(scene);
+            if (tagError != null)
+            {
+                _logger.LogWarning("UpdateScene failed tag validation: {Error}", tagError);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1810,6 +1827,54 @@ public partial class SceneService : ISceneService
             }
         }
         return count;
+    }
+
+    /// <summary>
+    /// Validates scene-level and node-level tag counts against configuration limits.
+    /// </summary>
+    /// <param name="scene">The scene to validate.</param>
+    /// <returns>Error message if validation fails, null if valid.</returns>
+    private string? ValidateTagCounts(Scene scene)
+    {
+        // Validate scene-level tags
+        if (scene.Tags != null && scene.Tags.Count > _configuration.MaxTagsPerScene)
+        {
+            return $"Scene has {scene.Tags.Count} tags, exceeds maximum of {_configuration.MaxTagsPerScene}";
+        }
+
+        // Validate per-node tags
+        if (scene.Root != null)
+        {
+            var nodeError = ValidateNodeTagsRecursive(scene.Root);
+            if (nodeError != null)
+            {
+                return nodeError;
+            }
+        }
+
+        return null;
+    }
+
+    private string? ValidateNodeTagsRecursive(SceneNode node)
+    {
+        if (node.Tags != null && node.Tags.Count > _configuration.MaxTagsPerNode)
+        {
+            return $"Node '{node.RefId}' has {node.Tags.Count} tags, exceeds maximum of {_configuration.MaxTagsPerNode}";
+        }
+
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                var error = ValidateNodeTagsRecursive(child);
+                if (error != null)
+                {
+                    return error;
+                }
+            }
+        }
+
+        return null;
     }
 
     private string IncrementPatchVersion(string version)

@@ -651,7 +651,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             // Paginate
             var page = body.Page;
-            var pageSize = Math.Min(body.PageSize, _configuration.MaxPageSize);
+            var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
             var totalCount = encounters.Count;
             var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
@@ -728,7 +728,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             // Paginate
             var page = body.Page;
-            var pageSize = Math.Min(body.PageSize, _configuration.MaxPageSize);
+            var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
             var totalCount = encounters.Count;
             var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
@@ -800,7 +800,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
             // Paginate
             var page = body.Page;
-            var pageSize = Math.Min(body.PageSize, _configuration.MaxPageSize);
+            var pageSize = Math.Min(body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize, _configuration.MaxPageSize);
             var totalCount = encounters.Count;
             var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
