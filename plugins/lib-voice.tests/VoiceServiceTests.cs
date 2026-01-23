@@ -753,9 +753,10 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var request = new PeerHeartbeatRequest { RoomId = roomId, SessionId = "session-123" };
+        var sessionId = Guid.NewGuid();
+        var request = new PeerHeartbeatRequest { RoomId = roomId, SessionId = sessionId };
 
-        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, "session-123", It.IsAny<CancellationToken>()))
+        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -771,9 +772,10 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var request = new PeerHeartbeatRequest { RoomId = roomId, SessionId = "session-123" };
+        var sessionId = Guid.NewGuid();
+        var request = new PeerHeartbeatRequest { RoomId = roomId, SessionId = sessionId };
 
-        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, "session-123", It.IsAny<CancellationToken>()))
+        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act

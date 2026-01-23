@@ -659,14 +659,15 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
+        var encounterId = Guid.NewGuid();
         var participants = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
         // Act
-        var result = runner.StartEncounter("encounter-001", "combat", participants);
+        var result = runner.StartEncounter(encounterId, "combat", participants);
 
         // Assert
         Assert.True(result);
-        Assert.Equal("encounter-001", runner.CurrentEncounterId);
+        Assert.Equal(encounterId, runner.CurrentEncounterId);
     }
 
     [Fact]
@@ -674,17 +675,19 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
+        var encounterId1 = Guid.NewGuid();
+        var encounterId2 = Guid.NewGuid();
         var participants = new List<Guid> { Guid.NewGuid() };
 
         // Start first encounter
-        runner.StartEncounter("encounter-001", "combat", participants);
+        runner.StartEncounter(encounterId1, "combat", participants);
 
         // Act - try to start another
-        var result = runner.StartEncounter("encounter-002", "combat", participants);
+        var result = runner.StartEncounter(encounterId2, "combat", participants);
 
         // Assert
         Assert.False(result);
-        Assert.Equal("encounter-001", runner.CurrentEncounterId); // Original still active
+        Assert.Equal(encounterId1, runner.CurrentEncounterId); // Original still active
     }
 
     [Fact]
@@ -692,6 +695,7 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
+        var encounterId = Guid.NewGuid();
         var participants = new List<Guid> { Guid.NewGuid() };
         var initialData = new Dictionary<string, object?>
         {
@@ -700,7 +704,7 @@ public class ActorRunnerTests
         };
 
         // Act
-        runner.StartEncounter("encounter-001", "combat", participants, initialData);
+        runner.StartEncounter(encounterId, "combat", participants, initialData);
         var snapshot = runner.GetStateSnapshot();
 
         // Assert
@@ -715,7 +719,7 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        runner.StartEncounter("encounter-001", "combat", new List<Guid> { Guid.NewGuid() });
+        runner.StartEncounter(Guid.NewGuid(), "combat", new List<Guid> { Guid.NewGuid() });
 
         // Act
         var result = runner.SetEncounterPhase("executing");
@@ -744,7 +748,7 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        runner.StartEncounter("encounter-001", "combat", new List<Guid> { Guid.NewGuid() });
+        runner.StartEncounter(Guid.NewGuid(), "combat", new List<Guid> { Guid.NewGuid() });
 
         // Act
         var result = runner.EndEncounter();
@@ -774,10 +778,11 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
+        var encounterId = Guid.NewGuid();
         var participant1 = Guid.NewGuid();
         var participant2 = Guid.NewGuid();
 
-        runner.StartEncounter("encounter-001", "conversation", new List<Guid> { participant1, participant2 });
+        runner.StartEncounter(encounterId, "conversation", new List<Guid> { participant1, participant2 });
         runner.SetEncounterPhase("gathering_options");
 
         // Act
@@ -785,7 +790,7 @@ public class ActorRunnerTests
 
         // Assert
         Assert.NotNull(snapshot.Encounter);
-        Assert.Equal("encounter-001", snapshot.Encounter.EncounterId);
+        Assert.Equal(encounterId, snapshot.Encounter.EncounterId);
         Assert.Equal("conversation", snapshot.Encounter.EncounterType);
         Assert.Equal("gathering_options", snapshot.Encounter.Phase);
         Assert.Contains(participant1, snapshot.Encounter.Participants);
@@ -810,7 +815,7 @@ public class ActorRunnerTests
         var beforeStart = DateTimeOffset.UtcNow;
 
         // Act
-        runner.StartEncounter("encounter-001", "combat", new List<Guid> { Guid.NewGuid() });
+        runner.StartEncounter(Guid.NewGuid(), "combat", new List<Guid> { Guid.NewGuid() });
         var snapshot = runner.GetStateSnapshot();
 
         // Assert

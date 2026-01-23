@@ -931,17 +931,18 @@ public class ActorServiceTests
         // Arrange
         var service = CreateService();
         var participantId = Guid.NewGuid();
+        var encounterId = Guid.NewGuid();
         var request = new StartEncounterRequest
         {
             ActorId = "event-brain-1",
-            EncounterId = "encounter-001",
+            EncounterId = encounterId,
             EncounterType = "combat",
             Participants = new List<Guid> { participantId }
         };
 
         var mockRunner = new Mock<IActorRunner>();
         mockRunner.Setup(r => r.StartEncounter(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<IReadOnlyList<Guid>>(),
             It.IsAny<Dictionary<string, object?>?>()))
@@ -965,7 +966,7 @@ public class ActorServiceTests
         var request = new StartEncounterRequest
         {
             ActorId = "nonexistent-actor",
-            EncounterId = "encounter-001",
+            EncounterId = Guid.NewGuid(),
             EncounterType = "combat",
             Participants = new List<Guid> { Guid.NewGuid() }
         };
@@ -991,14 +992,14 @@ public class ActorServiceTests
         var request = new StartEncounterRequest
         {
             ActorId = "event-brain-1",
-            EncounterId = "encounter-002",
+            EncounterId = Guid.NewGuid(),
             EncounterType = "combat",
             Participants = new List<Guid> { Guid.NewGuid() }
         };
 
         var mockRunner = new Mock<IActorRunner>();
         mockRunner.Setup(r => r.StartEncounter(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<IReadOnlyList<Guid>>(),
             It.IsAny<Dictionary<string, object?>?>()))
@@ -1039,7 +1040,7 @@ public class ActorServiceTests
             StartedAt = DateTimeOffset.UtcNow,
             Encounter = new EncounterStateData
             {
-                EncounterId = "encounter-001",
+                EncounterId = Guid.NewGuid(),
                 EncounterType = "combat",
                 Participants = new List<Guid>(),
                 Phase = "initializing",
@@ -1095,6 +1096,7 @@ public class ActorServiceTests
     {
         // Arrange
         var service = CreateService();
+        var encounterId = Guid.NewGuid();
         var request = new EndEncounterRequest
         {
             ActorId = "event-brain-1"
@@ -1111,7 +1113,7 @@ public class ActorServiceTests
             StartedAt = DateTimeOffset.UtcNow,
             Encounter = new EncounterStateData
             {
-                EncounterId = "encounter-001",
+                EncounterId = encounterId,
                 EncounterType = "combat",
                 Participants = new List<Guid>(),
                 Phase = "complete",
@@ -1129,7 +1131,7 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("encounter-001", response.EncounterId);
+        Assert.Equal(encounterId, response.EncounterId);
         Assert.True(response.DurationMs > 0);
     }
 
@@ -1166,6 +1168,7 @@ public class ActorServiceTests
     {
         // Arrange
         var service = CreateService();
+        var encounterId = Guid.NewGuid();
         var request = new GetEncounterRequest
         {
             ActorId = "event-brain-1"
@@ -1182,7 +1185,7 @@ public class ActorServiceTests
             StartedAt = DateTimeOffset.UtcNow,
             Encounter = new EncounterStateData
             {
-                EncounterId = "encounter-001",
+                EncounterId = encounterId,
                 EncounterType = "combat",
                 Participants = new List<Guid> { participantId },
                 Phase = "executing",
@@ -1201,7 +1204,7 @@ public class ActorServiceTests
         Assert.NotNull(response);
         Assert.True(response.HasActiveEncounter);
         Assert.NotNull(response.Encounter);
-        Assert.Equal("encounter-001", response.Encounter.EncounterId);
+        Assert.Equal(encounterId, response.Encounter.EncounterId);
         Assert.Equal("combat", response.Encounter.EncounterType);
         Assert.Equal("executing", response.Encounter.Phase);
         Assert.Contains(participantId, response.Encounter.Participants);
@@ -1278,7 +1281,7 @@ public class ActorServiceTests
         var request = new StartEncounterRequest
         {
             ActorId = "remote-actor-1",
-            EncounterId = "encounter-001",
+            EncounterId = Guid.NewGuid(),
             EncounterType = "combat",
             Participants = new List<Guid> { Guid.NewGuid() }
         };
@@ -1412,10 +1415,11 @@ public class ActorServiceTests
             });
 
         // Mock the remote invocation response
+        var encounterId = Guid.NewGuid();
         var expectedResponse = new EndEncounterResponse
         {
             ActorId = "remote-actor-3",
-            EncounterId = "encounter-003",
+            EncounterId = encounterId,
             DurationMs = 5000
         };
 
@@ -1432,7 +1436,7 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("encounter-003", response.EncounterId);
+        Assert.Equal(encounterId, response.EncounterId);
         Assert.Equal(5000, response.DurationMs);
 
         // Verify mesh client was called
@@ -1474,13 +1478,14 @@ public class ActorServiceTests
             });
 
         // Mock the remote invocation response
+        var encounterId = Guid.NewGuid();
         var expectedResponse = new GetEncounterResponse
         {
             ActorId = "remote-actor-4",
             HasActiveEncounter = true,
             Encounter = new EncounterState
             {
-                EncounterId = "encounter-004",
+                EncounterId = encounterId,
                 EncounterType = "dialogue",
                 Participants = new List<Guid> { participantId },
                 Phase = "active",
@@ -1503,7 +1508,7 @@ public class ActorServiceTests
         Assert.NotNull(response);
         Assert.True(response.HasActiveEncounter);
         Assert.NotNull(response.Encounter);
-        Assert.Equal("encounter-004", response.Encounter.EncounterId);
+        Assert.Equal(encounterId, response.Encounter.EncounterId);
         Assert.Equal("dialogue", response.Encounter.EncounterType);
         Assert.Contains(participantId, response.Encounter.Participants);
 
@@ -1525,7 +1530,7 @@ public class ActorServiceTests
         var request = new StartEncounterRequest
         {
             ActorId = "nonexistent-actor",
-            EncounterId = "encounter-999",
+            EncounterId = Guid.NewGuid(),
             EncounterType = "combat",
             Participants = new List<Guid> { Guid.NewGuid() }
         };
