@@ -1837,7 +1837,7 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Revokes all shortcuts from game-session service for a session.
     /// </summary>
-    private async Task RevokeShortcutsForSessionAsync(string sessionId, string stubName)
+    private async Task RevokeShortcutsForSessionAsync(Guid sessionId, string stubName)
     {
         try
         {
@@ -1845,14 +1845,14 @@ public partial class GameSessionService : IGameSessionService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 RevokeByService = "game-session",
                 Reason = $"Subscription to {stubName} ended"
             };
 
             // Publish to session-specific client event channel using direct exchange
             // CRITICAL: Must use IClientEventPublisher for session-specific events (IMPLEMENTATION TENETS)
-            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, revokeEvent);
+            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), revokeEvent);
             if (published)
             {
                 _logger.LogInformation("Revoked game-session shortcuts for session {SessionId} (reason: {StubName} subscription ended)",

@@ -1926,7 +1926,7 @@ internal class TicketModel
     public Guid TicketId { get; set; }
     public string QueueId { get; set; } = string.Empty;
     public Guid AccountId { get; set; }
-    public string WebSocketSessionId { get; set; } = string.Empty;
+    public Guid WebSocketSessionId { get; set; }
     public Guid? PartyId { get; set; }
     public List<PartyMemberModel>? PartyMembers { get; set; }
     public Dictionary<string, string> StringProperties { get; set; } = new();
@@ -1943,7 +1943,7 @@ internal class TicketModel
 internal class PartyMemberModel
 {
     public Guid AccountId { get; set; }
-    public string WebSocketSessionId { get; set; } = string.Empty;
+    public Guid WebSocketSessionId { get; set; }
     public double? SkillRating { get; set; }
 }
 
@@ -1980,7 +1980,7 @@ internal class MatchedTicketModel
 {
     public Guid TicketId { get; set; }
     public Guid AccountId { get; set; }
-    public string WebSocketSessionId { get; set; } = string.Empty;
+    public Guid WebSocketSessionId { get; set; }
     public Guid? PartyId { get; set; }
     public double? SkillRating { get; set; }
     public double WaitTimeSeconds { get; set; }
