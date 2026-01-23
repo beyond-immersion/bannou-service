@@ -435,9 +435,10 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Updating account: {AccountId}", accountId);
 
-            // Get existing account
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
             if (account == null)
             {
@@ -483,8 +484,13 @@ public partial class AccountService : IAccountService
 
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save updated account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
+            // Save updated account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for account {AccountId}", accountId);
+                return (StatusCodes.Conflict, null);
+            }
 
             _logger.LogInformation("Account updated: {AccountId}", accountId);
 
@@ -841,58 +847,57 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Updating profile for account: {AccountId}", accountId);
 
-            // Handle profile update similar to account update
-            try
+            // Get existing account with ETag for optimistic concurrency
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+            if (account == null)
             {
-                var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-                var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-
-                if (account == null)
-                {
-                    _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
-                    return (StatusCodes.NotFound, null);
-                }
-
-                // Update profile fields
-                if (body.DisplayName != null)
-                    account.DisplayName = body.DisplayName;
-
-                // Handle metadata update if provided
-                if (body.Metadata != null)
-                {
-                    var newMetadata = ConvertToMetadataDictionary(body.Metadata);
-                    if (newMetadata != null)
-                    {
-                        account.Metadata = newMetadata;
-                    }
-                }
-
-                account.UpdatedAt = DateTimeOffset.UtcNow;
-
-                await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
-
-                // Get auth methods for the account
-                var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
-
-                var response = new AccountResponse
-                {
-                    AccountId = account.AccountId,
-                    Email = account.Email,
-                    DisplayName = account.DisplayName,
-                    EmailVerified = account.IsVerified,
-                    CreatedAt = account.CreatedAt,
-                    UpdatedAt = account.UpdatedAt,
-                    Roles = account.Roles, // Return stored roles
-                    AuthMethods = authMethods
-                };
-
-                return (StatusCodes.OK, response);
+                _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
+                return (StatusCodes.NotFound, null);
             }
-            catch (Exception innerEx)
+
+            // Update profile fields
+            if (body.DisplayName != null)
+                account.DisplayName = body.DisplayName;
+
+            // Handle metadata update if provided
+            if (body.Metadata != null)
             {
-                _logger.LogError(innerEx, "Inner exception updating profile: {AccountId}", body.AccountId);
-                throw;
+                var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+                if (newMetadata != null)
+                {
+                    account.Metadata = newMetadata;
+                }
             }
+
+            account.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for account profile {AccountId}", accountId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Get auth methods for the account
+            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
+            var response = new AccountResponse
+            {
+                AccountId = account.AccountId,
+                Email = account.Email,
+                DisplayName = account.DisplayName,
+                EmailVerified = account.IsVerified,
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt,
+                Roles = account.Roles, // Return stored roles
+                AuthMethods = authMethods
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -917,9 +922,10 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Deleting account: {AccountId}", accountId);
 
-            // Get existing account for event publishing
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
             if (account == null)
             {
@@ -930,8 +936,13 @@ public partial class AccountService : IAccountService
             // Soft delete by setting DeletedAt timestamp
             account.DeletedAt = DateTimeOffset.UtcNow;
 
-            // Save the soft-deleted account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
+            // Save the soft-deleted account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for account deletion {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             // Remove email index
             var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
@@ -979,10 +990,11 @@ public partial class AccountService : IAccountService
                 return StatusCodes.NotFound;
             }
 
-            // Get existing auth methods
+            // Get existing auth methods with ETag for optimistic concurrency
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
             var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
-            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
+            var (authMethods, authEtag) = await authMethodsStore.GetWithETagAsync(authMethodsKey, cancellationToken);
+            authMethods ??= new List<AuthMethodInfo>();
 
             // Find the auth method to remove
             var methodToRemove = authMethods.FirstOrDefault(m => m.MethodId == methodId);
@@ -994,8 +1006,13 @@ public partial class AccountService : IAccountService
             // Remove the auth method
             authMethods.Remove(methodToRemove);
 
-            // Save updated auth methods
-            await authMethodsStore.SaveAsync(authMethodsKey, authMethods, cancellationToken: cancellationToken);
+            // Save updated auth methods with optimistic concurrency check
+            var newAuthEtag = await authMethodsStore.TrySaveAsync(authMethodsKey, authMethods, authEtag ?? string.Empty, cancellationToken);
+            if (newAuthEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for auth methods on account {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             // Remove provider index
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{methodToRemove.Provider}:{methodToRemove.ExternalId}";
@@ -1031,9 +1048,10 @@ public partial class AccountService : IAccountService
             var accountId = body.AccountId;
             _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
 
-            // Get existing account
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
             if (account == null)
             {
@@ -1045,8 +1063,13 @@ public partial class AccountService : IAccountService
             account.PasswordHash = body.PasswordHash;
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save updated account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account, cancellationToken: cancellationToken);
+            // Save updated account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for password update on account {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
             await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" });
@@ -1076,9 +1099,10 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Updating verification status for account: {AccountId}, Verified: {Verified}",
                 accountId, body.EmailVerified);
 
-            // Get existing account
+            // Get existing account with ETag for optimistic concurrency
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
             if (account == null)
             {
@@ -1090,8 +1114,13 @@ public partial class AccountService : IAccountService
             account.IsVerified = body.EmailVerified;
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save updated account
-            await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account, cancellationToken: cancellationToken);
+            // Save updated account with optimistic concurrency check
+            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for verification update on account {AccountId}", accountId);
+                return StatusCodes.Conflict;
+            }
 
             _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
                 accountId, body.EmailVerified);

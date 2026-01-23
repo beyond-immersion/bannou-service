@@ -156,18 +156,6 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int RetryDelayMilliseconds { get; set; } = 100;
 
     /// <summary>
-    /// Whether to log detailed routing decisions
-    /// Environment variable: MESH_ENABLE_DETAILED_LOGGING
-    /// </summary>
-    public bool EnableDetailedLogging { get; set; } = false;
-
-    /// <summary>
-    /// Whether to collect routing metrics
-    /// Environment variable: MESH_METRICS_ENABLED
-    /// </summary>
-    public bool MetricsEnabled { get; set; } = true;
-
-    /// <summary>
     /// How long to keep pooled HTTP connections alive in minutes
     /// Environment variable: MESH_POOLED_CONNECTION_LIFETIME_MINUTES
     /// </summary>

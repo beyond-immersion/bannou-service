@@ -513,12 +513,13 @@ public partial class AnalyticsService : IAnalyticsService
             var updatedRatings = new List<SkillRatingChange>();
             var now = DateTimeOffset.UtcNow;
 
-            // Load all current ratings
+            // Load all current ratings with ETags for optimistic concurrency
             var currentRatings = new Dictionary<string, SkillRatingData>();
+            var ratingEtags = new Dictionary<string, string>();
             foreach (var result in body.Results)
             {
                 var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
-                var rating = await ratingStore.GetAsync(key, cancellationToken);
+                var (rating, etag) = await ratingStore.GetWithETagAsync(key, cancellationToken);
                 currentRatings[key] = rating ?? new SkillRatingData
                 {
                     EntityId = result.EntityId,
@@ -530,6 +531,7 @@ public partial class AnalyticsService : IAnalyticsService
                     Volatility = _configuration.Glicko2DefaultVolatility,
                     MatchesPlayed = 0
                 };
+                ratingEtags[key] = etag ?? string.Empty;
             }
 
             // Calculate new ratings using Glicko-2
@@ -557,7 +559,13 @@ public partial class AnalyticsService : IAnalyticsService
                 playerRating.MatchesPlayed++;
                 playerRating.LastMatchAt = now;
 
-                await ratingStore.SaveAsync(key, playerRating, options: null, cancellationToken);
+                // Save with optimistic concurrency check
+                var newEtag = await ratingStore.TrySaveAsync(key, playerRating, ratingEtags[key], cancellationToken);
+                if (newEtag == null)
+                {
+                    _logger.LogWarning("Concurrent modification detected for rating {Key} during match {MatchId}", key, body.MatchId);
+                    return (StatusCodes.Conflict, null);
+                }
 
                 var ratingChange = newRating - previousRating;
                 updatedRatings.Add(new SkillRatingChange
@@ -1484,7 +1492,7 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 var entityKey = kvp.Key;
                 var entityEvents = kvp.Value;
-                var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
+                var (summary, summaryEtag) = await summaryStore.GetWithETagAsync(entityKey, cancellationToken);
 
                 if (summary == null)
                 {
@@ -1550,7 +1558,12 @@ public partial class AnalyticsService : IAnalyticsService
                 var summarySaved = false;
                 try
                 {
-                    await summaryStore.SaveAsync(entityKey, summary, summaryOptions, cancellationToken);
+                    var newSummaryEtag = await summaryStore.TrySaveAsync(entityKey, summary, summaryEtag ?? string.Empty, cancellationToken);
+                    if (newSummaryEtag == null)
+                    {
+                        _logger.LogWarning("Concurrent modification detected for analytics summary {EntityKey}, skipping batch", entityKey);
+                        continue;
+                    }
                     summarySaved = true;
                 }
                 catch (Exception ex)

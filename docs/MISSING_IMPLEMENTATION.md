@@ -289,21 +289,15 @@ The music service has no configuration schema at all, yet contains a hardcoded c
 
 ## Properties to REMOVE (Not Useful Features)
 
-The following unwired properties should be removed from their configuration schemas as they represent architectural anti-patterns or features with no viable implementation path:
+The following properties were removed from their configuration schemas:
 
-| Service | Property | Reason to Remove |
-|---------|----------|-----------------|
+| Service | Property | Reason Removed |
+|---------|----------|---------------|
 | Mesh | `EnableDetailedLogging` | Structured logging via ILogger already provides this; boolean toggle adds nothing |
 | Mesh | `MetricsEnabled` | No metrics infrastructure (Prometheus/StatsD) exists in Bannou |
-| Achievement | `DefinitionStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Achievement | `ProgressStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Analytics | `EventStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Analytics | `SummaryStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Analytics | `RatingStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Leaderboard | `DefinitionStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Leaderboard | `ScoreStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Leaderboard | `SeasonStoreName` | Anti-pattern: store names belong in StateStoreDefinitions |
-| Leaderboard | `RankCacheTtlSeconds` | Redis sorted sets are already O(log N); caching adds complexity without benefit |
+| Leaderboard | `RankCacheTtlSeconds` | Redis sorted sets are already sub-millisecond; application cache adds staleness without meaningful benefit |
+
+*Note: StoreName properties (Achievement, Analytics, Leaderboard) were already removed in a prior cleanup.*
 
 ---
 

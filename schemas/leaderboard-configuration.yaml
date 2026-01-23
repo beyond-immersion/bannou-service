@@ -17,11 +17,6 @@ x-service-configuration:
       description: Maximum entries returned per rank query
       default: 1000
       env: LEADERBOARD_MAX_ENTRIES_PER_QUERY
-    RankCacheTtlSeconds:
-      type: integer
-      description: TTL in seconds for cached rank queries
-      default: 60
-      env: LEADERBOARD_RANK_CACHE_TTL_SECONDS
     # Score Update Configuration
     ScoreUpdateBatchSize:
       type: integer

@@ -60,12 +60,6 @@ public class LeaderboardServiceConfiguration : IServiceConfiguration
     public int MaxEntriesPerQuery { get; set; } = 1000;
 
     /// <summary>
-    /// TTL in seconds for cached rank queries
-    /// Environment variable: LEADERBOARD_RANK_CACHE_TTL_SECONDS
-    /// </summary>
-    public int RankCacheTtlSeconds { get; set; } = 60;
-
-    /// <summary>
     /// Maximum scores to process in a single batch
     /// Environment variable: LEADERBOARD_SCORE_UPDATE_BATCH_SIZE
     /// </summary>

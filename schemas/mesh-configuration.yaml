@@ -147,21 +147,6 @@ x-service-configuration:
       default: 100
 
     # =========================================================================
-    # Logging and Diagnostics
-    # =========================================================================
-    EnableDetailedLogging:
-      type: boolean
-      description: Whether to log detailed routing decisions
-      env: MESH_ENABLE_DETAILED_LOGGING
-      default: false
-
-    MetricsEnabled:
-      type: boolean
-      description: Whether to collect routing metrics
-      env: MESH_METRICS_ENABLED
-      default: true
-
-    # =========================================================================
     # HTTP Client Configuration
     # =========================================================================
     PooledConnectionLifetimeMinutes:
