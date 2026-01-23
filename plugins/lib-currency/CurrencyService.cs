@@ -29,6 +29,7 @@ public partial class CurrencyService : ICurrencyService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CurrencyService> _logger;
     private readonly CurrencyServiceConfiguration _configuration;
+    private readonly IDistributedLockProvider _lockProvider;
 
     // State store key prefixes
     private const string DEF_PREFIX = "def:";
@@ -52,13 +53,15 @@ public partial class CurrencyService : ICurrencyService
         IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
         ILogger<CurrencyService> logger,
-        CurrencyServiceConfiguration configuration)
+        CurrencyServiceConfiguration configuration,
+        IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
         _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _lockProvider = lockProvider;
     }
 
     #region Currency Definition Operations
@@ -802,6 +805,16 @@ public partial class CurrencyService : ICurrencyService
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
 
+            // Acquire distributed lock for atomic balance modification
+            var balanceLockKey = $"{body.WalletId}:{body.CurrencyDefinitionId}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire balance lock for wallet {WalletId}, currency {CurrencyId}", body.WalletId, body.CurrencyDefinitionId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var balance = await GetOrCreateBalanceAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
             ResetEarnCapsIfNeeded(balance, definition);
 
@@ -953,6 +966,16 @@ public partial class CurrencyService : ICurrencyService
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
 
+            // Acquire distributed lock for atomic balance modification
+            var balanceLockKey = $"{body.WalletId}:{body.CurrencyDefinitionId}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire balance lock for wallet {WalletId}, currency {CurrencyId}", body.WalletId, body.CurrencyDefinitionId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var balance = await GetOrCreateBalanceAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
 
             // Check sufficient funds
@@ -1037,6 +1060,28 @@ public partial class CurrencyService : ICurrencyService
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
             if (!definition.Transferable) return (StatusCodes.BadRequest, null);
+
+            // Acquire distributed locks for both wallets in deterministic order to prevent deadlock
+            var sourceLockKey = $"{body.SourceWalletId}:{body.CurrencyDefinitionId}";
+            var targetLockKey = $"{body.TargetWalletId}:{body.CurrencyDefinitionId}";
+            var firstLockKey = string.CompareOrdinal(sourceLockKey, targetLockKey) <= 0 ? sourceLockKey : targetLockKey;
+            var secondLockKey = string.CompareOrdinal(sourceLockKey, targetLockKey) <= 0 ? targetLockKey : sourceLockKey;
+
+            await using var firstLock = await _lockProvider.LockAsync(
+                "currency-balance", firstLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!firstLock.Success)
+            {
+                _logger.LogWarning("Could not acquire first balance lock for transfer {FirstKey}", firstLockKey);
+                return (StatusCodes.Conflict, null);
+            }
+
+            await using var secondLock = await _lockProvider.LockAsync(
+                "currency-balance", secondLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!secondLock.Success)
+            {
+                _logger.LogWarning("Could not acquire second balance lock for transfer {SecondKey}", secondLockKey);
+                return (StatusCodes.Conflict, null);
+            }
 
             var sourceBalance = await GetOrCreateBalanceAsync(body.SourceWalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (sourceBalance.Amount < body.Amount)
