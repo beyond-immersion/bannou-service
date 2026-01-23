@@ -44846,6 +44846,16 @@
             Unique escrow agreement identifier
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.EscrowType">
+            <summary>
+            Type of escrow agreement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.TrustMode">
+            <summary>
+            Trust mode for the escrow
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.TrustedPartyId">
             <summary>
             For single_party_trusted - which party has authority
@@ -44889,6 +44899,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Consents">
             <summary>
             Consent decisions from parties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Status">
+            <summary>
+            Current escrow status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.RequiredConsentsForRelease">
@@ -44956,6 +44971,11 @@
             Game/application specific metadata
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.Resolution">
+            <summary>
+            How the escrow was resolved
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAgreement.ResolutionNotes">
             <summary>
             Notes about the resolution
@@ -44984,6 +45004,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.DisplayName">
             <summary>
             Display name for UI/logging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.Role">
+            <summary>
+            Role of this party in the escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.ConsentRequired">
@@ -45049,6 +45074,11 @@
         <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAsset">
             <summary>
             An asset held in escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.AssetType">
+            <summary>
+            Type of asset held in escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAsset.CurrencyDefinitionId">
@@ -45241,6 +45271,11 @@
             Type of the depositing party
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.Assets">
+            <summary>
+            Assets deposited
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.DepositedAt">
             <summary>
             When the deposit was made
@@ -45311,6 +45346,11 @@
             Type of the party
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.ConsentType">
+            <summary>
+            Type of consent given
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.ConsentedAt">
             <summary>
             When consent was given
@@ -45349,6 +45389,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.AssetDescription">
             <summary>
             Description of the affected asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.FailureType">
+            <summary>
+            Type of validation failure
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidationFailure.AffectedPartyId">
@@ -45414,6 +45459,21 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.AssetHandlerInfo.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest">
+            <summary>
+            Request to create a new escrow agreement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.EscrowType">
+            <summary>
+            Type of escrow agreement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.TrustMode">
+            <summary>
+            Trust mode for the escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowRequest.TrustedPartyId">
@@ -45486,6 +45546,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput">
+            <summary>
+            Input for defining a party in escrow creation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.PartyId">
             <summary>
             Party entity ID
@@ -45499,6 +45564,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.DisplayName">
             <summary>
             Display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.Role">
+            <summary>
+            Role of this party in the escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.ConsentRequired">
@@ -45519,6 +45589,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput">
+            <summary>
+            Input for defining expected deposits from a party
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.PartyId">
@@ -45549,6 +45624,16 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAssetInput">
+            <summary>
+            Input for specifying an asset in escrow operations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.AssetType">
+            <summary>
+            Type of asset to deposit
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetInput.CurrencyDefinitionId">
@@ -45631,6 +45716,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput">
+            <summary>
+            Input for specifying how assets should be allocated on release
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseAllocationInput.RecipientPartyId">
             <summary>
             Recipient party ID
@@ -45661,6 +45751,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.CreateEscrowResponse">
+            <summary>
+            Response from creating an escrow agreement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowResponse.Escrow">
+            <summary>
+            Created escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowResponse.DepositTokens">
             <summary>
             Deposit tokens for each party (full_consent mode)
@@ -45669,6 +45769,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.PartyToken">
+            <summary>
+            Token issued to a party for deposit or release operations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyToken.PartyId">
@@ -45691,6 +45796,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetEscrowRequest">
+            <summary>
+            Request to retrieve an escrow agreement by ID
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetEscrowRequest.EscrowId">
             <summary>
             Escrow ID to retrieve
@@ -45701,9 +45811,24 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetEscrowResponse">
+            <summary>
+            Response containing escrow agreement details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetEscrowResponse.Escrow">
+            <summary>
+            Escrow agreement details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetEscrowResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest">
+            <summary>
+            Request to list escrow agreements with optional filters
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ListEscrowsRequest.PartyId">
@@ -45776,6 +45901,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest">
+            <summary>
+            Request to retrieve a party token for deposit or release
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest.EscrowId">
             <summary>
             Escrow ID
@@ -45791,9 +45921,19 @@
             Party type
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest.TokenType">
+            <summary>
+            Type of token to retrieve
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetMyTokenResponse">
+            <summary>
+            Response containing party token information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetMyTokenResponse.Token">
@@ -45816,6 +45956,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.DepositRequest">
+            <summary>
+            Request to deposit assets into an escrow
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.EscrowId">
             <summary>
             Escrow ID
@@ -45831,6 +45976,11 @@
             Party type
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.Assets">
+            <summary>
+            Assets to deposit
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.DepositToken">
             <summary>
             Deposit token (required for full_consent)
@@ -45844,6 +45994,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.EscrowAssetBundleInput">
+            <summary>
+            Input for specifying a bundle of assets
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowAssetBundleInput.Assets">
@@ -45866,6 +46021,21 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.DepositResponse">
+            <summary>
+            Response from depositing assets into an escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositResponse.Escrow">
+            <summary>
+            Updated escrow agreement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DepositResponse.Deposit">
+            <summary>
+            Deposit record
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DepositResponse.FullyFunded">
             <summary>
             Whether escrow is now fully funded
@@ -45879,6 +46049,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.DepositResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest">
+            <summary>
+            Request to validate a deposit without executing
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.EscrowId">
@@ -45896,9 +46071,19 @@
             Party type
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.Assets">
+            <summary>
+            Assets to validate
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ValidateDepositResponse">
+            <summary>
+            Response from deposit validation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositResponse.Valid">
@@ -45921,6 +46106,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest">
+            <summary>
+            Request to get deposit status for a party
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.EscrowId">
             <summary>
             Escrow ID
@@ -45939,6 +46129,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse">
+            <summary>
+            Response containing party deposit status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusResponse.ExpectedAssets">
@@ -45971,6 +46166,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConsentRequest">
+            <summary>
+            Request to record party consent for release or refund
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.EscrowId">
             <summary>
             Escrow ID
@@ -45984,6 +46184,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.PartyType">
             <summary>
             Party type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.ConsentType">
+            <summary>
+            Type of consent being given
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.ReleaseToken">
@@ -46006,6 +46211,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ConsentResponse">
+            <summary>
+            Response from recording party consent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentResponse.Escrow">
+            <summary>
+            Updated escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ConsentResponse.ConsentRecorded">
             <summary>
             Whether consent was recorded
@@ -46016,9 +46231,19 @@
             Whether this consent triggered completion
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ConsentResponse.NewStatus">
+            <summary>
+            New escrow status after consent
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ConsentResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetConsentStatusRequest">
+            <summary>
+            Request to get consent status for all parties
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusRequest.EscrowId">
@@ -46029,6 +46254,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse">
+            <summary>
+            Response containing consent status for all parties
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetConsentStatusResponse.PartiesRequiringConsent">
@@ -46061,6 +46291,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.PartyConsentStatus">
+            <summary>
+            Consent status for a single party
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.PartyId">
             <summary>
             Party ID
@@ -46081,6 +46316,11 @@
             Whether consent was given
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.ConsentType">
+            <summary>
+            Type of consent given (if any)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.ConsentedAt">
             <summary>
             When consent was given
@@ -46089,6 +46329,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReleaseRequest">
+            <summary>
+            Request to trigger escrow release to recipients
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseRequest.EscrowId">
@@ -46116,6 +46361,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReleaseResponse">
+            <summary>
+            Response from releasing escrow assets to recipients
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResponse.Escrow">
+            <summary>
+            Released escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResponse.FinalizerResults">
             <summary>
             Results of contract finalizer APIs
@@ -46129,6 +46384,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.FinalizerResult">
+            <summary>
+            Result from a contract finalizer API call
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.FinalizerResult.Endpoint">
@@ -46151,9 +46411,19 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReleaseResult">
+            <summary>
+            Result of releasing assets to a single recipient
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.RecipientPartyId">
             <summary>
             Recipient party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.Assets">
+            <summary>
+            Assets released (null if failed)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.Success">
@@ -46169,6 +46439,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ReleaseResult.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.RefundRequest">
+            <summary>
+            Request to trigger escrow refund to depositors
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.RefundRequest.EscrowId">
@@ -46196,6 +46471,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.RefundResponse">
+            <summary>
+            Response from refunding escrow assets to depositors
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResponse.Escrow">
+            <summary>
+            Refunded escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.RefundResponse.Refunds">
             <summary>
             Refund results per depositor
@@ -46206,9 +46491,19 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.RefundResult">
+            <summary>
+            Result of refunding assets to a single depositor
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.DepositorPartyId">
             <summary>
             Depositor party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.Assets">
+            <summary>
+            Assets refunded (null if failed)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.Success">
@@ -46224,6 +46519,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.RefundResult.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.CancelRequest">
+            <summary>
+            Request to cancel escrow before fully funded
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CancelRequest.EscrowId">
@@ -46246,6 +46546,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.CancelResponse">
+            <summary>
+            Response from cancelling an escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.CancelResponse.Escrow">
+            <summary>
+            Cancelled escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CancelResponse.Refunds">
             <summary>
             Refund results for any deposits
@@ -46254,6 +46564,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.CancelResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.DisputeRequest">
+            <summary>
+            Request to raise a dispute on a funded escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.EscrowId">
@@ -46291,9 +46606,24 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.DisputeResponse">
+            <summary>
+            Response from raising a dispute on an escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.DisputeResponse.Escrow">
+            <summary>
+            Disputed escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DisputeResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ResolveRequest">
+            <summary>
+            Request for arbiter to resolve a disputed escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.EscrowId">
@@ -46309,6 +46639,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.ArbiterType">
             <summary>
             Arbiter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.Resolution">
+            <summary>
+            Resolution decision for the dispute
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ResolveRequest.SplitAllocations">
@@ -46331,6 +46666,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.SplitAllocation">
+            <summary>
+            Allocation of assets to a party in a split resolution
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.SplitAllocation.PartyId">
             <summary>
             Party ID
@@ -46351,6 +46691,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ResolveResponse">
+            <summary>
+            Response from arbiter resolving a disputed escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ResolveResponse.Escrow">
+            <summary>
+            Resolved escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ResolveResponse.Transfers">
             <summary>
             Transfer results
@@ -46361,9 +46711,19 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.TransferResult">
+            <summary>
+            Result of transferring assets to a party during resolution
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.PartyId">
             <summary>
             Party ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.Assets">
+            <summary>
+            Assets transferred (null if failed)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.Success">
@@ -46379,6 +46739,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.TransferResult.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest">
+            <summary>
+            Request to verify a condition for conditional escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionRequest.EscrowId">
@@ -46416,6 +46781,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.VerifyConditionResponse">
+            <summary>
+            Response from verifying a condition on an escrow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionResponse.Escrow">
+            <summary>
+            Updated escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionResponse.Triggered">
             <summary>
             Whether this triggered release/refund
@@ -46424,6 +46799,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.VerifyConditionResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ValidateEscrowRequest">
+            <summary>
+            Request to manually validate escrow assets
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowRequest.EscrowId">
@@ -46436,6 +46816,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ValidateEscrowResponse">
+            <summary>
+            Response from validating escrow assets
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowResponse.Valid">
             <summary>
             Whether all assets are valid
@@ -46446,9 +46831,19 @@
             Validation failures
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowResponse.Escrow">
+            <summary>
+            Escrow agreement with validation results
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateEscrowResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReaffirmRequest">
+            <summary>
+            Request to re-affirm after validation failure
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.EscrowId">
@@ -46481,6 +46876,16 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ReaffirmResponse">
+            <summary>
+            Response from party re-affirming after validation failure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmResponse.Escrow">
+            <summary>
+            Reaffirmed escrow agreement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmResponse.AllReaffirmed">
             <summary>
             Whether all parties have reaffirmed
@@ -46489,6 +46894,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest">
+            <summary>
+            Request to register a custom asset type handler
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerRequest.AssetType">
@@ -46526,6 +46936,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.RegisterHandlerResponse">
+            <summary>
+            Response from registering an asset handler
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.RegisterHandlerResponse.Registered">
             <summary>
             Whether registration succeeded
@@ -46546,6 +46961,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ListHandlersResponse">
+            <summary>
+            Response containing list of registered asset handlers
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ListHandlersResponse.Handlers">
             <summary>
             Registered handlers
@@ -46554,6 +46974,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.ListHandlersResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.DeregisterHandlerRequest">
+            <summary>
+            Request to remove a custom asset handler registration
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DeregisterHandlerRequest.AssetType">
@@ -46566,6 +46991,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.DeregisterHandlerResponse">
+            <summary>
+            Response from deregistering an asset handler
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DeregisterHandlerResponse.Deregistered">
             <summary>
             Whether deregistration succeeded
@@ -46574,6 +47004,11 @@
         <member name="P:BeyondImmersion.BannouService.Escrow.DeregisterHandlerResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Escrow.ErrorResponse">
+            <summary>
+            Standard error response format
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ErrorResponse.Error">

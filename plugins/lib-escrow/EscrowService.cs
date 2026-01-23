@@ -16,6 +16,39 @@ using System.Text;
 namespace BeyondImmersion.BannouService.Escrow;
 
 /// <summary>
+/// Topic constants for escrow events.
+/// </summary>
+public static class EscrowTopics
+{
+    /// <summary>Escrow created event topic.</summary>
+    public const string EscrowCreated = "escrow.created";
+    /// <summary>Deposit received event topic.</summary>
+    public const string EscrowDepositReceived = "escrow.deposit.received";
+    /// <summary>Escrow fully funded event topic.</summary>
+    public const string EscrowFunded = "escrow.funded";
+    /// <summary>Consent received event topic.</summary>
+    public const string EscrowConsentReceived = "escrow.consent.received";
+    /// <summary>Escrow finalizing event topic.</summary>
+    public const string EscrowFinalizing = "escrow.finalizing";
+    /// <summary>Escrow released event topic.</summary>
+    public const string EscrowReleased = "escrow.released";
+    /// <summary>Escrow refunded event topic.</summary>
+    public const string EscrowRefunded = "escrow.refunded";
+    /// <summary>Escrow disputed event topic.</summary>
+    public const string EscrowDisputed = "escrow.disputed";
+    /// <summary>Escrow resolved event topic.</summary>
+    public const string EscrowResolved = "escrow.resolved";
+    /// <summary>Escrow expired event topic.</summary>
+    public const string EscrowExpired = "escrow.expired";
+    /// <summary>Escrow cancelled event topic.</summary>
+    public const string EscrowCancelled = "escrow.cancelled";
+    /// <summary>Validation failed event topic.</summary>
+    public const string EscrowValidationFailed = "escrow.validation.failed";
+    /// <summary>Validation reaffirmed event topic.</summary>
+    public const string EscrowValidationReaffirmed = "escrow.validation.reaffirmed";
+}
+
+/// <summary>
 /// Implementation of the Escrow service.
 /// This class contains the business logic for all Escrow operations.
 /// </summary>

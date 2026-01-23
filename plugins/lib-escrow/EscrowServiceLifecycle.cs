@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Events.Escrow;
+using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Escrow;
@@ -241,19 +241,24 @@ public partial class EscrowService
             var createdEvent = new EscrowCreatedEvent
             {
                 EventId = Guid.NewGuid(),
-                OccurredAt = now,
+                Timestamp = now,
                 EscrowId = escrowId,
                 EscrowType = agreementModel.EscrowType.ToString(),
                 TrustMode = agreementModel.TrustMode.ToString(),
-                PartyCount = partyModels.Count,
+                Parties = partyModels.Select(p => new EscrowPartyInfo
+                {
+                    PartyId = p.PartyId,
+                    PartyType = p.PartyType,
+                    Role = p.Role.ToString()
+                }).ToList(),
                 ExpectedDepositCount = expectedDepositModels.Count,
                 ExpiresAt = body.ExpiresAt,
-                CreatedBy = body.CreatedBy,
-                CreatedByType = body.CreatedByType,
+                BoundContractId = body.BoundContractId,
                 ReferenceType = body.ReferenceType,
-                ReferenceId = body.ReferenceId
+                ReferenceId = body.ReferenceId,
+                CreatedAt = now
             };
-            await _messageBus.PublishAsync(EscrowTopics.EscrowCreated, createdEvent, cancellationToken);
+            await _messageBus.TryPublishAsync(EscrowTopics.EscrowCreated, createdEvent, cancellationToken);
 
             _logger.LogInformation(
                 "Created escrow {EscrowId} with {PartyCount} parties, type {EscrowType}, trust mode {TrustMode}",
