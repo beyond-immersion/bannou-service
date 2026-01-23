@@ -464,6 +464,27 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
+            // Rate limiting: check saves per minute per owner
+            if (_configuration.MaxSavesPerMinute > 0)
+            {
+                var rateStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.SaveLoadCache);
+                var minuteBucket = DateTimeOffset.UtcNow.ToString("yyyyMMddHHmm");
+                var rateKey = $"save-rate:{body.GameId}:{body.OwnerType}:{body.OwnerId}:{minuteBucket}";
+                var rateStr = await rateStore.GetAsync(rateKey, cancellationToken);
+                var saveCount = int.TryParse(rateStr, out var parsedCount) ? parsedCount : 0;
+
+                if (saveCount >= _configuration.MaxSavesPerMinute)
+                {
+                    _logger.LogWarning(
+                        "Rate limit exceeded for {OwnerType}:{OwnerId} in game {GameId}: {Count} saves in current minute (max {Max})",
+                        body.OwnerType, body.OwnerId, body.GameId, saveCount, _configuration.MaxSavesPerMinute);
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                await rateStore.SaveAsync(rateKey, (saveCount + 1).ToString(),
+                    options: new StateOptions { Ttl = 120 }, cancellationToken: cancellationToken);
+            }
+
             // Validate save data size against configured maximum
             if (body.Data.Length > _configuration.MaxSaveSizeBytes)
             {

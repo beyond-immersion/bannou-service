@@ -319,9 +319,12 @@ public static class Program
             }
 
             // enable websocket connections
+            // KeepAliveInterval sourced from ConnectServiceConfiguration.WebSocketKeepAliveIntervalSeconds;
+            // Program.cs (composition root) reads normalized env var since it cannot reference plugin types
+            var wsKeepAliveSeconds = ConfigurationRoot.GetValue<int?>("ConnectWebsocketKeepAliveIntervalSeconds") ?? 30;
             webApp.UseWebSockets(new WebSocketOptions()
             {
-                KeepAliveInterval = TimeSpan.FromMinutes(2)
+                KeepAliveInterval = TimeSpan.FromSeconds(wsKeepAliveSeconds)
             });
 
             // map controller routes

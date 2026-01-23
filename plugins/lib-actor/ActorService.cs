@@ -547,7 +547,9 @@ public partial class ActorService : IActorService
                     return (StatusCodes.Conflict, null);
                 }
 
-                await runner.StartAsync(cancellationToken);
+                using var startCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                startCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+                await runner.StartAsync(startCts.Token);
                 nodeId = _configuration.LocalModeNodeId;
                 nodeAppId = _configuration.LocalModeAppId;
                 startedAt = runner.StartedAt;
@@ -860,7 +862,9 @@ public partial class ActorService : IActorService
                     return (StatusCodes.NotFound, null);
                 }
 
-                await runner.StopAsync(body.Graceful, cancellationToken);
+                using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+                await runner.StopAsync(body.Graceful, stopCts.Token);
                 _actorRegistry.TryRemove(body.ActorId, out _);
 
                 // Publish stopped event

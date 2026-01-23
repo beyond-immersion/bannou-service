@@ -1091,6 +1091,15 @@ public partial class ConnectService : IConnectService
             }
             else if (routeInfo.RouteType == RouteType.Client)
             {
+                if (!_configuration.EnableClientToClientRouting)
+                {
+                    _logger.LogWarning("Client-to-client routing disabled, rejecting P2P message from session {SessionId}", sessionId);
+                    var errorResponse = MessageRouter.CreateErrorResponse(
+                        message, ResponseCodes.BroadcastNotAllowed, "Client-to-client routing is disabled");
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
                 await RouteToClientAsync(message, routeInfo, sessionId, cancellationToken);
             }
             else if (routeInfo.RouteType == RouteType.Broadcast)
