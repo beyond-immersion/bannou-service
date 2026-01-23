@@ -43844,6 +43844,11 @@
             Detailed description of this item
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Category">
+            <summary>
+            Item classification category
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Subcategory">
             <summary>
             Game-defined subcategory (e.g., sword, helmet)
@@ -43854,6 +43859,16 @@
             Flexible filtering tags
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Rarity">
+            <summary>
+            Item rarity tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.QuantityModel">
+            <summary>
+            How quantities are tracked for this item
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.MaxStackSize">
             <summary>
             Maximum stack size (1 for unique items)
@@ -43862,6 +43877,11 @@
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.UnitOfMeasure">
             <summary>
             Unit for continuous quantities (e.g., liters, kg)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.WeightPrecision">
+            <summary>
+            Precision for weight values
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Weight">
@@ -43904,6 +43924,11 @@
             Whether item can be destroyed/discarded
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.SoulboundType">
+            <summary>
+            Binding behavior when item is acquired
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.HasDurability">
             <summary>
             Whether item has durability tracking
@@ -43912,6 +43937,11 @@
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.MaxDurability">
             <summary>
             Maximum durability value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Scope">
+            <summary>
+            Realm availability scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.AvailableRealms">
@@ -43974,6 +44004,11 @@
             Filter by game service
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Category">
+            <summary>
+            Filter by item category
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Subcategory">
             <summary>
             Filter by subcategory
@@ -43982,6 +44017,16 @@
         <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Tags">
             <summary>
             Filter by tags (items must have all specified tags)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Rarity">
+            <summary>
+            Filter by rarity tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Scope">
+            <summary>
+            Filter by realm scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.RealmId">
@@ -44042,6 +44087,11 @@
         <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Tags">
             <summary>
             New tags (replaces existing)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Rarity">
+            <summary>
+            New rarity tier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Weight">
@@ -44174,6 +44224,11 @@
             Detailed description
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Category">
+            <summary>
+            Item classification category
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Subcategory">
             <summary>
             Game-defined subcategory
@@ -44184,6 +44239,16 @@
             Filtering tags
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Rarity">
+            <summary>
+            Item rarity tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.QuantityModel">
+            <summary>
+            How quantities are tracked
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.MaxStackSize">
             <summary>
             Maximum stack size
@@ -44192,6 +44257,11 @@
         <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.UnitOfMeasure">
             <summary>
             Unit for continuous quantities
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.WeightPrecision">
+            <summary>
+            Precision for weight values
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Weight">
@@ -44234,6 +44304,11 @@
             Whether item can be destroyed
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.SoulboundType">
+            <summary>
+            Binding behavior type
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.HasDurability">
             <summary>
             Whether item has durability
@@ -44242,6 +44317,11 @@
         <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.MaxDurability">
             <summary>
             Maximum durability value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Scope">
+            <summary>
+            Realm availability scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.AvailableRealms">
@@ -44384,6 +44464,11 @@
             Any other instance-specific data
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.OriginType">
+            <summary>
+            How this item instance was created
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.OriginId">
             <summary>
             Source entity ID (quest ID, creature ID, etc.)
@@ -44442,6 +44527,11 @@
         <member name="P:BeyondImmersion.BannouService.Item.BindItemInstanceRequest.CharacterId">
             <summary>
             Character to bind the item to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.BindItemInstanceRequest.BindType">
+            <summary>
+            Type of binding to apply
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest">
@@ -44537,6 +44627,11 @@
         <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.InstanceMetadata">
             <summary>
             Other instance-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.OriginType">
+            <summary>
+            How this item instance was created
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.OriginId">

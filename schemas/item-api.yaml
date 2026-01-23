@@ -535,6 +535,7 @@ components:
           description: Detailed description of this item
         category:
           $ref: '#/components/schemas/ItemCategory'
+          description: Item classification category
         subcategory:
           type: string
           maxLength: 64
@@ -549,8 +550,10 @@ components:
           description: Flexible filtering tags
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: Item rarity tier
         quantityModel:
           $ref: '#/components/schemas/QuantityModel'
+          description: How quantities are tracked for this item
         maxStackSize:
           type: integer
           minimum: 1
@@ -562,6 +565,7 @@ components:
           description: Unit for continuous quantities (e.g., liters, kg)
         weightPrecision:
           $ref: '#/components/schemas/WeightPrecision'
+          description: Precision for weight values
         weight:
           type: number
           format: double
@@ -601,6 +605,7 @@ components:
           description: Whether item can be destroyed/discarded
         soulboundType:
           $ref: '#/components/schemas/SoulboundType'
+          description: Binding behavior when item is acquired
         hasDurability:
           type: boolean
           default: false
@@ -611,6 +616,7 @@ components:
           description: Maximum durability value
         scope:
           $ref: '#/components/schemas/ItemScope'
+          description: Realm availability scope
         availableRealms:
           type: array
           items:
@@ -668,6 +674,7 @@ components:
           description: Filter by game service
         category:
           $ref: '#/components/schemas/ItemCategory'
+          description: Filter by item category
         subcategory:
           type: string
           nullable: true
@@ -680,8 +687,10 @@ components:
           description: Filter by tags (items must have all specified tags)
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: Filter by rarity tier
         scope:
           $ref: '#/components/schemas/ItemScope'
+          description: Filter by realm scope
         realmId:
           type: string
           format: uuid
@@ -743,6 +752,7 @@ components:
           description: New tags (replaces existing)
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: New rarity tier
         weight:
           type: number
           format: double
@@ -877,6 +887,7 @@ components:
           description: Detailed description
         category:
           $ref: '#/components/schemas/ItemCategory'
+          description: Item classification category
         subcategory:
           type: string
           nullable: true
@@ -888,8 +899,10 @@ components:
           description: Filtering tags
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: Item rarity tier
         quantityModel:
           $ref: '#/components/schemas/QuantityModel'
+          description: How quantities are tracked
         maxStackSize:
           type: integer
           description: Maximum stack size
@@ -899,6 +912,7 @@ components:
           description: Unit for continuous quantities
         weightPrecision:
           $ref: '#/components/schemas/WeightPrecision'
+          description: Precision for weight values
         weight:
           type: number
           format: double
@@ -934,6 +948,7 @@ components:
           description: Whether item can be destroyed
         soulboundType:
           $ref: '#/components/schemas/SoulboundType'
+          description: Binding behavior type
         hasDurability:
           type: boolean
           description: Whether item has durability
@@ -943,6 +958,7 @@ components:
           description: Maximum durability value
         scope:
           $ref: '#/components/schemas/ItemScope'
+          description: Realm availability scope
         availableRealms:
           type: array
           items:
@@ -1080,6 +1096,7 @@ components:
           description: Any other instance-specific data
         originType:
           $ref: '#/components/schemas/ItemOriginType'
+          description: How this item instance was created
         originId:
           type: string
           format: uuid
@@ -1145,6 +1162,7 @@ components:
           description: Character to bind the item to
         bindType:
           $ref: '#/components/schemas/SoulboundType'
+          description: Type of binding to apply
 
     DestroyItemInstanceRequest:
       type: object
@@ -1239,6 +1257,7 @@ components:
           description: Other instance-specific data
         originType:
           $ref: '#/components/schemas/ItemOriginType'
+          description: How this item instance was created
         originId:
           type: string
           format: uuid

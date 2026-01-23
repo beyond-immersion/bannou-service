@@ -260,6 +260,9 @@ public partial class CreateItemTemplateRequest
     [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? Description { get; set; } = default!;
 
+    /// <summary>
+    /// Item classification category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -279,10 +282,16 @@ public partial class CreateItemTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Item rarity tier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemRarity Rarity { get; set; } = default!;
 
+    /// <summary>
+    /// How quantities are tracked for this item
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -303,6 +312,9 @@ public partial class CreateItemTemplateRequest
     [System.ComponentModel.DataAnnotations.StringLength(32)]
     public string? UnitOfMeasure { get; set; } = default!;
 
+    /// <summary>
+    /// Precision for weight values
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("weightPrecision")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public WeightPrecision WeightPrecision { get; set; } = default!;
@@ -357,6 +369,9 @@ public partial class CreateItemTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
     public bool Destroyable { get; set; } = true;
 
+    /// <summary>
+    /// Binding behavior when item is acquired
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("soulboundType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SoulboundType SoulboundType { get; set; } = default!;
@@ -373,6 +388,9 @@ public partial class CreateItemTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
     public int? MaxDurability { get; set; } = default!;
 
+    /// <summary>
+    /// Realm availability scope
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -457,6 +475,9 @@ public partial class ListItemTemplatesRequest
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     public string GameId { get; set; } = default!;
 
+    /// <summary>
+    /// Filter by item category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemCategory Category { get; set; } = default!;
@@ -473,10 +494,16 @@ public partial class ListItemTemplatesRequest
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Filter by rarity tier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemRarity Rarity { get; set; } = default!;
 
+    /// <summary>
+    /// Filter by realm scope
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemScope Scope { get; set; } = default!;
@@ -562,6 +589,9 @@ public partial class UpdateItemTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
+    /// <summary>
+    /// New rarity tier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemRarity Rarity { get; set; } = default!;
@@ -739,6 +769,9 @@ public partial class ItemTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get; set; } = default!;
 
+    /// <summary>
+    /// Item classification category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -757,10 +790,16 @@ public partial class ItemTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Item rarity tier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemRarity Rarity { get; set; } = default!;
 
+    /// <summary>
+    /// How quantities are tracked
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -779,6 +818,9 @@ public partial class ItemTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("unitOfMeasure")]
     public string? UnitOfMeasure { get; set; } = default!;
 
+    /// <summary>
+    /// Precision for weight values
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("weightPrecision")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public WeightPrecision WeightPrecision { get; set; } = default!;
@@ -831,6 +873,9 @@ public partial class ItemTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
     public bool Destroyable { get; set; } = default!;
 
+    /// <summary>
+    /// Binding behavior type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("soulboundType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -849,6 +894,9 @@ public partial class ItemTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
     public int? MaxDurability { get; set; } = default!;
 
+    /// <summary>
+    /// Realm availability scope
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1043,6 +1091,9 @@ public partial class CreateItemInstanceRequest
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]
     public object? InstanceMetadata { get; set; } = default!;
 
+    /// <summary>
+    /// How this item instance was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1139,6 +1190,9 @@ public partial class BindItemInstanceRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of binding to apply
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SoulboundType BindType { get; set; } = default!;
@@ -1275,6 +1329,9 @@ public partial class ItemInstanceResponse
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]
     public object? InstanceMetadata { get; set; } = default!;
 
+    /// <summary>
+    /// How this item instance was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

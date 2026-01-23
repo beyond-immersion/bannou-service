@@ -51,7 +51,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
     /// Environment variable: ACTOR_DEPLOYMENT_MODE
     /// </summary>
-    public string DeploymentMode { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DeploymentMode { get; set; } = "bannou";
 
     /// <summary>
     /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
@@ -81,7 +81,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// App-id of control plane for pool node registration. Pool nodes only.
     /// Environment variable: ACTOR_CONTROL_PLANE_APP_ID
     /// </summary>
-    public string ControlPlaneAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string ControlPlaneAppId { get; set; } = "bannou";
 
     /// <summary>
     /// Docker image for pool nodes (pool-per-type, shared-pool, auto-scale modes)

@@ -81,6 +81,191 @@ paths: {}
 components:
   schemas:
     # =========================================================================
+    # Custom Lifecycle Events (non-standard lifecycle states)
+    # =========================================================================
+
+    ItemTemplateDeprecatedEvent:
+      type: object
+      description: Event published when an item template is deprecated (soft-disable with optional migration)
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - templateId
+      - code
+      - gameId
+      - name
+      - category
+      - rarity
+      - quantityModel
+      - scope
+      - isActive
+      - createdAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        templateId:
+          type: string
+          format: uuid
+          description: Deprecated template ID
+        code:
+          type: string
+          description: Item template code
+        gameId:
+          type: string
+          description: Game service ID
+        name:
+          type: string
+          description: Template display name
+        category:
+          type: string
+          description: Item category
+        rarity:
+          type: string
+          description: Item rarity tier
+        quantityModel:
+          type: string
+          description: Quantity tracking model
+        scope:
+          type: string
+          description: Realm availability scope
+        isActive:
+          type: boolean
+          description: Whether template is still active
+        createdAt:
+          type: string
+          format: date-time
+          description: When the template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was last modified
+        migrationTargetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Template ID to migrate existing instances to
+
+    ItemInstanceModifiedEvent:
+      type: object
+      description: Event published when an item instance is modified (durability, stats, name changes)
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        instanceId:
+          type: string
+          format: uuid
+          description: Modified item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template reference
+        containerId:
+          type: string
+          format: uuid
+          description: Container holding this item
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this instance exists in
+        quantity:
+          type: number
+          format: double
+          description: Current quantity
+        originType:
+          type: string
+          description: How this instance was created
+        createdAt:
+          type: string
+          format: date-time
+          description: When the instance was created
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the instance was modified
+
+    ItemInstanceDestroyedEvent:
+      type: object
+      description: Event published when an item instance is permanently destroyed
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - containerId
+      - realmId
+      - quantity
+      - originType
+      - createdAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        instanceId:
+          type: string
+          format: uuid
+          description: Destroyed item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template reference
+        containerId:
+          type: string
+          format: uuid
+          description: Container that held this item
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this instance existed in
+        quantity:
+          type: number
+          format: double
+          description: Quantity at time of destruction
+        originType:
+          type: string
+          description: How this instance was created
+        createdAt:
+          type: string
+          format: date-time
+          description: When the instance was created
+        modifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the instance was last modified
+
+    # =========================================================================
     # Binding Events (non-lifecycle)
     # =========================================================================
 

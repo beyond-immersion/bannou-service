@@ -59,7 +59,8 @@ public partial class ItemController
                     "description": "Detailed description of this item"
                 },
                 "category": {
-                    "$ref": "#/$defs/ItemCategory"
+                    "$ref": "#/$defs/ItemCategory",
+                    "description": "Item classification category"
                 },
                 "subcategory": {
                     "type": "string",
@@ -77,10 +78,12 @@ public partial class ItemController
                     "description": "Flexible filtering tags"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "Item rarity tier"
                 },
                 "quantityModel": {
-                    "$ref": "#/$defs/QuantityModel"
+                    "$ref": "#/$defs/QuantityModel",
+                    "description": "How quantities are tracked for this item"
                 },
                 "maxStackSize": {
                     "type": "integer",
@@ -94,7 +97,8 @@ public partial class ItemController
                     "description": "Unit for continuous quantities (e.g., liters, kg)"
                 },
                 "weightPrecision": {
-                    "$ref": "#/$defs/WeightPrecision"
+                    "$ref": "#/$defs/WeightPrecision",
+                    "description": "Precision for weight values"
                 },
                 "weight": {
                     "type": "number",
@@ -142,7 +146,8 @@ public partial class ItemController
                     "description": "Whether item can be destroyed/discarded"
                 },
                 "soulboundType": {
-                    "$ref": "#/$defs/SoulboundType"
+                    "$ref": "#/$defs/SoulboundType",
+                    "description": "Binding behavior when item is acquired"
                 },
                 "hasDurability": {
                     "type": "boolean",
@@ -155,7 +160,8 @@ public partial class ItemController
                     "description": "Maximum durability value"
                 },
                 "scope": {
-                    "$ref": "#/$defs/ItemScope"
+                    "$ref": "#/$defs/ItemScope",
+                    "description": "Realm availability scope"
                 },
                 "availableRealms": {
                     "type": "array",
@@ -314,7 +320,8 @@ public partial class ItemController
                     "description": "Detailed description"
                 },
                 "category": {
-                    "$ref": "#/$defs/ItemCategory"
+                    "$ref": "#/$defs/ItemCategory",
+                    "description": "Item classification category"
                 },
                 "subcategory": {
                     "type": "string",
@@ -329,10 +336,12 @@ public partial class ItemController
                     "description": "Filtering tags"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "Item rarity tier"
                 },
                 "quantityModel": {
-                    "$ref": "#/$defs/QuantityModel"
+                    "$ref": "#/$defs/QuantityModel",
+                    "description": "How quantities are tracked"
                 },
                 "maxStackSize": {
                     "type": "integer",
@@ -344,7 +353,8 @@ public partial class ItemController
                     "description": "Unit for continuous quantities"
                 },
                 "weightPrecision": {
-                    "$ref": "#/$defs/WeightPrecision"
+                    "$ref": "#/$defs/WeightPrecision",
+                    "description": "Precision for weight values"
                 },
                 "weight": {
                     "type": "number",
@@ -388,7 +398,8 @@ public partial class ItemController
                     "description": "Whether item can be destroyed"
                 },
                 "soulboundType": {
-                    "$ref": "#/$defs/SoulboundType"
+                    "$ref": "#/$defs/SoulboundType",
+                    "description": "Binding behavior type"
                 },
                 "hasDurability": {
                     "type": "boolean",
@@ -400,7 +411,8 @@ public partial class ItemController
                     "description": "Maximum durability value"
                 },
                 "scope": {
-                    "$ref": "#/$defs/ItemScope"
+                    "$ref": "#/$defs/ItemScope",
+                    "description": "Realm availability scope"
                 },
                 "availableRealms": {
                     "type": "array",
@@ -677,7 +689,8 @@ public partial class ItemController
                     "description": "Detailed description"
                 },
                 "category": {
-                    "$ref": "#/$defs/ItemCategory"
+                    "$ref": "#/$defs/ItemCategory",
+                    "description": "Item classification category"
                 },
                 "subcategory": {
                     "type": "string",
@@ -692,10 +705,12 @@ public partial class ItemController
                     "description": "Filtering tags"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "Item rarity tier"
                 },
                 "quantityModel": {
-                    "$ref": "#/$defs/QuantityModel"
+                    "$ref": "#/$defs/QuantityModel",
+                    "description": "How quantities are tracked"
                 },
                 "maxStackSize": {
                     "type": "integer",
@@ -707,7 +722,8 @@ public partial class ItemController
                     "description": "Unit for continuous quantities"
                 },
                 "weightPrecision": {
-                    "$ref": "#/$defs/WeightPrecision"
+                    "$ref": "#/$defs/WeightPrecision",
+                    "description": "Precision for weight values"
                 },
                 "weight": {
                     "type": "number",
@@ -751,7 +767,8 @@ public partial class ItemController
                     "description": "Whether item can be destroyed"
                 },
                 "soulboundType": {
-                    "$ref": "#/$defs/SoulboundType"
+                    "$ref": "#/$defs/SoulboundType",
+                    "description": "Binding behavior type"
                 },
                 "hasDurability": {
                     "type": "boolean",
@@ -763,7 +780,8 @@ public partial class ItemController
                     "description": "Maximum durability value"
                 },
                 "scope": {
-                    "$ref": "#/$defs/ItemScope"
+                    "$ref": "#/$defs/ItemScope",
+                    "description": "Realm availability scope"
                 },
                 "availableRealms": {
                     "type": "array",
@@ -972,7 +990,8 @@ public partial class ItemController
                     "description": "Filter by game service"
                 },
                 "category": {
-                    "$ref": "#/$defs/ItemCategory"
+                    "$ref": "#/$defs/ItemCategory",
+                    "description": "Filter by item category"
                 },
                 "subcategory": {
                     "type": "string",
@@ -988,10 +1007,12 @@ public partial class ItemController
                     "description": "Filter by tags (items must have all specified tags)"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "Filter by rarity tier"
                 },
                 "scope": {
-                    "$ref": "#/$defs/ItemScope"
+                    "$ref": "#/$defs/ItemScope",
+                    "description": "Filter by realm scope"
                 },
                 "realmId": {
                     "type": "string",
@@ -1141,7 +1162,8 @@ public partial class ItemController
                     "description": "Detailed description"
                 },
                 "category": {
-                    "$ref": "#/$defs/ItemCategory"
+                    "$ref": "#/$defs/ItemCategory",
+                    "description": "Item classification category"
                 },
                 "subcategory": {
                     "type": "string",
@@ -1156,10 +1178,12 @@ public partial class ItemController
                     "description": "Filtering tags"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "Item rarity tier"
                 },
                 "quantityModel": {
-                    "$ref": "#/$defs/QuantityModel"
+                    "$ref": "#/$defs/QuantityModel",
+                    "description": "How quantities are tracked"
                 },
                 "maxStackSize": {
                     "type": "integer",
@@ -1171,7 +1195,8 @@ public partial class ItemController
                     "description": "Unit for continuous quantities"
                 },
                 "weightPrecision": {
-                    "$ref": "#/$defs/WeightPrecision"
+                    "$ref": "#/$defs/WeightPrecision",
+                    "description": "Precision for weight values"
                 },
                 "weight": {
                     "type": "number",
@@ -1215,7 +1240,8 @@ public partial class ItemController
                     "description": "Whether item can be destroyed"
                 },
                 "soulboundType": {
-                    "$ref": "#/$defs/SoulboundType"
+                    "$ref": "#/$defs/SoulboundType",
+                    "description": "Binding behavior type"
                 },
                 "hasDurability": {
                     "type": "boolean",
@@ -1227,7 +1253,8 @@ public partial class ItemController
                     "description": "Maximum durability value"
                 },
                 "scope": {
-                    "$ref": "#/$defs/ItemScope"
+                    "$ref": "#/$defs/ItemScope",
+                    "description": "Realm availability scope"
                 },
                 "availableRealms": {
                     "type": "array",
@@ -1466,7 +1493,8 @@ public partial class ItemController
                     "description": "New tags (replaces existing)"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "New rarity tier"
                 },
                 "weight": {
                     "type": "number",
@@ -1624,7 +1652,8 @@ public partial class ItemController
                     "description": "Detailed description"
                 },
                 "category": {
-                    "$ref": "#/$defs/ItemCategory"
+                    "$ref": "#/$defs/ItemCategory",
+                    "description": "Item classification category"
                 },
                 "subcategory": {
                     "type": "string",
@@ -1639,10 +1668,12 @@ public partial class ItemController
                     "description": "Filtering tags"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "Item rarity tier"
                 },
                 "quantityModel": {
-                    "$ref": "#/$defs/QuantityModel"
+                    "$ref": "#/$defs/QuantityModel",
+                    "description": "How quantities are tracked"
                 },
                 "maxStackSize": {
                     "type": "integer",
@@ -1654,7 +1685,8 @@ public partial class ItemController
                     "description": "Unit for continuous quantities"
                 },
                 "weightPrecision": {
-                    "$ref": "#/$defs/WeightPrecision"
+                    "$ref": "#/$defs/WeightPrecision",
+                    "description": "Precision for weight values"
                 },
                 "weight": {
                     "type": "number",
@@ -1698,7 +1730,8 @@ public partial class ItemController
                     "description": "Whether item can be destroyed"
                 },
                 "soulboundType": {
-                    "$ref": "#/$defs/SoulboundType"
+                    "$ref": "#/$defs/SoulboundType",
+                    "description": "Binding behavior type"
                 },
                 "hasDurability": {
                     "type": "boolean",
@@ -1710,7 +1743,8 @@ public partial class ItemController
                     "description": "Maximum durability value"
                 },
                 "scope": {
-                    "$ref": "#/$defs/ItemScope"
+                    "$ref": "#/$defs/ItemScope",
+                    "description": "Realm availability scope"
                 },
                 "availableRealms": {
                     "type": "array",
@@ -1991,7 +2025,8 @@ public partial class ItemController
                     "description": "Detailed description"
                 },
                 "category": {
-                    "$ref": "#/$defs/ItemCategory"
+                    "$ref": "#/$defs/ItemCategory",
+                    "description": "Item classification category"
                 },
                 "subcategory": {
                     "type": "string",
@@ -2006,10 +2041,12 @@ public partial class ItemController
                     "description": "Filtering tags"
                 },
                 "rarity": {
-                    "$ref": "#/$defs/ItemRarity"
+                    "$ref": "#/$defs/ItemRarity",
+                    "description": "Item rarity tier"
                 },
                 "quantityModel": {
-                    "$ref": "#/$defs/QuantityModel"
+                    "$ref": "#/$defs/QuantityModel",
+                    "description": "How quantities are tracked"
                 },
                 "maxStackSize": {
                     "type": "integer",
@@ -2021,7 +2058,8 @@ public partial class ItemController
                     "description": "Unit for continuous quantities"
                 },
                 "weightPrecision": {
-                    "$ref": "#/$defs/WeightPrecision"
+                    "$ref": "#/$defs/WeightPrecision",
+                    "description": "Precision for weight values"
                 },
                 "weight": {
                     "type": "number",
@@ -2065,7 +2103,8 @@ public partial class ItemController
                     "description": "Whether item can be destroyed"
                 },
                 "soulboundType": {
-                    "$ref": "#/$defs/SoulboundType"
+                    "$ref": "#/$defs/SoulboundType",
+                    "description": "Binding behavior type"
                 },
                 "hasDurability": {
                     "type": "boolean",
@@ -2077,7 +2116,8 @@ public partial class ItemController
                     "description": "Maximum durability value"
                 },
                 "scope": {
-                    "$ref": "#/$defs/ItemScope"
+                    "$ref": "#/$defs/ItemScope",
+                    "description": "Realm availability scope"
                 },
                 "availableRealms": {
                     "type": "array",
@@ -2352,7 +2392,8 @@ public partial class ItemController
                     "description": "Any other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",
@@ -2476,7 +2517,8 @@ public partial class ItemController
                     "description": "Other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",
@@ -2691,7 +2733,8 @@ public partial class ItemController
                     "description": "Other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",
@@ -2927,7 +2970,8 @@ public partial class ItemController
                     "description": "Other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",
@@ -3046,7 +3090,8 @@ public partial class ItemController
                     "description": "Character to bind the item to"
                 },
                 "bindType": {
-                    "$ref": "#/$defs/SoulboundType"
+                    "$ref": "#/$defs/SoulboundType",
+                    "description": "Type of binding to apply"
                 }
             }
         },
@@ -3161,7 +3206,8 @@ public partial class ItemController
                     "description": "Other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",
@@ -3518,7 +3564,8 @@ public partial class ItemController
                     "description": "Other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",
@@ -3772,7 +3819,8 @@ public partial class ItemController
                     "description": "Other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",
@@ -4017,7 +4065,8 @@ public partial class ItemController
                     "description": "Other instance-specific data"
                 },
                 "originType": {
-                    "$ref": "#/$defs/ItemOriginType"
+                    "$ref": "#/$defs/ItemOriginType",
+                    "description": "How this item instance was created"
                 },
                 "originId": {
                     "type": "string",

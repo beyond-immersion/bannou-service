@@ -75,145 +75,60 @@ paths:
         \                    \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
         : {\n                    \"type\": \"string\",\n                    \"maxLength\": 1000,\n                    \"nullable\"\
         : true,\n                    \"description\": \"Detailed description of this item\"\n                },\n        \
-        \        \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\"\n                },\n           \
-        \     \"subcategory\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 64,\n    \
-        \                \"nullable\": true,\n                    \"description\": \"Game-defined subcategory (e.g., sword,
-        helmet)\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\",\n                        \"maxLength\": 32\n\
-        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Flexible
-        filtering tags\"\n                },\n                \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\
-        \n                },\n                \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\"\
-        \n                },\n                \"maxStackSize\": {\n                    \"type\": \"integer\",\n          \
-        \          \"minimum\": 1,\n                    \"description\": \"Maximum stack size (1 for unique items)\"\n   \
-        \             },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n              \
-        \      \"maxLength\": 32,\n                    \"nullable\": true,\n                    \"description\": \"Unit for
-        continuous quantities (e.g., liters, kg)\"\n                },\n                \"weightPrecision\": {\n         \
-        \           \"$ref\": \"#/$defs/WeightPrecision\"\n                },\n                \"weight\": {\n           \
-        \         \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Weight value (interpreted per weightPrecision)\"\n                },\n   \
-        \             \"volume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Volume for volumetric inventories\"\
-        \n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n             \
-        \       \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Width in
-        grid-based inventories\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Height in grid-based inventories\"\n                },\n                \"canRotate\": {\n                   \
-        \ \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
-        item can be rotated in grid\"\n                },\n                \"baseValue\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"Reference price for vendors/markets\"\n                },\n                \"tradeable\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether item can be traded/auctioned\"\n                },\n                \"destroyable\": {\n             \
-        \       \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        item can be destroyed/discarded\"\n                },\n                \"soulboundType\": {\n                    \"\
-        $ref\": \"#/$defs/SoulboundType\"\n                },\n                \"hasDurability\": {\n                    \"\
-        type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether item
-        has durability tracking\"\n                },\n                \"maxDurability\": {\n                    \"type\"\
-        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum durability
-        value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"#/$defs/ItemScope\"\n \
-        \               },\n                \"availableRealms\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Realm IDs
-        where this template is available (for realm_specific or multi_realm)\"\n                },\n                \"stats\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-defined stats (e.g., attack, defense)\"\n                },\n                \"effects\": {\n           \
-        \         \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Game-defined effects (e.g., on_use, on_equip)\"\n                },\n                \"requirements\": {\n       \
-        \             \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-defined requirements (e.g., level, strength)\"\n                },\n                \"display\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display properties (e.g., iconId, modelId)\"\n                },\n                \"metadata\": {\n          \
-        \          \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Any other game-specific data\"\n                }\n            }\n        },\n        \"ItemCategory\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"Item classification category\",\n            \"enum\"\
-        : [\n                \"weapon\",\n                \"armor\",\n                \"accessory\",\n                \"consumable\"\
-        ,\n                \"material\",\n                \"container\",\n                \"quest\",\n                \"currency_like\"\
-        ,\n                \"misc\",\n                \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n \
-        \           \"type\": \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n \
-        \               \"common\",\n                \"uncommon\",\n                \"rare\",\n                \"epic\",\n\
-        \                \"legendary\",\n                \"custom\"\n            ]\n        },\n        \"QuantityModel\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How quantities are tracked for this item type\"\
-        ,\n            \"enum\": [\n                \"discrete\",\n                \"continuous\",\n                \"unique\"\
-        \n            ]\n        },\n        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Precision for weight values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"\
-        integer\",\n                \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n      \
-        \      ]\n        },\n        \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"When item becomes bound to a character\",\n            \"enum\": [\n                \"none\",\n              \
-        \  \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"\
-        ItemScope\": {\n            \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent
-        with CurrencyScope)\",\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n\
-        \                \"multi_realm\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"templateId\",\n                \"code\",\n                \"gameId\",\n                \"name\",\n    \
-        \            \"category\",\n                \"quantityModel\",\n                \"maxStackSize\",\n              \
-        \  \"scope\",\n                \"tradeable\",\n                \"destroyable\",\n                \"soulboundType\"\
-        ,\n                \"hasDurability\",\n                \"isActive\",\n                \"isDeprecated\",\n        \
-        \        \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n          \
-        \      \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
-        \                   \"description\": \"Unique template identifier\"\n                },\n                \"code\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code within the game\"\
-        \n                },\n                \"gameId\": {\n                    \"type\": \"string\",\n                 \
-        \   \"description\": \"Game service this template belongs to\"\n                },\n                \"name\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
-        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n \
-        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\"\n                },\n    \
-        \            \"subcategory\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Game-defined subcategory\"\n                },\n                \"tags\":
-        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Filtering tags\"\n                },\n  \
-        \              \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\n                },\n         \
-        \       \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\"\n                },\n      \
-        \          \"maxStackSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum stack size\"\n                },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\
-        \n                },\n                \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\"\
-        \n                },\n                \"weight\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Weight
-        value\"\n                },\n                \"volume\": {\n                    \"type\": \"number\",\n          \
-        \          \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Volume for volumetric inventories\"\n                },\n                \"gridWidth\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Width in grid-based
-        inventories\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Height in grid-based inventories\"\
-        \n                },\n                \"canRotate\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Whether item can be rotated in grid\"\n      \
-        \          },\n                \"baseValue\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Reference price\"\
-        \n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether item can be traded\"\n                },\n                \"destroyable\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether item can be destroyed\"\
-        \n                },\n                \"soulboundType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\"\
-        \n                },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n         \
-        \           \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"\
-        #/$defs/ItemScope\"\n                },\n                \"availableRealms\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                      \
-        \  \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Available realms\"\n                },\n                \"stats\": {\n                    \"type\": \"object\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Game-defined stats\"\n        \
-        \        },\n                \"effects\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Game-defined effects\"\n                },\n                \"requirements\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-defined requirements\"\n                },\n                \"display\": {\n                    \"type\"\
-        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Display properties\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Other game-specific data\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether template is active\"\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether template is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\
-        \n                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
-        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
+        \        \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\",\n                    \"description\"\
+        : \"Item classification category\"\n                },\n                \"subcategory\": {\n                    \"\
+        type\": \"string\",\n                    \"maxLength\": 64,\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Game-defined subcategory (e.g., sword, helmet)\"\n                },\n              \
+        \  \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                     \
+        \   \"type\": \"string\",\n                        \"maxLength\": 32\n                    },\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Flexible filtering tags\"\n                },\n    \
+        \            \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\",\n                    \"description\"\
+        : \"Item rarity tier\"\n                },\n                \"quantityModel\": {\n                    \"$ref\": \"\
+        #/$defs/QuantityModel\",\n                    \"description\": \"How quantities are tracked for this item\"\n    \
+        \            },\n                \"maxStackSize\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 1,\n                    \"description\": \"Maximum stack size (1 for unique items)\"\n        \
+        \        },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                   \
+        \ \"maxLength\": 32,\n                    \"nullable\": true,\n                    \"description\": \"Unit for continuous
+        quantities (e.g., liters, kg)\"\n                },\n                \"weightPrecision\": {\n                    \"\
+        $ref\": \"#/$defs/WeightPrecision\",\n                    \"description\": \"Precision for weight values\"\n     \
+        \           },\n                \"weight\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Weight value (interpreted
+        per weightPrecision)\"\n                },\n                \"volume\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Volume for volumetric inventories\"\n                },\n                \"gridWidth\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Width in grid-based inventories\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Height in grid-based inventories\"\n                },\n         \
+        \       \"canRotate\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Whether item can be rotated in grid\"\n                },\n                \"\
+        baseValue\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Reference price for vendors/markets\"\n  \
+        \              },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"default\": true,\n                    \"description\": \"Whether item can be traded/auctioned\"\n         \
+        \       },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"\
+        default\": true,\n                    \"description\": \"Whether item can be destroyed/discarded\"\n             \
+        \   },\n                \"soulboundType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\",\n         \
+        \           \"description\": \"Binding behavior when item is acquired\"\n                },\n                \"hasDurability\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether item has durability tracking\"\n                },\n                \"maxDurability\": {\n           \
+        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"#/$defs/ItemScope\"\
+        ,\n                    \"description\": \"Realm availability scope\"\n                },\n                \"availableRealms\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm IDs where this template is available (for realm_specific or
+        multi_realm)\"\n                },\n                \"stats\": {\n                    \"type\": \"object\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Game-defined stats (e.g., attack, defense)\"\
+        \n                },\n                \"effects\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Game-defined effects (e.g., on_use, on_equip)\"\n\
+        \                },\n                \"requirements\": {\n                    \"type\": \"object\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Game-defined requirements (e.g., level, strength)\"\
+        \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Display properties (e.g., iconId, modelId)\"\n  \
+        \              },\n                \"metadata\": {\n                    \"type\": \"object\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Any other game-specific data\"\n                }\n\
+        \            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
         ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
         \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
@@ -232,6 +147,99 @@ paths:
         \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
         ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
         \n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
+        \        \"templateId\",\n                \"code\",\n                \"gameId\",\n                \"name\",\n    \
+        \            \"category\",\n                \"quantityModel\",\n                \"maxStackSize\",\n              \
+        \  \"scope\",\n                \"tradeable\",\n                \"destroyable\",\n                \"soulboundType\"\
+        ,\n                \"hasDurability\",\n                \"isActive\",\n                \"isDeprecated\",\n        \
+        \        \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n          \
+        \      \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"Unique template identifier\"\n                },\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code within the game\"\
+        \n                },\n                \"gameId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Game service this template belongs to\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n \
+        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\",\n                    \"description\"\
+        : \"Item classification category\"\n                },\n                \"subcategory\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined
+        subcategory\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
+        \     \"description\": \"Filtering tags\"\n                },\n                \"rarity\": {\n                   \
+        \ \"$ref\": \"#/$defs/ItemRarity\",\n                    \"description\": \"Item rarity tier\"\n                },\n\
+        \                \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\",\n                \
+        \    \"description\": \"How quantities are tracked\"\n                },\n                \"maxStackSize\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Maximum stack size\"\n         \
+        \       },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\n                },\n \
+        \               \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\",\n             \
+        \       \"description\": \"Precision for weight values\"\n                },\n                \"weight\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Weight value\"\n                },\n                \"volume\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Volume for volumetric inventories\"\n                },\n        \
+        \        \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Width in grid-based inventories\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Height in grid-based inventories\"\n                },\n                \"canRotate\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
+        item can be rotated in grid\"\n                },\n                \"baseValue\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Reference price\"\n                },\n                \"tradeable\": {\n            \
+        \        \"type\": \"boolean\",\n                    \"description\": \"Whether item can be traded\"\n           \
+        \     },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether item can be destroyed\"\n                },\n                \"soulboundType\": {\n                  \
+        \  \"$ref\": \"#/$defs/SoulboundType\",\n                    \"description\": \"Binding behavior type\"\n        \
+        \        },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n                  \
+        \  \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"\
+        #/$defs/ItemScope\",\n                    \"description\": \"Realm availability scope\"\n                },\n    \
+        \            \"availableRealms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Available realms\"\n       \
+        \         },\n                \"stats\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-defined stats\"\n                },\n                \"effects\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-defined effects\"\n                },\n                \"requirements\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined requirements\"\
+        \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
+        \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
+        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
+        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
+        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
+        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
+        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
+        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
+        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
+        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
+        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
+        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
+        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
+        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
+        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
+        \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new item template\",\n    \"description\": \"Creates a new item
         definition for a game. Code, gameId, quantityModel, and scope\\nare immutable after creation.\\n\",\n    \"tags\"\
         : [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createItemTemplate\"\n}"
@@ -290,79 +298,83 @@ paths:
         \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
         \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
         \       \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n \
-        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\"\n                },\n    \
-        \            \"subcategory\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Game-defined subcategory\"\n                },\n                \"tags\":
-        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Filtering tags\"\n                },\n  \
-        \              \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\n                },\n         \
-        \       \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\"\n                },\n      \
-        \          \"maxStackSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum stack size\"\n                },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\
-        \n                },\n                \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\"\
-        \n                },\n                \"weight\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Weight
-        value\"\n                },\n                \"volume\": {\n                    \"type\": \"number\",\n          \
-        \          \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Volume for volumetric inventories\"\n                },\n                \"gridWidth\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Width in grid-based
-        inventories\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Height in grid-based inventories\"\
-        \n                },\n                \"canRotate\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Whether item can be rotated in grid\"\n      \
-        \          },\n                \"baseValue\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Reference price\"\
-        \n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether item can be traded\"\n                },\n                \"destroyable\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether item can be destroyed\"\
-        \n                },\n                \"soulboundType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\"\
-        \n                },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n         \
-        \           \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\"\
+        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\",\n                    \"description\"\
+        : \"Item classification category\"\n                },\n                \"subcategory\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined
+        subcategory\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
+        \     \"description\": \"Filtering tags\"\n                },\n                \"rarity\": {\n                   \
+        \ \"$ref\": \"#/$defs/ItemRarity\",\n                    \"description\": \"Item rarity tier\"\n                },\n\
+        \                \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\",\n                \
+        \    \"description\": \"How quantities are tracked\"\n                },\n                \"maxStackSize\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Maximum stack size\"\n         \
+        \       },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\n                },\n \
+        \               \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\",\n             \
+        \       \"description\": \"Precision for weight values\"\n                },\n                \"weight\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Weight value\"\n                },\n                \"volume\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Volume for volumetric inventories\"\n                },\n        \
+        \        \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Width in grid-based inventories\"\n                },\n                \"gridHeight\"\
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Height in grid-based inventories\"\n                },\n                \"canRotate\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
+        item can be rotated in grid\"\n                },\n                \"baseValue\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Reference price\"\n                },\n                \"tradeable\": {\n            \
+        \        \"type\": \"boolean\",\n                    \"description\": \"Whether item can be traded\"\n           \
+        \     },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether item can be destroyed\"\n                },\n                \"soulboundType\": {\n                  \
+        \  \"$ref\": \"#/$defs/SoulboundType\",\n                    \"description\": \"Binding behavior type\"\n        \
+        \        },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n                  \
+        \  \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"\
-        #/$defs/ItemScope\"\n                },\n                \"availableRealms\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                      \
-        \  \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Available realms\"\n                },\n                \"stats\": {\n                    \"type\": \"object\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Game-defined stats\"\n        \
-        \        },\n                \"effects\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Game-defined effects\"\n                },\n                \"requirements\"\
+        #/$defs/ItemScope\",\n                    \"description\": \"Realm availability scope\"\n                },\n    \
+        \            \"availableRealms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Available realms\"\n       \
+        \         },\n                \"stats\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-defined stats\"\n                },\n                \"effects\"\
         : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-defined requirements\"\n                },\n                \"display\": {\n                    \"type\"\
-        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Display properties\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Other game-specific data\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether template is active\"\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether template is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\
-        \n                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
-        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
-        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Game-defined effects\"\n                },\n                \"requirements\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined requirements\"\
+        \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
+        \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
+        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
+        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
+        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
+        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
+        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
+        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
+        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
+        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
+        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
+        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
+        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
+        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
+        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
+        \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get item template by ID or code\",\n    \"description\": \"Retrieves an
         item template by its unique ID or by code+gameId combination.\\nAt least one of templateId or (code + gameId) must
         be provided.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -397,35 +409,36 @@ paths:
         : \"Request to list item templates\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
         \                \"gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
         Filter by game service\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\"\
-        \n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Filter by subcategory\"\n                },\n\
-        \                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
-        \                 \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Filter by tags (items must have all specified tags)\"\n                },\n      \
-        \          \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\n                },\n             \
-        \   \"scope\": {\n                    \"$ref\": \"#/$defs/ItemScope\"\n                },\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Filter by realm availability\"\n                },\n   \
-        \             \"includeInactive\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Include inactive templates\"\n                },\n              \
-        \  \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
-        \                    \"description\": \"Include deprecated templates\"\n                },\n                \"search\"\
+        ,\n                    \"description\": \"Filter by item category\"\n                },\n                \"subcategory\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Search in name and description\"\n                },\n                \"offset\": {\n                    \"type\"\
-        : \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Pagination offset\"\n\
-        \                },\n                \"limit\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"default\": 50,\n                    \"maximum\": 200,\n                    \"description\": \"Maximum results
-        to return\"\n                }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Item classification category\",\n            \"enum\": [\n                \"weapon\"\
-        ,\n                \"armor\",\n                \"accessory\",\n                \"consumable\",\n                \"\
-        material\",\n                \"container\",\n                \"quest\",\n                \"currency_like\",\n    \
-        \            \"misc\",\n                \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n       \
-        \     \"type\": \"string\",\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n       \
-        \         \"common\",\n                \"uncommon\",\n                \"rare\",\n                \"epic\",\n     \
-        \           \"legendary\",\n                \"custom\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Filter by subcategory\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Filter by tags (items must have all specified
+        tags)\"\n                },\n                \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\",\n\
+        \                    \"description\": \"Filter by rarity tier\"\n                },\n                \"scope\": {\n\
+        \                    \"$ref\": \"#/$defs/ItemScope\",\n                    \"description\": \"Filter by realm scope\"\
+        \n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter
+        by realm availability\"\n                },\n                \"includeInactive\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Include inactive templates\"\
+        \n                },\n                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"default\": false,\n                    \"description\": \"Include deprecated templates\"\n     \
+        \           },\n                \"search\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Search in name and description\"\n                },\n           \
+        \     \"offset\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n           \
+        \         \"description\": \"Pagination offset\"\n                },\n                \"limit\": {\n             \
+        \       \"type\": \"integer\",\n                    \"default\": 50,\n                    \"maximum\": 200,\n    \
+        \                \"description\": \"Maximum results to return\"\n                }\n            }\n        },\n  \
+        \      \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
+        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
+        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
+        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
+        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
+        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
+        \           ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\": [\n                \"global\"\
+        ,\n                \"realm_specific\",\n                \"multi_realm\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListItemTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"ListItemTemplatesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of item templates\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -449,79 +462,83 @@ paths:
         \                   \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
         \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
         \       \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n \
-        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\"\n                },\n    \
-        \            \"subcategory\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Game-defined subcategory\"\n                },\n                \"tags\":
-        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Filtering tags\"\n                },\n  \
-        \              \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\n                },\n         \
-        \       \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\"\n                },\n      \
-        \          \"maxStackSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum stack size\"\n                },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\
-        \n                },\n                \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\"\
-        \n                },\n                \"weight\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Weight
-        value\"\n                },\n                \"volume\": {\n                    \"type\": \"number\",\n          \
-        \          \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Volume for volumetric inventories\"\n                },\n                \"gridWidth\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Width in grid-based
-        inventories\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Height in grid-based inventories\"\
-        \n                },\n                \"canRotate\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Whether item can be rotated in grid\"\n      \
-        \          },\n                \"baseValue\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Reference price\"\
-        \n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether item can be traded\"\n                },\n                \"destroyable\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether item can be destroyed\"\
-        \n                },\n                \"soulboundType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\"\
-        \n                },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n         \
-        \           \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\"\
+        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\",\n                    \"description\"\
+        : \"Item classification category\"\n                },\n                \"subcategory\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined
+        subcategory\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
+        \     \"description\": \"Filtering tags\"\n                },\n                \"rarity\": {\n                   \
+        \ \"$ref\": \"#/$defs/ItemRarity\",\n                    \"description\": \"Item rarity tier\"\n                },\n\
+        \                \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\",\n                \
+        \    \"description\": \"How quantities are tracked\"\n                },\n                \"maxStackSize\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Maximum stack size\"\n         \
+        \       },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\n                },\n \
+        \               \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\",\n             \
+        \       \"description\": \"Precision for weight values\"\n                },\n                \"weight\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Weight value\"\n                },\n                \"volume\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Volume for volumetric inventories\"\n                },\n        \
+        \        \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Width in grid-based inventories\"\n                },\n                \"gridHeight\"\
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Height in grid-based inventories\"\n                },\n                \"canRotate\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
+        item can be rotated in grid\"\n                },\n                \"baseValue\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Reference price\"\n                },\n                \"tradeable\": {\n            \
+        \        \"type\": \"boolean\",\n                    \"description\": \"Whether item can be traded\"\n           \
+        \     },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether item can be destroyed\"\n                },\n                \"soulboundType\": {\n                  \
+        \  \"$ref\": \"#/$defs/SoulboundType\",\n                    \"description\": \"Binding behavior type\"\n        \
+        \        },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n                  \
+        \  \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"\
-        #/$defs/ItemScope\"\n                },\n                \"availableRealms\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                      \
-        \  \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Available realms\"\n                },\n                \"stats\": {\n                    \"type\": \"object\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Game-defined stats\"\n        \
-        \        },\n                \"effects\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Game-defined effects\"\n                },\n                \"requirements\"\
+        #/$defs/ItemScope\",\n                    \"description\": \"Realm availability scope\"\n                },\n    \
+        \            \"availableRealms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Available realms\"\n       \
+        \         },\n                \"stats\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-defined stats\"\n                },\n                \"effects\"\
         : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-defined requirements\"\n                },\n                \"display\": {\n                    \"type\"\
-        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Display properties\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Other game-specific data\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether template is active\"\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether template is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\
-        \n                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
-        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
-        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Game-defined effects\"\n                },\n                \"requirements\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined requirements\"\
+        \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
+        \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
+        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
+        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
+        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
+        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
+        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
+        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
+        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
+        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
+        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
+        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
+        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
+        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
+        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
+        \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List item templates with filters\",\n    \"description\": \"Lists item
         templates with optional filtering by gameId, category, tags,\\nrarity, scope, and active status.\\n\",\n    \"tags\"\
         : [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listItemTemplates\"\n}"
@@ -569,40 +586,41 @@ paths:
         \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
         string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
         New tags (replaces existing)\"\n                },\n                \"rarity\": {\n                    \"$ref\": \"\
-        #/$defs/ItemRarity\"\n                },\n                \"weight\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New weight value\"\n                },\n                \"volume\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New volume value\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"New grid width\"\n            \
-        \    },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New grid height\"\n                },\n                \"canRotate\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New rotation setting\"\n                },\n                \"baseValue\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                \
-        \    \"description\": \"New base value\"\n                },\n                \"tradeable\": {\n                 \
-        \   \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"New tradeable
-        setting\"\n                },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"New destroyable setting\"\n       \
-        \         },\n                \"maxDurability\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"New max durability\"\n                },\n       \
-        \         \"availableRealms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"New available realms\"\n        \
-        \        },\n                \"stats\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New stats\"\n                },\n                \"effects\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New effects\"\n                },\n                \"requirements\": {\n                    \"type\": \"object\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"New requirements\"\n          \
-        \      },\n                \"display\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New display properties\"\n                },\n                \"metadata\"\
+        #/$defs/ItemRarity\",\n                    \"description\": \"New rarity tier\"\n                },\n            \
+        \    \"weight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"New weight value\"\n                },\n\
+        \                \"volume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"New volume value\"\n          \
+        \      },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New grid width\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New grid height\"\n                },\n                \"canRotate\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"New rotation setting\"\n      \
+        \          },\n                \"baseValue\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"New base value\"\
+        \n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"New tradeable setting\"\n                },\n\
+        \                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New destroyable setting\"\n                },\n                \"\
+        maxDurability\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"New max durability\"\n                },\n                \"availableRealms\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New available realms\"\n                },\n                \"stats\"\
         : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New metadata\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Active status\"\n             \
-        \   }\n            }\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        }\n    }\n}"
+        : \"New stats\"\n                },\n                \"effects\": {\n                    \"type\": \"object\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"New effects\"\n                },\n\
+        \                \"requirements\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New requirements\"\n                },\n                \"display\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New display properties\"\n                },\n                \"metadata\": {\n                    \"type\": \"\
+        object\",\n                    \"nullable\": true,\n                    \"description\": \"New metadata\"\n      \
+        \          },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Active status\"\n                }\n            }\n    \
+        \    },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item rarity
+        tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n                \"rare\"\
+        ,\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n            ]\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item template details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -619,79 +637,83 @@ paths:
         \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
         \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
         \       \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n \
-        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\"\n                },\n    \
-        \            \"subcategory\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Game-defined subcategory\"\n                },\n                \"tags\":
-        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Filtering tags\"\n                },\n  \
-        \              \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\n                },\n         \
-        \       \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\"\n                },\n      \
-        \          \"maxStackSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum stack size\"\n                },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\
-        \n                },\n                \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\"\
-        \n                },\n                \"weight\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Weight
-        value\"\n                },\n                \"volume\": {\n                    \"type\": \"number\",\n          \
-        \          \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Volume for volumetric inventories\"\n                },\n                \"gridWidth\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Width in grid-based
-        inventories\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Height in grid-based inventories\"\
-        \n                },\n                \"canRotate\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Whether item can be rotated in grid\"\n      \
-        \          },\n                \"baseValue\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Reference price\"\
-        \n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether item can be traded\"\n                },\n                \"destroyable\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether item can be destroyed\"\
-        \n                },\n                \"soulboundType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\"\
-        \n                },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n         \
-        \           \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\"\
+        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\",\n                    \"description\"\
+        : \"Item classification category\"\n                },\n                \"subcategory\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined
+        subcategory\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
+        \     \"description\": \"Filtering tags\"\n                },\n                \"rarity\": {\n                   \
+        \ \"$ref\": \"#/$defs/ItemRarity\",\n                    \"description\": \"Item rarity tier\"\n                },\n\
+        \                \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\",\n                \
+        \    \"description\": \"How quantities are tracked\"\n                },\n                \"maxStackSize\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Maximum stack size\"\n         \
+        \       },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\n                },\n \
+        \               \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\",\n             \
+        \       \"description\": \"Precision for weight values\"\n                },\n                \"weight\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Weight value\"\n                },\n                \"volume\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Volume for volumetric inventories\"\n                },\n        \
+        \        \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Width in grid-based inventories\"\n                },\n                \"gridHeight\"\
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Height in grid-based inventories\"\n                },\n                \"canRotate\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
+        item can be rotated in grid\"\n                },\n                \"baseValue\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Reference price\"\n                },\n                \"tradeable\": {\n            \
+        \        \"type\": \"boolean\",\n                    \"description\": \"Whether item can be traded\"\n           \
+        \     },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether item can be destroyed\"\n                },\n                \"soulboundType\": {\n                  \
+        \  \"$ref\": \"#/$defs/SoulboundType\",\n                    \"description\": \"Binding behavior type\"\n        \
+        \        },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n                  \
+        \  \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"\
-        #/$defs/ItemScope\"\n                },\n                \"availableRealms\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                      \
-        \  \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Available realms\"\n                },\n                \"stats\": {\n                    \"type\": \"object\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Game-defined stats\"\n        \
-        \        },\n                \"effects\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Game-defined effects\"\n                },\n                \"requirements\"\
+        #/$defs/ItemScope\",\n                    \"description\": \"Realm availability scope\"\n                },\n    \
+        \            \"availableRealms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Available realms\"\n       \
+        \         },\n                \"stats\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-defined stats\"\n                },\n                \"effects\"\
         : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-defined requirements\"\n                },\n                \"display\": {\n                    \"type\"\
-        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Display properties\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Other game-specific data\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether template is active\"\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether template is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\
-        \n                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
-        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
-        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Game-defined effects\"\n                },\n                \"requirements\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined requirements\"\
+        \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
+        \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
+        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
+        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
+        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
+        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
+        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
+        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
+        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
+        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
+        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
+        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
+        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
+        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
+        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
+        \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update mutable fields of an item template\",\n    \"description\": \"Updates
         mutable fields of an item template. Code, gameId, quantityModel, and scope\\nare immutable after creation and cannot
         be changed.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -753,79 +775,83 @@ paths:
         \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
         \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
         \       \"nullable\": true,\n                    \"description\": \"Detailed description\"\n                },\n \
-        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\"\n                },\n    \
-        \            \"subcategory\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Game-defined subcategory\"\n                },\n                \"tags\":
-        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Filtering tags\"\n                },\n  \
-        \              \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\n                },\n         \
-        \       \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\"\n                },\n      \
-        \          \"maxStackSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Maximum stack size\"\n                },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\
-        \n                },\n                \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\"\
-        \n                },\n                \"weight\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Weight
-        value\"\n                },\n                \"volume\": {\n                    \"type\": \"number\",\n          \
-        \          \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Volume for volumetric inventories\"\n                },\n                \"gridWidth\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Width in grid-based
-        inventories\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Height in grid-based inventories\"\
-        \n                },\n                \"canRotate\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Whether item can be rotated in grid\"\n      \
-        \          },\n                \"baseValue\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Reference price\"\
-        \n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether item can be traded\"\n                },\n                \"destroyable\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether item can be destroyed\"\
-        \n                },\n                \"soulboundType\": {\n                    \"$ref\": \"#/$defs/SoulboundType\"\
-        \n                },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n         \
-        \           \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\"\
+        \               \"category\": {\n                    \"$ref\": \"#/$defs/ItemCategory\",\n                    \"description\"\
+        : \"Item classification category\"\n                },\n                \"subcategory\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined
+        subcategory\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
+        \     \"description\": \"Filtering tags\"\n                },\n                \"rarity\": {\n                   \
+        \ \"$ref\": \"#/$defs/ItemRarity\",\n                    \"description\": \"Item rarity tier\"\n                },\n\
+        \                \"quantityModel\": {\n                    \"$ref\": \"#/$defs/QuantityModel\",\n                \
+        \    \"description\": \"How quantities are tracked\"\n                },\n                \"maxStackSize\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Maximum stack size\"\n         \
+        \       },\n                \"unitOfMeasure\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Unit for continuous quantities\"\n                },\n \
+        \               \"weightPrecision\": {\n                    \"$ref\": \"#/$defs/WeightPrecision\",\n             \
+        \       \"description\": \"Precision for weight values\"\n                },\n                \"weight\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Weight value\"\n                },\n                \"volume\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Volume for volumetric inventories\"\n                },\n        \
+        \        \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Width in grid-based inventories\"\n                },\n                \"gridHeight\"\
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Height in grid-based inventories\"\n                },\n                \"canRotate\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether
+        item can be rotated in grid\"\n                },\n                \"baseValue\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Reference price\"\n                },\n                \"tradeable\": {\n            \
+        \        \"type\": \"boolean\",\n                    \"description\": \"Whether item can be traded\"\n           \
+        \     },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether item can be destroyed\"\n                },\n                \"soulboundType\": {\n                  \
+        \  \"$ref\": \"#/$defs/SoulboundType\",\n                    \"description\": \"Binding behavior type\"\n        \
+        \        },\n                \"hasDurability\": {\n                    \"type\": \"boolean\",\n                  \
+        \  \"description\": \"Whether item has durability\"\n                },\n                \"maxDurability\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Maximum durability value\"\n                },\n                \"scope\": {\n                    \"$ref\": \"\
-        #/$defs/ItemScope\"\n                },\n                \"availableRealms\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                      \
-        \  \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Available realms\"\n                },\n                \"stats\": {\n                    \"type\": \"object\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Game-defined stats\"\n        \
-        \        },\n                \"effects\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Game-defined effects\"\n                },\n                \"requirements\"\
+        #/$defs/ItemScope\",\n                    \"description\": \"Realm availability scope\"\n                },\n    \
+        \            \"availableRealms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Available realms\"\n       \
+        \         },\n                \"stats\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-defined stats\"\n                },\n                \"effects\"\
         : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-defined requirements\"\n                },\n                \"display\": {\n                    \"type\"\
-        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Display properties\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Other game-specific data\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether template is active\"\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether template is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\
-        \n                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
-        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
-        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
-        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
-        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
-        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
-        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
-        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
-        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
-        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
-        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
-        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
-        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
-        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
-        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Game-defined effects\"\n                },\n                \"requirements\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Game-defined requirements\"\
+        \n                },\n                \"display\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Display properties\"\n                },\n      \
+        \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Other game-specific data\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether template is active\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
+        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
+        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
+        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
+        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
+        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
+        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
+        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
+        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
+        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
+        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
+        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
+        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
+        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
+        \   ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate an item template\",\n    \"description\": \"Marks an item template
         as deprecated. Deprecated templates cannot be used\\nto create new instances but existing instances remain valid.
         Optionally\\nspecify a migration target template.\\n\",\n    \"tags\": [\n        \"Item Template\"\n    ],\n    \"\
@@ -891,13 +917,14 @@ paths:
         \                   \"description\": \"Player-assigned custom name\"\n                },\n                \"instanceMetadata\"\
         : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Any other instance-specific data\"\n                },\n                \"originType\": {\n                  \
-        \  \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n                \"originId\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Source entity ID (quest ID, creature ID, etc.)\"\n                }\n        \
-        \    }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\"\
-        ,\n                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        \  \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item instance was created\"\
+        \n                },\n                \"originId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Source
+        entity ID (quest ID, creature ID, etc.)\"\n                }\n            }\n        },\n        \"ItemOriginType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n     \
+        \       \"enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n         \
+        \       \"trade\",\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n       \
+        \     ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -932,17 +959,18 @@ paths:
         : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
         \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n                \"originId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
+        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
+        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
+        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
+        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
+        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new item instance\",\n    \"description\": \"Creates a new item
         instance from a template. The instance must be placed\\nin a container (containerId required). Use lib-inventory's
         /inventory/add\\nfor most use cases - this endpoint is for low-level instance creation.\\n\",\n    \"tags\": [\n \
@@ -1012,17 +1040,18 @@ paths:
         : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
         \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n                \"originId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
+        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
+        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
+        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
+        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
+        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get item instance by ID\",\n    \"description\": \"Retrieves an item instance
         by its unique ID.\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getItemInstance\"\n}"
@@ -1105,17 +1134,18 @@ paths:
         : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
         \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n                \"originId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
+        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
+        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
+        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
+        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
+        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Modify item instance state\",\n    \"description\": \"Modifies an item
         instance's mutable state: durability, custom stats,\\ncustom name, and metadata. Cannot modify bound items unless
         admin.\\n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1159,10 +1189,11 @@ paths:
         : \"uuid\",\n                    \"description\": \"Instance ID to bind\"\n                },\n                \"\
         characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
         \           \"description\": \"Character to bind the item to\"\n                },\n                \"bindType\":
-        {\n                    \"$ref\": \"#/$defs/SoulboundType\"\n                }\n            }\n        },\n       \
-        \ \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound
-        to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n          \
-        \      \"on_equip\",\n                \"on_use\"\n            ]\n        }\n    }\n}"
+        {\n                    \"$ref\": \"#/$defs/SoulboundType\",\n                    \"description\": \"Type of binding
+        to apply\"\n                }\n            }\n        },\n        \"SoulboundType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"When item becomes bound to a character\",\n            \"enum\": [\n           \
+        \     \"none\",\n                \"on_pickup\",\n                \"on_equip\",\n                \"on_use\"\n     \
+        \       ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -1197,17 +1228,18 @@ paths:
         : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
         \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n                \"originId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
+        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
+        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
+        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
+        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
+        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bind item to character\",\n    \"description\": \"Binds an item instance
         to a character. The bind type must be allowed by\\nthe template's soulboundType. Once bound, the item cannot be traded.\\\
         n\",\n    \"tags\": [\n        \"Item Instance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bindItemInstance\"\
@@ -1334,17 +1366,18 @@ paths:
         : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
         \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n                \"originId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
+        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
+        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
+        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
+        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
+        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List items in a container\",\n    \"description\": \"Returns all item instances
         in the specified container.\",\n    \"tags\": [\n        \"Item Query\"\n    ],\n    \"deprecated\": false,\n    \"\
         operationId\": \"listItemsByContainer\"\n}"
@@ -1426,17 +1459,18 @@ paths:
         : true,\n                    \"description\": \"Player-assigned custom name\"\n                },\n              \
         \  \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Other instance-specific data\"\n                },\n                \"originType\"\
-        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n                \"originId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
-        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
-        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
-        ,\n                \"other\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"description\": \"How this item
+        instance was created\"\n                },\n                \"originId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Source entity ID\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\
+        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"ItemOriginType\": {\n   \
+        \         \"type\": \"string\",\n            \"description\": \"How an item instance was created\",\n            \"\
+        enum\": [\n                \"loot\",\n                \"quest\",\n                \"craft\",\n                \"trade\"\
+        ,\n                \"purchase\",\n                \"spawn\",\n                \"other\"\n            ]\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List instances of a template\",\n    \"description\": \"Returns item instances
         of the specified template, optionally filtered by realm.\\nUseful for admin queries and analytics.\\n\",\n    \"tags\"\
         : [\n        \"Item Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listItemsByTemplate\"\n}"
@@ -1513,17 +1547,18 @@ paths:
         \       \"nullable\": true,\n                    \"description\": \"Player-assigned custom name\"\n              \
         \  },\n                \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Other instance-specific data\"\n                },\n   \
-        \             \"originType\": {\n                    \"$ref\": \"#/$defs/ItemOriginType\"\n                },\n  \
-        \              \"originId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Source entity ID\"\n          \
-        \      },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"Instance creation timestamp\"\n                },\n     \
-        \           \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Last modification timestamp\"\n\
-        \                }\n            }\n        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How an item instance was created\",\n            \"enum\": [\n                \"loot\"\
-        ,\n                \"quest\",\n                \"craft\",\n                \"trade\",\n                \"purchase\"\
-        ,\n                \"spawn\",\n                \"other\"\n            ]\n        }\n    }\n}"
+        \             \"originType\": {\n                    \"$ref\": \"#/$defs/ItemOriginType\",\n                    \"\
+        description\": \"How this item instance was created\"\n                },\n                \"originId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Source entity ID\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Instance creation timestamp\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"ItemOriginType\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        an item instance was created\",\n            \"enum\": [\n                \"loot\",\n                \"quest\",\n\
+        \                \"craft\",\n                \"trade\",\n                \"purchase\",\n                \"spawn\"\
+        ,\n                \"other\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get multiple item instances by ID\",\n    \"description\": \"Retrieves
         multiple item instances in a single request.\",\n    \"tags\": [\n        \"Item Query\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"batchGetItemInstances\"\n}"
@@ -1627,6 +1662,7 @@ components:
           description: Detailed description of this item
         category:
           $ref: '#/components/schemas/ItemCategory'
+          description: Item classification category
         subcategory:
           type: string
           maxLength: 64
@@ -1641,8 +1677,10 @@ components:
           description: Flexible filtering tags
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: Item rarity tier
         quantityModel:
           $ref: '#/components/schemas/QuantityModel'
+          description: How quantities are tracked for this item
         maxStackSize:
           type: integer
           minimum: 1
@@ -1654,6 +1692,7 @@ components:
           description: Unit for continuous quantities (e.g., liters, kg)
         weightPrecision:
           $ref: '#/components/schemas/WeightPrecision'
+          description: Precision for weight values
         weight:
           type: number
           format: double
@@ -1693,6 +1732,7 @@ components:
           description: Whether item can be destroyed/discarded
         soulboundType:
           $ref: '#/components/schemas/SoulboundType'
+          description: Binding behavior when item is acquired
         hasDurability:
           type: boolean
           default: false
@@ -1703,6 +1743,7 @@ components:
           description: Maximum durability value
         scope:
           $ref: '#/components/schemas/ItemScope'
+          description: Realm availability scope
         availableRealms:
           type: array
           items:
@@ -1758,6 +1799,7 @@ components:
           description: Filter by game service
         category:
           $ref: '#/components/schemas/ItemCategory'
+          description: Filter by item category
         subcategory:
           type: string
           nullable: true
@@ -1770,8 +1812,10 @@ components:
           description: Filter by tags (items must have all specified tags)
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: Filter by rarity tier
         scope:
           $ref: '#/components/schemas/ItemScope'
+          description: Filter by realm scope
         realmId:
           type: string
           format: uuid
@@ -1832,6 +1876,7 @@ components:
           description: New tags (replaces existing)
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: New rarity tier
         weight:
           type: number
           format: double
@@ -1964,6 +2009,7 @@ components:
           description: Detailed description
         category:
           $ref: '#/components/schemas/ItemCategory'
+          description: Item classification category
         subcategory:
           type: string
           nullable: true
@@ -1975,8 +2021,10 @@ components:
           description: Filtering tags
         rarity:
           $ref: '#/components/schemas/ItemRarity'
+          description: Item rarity tier
         quantityModel:
           $ref: '#/components/schemas/QuantityModel'
+          description: How quantities are tracked
         maxStackSize:
           type: integer
           description: Maximum stack size
@@ -1986,6 +2034,7 @@ components:
           description: Unit for continuous quantities
         weightPrecision:
           $ref: '#/components/schemas/WeightPrecision'
+          description: Precision for weight values
         weight:
           type: number
           format: double
@@ -2021,6 +2070,7 @@ components:
           description: Whether item can be destroyed
         soulboundType:
           $ref: '#/components/schemas/SoulboundType'
+          description: Binding behavior type
         hasDurability:
           type: boolean
           description: Whether item has durability
@@ -2030,6 +2080,7 @@ components:
           description: Maximum durability value
         scope:
           $ref: '#/components/schemas/ItemScope'
+          description: Realm availability scope
         availableRealms:
           type: array
           items:
@@ -2161,6 +2212,7 @@ components:
           description: Any other instance-specific data
         originType:
           $ref: '#/components/schemas/ItemOriginType'
+          description: How this item instance was created
         originId:
           type: string
           format: uuid
@@ -2223,6 +2275,7 @@ components:
           description: Character to bind the item to
         bindType:
           $ref: '#/components/schemas/SoulboundType'
+          description: Type of binding to apply
     DestroyItemInstanceRequest:
       type: object
       description: Request to destroy an item instance
@@ -2315,6 +2368,7 @@ components:
           description: Other instance-specific data
         originType:
           $ref: '#/components/schemas/ItemOriginType'
+          description: How this item instance was created
         originId:
           type: string
           format: uuid
