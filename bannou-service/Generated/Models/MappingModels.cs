@@ -25,21 +25,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Mapping;
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Mapping;
 
@@ -290,9 +275,9 @@ public partial class Position3D
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -327,9 +312,9 @@ public partial class Bounds
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -386,9 +371,9 @@ public partial class MapPayload
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -480,9 +465,9 @@ public partial class MapObject
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -542,9 +527,9 @@ public partial class ObjectChange
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -612,9 +597,9 @@ public partial class AuthorityGrant
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -651,9 +636,9 @@ public partial class NonAuthorityAlertConfig
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -724,9 +709,9 @@ public partial class ActorCapabilities
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -775,9 +760,9 @@ public partial class CustomAffordance
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -851,9 +836,9 @@ public partial class CreateChannelRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -888,9 +873,9 @@ public partial class ReleaseAuthorityRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -915,9 +900,9 @@ public partial class ReleaseAuthorityResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -952,9 +937,9 @@ public partial class AuthorityHeartbeatRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -991,9 +976,9 @@ public partial class AuthorityHeartbeatResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1061,9 +1046,9 @@ public partial class PublishMapUpdateRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1100,9 +1085,9 @@ public partial class PublishMapUpdateResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1152,9 +1137,9 @@ public partial class PublishObjectChangesRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1203,9 +1188,9 @@ public partial class PublishObjectChangesResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1253,9 +1238,9 @@ public partial class RequestSnapshotRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1298,9 +1283,9 @@ public partial class RequestSnapshotResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1348,9 +1333,9 @@ public partial class QueryPointRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1387,9 +1372,9 @@ public partial class QueryPointResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1438,9 +1423,9 @@ public partial class QueryBoundsRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1477,9 +1462,9 @@ public partial class QueryBoundsResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1527,9 +1512,9 @@ public partial class QueryObjectsByTypeRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1566,9 +1551,9 @@ public partial class QueryObjectsByTypeResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1662,9 +1647,9 @@ public partial class AffordanceQueryRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1716,9 +1701,9 @@ public partial class AffordanceLocation
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1767,9 +1752,9 @@ public partial class AffordanceQueryMetadata
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1800,9 +1785,9 @@ public partial class AffordanceQueryResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1846,9 +1831,9 @@ public partial class AuthoringCheckoutRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1891,9 +1876,9 @@ public partial class AuthoringCheckoutResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1943,9 +1928,9 @@ public partial class AuthoringCommitRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -1970,9 +1955,9 @@ public partial class AuthoringCommitResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2016,9 +2001,9 @@ public partial class AuthoringReleaseRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2043,9 +2028,9 @@ public partial class AuthoringReleaseResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2118,9 +2103,9 @@ public partial class MapDefinition
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2174,9 +2159,9 @@ public partial class LayerDefinition
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2227,9 +2212,9 @@ public partial class CreateDefinitionRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2256,9 +2241,9 @@ public partial class GetDefinitionRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2295,9 +2280,9 @@ public partial class ListDefinitionsRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2340,9 +2325,9 @@ public partial class ListDefinitionsResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2399,9 +2384,9 @@ public partial class UpdateDefinitionRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2428,9 +2413,9 @@ public partial class DeleteDefinitionRequest
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -2455,9 +2440,9 @@ public partial class DeleteDefinitionResponse
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
