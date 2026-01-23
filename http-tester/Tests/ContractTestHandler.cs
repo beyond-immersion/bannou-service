@@ -491,7 +491,9 @@ public class ContractTestHandler : BaseHttpTestHandler
                                         Type = ValidationConditionType.StatusCodeIn,
                                         StatusCodes = new List<int> { 200 }
                                     }
-                                }
+                                },
+                                PermanentFailureConditions = new List<ValidationCondition>(),
+                                TransientFailureStatusCodes = new List<int>()
                             }
                         },
                         // Award employer achievement progress
@@ -604,7 +606,8 @@ public class ContractTestHandler : BaseHttpTestHandler
                                     new ValidationCondition
                                     {
                                         Type = ValidationConditionType.JsonPathExists,
-                                        JsonPath = "$.realmId"
+                                        JsonPath = "$.realmId",
+                                        StatusCodes = new List<int>()
                                     }
                                 },
                                 PermanentFailureConditions = new List<ValidationCondition>
@@ -702,8 +705,9 @@ public class ContractTestHandler : BaseHttpTestHandler
             if (breach.BreachId == Guid.Empty)
                 return TestResult.Failed("Breach report returned empty ID");
 
-            if (breach.Status != BreachStatus.Detected)
-                return TestResult.Failed($"Expected detected status, got: {breach.Status}");
+            // When GracePeriodForCure is configured, breach enters cure_period status (not detected)
+            if (breach.Status != BreachStatus.Cure_period)
+                return TestResult.Failed($"Expected cure_period status (grace period configured), got: {breach.Status}");
 
             // Cure the breach
             var cured = await contractClient.CureBreachAsync(new CureBreachRequest

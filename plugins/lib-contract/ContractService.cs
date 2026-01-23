@@ -47,6 +47,39 @@ public partial class ContractService : IContractService
     private const string ALL_TEMPLATES_KEY = "all-templates";
 
     /// <summary>
+    /// Safely extracts a boolean value from custom terms dictionary.
+    /// Handles both native bool values and JsonElement values from JSON deserialization.
+    /// </summary>
+    /// <param name="customTerms">The custom terms dictionary.</param>
+    /// <param name="key">The key to look up.</param>
+    /// <returns>True if the key exists and has a truthy boolean value, false otherwise.</returns>
+    private static bool GetCustomTermBool(IDictionary<string, object>? customTerms, string key)
+    {
+        if (customTerms == null || !customTerms.TryGetValue(key, out var value))
+            return false;
+
+        // Handle JsonElement from JSON deserialization
+        if (value is System.Text.Json.JsonElement jsonElement)
+        {
+            return jsonElement.ValueKind == System.Text.Json.JsonValueKind.True;
+        }
+
+        // Handle native bool
+        if (value is bool boolValue)
+            return boolValue;
+
+        // Fallback for other types
+        try
+        {
+            return Convert.ToBoolean(value);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Initializes a new instance of the ContractService.
     /// </summary>
     public ContractService(
@@ -1423,8 +1456,7 @@ public partial class ContractService : IContractService
                     switch (body.ConstraintType)
                     {
                         case ConstraintType.Exclusivity:
-                            if (customTerms.ContainsKey("exclusivity") &&
-                                Convert.ToBoolean(customTerms["exclusivity"]))
+                            if (GetCustomTermBool(customTerms, "exclusivity"))
                             {
                                 hasViolation = true;
                                 reason = "Entity has an exclusivity clause in an active contract";
@@ -1432,8 +1464,7 @@ public partial class ContractService : IContractService
                             break;
 
                         case ConstraintType.Non_compete:
-                            if (customTerms.ContainsKey("nonCompete") &&
-                                Convert.ToBoolean(customTerms["nonCompete"]))
+                            if (GetCustomTermBool(customTerms, "nonCompete"))
                             {
                                 hasViolation = true;
                                 reason = "Entity has a non-compete clause in an active contract";
