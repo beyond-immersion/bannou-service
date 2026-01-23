@@ -856,8 +856,7 @@ public partial class ContractService
             // Parse the balance from the response
             if (!string.IsNullOrEmpty(result.Result.ResponseBody))
             {
-                using var doc = JsonDocument.Parse(result.Result.ResponseBody);
-                var root = doc.RootElement;
+                var root = BannouJson.Deserialize<JsonElement>(result.Result.ResponseBody);
 
                 // Look for common balance fields: "balance", "amount", "quantity"
                 if (root.TryGetProperty("balance", out var balanceProp) && balanceProp.TryGetDouble(out var balance))
@@ -927,8 +926,7 @@ public partial class ContractService
 
             if (!string.IsNullOrEmpty(result.Result.ResponseBody))
             {
-                using var doc = JsonDocument.Parse(result.Result.ResponseBody);
-                var root = doc.RootElement;
+                var root = BannouJson.Deserialize<JsonElement>(result.Result.ResponseBody);
 
                 if (root.TryGetProperty("balance", out var balanceProp) && balanceProp.TryGetDouble(out var balance))
                 {
@@ -1204,8 +1202,14 @@ public partial class ContractService
                 amount = ParseClauseAmount(clause, contract);
                 assetType = "currency";
 
+                if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
+                {
+                    _logger.LogWarning("Fee clause {ClauseId} missing source or recipient wallet after template resolution", clause.Id);
+                    return null;
+                }
+
                 // Remainder for fees: query source wallet balance
-                if (amount == REMAINDER_SENTINEL && !string.IsNullOrEmpty(sourceId))
+                if (amount == REMAINDER_SENTINEL)
                 {
                     var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
                     amount = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
@@ -1214,8 +1218,8 @@ public partial class ContractService
                 var currencyCode = clause.GetProperty("currency_code") ?? "gold";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
                 {
-                    ["from_wallet_id"] = sourceId ?? string.Empty,
-                    ["to_wallet_id"] = destinationId ?? string.Empty,
+                    ["from_wallet_id"] = sourceId,
+                    ["to_wallet_id"] = destinationId,
                     ["currency_code"] = currencyCode,
                     ["amount"] = amount
                 });
@@ -1228,11 +1232,17 @@ public partial class ContractService
                 amount = GetClauseDoubleProperty(clause, "quantity", 1);
                 assetType = "item";
 
+                if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
+                {
+                    _logger.LogWarning("Item clause {ClauseId} missing source or destination container after template resolution", clause.Id);
+                    return null;
+                }
+
                 var itemCode = clause.GetProperty("item_code") ?? "all";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
                 {
-                    ["from_container_id"] = sourceId ?? string.Empty,
-                    ["to_container_id"] = destinationId ?? string.Empty,
+                    ["from_container_id"] = sourceId,
+                    ["to_container_id"] = destinationId,
                     ["item_code"] = itemCode,
                     ["quantity"] = (int)amount
                 });
@@ -1245,8 +1255,14 @@ public partial class ContractService
                 amount = ParseClauseAmount(clause, contract);
                 assetType = "currency";
 
+                if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
+                {
+                    _logger.LogWarning("Distribution clause {ClauseId} missing source or destination wallet after template resolution", clause.Id);
+                    return null;
+                }
+
                 // Remainder for distributions: query source wallet balance (after fees deducted)
-                if (amount == REMAINDER_SENTINEL && !string.IsNullOrEmpty(sourceId))
+                if (amount == REMAINDER_SENTINEL)
                 {
                     var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
                     amount = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
@@ -1255,8 +1271,8 @@ public partial class ContractService
                 var currencyCode = clause.GetProperty("currency_code") ?? "gold";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
                 {
-                    ["from_wallet_id"] = sourceId ?? string.Empty,
-                    ["to_wallet_id"] = destinationId ?? string.Empty,
+                    ["from_wallet_id"] = sourceId,
+                    ["to_wallet_id"] = destinationId,
                     ["currency_code"] = currencyCode,
                     ["amount"] = amount
                 });
@@ -1421,10 +1437,8 @@ public partial class ContractService
         }
         else
         {
-            // Try to serialize and re-parse as JsonElement
-            var json = BannouJson.Serialize(clausesObj);
-            using var doc = JsonDocument.Parse(json);
-            clausesElement = doc.RootElement.Clone();
+            // Serialize the object directly to JsonElement via BannouJson
+            clausesElement = BannouJson.SerializeToElement(clausesObj);
         }
 
         if (clausesElement.ValueKind != JsonValueKind.Array)
@@ -1454,12 +1468,13 @@ public partial class ContractService
 
     /// <summary>
     /// Resolves template value references ({{Key}} patterns) in a string using the contract's template values.
+    /// Returns null if input is null or empty.
     /// </summary>
-    private static string ResolveTemplateValue(string? input, Dictionary<string, string>? templateValues)
+    private static string? ResolveTemplateValue(string? input, Dictionary<string, string>? templateValues)
     {
         if (string.IsNullOrEmpty(input) || templateValues == null)
         {
-            return input ?? string.Empty;
+            return input;
         }
 
         // Replace all {{Key}} patterns with their values
@@ -1485,6 +1500,8 @@ public partial class ContractService
     {
         if (element.TryGetProperty(propertyName, out var prop) && prop.ValueKind == JsonValueKind.String)
         {
+            // GetString() returns string? but cannot return null when ValueKind is String;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             return prop.GetString() ?? string.Empty;
         }
         return string.Empty;
