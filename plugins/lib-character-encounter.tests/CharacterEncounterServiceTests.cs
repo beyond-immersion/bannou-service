@@ -967,15 +967,18 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockPerspectiveStore
             .Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(perspective);
+        _mockPerspectiveStore
+            .Setup(s => s.GetWithETagAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((perspective, "etag-0"));
 
         PerspectiveData? savedPerspective = null;
         _mockPerspectiveStore
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<PerspectiveData>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, PerspectiveData, StateOptions?, CancellationToken>((_, p, _, _) => savedPerspective = p)
+            .Callback<string, PerspectiveData, string, CancellationToken>((_, p, _, _) => savedPerspective = p)
             .ReturnsAsync("etag-1");
 
         var request = new UpdatePerspectiveRequest
@@ -1012,7 +1015,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid> { perspectiveId } });
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
-        _mockPerspectiveStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
+        _mockPerspectiveStore.Setup(s => s.GetWithETagAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync((perspective, "etag-0"));
+        _mockPerspectiveStore.Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         EncounterPerspectiveUpdatedEvent? capturedEvent = null;
         _mockMessageBus
@@ -1056,11 +1060,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid> { perspectiveId } });
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
+        _mockPerspectiveStore.Setup(s => s.GetWithETagAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync((perspective, "etag-0"));
 
         PerspectiveData? savedPerspective = null;
         _mockPerspectiveStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, PerspectiveData, StateOptions?, CancellationToken>((_, p, _, _) => savedPerspective = p)
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, PerspectiveData, string, CancellationToken>((_, p, _, _) => savedPerspective = p)
             .ReturnsAsync("etag-1");
 
         var request = new RefreshMemoryRequest
@@ -1097,11 +1102,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid> { perspectiveId } });
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
+        _mockPerspectiveStore.Setup(s => s.GetWithETagAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync((perspective, "etag-0"));
 
         PerspectiveData? savedPerspective = null;
         _mockPerspectiveStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, PerspectiveData, StateOptions?, CancellationToken>((_, p, _, _) => savedPerspective = p)
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, PerspectiveData, string, CancellationToken>((_, p, _, _) => savedPerspective = p)
             .ReturnsAsync("etag-1");
 
         // Act

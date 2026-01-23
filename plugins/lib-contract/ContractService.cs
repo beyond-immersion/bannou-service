@@ -125,6 +125,33 @@ public partial class ContractService : IContractService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Validate milestone count against configuration limit
+            if (body.Milestones?.Count > _configuration.MaxMilestonesPerTemplate)
+            {
+                _logger.LogWarning("Template milestone count {Count} exceeds maximum {Max}",
+                    body.Milestones.Count, _configuration.MaxMilestonesPerTemplate);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate prebound API count per milestone
+            if (body.Milestones != null)
+            {
+                foreach (var milestone in body.Milestones)
+                {
+                    var onCompleteCount = milestone.OnComplete?.Count ?? 0;
+                    var onExpireCount = milestone.OnExpire?.Count ?? 0;
+
+                    if (onCompleteCount > _configuration.MaxPreboundApisPerMilestone ||
+                        onExpireCount > _configuration.MaxPreboundApisPerMilestone)
+                    {
+                        _logger.LogWarning(
+                            "Milestone {Code} exceeds prebound API limit: onComplete={OnComplete}, onExpire={OnExpire}, max={Max}",
+                            milestone.Code, onCompleteCount, onExpireCount, _configuration.MaxPreboundApisPerMilestone);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
+            }
+
             var templateId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
@@ -469,12 +496,39 @@ public partial class ContractService : IContractService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Validate party count
+            // Validate party count against template bounds
             if (body.Parties.Count < template.MinParties || body.Parties.Count > template.MaxParties)
             {
                 _logger.LogWarning("Invalid party count: {Count}, expected {Min}-{Max}",
                     body.Parties.Count, template.MinParties, template.MaxParties);
                 return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate party count against configuration hard cap
+            if (body.Parties.Count > _configuration.MaxPartiesPerContract)
+            {
+                _logger.LogWarning("Party count {Count} exceeds configuration maximum {Max}",
+                    body.Parties.Count, _configuration.MaxPartiesPerContract);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate active contract limit per entity (0 = unlimited)
+            if (_configuration.MaxActiveContractsPerEntity > 0)
+            {
+                foreach (var party in body.Parties)
+                {
+                    var partyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
+                    var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+                        .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
+
+                    if (contractIds.Count >= _configuration.MaxActiveContractsPerEntity)
+                    {
+                        _logger.LogWarning(
+                            "Entity {EntityType}:{EntityId} has {Count} contracts, exceeds limit {Max}",
+                            party.EntityType, party.EntityId, contractIds.Count, _configuration.MaxActiveContractsPerEntity);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
             }
 
             var contractId = Guid.NewGuid();
@@ -1033,15 +1087,12 @@ public partial class ContractService : IContractService
             milestone.CompletedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Execute onComplete prebound APIs
+            // Execute onComplete prebound APIs in configured batch size
             var apisExecuted = 0;
             if (milestone.OnComplete?.Count > 0)
             {
-                foreach (var api in milestone.OnComplete)
-                {
-                    await ExecutePreboundApiAsync(model, api, "milestone.completed", cancellationToken);
-                    apisExecuted++;
-                }
+                apisExecuted = await ExecutePreboundApisBatchedAsync(
+                    model, milestone.OnComplete, "milestone.completed", cancellationToken);
             }
 
             // Activate next milestone if any
@@ -1134,13 +1185,11 @@ public partial class ContractService : IContractService
             milestone.FailedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Execute onExpire prebound APIs
+            // Execute onExpire prebound APIs in configured batch size
             if (milestone.OnExpire?.Count > 0)
             {
-                foreach (var api in milestone.OnExpire)
-                {
-                    await ExecutePreboundApiAsync(model, api, "milestone.failed", cancellationToken);
-                }
+                await ExecutePreboundApisBatchedAsync(
+                    model, milestone.OnExpire, "milestone.failed", cancellationToken);
             }
 
             var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
@@ -1751,12 +1800,40 @@ public partial class ContractService : IContractService
         };
     }
 
+    /// <summary>
+    /// Executes a list of prebound APIs in batches of configured size.
+    /// APIs within each batch execute concurrently; batches execute sequentially.
+    /// </summary>
+    private async Task<int> ExecutePreboundApisBatchedAsync(
+        ContractInstanceModel contract,
+        List<PreboundApiModel> apis,
+        string trigger,
+        CancellationToken ct)
+    {
+        var executed = 0;
+        var batchSize = _configuration.PreboundApiBatchSize;
+
+        for (var i = 0; i < apis.Count; i += batchSize)
+        {
+            var batch = apis.Skip(i).Take(batchSize);
+            var tasks = batch.Select(api => ExecutePreboundApiAsync(contract, api, trigger, ct));
+            await Task.WhenAll(tasks);
+            executed += Math.Min(batchSize, apis.Count - i);
+        }
+
+        return executed;
+    }
+
     private async Task ExecutePreboundApiAsync(
         ContractInstanceModel contract,
         PreboundApiModel api,
         string trigger,
         CancellationToken ct)
     {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutCts.CancelAfter(_configuration.PreboundApiTimeoutMs);
+        var effectiveCt = timeoutCts.Token;
+
         try
         {
             _logger.LogInformation("Executing prebound API: {Service}{Endpoint} for contract {ContractId}",
@@ -1775,8 +1852,8 @@ public partial class ContractService : IContractService
                 ExecutionMode = ConvertExecutionMode(api.ExecutionMode)
             };
 
-            // Execute via ServiceNavigator
-            var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);
+            // Execute via ServiceNavigator with configured timeout
+            var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, effectiveCt);
 
             if (!result.SubstitutionSucceeded)
             {

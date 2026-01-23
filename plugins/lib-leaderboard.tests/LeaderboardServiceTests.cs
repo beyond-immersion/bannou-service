@@ -378,8 +378,8 @@ public class LeaderboardServiceTests
         var leaderboardId = "test-leaderboard";
 
         _mockDefinitionStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LeaderboardDefinitionData
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new LeaderboardDefinitionData
             {
                 GameServiceId = gameServiceId,
                 LeaderboardId = leaderboardId,
@@ -387,7 +387,7 @@ public class LeaderboardServiceTests
                 SortOrder = SortOrder.Descending,
                 UpdateMode = UpdateMode.Replace,
                 IsSeasonal = false // Not seasonal
-            });
+            }, "etag-0"));
 
         var request = new CreateSeasonRequest
         {

@@ -287,16 +287,16 @@ public class AccountServiceTests
         };
 
         _mockAccountStore
-            .Setup(s => s.GetAsync(
+            .Setup(s => s.GetWithETagAsync(
                 $"account-{accountId}",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountModel);
+            .ReturnsAsync((accountModel, "etag-0"));
 
         _mockAccountStore
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
@@ -335,16 +335,16 @@ public class AccountServiceTests
         };
 
         _mockAccountStore
-            .Setup(s => s.GetAsync(
+            .Setup(s => s.GetWithETagAsync(
                 $"account-{accountId}",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountModel);
+            .ReturnsAsync((accountModel, "etag-0"));
 
         _mockAccountStore
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
