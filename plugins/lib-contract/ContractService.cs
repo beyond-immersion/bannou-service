@@ -624,7 +624,7 @@ public partial class ContractService : IContractService
             }
 
             // Guardian enforcement: locked contracts cannot be modified by parties
-            if (!string.IsNullOrEmpty(model.GuardianId))
+            if (model.GuardianId.HasValue)
             {
                 _logger.LogWarning("Cannot consent to locked contract: {ContractId}, guardian: {GuardianId}",
                     body.ContractId, model.GuardianId);
@@ -808,8 +808,8 @@ public partial class ContractService : IContractService
 
             if (body.TemplateId.HasValue)
             {
-                var templateIdStr = body.TemplateId.Value.ToString();
-                filtered = filtered.Where(c => c.TemplateId == templateIdStr);
+                var templateId = body.TemplateId.Value;
+                filtered = filtered.Where(c => c.TemplateId == templateId);
             }
 
             // Pagination
@@ -856,7 +856,7 @@ public partial class ContractService : IContractService
             }
 
             // Guardian enforcement: locked contracts cannot be terminated by parties
-            if (!string.IsNullOrEmpty(model.GuardianId))
+            if (model.GuardianId.HasValue)
             {
                 _logger.LogWarning("Cannot terminate locked contract: {ContractId}, guardian: {GuardianId}",
                     body.ContractId, model.GuardianId);
@@ -2051,7 +2051,7 @@ public partial class ContractService : IContractService
             RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
-            DefaultEnforcementMode = model.DefaultEnforcementMode,
+            DefaultEnforcementMode = model.DefaultEnforcementMode.ToString(),
             Transferable = model.Transferable,
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt
@@ -2072,7 +2072,7 @@ public partial class ContractService : IContractService
             RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
-            DefaultEnforcementMode = model.DefaultEnforcementMode,
+            DefaultEnforcementMode = model.DefaultEnforcementMode.ToString(),
             Transferable = model.Transferable,
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt,
@@ -2094,7 +2094,7 @@ public partial class ContractService : IContractService
             RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
-            DefaultEnforcementMode = model.DefaultEnforcementMode,
+            DefaultEnforcementMode = model.DefaultEnforcementMode.ToString(),
             Transferable = model.Transferable,
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt,

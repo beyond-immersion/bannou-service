@@ -84,7 +84,7 @@ public partial class ContractService
             }
 
             // Check if already locked
-            if (!string.IsNullOrEmpty(model.GuardianId))
+            if (model.GuardianId.HasValue)
             {
                 _logger.LogWarning("Contract already locked: {ContractId} by {GuardianId}",
                     body.ContractInstanceId, model.GuardianId);
@@ -93,7 +93,7 @@ public partial class ContractService
 
             // Lock the contract
             var now = DateTimeOffset.UtcNow;
-            model.GuardianId = body.GuardianId.ToString();
+            model.GuardianId = body.GuardianId;
             model.GuardianType = body.GuardianType;
             model.LockedAt = now;
             model.UpdatedAt = now;
@@ -164,14 +164,14 @@ public partial class ContractService
             }
 
             // Check if locked
-            if (string.IsNullOrEmpty(model.GuardianId))
+            if (!model.GuardianId.HasValue)
             {
                 _logger.LogWarning("Contract not locked: {ContractId}", body.ContractInstanceId);
                 return (StatusCodes.NotFound, null);
             }
 
             // Verify guardian
-            if (model.GuardianId != body.GuardianId.ToString() || model.GuardianType != body.GuardianType)
+            if (model.GuardianId != body.GuardianId || model.GuardianType != body.GuardianType)
             {
                 _logger.LogWarning("Not the current guardian for contract: {ContractId}", body.ContractInstanceId);
                 return (StatusCodes.Forbidden, null);
@@ -249,13 +249,13 @@ public partial class ContractService
             }
 
             // Verify contract is locked and caller is guardian
-            if (string.IsNullOrEmpty(model.GuardianId))
+            if (!model.GuardianId.HasValue)
             {
                 _logger.LogWarning("Contract not locked: {ContractId}", body.ContractInstanceId);
                 return (StatusCodes.Forbidden, null);
             }
 
-            if (model.GuardianId != body.GuardianId.ToString() || model.GuardianType != body.GuardianType)
+            if (model.GuardianId != body.GuardianId || model.GuardianType != body.GuardianType)
             {
                 _logger.LogWarning("Not the current guardian for contract: {ContractId}", body.ContractInstanceId);
                 return (StatusCodes.Forbidden, null);
@@ -263,8 +263,8 @@ public partial class ContractService
 
             // Find the party to transfer
             var party = model.Parties?.FirstOrDefault(p =>
-                p.EntityId == body.FromEntityId.ToString() &&
-                p.EntityType == body.FromEntityType.ToString());
+                p.EntityId == body.FromEntityId &&
+                p.EntityType == body.FromEntityType);
 
             if (party == null)
             {
@@ -279,8 +279,8 @@ public partial class ContractService
             // Transfer the party
             var previousEntityId = party.EntityId;
             var role = party.Role;
-            party.EntityId = body.ToEntityId.ToString();
-            party.EntityType = body.ToEntityType.ToString();
+            party.EntityId = body.ToEntityId;
+            party.EntityType = body.ToEntityType;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
@@ -351,7 +351,7 @@ public partial class ContractService
             {
                 TypeCode = body.TypeCode,
                 Description = body.Description,
-                Category = body.Category.ToString(),
+                Category = body.Category,
                 IsBuiltIn = false,
                 ValidationHandler = body.ValidationHandler != null ? new ClauseHandlerModel
                 {
@@ -422,8 +422,7 @@ public partial class ContractService
                 // Apply filters
                 if (body.Category.HasValue)
                 {
-                    if (!Enum.TryParse<ClauseCategory>(model.Category, true, out var category) ||
-                        category != body.Category.Value)
+                    if (model.Category != body.Category.Value)
                     {
                         continue;
                     }
@@ -438,8 +437,7 @@ public partial class ContractService
                 {
                     TypeCode = model.TypeCode,
                     Description = model.Description,
-                    Category = Enum.TryParse<ClauseCategory>(model.Category, true, out var cat)
-                        ? cat : ClauseCategory.Validation,
+                    Category = model.Category,
                     HasValidationHandler = model.ValidationHandler != null,
                     HasExecutionHandler = model.ExecutionHandler != null,
                     IsBuiltIn = model.IsBuiltIn
@@ -480,7 +478,7 @@ public partial class ContractService
         {
             TypeCode = "asset_requirement",
             Description = "Validates that required assets exist at a location",
-            Category = ClauseCategory.Validation.ToString(),
+            Category = ClauseCategory.Validation,
             IsBuiltIn = true,
             ValidationHandler = new ClauseHandlerModel
             {
@@ -498,7 +496,7 @@ public partial class ContractService
         {
             TypeCode = "currency_transfer",
             Description = "Transfers currency between wallets",
-            Category = ClauseCategory.Execution.ToString(),
+            Category = ClauseCategory.Execution,
             IsBuiltIn = true,
             ValidationHandler = null,
             ExecutionHandler = new ClauseHandlerModel
@@ -516,7 +514,7 @@ public partial class ContractService
         {
             TypeCode = "item_transfer",
             Description = "Transfers items between containers",
-            Category = ClauseCategory.Execution.ToString(),
+            Category = ClauseCategory.Execution,
             IsBuiltIn = true,
             ValidationHandler = null,
             ExecutionHandler = new ClauseHandlerModel
@@ -534,7 +532,7 @@ public partial class ContractService
         {
             TypeCode = "fee",
             Description = "Deducts fee from source wallet and transfers to recipient",
-            Category = ClauseCategory.Execution.ToString(),
+            Category = ClauseCategory.Execution,
             IsBuiltIn = true,
             ValidationHandler = null,
             ExecutionHandler = new ClauseHandlerModel
@@ -983,10 +981,10 @@ public partial class ContractService
                         ClauseType = d.ClauseType,
                         AssetType = d.AssetType,
                         Amount = d.Amount,
-                        SourceWalletId = string.IsNullOrEmpty(d.SourceWalletId) ? null : Guid.Parse(d.SourceWalletId),
-                        DestinationWalletId = string.IsNullOrEmpty(d.DestinationWalletId) ? null : Guid.Parse(d.DestinationWalletId),
-                        SourceContainerId = string.IsNullOrEmpty(d.SourceContainerId) ? null : Guid.Parse(d.SourceContainerId),
-                        DestinationContainerId = string.IsNullOrEmpty(d.DestinationContainerId) ? null : Guid.Parse(d.DestinationContainerId)
+                        SourceWalletId = d.SourceWalletId,
+                        DestinationWalletId = d.DestinationWalletId,
+                        SourceContainerId = d.SourceContainerId,
+                        DestinationContainerId = d.DestinationContainerId
                     }).ToList(),
                     ExecutedAt = model.ExecutedAt
                 });
@@ -1043,10 +1041,10 @@ public partial class ContractService
                     ClauseType = d.ClauseType,
                     AssetType = d.AssetType,
                     Amount = d.Amount,
-                    SourceWalletId = string.IsNullOrEmpty(d.SourceWalletId) ? null : Guid.Parse(d.SourceWalletId),
-                    DestinationWalletId = string.IsNullOrEmpty(d.DestinationWalletId) ? null : Guid.Parse(d.DestinationWalletId),
-                    SourceContainerId = string.IsNullOrEmpty(d.SourceContainerId) ? null : Guid.Parse(d.SourceContainerId),
-                    DestinationContainerId = string.IsNullOrEmpty(d.DestinationContainerId) ? null : Guid.Parse(d.DestinationContainerId)
+                    SourceWalletId = d.SourceWalletId,
+                    DestinationWalletId = d.DestinationWalletId,
+                    SourceContainerId = d.SourceContainerId,
+                    DestinationContainerId = d.DestinationContainerId
                 }).ToList(),
                 ExecutedAt = now
             };
@@ -1297,7 +1295,7 @@ public partial class ContractService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    ContractId = Guid.Parse(contract.ContractId),
+                    ContractId = contract.ContractId,
                     Trigger = "contract.execute",
                     ServiceName = handler.Service,
                     Endpoint = handler.Endpoint,
@@ -1315,7 +1313,7 @@ public partial class ContractService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    ContractId = Guid.Parse(contract.ContractId),
+                    ContractId = contract.ContractId,
                     Trigger = "contract.execute",
                     ServiceName = handler.Service,
                     Endpoint = handler.Endpoint,
@@ -1334,10 +1332,10 @@ public partial class ContractService
                 ClauseType = clause.Type,
                 AssetType = assetType,
                 Amount = amount,
-                SourceWalletId = assetType == "currency" ? sourceId : null,
-                DestinationWalletId = assetType == "currency" ? destinationId : null,
-                SourceContainerId = assetType == "item" ? sourceId : null,
-                DestinationContainerId = assetType == "item" ? destinationId : null
+                SourceWalletId = assetType == "currency" && Guid.TryParse(sourceId, out var srcWallet) ? srcWallet : null,
+                DestinationWalletId = assetType == "currency" && Guid.TryParse(destinationId, out var dstWallet) ? dstWallet : null,
+                SourceContainerId = assetType == "item" && Guid.TryParse(sourceId, out var srcContainer) ? srcContainer : null,
+                DestinationContainerId = assetType == "item" && Guid.TryParse(destinationId, out var dstContainer) ? dstContainer : null
             };
         }
         catch (Exception ex)
@@ -1542,21 +1540,21 @@ public partial class ContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
+            ContractId = model.ContractId,
             GuardianId = guardianId,
             GuardianType = guardianType
         });
     }
 
     private async Task PublishContractUnlockedEventAsync(
-        ContractInstanceModel model, string? guardianId, string? guardianType, CancellationToken ct)
+        ContractInstanceModel model, Guid? guardianId, string? guardianType, CancellationToken ct)
     {
         await _messageBus.TryPublishAsync("contract.unlocked", new ContractUnlockedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
-            PreviousGuardianId = string.IsNullOrEmpty(guardianId) ? null : Guid.Parse(guardianId),
+            ContractId = model.ContractId,
+            PreviousGuardianId = guardianId,
             PreviousGuardianType = guardianType
         });
     }
@@ -1571,7 +1569,7 @@ public partial class ContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
+            ContractId = model.ContractId,
             Role = role,
             FromEntityId = fromEntityId,
             FromEntityType = fromEntityType.ToString(),
@@ -1588,7 +1586,7 @@ public partial class ContractService
             Timestamp = DateTimeOffset.UtcNow,
             TypeCode = model.TypeCode,
             Description = model.Description,
-            Category = model.Category,
+            Category = model.Category.ToString(),
             IsBuiltIn = model.IsBuiltIn
         });
     }
@@ -1600,7 +1598,7 @@ public partial class ContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
+            ContractId = model.ContractId,
             Keys = keys,
             ValueCount = model.TemplateValues?.Count ?? 0
         });
@@ -1613,7 +1611,7 @@ public partial class ContractService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ContractId = Guid.Parse(model.ContractId),
+            ContractId = model.ContractId,
             TemplateCode = model.TemplateCode,
             DistributionCount = distributionCount
         });

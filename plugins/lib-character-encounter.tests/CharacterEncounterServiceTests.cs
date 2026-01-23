@@ -608,7 +608,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.Equal(StatusCodes.OK, status);
         Assert.Equal(2, savedPerspectives.Count);
 
-        var perspA = savedPerspectives.FirstOrDefault(p => p.CharacterId == charA.ToString());
+        var perspA = savedPerspectives.FirstOrDefault(p => p.CharacterId == charA);
         Assert.NotNull(perspA);
         Assert.Equal("GRATITUDE", perspA.EmotionalImpact);
         Assert.Equal(0.3f, perspA.SentimentShift);
@@ -630,8 +630,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var charIndex = new CharacterIndexData
         {
-            CharacterId = characterId.ToString(),
-            PerspectiveIds = new List<string> { perspectiveId.ToString() }
+            CharacterId = characterId,
+            PerspectiveIds = new List<Guid> { perspectiveId }
         };
 
         var perspective = CreateTestPerspective(perspectiveId, encounterId, characterId);
@@ -694,9 +694,9 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var pairIndex = new PairIndexData
         {
-            CharacterIdA = (charA < charB ? charA : charB).ToString(),
-            CharacterIdB = (charA < charB ? charB : charA).ToString(),
-            EncounterIds = new List<string> { encounterId.ToString() }
+            CharacterIdA = charA < charB ? charA : charB,
+            CharacterIdB = charA < charB ? charB : charA,
+            EncounterIds = new List<Guid> { encounterId }
         };
 
         var encounter = CreateTestEncounter(encounterId, new List<Guid> { charA, charB });
@@ -738,9 +738,9 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var pairIndex = new PairIndexData
         {
-            CharacterIdA = (charA < charB ? charA : charB).ToString(),
-            CharacterIdB = (charA < charB ? charB : charA).ToString(),
-            EncounterIds = new List<string> { encounterId.ToString() }
+            CharacterIdA = charA < charB ? charA : charB,
+            CharacterIdB = charA < charB ? charB : charA,
+            EncounterIds = new List<Guid> { encounterId }
         };
 
         _mockPairIndexStore
@@ -793,16 +793,16 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var pairIndex = new PairIndexData
         {
-            CharacterIdA = (characterId < targetId ? characterId : targetId).ToString(),
-            CharacterIdB = (characterId < targetId ? targetId : characterId).ToString(),
-            EncounterIds = new List<string> { encounterId.ToString() }
+            CharacterIdA = characterId < targetId ? characterId : targetId,
+            CharacterIdB = characterId < targetId ? targetId : characterId,
+            EncounterIds = new List<Guid> { encounterId }
         };
 
         var perspective = new PerspectiveData
         {
-            PerspectiveId = perspectiveId.ToString(),
-            EncounterId = encounterId.ToString(),
-            CharacterId = characterId.ToString(),
+            PerspectiveId = perspectiveId,
+            EncounterId = encounterId,
+            CharacterId = characterId,
             EmotionalImpact = "GRATITUDE",
             SentimentShift = 0.5f,
             MemoryStrength = 1.0f,
@@ -823,8 +823,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData
             {
-                CharacterId = characterId.ToString(),
-                PerspectiveIds = new List<string> { perspectiveId.ToString() }
+                CharacterId = characterId,
+                PerspectiveIds = new List<Guid> { perspectiveId }
             });
         _mockPerspectiveStore
             .Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
@@ -854,7 +854,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(target1.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PairIndexData
             {
-                EncounterIds = new List<string> { Guid.NewGuid().ToString() }
+                EncounterIds = new List<Guid> { Guid.NewGuid() }
             });
 
         // Setup for target2 - they have not met
@@ -922,8 +922,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData
             {
-                CharacterId = characterId.ToString(),
-                PerspectiveIds = new List<string> { perspectiveId.ToString() }
+                CharacterId = characterId,
+                PerspectiveIds = new List<Guid> { perspectiveId }
             });
         _mockPerspectiveStore
             .Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
@@ -961,8 +961,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterIndexData
             {
-                CharacterId = characterId.ToString(),
-                PerspectiveIds = new List<string> { perspectiveId.ToString() }
+                CharacterId = characterId,
+                PerspectiveIds = new List<Guid> { perspectiveId }
             });
         _mockPerspectiveStore
             .Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>()))
@@ -1010,7 +1010,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         _mockEncounterStore.Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>())).ReturnsAsync(encounter);
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId.ToString(), PerspectiveIds = new List<string> { perspectiveId.ToString() } });
+            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid> { perspectiveId } });
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
         _mockPerspectiveStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
@@ -1054,7 +1054,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         _mockEncounterStore.Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>())).ReturnsAsync(encounter);
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId.ToString(), PerspectiveIds = new List<string> { perspectiveId.ToString() } });
+            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid> { perspectiveId } });
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
 
         PerspectiveData? savedPerspective = null;
@@ -1095,7 +1095,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         _mockEncounterStore.Setup(s => s.GetAsync($"enc-{encounterId}", It.IsAny<CancellationToken>())).ReturnsAsync(encounter);
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId.ToString(), PerspectiveIds = new List<string> { perspectiveId.ToString() } });
+            .ReturnsAsync(new CharacterIndexData { CharacterId = characterId, PerspectiveIds = new List<Guid> { perspectiveId } });
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
 
         PerspectiveData? savedPerspective = null;
@@ -1138,9 +1138,9 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{charA}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterIndexData { CharacterId = charA.ToString(), PerspectiveIds = new List<string> { perspectiveIdA.ToString() } });
+            .ReturnsAsync(new CharacterIndexData { CharacterId = charA, PerspectiveIds = new List<Guid> { perspectiveIdA } });
         _mockCharIndexStore.Setup(s => s.GetAsync($"char-idx-{charB}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterIndexData { CharacterId = charB.ToString(), PerspectiveIds = new List<string> { perspectiveIdB.ToString() } });
+            .ReturnsAsync(new CharacterIndexData { CharacterId = charB, PerspectiveIds = new List<Guid> { perspectiveIdB } });
         _mockCharIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveIdA}", It.IsAny<CancellationToken>())).ReturnsAsync(perspectiveA);
@@ -1148,11 +1148,11 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockPerspectiveStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockPairIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("pair-idx-")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PairIndexData { EncounterIds = new List<string> { encounterId.ToString() } });
+            .ReturnsAsync(new PairIndexData { EncounterIds = new List<Guid> { encounterId } });
         _mockPairIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PairIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         _mockGlobalIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GlobalCharacterIndexData { CharacterIds = new List<string> { charA.ToString(), charB.ToString() } });
+            .ReturnsAsync(new GlobalCharacterIndexData { CharacterIds = new List<Guid> { charA, charB } });
         _mockGlobalIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GlobalCharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         // Act
@@ -1194,8 +1194,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var charIndex = new CharacterIndexData
         {
-            CharacterId = characterId.ToString(),
-            PerspectiveIds = new List<string> { perspectiveId.ToString() }
+            CharacterId = characterId,
+            PerspectiveIds = new List<Guid> { perspectiveId }
         };
 
         var perspective = CreateTestPerspective(perspectiveId, encounterId, characterId);
@@ -1212,11 +1212,11 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockEncounterStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _mockPairIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("pair-idx-")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PairIndexData { EncounterIds = new List<string> { encounterId.ToString() } });
+            .ReturnsAsync(new PairIndexData { EncounterIds = new List<Guid> { encounterId } });
         _mockPairIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PairIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         _mockGlobalIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GlobalCharacterIndexData { CharacterIds = new List<string> { characterId.ToString() } });
+            .ReturnsAsync(new GlobalCharacterIndexData { CharacterIds = new List<Guid> { characterId } });
         _mockGlobalIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GlobalCharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         // Act
@@ -1240,8 +1240,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var charIndex = new CharacterIndexData
         {
-            CharacterId = characterId.ToString(),
-            PerspectiveIds = new List<string> { perspectiveId.ToString() }
+            CharacterId = characterId,
+            PerspectiveIds = new List<Guid> { perspectiveId }
         };
 
         // Create a perspective with old decay time to trigger decay
@@ -1274,8 +1274,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var charIndex = new CharacterIndexData
         {
-            CharacterId = characterId.ToString(),
-            PerspectiveIds = new List<string> { perspectiveId.ToString() }
+            CharacterId = characterId,
+            PerspectiveIds = new List<Guid> { perspectiveId }
         };
 
         var perspective = CreateTestPerspective(perspectiveId, encounterId, characterId);
@@ -1342,7 +1342,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     {
         return new EncounterTypeData
         {
-            TypeId = Guid.NewGuid().ToString(),
+            TypeId = Guid.NewGuid(),
             Code = code,
             Name = name,
             Description = $"Test encounter type: {name}",
@@ -1358,10 +1358,10 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     {
         return new EncounterData
         {
-            EncounterId = encounterId.ToString(),
+            EncounterId = encounterId,
             EncounterTypeCode = "DIALOGUE",
-            RealmId = Guid.NewGuid().ToString(),
-            ParticipantIds = participantIds.Select(p => p.ToString()).ToList(),
+            RealmId = Guid.NewGuid(),
+            ParticipantIds = participantIds,
             Outcome = "NEUTRAL",
             Context = "Test encounter",
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -1373,9 +1373,9 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     {
         return new PerspectiveData
         {
-            PerspectiveId = perspectiveId.ToString(),
-            EncounterId = encounterId.ToString(),
-            CharacterId = characterId.ToString(),
+            PerspectiveId = perspectiveId,
+            EncounterId = encounterId,
+            CharacterId = characterId,
             EmotionalImpact = "INDIFFERENCE",
             SentimentShift = 0.0f,
             MemoryStrength = 1.0f,

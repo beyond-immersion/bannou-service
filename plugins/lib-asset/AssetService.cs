@@ -1188,7 +1188,7 @@ public partial class AssetService : IAssetService
                 $"bundle-download:{downloadToken}",
                 new BundleDownloadToken
                 {
-                    BundleId = body.BundleId,
+                    BundleId = Guid.Parse(body.BundleId),
                     Format = body.Format,
                     Path = downloadPath,
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -1828,8 +1828,8 @@ public partial class AssetService : IAssetService
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
 
             // Build coverage matrix: bundleId → set of requested assets it contains
-            var bundleCoverage = new Dictionary<string, HashSet<string>>();
-            var bundleMetadataCache = new Dictionary<string, BundleMetadata>();
+            var bundleCoverage = new Dictionary<Guid, HashSet<string>>();
+            var bundleMetadataCache = new Dictionary<Guid, BundleMetadata>();
             var unresolved = new List<string>();
 
             foreach (var assetId in body.AssetIds)
@@ -2057,7 +2057,7 @@ public partial class AssetService : IAssetService
             var response = new GetJobStatusResponse
             {
                 JobId = job.JobId,
-                MetabundleId = job.MetabundleId,
+                MetabundleId = job.MetabundleId.ToString(),
                 Status = apiStatus,
                 Progress = job.Progress,
                 CreatedAt = job.CreatedAt,
@@ -2091,9 +2091,9 @@ public partial class AssetService : IAssetService
                     response.SourceBundles = job.Result.SourceBundles
                         .Select(sb => new SourceBundleReference
                         {
-                            BundleId = sb.BundleId,
+                            BundleId = sb.BundleId.ToString(),
                             Version = sb.Version,
-                            AssetIds = sb.AssetIds,
+                            AssetIds = sb.AssetIds.Select(a => a.ToString()).ToList(),
                             ContentHash = sb.ContentHash
                         })
                         .ToList();
@@ -2185,12 +2185,12 @@ public partial class AssetService : IAssetService
             _logger.LogInformation("CancelJob: Job {JobId} cancelled (was {PreviousStatus})", body.JobId, previousStatus);
 
             // Emit completion event if there's a session to notify
-            if (!string.IsNullOrEmpty(job.RequesterSessionId))
+            if (job.RequesterSessionId.HasValue)
             {
                 await _eventEmitter.EmitMetabundleCreationCompleteAsync(
-                    job.RequesterSessionId,
+                    job.RequesterSessionId.Value.ToString(),
                     job.JobId,
-                    job.MetabundleId,
+                    job.MetabundleId.ToString(),
                     success: false,
                     MetabundleJobStatus.Cancelled,
                     downloadUrl: null,
@@ -2541,12 +2541,13 @@ public partial class AssetService : IAssetService
             index ??= new AssetBundleIndex();
 
             // Already indexed
-            if (index.BundleIds.Contains(bundleId))
+            var bundleGuid = Guid.Parse(bundleId);
+            if (index.BundleIds.Contains(bundleGuid))
             {
                 return;
             }
 
-            index.BundleIds.Add(bundleId);
+            index.BundleIds.Add(bundleGuid);
 
             if (etag == null)
             {
@@ -3491,9 +3492,10 @@ public partial class AssetService : IAssetService
             var indexKey = $"asset-bundle:{assetId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken);
 
-            if (index != null && index.BundleIds.Contains(bundleId))
+            var bundleGuid = Guid.Parse(bundleId);
+            if (index != null && index.BundleIds.Contains(bundleGuid))
             {
-                index.BundleIds.Remove(bundleId);
+                index.BundleIds.Remove(bundleGuid);
 
                 if (index.BundleIds.Count == 0)
                 {
@@ -3662,8 +3664,8 @@ public partial class AssetService : IAssetService
 /// </summary>
 public sealed class AssetProcessingJobEvent
 {
-    public string JobId { get; set; } = Guid.NewGuid().ToString();
-    public string AssetId { get; set; } = string.Empty;
+    public Guid JobId { get; set; } = Guid.NewGuid();
+    public Guid AssetId { get; set; }
     public string StorageKey { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
@@ -3673,7 +3675,7 @@ public sealed class AssetProcessingJobEvent
     /// Contains either an accountId or service name.
     /// </summary>
     public string Owner { get; set; } = string.Empty;
-    public string? RealmId { get; set; }
+    public Guid? RealmId { get; set; }
     public Dictionary<string, string>? Tags { get; set; }
     public Dictionary<string, object>? ProcessingOptions { get; set; }
     public string PoolType { get; set; } = string.Empty;
@@ -3688,7 +3690,7 @@ public sealed class AssetProcessingJobEvent
 /// </summary>
 public sealed class AssetProcessingRetryEvent
 {
-    public string AssetId { get; set; } = string.Empty;
+    public Guid AssetId { get; set; }
     public string StorageKey { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public string PoolType { get; set; } = string.Empty;
@@ -3702,7 +3704,7 @@ public sealed class AssetProcessingRetryEvent
 /// </summary>
 internal sealed class BundleDownloadToken
 {
-    public string BundleId { get; set; } = string.Empty;
+    public Guid BundleId { get; set; }
     public BundleFormat Format { get; set; }
     public string Path { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
@@ -3717,7 +3719,7 @@ internal sealed class AssetBundleIndex
     /// <summary>
     /// List of bundle IDs containing this asset.
     /// </summary>
-    public List<string> BundleIds { get; set; } = new();
+    public List<Guid> BundleIds { get; set; } = new();
 }
 
 /// <summary>
@@ -3734,7 +3736,7 @@ internal sealed class MetabundleJob
     /// <summary>
     /// Target metabundle identifier.
     /// </summary>
-    public string MetabundleId { get; set; } = string.Empty;
+    public Guid MetabundleId { get; set; }
 
     /// <summary>
     /// Current job status.
@@ -3749,7 +3751,7 @@ internal sealed class MetabundleJob
     /// <summary>
     /// Session ID of the requester for completion notification.
     /// </summary>
-    public string? RequesterSessionId { get; set; }
+    public Guid? RequesterSessionId { get; set; }
 
     /// <summary>
     /// Serialized request for background processing.
@@ -3822,9 +3824,9 @@ internal sealed class MetabundleJobResult
 /// </summary>
 internal sealed class SourceBundleReferenceInternal
 {
-    public string BundleId { get; set; } = string.Empty;
+    public Guid BundleId { get; set; }
     public string Version { get; set; } = string.Empty;
-    public List<string> AssetIds { get; set; } = new();
+    public List<Guid> AssetIds { get; set; } = new();
     public string ContentHash { get; set; } = string.Empty;
 }
 
@@ -3842,7 +3844,7 @@ internal sealed class MetabundleJobQueuedEvent
     /// <summary>
     /// The metabundle ID being created.
     /// </summary>
-    public string MetabundleId { get; set; } = string.Empty;
+    public Guid MetabundleId { get; set; }
 
     /// <summary>
     /// Number of source bundles to merge.

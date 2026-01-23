@@ -357,7 +357,7 @@ Most complex. Each violation needs analysis of the specific operation to determi
   - [x] ContractService - ContractInstanceModel.Status, ContractPartyModel.ConsentStatus, MilestoneInstanceModel.Status, BreachModel.Status, PreboundApiModel.ExecutionMode → enum types
   - [x] ActorAssignment - Status → ActorStatus enum
   - [x] OrchestratorService - Created ProcessorStatus enum, ProcessorInstance.Status → ProcessorStatus
-- [ ] Phase 1: T25 GUID-as-string (8/11 services complete)
+- [ ] Phase 1: T25 GUID-as-string (9/11 services complete)
   - [x] lib-account - AccountModel.AccountId → Guid
   - [x] lib-character - CharacterModel.CharacterId, RealmId, SpeciesId → Guid; CharacterArchiveModel similarly; RefCountData.CharacterId → Guid
   - [x] lib-location - LocationModel.LocationId, RealmId, ParentLocationId → Guid/Guid?
@@ -366,7 +366,7 @@ Most complex. Each violation needs analysis of the specific operation to determi
   - [x] lib-voice - ParticipantRegistration.SessionId → Guid; voice-api.yaml SessionId fields → format: uuid
   - [x] lib-matchmaking - TicketModel.WebSocketSessionId, PartyMemberModel.WebSocketSessionId, MatchedTicketModel.WebSocketSessionId → Guid
   - [x] lib-game-session - SubscriberSessionsModel.SessionIds → HashSet<Guid>; RevokeShortcutsForSessionAsync → Guid param
-  - [ ] lib-character-encounter - Complex (many List<string> to List<Guid>)
+  - [x] lib-character-encounter - All internal POCOs (EncounterData, PerspectiveData, CharacterIndexData, PairIndexData, LocationIndexData, GlobalCharacterIndexData, EncounterTypeData) → Guid/List<Guid>
   - [ ] lib-asset - Owner/realm IDs
   - [ ] lib-documentation - Document owner
   - [ ] lib-behavior - Behavior owner
