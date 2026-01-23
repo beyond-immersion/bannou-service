@@ -1808,13 +1808,15 @@ public partial class ContractService : IContractService
 
     /// <summary>
     /// Builds a context dictionary from contract data for template substitution.
+    /// Values are converted to strings at this boundary for template interpolation.
     /// </summary>
     private static Dictionary<string, object?> BuildContractContext(ContractInstanceModel contract)
     {
         var context = new Dictionary<string, object?>
         {
-            ["contract.id"] = contract.ContractId,
-            ["contract.templateId"] = contract.TemplateId,
+            // Convert Guids to strings at serialization boundary for template substitution
+            ["contract.id"] = contract.ContractId.ToString(),
+            ["contract.templateId"] = contract.TemplateId.ToString(),
             ["contract.templateCode"] = contract.TemplateCode,
             ["contract.status"] = contract.Status.ToString().ToLowerInvariant(),
             ["contract.effectiveFrom"] = contract.EffectiveFrom?.ToString("o"),
@@ -1822,22 +1824,22 @@ public partial class ContractService : IContractService
             ["contract.currentMilestoneIndex"] = contract.CurrentMilestoneIndex
         };
 
-        // Add parties
+        // Add parties - convert Guids and enums to strings at serialization boundary
         if (contract.Parties != null)
         {
             context["contract.parties"] = contract.Parties.Select(p => new Dictionary<string, object?>
             {
-                ["entityId"] = p.EntityId,
-                ["entityType"] = p.EntityType,
+                ["entityId"] = p.EntityId.ToString(),
+                ["entityType"] = p.EntityType.ToString(),
                 ["role"] = p.Role,
-                ["consentStatus"] = p.ConsentStatus
+                ["consentStatus"] = p.ConsentStatus.ToString()
             }).ToList();
 
             // Add party shortcuts by role
             foreach (var party in contract.Parties)
             {
-                context[$"contract.party.{party.Role.ToLowerInvariant()}.entityId"] = party.EntityId;
-                context[$"contract.party.{party.Role.ToLowerInvariant()}.entityType"] = party.EntityType;
+                context[$"contract.party.{party.Role.ToLowerInvariant()}.entityId"] = party.EntityId.ToString();
+                context[$"contract.party.{party.Role.ToLowerInvariant()}.entityType"] = party.EntityType.ToString();
             }
         }
 

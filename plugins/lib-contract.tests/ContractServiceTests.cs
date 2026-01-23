@@ -549,8 +549,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Proposed;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Pending }
+            new() { EntityId = partyEntityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Pending },
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Pending }
         };
 
         _mockInstanceStore
@@ -615,8 +615,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Proposed;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented, ConsentedAt = DateTimeOffset.UtcNow }
+            new() { EntityId = partyEntityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Pending },
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented, ConsentedAt = DateTimeOffset.UtcNow }
         };
 
         ContractInstanceModel? savedInstance = null;
@@ -710,8 +710,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = requestingEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
+            new() { EntityId = requestingEntityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
 
         _mockInstanceStore
@@ -750,8 +750,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
 
         _mockInstanceStore
@@ -1097,11 +1097,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var contractId = Guid.NewGuid();
         var breach = new BreachModel
         {
-            BreachId = breachId.ToString(),
-            ContractId = contractId.ToString(),
-            BreachingEntityId = Guid.NewGuid().ToString(),
-            BreachingEntityType = "Character",
-            BreachType = "term_violation",
+            BreachId = breachId,
+            ContractId = contractId,
+            BreachingEntityId = Guid.NewGuid(),
+            BreachingEntityType = EntityType.Character,
+            BreachType = BreachType.Term_violation,
             Status = BreachStatus.Detected,
             DetectedAt = DateTimeOffset.UtcNow
         };
@@ -1163,11 +1163,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var contractId = Guid.NewGuid();
         var breach = new BreachModel
         {
-            BreachId = breachId.ToString(),
-            ContractId = contractId.ToString(),
-            BreachingEntityId = Guid.NewGuid().ToString(),
-            BreachingEntityType = "Character",
-            BreachType = "term_violation",
+            BreachId = breachId,
+            ContractId = contractId,
+            BreachingEntityId = Guid.NewGuid(),
+            BreachingEntityType = EntityType.Character,
+            BreachType = BreachType.Term_violation,
             Status = BreachStatus.Detected,
             DetectedAt = DateTimeOffset.UtcNow
         };
@@ -1388,7 +1388,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = entityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented }
+            new() { EntityId = entityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Consented }
         };
 
         _mockListStore
@@ -1442,7 +1442,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     {
         return new ContractTemplateModel
         {
-            TemplateId = templateId.ToString(),
+            TemplateId = templateId,
             Code = code,
             Name = "Test Template",
             Description = "A test contract template",
@@ -1453,7 +1453,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                 new() { Role = "employer", MinCount = 1, MaxCount = 1 },
                 new() { Role = "employee", MinCount = 1, MaxCount = 1 }
             },
-            DefaultEnforcementMode = "event_only",
+            DefaultEnforcementMode = EnforcementMode.Event_only,
             Transferable = false,
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow
@@ -1464,14 +1464,14 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     {
         return new ContractInstanceModel
         {
-            ContractId = contractId.ToString(),
-            TemplateId = Guid.NewGuid().ToString(),
+            ContractId = contractId,
+            TemplateId = Guid.NewGuid(),
             TemplateCode = "test_template",
             Status = ContractStatus.Draft,
             Parties = new List<ContractPartyModel>
             {
-                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending },
-                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Pending }
+                new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Pending },
+                new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Pending }
             },
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -1493,8 +1493,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
-            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
+            new() { EntityId = employerId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = employeeId, EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
         instance.Milestones = new List<MilestoneInstanceModel>
         {
@@ -2040,13 +2040,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var employerId = Guid.NewGuid();
         var employeeId = Guid.NewGuid();
         var instance = CreateTestInstanceModel(contractId);
-        instance.TemplateId = templateId.ToString();
+        instance.TemplateId = templateId;
         instance.TemplateCode = "employment_contract";
         instance.Status = ContractStatus.Active;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = employerId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented },
-            new() { EntityId = employeeId.ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented }
+            new() { EntityId = employerId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = employeeId, EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented }
         };
         instance.Terms = new ContractTermsModel
         {
@@ -2141,7 +2141,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var templateId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.TemplateId = templateId.ToString();
+        instance.TemplateId = templateId;
         instance.Status = ContractStatus.Active;
 
         var template = CreateTestTemplateModel(templateId);
@@ -2184,8 +2184,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var templateId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.TemplateId = templateId.ToString();
-        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.TemplateId = templateId;
+        instance.GuardianId = Guid.NewGuid();
         instance.GuardianType = "escrow";
 
         var template = CreateTestTemplateModel(templateId);
@@ -2222,7 +2222,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var templateId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.TemplateId = templateId.ToString();
+        instance.TemplateId = templateId;
 
         var template = CreateTestTemplateModel(templateId);
         template.Transferable = false;
@@ -2258,7 +2258,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var guardianId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.GuardianId = guardianId.ToString();
+        instance.GuardianId = guardianId;
         instance.GuardianType = "escrow";
         instance.LockedAt = DateTimeOffset.UtcNow.AddHours(-1);
 
@@ -2293,7 +2293,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var contractId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.GuardianId = Guid.NewGuid();
         instance.GuardianType = "escrow";
 
         _mockInstanceStore
@@ -2326,11 +2326,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var toEntityId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.GuardianId = guardianId.ToString();
+        instance.GuardianId = guardianId;
         instance.GuardianType = "escrow";
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = fromEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented }
+            new() { EntityId = fromEntityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Consented }
         };
 
         _mockInstanceStore
@@ -2457,7 +2457,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .ReturnsAsync(new ClauseTypeModel
             {
                 TypeCode = "custom_fee",
-                Category = "Execution",
+                Category = ClauseCategory.Execution,
                 IsBuiltIn = false,
                 CreatedAt = DateTimeOffset.UtcNow
             });
@@ -2494,7 +2494,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 TypeCode = "asset_requirement",
                 Description = "Validates assets",
-                Category = "Validation",
+                Category = ClauseCategory.Validation,
                 IsBuiltIn = true,
                 ValidationHandler = new ClauseHandlerModel { Service = "currency", Endpoint = "/currency/balance/get" },
                 CreatedAt = DateTimeOffset.UtcNow
@@ -2505,7 +2505,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 TypeCode = "currency_transfer",
                 Description = "Transfers currency",
-                Category = "Execution",
+                Category = ClauseCategory.Execution,
                 IsBuiltIn = true,
                 ExecutionHandler = new ClauseHandlerModel { Service = "currency", Endpoint = "/currency/transfer" },
                 CreatedAt = DateTimeOffset.UtcNow
@@ -2650,7 +2650,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var templateId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.TemplateId = templateId.ToString();
+        instance.TemplateId = templateId;
         instance.TemplateValues = new Dictionary<string, string> { ["key"] = "value" };
 
         var template = CreateTestTemplateModel(templateId);
@@ -2804,7 +2804,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var templateId = Guid.NewGuid();
 
         var instance = CreateTestInstanceModel(contractId);
-        instance.TemplateId = templateId.ToString();
+        instance.TemplateId = templateId;
         instance.Status = ContractStatus.Fulfilled;
         instance.TemplateValues = new Dictionary<string, string> { ["key"] = "value" };
 
@@ -2875,7 +2875,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         var instance = CreateTestInstanceModel(contractId);
         instance.Status = ContractStatus.Active;
-        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.GuardianId = Guid.NewGuid();
         instance.GuardianType = "escrow";
 
         _mockInstanceStore
@@ -2907,11 +2907,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         var instance = CreateTestInstanceModel(contractId);
         instance.Status = ContractStatus.Proposed;
-        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.GuardianId = Guid.NewGuid();
         instance.GuardianType = "escrow";
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = entityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending }
+            new() { EntityId = entityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Pending }
         };
 
         _mockInstanceStore
