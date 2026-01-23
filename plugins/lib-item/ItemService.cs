@@ -23,10 +23,14 @@ namespace BeyondImmersion.BannouService.Item;
 public partial class ItemService : IItemService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IServiceNavigator _navigator;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
+
+#pragma warning disable IDE0052 // Remove unread private members
+    // Retained for future currency-item integration via lib-mesh
+    private readonly IServiceNavigator _navigator;
+#pragma warning restore IDE0052
 
     // Template store key prefixes
     private const string TPL_PREFIX = "tpl:";
@@ -89,14 +93,14 @@ public partial class ItemService : IItemService
                 GameId = body.GameId,
                 Name = body.Name,
                 Description = body.Description,
-                Category = body.Category.ToString(),
+                Category = body.Category,
                 Subcategory = body.Subcategory,
                 Tags = body.Tags?.ToList() ?? new List<string>(),
-                Rarity = body.Rarity.ToString(),
-                QuantityModel = body.QuantityModel.ToString(),
+                Rarity = body.Rarity ?? Enum.Parse<ItemRarity>(_configuration.DefaultRarity, ignoreCase: true),
+                QuantityModel = body.QuantityModel,
                 MaxStackSize = body.MaxStackSize > 0 ? body.MaxStackSize : _configuration.DefaultMaxStackSize,
                 UnitOfMeasure = body.UnitOfMeasure,
-                WeightPrecision = body.WeightPrecision.ToString(),
+                WeightPrecision = body.WeightPrecision ?? Enum.Parse<WeightPrecision>(_configuration.DefaultWeightPrecision, ignoreCase: true),
                 Weight = body.Weight,
                 Volume = body.Volume,
                 GridWidth = body.GridWidth,
@@ -105,10 +109,10 @@ public partial class ItemService : IItemService
                 BaseValue = body.BaseValue,
                 Tradeable = body.Tradeable,
                 Destroyable = body.Destroyable,
-                SoulboundType = body.SoulboundType.ToString(),
+                SoulboundType = body.SoulboundType ?? Enum.Parse<SoulboundType>(_configuration.DefaultSoulboundType, ignoreCase: true),
                 HasDurability = body.HasDurability,
                 MaxDurability = body.MaxDurability,
-                Scope = body.Scope.ToString(),
+                Scope = body.Scope,
                 AvailableRealms = body.AvailableRealms?.Select(r => r.ToString()).ToList(),
                 Stats = body.Stats is not null ? BannouJson.Serialize(body.Stats) : null,
                 Effects = body.Effects is not null ? BannouJson.Serialize(body.Effects) : null,
@@ -127,6 +131,9 @@ public partial class ItemService : IItemService
             await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, $"{TPL_GAME_INDEX}{body.GameId}", templateId.ToString(), cancellationToken);
             await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
 
+            // Populate cache
+            await PopulateTemplateCacheAsync(templateId.ToString(), model, cancellationToken);
+
             // Publish lifecycle event
             await _messageBus.TryPublishAsync("item-template.created", new ItemTemplateCreatedEvent
             {
@@ -136,10 +143,10 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
-                Category = model.Category,
-                Rarity = model.Rarity,
-                QuantityModel = model.QuantityModel,
-                Scope = model.Scope,
+                Category = model.Category.ToString(),
+                Rarity = model.Rarity.ToString(),
+                QuantityModel = model.QuantityModel.ToString(),
+                Scope = model.Scope.ToString(),
                 IsActive = model.IsActive,
                 CreatedAt = now
             }, cancellationToken);
@@ -206,16 +213,16 @@ public partial class ItemService : IItemService
             var templates = new List<ItemTemplateResponse>();
             foreach (var id in ids)
             {
-                var model = await templateStore.GetAsync($"{TPL_PREFIX}{id}", cancellationToken);
+                var model = await GetTemplateWithCacheAsync(id, cancellationToken);
                 if (model is null) continue;
 
                 // Apply filters
                 if (!body.IncludeInactive && !model.IsActive) continue;
                 if (!body.IncludeDeprecated && model.IsDeprecated) continue;
-                if (body.Category != default && model.Category != body.Category.ToString()) continue;
+                if (body.Category != default && model.Category != body.Category) continue;
                 if (!string.IsNullOrEmpty(body.Subcategory) && model.Subcategory != body.Subcategory) continue;
-                if (body.Rarity != default && model.Rarity != body.Rarity.ToString()) continue;
-                if (body.Scope != default && model.Scope != body.Scope.ToString()) continue;
+                if (body.Rarity != default && model.Rarity != body.Rarity) continue;
+                if (body.Scope != default && model.Scope != body.Scope) continue;
                 if (body.RealmId.HasValue && model.AvailableRealms is not null &&
                     !model.AvailableRealms.Contains(body.RealmId.Value.ToString())) continue;
                 if (body.Tags is not null && body.Tags.Count > 0 &&
@@ -269,7 +276,7 @@ public partial class ItemService : IItemService
             if (body.Description is not null) model.Description = body.Description;
             if (body.Subcategory is not null) model.Subcategory = body.Subcategory;
             if (body.Tags is not null) model.Tags = body.Tags.ToList();
-            if (body.Rarity != default) model.Rarity = body.Rarity.ToString();
+            if (body.Rarity != default) model.Rarity = body.Rarity;
             if (body.Weight.HasValue) model.Weight = body.Weight;
             if (body.Volume.HasValue) model.Volume = body.Volume;
             if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth;
@@ -290,6 +297,9 @@ public partial class ItemService : IItemService
 
             await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
 
+            // Invalidate cache after write
+            await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
+
             await _messageBus.TryPublishAsync("item-template.updated", new ItemTemplateUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -298,10 +308,10 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
-                Category = model.Category,
-                Rarity = model.Rarity,
-                QuantityModel = model.QuantityModel,
-                Scope = model.Scope,
+                Category = model.Category.ToString(),
+                Rarity = model.Rarity.ToString(),
+                QuantityModel = model.QuantityModel.ToString(),
+                Scope = model.Scope.ToString(),
                 IsActive = model.IsActive,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = now
@@ -344,6 +354,9 @@ public partial class ItemService : IItemService
 
             await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
 
+            // Invalidate cache after write
+            await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
+
             await _messageBus.TryPublishAsync("item-template.deprecated", new ItemTemplateDeprecatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -352,10 +365,10 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
-                Category = model.Category,
-                Rarity = model.Rarity,
-                QuantityModel = model.QuantityModel,
-                Scope = model.Scope,
+                Category = model.Category.ToString(),
+                Rarity = model.Rarity.ToString(),
+                QuantityModel = model.QuantityModel.ToString(),
+                Scope = model.Scope.ToString(),
                 IsActive = model.IsActive,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = now
@@ -389,9 +402,8 @@ public partial class ItemService : IItemService
             _logger.LogInformation("Creating item instance for template {TemplateId} in container {ContainerId}",
                 body.TemplateId, body.ContainerId);
 
-            // Get template
-            var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-            var template = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
+            // Get template (uses cache)
+            var template = await GetTemplateWithCacheAsync(body.TemplateId.ToString(), cancellationToken);
             if (template is null)
             {
                 _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
@@ -412,11 +424,11 @@ public partial class ItemService : IItemService
 
             // Validate quantity based on quantity model
             var quantity = body.Quantity;
-            if (template.QuantityModel == QuantityModel.Unique.ToString())
+            if (template.QuantityModel == QuantityModel.Unique)
             {
                 quantity = 1;
             }
-            else if (template.QuantityModel == QuantityModel.Discrete.ToString())
+            else if (template.QuantityModel == QuantityModel.Discrete)
             {
                 quantity = Math.Floor(quantity);
                 if (quantity > template.MaxStackSize)
@@ -440,7 +452,7 @@ public partial class ItemService : IItemService
                 CustomStats = body.CustomStats is not null ? BannouJson.Serialize(body.CustomStats) : null,
                 CustomName = body.CustomName,
                 InstanceMetadata = body.InstanceMetadata is not null ? BannouJson.Serialize(body.InstanceMetadata) : null,
-                OriginType = body.OriginType.ToString(),
+                OriginType = body.OriginType,
                 OriginId = body.OriginId?.ToString(),
                 CreatedAt = now
             };
@@ -448,6 +460,9 @@ public partial class ItemService : IItemService
             await instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", model, cancellationToken: cancellationToken);
             await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{body.ContainerId}", instanceId.ToString(), cancellationToken);
             await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{body.TemplateId}", instanceId.ToString(), cancellationToken);
+
+            // Populate instance cache
+            await PopulateInstanceCacheAsync(instanceId.ToString(), model, cancellationToken);
 
             await _messageBus.TryPublishAsync("item-instance.created", new ItemInstanceCreatedEvent
             {
@@ -483,8 +498,7 @@ public partial class ItemService : IItemService
     {
         try
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+            var model = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
             if (model is null)
             {
@@ -542,6 +556,9 @@ public partial class ItemService : IItemService
 
             await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
 
+            // Invalidate cache after write
+            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
             await _messageBus.TryPublishAsync("item-instance.modified", new ItemInstanceModifiedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -551,7 +568,7 @@ public partial class ItemService : IItemService
                 ContainerId = Guid.Parse(model.ContainerId),
                 RealmId = Guid.Parse(model.RealmId),
                 Quantity = model.Quantity,
-                OriginType = model.OriginType,
+                OriginType = model.OriginType.ToString(),
                 CreatedAt = model.CreatedAt,
                 ModifiedAt = now
             }, cancellationToken);
@@ -587,8 +604,13 @@ public partial class ItemService : IItemService
 
             if (model.BoundToId is not null)
             {
-                _logger.LogWarning("Item {InstanceId} is already bound to {BoundToId}", body.InstanceId, model.BoundToId);
-                return (StatusCodes.Conflict, null);
+                if (!_configuration.BindingAllowAdminOverride)
+                {
+                    _logger.LogWarning("Item {InstanceId} is already bound to {BoundToId}", body.InstanceId, model.BoundToId);
+                    return (StatusCodes.Conflict, null);
+                }
+                _logger.LogInformation("Admin override: rebinding item {InstanceId} from {OldBound} to {NewBound}",
+                    body.InstanceId, model.BoundToId, body.CharacterId);
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -598,9 +620,11 @@ public partial class ItemService : IItemService
 
             await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
 
-            // Get template for event enrichment
-            var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-            var template = await templateStore.GetAsync($"{TPL_PREFIX}{model.TemplateId}", cancellationToken);
+            // Invalidate cache after write
+            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
+            // Get template for event enrichment (uses cache)
+            var template = await GetTemplateWithCacheAsync(model.TemplateId, cancellationToken);
 
             if (template is null)
             {
@@ -644,7 +668,6 @@ public partial class ItemService : IItemService
         try
         {
             var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
             var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
             if (model is null)
@@ -652,9 +675,8 @@ public partial class ItemService : IItemService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get template to check destroyable
-            var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-            var template = await templateStore.GetAsync($"{TPL_PREFIX}{model.TemplateId}", cancellationToken);
+            // Get template to check destroyable (uses cache)
+            var template = await GetTemplateWithCacheAsync(model.TemplateId, cancellationToken);
             if (template is not null && !template.Destroyable && body.Reason != "admin")
             {
                 _logger.LogWarning("Item {InstanceId} is not destroyable", body.InstanceId);
@@ -670,6 +692,9 @@ public partial class ItemService : IItemService
             // Delete instance
             await instanceStore.DeleteAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
+            // Invalidate cache after delete
+            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
             await _messageBus.TryPublishAsync("item-instance.destroyed", new ItemInstanceDestroyedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -679,7 +704,7 @@ public partial class ItemService : IItemService
                 ContainerId = Guid.Parse(model.ContainerId),
                 RealmId = Guid.Parse(model.RealmId),
                 Quantity = model.Quantity,
-                OriginType = model.OriginType,
+                OriginType = model.OriginType.ToString(),
                 CreatedAt = model.CreatedAt,
                 ModifiedAt = now
             }, cancellationToken);
@@ -714,7 +739,6 @@ public partial class ItemService : IItemService
     {
         try
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
 
             var idsJson = await stringStore.GetAsync($"{INST_CONTAINER_INDEX}{body.ContainerId}", cancellationToken);
@@ -722,10 +746,11 @@ public partial class ItemService : IItemService
                 ? new List<string>()
                 : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
 
+            var effectiveLimit = Math.Min(ids.Count, _configuration.MaxInstancesPerQuery);
             var items = new List<ItemInstanceResponse>();
-            foreach (var id in ids)
+            foreach (var id in ids.Take(effectiveLimit))
             {
-                var model = await instanceStore.GetAsync($"{INST_PREFIX}{id}", cancellationToken);
+                var model = await GetInstanceWithCacheAsync(id, cancellationToken);
                 if (model is not null)
                 {
                     items.Add(MapInstanceToResponse(model));
@@ -756,7 +781,6 @@ public partial class ItemService : IItemService
     {
         try
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
 
             var idsJson = await stringStore.GetAsync($"{INST_TEMPLATE_INDEX}{body.TemplateId}", cancellationToken);
@@ -764,10 +788,11 @@ public partial class ItemService : IItemService
                 ? new List<string>()
                 : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
 
+            var effectiveLimit = Math.Min(body.Limit, _configuration.MaxInstancesPerQuery);
             var items = new List<ItemInstanceResponse>();
             foreach (var id in ids)
             {
-                var model = await instanceStore.GetAsync($"{INST_PREFIX}{id}", cancellationToken);
+                var model = await GetInstanceWithCacheAsync(id, cancellationToken);
                 if (model is null) continue;
 
                 // Apply realm filter
@@ -777,7 +802,7 @@ public partial class ItemService : IItemService
             }
 
             var totalCount = items.Count;
-            var paged = items.Skip(body.Offset).Take(body.Limit).ToList();
+            var paged = items.Skip(body.Offset).Take(effectiveLimit).ToList();
 
             return (StatusCodes.OK, new ListItemsResponse
             {
@@ -803,14 +828,12 @@ public partial class ItemService : IItemService
     {
         try
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-
             var items = new List<ItemInstanceResponse>();
             var notFound = new List<Guid>();
 
             foreach (var instanceId in body.InstanceIds)
             {
-                var model = await instanceStore.GetAsync($"{INST_PREFIX}{instanceId}", cancellationToken);
+                var model = await GetInstanceWithCacheAsync(instanceId.ToString(), cancellationToken);
                 if (model is not null)
                 {
                     items.Add(MapInstanceToResponse(model));
@@ -844,53 +867,186 @@ public partial class ItemService : IItemService
 
     private async Task<ItemTemplateModel?> ResolveTemplateAsync(string? templateId, string? code, string? gameId, CancellationToken ct)
     {
-        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
-
         if (!string.IsNullOrEmpty(templateId))
         {
-            return await templateStore.GetAsync($"{TPL_PREFIX}{templateId}", ct);
+            return await GetTemplateWithCacheAsync(templateId, ct);
         }
 
         if (!string.IsNullOrEmpty(code) && !string.IsNullOrEmpty(gameId))
         {
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
             var id = await stringStore.GetAsync($"{TPL_CODE_INDEX}{gameId}:{code}", ct);
             if (!string.IsNullOrEmpty(id))
             {
-                return await templateStore.GetAsync($"{TPL_PREFIX}{id}", ct);
+                return await GetTemplateWithCacheAsync(id, ct);
             }
         }
 
         return null;
     }
 
+    /// <summary>
+    /// Add a value to a JSON-serialized list in a state store with optimistic concurrency.
+    /// Uses GetWithETagAsync/TrySaveAsync to prevent distributed race conditions (IMPLEMENTATION TENETS).
+    /// </summary>
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
-        var json = await stringStore.GetAsync(key, ct);
-        var list = string.IsNullOrEmpty(json)
-            ? new List<string>()
-            : BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
+        const int maxRetries = 3;
 
-        if (!list.Contains(value))
+        for (var attempt = 0; attempt < maxRetries; attempt++)
         {
+            var (json, etag) = await stringStore.GetWithETagAsync(key, ct);
+            var list = string.IsNullOrEmpty(json)
+                ? new List<string>()
+                : BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
+
+            if (list.Contains(value)) return;
+
             list.Add(value);
-            await stringStore.SaveAsync(key, BannouJson.Serialize(list), cancellationToken: ct);
+            var serialized = BannouJson.Serialize(list);
+
+            if (etag is null)
+            {
+                // First write - no concurrency concern
+                await stringStore.SaveAsync(key, serialized, cancellationToken: ct);
+                return;
+            }
+
+            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag, ct);
+            if (newEtag is not null) return;
+
+            _logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
         }
+
+        _logger.LogWarning("Failed to add to list {Key} after {MaxRetries} retries", key, maxRetries);
     }
 
+    /// <summary>
+    /// Remove a value from a JSON-serialized list in a state store with optimistic concurrency.
+    /// Uses GetWithETagAsync/TrySaveAsync to prevent distributed race conditions (IMPLEMENTATION TENETS).
+    /// </summary>
     private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
-        var json = await stringStore.GetAsync(key, ct);
-        if (string.IsNullOrEmpty(json)) return;
+        const int maxRetries = 3;
 
-        var list = BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
-        if (list.Remove(value))
+        for (var attempt = 0; attempt < maxRetries; attempt++)
         {
-            await stringStore.SaveAsync(key, BannouJson.Serialize(list), cancellationToken: ct);
+            var (json, etag) = await stringStore.GetWithETagAsync(key, ct);
+            if (string.IsNullOrEmpty(json)) return;
+
+            var list = BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
+            if (!list.Remove(value)) return;
+
+            var serialized = BannouJson.Serialize(list);
+
+            if (etag is null)
+            {
+                await stringStore.SaveAsync(key, serialized, cancellationToken: ct);
+                return;
+            }
+
+            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag, ct);
+            if (newEtag is not null) return;
+
+            _logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
         }
+
+        _logger.LogWarning("Failed to remove from list {Key} after {MaxRetries} retries", key, maxRetries);
     }
+
+    #endregion
+
+    #region Cache Methods
+
+    /// <summary>
+    /// Get template with Redis cache read-through. Falls back to MySQL persistent store on cache miss.
+    /// </summary>
+    private async Task<ItemTemplateModel?> GetTemplateWithCacheAsync(string templateId, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
+        var cacheKey = $"{TPL_PREFIX}{templateId}";
+
+        // Try cache first
+        var cached = await cacheStore.GetAsync(cacheKey, ct);
+        if (cached is not null) return cached;
+
+        // Fallback to persistent store
+        var store = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
+        var model = await store.GetAsync(cacheKey, ct);
+        if (model is null) return null;
+
+        // Populate cache
+        await cacheStore.SaveAsync(cacheKey, model,
+            new StateOptions { Ttl = _configuration.TemplateCacheTtlSeconds }, ct);
+        return model;
+    }
+
+    /// <summary>
+    /// Populate template cache after a write operation.
+    /// </summary>
+    private async Task PopulateTemplateCacheAsync(string templateId, ItemTemplateModel model, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
+        await cacheStore.SaveAsync($"{TPL_PREFIX}{templateId}", model,
+            new StateOptions { Ttl = _configuration.TemplateCacheTtlSeconds }, ct);
+    }
+
+    /// <summary>
+    /// Invalidate template cache after a write/update operation.
+    /// </summary>
+    private async Task InvalidateTemplateCacheAsync(string templateId, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
+        await cacheStore.DeleteAsync($"{TPL_PREFIX}{templateId}", ct);
+    }
+
+    /// <summary>
+    /// Get instance with Redis cache read-through. Falls back to MySQL persistent store on cache miss.
+    /// </summary>
+    private async Task<ItemInstanceModel?> GetInstanceWithCacheAsync(string instanceId, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
+        var cacheKey = $"{INST_PREFIX}{instanceId}";
+
+        // Try cache first
+        var cached = await cacheStore.GetAsync(cacheKey, ct);
+        if (cached is not null) return cached;
+
+        // Fallback to persistent store
+        var store = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        var model = await store.GetAsync(cacheKey, ct);
+        if (model is null) return null;
+
+        // Populate cache
+        await cacheStore.SaveAsync(cacheKey, model,
+            new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
+        return model;
+    }
+
+    /// <summary>
+    /// Populate instance cache after a write operation.
+    /// </summary>
+    private async Task PopulateInstanceCacheAsync(string instanceId, ItemInstanceModel model, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
+        await cacheStore.SaveAsync($"{INST_PREFIX}{instanceId}", model,
+            new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
+    }
+
+    /// <summary>
+    /// Invalidate instance cache after a write/delete operation.
+    /// </summary>
+    private async Task InvalidateInstanceCacheAsync(string instanceId, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
+        await cacheStore.DeleteAsync($"{INST_PREFIX}{instanceId}", ct);
+    }
+
+    #endregion
+
+    #region Mapping Methods
 
     private static ItemTemplateResponse MapTemplateToResponse(ItemTemplateModel model)
     {
@@ -901,14 +1057,14 @@ public partial class ItemService : IItemService
             GameId = model.GameId,
             Name = model.Name,
             Description = model.Description,
-            Category = Enum.Parse<ItemCategory>(model.Category),
+            Category = model.Category,
             Subcategory = model.Subcategory,
             Tags = model.Tags,
-            Rarity = Enum.Parse<ItemRarity>(model.Rarity),
-            QuantityModel = Enum.Parse<QuantityModel>(model.QuantityModel),
+            Rarity = model.Rarity,
+            QuantityModel = model.QuantityModel,
             MaxStackSize = model.MaxStackSize,
             UnitOfMeasure = model.UnitOfMeasure,
-            WeightPrecision = Enum.Parse<WeightPrecision>(model.WeightPrecision),
+            WeightPrecision = model.WeightPrecision,
             Weight = model.Weight,
             Volume = model.Volume,
             GridWidth = model.GridWidth,
@@ -917,10 +1073,10 @@ public partial class ItemService : IItemService
             BaseValue = model.BaseValue,
             Tradeable = model.Tradeable,
             Destroyable = model.Destroyable,
-            SoulboundType = Enum.Parse<SoulboundType>(model.SoulboundType),
+            SoulboundType = model.SoulboundType,
             HasDurability = model.HasDurability,
             MaxDurability = model.MaxDurability,
-            Scope = Enum.Parse<ItemScope>(model.Scope),
+            Scope = model.Scope,
             AvailableRealms = model.AvailableRealms?.Select(r => Guid.Parse(r)).ToList(),
             Stats = model.Stats is not null ? BannouJson.Deserialize<object>(model.Stats) : null,
             Effects = model.Effects is not null ? BannouJson.Deserialize<object>(model.Effects) : null,
@@ -955,7 +1111,7 @@ public partial class ItemService : IItemService
             CustomStats = model.CustomStats is not null ? BannouJson.Deserialize<object>(model.CustomStats) : null,
             CustomName = model.CustomName,
             InstanceMetadata = model.InstanceMetadata is not null ? BannouJson.Deserialize<object>(model.InstanceMetadata) : null,
-            OriginType = Enum.Parse<ItemOriginType>(model.OriginType),
+            OriginType = model.OriginType,
             OriginId = model.OriginId is not null ? Guid.Parse(model.OriginId) : null,
             CreatedAt = model.CreatedAt,
             ModifiedAt = model.ModifiedAt
@@ -977,14 +1133,14 @@ internal class ItemTemplateModel
     public string GameId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string Category { get; set; } = string.Empty;
+    public ItemCategory Category { get; set; }
     public string? Subcategory { get; set; }
     public List<string> Tags { get; set; } = new();
-    public string Rarity { get; set; } = string.Empty;
-    public string QuantityModel { get; set; } = string.Empty;
+    public ItemRarity Rarity { get; set; }
+    public QuantityModel QuantityModel { get; set; }
     public int MaxStackSize { get; set; }
     public string? UnitOfMeasure { get; set; }
-    public string WeightPrecision { get; set; } = string.Empty;
+    public WeightPrecision WeightPrecision { get; set; }
     public double? Weight { get; set; }
     public double? Volume { get; set; }
     public int? GridWidth { get; set; }
@@ -993,10 +1149,10 @@ internal class ItemTemplateModel
     public double? BaseValue { get; set; }
     public bool Tradeable { get; set; }
     public bool Destroyable { get; set; }
-    public string SoulboundType { get; set; } = string.Empty;
+    public SoulboundType SoulboundType { get; set; }
     public bool HasDurability { get; set; }
     public int? MaxDurability { get; set; }
-    public string Scope { get; set; } = string.Empty;
+    public ItemScope Scope { get; set; }
     public List<string>? AvailableRealms { get; set; }
     public string? Stats { get; set; }
     public string? Effects { get; set; }
@@ -1031,7 +1187,7 @@ internal class ItemInstanceModel
     public string? CustomStats { get; set; }
     public string? CustomName { get; set; }
     public string? InstanceMetadata { get; set; }
-    public string OriginType { get; set; } = string.Empty;
+    public ItemOriginType OriginType { get; set; }
     public string? OriginId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? ModifiedAt { get; set; }

@@ -22,6 +22,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<ItemTemplateModel>> _mockTemplateStore;
     private readonly Mock<IStateStore<ItemInstanceModel>> _mockInstanceStore;
+    private readonly Mock<IStateStore<ItemTemplateModel>> _mockTemplateCacheStore;
+    private readonly Mock<IStateStore<ItemInstanceModel>> _mockInstanceCacheStore;
     private readonly Mock<IStateStore<string>> _mockTemplateStringStore;
     private readonly Mock<IStateStore<string>> _mockInstanceStringStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
@@ -33,13 +35,15 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockTemplateStore = new Mock<IStateStore<ItemTemplateModel>>();
         _mockInstanceStore = new Mock<IStateStore<ItemInstanceModel>>();
+        _mockTemplateCacheStore = new Mock<IStateStore<ItemTemplateModel>>();
+        _mockInstanceCacheStore = new Mock<IStateStore<ItemInstanceModel>>();
         _mockTemplateStringStore = new Mock<IStateStore<string>>();
         _mockInstanceStringStore = new Mock<IStateStore<string>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockNavigator = new Mock<IServiceNavigator>();
         _mockLogger = new Mock<ILogger<ItemService>>();
 
-        // Template stores
+        // Template persistent stores
         _mockStateStoreFactory
             .Setup(f => f.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore))
             .Returns(_mockTemplateStore.Object);
@@ -47,7 +51,12 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(f => f.GetStore<string>(StateStoreDefinitions.ItemTemplateStore))
             .Returns(_mockTemplateStringStore.Object);
 
-        // Instance stores
+        // Template cache store (Redis)
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache))
+            .Returns(_mockTemplateCacheStore.Object);
+
+        // Instance persistent stores
         _mockStateStoreFactory
             .Setup(f => f.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore))
             .Returns(_mockInstanceStore.Object);
@@ -55,10 +64,54 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(f => f.GetStore<string>(StateStoreDefinitions.ItemInstanceStore))
             .Returns(_mockInstanceStringStore.Object);
 
+        // Instance cache store (Redis)
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache))
+            .Returns(_mockInstanceCacheStore.Object);
+
+        // Default cache stores return null (cache miss) so tests hit persistent stores
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ItemTemplateModel?)null);
+        _mockTemplateCacheStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("cache-etag");
+        _mockTemplateCacheStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ItemInstanceModel?)null);
+        _mockInstanceCacheStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("cache-etag");
+        _mockInstanceCacheStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Default GetWithETagAsync for optimistic concurrency in list operations
+        _mockTemplateStringStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, (string?)null));
+        _mockTemplateStringStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        _mockInstanceStringStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, (string?)null));
+        _mockInstanceStringStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
         // Default message bus setup
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+
+        // Default configuration: disable admin override so bind tests expect Conflict
+        Configuration.BindingAllowAdminOverride = false;
     }
 
     private ItemService CreateService()
@@ -189,6 +242,87 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert
         Assert.NotNull(savedModel);
         Assert.Equal(50, savedModel.MaxStackSize);
+    }
+
+    [Fact]
+    public async Task CreateItemTemplateAsync_UsesDefaultRarity_WhenNotProvided()
+    {
+        // Arrange
+        Configuration.DefaultRarity = "epic";
+        var service = CreateService();
+        var request = CreateValidTemplateRequest();
+        request.Rarity = null;
+
+        _mockTemplateStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        ItemTemplateModel? savedModel = null;
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemTemplateModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        // Act
+        await service.CreateItemTemplateAsync(request);
+
+        // Assert
+        Assert.NotNull(savedModel);
+        Assert.Equal(ItemRarity.Epic, savedModel.Rarity);
+    }
+
+    [Fact]
+    public async Task CreateItemTemplateAsync_UsesDefaultWeightPrecision_WhenNotProvided()
+    {
+        // Arrange
+        Configuration.DefaultWeightPrecision = "integer";
+        var service = CreateService();
+        var request = CreateValidTemplateRequest();
+        request.WeightPrecision = null;
+
+        _mockTemplateStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        ItemTemplateModel? savedModel = null;
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemTemplateModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        // Act
+        await service.CreateItemTemplateAsync(request);
+
+        // Assert
+        Assert.NotNull(savedModel);
+        Assert.Equal(WeightPrecision.Integer, savedModel.WeightPrecision);
+    }
+
+    [Fact]
+    public async Task CreateItemTemplateAsync_UsesDefaultSoulboundType_WhenNotProvided()
+    {
+        // Arrange
+        Configuration.DefaultSoulboundType = "on_pickup";
+        var service = CreateService();
+        var request = CreateValidTemplateRequest();
+        request.SoulboundType = null;
+
+        _mockTemplateStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        ItemTemplateModel? savedModel = null;
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ItemTemplateModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        // Act
+        await service.CreateItemTemplateAsync(request);
+
+        // Assert
+        Assert.NotNull(savedModel);
+        Assert.Equal(SoulboundType.On_pickup, savedModel.SoulboundType);
     }
 
     #endregion
@@ -504,9 +638,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockInstanceStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
 
         var request = new CreateItemInstanceRequest
         {
@@ -593,7 +724,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var templateId = Guid.NewGuid();
         var template = CreateStoredTemplateModel(templateId);
-        template.QuantityModel = QuantityModel.Unique.ToString();
+        template.QuantityModel = QuantityModel.Unique;
 
         _mockTemplateStore
             .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
@@ -604,9 +735,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
 
         var request = new CreateItemInstanceRequest
         {
@@ -633,7 +761,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var templateId = Guid.NewGuid();
         var template = CreateStoredTemplateModel(templateId);
-        template.QuantityModel = QuantityModel.Discrete.ToString();
+        template.QuantityModel = QuantityModel.Discrete;
         template.MaxStackSize = 20;
 
         _mockTemplateStore
@@ -645,9 +773,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, ItemInstanceModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag");
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
 
         var request = new CreateItemInstanceRequest
         {
@@ -680,9 +805,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockInstanceStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
 
         var containerId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
@@ -916,6 +1038,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     public async Task BindItemInstanceAsync_AlreadyBound_ReturnsConflict()
     {
         // Arrange
+        Configuration.BindingAllowAdminOverride = false;
         var service = CreateService();
         var instanceId = Guid.NewGuid();
         var model = CreateStoredInstanceModel(instanceId);
@@ -938,6 +1061,45 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task BindItemInstanceAsync_AlreadyBound_AdminOverride_Succeeds()
+    {
+        // Arrange
+        Configuration.BindingAllowAdminOverride = true;
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var newCharacterId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+        model.BoundToId = Guid.NewGuid().ToString();
+
+        var template = CreateStoredTemplateModel(Guid.Parse(model.TemplateId));
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new BindItemInstanceRequest
+        {
+            InstanceId = instanceId,
+            CharacterId = newCharacterId,
+            BindType = SoulboundType.On_equip
+        };
+
+        // Act
+        var (status, response) = await service.BindItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(newCharacterId, response.BoundToId);
     }
 
     [Fact]
@@ -987,9 +1149,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockInstanceStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
 
         var request = new DestroyItemInstanceRequest
         {
@@ -1057,9 +1216,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockInstanceStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
 
         var request = new DestroyItemInstanceRequest
         {
@@ -1156,6 +1312,37 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Equal(0, response.TotalCount);
     }
 
+    [Fact]
+    public async Task ListItemsByContainerAsync_MaxInstancesPerQuery_CapsResults()
+    {
+        // Arrange
+        Configuration.MaxInstancesPerQuery = 2;
+        var service = CreateService();
+        var containerId = Guid.NewGuid();
+        var ids = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
+
+        _mockInstanceStringStore
+            .Setup(s => s.GetAsync($"inst-container:{containerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BannouJson.Serialize(ids.Select(id => id.ToString()).ToList()));
+
+        foreach (var id in ids)
+        {
+            _mockInstanceStore
+                .Setup(s => s.GetAsync($"inst:{id}", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateStoredInstanceModel(id));
+        }
+
+        var request = new ListItemsByContainerRequest { ContainerId = containerId };
+
+        // Act
+        var (status, response) = await service.ListItemsByContainerAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Items.Count);
+    }
+
     #endregion
 
     #region ListItemsByTemplate Tests
@@ -1204,6 +1391,42 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Equal(matchId, response.Items.First().InstanceId);
     }
 
+    [Fact]
+    public async Task ListItemsByTemplateAsync_MaxInstancesPerQuery_CapsResults()
+    {
+        // Arrange
+        Configuration.MaxInstancesPerQuery = 2;
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var ids = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
+
+        _mockInstanceStringStore
+            .Setup(s => s.GetAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BannouJson.Serialize(ids.Select(id => id.ToString()).ToList()));
+
+        foreach (var id in ids)
+        {
+            _mockInstanceStore
+                .Setup(s => s.GetAsync($"inst:{id}", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateStoredInstanceModel(id));
+        }
+
+        var request = new ListItemsByTemplateRequest
+        {
+            TemplateId = templateId,
+            Offset = 0,
+            Limit = 50
+        };
+
+        // Act
+        var (status, response) = await service.ListItemsByTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Items.Count);
+    }
+
     #endregion
 
     #region BatchGetItemInstances Tests
@@ -1242,6 +1465,86 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
     #endregion
 
+    #region Cache Behavior Tests
+
+    [Fact]
+    public async Task GetItemTemplateAsync_CacheHit_DoesNotQueryPersistentStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var model = CreateStoredTemplateModel(templateId);
+
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new GetItemTemplateRequest { TemplateId = templateId };
+
+        // Act
+        var (status, response) = await service.GetItemTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        _mockTemplateStore.Verify(
+            s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetItemInstanceAsync_CacheHit_DoesNotQueryPersistentStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var instanceId = Guid.NewGuid();
+        var model = CreateStoredInstanceModel(instanceId);
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        var request = new GetItemInstanceRequest { InstanceId = instanceId };
+
+        // Act
+        var (status, response) = await service.GetItemInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        _mockInstanceStore.Verify(
+            s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateItemTemplateAsync_InvalidatesCache()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var model = CreateStoredTemplateModel(templateId);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemTemplateModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new UpdateItemTemplateRequest { TemplateId = templateId, Name = "Updated" };
+
+        // Act
+        await service.UpdateItemTemplateAsync(request);
+
+        // Assert
+        _mockTemplateCacheStore.Verify(
+            s => s.DeleteAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static CreateItemTemplateRequest CreateValidTemplateRequest()
@@ -1276,18 +1579,18 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             GameId = "game1",
             Name = "Test Sword",
             Description = "A test sword",
-            Category = ItemCategory.Weapon.ToString(),
-            Rarity = ItemRarity.Rare.ToString(),
-            QuantityModel = QuantityModel.Unique.ToString(),
+            Category = ItemCategory.Weapon,
+            Rarity = ItemRarity.Rare,
+            QuantityModel = QuantityModel.Unique,
             MaxStackSize = 1,
-            WeightPrecision = WeightPrecision.Decimal_2.ToString(),
+            WeightPrecision = WeightPrecision.Decimal_2,
             Weight = 3.5,
             Tradeable = true,
             Destroyable = true,
-            SoulboundType = SoulboundType.None.ToString(),
+            SoulboundType = SoulboundType.None,
             HasDurability = true,
             MaxDurability = 100,
-            Scope = ItemScope.Global.ToString(),
+            Scope = ItemScope.Global,
             IsActive = true,
             IsDeprecated = false,
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
@@ -1305,7 +1608,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             RealmId = Guid.NewGuid().ToString(),
             Quantity = 1,
             CurrentDurability = 100,
-            OriginType = ItemOriginType.Loot.ToString(),
+            OriginType = ItemOriginType.Loot,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-30)
         };
     }

@@ -733,7 +733,8 @@ public class Program
             new StateTestHandler(),
             new SubscriptionTestHandler(),
             new TestingTestHandler(),
-            new MatchmakingTestHandler()
+            new MatchmakingTestHandler(),
+            new InventoryTestHandler()
         };
 
         // Filter test handlers by plugin if specified

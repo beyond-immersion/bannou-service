@@ -46353,7 +46353,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Rarity">
             <summary>
-            Item rarity tier
+            Item rarity tier (defaults to config when not specified)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.QuantityModel">
@@ -46373,7 +46373,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.WeightPrecision">
             <summary>
-            Precision for weight values
+            Precision for weight values (defaults to config when not specified)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Weight">
@@ -46418,7 +46418,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.SoulboundType">
             <summary>
-            Binding behavior when item is acquired
+            Binding behavior when item is acquired (defaults to config when not specified)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.HasDurability">
