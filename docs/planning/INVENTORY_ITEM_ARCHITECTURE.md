@@ -1,7 +1,8 @@
 # Inventory and Item System Architecture Planning
 
 > **Created**: 2026-01-22
-> **Status**: RESEARCH COMPLETE - Ready for Review
+> **Audited**: 2026-01-22 (TENETS compliance verified)
+> **Status**: ARCHITECTURE COMPLETE - Ready for Implementation
 > **Purpose**: Comprehensive architecture design for lib-inventory/lib-item
 > **Related**: ECONOMY_CURRENCY_ARCHITECTURE.md (see lib-currency for economic context)
 
@@ -465,7 +466,63 @@ EquipmentSlot:
 - Pro: Maximum flexibility
 - Con: No built-in equipment queries
 
-**Recommendation**: Option C - let games define their own container types. The backend provides the mechanics; games provide the semantics. An equipment slot is just a container with `maxSlots: 1` and `containerType: "equipment_main_hand"`.
+**DECISION**: Option A/C hybrid - equipment slots ARE containers with special flags.
+
+#### 3.7.1 Equipment as Containers Pattern
+
+```yaml
+Container:
+  constraintModel: slot_only
+  maxSlots: 1                      # Equipment slots hold exactly one item
+  containerType: "equipment_slot"  # Game-defined type
+  isEquipmentSlot: boolean         # Flag for future lib-equipment to use
+  equipmentSlotName: string?       # "main_hand", "helmet", "ring_left", etc.
+```
+
+**Benefits of this approach:**
+
+1. **Unified model**: Equipping/unequipping = moving items between containers
+2. **Event reuse**: `inventory-item.moved` covers equip/unequip actions
+3. **Constraint reuse**: Equipment slots can use filtering (`allowedCategories: ["weapon"]`)
+4. **Future-proof**: `isEquipmentSlot` flag allows future lib-equipment to build on top
+
+**Example equipment setup:**
+
+```yaml
+# Character's equipment slots (created when character is created)
+main_hand_slot:
+  ownerId: {characterId}
+  ownerType: character
+  containerType: "equipment_slot"
+  constraintModel: slot_only
+  maxSlots: 1
+  isEquipmentSlot: true
+  equipmentSlotName: "main_hand"
+  allowedCategories: ["weapon"]
+
+helmet_slot:
+  ownerId: {characterId}
+  ownerType: character
+  containerType: "equipment_slot"
+  constraintModel: slot_only
+  maxSlots: 1
+  isEquipmentSlot: true
+  equipmentSlotName: "helmet"
+  allowedCategories: ["armor"]
+  allowedTags: ["head_slot"]
+```
+
+**Equipping flow:**
+1. Client calls `/inventory/move` with `targetContainerId: helmet_slot.id`
+2. Backend validates item against slot constraints (category, tags)
+3. On success, publishes `inventory-item.moved` event
+4. Game logic interprets this as "equipped" because target is equipment slot
+
+**Future lib-equipment integration:**
+- lib-equipment can query containers where `isEquipmentSlot: true`
+- Can add equipment-specific events (`equipment.item.equipped`, `equipment.item.unequipped`)
+- Can manage stat calculations, set bonuses, etc.
+- lib-inventory provides the mechanical foundation
 
 ### 3.8 Nested Containers (Bags in Bags)
 
@@ -477,22 +534,171 @@ Many games support putting containers inside containers (bags in inventory):
 - **Fixed depth**: Reasonable default (e.g., 3 levels max)
 - **Game-configurable**: Best - let each game set their own limit
 
-**Proposed approach:**
+**DECISION**: Game-configurable depth with default max of 3.
+
+#### 3.8.1 Constraint Propagation Analysis
+
+**Key insight**: Different constraint types propagate differently through the hierarchy.
+
+| Constraint Type | Propagates? | Rationale |
+|-----------------|-------------|-----------|
+| **Weight** | YES | Physics: mass of contents adds to container mass |
+| **Volume** | NO | Child uses a footprint in parent; internal volume is separate |
+| **Slots** | NO | Child occupies slots in parent; child's slots are internal |
+| **Grid** | NO | Child has footprint in parent grid; internal grid is separate |
+
+**Weight is the ONLY truly transitive physical property.**
+
+#### 3.8.2 Weight Contribution Model
+
+Not all containers contribute weight the same way. Magic items, dimensional bags, etc. may have special rules:
+
 ```yaml
-Container:
-  # Nesting control
-  canContainContainers: boolean    # Can this container hold other containers?
-  maxNestingDepth: integer?        # null = inherit from parent or global default
-  currentNestingDepth: integer     # Computed, for validation
+WeightContribution:
+  - none              # Parent ignores entirely (bag of holding, magical storage)
+  - self_only         # Only container's empty weight counts (cargo hold with anti-grav)
+  - self_plus_contents # Container + all recursive contents (DEFAULT - realistic)
 ```
 
-**Weight propagation:**
-When a bag is placed in an inventory, does the bag's weight count toward the inventory's limit?
-- Option A: Containers have no weight themselves
-- Option B: Container weight = own weight + contents weight
-- Option C: Game-configurable per container type
+#### 3.8.3 Container Nesting Schema
 
-**Recommendation**: Option B with game-configurable. By default, nested container weight includes contents.
+```yaml
+Container:
+  # Parent relationship
+  parentContainerId: uuid?        # Immediate parent (null = root container)
+  nestingDepth: integer           # 0 = root, computed on placement
+
+  # Nesting permissions
+  canContainContainers: boolean   # Can this container hold other containers?
+  maxNestingDepth: integer?       # null = inherit from global default (3)
+
+  # Physical properties
+  selfWeight: decimal             # Empty container weight
+  weightContribution: WeightContribution  # How this container's weight propagates
+
+  # Footprint (how this container appears in parent)
+  slotCost: integer               # Slots used in slot-based parent (default 1)
+  gridWidth: integer?             # Space in grid-based parent
+  gridHeight: integer?
+  volume: decimal?                # Space in volumetric parent
+
+  # Cached totals (denormalized for performance)
+  contentsWeight: decimal         # Weight of all direct contents
+  totalWeight: decimal            # selfWeight + contentsWeight (recursive)
+```
+
+#### 3.8.4 Validation Walk Algorithm
+
+When adding an item to a nested container, validation must walk up the hierarchy:
+
+```csharp
+async Task<ValidationResult> ValidateAddItem(Guid containerId, ItemInstance item)
+{
+    var container = await _containerStore.GetAsync(containerId);
+    var template = await _templateCache.GetAsync(item.TemplateId);
+
+    // Step 1: Check immediate container constraints
+    var immediateResult = ValidateImmediateConstraints(container, template, item.Quantity);
+    if (!immediateResult.Success) return immediateResult;
+
+    // Step 2: Walk up for weight propagation only
+    var itemWeight = template.Weight * item.Quantity;
+    var current = container;
+
+    while (current.ParentContainerId.HasValue)
+    {
+        var parent = await _containerStore.GetAsync(current.ParentContainerId.Value);
+
+        // Check if this container contributes weight
+        if (current.WeightContribution == WeightContribution.SelfPlusContents)
+        {
+            // Check parent's weight limit
+            if (parent.MaxWeight.HasValue)
+            {
+                var newParentWeight = parent.TotalWeight + itemWeight;
+                if (newParentWeight > parent.MaxWeight)
+                {
+                    return ValidationResult.Fail(
+                        $"Adding item would exceed weight limit in ancestor container {parent.Id}");
+                }
+            }
+        }
+        else if (current.WeightContribution == WeightContribution.None)
+        {
+            // Magical container: stop propagation entirely
+            break;
+        }
+        // WeightContribution.SelfOnly: item weight doesn't propagate, continue checking
+
+        current = parent;
+    }
+
+    return ValidationResult.Success();
+}
+```
+
+#### 3.8.5 Weight Recalculation
+
+After any add/remove/move operation, update cached weights:
+
+```csharp
+async Task RecalculateWeightsUpward(Container container)
+{
+    var current = container;
+    while (current != null)
+    {
+        // Recalculate contents weight from direct children
+        current.ContentsWeight = await CalculateDirectContentsWeight(current.Id);
+        current.TotalWeight = current.SelfWeight + current.ContentsWeight;
+
+        await _containerStore.SaveAsync(current.Id, current);
+
+        // Walk up if this container contributes to parent
+        if (current.ParentContainerId.HasValue &&
+            current.WeightContribution == WeightContribution.SelfPlusContents)
+        {
+            current = await _containerStore.GetAsync(current.ParentContainerId.Value);
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
+async Task<decimal> CalculateDirectContentsWeight(Guid containerId)
+{
+    var itemsWeight = await _instanceStore.SumWeightByContainer(containerId);
+    var childContainers = await _containerStore.GetByParent(containerId);
+
+    var containerWeight = childContainers
+        .Where(c => c.WeightContribution == WeightContribution.SelfPlusContents)
+        .Sum(c => c.TotalWeight)
+        + childContainers
+        .Where(c => c.WeightContribution == WeightContribution.SelfOnly)
+        .Sum(c => c.SelfWeight);
+    // WeightContribution.None containers contribute 0
+
+    return itemsWeight + containerWeight;
+}
+```
+
+#### 3.8.6 Cross-Constraint Scenarios
+
+**Scenario: Fluid container in slot-based inventory**
+- Fluid container uses `slotCost: 1` in parent
+- Parent's slots don't care about fluid container's internal volume
+- Weight propagates based on `weightContribution`
+
+**Scenario: Backpack in grid-based inventory (Tarkov)**
+- Backpack has `gridWidth: 2, gridHeight: 3` footprint in parent
+- Backpack's internal grid (`gridWidth: 4, gridHeight: 4`) is separate
+- Weight propagates normally
+
+**Scenario: Bag of Holding (magical)**
+- `weightContribution: none` - parent sees no weight
+- Parent only sees the bag's footprint (`slotCost: 1`)
+- Items inside don't affect parent's weight limit
 
 ### 3.9 Comparison with lib-save-load and lib-state
 
@@ -580,630 +786,1334 @@ When do items get their own instance ID vs. being pure stacks?
 
 ### 4.1 Plugin Structure
 
-**Recommendation**: Two plugins with clear responsibilities
+**DECISION**: Two plugins with clear responsibilities
 
 | Plugin | Responsibility |
 |--------|----------------|
-| **lib-item** | Item templates, item instances, item state |
-| **lib-inventory** | Containers, capacity management, item placement |
+| **lib-item** | Item templates, item instances, item identity, durability, enchantments, binding |
+| **lib-inventory** | Containers, capacity management, item placement, movement, transfers, constraint validation |
 
 **Rationale**:
 - Items can exist outside containers (on ground, in trade, in mail)
 - Containers are a separate concept from items themselves
 - Clear separation of concerns
-- lib-market and lib-craft interact with lib-item for templates
+- Items have their own rich lifecycle (created, modified, bound, destroyed)
+- lib-market and lib-craft interact with lib-item for templates/instances
 
-**Alternative considered**: Single lib-inventory plugin
-- Simpler, fewer cross-plugin dependencies
-- But conflates two distinct concepts
-- DECISION PENDING based on team discussion
+#### 4.1.1 lib-item Responsibilities
+
+- **Template CRUD**: Create, read, update, deprecate item definitions
+- **Instance lifecycle**: Create instances, track modifications, handle destruction
+- **Item state**: Durability, enchantments, custom stats, binding status
+- **Item queries**: Find by template, by owner, by properties
+- **Item events**: Template changes, instance state changes
+
+#### 4.1.2 lib-inventory Responsibilities
+
+- **Container CRUD**: Create, configure, delete containers
+- **Spatial management**: Slot allocation, grid placement, weight tracking
+- **Constraint validation**: Check capacity, allowed categories, nesting depth
+- **Movement operations**: Add, remove, move, transfer items between containers
+- **Container queries**: Find containers by owner, check available space
+- **Container events**: Placement changes, capacity alerts
 
 ### 4.2 Core Schemas
 
+**IMPORTANT - TENETS Compliance:**
+- All schema properties MUST have `description` fields (T1)
+- Use `x-permissions` array format with valid roles: anonymous, user, developer, admin (T13)
+- Schemas MUST include NRT compliance note in `info.description`
+- Event topics use kebab-case for multi-word entities: `item-template.created` not `item.template.created` (T5)
+- Lifecycle events MUST use `x-lifecycle` pattern, never manual definition (T5)
+- All schemas must specify `servers: [{ url: http://localhost:5012 }]` (T1)
+
 #### ItemTemplate Schema (Refined)
 ```yaml
+# Full schema will be in schemas/item-api.yaml
+# This shows the model structure - actual schema requires descriptions on all properties
+
 ItemTemplate:
-  id: uuid
+  type: object
+  required: [templateId, code, gameId, name, category, quantityModel, maxStackSize, scope]
+  properties:
+    templateId:
+      type: string
+      format: uuid
+      description: Unique identifier for the item template
 
-  # Core identification (indexed, queryable)
-  code: string              # "iron_sword", "health_potion" - unique within game
-  gameId: string            # Game service this template belongs to
-  name: string              # Display name
-  description: string?
+    # Core identification (indexed, queryable)
+    code:
+      type: string
+      description: Unique code within the game (e.g., "iron_sword", "health_potion")
+    gameId:
+      type: string
+      description: Game service this template belongs to
+    name:
+      type: string
+      description: Human-readable display name
+    description:
+      type: string
+      nullable: true
+      description: Optional detailed description
 
-  # Classification (indexed, queryable)
-  category: ItemCategory    # weapon, armor, consumable, material, container, etc.
-  subcategory: string?      # "sword", "helmet" - game-defined
-  tags: [string]            # Flexible filtering
-  rarity: ItemRarity        # common, uncommon, rare, epic, legendary
+    # Classification (indexed, queryable)
+    category:
+      $ref: '#/components/schemas/ItemCategory'
+    subcategory:
+      type: string
+      nullable: true
+      description: Game-defined subcategory (e.g., "sword", "helmet")
+    tags:
+      type: array
+      items:
+        type: string
+      description: Flexible filtering tags
+    rarity:
+      $ref: '#/components/schemas/ItemRarity'
 
-  # Quantity behavior
-  quantityModel: QuantityModel  # discrete, continuous, unique
-  maxStackSize: integer         # 1 for unique, 99/999 for stackable
-  unitOfMeasure: string?        # "liters", "kg" for continuous
+    # Quantity behavior
+    quantityModel:
+      $ref: '#/components/schemas/QuantityModel'
+    maxStackSize:
+      type: integer
+      description: Maximum stack size (1 for unique items)
+    unitOfMeasure:
+      type: string
+      nullable: true
+      description: Unit for continuous quantities (e.g., "liters", "kg")
 
-  # Physical properties
-  weight: decimal?          # For weight-based inventories
-  volume: decimal?          # For volumetric inventories
-  gridWidth: integer?       # For grid inventories
-  gridHeight: integer?      # For grid inventories
-  canRotate: boolean?       # Can be rotated in grid
+    # Physical properties (follows lib-currency precision pattern)
+    weightPrecision:
+      $ref: '#/components/schemas/WeightPrecision'
+    weight:
+      type: number
+      format: double
+      nullable: true
+      description: Weight value (interpreted per weightPrecision)
+    volume:
+      type: number
+      format: double
+      nullable: true
+      description: Volume for volumetric inventories
+    gridWidth:
+      type: integer
+      nullable: true
+      description: Width in grid-based inventories
+    gridHeight:
+      type: integer
+      nullable: true
+      description: Height in grid-based inventories
+    canRotate:
+      type: boolean
+      nullable: true
+      description: Whether item can be rotated in grid
 
-  # Value and trading
-  baseValue: decimal?       # Reference price for vendors/markets
-  tradeable: boolean        # Can be traded/auctioned
-  destroyable: boolean      # Can be destroyed/discarded
+    # Value and trading
+    baseValue:
+      type: number
+      format: double
+      nullable: true
+      description: Reference price for vendors/markets
+    tradeable:
+      type: boolean
+      description: Whether item can be traded/auctioned
+    destroyable:
+      type: boolean
+      description: Whether item can be destroyed/discarded
 
-  # Binding
-  soulboundType: SoulboundType  # none, on_pickup, on_equip, on_use
+    # Binding
+    soulboundType:
+      $ref: '#/components/schemas/SoulboundType'
 
-  # Durability (optional)
-  hasDurability: boolean
-  maxDurability: integer?
+    # Durability (optional)
+    hasDurability:
+      type: boolean
+      description: Whether item has durability tracking
+    maxDurability:
+      type: integer
+      nullable: true
+      description: Maximum durability value
 
-  # Realm scoping
-  realmScope: RealmScope    # global, realm_specific
-  availableRealms: [uuid]?  # If realm_specific
+    # Scope (follows lib-currency pattern)
+    scope:
+      $ref: '#/components/schemas/ItemScope'
+    availableRealms:
+      type: array
+      items:
+        type: string
+        format: uuid
+      nullable: true
+      description: Realms where this template is available (if scope is realm_specific or multi_realm)
 
-  # Game-specific data (opaque to backend)
-  stats: object?            # { attack: 25, defense: 0 }
-  effects: object?          # { on_use: "heal", amount: 50 }
-  requirements: object?     # { level: 10, strength: 15 }
-  display: object?          # { iconId: uuid, modelId: uuid }
-  metadata: object?         # Anything else
+    # Game-specific data (opaque to backend)
+    stats:
+      type: object
+      nullable: true
+      description: Game-defined stats (e.g., attack, defense)
+    effects:
+      type: object
+      nullable: true
+      description: Game-defined effects (e.g., on_use, on_equip)
+    requirements:
+      type: object
+      nullable: true
+      description: Game-defined requirements (e.g., level, strength)
+    display:
+      type: object
+      nullable: true
+      description: Display properties (e.g., iconId, modelId)
+    metadata:
+      type: object
+      nullable: true
+      description: Any other game-specific data
 
-  # Lifecycle
-  isActive: boolean
-  createdAt: timestamp
-  updatedAt: timestamp
+    # Lifecycle
+    isActive:
+      type: boolean
+      description: Whether template is currently active
+    createdAt:
+      type: string
+      format: date-time
+      description: Template creation timestamp
+    updatedAt:
+      type: string
+      format: date-time
+      description: Last update timestamp
 
 # Enums
 ItemCategory:
-  - weapon
-  - armor
-  - accessory
-  - consumable
-  - material
-  - container
-  - quest
-  - currency_like  # Fungible items that act like currency
-  - misc
-  - custom        # Game-defined
+  type: string
+  enum:
+    - weapon
+    - armor
+    - accessory
+    - consumable
+    - material
+    - container
+    - quest
+    - currency_like  # Fungible items that act like currency
+    - misc
+    - custom         # Game-defined
+  description: Item classification category
 
 QuantityModel:
-  - discrete      # Integer quantities (arrows, potions)
-  - continuous    # Decimal quantities (water, fuel)
-  - unique        # Always 1, non-stackable
+  type: string
+  enum:
+    - discrete      # Integer quantities (arrows, potions)
+    - continuous    # Decimal quantities (water, fuel)
+    - unique        # Always 1, non-stackable
+  description: How quantities are tracked for this item type
 
 ItemRarity:
-  - common
-  - uncommon
-  - rare
-  - epic
-  - legendary
-  - custom
+  type: string
+  enum:
+    - common
+    - uncommon
+    - rare
+    - epic
+    - legendary
+    - custom
+  description: Item rarity tier
 
 SoulboundType:
-  - none
-  - on_pickup
-  - on_equip
-  - on_use
+  type: string
+  enum:
+    - none
+    - on_pickup
+    - on_equip
+    - on_use
+  description: When item becomes bound to a character
+
+ItemScope:
+  type: string
+  enum:
+    - global          # Available in all realms
+    - realm_specific  # Available only in specific realms
+    - multi_realm     # Available in a subset of realms
+  description: Realm availability scope (consistent with lib-currency)
+
+WeightPrecision:
+  type: string
+  enum:
+    - integer     # Whole units only
+    - decimal_1   # One decimal place
+    - decimal_2   # Two decimal places (recommended default)
+    - decimal_3   # Three decimal places
+  description: Precision for weight values (consistent with lib-currency)
 ```
 
 #### ItemInstance Schema
 ```yaml
 ItemInstance:
-  id: uuid
-  templateId: uuid
+  type: object
+  required: [instanceId, templateId, ownerId, ownerType, realmId, quantity, originType, createdAt]
+  properties:
+    instanceId:
+      type: string
+      format: uuid
+      description: Unique identifier for this item instance
+    templateId:
+      type: string
+      format: uuid
+      description: Reference to the item template
 
-  # Ownership (polymorphic)
-  ownerId: uuid
-  ownerType: OwnerType      # character, container, ground, escrow, mail
+    # Ownership (polymorphic)
+    ownerId:
+      type: string
+      format: uuid
+      description: ID of the owning entity
+    ownerType:
+      $ref: '#/components/schemas/ItemOwnerType'
 
-  # Location in container
-  containerId: uuid?
-  slotIndex: integer?       # For slot-based
-  slotX: integer?           # For grid-based
-  slotY: integer?           # For grid-based
-  rotated: boolean?         # For grid rotation
+    # Location in container
+    containerId:
+      type: string
+      format: uuid
+      nullable: true
+      description: Container holding this item (null if not in a container)
+    slotIndex:
+      type: integer
+      nullable: true
+      description: Slot position in slot-based containers
+    slotX:
+      type: integer
+      nullable: true
+      description: X position in grid-based containers
+    slotY:
+      type: integer
+      nullable: true
+      description: Y position in grid-based containers
+    rotated:
+      type: boolean
+      nullable: true
+      description: Whether item is rotated 90 degrees in grid
 
-  # Realm
-  realmId: uuid
+    # Realm
+    realmId:
+      type: string
+      format: uuid
+      description: Realm this instance exists in
 
-  # Quantity (uses decimal for unified handling)
-  quantity: decimal         # 1 for unique, 99 for stack, 2.5 for continuous
+    # Quantity (uses decimal for unified handling)
+    quantity:
+      type: number
+      format: double
+      description: Item quantity (1 for unique, integer for discrete, decimal for continuous)
 
-  # Instance state
-  currentDurability: integer?
-  boundToId: uuid?          # Character ID if soulbound
-  boundAt: timestamp?
+    # Instance state
+    currentDurability:
+      type: integer
+      nullable: true
+      description: Current durability (if template has durability)
+    boundToId:
+      type: string
+      format: uuid
+      nullable: true
+      description: Character ID this item is soulbound to
+    boundAt:
+      type: string
+      format: date-time
+      nullable: true
+      description: When item was bound
 
-  # Modifications (game-specific)
-  customStats: object?      # Enchantments, modifications
-  customName: string?       # Player-renamed items
-  instanceMetadata: object? # Any other instance-specific data
+    # Modifications (game-specific)
+    customStats:
+      type: object
+      nullable: true
+      description: Instance-specific stat modifications (enchantments, etc.)
+    customName:
+      type: string
+      nullable: true
+      description: Player-assigned custom name
+    instanceMetadata:
+      type: object
+      nullable: true
+      description: Any other instance-specific data
 
-  # Audit trail
-  originType: ItemOriginType  # loot, quest, craft, trade, spawn
-  originId: uuid?             # Quest ID, creature ID, etc.
-  createdAt: timestamp
-  modifiedAt: timestamp
+    # Audit trail
+    originType:
+      $ref: '#/components/schemas/ItemOriginType'
+    originId:
+      type: string
+      format: uuid
+      nullable: true
+      description: Source entity ID (quest ID, creature ID, etc.)
+    createdAt:
+      type: string
+      format: date-time
+      description: Instance creation timestamp
+    modifiedAt:
+      type: string
+      format: date-time
+      nullable: true
+      description: Last modification timestamp
+
+ItemOwnerType:
+  type: string
+  enum:
+    - character       # Character owns the item (in inventory, equipped, etc.)
+    - location        # Item is "on the ground" at a location
+    - escrow          # Item is held in escrow for trade/market
+    - mail            # Item is in mail system
+    - container       # Owned by a container (for nested containers)
+    - other           # Game-defined owner type
+  description: Type of entity that owns this item instance
+
+ItemOriginType:
+  type: string
+  enum:
+    - loot            # Dropped from creature/container
+    - quest           # Quest reward
+    - craft           # Crafted by player
+    - trade           # Received in trade
+    - purchase        # Bought from vendor
+    - spawn           # System-spawned (admin, event)
+    - other           # Game-defined origin
+  description: How this item instance was created
 ```
 
 #### Container Schema
 ```yaml
 Container:
-  id: uuid
+  type: object
+  required: [containerId, ownerId, ownerType, containerType, constraintModel]
+  properties:
+    containerId:
+      type: string
+      format: uuid
+      description: Unique identifier for this container
 
-  # Ownership
-  ownerId: uuid
-  ownerType: ContainerOwnerType  # character, location, vehicle, chest, npc
+    # Ownership
+    ownerId:
+      type: string
+      format: uuid
+      description: ID of the entity that owns this container
+    ownerType:
+      $ref: '#/components/schemas/ContainerOwnerType'
 
-  # Type and behavior
-  containerType: string     # Game-defined: "inventory", "bank", "equipment_slot", etc.
-  constraintModel: ContainerConstraintModel
+    # Type and behavior
+    containerType:
+      type: string
+      description: Game-defined type (e.g., "inventory", "bank", "equipment_slot")
+    constraintModel:
+      $ref: '#/components/schemas/ContainerConstraintModel'
 
-  # Slot constraints
-  maxSlots: integer?
-  usedSlots: integer?       # Denormalized
+    # Equipment slot support
+    isEquipmentSlot:
+      type: boolean
+      description: Whether this container is an equipment slot
+    equipmentSlotName:
+      type: string
+      nullable: true
+      description: Equipment slot name (e.g., "main_hand", "helmet") if isEquipmentSlot
 
-  # Weight constraints
-  maxWeight: decimal?
-  currentWeight: decimal?   # Denormalized
+    # Slot constraints
+    maxSlots:
+      type: integer
+      nullable: true
+      description: Maximum number of slots (for slot-based containers)
+    usedSlots:
+      type: integer
+      nullable: true
+      description: Current used slots (denormalized)
 
-  # Grid constraints
-  gridWidth: integer?
-  gridHeight: integer?
+    # Weight constraints
+    maxWeight:
+      type: number
+      format: double
+      nullable: true
+      description: Maximum weight capacity
 
-  # Volume constraints
-  maxVolume: decimal?
-  currentVolume: decimal?   # Denormalized
+    # Grid constraints (internal dimensions)
+    gridWidth:
+      type: integer
+      nullable: true
+      description: Internal grid width (for grid containers)
+    gridHeight:
+      type: integer
+      nullable: true
+      description: Internal grid height (for grid containers)
 
-  # Nesting
-  parentContainerId: uuid?  # If nested
-  canContainContainers: boolean
-  maxNestingDepth: integer?
+    # Volume constraints
+    maxVolume:
+      type: number
+      format: double
+      nullable: true
+      description: Maximum volume capacity
+    currentVolume:
+      type: number
+      format: double
+      nullable: true
+      description: Current volume used (denormalized)
 
-  # Filtering
-  allowedCategories: [string]?
-  forbiddenCategories: [string]?
-  allowedTags: [string]?
+    # Nesting and weight propagation
+    parentContainerId:
+      type: string
+      format: uuid
+      nullable: true
+      description: Parent container ID (null for root containers)
+    nestingDepth:
+      type: integer
+      description: Depth in container hierarchy (0 = root)
+    canContainContainers:
+      type: boolean
+      description: Whether this container can hold other containers
+    maxNestingDepth:
+      type: integer
+      nullable: true
+      description: Maximum nesting depth allowed (null = use global default)
+    selfWeight:
+      type: number
+      format: double
+      description: Empty container weight
+    weightContribution:
+      $ref: '#/components/schemas/WeightContribution'
 
-  # Realm
-  realmId: uuid
+    # Footprint in parent container
+    slotCost:
+      type: integer
+      description: Slots used in slot-based parent (default 1)
+    parentGridWidth:
+      type: integer
+      nullable: true
+      description: Width footprint in grid-based parent
+    parentGridHeight:
+      type: integer
+      nullable: true
+      description: Height footprint in grid-based parent
+    parentVolume:
+      type: number
+      format: double
+      nullable: true
+      description: Volume footprint in volumetric parent
 
-  # Game-specific
-  tags: [string]
-  metadata: object?
+    # Cached totals
+    contentsWeight:
+      type: number
+      format: double
+      description: Weight of direct contents (denormalized)
+    totalWeight:
+      type: number
+      format: double
+      description: Total weight including self (denormalized)
 
-  # Lifecycle
-  createdAt: timestamp
-  modifiedAt: timestamp
+    # Filtering
+    allowedCategories:
+      type: array
+      items:
+        type: string
+      nullable: true
+      description: Allowed item categories (null = all allowed)
+    forbiddenCategories:
+      type: array
+      items:
+        type: string
+      nullable: true
+      description: Forbidden item categories
+    allowedTags:
+      type: array
+      items:
+        type: string
+      nullable: true
+      description: Required item tags for placement
+
+    # Realm
+    realmId:
+      type: string
+      format: uuid
+      nullable: true
+      description: Realm this container belongs to (null = account-level storage)
+
+    # Game-specific
+    tags:
+      type: array
+      items:
+        type: string
+      description: Container tags for filtering
+    metadata:
+      type: object
+      nullable: true
+      description: Game-specific container data
+
+    # Lifecycle
+    createdAt:
+      type: string
+      format: date-time
+      description: Container creation timestamp
+    modifiedAt:
+      type: string
+      format: date-time
+      nullable: true
+      description: Last modification timestamp
 
 ContainerConstraintModel:
-  - slot_only
-  - weight_only
-  - slot_and_weight
-  - grid
-  - volumetric
-  - unlimited
+  type: string
+  enum:
+    - slot_only           # maxSlots only, items take 1 slot each
+    - weight_only         # maxWeight only, no slot limit
+    - slot_and_weight     # Both constraints apply
+    - grid                # 2D grid with item dimensions
+    - volumetric          # 3D volume (rare, complex)
+    - unlimited           # No constraints (admin/debug)
+  description: Container capacity constraint type
+
+WeightContribution:
+  type: string
+  enum:
+    - none                # Parent ignores entirely (magical storage)
+    - self_only           # Only container's empty weight counts
+    - self_plus_contents  # Container + all recursive contents (DEFAULT)
+  description: How container weight propagates to parent
+
+ContainerOwnerType:
+  type: string
+  enum:
+    - character           # Player or NPC
+    - account             # Account-level storage (cross-character)
+    - location            # World containers (chests, items on ground)
+    - vehicle             # Vehicle storage
+    - guild               # Guild bank, shared storage
+    - escrow              # Trade/market escrow
+    - mail                # Mail system
+    - other               # Game-defined owner types
+  description: Type of entity that owns this container
 ```
 
 ### 4.3 API Design
 
-Following Bannou's POST-only pattern:
+Following Bannou's POST-only pattern with proper `x-permissions` format:
 
 ```yaml
 # ═══════════════════════════════════════════════════════════
-# ITEM TEMPLATE MANAGEMENT (lib-item or lib-inventory)
+# lib-item API (schemas/item-api.yaml)
 # ═══════════════════════════════════════════════════════════
 
-/item/template/create:
-  access: developer
-  request: { gameId, code, name, category, ... }
-  response: { template }
+openapi: 3.0.3
+info:
+  title: Item Service API
+  version: 1.0.0
+  description: |
+    Item template and instance management service.
 
-/item/template/get:
-  access: user
-  request: { templateId | code, gameId }
-  response: { template }
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
 
-/item/template/list:
-  access: user
-  request: { gameId, category?, tags?, rarity?, search?, offset, limit }
-  response: { templates[], totalCount }
+servers:
+  - url: http://localhost:5012
+    description: Bannou service endpoint
 
-/item/template/update:
-  access: developer
-  request: { templateId, ...changes }
-  response: { template }
+paths:
+  /item/template/create:
+    post:
+      operationId: createItemTemplate
+      tags: [Item Template]
+      summary: Create a new item template
+      description: Creates a new item definition for a game
+      x-permissions:
+        - role: developer
+          states: {}
+      # ... request/response bodies
 
-/item/template/deprecate:
-  access: admin
-  request: { templateId, migrationTargetId? }
-  response: { deprecated: boolean }
+  /item/template/get:
+    post:
+      operationId: getItemTemplate
+      tags: [Item Template]
+      summary: Get item template by ID or code
+      x-permissions:
+        - role: user
+          states: {}
 
-# ═══════════════════════════════════════════════════════════
-# CONTAINER MANAGEMENT
-# ═══════════════════════════════════════════════════════════
+  /item/template/list:
+    post:
+      operationId: listItemTemplates
+      tags: [Item Template]
+      summary: List item templates with filters
+      x-permissions:
+        - role: user
+          states: {}
 
-/inventory/container/create:
-  access: authenticated
-  request: { ownerId, ownerType, containerType, constraintModel, ... }
-  response: { container }
+  /item/template/update:
+    post:
+      operationId: updateItemTemplate
+      tags: [Item Template]
+      summary: Update item template mutable fields
+      x-permissions:
+        - role: developer
+          states: {}
 
-/inventory/container/get:
-  access: user
-  request: { containerId | { ownerId, ownerType, containerType } }
-  response: { container, items[] }
+  /item/template/deprecate:
+    post:
+      operationId: deprecateItemTemplate
+      tags: [Item Template]
+      summary: Deprecate an item template
+      x-permissions:
+        - role: admin
+          states: {}
 
-/inventory/container/list:
-  access: user
-  request: { ownerId, ownerType }
-  response: { containers[] }
+  /item/instance/create:
+    post:
+      operationId: createItemInstance
+      tags: [Item Instance]
+      summary: Create a new item instance
+      description: Creates a new item from a template
+      x-permissions:
+        - role: developer
+          states: {}
 
-/inventory/container/delete:
-  access: admin
-  request: { containerId, itemHandling: "destroy" | "transfer" | "error" }
-  response: { deleted, itemsAffected }
+  /item/instance/get:
+    post:
+      operationId: getItemInstance
+      tags: [Item Instance]
+      summary: Get item instance by ID
+      x-permissions:
+        - role: user
+          states: {}
 
-# ═══════════════════════════════════════════════════════════
-# ITEM INSTANCE OPERATIONS
-# ═══════════════════════════════════════════════════════════
+  /item/instance/modify:
+    post:
+      operationId: modifyItemInstance
+      tags: [Item Instance]
+      summary: Modify item instance state
+      x-permissions:
+        - role: developer
+          states: {}
 
-/inventory/add:
-  access: authenticated
-  description: Add items to a container (create instances or stack)
-  request:
-    containerId: uuid
-    templateId: uuid
-    quantity: decimal
-    originType: ItemOriginType
-    originId: uuid?
-    customStats: object?
-    slotIndex: integer?     # null for auto-placement
-    slotX: integer?         # For grid containers
-    slotY: integer?
-  response: { instance, stacked: boolean, overflowQuantity: decimal? }
-  errors: [ CONTAINER_FULL, WEIGHT_EXCEEDED, ITEM_NOT_ALLOWED ]
+  /item/instance/bind:
+    post:
+      operationId: bindItemInstance
+      tags: [Item Instance]
+      summary: Bind item to character
+      x-permissions:
+        - role: developer
+          states: {}
 
-/inventory/remove:
-  access: authenticated
-  description: Remove items from container (reduce quantity or delete)
-  request:
-    instanceId: uuid
-    quantity: decimal
-    reason: RemovalReason   # consumed, destroyed, transferred, sold, dropped
-  response: { removed, remainingQuantity }
-
-/inventory/move:
-  access: authenticated
-  description: Move item to different slot or container
-  request:
-    instanceId: uuid
-    targetContainerId: uuid
-    targetSlotIndex: integer?
-    targetSlotX: integer?
-    targetSlotY: integer?
-    rotated: boolean?
-  response: { instance }
-  errors: [ CONTAINER_FULL, SLOT_OCCUPIED, INCOMPATIBLE_CONTAINER ]
-
-/inventory/transfer:
-  access: authenticated
-  description: Transfer item ownership (trade, mail, drop)
-  request:
-    instanceId: uuid
-    quantity: decimal
-    targetOwnerId: uuid
-    targetOwnerType: OwnerType
-    targetContainerId: uuid?  # null = auto-select or create
-  response: { sourceInstance?, targetInstance }
-  errors: [ NOT_TRADEABLE, SOULBOUND, TARGET_FULL ]
-
-/inventory/split:
-  access: user
-  description: Split a stack into two stacks
-  request:
-    instanceId: uuid
-    quantity: decimal       # Amount to split off
-  response: { originalInstance, newInstance }
-
-/inventory/merge:
-  access: user
-  description: Merge two stacks of same template
-  request:
-    sourceInstanceId: uuid
-    targetInstanceId: uuid
-  response: { instance, sourceDestroyed: boolean }
+  /item/instance/destroy:
+    post:
+      operationId: destroyItemInstance
+      tags: [Item Instance]
+      summary: Destroy item instance
+      x-permissions:
+        - role: developer
+          states: {}
 
 # ═══════════════════════════════════════════════════════════
-# QUERIES
+# lib-inventory API (schemas/inventory-api.yaml)
 # ═══════════════════════════════════════════════════════════
 
-/inventory/query:
-  access: user
-  description: Find items across containers
-  request:
-    ownerId: uuid
-    ownerType: OwnerType
-    templateId: uuid?
-    category: string?
-    tags: [string]?
-    includeNested: boolean?   # Search nested containers
-  response: { instances[] }
+  /inventory/container/create:
+    post:
+      operationId: createContainer
+      tags: [Container]
+      summary: Create a new container
+      x-permissions:
+        - role: developer
+          states: {}
 
-/inventory/count:
-  access: user
-  description: Count items of a template
-  request:
-    ownerId: uuid
-    ownerType: OwnerType
-    templateId: uuid
-    includeNested: boolean?
-  response: { totalQuantity }
+  /inventory/container/get:
+    post:
+      operationId: getContainer
+      tags: [Container]
+      summary: Get container with contents
+      x-permissions:
+        - role: user
+          states: {}
 
-/inventory/has:
-  access: authenticated
-  description: Check if entity has enough items (for crafting, quests)
-  request:
-    ownerId: uuid
-    ownerType: OwnerType
-    requirements: [{ templateId, quantity }]
-  response: { hasAll: boolean, missing: [{ templateId, required, actual }] }
+  /inventory/container/get-or-create:
+    post:
+      operationId: getOrCreateContainer
+      tags: [Container]
+      summary: Get container or create if not exists (lazy creation pattern)
+      description: |
+        Enables lazy container creation for character inventories.
+        If container doesn't exist for the owner/type combo, creates it.
+      x-permissions:
+        - role: developer
+          states: {}
 
-/inventory/find-space:
-  access: user
-  description: Check where an item would fit
-  request:
-    containerId: uuid
-    templateId: uuid
-    quantity: decimal
-  response: { canFit: boolean, suggestedSlot: { index?, x?, y?, rotated? }? }
+  /inventory/container/list:
+    post:
+      operationId: listContainers
+      tags: [Container]
+      summary: List containers for owner
+      x-permissions:
+        - role: user
+          states: {}
 
-# ═══════════════════════════════════════════════════════════
-# INSTANCE MODIFICATIONS
-# ═══════════════════════════════════════════════════════════
+  /inventory/container/delete:
+    post:
+      operationId: deleteContainer
+      tags: [Container]
+      summary: Delete container
+      x-permissions:
+        - role: admin
+          states: {}
 
-/inventory/modify:
-  access: authenticated
-  description: Modify item instance state (durability, stats, name)
-  request:
-    instanceId: uuid
-    modifications:
-      durabilityDelta: integer?
-      customStats: object?
-      customName: string?
-      metadata: object?
-  response: { instance }
+  /inventory/add:
+    post:
+      operationId: addItemToContainer
+      tags: [Inventory Operations]
+      summary: Add items to container
+      description: Add items (create instances or stack onto existing)
+      x-permissions:
+        - role: developer
+          states: {}
 
-/inventory/bind:
-  access: authenticated
-  description: Bind an item to a character
-  request:
-    instanceId: uuid
-    characterId: uuid
-    bindType: SoulboundType
-  response: { instance }
+  /inventory/remove:
+    post:
+      operationId: removeItemFromContainer
+      tags: [Inventory Operations]
+      summary: Remove items from container
+      x-permissions:
+        - role: developer
+          states: {}
+
+  /inventory/move:
+    post:
+      operationId: moveItem
+      tags: [Inventory Operations]
+      summary: Move item to different slot or container
+      x-permissions:
+        - role: user
+          states: {}
+
+  /inventory/transfer:
+    post:
+      operationId: transferItem
+      tags: [Inventory Operations]
+      summary: Transfer item ownership
+      x-permissions:
+        - role: developer
+          states: {}
+
+  /inventory/split:
+    post:
+      operationId: splitStack
+      tags: [Inventory Operations]
+      summary: Split stack into two
+      x-permissions:
+        - role: user
+          states: {}
+
+  /inventory/merge:
+    post:
+      operationId: mergeStacks
+      tags: [Inventory Operations]
+      summary: Merge two stacks
+      x-permissions:
+        - role: user
+          states: {}
+
+  /inventory/query:
+    post:
+      operationId: queryItems
+      tags: [Inventory Queries]
+      summary: Find items across containers
+      x-permissions:
+        - role: user
+          states: {}
+
+  /inventory/count:
+    post:
+      operationId: countItems
+      tags: [Inventory Queries]
+      summary: Count items of a template
+      x-permissions:
+        - role: user
+          states: {}
+
+  /inventory/has:
+    post:
+      operationId: hasItems
+      tags: [Inventory Queries]
+      summary: Check if entity has required items
+      x-permissions:
+        - role: user
+          states: {}
+
+  /inventory/find-space:
+    post:
+      operationId: findSpace
+      tags: [Inventory Queries]
+      summary: Find where item would fit
+      x-permissions:
+        - role: user
+          states: {}
 ```
 
 ### 4.4 Events
 
+Events use kebab-case for multi-word entity names (per T5 topic naming convention).
+
+#### 4.4.1 lib-item Events Schema (`schemas/item-events.yaml`)
+
 ```yaml
-# Template events
-item.template.created:
-  templateId: uuid
-  code: string
-  gameId: string
-  category: string
+openapi: 3.0.3
+info:
+  title: Item Service Events
+  version: 1.0.0
+  description: |
+    Event models for Item service pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
 
-item.template.updated:
-  templateId: uuid
-  changes: object
+    **Topic Naming**: Uses kebab-case for multi-word entities (item-template, item-instance).
 
-item.template.deprecated:
-  templateId: uuid
-  migrationTargetId: uuid?
+  x-event-subscriptions: []
 
-# Instance events
-inventory.item.added:
-  instanceId: uuid
-  containerId: uuid
-  templateId: uuid
-  quantity: decimal
-  originType: string
-  originId: uuid?
+  x-event-publications:
+    # Template lifecycle (auto-generated from x-lifecycle)
+    - topic: item-template.created
+      event: ItemTemplateCreatedEvent
+      description: Published when a new item template is created
+    - topic: item-template.updated
+      event: ItemTemplateUpdatedEvent
+      description: Published when an item template is updated
+    - topic: item-template.deprecated
+      event: ItemTemplateDeprecatedEvent
+      description: Published when an item template is deprecated
 
-inventory.item.removed:
-  instanceId: uuid
-  containerId: uuid
-  templateId: uuid
-  quantity: decimal
-  reason: string
-  remainingQuantity: decimal
+    # Instance lifecycle (auto-generated from x-lifecycle)
+    - topic: item-instance.created
+      event: ItemInstanceCreatedEvent
+      description: Published when a new item instance is created
+    - topic: item-instance.modified
+      event: ItemInstanceModifiedEvent
+      description: Published when an item instance is modified
+    - topic: item-instance.destroyed
+      event: ItemInstanceDestroyedEvent
+      description: Published when an item instance is destroyed
 
-inventory.item.moved:
-  instanceId: uuid
-  fromContainerId: uuid
-  toContainerId: uuid
-  fromSlot: { index?, x?, y? }
-  toSlot: { index?, x?, y? }
+    # Binding events
+    - topic: item-instance.bound
+      event: ItemInstanceBoundEvent
+      description: Published when an item is bound to a character
+    - topic: item-instance.unbound
+      event: ItemInstanceUnboundEvent
+      description: Published when an item binding is removed
 
-inventory.item.transferred:
-  instanceId: uuid
-  fromOwnerId: uuid
-  fromOwnerType: string
-  toOwnerId: uuid
-  toOwnerType: string
-  quantity: decimal
+# Lifecycle events auto-generated from x-lifecycle
+x-lifecycle:
+  ItemTemplate:
+    model:
+      templateId: { type: string, format: uuid, primary: true, required: true, description: "Template ID" }
+      code: { type: string, required: true, description: "Unique item code" }
+      gameId: { type: string, required: true, description: "Game service ID" }
+      name: { type: string, required: true, description: "Display name" }
+      category: { type: string, required: true, description: "Item category" }
+      scope: { type: string, required: true, description: "Realm scope" }
+      isActive: { type: boolean, required: true, description: "Whether active" }
+    sensitive: []
 
-inventory.item.stacked:
-  sourceInstanceId: uuid
-  targetInstanceId: uuid
-  quantity: decimal
-  sourceDestroyed: boolean
+  ItemInstance:
+    model:
+      instanceId: { type: string, format: uuid, primary: true, required: true, description: "Instance ID" }
+      templateId: { type: string, format: uuid, required: true, description: "Template reference" }
+      ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
+      ownerType: { type: string, required: true, description: "Owner type" }
+      realmId: { type: string, format: uuid, required: true, description: "Realm ID" }
+      quantity: { type: number, required: true, description: "Item quantity" }
+    sensitive: []
 
-inventory.item.modified:
-  instanceId: uuid
-  changes: object
+# Non-lifecycle events defined in components/schemas
+components:
+  schemas:
+    ItemInstanceBoundEvent:
+      type: object
+      required: [eventId, timestamp, instanceId, templateId, characterId, bindType]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        instanceId:
+          type: string
+          format: uuid
+          description: Bound item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        characterId:
+          type: string
+          format: uuid
+          description: Character the item is bound to
+        bindType:
+          type: string
+          description: Type of binding (on_pickup, on_equip, on_use)
 
-inventory.item.bound:
-  instanceId: uuid
-  characterId: uuid
-  bindType: string
+    ItemInstanceUnboundEvent:
+      type: object
+      required: [eventId, timestamp, instanceId, templateId, previousCharacterId, reason]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        instanceId:
+          type: string
+          format: uuid
+          description: Unbound item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        previousCharacterId:
+          type: string
+          format: uuid
+          description: Character the item was bound to
+        reason:
+          type: string
+          description: Reason for unbinding (admin, expiration, transfer_override)
+```
 
-# Container events
-inventory.container.created:
-  containerId: uuid
-  ownerId: uuid
-  ownerType: string
-  containerType: string
+#### 4.4.2 lib-inventory Events Schema (`schemas/inventory-events.yaml`)
 
-inventory.container.full:
-  containerId: uuid
-  ownerId: uuid
+```yaml
+openapi: 3.0.3
+info:
+  title: Inventory Service Events
+  version: 1.0.0
+  description: |
+    Event models for Inventory service pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
 
-inventory.container.deleted:
-  containerId: uuid
-  itemsAffected: integer
+    **Topic Naming**: Uses kebab-case for multi-word entities (inventory-container, inventory-item).
+
+  x-event-subscriptions: []
+
+  x-event-publications:
+    # Container lifecycle (auto-generated from x-lifecycle)
+    - topic: inventory-container.created
+      event: InventoryContainerCreatedEvent
+      description: Published when a container is created
+    - topic: inventory-container.modified
+      event: InventoryContainerModifiedEvent
+      description: Published when a container is modified
+    - topic: inventory-container.deleted
+      event: InventoryContainerDeletedEvent
+      description: Published when a container is deleted
+
+    # Item placement events
+    - topic: inventory-item.placed
+      event: InventoryItemPlacedEvent
+      description: Published when an item is placed in a container
+    - topic: inventory-item.removed
+      event: InventoryItemRemovedEvent
+      description: Published when an item is removed from a container
+    - topic: inventory-item.moved
+      event: InventoryItemMovedEvent
+      description: Published when an item moves between slots/containers
+    - topic: inventory-item.transferred
+      event: InventoryItemTransferredEvent
+      description: Published when item ownership transfers
+
+    # Stack events
+    - topic: inventory-item.stacked
+      event: InventoryItemStackedEvent
+      description: Published when items are stacked together
+    - topic: inventory-item.split
+      event: InventoryItemSplitEvent
+      description: Published when a stack is split
+
+    # Capacity events
+    - topic: inventory-container.full
+      event: InventoryContainerFullEvent
+      description: Published when container reaches capacity
+    - topic: inventory.weight-exceeded
+      event: InventoryWeightExceededEvent
+      description: Published when weight limit is exceeded
+    - topic: inventory.nesting-limit
+      event: InventoryNestingLimitEvent
+      description: Published when nesting depth limit is reached
+
+x-lifecycle:
+  InventoryContainer:
+    model:
+      containerId: { type: string, format: uuid, primary: true, required: true, description: "Container ID" }
+      ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
+      ownerType: { type: string, required: true, description: "Owner type" }
+      containerType: { type: string, required: true, description: "Container type" }
+      constraintModel: { type: string, required: true, description: "Constraint model" }
+      isEquipmentSlot: { type: boolean, required: true, description: "Whether equipment slot" }
+    sensitive: []
+
+components:
+  schemas:
+    # Non-lifecycle event schemas here...
+    # (Full definitions omitted for brevity - each event has full property definitions)
+```
+
+#### 4.4.3 Event Flow Examples
+
+**Equipping an item (via inventory-item.moved):**
+```
+1. Client: POST /inventory/move { instanceId, targetContainerId: helmet_slot.id }
+2. lib-inventory validates slot constraints
+3. lib-inventory publishes:
+   - inventory-item.removed (from backpack)
+   - inventory-item.moved (backpack → helmet_slot)
+4. lib-equipment (future) listens for moves where toContainerType == "equipment_slot"
+5. Game calculates stat changes
+```
+
+**Crafting creates item (cross-plugin):**
+```
+1. lib-craft calls lib-item /item/instance/create
+2. lib-item publishes: item-instance.created
+3. lib-craft calls lib-inventory /inventory/add
+4. lib-inventory publishes: inventory-item.placed
+5. Client receives both events, updates UI
+```
+
+**Item dropped on ground:**
+```
+1. Client: POST /inventory/transfer { instanceId, targetOwnerType: location, targetOwnerId: locationId }
+2. lib-inventory validates transfer
+3. lib-inventory publishes: inventory-item.transferred
+4. Item now has ownerId: locationId, ownerType: location, containerId: location's ground container
 ```
 
 ---
 
-## Part 5: Open Questions
+## Part 5: Resolved Architectural Decisions
 
-### 5.1 Critical Decisions Needed
+### 5.1 Decisions Summary
 
-1. **One plugin or two?**
-   - lib-item + lib-inventory (cleaner separation)
-   - lib-inventory only (simpler)
+| Decision | Resolution | Rationale |
+|----------|------------|-----------|
+| **Plugin structure** | Two plugins: lib-item + lib-inventory | Items have rich lifecycle deserving own events. Containers are spatial organization concern. |
+| **Grid inventory** | Include in initial implementation | All features in single session; no phasing. |
+| **Fluid handling** | Continuous quantities via `quantityModel: continuous` | Simple approach covers most use cases. |
+| **Equipment system** | Equipment slots = containers with `maxSlots: 1` and `isEquipmentSlot: true` | Reuses inventory mechanics. Future lib-equipment can layer on top. |
+| **Nested containers** | Game-configurable depth, default max 3 | Weight is only transitive property. |
+| **Weight propagation** | `WeightContribution` enum: none, self_only, self_plus_contents | Handles magical bags, cargo holds, realistic physics. |
+| **State store backend** | Redis cache + MySQL persistence | High-frequency access needs cache; persistence needs MySQL for queries. |
+| **Template scope** | Follow lib-currency pattern (global, realm_specific, multi_realm) | Consistency across services. |
+| **Weight/volume precision** | Follow lib-currency precision enum pattern | Consistency across services. |
+| **Character inventory creation** | Lazy creation via `/inventory/container/get-or-create` | Container doesn't exist until accessed, then auto-created. |
+| **Items on ground** | Location owns a container; items placed in location's container | `ownerType: location`, `ownerId: locationId`, `containerId: location's ground container`. |
 
-2. **Grid inventory support priority?**
-   - MVP: slot/weight only
-   - Phase 2: add grid support
-   - Or: grid from day one?
+### 5.2 Edge Cases and Handling
 
-3. **Fluid handling?**
-   - Continuous quantity items (simple)
-   - Separate lib-fluid (complex, defer?)
+| Edge Case | Handling |
+|-----------|----------|
+| Item stacking across containers | Auto-merge on transfer when same template and capacity allows |
+| Container nesting limits | `maxNestingDepth` per container, validated on placement |
+| Weight exceeds limit during nesting | Validation walk checks all ancestors before allowing placement |
+| Magical container in weighted parent | `weightContribution: none` stops propagation entirely |
+| Item deletion cascade | Container delete specifies `itemHandling`: destroy, transfer, or error |
+| Ownership transfers (trades) | Atomic transaction via future lib-market with escrow containers |
+| Realm-crossing items | Account-level containers (`realmId: null`) for cross-realm storage |
+| Template deprecation | Items keep old template reference, migration API available |
+| Concurrent modifications | Optimistic locking via container version/ETag |
+| Stack overflow | Return `overflowQuantity`, partial success allowed |
+| Fluid in slot container | Fluid container uses `slotCost: 1` footprint; internal volume separate |
+| Backpack in grid inventory | Backpack has footprint (`parentGridWidth/Height`) separate from internal grid |
 
-4. **Equipment system?**
-   - Part of lib-inventory?
-   - Separate lib-equipment?
-   - Game-specific (just use container types)?
+### 5.3 Deferred for Future Consideration
 
-5. **Nested containers (bags in bags)?**
-   - Allow arbitrary nesting?
-   - Fixed depth limit?
-   - Game-configurable?
-
-### 5.2 Edge Cases to Consider
-
-- **Item stacking across containers**: Auto-merge when transferring?
-- **Container within container limits**: Max nesting depth?
-- **Item deletion cascade**: What happens to items when container deleted?
-- **Ownership transfers**: Atomic transactions for trades?
-- **Realm-crossing items**: Can items move between realms?
-- **Version migration**: How to handle item template changes?
+| Topic | Rationale |
+|-------|-----------|
+| **lib-fluid** (pressure/flow simulation) | Only needed if games require pipe networks, pressure physics. Current continuous quantities handle storage. |
+| **lib-equipment** (stat bonuses, set effects) | Mechanical foundation (equipment slots as containers) is ready. Higher-level equipment logic deferred. |
+| **Cross-game trading** | Entities not realm-specific, so mechanically possible. Policy/balance concerns remain game-specific. |
+| **Procedural item generation** | Template system supports it. Procedural generation logic belongs in game code, not inventory service. |
 
 ---
 
-## Part 6: Implementation Considerations
+## Part 6: State Stores and Configuration
 
-### 6.1 Performance
-
-- Item templates are read-heavy: aggressive caching
-- Container queries are frequent: index by owner
-- Grid placement validation: can be complex, consider client-side with server validation
-
-### 6.2 Scalability
-
-- Realm-partition item instances
-- Global item templates (replicated)
-- Redis cache for hot containers
-
-### 6.3 Integration Points
-
-- **lib-currency**: Items have value, market integration
-- **lib-market**: Auctions, trading
-- **lib-craft**: Recipes consume/produce items
-- **lib-character**: Character inventories
-- **lib-location**: Location-based containers (chests)
-
-### 4.5 State Stores
+### 6.1 State Store Definitions (for `schemas/state-stores.yaml`)
 
 ```yaml
 # ═══════════════════════════════════════════════════════════
-# REDIS (Hot data, caching)
+# lib-item State Stores
 # ═══════════════════════════════════════════════════════════
 
 item-template-cache:
   backend: redis
   prefix: "item:tpl"
-  purpose: Template lookup cache (global, replicated)
-  ttl: 1 hour (refreshed on access)
+  service: Item
+  purpose: Template lookup cache (global, aggressive caching)
+
+item-template-store:
+  backend: mysql
+  service: Item
+  purpose: Item template definitions (persistent, queryable)
 
 item-instance-cache:
   backend: redis
   prefix: "item:inst"
-  purpose: Hot item instance data
-  ttl: 15 minutes
-
-container-cache:
-  backend: redis
-  prefix: "inv:cont"
-  purpose: Container state + item list
-  ttl: 5 minutes
-
-container-lock:
-  backend: redis
-  prefix: "inv:lock"
-  purpose: Optimistic locking for concurrent modifications
-  ttl: 30 seconds
-
-# ═══════════════════════════════════════════════════════════
-# MYSQL (Persistence, queries)
-# ═══════════════════════════════════════════════════════════
-
-item-template-store:
-  backend: mysql
-  table: item_templates
-  purpose: Item definitions (global)
-  indexes:
-    - code, gameId (unique)
-    - category
-    - tags (JSON)
-    - rarity
+  service: Item
+  purpose: Hot item instance data for active gameplay
 
 item-instance-store:
   backend: mysql
-  table: item_instances
-  purpose: Item instances (realm-partitioned)
-  partition: realmId
-  indexes:
-    - templateId
-    - ownerId, ownerType
-    - containerId
-    - originType, originId
+  service: Item
+  purpose: Item instances (persistent, realm-partitioned)
 
-container-store:
+# ═══════════════════════════════════════════════════════════
+# lib-inventory State Stores
+# ═══════════════════════════════════════════════════════════
+
+inventory-container-cache:
+  backend: redis
+  prefix: "inv:cont"
+  service: Inventory
+  purpose: Container state and item list cache
+
+inventory-container-store:
   backend: mysql
-  table: containers
-  purpose: Container definitions
-  indexes:
-    - ownerId, ownerType
-    - containerType
-    - parentContainerId
+  service: Inventory
+  purpose: Container definitions (persistent)
+
+inventory-lock:
+  backend: redis
+  prefix: "inv:lock"
+  service: Inventory
+  purpose: Distributed locks for concurrent modifications
 ```
 
-### 4.6 Cross-Plugin Integration
+### 6.2 Configuration Schemas
+
+#### lib-item Configuration (`schemas/item-configuration.yaml`)
+
+```yaml
+openapi: 3.0.3
+info:
+  title: Item Service Configuration
+  version: 1.0.0
+
+x-service-configuration:
+  properties:
+    DefaultMaxStackSize:
+      type: integer
+      default: 99
+      env: ITEM_DEFAULT_MAX_STACK_SIZE
+      description: Default max stack size for new templates
+
+    DefaultWeightPrecision:
+      type: string
+      default: decimal_2
+      env: ITEM_DEFAULT_WEIGHT_PRECISION
+      description: Default weight precision for new templates
+
+    TemplateCacheTtlSeconds:
+      type: integer
+      default: 3600
+      env: ITEM_TEMPLATE_CACHE_TTL_SECONDS
+      description: TTL for template cache entries
+
+    InstanceCacheTtlSeconds:
+      type: integer
+      default: 900
+      env: ITEM_INSTANCE_CACHE_TTL_SECONDS
+      description: TTL for instance cache entries
+```
+
+#### lib-inventory Configuration (`schemas/inventory-configuration.yaml`)
+
+```yaml
+openapi: 3.0.3
+info:
+  title: Inventory Service Configuration
+  version: 1.0.0
+
+x-service-configuration:
+  properties:
+    DefaultMaxNestingDepth:
+      type: integer
+      default: 3
+      env: INVENTORY_DEFAULT_MAX_NESTING_DEPTH
+      description: Default maximum nesting depth for containers
+
+    DefaultWeightContribution:
+      type: string
+      default: self_plus_contents
+      env: INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION
+      description: Default weight contribution mode for containers
+
+    ContainerCacheTtlSeconds:
+      type: integer
+      default: 300
+      env: INVENTORY_CONTAINER_CACHE_TTL_SECONDS
+      description: TTL for container cache entries
+
+    LockTimeoutSeconds:
+      type: integer
+      default: 30
+      env: INVENTORY_LOCK_TIMEOUT_SECONDS
+      description: Timeout for container modification locks
+
+    EnableLazyContainerCreation:
+      type: boolean
+      default: true
+      env: INVENTORY_ENABLE_LAZY_CONTAINER_CREATION
+      description: Whether to enable lazy container creation for characters
+```
+
+---
+
+## Part 7: Implementation Considerations
+
+### 7.1 Performance
+
+- **Item templates**: Read-heavy, cache aggressively in Redis
+- **Container queries**: Frequent, index by owner in MySQL
+- **Grid placement**: Complex, client-side with server validation
+- **Bulk operations**: Batch API for multi-item operations
+
+### 7.2 Scalability
+
+- **Realm-partition** item instances in MySQL
+- **Global replicate** item templates
+- **Redis cluster** for hot containers
+- **Read replicas** for query-heavy workloads
+
+### 7.3 Implementation Order
+
+Both lib-item and lib-inventory implemented together with full feature set:
+
+**1. lib-item (implement first)**
+   - Item template CRUD and caching
+   - Item instance lifecycle (create, modify, destroy)
+   - Binding system (soulbound)
+   - Durability tracking
+   - All quantity models (discrete, continuous, unique)
+   - Template deprecation handling
+
+**2. lib-inventory (implement second, depends on lib-item)**
+   - Container CRUD with all constraint models
+   - Slot-based containers
+   - Weight-based containers with propagation
+   - Grid-based containers with rotation
+   - Volumetric containers
+   - Nested container support with WeightContribution
+   - Equipment slots as containers
+   - Movement, transfer, split, merge operations
+   - Validation walk algorithm
+   - Lazy container creation via get-or-create
+
+**3. Integration**
+   - Event wiring between plugins
+   - Cross-plugin test scenarios
+   - Documentation and examples
+
+### 7.4 Cross-Plugin Integration
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        lib-character                         │
-│  (Character has inventory containers)                        │
+│  (Character exists; inventory created lazily on access)      │
 └─────────────────┬───────────────────────────────────────────┘
-                  │ creates containers for
+                  │ accesses containers via get-or-create
                   ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                       lib-inventory                          │
@@ -1226,87 +2136,10 @@ container-store:
 
 **Event flows:**
 
-1. **Character created** → lib-character creates default containers
+1. **Character inventory accessed** → lib-inventory get-or-create creates containers on demand
 2. **Quest completed** → lib-quest calls `/inventory/add` with origin
 3. **Item crafted** → lib-craft consumes inputs, creates outputs
 4. **Item sold** → lib-market escrows item, lib-currency handles payment
-
----
-
-## Part 5: Open Questions
-
-### 5.1 Critical Decisions Needed
-
-1. **One plugin or two?**
-   - lib-item + lib-inventory (cleaner separation)
-   - lib-inventory only (simpler)
-   - **Leaning toward**: Single lib-inventory for MVP, split later if needed
-
-2. **Grid inventory support priority?**
-   - MVP: slot/weight only
-   - Phase 2: add grid support
-   - **Recommendation**: MVP slot/weight, grid in Phase 2
-
-3. **Fluid handling?**
-   - Continuous quantity items (simple)
-   - Separate lib-fluid (complex, defer?)
-   - **Recommendation**: Continuous quantities in lib-inventory, defer lib-fluid
-
-4. **Equipment system?**
-   - Part of lib-inventory (via container types)
-   - **Recommendation**: Equipment = containers with maxSlots=1 and game-defined types
-
-5. **Nested containers (bags in bags)?**
-   - Game-configurable depth limit
-   - **Recommendation**: Default max depth 3, configurable per container type
-
-### 5.2 Edge Cases to Consider
-
-| Edge Case | Proposed Handling |
-|-----------|-------------------|
-| Item stacking across containers | Auto-merge when capacity allows |
-| Container within container limits | Configurable maxNestingDepth |
-| Item deletion cascade | Soft-delete with recovery option |
-| Ownership transfers (trades) | Atomic transaction via lib-market |
-| Realm-crossing items | Requires explicit transfer API |
-| Template version migration | Deprecated templates map to replacements |
-| Concurrent modifications | Optimistic locking with ETags |
-| Stack overflow | Return overflow quantity, don't fail |
-
----
-
-## Part 6: Implementation Considerations
-
-### 6.1 Performance
-
-- **Item templates**: Read-heavy, cache aggressively (1h TTL)
-- **Container queries**: Frequent, index by owner
-- **Grid placement**: Complex, client-side with server validation
-- **Bulk operations**: Batch API for multi-item operations
-
-### 6.2 Scalability
-
-- **Realm-partition** item instances
-- **Global replicate** item templates
-- **Redis cluster** for hot containers
-- **Read replicas** for query-heavy workloads
-
-### 6.3 Migration Strategy
-
-1. **Phase 1: MVP** (parallel with lib-currency)
-   - Slot-based and weight-based containers
-   - Basic template/instance pattern
-   - Core CRUD operations
-
-2. **Phase 2: Grid Support**
-   - Grid-based containers
-   - Tetris-style placement
-   - Rotation support
-
-3. **Phase 3: Advanced Features**
-   - Continuous quantities (fluids)
-   - Equipment integration
-   - Cross-realm transfers
 
 ---
 
@@ -1402,7 +2235,7 @@ iron_sword:
   category: weapon
   subcategory: sword
   rarity: common
-  stackable: false
+  quantityModel: unique
   maxStackSize: 1
   weight: 3.5
   baseValue: 25
@@ -1425,6 +2258,8 @@ equipment_main_hand:
   containerType: "equipment_slot"
   constraintModel: slot_only
   maxSlots: 1
+  isEquipmentSlot: true
+  equipmentSlotName: "main_hand"
   allowedCategories: ["weapon"]
 ```
 
@@ -1477,6 +2312,53 @@ player_backpack:
 
 ---
 
-*Document Status: RESEARCH COMPLETE - Ready for review and decision-making*
+*Document Status: ARCHITECTURE COMPLETE - TENETS AUDIT PASSED*
 *Last Updated: 2026-01-22*
 *Research Sources: 5 parallel web search agents covering game systems, fluid mechanics, data modeling, ECS patterns, and commercial BaaS platforms*
+
+---
+
+## Implementation Checklist
+
+### lib-item Schema (schemas/item-api.yaml)
+- [ ] ItemTemplate model with all fields and descriptions
+- [ ] ItemInstance model with all fields and descriptions
+- [ ] QuantityModel enum
+- [ ] ItemRarity enum
+- [ ] SoulboundType enum
+- [ ] ItemCategory enum
+- [ ] ItemScope enum (consistent with CurrencyScope)
+- [ ] WeightPrecision enum (consistent with CurrencyPrecision)
+- [ ] ItemOwnerType enum
+- [ ] ItemOriginType enum
+- [ ] Template CRUD endpoints with x-permissions
+- [ ] Instance lifecycle endpoints with x-permissions
+- [ ] Binding endpoints with x-permissions
+- [ ] Query endpoints with x-permissions
+- [ ] Lifecycle events via x-lifecycle
+- [ ] State stores added to state-stores.yaml
+- [ ] Configuration schema (item-configuration.yaml)
+
+### lib-inventory Schema (schemas/inventory-api.yaml)
+- [ ] Container model with nesting support and descriptions
+- [ ] ContainerConstraintModel enum
+- [ ] WeightContribution enum
+- [ ] ContainerOwnerType enum
+- [ ] Container CRUD endpoints with x-permissions
+- [ ] get-or-create endpoint for lazy creation
+- [ ] Add/Remove/Move/Transfer endpoints with x-permissions
+- [ ] Split/Merge endpoints with x-permissions
+- [ ] Query endpoints (find-space, has, count) with x-permissions
+- [ ] Lifecycle events via x-lifecycle
+- [ ] State stores added to state-stores.yaml
+- [ ] Configuration schema (inventory-configuration.yaml)
+
+### Implementation (after schema generation)
+- [ ] lib-item service implementation
+- [ ] lib-inventory service implementation
+- [ ] Validation walk algorithm
+- [ ] Weight recalculation
+- [ ] Grid placement validation
+- [ ] Lazy container creation
+- [ ] Unit tests
+- [ ] HTTP integration tests
