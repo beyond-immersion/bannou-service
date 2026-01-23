@@ -16821,6 +16821,191 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent">
+            <summary>
+            Event published when an item template is deprecated (soft-disable with optional migration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.TemplateId">
+            <summary>
+            Deprecated template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.Code">
+            <summary>
+            Item template code
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.GameId">
+            <summary>
+            Game service ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.Name">
+            <summary>
+            Template display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.Category">
+            <summary>
+            Item category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.Rarity">
+            <summary>
+            Item rarity tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.QuantityModel">
+            <summary>
+            Quantity tracking model
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.Scope">
+            <summary>
+            Realm availability scope
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.IsActive">
+            <summary>
+            Whether template is still active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.CreatedAt">
+            <summary>
+            When the template was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.UpdatedAt">
+            <summary>
+            When the template was last modified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeprecatedEvent.MigrationTargetId">
+            <summary>
+            Template ID to migrate existing instances to
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent">
+            <summary>
+            Event published when an item instance is modified (durability, stats, name changes)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.InstanceId">
+            <summary>
+            Modified item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.TemplateId">
+            <summary>
+            Item template reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.ContainerId">
+            <summary>
+            Container holding this item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.RealmId">
+            <summary>
+            Realm this instance exists in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.Quantity">
+            <summary>
+            Current quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.OriginType">
+            <summary>
+            How this instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.CreatedAt">
+            <summary>
+            When the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceModifiedEvent.ModifiedAt">
+            <summary>
+            When the instance was modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent">
+            <summary>
+            Event published when an item instance is permanently destroyed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.InstanceId">
+            <summary>
+            Destroyed item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.TemplateId">
+            <summary>
+            Item template reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.ContainerId">
+            <summary>
+            Container that held this item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.RealmId">
+            <summary>
+            Realm this instance existed in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.Quantity">
+            <summary>
+            Quantity at time of destruction
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.OriginType">
+            <summary>
+            How this instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.CreatedAt">
+            <summary>
+            When the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDestroyedEvent.ModifiedAt">
+            <summary>
+            When the instance was last modified
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent">
             <summary>
             Event published when an item is bound to a character (soulbound)
