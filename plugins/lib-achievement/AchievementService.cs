@@ -563,9 +563,10 @@ public partial class AchievementService : IAchievementService
                 await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
             }
 
-            // Save progress
+            // Save progress with cache TTL
             entityProgress.Achievements[body.AchievementId] = achievementProgress;
-            await progressStore.SaveAsync(progressKey, entityProgress, options: null, cancellationToken);
+            await progressStore.SaveAsync(progressKey, entityProgress,
+                new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds }, cancellationToken);
 
             // Publish progress event
             var progressEvent = new AchievementProgressUpdatedEvent
@@ -704,7 +705,8 @@ public partial class AchievementService : IAchievementService
             definition.EarnedCount++;
             await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
 
-            await store.SaveAsync(key, progress, options: null, cancellationToken);
+            await store.SaveAsync(key, progress,
+                new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds }, cancellationToken);
 
             // Publish unlock event
             await PublishUnlockEventAsync(body.GameServiceId, definition, body.EntityId, body.EntityType, progress.TotalPoints, cancellationToken);
@@ -1120,7 +1122,7 @@ public partial class AchievementService : IAchievementService
             Points = definition.Points,
             TotalPoints = totalPoints,
             IconUrl = definition.IconUrl,
-            IsRare = definition.EarnedCount < 100, // Simple heuristic
+            IsRare = definition.EarnedCount < _configuration.RarityThresholdEarnedCount,
             Rarity = null // Would need total player count to calculate
         };
         await _messageBus.TryPublishAsync("achievement.unlocked", unlockEvent, cancellationToken: cancellationToken);

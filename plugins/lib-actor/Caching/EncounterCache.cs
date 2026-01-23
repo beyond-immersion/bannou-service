@@ -19,25 +19,28 @@ public sealed class EncounterCache : IEncounterCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EncounterCache> _logger;
+    private readonly ActorServiceConfiguration _configuration;
     private readonly ConcurrentDictionary<Guid, CachedEncounterList> _encounterListCache = new();
     private readonly ConcurrentDictionary<string, CachedSentiment> _sentimentCache = new();
     private readonly ConcurrentDictionary<string, CachedHasMet> _hasMetCache = new();
     private readonly ConcurrentDictionary<string, CachedEncounterList> _pairEncounterCache = new();
 
     /// <summary>
-    /// Time-to-live for cached encounter data (5 minutes).
+    /// Time-to-live for cached encounter data.
     /// </summary>
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
+    private TimeSpan CacheTtl => TimeSpan.FromMinutes(_configuration.EncounterCacheTtlMinutes);
 
     /// <summary>
     /// Creates a new encounter cache.
     /// </summary>
     public EncounterCache(
         IServiceScopeFactory scopeFactory,
-        ILogger<EncounterCache> logger)
+        ILogger<EncounterCache> logger,
+        ActorServiceConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc/>

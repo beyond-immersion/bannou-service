@@ -21,24 +21,27 @@ public sealed class PersonalityCache : IPersonalityCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PersonalityCache> _logger;
+    private readonly ActorServiceConfiguration _configuration;
     private readonly ConcurrentDictionary<Guid, CachedPersonality> _personalityCache = new();
     private readonly ConcurrentDictionary<Guid, CachedCombatPreferences> _combatCache = new();
     private readonly ConcurrentDictionary<Guid, CachedBackstory> _backstoryCache = new();
 
     /// <summary>
-    /// Time-to-live for cached personality data (5 minutes).
+    /// Time-to-live for cached personality data.
     /// </summary>
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
+    private TimeSpan CacheTtl => TimeSpan.FromMinutes(_configuration.PersonalityCacheTtlMinutes);
 
     /// <summary>
     /// Creates a new personality cache.
     /// </summary>
     public PersonalityCache(
         IServiceScopeFactory scopeFactory,
-        ILogger<PersonalityCache> logger)
+        ILogger<PersonalityCache> logger,
+        ActorServiceConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc/>
