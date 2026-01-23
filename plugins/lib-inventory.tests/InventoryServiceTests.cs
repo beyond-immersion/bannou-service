@@ -27,6 +27,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<IItemClient> _mockItemClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<InventoryService>> _mockLogger;
 
     public InventoryServiceTests()
@@ -37,6 +38,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         _mockMessageBus = new Mock<IMessageBus>();
         _mockNavigator = new Mock<IServiceNavigator>();
         _mockItemClient = new Mock<IItemClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<InventoryService>>();
 
         _mockStateStoreFactory
@@ -46,6 +48,11 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(f => f.GetStore<string>(StateStoreDefinitions.InventoryContainerStore))
             .Returns(_mockStringStore.Object);
 
+        // Setup container cache store (cache operations are non-fatal so this can return same mock)
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache))
+            .Returns(_mockContainerStore.Object);
+
         _mockNavigator
             .Setup(n => n.Item)
             .Returns(_mockItemClient.Object);
@@ -53,6 +60,18 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         Configuration.DefaultMaxSlots = 20;
         Configuration.DefaultMaxWeight = 100.0;
@@ -67,6 +86,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             _mockMessageBus.Object,
             _mockNavigator.Object,
             _mockStateStoreFactory.Object,
+            _mockLockProvider.Object,
             _mockLogger.Object,
             Configuration);
     }

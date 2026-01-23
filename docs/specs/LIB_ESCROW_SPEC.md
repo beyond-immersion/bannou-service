@@ -1212,7 +1212,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/create:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: developer
+      states: {}
   description: |
     Create a new escrow agreement. Creates the escrow's wallet and container,
     issues deposit tokens, and begins accepting deposits.
@@ -1277,7 +1279,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/get:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: Get escrow details
   request:
     escrowId: uuid
@@ -1289,7 +1293,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/list:
   method: POST
-  access: user
+  x-permissions:
+    - role: user
+      states: {}
   description: List escrows for a party
   request:
     partyId: uuid
@@ -1315,7 +1321,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/deposit:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: |
     Deposit assets into escrow. Transfers currency from party wallet to escrow wallet,
     moves items from party container to escrow container, or locks contracts.
@@ -1352,7 +1360,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/deposit/validate:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: Validate a deposit without executing (dry run)
   request:
     escrowId: uuid
@@ -1366,7 +1376,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/deposit/status:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: Get deposit status for a party
   request:
     escrowId: uuid
@@ -1389,7 +1401,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/consent:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: Record party consent for release, refund, or re-affirmation
   request:
     escrowId: uuid
@@ -1416,7 +1430,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/consent/status:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: Get consent status for escrow
   request:
     escrowId: uuid
@@ -1446,7 +1462,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/release:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: developer
+      states: {}
   description: |
     Trigger release (for trusted modes or after consent).
     If boundContractId is set, checks contract status first (must be fulfilled).
@@ -1483,7 +1501,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/refund:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: developer
+      states: {}
   description: Trigger refund (for trusted modes or consent)
   request:
     escrowId: uuid
@@ -1508,7 +1528,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/cancel:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: developer
+      states: {}
   description: Cancel escrow before fully funded
   request:
     escrowId: uuid
@@ -1531,7 +1553,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/dispute:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: Raise a dispute on funded escrow
   request:
     escrowId: uuid
@@ -1558,7 +1582,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/resolve:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: developer
+      states: {}
   description: Arbiter resolves disputed escrow
   request:
     escrowId: uuid
@@ -1601,7 +1627,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/verify-condition:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: developer
+      states: {}
   description: |
     Verify condition for conditional escrow (non-contract path).
     For escrows with boundContractId, use contract milestones instead.
@@ -1632,7 +1660,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/validate:
   method: POST
-  access: admin
+  x-permissions:
+    - role: admin
+      states: {}
   description: Manually trigger validation on an active escrow
   request:
     escrowId: uuid
@@ -1643,7 +1673,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/reaffirm:
   method: POST
-  access: authenticated
+  x-permissions:
+    - role: user
+      states: {}
   description: Re-affirm after validation failure (party accepts changed state)
   request:
     escrowId: uuid
@@ -1670,7 +1702,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/handler/register:
   method: POST
-  access: admin
+  x-permissions:
+    - role: admin
+      states: {}
   description: Register a custom asset type handler
   request:
     assetType: string
@@ -1688,7 +1722,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/handler/list:
   method: POST
-  access: admin
+  x-permissions:
+    - role: admin
+      states: {}
   description: List registered asset handlers (includes built-in)
   request: {}
   response:
@@ -1706,7 +1742,9 @@ All custom handlers must implement these guarantees:
 
 /escrow/handler/deregister:
   method: POST
-  access: admin
+  x-permissions:
+    - role: admin
+      states: {}
   description: Remove a custom asset handler registration
   request:
     assetType: string

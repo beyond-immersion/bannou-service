@@ -354,12 +354,12 @@ Most complex. Each violation needs analysis of the specific operation to determi
 
 - [ ] Phase 1: T25 enum-as-string (0/9)
 - [ ] Phase 1: T25 GUID-as-string (0/25)
-- [ ] Phase 2: T21 unused cache stores (4/5)
+- [x] Phase 2: T21 unused cache stores (5/5)
   - [x] MusicCompositions - Implemented composition caching for deterministic requests
   - [x] CurrencyBalanceCache - Implemented cache read-through/write-through for balance operations
   - [x] CurrencyHoldsCache - Implemented cache read-through/write-through for hold operations
   - [x] InventoryContainerCache - Implemented cache read-through/write-through for container operations
-  - [ ] InventoryLock
+  - [x] InventoryLock - Implemented distributed locking for AddItem, RemoveItem, UpdateContainer operations
 - [ ] Phase 3: T21 unused config (0/20 services)
 - [ ] Phase 3: T21 hardcoded tunables (0/51)
 - [ ] Phase 4: T9 non-atomic operations (0/36)
