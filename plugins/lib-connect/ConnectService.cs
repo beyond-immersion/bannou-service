@@ -1632,7 +1632,8 @@ public partial class ConnectService : IConnectService
                 eventData.EventType, eventData.SessionId);
 
             // Check if the session has an active WebSocket connection
-            if (HasConnection(eventData.SessionId))
+            var sessionIdStr = eventData.SessionId.ToString();
+            if (HasConnection(sessionIdStr))
             {
                 if (eventData.EventType == AuthEventType.Login)
                 {
@@ -1654,11 +1655,11 @@ public partial class ConnectService : IConnectService
                 else if (eventData.EventType == AuthEventType.TokenRefresh)
                 {
                     // Token refreshed - validate session still exists
-                    var sessionValid = await ValidateSessionAsync(eventData.SessionId);
+                    var sessionValid = await ValidateSessionAsync(sessionIdStr);
                     if (!sessionValid)
                     {
                         _logger.LogWarning("Session {SessionId} invalid after token refresh, disconnecting", eventData.SessionId);
-                        await DisconnectAsync(eventData.SessionId, "Session invalid");
+                        await DisconnectAsync(sessionIdStr, "Session invalid");
                     }
                 }
             }

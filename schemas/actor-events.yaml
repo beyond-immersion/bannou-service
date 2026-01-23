@@ -400,6 +400,7 @@ components:
           description: Actor managing this encounter
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for the encounter
         encounterType:
           type: string
@@ -432,6 +433,7 @@ components:
           description: Actor that was managing this encounter
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for the encounter
         durationSeconds:
           type: number
@@ -466,6 +468,7 @@ components:
           description: Actor managing this encounter
         encounterId:
           type: string
+          format: uuid
           description: Unique identifier for the encounter
         previousPhase:
           type: string

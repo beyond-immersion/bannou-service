@@ -451,7 +451,7 @@ public partial class ActorEncounterStartedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Type of encounter (combat, conversation, etc.)
@@ -500,7 +500,7 @@ public partial class ActorEncounterEndedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Duration of the encounter in seconds
@@ -545,7 +545,7 @@ public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Phase before the change

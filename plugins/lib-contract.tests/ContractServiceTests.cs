@@ -27,6 +27,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     private readonly Mock<IStateStore<BreachModel>> _mockBreachStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<ClauseTypeModel>> _mockClauseTypeStore;
+    private readonly Mock<IStateStore<LockContractResponse>> _mockLockResponseStore;
+    private readonly Mock<IStateStore<UnlockContractResponse>> _mockUnlockResponseStore;
+    private readonly Mock<IStateStore<TransferContractPartyResponse>> _mockTransferResponseStore;
+    private readonly Mock<IStateStore<ExecuteContractResponse>> _mockExecuteResponseStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<ILogger<ContractService>> _mockLogger;
@@ -42,6 +47,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockBreachStore = new Mock<IStateStore<BreachModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockClauseTypeStore = new Mock<IStateStore<ClauseTypeModel>>();
+        _mockLockResponseStore = new Mock<IStateStore<LockContractResponse>>();
+        _mockUnlockResponseStore = new Mock<IStateStore<UnlockContractResponse>>();
+        _mockTransferResponseStore = new Mock<IStateStore<TransferContractPartyResponse>>();
+        _mockExecuteResponseStore = new Mock<IStateStore<ExecuteContractResponse>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockNavigator = new Mock<IServiceNavigator>();
         _mockLogger = new Mock<ILogger<ContractService>>();
@@ -53,6 +63,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockStateStoreFactory.Setup(f => f.GetStore<BreachModel>(STATE_STORE)).Returns(_mockBreachStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<ClauseTypeModel>(STATE_STORE)).Returns(_mockClauseTypeStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<LockContractResponse>(STATE_STORE)).Returns(_mockLockResponseStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<UnlockContractResponse>(STATE_STORE)).Returns(_mockUnlockResponseStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<TransferContractPartyResponse>(STATE_STORE)).Returns(_mockTransferResponseStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<ExecuteContractResponse>(STATE_STORE)).Returns(_mockExecuteResponseStore.Object);
 
         // Default message bus setup
         _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -2110,6 +2125,812 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         Assert.Equal("P30D", capturedContext["contract.terms.duration"]);
         Assert.Equal("weekly", capturedContext["contract.terms.paymentFrequency"]);
         Assert.Equal(500, capturedContext["contract.terms.custom.wage"]);
+    }
+
+    #endregion
+
+    #region Guardian System Tests
+
+    [Fact]
+    public async Task LockContractAsync_ValidRequest_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var guardianId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId.ToString();
+        instance.Status = ContractStatus.Active;
+
+        var template = CreateTestTemplateModel(templateId);
+        template.Transferable = true;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new LockContractRequest
+        {
+            ContractInstanceId = contractId,
+            GuardianId = guardianId,
+            GuardianType = "escrow"
+        };
+
+        // Act
+        var (status, response) = await service.LockContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Locked);
+        Assert.Equal(contractId, response.ContractId);
+        Assert.Equal(guardianId, response.GuardianId);
+    }
+
+    [Fact]
+    public async Task LockContractAsync_AlreadyLocked_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId.ToString();
+        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.GuardianType = "escrow";
+
+        var template = CreateTestTemplateModel(templateId);
+        template.Transferable = true;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new LockContractRequest
+        {
+            ContractInstanceId = contractId,
+            GuardianId = Guid.NewGuid(),
+            GuardianType = "escrow"
+        };
+
+        // Act
+        var (status, response) = await service.LockContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task LockContractAsync_NotTransferable_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId.ToString();
+
+        var template = CreateTestTemplateModel(templateId);
+        template.Transferable = false;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new LockContractRequest
+        {
+            ContractInstanceId = contractId,
+            GuardianId = Guid.NewGuid(),
+            GuardianType = "escrow"
+        };
+
+        // Act
+        var (status, response) = await service.LockContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UnlockContractAsync_ValidGuardian_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var guardianId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.GuardianId = guardianId.ToString();
+        instance.GuardianType = "escrow";
+        instance.LockedAt = DateTimeOffset.UtcNow.AddHours(-1);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new UnlockContractRequest
+        {
+            ContractInstanceId = contractId,
+            GuardianId = guardianId,
+            GuardianType = "escrow"
+        };
+
+        // Act
+        var (status, response) = await service.UnlockContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Unlocked);
+    }
+
+    [Fact]
+    public async Task UnlockContractAsync_WrongGuardian_ReturnsForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.GuardianType = "escrow";
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new UnlockContractRequest
+        {
+            ContractInstanceId = contractId,
+            GuardianId = Guid.NewGuid(),
+            GuardianType = "escrow"
+        };
+
+        // Act
+        var (status, response) = await service.UnlockContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task TransferContractPartyAsync_ValidGuardian_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var guardianId = Guid.NewGuid();
+        var fromEntityId = Guid.NewGuid();
+        var toEntityId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.GuardianId = guardianId.ToString();
+        instance.GuardianType = "escrow";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = fromEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Consented }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockListStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+        _mockListStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new TransferContractPartyRequest
+        {
+            ContractInstanceId = contractId,
+            GuardianId = guardianId,
+            GuardianType = "escrow",
+            FromEntityId = fromEntityId,
+            FromEntityType = EntityType.Character,
+            ToEntityId = toEntityId,
+            ToEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.TransferContractPartyAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Transferred);
+        Assert.Equal(toEntityId, response.ToEntityId);
+        Assert.Equal("employer", response.Role);
+    }
+
+    [Fact]
+    public async Task TransferContractPartyAsync_NotLocked_ReturnsForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        // No guardian set (not locked)
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new TransferContractPartyRequest
+        {
+            ContractInstanceId = contractId,
+            GuardianId = Guid.NewGuid(),
+            GuardianType = "escrow",
+            FromEntityId = Guid.NewGuid(),
+            FromEntityType = EntityType.Character,
+            ToEntityId = Guid.NewGuid(),
+            ToEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.TransferContractPartyAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Clause Type System Tests
+
+    [Fact]
+    public async Task RegisterClauseTypeAsync_ValidRequest_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockClauseTypeStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ClauseTypeModel?)null);
+        _mockClauseTypeStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ClauseTypeModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockListStore
+            .Setup(s => s.GetAsync("all-clause-types", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        _mockListStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new RegisterClauseTypeRequest
+        {
+            TypeCode = "custom_fee",
+            Description = "Custom fee clause",
+            Category = ClauseCategory.Execution,
+            ExecutionHandler = new ClauseHandlerDefinition
+            {
+                Service = "currency",
+                Endpoint = "/currency/transfer"
+            }
+        };
+
+        // Act
+        var (status, response) = await service.RegisterClauseTypeAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Registered);
+        Assert.Equal("custom_fee", response.TypeCode);
+    }
+
+    [Fact]
+    public async Task RegisterClauseTypeAsync_DuplicateCode_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockClauseTypeStore
+            .Setup(s => s.GetAsync("clause-type:custom_fee", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ClauseTypeModel
+            {
+                TypeCode = "custom_fee",
+                Category = "Execution",
+                IsBuiltIn = false,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new RegisterClauseTypeRequest
+        {
+            TypeCode = "custom_fee",
+            Description = "Custom fee clause",
+            Category = ClauseCategory.Execution
+        };
+
+        // Act
+        var (status, response) = await service.RegisterClauseTypeAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ListClauseTypesAsync_ReturnsRegisteredTypes()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup: built-in types already registered
+        _mockListStore
+            .Setup(s => s.GetAsync("all-clause-types", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "asset_requirement", "currency_transfer" });
+
+        _mockClauseTypeStore
+            .Setup(s => s.GetAsync("clause-type:asset_requirement", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ClauseTypeModel
+            {
+                TypeCode = "asset_requirement",
+                Description = "Validates assets",
+                Category = "Validation",
+                IsBuiltIn = true,
+                ValidationHandler = new ClauseHandlerModel { Service = "currency", Endpoint = "/currency/balance/get" },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+        _mockClauseTypeStore
+            .Setup(s => s.GetAsync("clause-type:currency_transfer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ClauseTypeModel
+            {
+                TypeCode = "currency_transfer",
+                Description = "Transfers currency",
+                Category = "Execution",
+                IsBuiltIn = true,
+                ExecutionHandler = new ClauseHandlerModel { Service = "currency", Endpoint = "/currency/transfer" },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new ListClauseTypesRequest();
+
+        // Act
+        var (status, response) = await service.ListClauseTypesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ClauseTypes.Count);
+    }
+
+    #endregion
+
+    #region Template Values Tests
+
+    [Fact]
+    public async Task SetContractTemplateValuesAsync_ValidRequest_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new SetTemplateValuesRequest
+        {
+            ContractInstanceId = contractId,
+            TemplateValues = new Dictionary<string, string>
+            {
+                ["PartyA_EscrowWalletId"] = Guid.NewGuid().ToString(),
+                ["PartyB_WalletId"] = Guid.NewGuid().ToString(),
+                ["base_amount"] = "10000"
+            }
+        };
+
+        // Act
+        var (status, response) = await service.SetContractTemplateValuesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Updated);
+        Assert.Equal(3, response.ValueCount);
+    }
+
+    [Fact]
+    public async Task SetContractTemplateValuesAsync_InvalidKey_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new SetTemplateValuesRequest
+        {
+            ContractInstanceId = contractId,
+            TemplateValues = new Dictionary<string, string>
+            {
+                ["valid_key"] = "value",
+                ["invalid-key-with-hyphens"] = "value"
+            }
+        };
+
+        // Act
+        var (status, response) = await service.SetContractTemplateValuesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task SetContractTemplateValuesAsync_MergesWithExisting()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateValues = new Dictionary<string, string>
+        {
+            ["existing_key"] = "existing_value"
+        };
+
+        ContractInstanceModel? savedModel = null;
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContractInstanceModel, StateOptions?, CancellationToken>((k, m, o, c) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        var request = new SetTemplateValuesRequest
+        {
+            ContractInstanceId = contractId,
+            TemplateValues = new Dictionary<string, string>
+            {
+                ["new_key"] = "new_value"
+            }
+        };
+
+        // Act
+        var (status, response) = await service.SetContractTemplateValuesAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedModel);
+        Assert.Equal(2, savedModel.TemplateValues?.Count);
+        Assert.Equal("existing_value", savedModel.TemplateValues?["existing_key"]);
+        Assert.Equal("new_value", savedModel.TemplateValues?["new_key"]);
+    }
+
+    #endregion
+
+    #region Execution System Tests
+
+    [Fact]
+    public async Task CheckAssetRequirementsAsync_NoClauses_AllSatisfied()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId.ToString();
+        instance.TemplateValues = new Dictionary<string, string> { ["key"] = "value" };
+
+        var template = CreateTestTemplateModel(templateId);
+        // No clauses defined in template
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new CheckAssetRequirementsRequest
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var (status, response) = await service.CheckAssetRequirementsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.AllSatisfied);
+    }
+
+    [Fact]
+    public async Task CheckAssetRequirementsAsync_MissingTemplateValues_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateValues = null;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new CheckAssetRequirementsRequest
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var (status, response) = await service.CheckAssetRequirementsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_NotFulfilled_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.TemplateValues = new Dictionary<string, string> { ["key"] = "value" };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_MissingTemplateValues_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Fulfilled;
+        instance.TemplateValues = null;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_AlreadyExecuted_ReturnsCachedResult()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var executedAt = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Fulfilled;
+        instance.TemplateValues = new Dictionary<string, string> { ["key"] = "value" };
+        instance.ExecutedAt = executedAt;
+        instance.ExecutionIdempotencyKey = "test-key";
+        instance.ExecutionDistributions = new List<DistributionRecordModel>();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Executed);
+        Assert.True(response.AlreadyExecuted);
+        Assert.Equal(executedAt, response.ExecutedAt);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_FulfilledWithNoClauses_ExecutesSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.TemplateId = templateId.ToString();
+        instance.Status = ContractStatus.Fulfilled;
+        instance.TemplateValues = new Dictionary<string, string> { ["key"] = "value" };
+
+        var template = CreateTestTemplateModel(templateId);
+        // No clauses defined
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId,
+            IdempotencyKey = "test-exec-key"
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Executed);
+        Assert.False(response.AlreadyExecuted);
+        Assert.NotNull(response.ExecutedAt);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_ContractNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ContractInstanceModel?)null);
+
+        var request = new ExecuteContractRequest
+        {
+            ContractInstanceId = contractId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Guardian Enforcement Tests
+
+    [Fact]
+    public async Task TerminateContractAsync_LockedContract_ReturnsForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.GuardianType = "escrow";
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new TerminateContractInstanceRequest
+        {
+            ContractId = contractId,
+            RequestingEntityId = Guid.NewGuid(),
+            RequestingEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.TerminateContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ConsentToContractAsync_LockedContract_ReturnsForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Proposed;
+        instance.GuardianId = Guid.NewGuid().ToString();
+        instance.GuardianType = "escrow";
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = entityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+
+        var request = new ConsentToContractRequest
+        {
+            ContractId = contractId,
+            PartyEntityId = entityId,
+            PartyEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.ConsentToContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
     }
 
     #endregion

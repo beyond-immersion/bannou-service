@@ -107,7 +107,7 @@ public class ActorRunner : IActorRunner
     public int PerceptionQueueDepth => _perceptionQueue.Reader.Count;
 
     /// <inheritdoc/>
-    public string? CurrentEncounterId => _encounter?.EncounterId;
+    public Guid? CurrentEncounterId => _encounter?.EncounterId;
 
     /// <summary>
     /// Creates a new actor runner instance.
@@ -314,7 +314,7 @@ public class ActorRunner : IActorRunner
     }
 
     /// <inheritdoc/>
-    public bool StartEncounter(string encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null)
+    public bool StartEncounter(Guid encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null)
     {
         if (_disposed)
             return false;
