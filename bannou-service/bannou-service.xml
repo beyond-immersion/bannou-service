@@ -16821,6 +16821,466 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent">
+            <summary>
+            Event published when an item is bound to a character (soulbound)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.InstanceId">
+            <summary>
+            Bound item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.TemplateCode">
+            <summary>
+            Item template code for debugging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.RealmId">
+            <summary>
+            Realm where binding occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.CharacterId">
+            <summary>
+            Character the item is bound to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.BindType">
+            <summary>
+            Type of binding (on_pickup, on_equip, on_use)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent">
+            <summary>
+            Event published when an item binding is removed (admin action, expiration)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.InstanceId">
+            <summary>
+            Unbound item instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.TemplateId">
+            <summary>
+            Item template ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.TemplateCode">
+            <summary>
+            Item template code for debugging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.RealmId">
+            <summary>
+            Realm where unbinding occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.PreviousCharacterId">
+            <summary>
+            Character the item was previously bound to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.Reason">
+            <summary>
+            Reason for unbinding (admin, expiration, transfer_override)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent.UnboundBy">
+            <summary>
+            Account ID of admin who performed unbinding (if admin action)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent">
+            <summary>
+            Published to item-template.created when a itemtemplate is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.EventName">
+            <summary>
+            Event type identifier: item-template.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.TemplateId">
+            <summary>
+            Unique identifier for the item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Code">
+            <summary>
+            Unique item code within game
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.GameId">
+            <summary>
+            Game service this template belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Name">
+            <summary>
+            Human-readable display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Category">
+            <summary>
+            Item classification category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Rarity">
+            <summary>
+            Item rarity tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.QuantityModel">
+            <summary>
+            How quantities are tracked (discrete, continuous, unique)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Scope">
+            <summary>
+            Realm availability scope
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.IsActive">
+            <summary>
+            Whether template is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.CreatedAt">
+            <summary>
+            When the template was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.UpdatedAt">
+            <summary>
+            When the template was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent">
+            <summary>
+            Published to item-template.updated when a itemtemplate is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: item-template.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.TemplateId">
+            <summary>
+            Unique identifier for the item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Code">
+            <summary>
+            Unique item code within game
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.GameId">
+            <summary>
+            Game service this template belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Name">
+            <summary>
+            Human-readable display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Category">
+            <summary>
+            Item classification category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Rarity">
+            <summary>
+            Item rarity tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.QuantityModel">
+            <summary>
+            How quantities are tracked (discrete, continuous, unique)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Scope">
+            <summary>
+            Realm availability scope
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.IsActive">
+            <summary>
+            Whether template is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.CreatedAt">
+            <summary>
+            When the template was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.UpdatedAt">
+            <summary>
+            When the template was last modified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent">
+            <summary>
+            Published to item-template.deleted when a itemtemplate is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.EventName">
+            <summary>
+            Event type identifier: item-template.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.TemplateId">
+            <summary>
+            Unique identifier for the item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Code">
+            <summary>
+            Unique item code within game
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.GameId">
+            <summary>
+            Game service this template belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Name">
+            <summary>
+            Human-readable display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Category">
+            <summary>
+            Item classification category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Rarity">
+            <summary>
+            Item rarity tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.QuantityModel">
+            <summary>
+            How quantities are tracked (discrete, continuous, unique)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Scope">
+            <summary>
+            Realm availability scope
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.IsActive">
+            <summary>
+            Whether template is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.CreatedAt">
+            <summary>
+            When the template was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.UpdatedAt">
+            <summary>
+            When the template was last modified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent">
+            <summary>
+            Published to item-instance.created when a iteminstance is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.EventName">
+            <summary>
+            Event type identifier: item-instance.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.InstanceId">
+            <summary>
+            Unique identifier for this item instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.TemplateId">
+            <summary>
+            Reference to the item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.ContainerId">
+            <summary>
+            Container holding this item (ownership derived from container)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.RealmId">
+            <summary>
+            Realm this instance exists in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.Quantity">
+            <summary>
+            Item quantity (1 for unique, integer for discrete, decimal for continuous)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.OriginType">
+            <summary>
+            How this item instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.CreatedAt">
+            <summary>
+            When the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceCreatedEvent.ModifiedAt">
+            <summary>
+            When the instance was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent">
+            <summary>
+            Published to item-instance.updated when a iteminstance is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: item-instance.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.InstanceId">
+            <summary>
+            Unique identifier for this item instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.TemplateId">
+            <summary>
+            Reference to the item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.ContainerId">
+            <summary>
+            Container holding this item (ownership derived from container)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.RealmId">
+            <summary>
+            Realm this instance exists in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.Quantity">
+            <summary>
+            Item quantity (1 for unique, integer for discrete, decimal for continuous)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.OriginType">
+            <summary>
+            How this item instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.CreatedAt">
+            <summary>
+            When the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.ModifiedAt">
+            <summary>
+            When the instance was last modified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent">
+            <summary>
+            Published to item-instance.deleted when a iteminstance is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.EventName">
+            <summary>
+            Event type identifier: item-instance.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.InstanceId">
+            <summary>
+            Unique identifier for this item instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.TemplateId">
+            <summary>
+            Reference to the item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.ContainerId">
+            <summary>
+            Container holding this item (ownership derived from container)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.RealmId">
+            <summary>
+            Realm this instance exists in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.Quantity">
+            <summary>
+            Item quantity (1 for unique, integer for discrete, decimal for continuous)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.OriginType">
+            <summary>
+            How this item instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.CreatedAt">
+            <summary>
+            When the instance was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.ModifiedAt">
+            <summary>
+            When the instance was last modified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent">
             <summary>
             Published when an entity's rank changes on a leaderboard
@@ -42870,6 +43330,1325 @@
             ID of the game session to leave.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Item.IItemClient">
+            <summary>
+            Client interface for the Item service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.CreateItemTemplateAsync(BeyondImmersion.BannouService.Item.CreateItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new item template
+            </summary>
+            <remarks>
+            Creates a new item definition for a game. Code, gameId, quantityModel, and scope
+            <br/>are immutable after creation.
+            </remarks>
+            <returns>Item template created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.GetItemTemplateAsync(BeyondImmersion.BannouService.Item.GetItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get item template by ID or code
+            </summary>
+            <remarks>
+            Retrieves an item template by its unique ID or by code+gameId combination.
+            <br/>At least one of templateId or (code + gameId) must be provided.
+            </remarks>
+            <returns>Item template retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.ListItemTemplatesAsync(BeyondImmersion.BannouService.Item.ListItemTemplatesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List item templates with filters
+            </summary>
+            <remarks>
+            Lists item templates with optional filtering by gameId, category, tags,
+            <br/>rarity, scope, and active status.
+            </remarks>
+            <returns>Item templates retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.UpdateItemTemplateAsync(BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update mutable fields of an item template
+            </summary>
+            <remarks>
+            Updates mutable fields of an item template. Code, gameId, quantityModel, and scope
+            <br/>are immutable after creation and cannot be changed.
+            </remarks>
+            <returns>Item template updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.DeprecateItemTemplateAsync(BeyondImmersion.BannouService.Item.DeprecateItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Deprecate an item template
+            </summary>
+            <remarks>
+            Marks an item template as deprecated. Deprecated templates cannot be used
+            <br/>to create new instances but existing instances remain valid. Optionally
+            <br/>specify a migration target template.
+            </remarks>
+            <returns>Item template deprecated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.CreateItemInstanceAsync(BeyondImmersion.BannouService.Item.CreateItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new item instance
+            </summary>
+            <remarks>
+            Creates a new item instance from a template. The instance must be placed
+            <br/>in a container (containerId required). Use lib-inventory's /inventory/add
+            <br/>for most use cases - this endpoint is for low-level instance creation.
+            </remarks>
+            <returns>Item instance created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.GetItemInstanceAsync(BeyondImmersion.BannouService.Item.GetItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get item instance by ID
+            </summary>
+            <remarks>
+            Retrieves an item instance by its unique ID.
+            </remarks>
+            <returns>Item instance retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.ModifyItemInstanceAsync(BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Modify item instance state
+            </summary>
+            <remarks>
+            Modifies an item instance's mutable state: durability, custom stats,
+            <br/>custom name, and metadata. Cannot modify bound items unless admin.
+            </remarks>
+            <returns>Item instance modified successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.BindItemInstanceAsync(BeyondImmersion.BannouService.Item.BindItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bind item to character
+            </summary>
+            <remarks>
+            Binds an item instance to a character. The bind type must be allowed by
+            <br/>the template's soulboundType. Once bound, the item cannot be traded.
+            </remarks>
+            <returns>Item instance bound successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.DestroyItemInstanceAsync(BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Destroy item instance
+            </summary>
+            <remarks>
+            Permanently destroys an item instance. The reason is recorded for audit.
+            <br/>Cannot destroy bound items unless admin or reason is 'admin'.
+            </remarks>
+            <returns>Item instance destroyed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.ListItemsByContainerAsync(BeyondImmersion.BannouService.Item.ListItemsByContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List items in a container
+            </summary>
+            <remarks>
+            Returns all item instances in the specified container.
+            </remarks>
+            <returns>Items retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.ListItemsByTemplateAsync(BeyondImmersion.BannouService.Item.ListItemsByTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List instances of a template
+            </summary>
+            <remarks>
+            Returns item instances of the specified template, optionally filtered by realm.
+            <br/>Useful for admin queries and analytics.
+            </remarks>
+            <returns>Items retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.IItemClient.BatchGetItemInstancesAsync(BeyondImmersion.BannouService.Item.BatchGetItemInstancesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get multiple item instances by ID
+            </summary>
+            <remarks>
+            Retrieves multiple item instances in a single request.
+            </remarks>
+            <returns>Items retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemClient">
+            <summary>
+            Client implementation for the Item service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Item.ItemClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Item.ItemClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Item.ItemClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Item.ItemClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Item.ItemClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.CreateItemTemplateAsync(BeyondImmersion.BannouService.Item.CreateItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new item template
+            </summary>
+            <remarks>
+            Creates a new item definition for a game. Code, gameId, quantityModel, and scope
+            <br/>are immutable after creation.
+            </remarks>
+            <returns>Item template created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.GetItemTemplateAsync(BeyondImmersion.BannouService.Item.GetItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get item template by ID or code
+            </summary>
+            <remarks>
+            Retrieves an item template by its unique ID or by code+gameId combination.
+            <br/>At least one of templateId or (code + gameId) must be provided.
+            </remarks>
+            <returns>Item template retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ListItemTemplatesAsync(BeyondImmersion.BannouService.Item.ListItemTemplatesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List item templates with filters
+            </summary>
+            <remarks>
+            Lists item templates with optional filtering by gameId, category, tags,
+            <br/>rarity, scope, and active status.
+            </remarks>
+            <returns>Item templates retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.UpdateItemTemplateAsync(BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update mutable fields of an item template
+            </summary>
+            <remarks>
+            Updates mutable fields of an item template. Code, gameId, quantityModel, and scope
+            <br/>are immutable after creation and cannot be changed.
+            </remarks>
+            <returns>Item template updated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.DeprecateItemTemplateAsync(BeyondImmersion.BannouService.Item.DeprecateItemTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Deprecate an item template
+            </summary>
+            <remarks>
+            Marks an item template as deprecated. Deprecated templates cannot be used
+            <br/>to create new instances but existing instances remain valid. Optionally
+            <br/>specify a migration target template.
+            </remarks>
+            <returns>Item template deprecated successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.CreateItemInstanceAsync(BeyondImmersion.BannouService.Item.CreateItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new item instance
+            </summary>
+            <remarks>
+            Creates a new item instance from a template. The instance must be placed
+            <br/>in a container (containerId required). Use lib-inventory's /inventory/add
+            <br/>for most use cases - this endpoint is for low-level instance creation.
+            </remarks>
+            <returns>Item instance created successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.GetItemInstanceAsync(BeyondImmersion.BannouService.Item.GetItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get item instance by ID
+            </summary>
+            <remarks>
+            Retrieves an item instance by its unique ID.
+            </remarks>
+            <returns>Item instance retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ModifyItemInstanceAsync(BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Modify item instance state
+            </summary>
+            <remarks>
+            Modifies an item instance's mutable state: durability, custom stats,
+            <br/>custom name, and metadata. Cannot modify bound items unless admin.
+            </remarks>
+            <returns>Item instance modified successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.BindItemInstanceAsync(BeyondImmersion.BannouService.Item.BindItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bind item to character
+            </summary>
+            <remarks>
+            Binds an item instance to a character. The bind type must be allowed by
+            <br/>the template's soulboundType. Once bound, the item cannot be traded.
+            </remarks>
+            <returns>Item instance bound successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.DestroyItemInstanceAsync(BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Destroy item instance
+            </summary>
+            <remarks>
+            Permanently destroys an item instance. The reason is recorded for audit.
+            <br/>Cannot destroy bound items unless admin or reason is 'admin'.
+            </remarks>
+            <returns>Item instance destroyed successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ListItemsByContainerAsync(BeyondImmersion.BannouService.Item.ListItemsByContainerRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List items in a container
+            </summary>
+            <remarks>
+            Returns all item instances in the specified container.
+            </remarks>
+            <returns>Items retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ListItemsByTemplateAsync(BeyondImmersion.BannouService.Item.ListItemsByTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List instances of a template
+            </summary>
+            <remarks>
+            Returns item instances of the specified template, optionally filtered by realm.
+            <br/>Useful for admin queries and analytics.
+            </remarks>
+            <returns>Items retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.BatchGetItemInstancesAsync(BeyondImmersion.BannouService.Item.BatchGetItemInstancesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get multiple item instances by ID
+            </summary>
+            <remarks>
+            Retrieves multiple item instances in a single request.
+            </remarks>
+            <returns>Items retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Item.ItemClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Item.ItemClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemCategory">
+            <summary>
+            Item classification category
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.QuantityModel">
+            <summary>
+            How quantities are tracked for this item type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemRarity">
+            <summary>
+            Item rarity tier
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.SoulboundType">
+            <summary>
+            When item becomes bound to a character
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemScope">
+            <summary>
+            Realm availability scope (consistent with CurrencyScope)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.WeightPrecision">
+            <summary>
+            Precision for weight values (consistent with CurrencyPrecision)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemOriginType">
+            <summary>
+            How an item instance was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest">
+            <summary>
+            Request to create a new item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Code">
+            <summary>
+            Unique code within the game (immutable after creation)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.GameId">
+            <summary>
+            Game service this template belongs to (immutable after creation)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Name">
+            <summary>
+            Human-readable display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Description">
+            <summary>
+            Detailed description of this item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Subcategory">
+            <summary>
+            Game-defined subcategory (e.g., sword, helmet)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Tags">
+            <summary>
+            Flexible filtering tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.MaxStackSize">
+            <summary>
+            Maximum stack size (1 for unique items)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.UnitOfMeasure">
+            <summary>
+            Unit for continuous quantities (e.g., liters, kg)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Weight">
+            <summary>
+            Weight value (interpreted per weightPrecision)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Volume">
+            <summary>
+            Volume for volumetric inventories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.GridWidth">
+            <summary>
+            Width in grid-based inventories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.GridHeight">
+            <summary>
+            Height in grid-based inventories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.CanRotate">
+            <summary>
+            Whether item can be rotated in grid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.BaseValue">
+            <summary>
+            Reference price for vendors/markets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Tradeable">
+            <summary>
+            Whether item can be traded/auctioned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Destroyable">
+            <summary>
+            Whether item can be destroyed/discarded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.HasDurability">
+            <summary>
+            Whether item has durability tracking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.MaxDurability">
+            <summary>
+            Maximum durability value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.AvailableRealms">
+            <summary>
+            Realm IDs where this template is available (for realm_specific or multi_realm)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Stats">
+            <summary>
+            Game-defined stats (e.g., attack, defense)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Effects">
+            <summary>
+            Game-defined effects (e.g., on_use, on_equip)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Requirements">
+            <summary>
+            Game-defined requirements (e.g., level, strength)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Display">
+            <summary>
+            Display properties (e.g., iconId, modelId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemTemplateRequest.Metadata">
+            <summary>
+            Any other game-specific data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.GetItemTemplateRequest">
+            <summary>
+            Request to get an item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.GetItemTemplateRequest.TemplateId">
+            <summary>
+            Template ID (provide this or code+gameId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.GetItemTemplateRequest.Code">
+            <summary>
+            Item code (provide with gameId)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.GetItemTemplateRequest.GameId">
+            <summary>
+            Game service ID (provide with code)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest">
+            <summary>
+            Request to list item templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.GameId">
+            <summary>
+            Filter by game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Subcategory">
+            <summary>
+            Filter by subcategory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Tags">
+            <summary>
+            Filter by tags (items must have all specified tags)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.RealmId">
+            <summary>
+            Filter by realm availability
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.IncludeInactive">
+            <summary>
+            Include inactive templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.IncludeDeprecated">
+            <summary>
+            Include deprecated templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Search">
+            <summary>
+            Search in name and description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesRequest.Limit">
+            <summary>
+            Maximum results to return
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest">
+            <summary>
+            Request to update mutable fields of an item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.TemplateId">
+            <summary>
+            Template ID to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Name">
+            <summary>
+            New display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Subcategory">
+            <summary>
+            New subcategory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Tags">
+            <summary>
+            New tags (replaces existing)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Weight">
+            <summary>
+            New weight value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Volume">
+            <summary>
+            New volume value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.GridWidth">
+            <summary>
+            New grid width
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.GridHeight">
+            <summary>
+            New grid height
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.CanRotate">
+            <summary>
+            New rotation setting
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.BaseValue">
+            <summary>
+            New base value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Tradeable">
+            <summary>
+            New tradeable setting
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Destroyable">
+            <summary>
+            New destroyable setting
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.MaxDurability">
+            <summary>
+            New max durability
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.AvailableRealms">
+            <summary>
+            New available realms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Stats">
+            <summary>
+            New stats
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Effects">
+            <summary>
+            New effects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Requirements">
+            <summary>
+            New requirements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Display">
+            <summary>
+            New display properties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.Metadata">
+            <summary>
+            New metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.UpdateItemTemplateRequest.IsActive">
+            <summary>
+            Active status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.DeprecateItemTemplateRequest">
+            <summary>
+            Request to deprecate an item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DeprecateItemTemplateRequest.TemplateId">
+            <summary>
+            Template ID to deprecate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DeprecateItemTemplateRequest.MigrationTargetId">
+            <summary>
+            Optional template to migrate existing instances to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DeprecateItemTemplateRequest.Reason">
+            <summary>
+            Reason for deprecation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemTemplateResponse">
+            <summary>
+            Item template details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.TemplateId">
+            <summary>
+            Unique template identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Code">
+            <summary>
+            Unique code within the game
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.GameId">
+            <summary>
+            Game service this template belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Name">
+            <summary>
+            Human-readable display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Description">
+            <summary>
+            Detailed description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Subcategory">
+            <summary>
+            Game-defined subcategory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Tags">
+            <summary>
+            Filtering tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.MaxStackSize">
+            <summary>
+            Maximum stack size
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.UnitOfMeasure">
+            <summary>
+            Unit for continuous quantities
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Weight">
+            <summary>
+            Weight value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Volume">
+            <summary>
+            Volume for volumetric inventories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.GridWidth">
+            <summary>
+            Width in grid-based inventories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.GridHeight">
+            <summary>
+            Height in grid-based inventories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.CanRotate">
+            <summary>
+            Whether item can be rotated in grid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.BaseValue">
+            <summary>
+            Reference price
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Tradeable">
+            <summary>
+            Whether item can be traded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Destroyable">
+            <summary>
+            Whether item can be destroyed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.HasDurability">
+            <summary>
+            Whether item has durability
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.MaxDurability">
+            <summary>
+            Maximum durability value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.AvailableRealms">
+            <summary>
+            Available realms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Stats">
+            <summary>
+            Game-defined stats
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Effects">
+            <summary>
+            Game-defined effects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Requirements">
+            <summary>
+            Game-defined requirements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Display">
+            <summary>
+            Display properties
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.Metadata">
+            <summary>
+            Other game-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.IsActive">
+            <summary>
+            Whether template is active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.IsDeprecated">
+            <summary>
+            Whether template is deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.DeprecatedAt">
+            <summary>
+            When template was deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.MigrationTargetId">
+            <summary>
+            Migration target template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemTemplateResponse.UpdatedAt">
+            <summary>
+            Last update timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ListItemTemplatesResponse">
+            <summary>
+            Paginated list of item templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesResponse.Templates">
+            <summary>
+            List of templates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemTemplatesResponse.TotalCount">
+            <summary>
+            Total number of matching templates
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest">
+            <summary>
+            Request to create a new item instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.TemplateId">
+            <summary>
+            Template to instantiate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.ContainerId">
+            <summary>
+            Container to place the item in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.RealmId">
+            <summary>
+            Realm this instance exists in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.Quantity">
+            <summary>
+            Item quantity (respects template's quantityModel)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.SlotIndex">
+            <summary>
+            Slot position in slot-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.SlotX">
+            <summary>
+            X position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.SlotY">
+            <summary>
+            Y position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.Rotated">
+            <summary>
+            Whether item is rotated in grid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.CurrentDurability">
+            <summary>
+            Initial durability (defaults to template's maxDurability)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.CustomStats">
+            <summary>
+            Instance-specific stat modifications
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.CustomName">
+            <summary>
+            Player-assigned custom name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.InstanceMetadata">
+            <summary>
+            Any other instance-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.CreateItemInstanceRequest.OriginId">
+            <summary>
+            Source entity ID (quest ID, creature ID, etc.)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.GetItemInstanceRequest">
+            <summary>
+            Request to get an item instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.GetItemInstanceRequest.InstanceId">
+            <summary>
+            Instance ID to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest">
+            <summary>
+            Request to modify item instance state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.InstanceId">
+            <summary>
+            Instance ID to modify
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.DurabilityDelta">
+            <summary>
+            Change to durability (positive to repair, negative for damage)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.CustomStats">
+            <summary>
+            New custom stats (merges with existing)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.CustomName">
+            <summary>
+            New custom name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.InstanceMetadata">
+            <summary>
+            New instance metadata (merges with existing)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.BindItemInstanceRequest">
+            <summary>
+            Request to bind an item to a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.BindItemInstanceRequest.InstanceId">
+            <summary>
+            Instance ID to bind
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.BindItemInstanceRequest.CharacterId">
+            <summary>
+            Character to bind the item to
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest">
+            <summary>
+            Request to destroy an item instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest.InstanceId">
+            <summary>
+            Instance ID to destroy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DestroyItemInstanceRequest.Reason">
+            <summary>
+            Reason for destruction (consumed, destroyed, expired, admin)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ItemInstanceResponse">
+            <summary>
+            Item instance details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.InstanceId">
+            <summary>
+            Unique instance identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.TemplateId">
+            <summary>
+            Reference to the item template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.ContainerId">
+            <summary>
+            Container holding this item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.RealmId">
+            <summary>
+            Realm this instance exists in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.Quantity">
+            <summary>
+            Item quantity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.SlotIndex">
+            <summary>
+            Slot position in slot-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.SlotX">
+            <summary>
+            X position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.SlotY">
+            <summary>
+            Y position in grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.Rotated">
+            <summary>
+            Whether item is rotated in grid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.CurrentDurability">
+            <summary>
+            Current durability
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.BoundToId">
+            <summary>
+            Character ID this item is bound to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.BoundAt">
+            <summary>
+            When item was bound
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.CustomStats">
+            <summary>
+            Instance-specific stat modifications
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.CustomName">
+            <summary>
+            Player-assigned custom name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.InstanceMetadata">
+            <summary>
+            Other instance-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.OriginId">
+            <summary>
+            Source entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.CreatedAt">
+            <summary>
+            Instance creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ItemInstanceResponse.ModifiedAt">
+            <summary>
+            Last modification timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.DestroyItemInstanceResponse">
+            <summary>
+            Response after destroying an item instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DestroyItemInstanceResponse.Destroyed">
+            <summary>
+            Whether destruction was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DestroyItemInstanceResponse.InstanceId">
+            <summary>
+            Destroyed instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.DestroyItemInstanceResponse.TemplateId">
+            <summary>
+            Template of destroyed instance
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ListItemsByContainerRequest">
+            <summary>
+            Request to list items in a container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemsByContainerRequest.ContainerId">
+            <summary>
+            Container to list items from
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ListItemsByTemplateRequest">
+            <summary>
+            Request to list instances of a template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemsByTemplateRequest.TemplateId">
+            <summary>
+            Template to find instances of
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemsByTemplateRequest.RealmId">
+            <summary>
+            Filter by realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemsByTemplateRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemsByTemplateRequest.Limit">
+            <summary>
+            Maximum results to return
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.ListItemsResponse">
+            <summary>
+            List of item instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemsResponse.Items">
+            <summary>
+            List of items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ListItemsResponse.TotalCount">
+            <summary>
+            Total number of matching items
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.BatchGetItemInstancesRequest">
+            <summary>
+            Request to get multiple item instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.BatchGetItemInstancesRequest.InstanceIds">
+            <summary>
+            Instance IDs to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Item.BatchGetItemInstancesResponse">
+            <summary>
+            Multiple item instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.BatchGetItemInstancesResponse.Items">
+            <summary>
+            Found items
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.BatchGetItemInstancesResponse.NotFound">
+            <summary>
+            Instance IDs that were not found
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient">
             <summary>
             Client interface for the Leaderboard service.
@@ -66127,6 +67906,11 @@
             Gets the GameSession service client.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Item">
+            <summary>
+            Gets the Item service client.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Leaderboard">
             <summary>
             Gets the Leaderboard service client.
@@ -66335,7 +68119,7 @@
             and zero-copy byte forwarding for Connect service routing.
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,System.Net.Http.IHttpClientFactory,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Currency.ICurrencyClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,System.Net.Http.IHttpClientFactory,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterEncounter.ICharacterEncounterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Contract.IContractClient,BeyondImmersion.BannouService.Currency.ICurrencyClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Item.IItemClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Music.IMusicClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
             <summary>
             Creates a new ServiceNavigator with all service client dependencies.
             </summary>
@@ -66404,6 +68188,9 @@
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GameSession">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Item">
             <inheritdoc />
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Leaderboard">
@@ -67002,6 +68789,18 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.GameSession">
             <summary>Game session state and history</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemInstanceCache">
+            <summary>Hot item instance data for active gameplay</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemInstanceStore">
+            <summary>Item instances (persistent, realm-partitioned)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemTemplateCache">
+            <summary>Template lookup cache (global, aggressive caching)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemTemplateStore">
+            <summary>Item template definitions (persistent, queryable)</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.LeaderboardDefinition">
             <summary>Leaderboard definitions and metadata</summary>
