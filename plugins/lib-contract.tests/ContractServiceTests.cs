@@ -534,8 +534,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Proposed;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = MilestoneStatus.Pending },
-            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = MilestoneStatus.Pending }
+            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending },
+            new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Pending }
         };
 
         _mockInstanceStore
@@ -600,7 +600,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         instance.Status = ContractStatus.Proposed;
         instance.Parties = new List<ContractPartyModel>
         {
-            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = MilestoneStatus.Pending },
+            new() { EntityId = partyEntityId.ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending },
             new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Consented, ConsentedAt = DateTimeOffset.UtcNow }
         };
 
@@ -629,7 +629,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         Assert.NotNull(response);
         Assert.NotNull(savedInstance);
         // When EffectiveFrom is null, contract becomes "active" immediately after all consent
-        Assert.Equal("active", savedInstance.Status);
+        Assert.Equal(ContractStatus.Active, savedInstance.Status);
     }
 
     #endregion
@@ -1455,8 +1455,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             Status = ContractStatus.Draft,
             Parties = new List<ContractPartyModel>
             {
-                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = MilestoneStatus.Pending },
-                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = MilestoneStatus.Pending }
+                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employer", ConsentStatus = ConsentStatus.Pending },
+                new() { EntityId = Guid.NewGuid().ToString(), EntityType = "Character", Role = "employee", ConsentStatus = ConsentStatus.Pending }
             },
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -1487,7 +1487,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "payment_milestone",
                 Name = "Payment Milestone",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1576,7 +1576,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "payment_milestone",
                 Name = "Payment Milestone",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1653,7 +1653,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "payment_milestone",
                 Name = "Payment Milestone",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1741,7 +1741,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "multi_action_milestone",
                 Name = "Multi Action Milestone",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1758,7 +1758,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "notification",
                         Endpoint = "/notification/send",
                         PayloadTemplate = """{"message": "Milestone completed"}""",
-                        ExecutionMode = "fire_and_forget"
+                        ExecutionMode = PreboundApiExecutionMode.Fire_and_forget
                     }
                 }
             }
@@ -1829,7 +1829,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "deadline_milestone",
                 Name = "Deadline Milestone",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1,
                 OnExpire = new List<PreboundApiModel>
@@ -1839,7 +1839,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "notification",
                         Endpoint = "/notification/send",
                         PayloadTemplate = """{"type": "milestone_failed", "contractId": "{{contract.id}}"}""",
-                        ExecutionMode = "fire_and_forget"
+                        ExecutionMode = PreboundApiExecutionMode.Fire_and_forget
                     }
                 }
             }
@@ -1907,7 +1907,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "milestone_1",
                 Name = "Test Milestone",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>
@@ -1978,7 +1978,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "simple_milestone",
                 Name = "Simple Milestone",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1
                 // No OnComplete or OnExpire APIs
@@ -2048,7 +2048,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             {
                 Code = "payment",
                 Name = "Payment",
-                Status = ContractStatus.Active,
+                Status = MilestoneStatus.Pending,
                 Required = true,
                 Sequence = 1,
                 OnComplete = new List<PreboundApiModel>

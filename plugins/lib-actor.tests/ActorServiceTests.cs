@@ -1296,7 +1296,7 @@ public class ActorServiceTests
                 NodeAppId = "app-remote-001",
                 TemplateId = Guid.NewGuid().ToString(),
                 Category = "event-brain",
-                Status = "running"
+                Status = ActorStatus.Running
             });
 
         // Mock the remote invocation (no response expected)
@@ -1348,7 +1348,7 @@ public class ActorServiceTests
                 NodeAppId = "app-remote-002",
                 TemplateId = Guid.NewGuid().ToString(),
                 Category = "event-brain",
-                Status = "running"
+                Status = ActorStatus.Running
             });
 
         // Mock the remote invocation response
@@ -1408,7 +1408,7 @@ public class ActorServiceTests
                 NodeAppId = "app-remote-003",
                 TemplateId = Guid.NewGuid().ToString(),
                 Category = "event-brain",
-                Status = "running"
+                Status = ActorStatus.Running
             });
 
         // Mock the remote invocation response
@@ -1470,7 +1470,7 @@ public class ActorServiceTests
                 NodeAppId = "app-remote-004",
                 TemplateId = Guid.NewGuid().ToString(),
                 Category = "event-brain",
-                Status = "running"
+                Status = ActorStatus.Running
             });
 
         // Mock the remote invocation response

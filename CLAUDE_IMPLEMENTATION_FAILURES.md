@@ -352,7 +352,11 @@ Most complex. Each violation needs analysis of the specific operation to determi
 
 ## Progress Tracking
 
-- [ ] Phase 1: T25 enum-as-string (0/9)
+- [x] Phase 1: T25 enum-as-string (9/9)
+  - [x] CurrencyService - WalletModel.Status, HoldModel.Status → enum types
+  - [x] ContractService - ContractInstanceModel.Status, ContractPartyModel.ConsentStatus, MilestoneInstanceModel.Status, BreachModel.Status, PreboundApiModel.ExecutionMode → enum types
+  - [x] ActorAssignment - Status → ActorStatus enum
+  - [x] OrchestratorService - Created ProcessorStatus enum, ProcessorInstance.Status → ProcessorStatus
 - [ ] Phase 1: T25 GUID-as-string (0/25)
 - [x] Phase 2: T21 unused cache stores (5/5)
   - [x] MusicCompositions - Implemented composition caching for deterministic requests

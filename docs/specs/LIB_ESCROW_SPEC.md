@@ -1,6 +1,6 @@
 # lib-escrow Service Specification
 
-> **Version**: 2.0.0
+> **Version**: 3.0.0
 > **Status**: Implementation Ready
 > **Created**: 2026-01-22
 > **Updated**: 2026-01-23
@@ -8,6 +8,17 @@
 > **Dependent Plugins**: lib-market, lib-trade, lib-quest (future)
 
 This document is the implementation-ready specification for the `lib-escrow` service. It provides a generic multi-party escrow system with full asset custody, capable of holding currency, items, and contracts.
+
+### Changelog
+
+**v3.0.0** (2026-01-23):
+- **Per-party escrow infrastructure**: Each party now gets their own escrow wallet and container (instead of one shared). Enables clean refunds, contribution tracking, and ownership validation.
+- **Contract-driven distribution**: Fees and asset distribution are now handled by the bound contract via `/contract/instance/execute`. Escrow is the "vault", contract is the "brain".
+- **Neutral terminology**: Changed from buyer/seller to Party A/Party B throughout.
+- **Added `/escrow/get-my-token`**: Convenience endpoint for parties to retrieve their tokens.
+- **Added `contractPartyRole`**: Required field for contract assets to specify which party role is being escrowed.
+- **Added Appendix B**: Contract endpoints for asset requirement checking and execution.
+- **Fixed x-permissions**: Converted all endpoints from incorrect `access:` format to proper `x-permissions:` array format.
 
 ---
 
@@ -246,10 +257,15 @@ These are real, queryable entities in their respective systems. The escrow servi
 
 | Asset Type | Deposit Operation | Release Operation | Refund Operation |
 |-----------|-------------------|-------------------|------------------|
-| **Currency** | `/currency/transfer` (depositor wallet → escrow wallet) | `/currency/transfer` (escrow wallet → recipient wallet) | `/currency/transfer` (escrow wallet → depositor wallet) |
-| **Item** | `/inventory/transfer` (depositor container → escrow container) | `/inventory/transfer` (escrow container → recipient container) | `/inventory/transfer` (escrow container → depositor container) |
+| **Currency** | `/currency/transfer` (party wallet → party's escrow wallet) | Contract executes: `/currency/transfer` (party's escrow wallet → recipient wallet) | `/currency/transfer` (party's escrow wallet → same party's wallet) |
+| **Item** | `/inventory/transfer` (party container → party's escrow container) | Contract executes: `/inventory/transfer` (party's escrow container → recipient container) | `/inventory/transfer` (party's escrow container → same party's container) |
 | **Contract** | `/contract/lock` (escrow becomes guardian) | `/contract/transfer-party` (reassign to recipient) | `/contract/unlock` (return to original state) |
 | **Custom** | Registered deposit endpoint | Registered release endpoint | Registered refund endpoint |
+
+**Key distinction**:
+- **Deposit**: Assets flow INTO the depositing party's escrow wallet/container
+- **Release**: Contract execution distributes FROM escrow wallets/containers TO recipients (other parties, fee collectors)
+- **Refund**: Assets flow FROM each party's escrow wallet/container back TO that same party (trivial, no cross-party confusion)
 
 ### 3.4 Idempotency
 
@@ -339,6 +355,12 @@ EscrowAsset:
   contractDescription: string
   nullable: true
 
+  # Which party role in the contract is being escrowed
+  # Required for /contract/transfer-party on release
+  contractPartyRole: string
+  nullable: true
+  notes: "e.g., 'employer', 'contractor', 'landlord', 'tenant'"
+
   # ═══════════════════════════════════════════════════════════════
   # CUSTOM ASSETS
   # ═══════════════════════════════════════════════════════════════
@@ -406,7 +428,7 @@ EscrowAgreement:
   escrowType: EscrowType
   values:
     - two_party:
-        description: "Simple buyer/seller or trader escrow"
+        description: "Simple trade escrow between Party A and Party B"
     - multi_party:
         description: "N parties with complex deposit/receive rules"
     - conditional:
@@ -447,16 +469,18 @@ EscrowAgreement:
   nullable: true
 
   # ═══════════════════════════════════════════════════════════════
-  # OWNED INFRASTRUCTURE
+  # OWNED INFRASTRUCTURE (Per-Party)
   # ═══════════════════════════════════════════════════════════════
-
-  # Escrow's own wallet (created on agreement creation)
-  escrowWalletId: uuid
-  notes: "Created via /currency/wallet/create with ownerType=escrow"
-
-  # Escrow's own container (created on agreement creation)
-  escrowContainerId: uuid
-  notes: "Created via /inventory/create-container with ownerType=escrow"
+  #
+  # Each party gets their own escrow wallet and container.
+  # These are tracked in the EscrowParty records (see escrowWalletId,
+  # escrowContainerId fields on EscrowParty).
+  #
+  # This per-party model enables:
+  # - Clean refunds (party's escrow → party's wallet, no ambiguity)
+  # - Contribution tracking (verify each party deposited their share)
+  # - Ownership validation (party can only withdraw from their escrow)
+  # - Extra item handling (non-term items stay in depositor's escrow)
 
   # ═══════════════════════════════════════════════════════════════
   # PARTIES
@@ -664,16 +688,30 @@ EscrowParty:
   notes: "Arbiters and observers typically have this false"
 
   # ═══════════════════════════════════════════════════════════════
-  # PARTY INFRASTRUCTURE REFERENCES
+  # PARTY'S OWN INFRASTRUCTURE (source/destination for deposits/receipts)
   # ═══════════════════════════════════════════════════════════════
 
-  # Party's wallet (for currency deposits/receipts)
+  # Party's own wallet (where currency comes from / returns to)
   walletId: uuid
   nullable: true
 
-  # Party's container (for item deposits/receipts)
+  # Party's own container (where items come from / return to)
   containerId: uuid
   nullable: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # PARTY'S ESCROW INFRASTRUCTURE (created by escrow, owned by escrow)
+  # ═══════════════════════════════════════════════════════════════
+
+  # Escrow wallet for THIS party's deposits (ownerType=escrow, ownerId=agreementId)
+  escrowWalletId: uuid
+  nullable: true
+  notes: "Created on escrow creation. Party deposits INTO this wallet."
+
+  # Escrow container for THIS party's deposits (ownerType=escrow, ownerId=agreementId)
+  escrowContainerId: uuid
+  nullable: true
+  notes: "Created on escrow creation. Party deposits INTO this container."
 
   # ═══════════════════════════════════════════════════════════════
   # TOKENS (for full_consent mode)
@@ -979,16 +1017,19 @@ Validation can interrupt any active state:
 
 ## 9. Contract Integration
 
-lib-escrow integrates with lib-contract in three distinct ways:
+lib-escrow integrates with lib-contract in three distinct ways. The key insight is that **the contract is the brain, escrow is the vault**: the contract defines what assets are needed, how they should be distributed, and what fees apply. The escrow holds assets and gates access.
 
-### 9.1 Contract as Condition (Bound Contract)
+### 9.1 Contract as Condition AND Distribution Controller (Bound Contract)
 
-When `boundContractId` is set on an escrow, the contract governs release:
+When `boundContractId` is set on an escrow, the contract governs:
+- **When** release happens (contract fulfillment)
+- **What** each party must deposit (asset requirement clauses)
+- **How** assets are distributed (fee clauses, distribution clauses)
 
 ```yaml
 # Escrow listens to these events for its bound contract:
 contract.fulfilled:
-  action: Transition to finalizing → releasing → released
+  action: Transition to finalizing → contract executes → released
 
 contract.breached (permanent):
   action: Transition to refunding → refunded
@@ -996,6 +1037,39 @@ contract.breached (permanent):
 contract.terminated:
   action: Transition to refunding → refunded
 ```
+
+**Contract-Driven Flow**:
+
+1. **Setup**: Escrow sets template values on the bound contract:
+   ```yaml
+   templateValues:
+     EscrowId: "{{agreementId}}"
+     PartyA_EscrowWalletId: "{{partyA.escrowWalletId}}"
+     PartyA_EscrowContainerId: "{{partyA.escrowContainerId}}"
+     PartyB_EscrowWalletId: "{{partyB.escrowWalletId}}"
+     PartyB_EscrowContainerId: "{{partyB.escrowContainerId}}"
+     PartyA_WalletId: "{{partyA.walletId}}"
+     PartyA_ContainerId: "{{partyA.containerId}}"
+     PartyB_WalletId: "{{partyB.walletId}}"
+     PartyB_ContainerId: "{{partyB.containerId}}"
+     # Additional fee recipient wallets as needed
+   ```
+
+2. **Deposit Validation**: After each deposit, escrow queries contract:
+   ```yaml
+   POST /contract/instance/check-asset-requirements
+   # Contract checks if party's escrow wallet/container has required assets
+   # Returns: { allSatisfied: boolean, byParty: [...] }
+   ```
+
+3. **Execution**: When conditions are met, escrow calls contract to execute:
+   ```yaml
+   POST /contract/instance/execute
+   # Contract executes all distribution clauses:
+   # - Fee clauses: Move fees from escrow wallets to fee recipients
+   # - Distribution clauses: Move remaining assets to recipients
+   # Returns: { executed: boolean, distributions: [...] }
+   ```
 
 **Manual release with bound contract**: When a party triggers manual release on an escrow with `boundContractId`, the escrow checks the contract's current status via `/contract/instance/get-status`. If the contract is not in `fulfilled` status, the release is rejected. This is NOT an override - the manual trigger is a convenience for when the event was missed, not a way to bypass the contract.
 
@@ -1005,8 +1079,10 @@ Contract instances can be deposited as `assetType=contract`. When deposited:
 
 1. lib-escrow calls `/contract/lock` with `guardianId=escrowId`, `guardianType=escrow`
 2. The contract becomes locked: no party can modify, terminate, or transfer it
-3. On release: lib-escrow calls `/contract/transfer-party` to reassign the relevant party role to the recipient
+3. On release: lib-escrow calls `/contract/transfer-party` to reassign the `contractPartyRole` to the recipient
 4. On refund: lib-escrow calls `/contract/unlock` to restore the contract to its original state
+
+**Note**: The `contractPartyRole` field on `EscrowAsset` specifies which role in the contract is being transferred (e.g., "employer", "landlord").
 
 **Example**: Land deed (a contract between owner and realm) held in escrow during a property sale. The deed contract is locked so the seller can't void it, then transferred to the buyer on completion.
 
@@ -1014,19 +1090,19 @@ Contract instances can be deposited as `assetType=contract`. When deposited:
 
 An escrow can have a `boundContractId` (conditions) AND hold contracts as deposited assets (prizes). These are independent:
 
-- The bound contract governs WHEN release happens
-- The deposited contracts are WHAT gets released
+- The bound contract governs WHEN release happens and HOW assets are distributed
+- The deposited contracts are additional assets HELD in escrow (and transferred on release)
 
 **Example**: A property sale where:
-- Bound contract: "Buyer pays X gold within 7 days" (milestones: payment_deposited, inspection_complete)
+- Bound contract: Defines payment terms, inspection milestones, fee splits, and distribution rules
 - Deposited contract: The land deed itself (transferred to buyer on release)
-- Deposited currency: The purchase price (transferred to seller on release)
+- Deposited currency: The purchase price (transferred to seller on release, minus fees)
 
 ---
 
 ## 10. Finalization Flow
 
-When an escrow transitions to `finalizing`, a multi-step process runs before assets are released:
+When an escrow transitions to `finalizing`, the bound contract takes over asset distribution.
 
 ### 10.1 Finalization Steps
 
@@ -1038,80 +1114,114 @@ When an escrow transitions to `finalizing`, a multi-step process runs before ass
          │
          ▼
 3. If boundContractId exists:
-   - Read contract's finalizer prebound APIs (onFulfill/onTerminate)
-   - Substitute template variables including {{EscrowWalletId}} and {{EscrowContainerId}}
-   - Execute finalizer APIs (these can move fees/items to third parties)
+   - Call POST /contract/instance/execute
+   - Contract handles ALL asset distribution:
+     • Fee clauses: Move fees from party escrow wallets to fee recipients
+     • Distribution clauses: Move assets from party escrow wallets/containers to recipients
          │
          ▼
-4. If any finalizer fails critically:
-   - Status → REFUNDING (abort release, return all assets)
+4. If contract execution fails:
+   - Status → REFUNDING (abort, return all assets to depositors)
          │
          ▼
 5. Status → RELEASING
-   - Transfer remaining assets from escrow wallet/container to recipients
-   - Transfer/unlock deposited contracts to recipients
+   - Handle any deposited contracts (asset type): transfer-party to recipients
+   - Verify all escrow wallets/containers are empty
          │
          ▼
 6. Status → RELEASED
-   - Cleanup: close wallet, delete container
+   - Cleanup: close all party escrow wallets, delete all party escrow containers
    - Publish escrow.released event
 ```
 
-### 10.2 Template Variables for Finalizer APIs
+### 10.2 Template Variables for Contract Execution
 
-When executing a bound contract's finalizer prebound APIs, lib-escrow provides these additional context variables:
+When binding an escrow to a contract, lib-escrow sets these template values:
 
 | Variable | Description |
 |----------|-------------|
-| `{{EscrowWalletId}}` | The escrow agreement's wallet ID |
-| `{{EscrowContainerId}}` | The escrow agreement's container ID |
-| `{{EscrowAgreementId}}` | The escrow agreement's ID |
+| `{{EscrowId}}` | The escrow agreement's ID |
+| `{{PartyA_EscrowWalletId}}` | Party A's escrow wallet (SOURCE for fees/distribution) |
+| `{{PartyA_EscrowContainerId}}` | Party A's escrow container (SOURCE for items) |
+| `{{PartyB_EscrowWalletId}}` | Party B's escrow wallet (SOURCE for fees/distribution) |
+| `{{PartyB_EscrowContainerId}}` | Party B's escrow container (SOURCE for items) |
+| `{{PartyA_WalletId}}` | Party A's own wallet (DESTINATION on release) |
+| `{{PartyA_ContainerId}}` | Party A's own container (DESTINATION on release) |
+| `{{PartyB_WalletId}}` | Party B's own wallet (DESTINATION on release) |
+| `{{PartyB_ContainerId}}` | Party B's own container (DESTINATION on release) |
 
-This allows contract terms to specify fee distribution from the escrow's own holdings:
+For multi-party escrows, additional variables follow the pattern `{{PartyN_*}}`.
 
-```yaml
-# Example: Contract milestone onFulfill takes 5% broker fee
-serviceName: "currency"
-endpoint: "/currency/transfer"
-payloadTemplate: |
-  {
-    "source_wallet_id": "{{EscrowWalletId}}",
-    "target_wallet_id": "{{contract.terms.broker_wallet_id}}",
-    "currency_id": "{{contract.terms.fee_currency_id}}",
-    "amount": {{contract.terms.broker_fee_amount}},
-    "reference_id": "{{EscrowAgreementId}}",
-    "reference_type": "escrow_fee"
-  }
-```
+### 10.3 Contract Clause Examples
+
+The contract template defines clauses for asset requirements, fees, and distribution:
 
 ```yaml
-# Example: Move specific items to a third party (lawyer's cut)
-serviceName: "inventory"
-endpoint: "/inventory/transfer"
-payloadTemplate: |
-  {
-    "source_container_id": "{{EscrowContainerId}}",
-    "target_container_id": "{{contract.terms.lawyer_container_id}}",
-    "item_instance_id": "{{contract.terms.fee_item_id}}",
-    "reference_id": "{{EscrowAgreementId}}",
-    "reference_type": "escrow_fee"
-  }
+# Asset requirement clauses (what must be deposited)
+clauses:
+  - id: party_a_payment
+    type: asset_requirement
+    party: party_a
+    check_location: "{{PartyA_EscrowWalletId}}"
+    assets:
+      - type: currency
+        code: gold
+        amount: 10000
+
+  - id: party_b_goods
+    type: asset_requirement
+    party: party_b
+    check_location: "{{PartyB_EscrowContainerId}}"
+    assets:
+      - type: item
+        templateCode: "rare_sword"
+        quantity: 1
+
+  # Fee clauses (deducted before distribution)
+  - id: broker_fee
+    type: fee
+    source_wallet: "{{PartyA_EscrowWalletId}}"
+    amount: 500
+    amount_type: flat
+    recipient_wallet: "{{BrokerFee_WalletId}}"
+
+  - id: guild_tax
+    type: fee
+    source_wallet: "{{PartyA_EscrowWalletId}}"
+    amount: 5
+    amount_type: percentage
+    recipient_wallet: "{{GuildTreasury_WalletId}}"
+
+  # Distribution clauses (what goes where after fees)
+  - id: payment_to_party_b
+    type: distribution
+    source_wallet: "{{PartyA_EscrowWalletId}}"
+    destination_wallet: "{{PartyB_WalletId}}"
+    amount: remainder  # Everything left after fees
+
+  - id: goods_to_party_a
+    type: distribution
+    source_container: "{{PartyB_EscrowContainerId}}"
+    destination_container: "{{PartyA_ContainerId}}"
+    items: all  # All items from Party B's escrow container
 ```
 
-### 10.3 Fee Handling Design
+### 10.4 Fee Handling Design
 
-Fees are NOT a built-in escrow feature. Instead, they are implemented through contract terms:
+Fees are NOT a built-in escrow feature. They are contract terms that the contract plugin knows how to resolve:
 
-1. The contract template specifies that each party must deposit X extra (fee amount) into escrow
-2. The contract's `onFulfill` prebound APIs specify where the fee goes (broker, lawyer, guild treasury, etc.)
-3. During finalization, these APIs execute FIRST, moving fees from the escrow's wallet/container to third parties
-4. The remaining assets in escrow are then released to the designated recipients
+1. **Contract defines fees**: Fee clauses specify flat amounts, percentages, or formulas
+2. **Contract tracks sources**: Each fee specifies which party's escrow wallet to deduct from
+3. **Contract executes fees**: During `/contract/instance/execute`, fees are processed FIRST
+4. **Contract distributes remainder**: After fees, distribution clauses move remaining assets
 
 This means:
 - lib-escrow has no fee logic
-- Fees are just contract terms
-- Fee distribution is just prebound API execution
-- Any fee structure is possible (flat, percentage, multi-party splits)
+- lib-escrow has no distribution logic (beyond deposited contracts)
+- Fees and distributions are contract terms
+- The contract plugin handles all the math (percentages, remainders, etc.)
+- Any fee structure is possible (flat, percentage, multi-party splits, item fees)
+- Per-party escrow wallets ensure each party's contribution is tracked separately
 
 ---
 
@@ -1123,10 +1233,12 @@ lib-escrow periodically validates that held assets remain intact and unchanged.
 
 | Asset Type | Validation Check |
 |-----------|-----------------|
-| **Currency** | Query escrow wallet balance matches expected total for each currency |
-| **Items** | Query escrow container, verify each expected item instance still exists |
+| **Currency** | Query each party's escrow wallet balance matches expected deposits for that party |
+| **Items** | Query each party's escrow container, verify expected item instances still exist |
 | **Item Stacks** | Verify stack quantity hasn't decreased |
 | **Contracts** | Query contract status, verify still locked and valid (not externally voided) |
+
+**Per-party validation**: Because each party has their own escrow wallet/container, validation failures are attributed to the specific party whose deposits are affected.
 | **Custom** | Call registered validate endpoint |
 
 ### 11.2 Validation Frequency
@@ -1250,8 +1362,10 @@ All custom handlers must implement these guarantees:
     - role: developer
       states: {}
   description: |
-    Create a new escrow agreement. Creates the escrow's wallet and container,
-    issues deposit tokens, and begins accepting deposits.
+    Create a new escrow agreement. For each party, creates a dedicated escrow wallet
+    and container (owned by escrow entity). Issues deposit tokens and returns ALL
+    tokens to the creating service, which is responsible for distributing them to
+    parties through appropriate channels. Sets template values on bound contract.
   request:
     escrowType: EscrowType
     trustMode: EscrowTrustMode
@@ -1344,6 +1458,30 @@ All custom handlers must implement these guarantees:
   response:
     escrows: [EscrowAgreement]
     totalCount: integer
+
+/escrow/get-my-token:
+  method: POST
+  x-permissions:
+    - role: user
+      states: {}
+  description: |
+    Get the deposit or release token for a specific party. This is a convenience
+    endpoint for parties to retrieve their tokens if they weren't provided at creation.
+    The party is identified by ownerId/ownerType (works for characters, NPCs, guilds, etc.).
+  request:
+    escrowId: uuid
+    ownerId: uuid                      # The party's ID
+    ownerType: string                  # The party's type (character, npc, guild, etc.)
+    tokenType: TokenType               # "deposit" or "release"
+  response:
+    token: string                      # The requested token (if available)
+    tokenUsed: boolean                 # Whether token has already been used
+    tokenUsedAt: timestamp             # When it was used (if applicable)
+  errors:
+    - ESCROW_NOT_FOUND
+    - NOT_A_PARTY
+    - TOKEN_NOT_AVAILABLE              # e.g., release token not yet issued
+    - INVALID_TOKEN_TYPE
 ```
 
 ### 13.2 Deposits
@@ -1359,9 +1497,11 @@ All custom handlers must implement these guarantees:
     - role: user
       states: {}
   description: |
-    Deposit assets into escrow. Transfers currency from party wallet to escrow wallet,
-    moves items from party container to escrow container, or locks contracts.
-    Rejects soulbound/non-tradeable items.
+    Deposit assets into escrow. Transfers currency from party's own wallet to that
+    party's escrow wallet. Moves items from party's own container to that party's
+    escrow container. Locks contracts with escrow as guardian.
+    Rejects soulbound/non-tradeable items. After each deposit, queries bound contract
+    to check if all asset requirements are satisfied.
   request:
     escrowId: uuid
     partyId: uuid
@@ -2535,4 +2675,100 @@ These endpoints will need to be added to `schemas/contract-api.yaml` before lib-
 
 ---
 
-*This specification is implementation-ready. lib-currency and lib-inventory require no changes (escrow uses their existing transfer APIs). lib-contract requires the lock/unlock/transfer-party endpoints defined in Appendix A.*
+## Appendix B: Contract Asset/Fee Resolution Requirements
+
+For the contract-driven fee and distribution model to work, lib-contract needs these capabilities:
+
+```yaml
+/contract/instance/check-asset-requirements:
+  method: POST
+  x-permissions:
+    - role: developer
+      states: {}
+  description: |
+    Check if all asset requirement clauses are satisfied. Uses template values
+    (e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers.
+  request:
+    contractInstanceId: uuid
+  response:
+    allSatisfied: boolean
+    byParty:
+      - partyRole: string               # e.g., "party_a", "party_b"
+        satisfied: boolean
+        clauses:
+          - clauseId: string
+            satisfied: boolean
+            required:                   # What the clause requires
+              type: string              # currency | item | item_stack
+              code: string              # Currency code or item template code
+              amount: number            # Amount or quantity required
+            current:                    # What's currently present
+              amount: number
+            missing:                    # What's still needed
+              amount: number
+  errors:
+    - CONTRACT_NOT_FOUND
+    - TEMPLATE_VALUES_NOT_SET
+
+/contract/instance/execute:
+  method: POST
+  x-permissions:
+    - role: developer
+      states: {}
+  description: |
+    Execute all contract terms - distribute assets per clauses, collect fees,
+    mark contract as executed. This is idempotent - calling twice returns the
+    same result without re-executing.
+  request:
+    contractInstanceId: uuid
+    idempotencyKey: string
+  response:
+    executed: boolean
+    alreadyExecuted: boolean            # True if this was a repeat call
+    distributions:                      # What was moved where
+      - clauseId: string
+        clauseType: string              # fee | distribution
+        assetType: string               # currency | item
+        amount: number
+        sourceWalletId: uuid
+        destinationWalletId: uuid
+  errors:
+    - CONTRACT_NOT_FOUND
+    - CONTRACT_NOT_FULFILLED            # Can't execute unfulfilled contract
+    - CONTRACT_ALREADY_EXECUTED
+    - TEMPLATE_VALUES_NOT_SET
+    - INSUFFICIENT_BALANCE              # Escrow wallet doesn't have required funds
+    - TRANSFER_FAILED
+
+/contract/instance/set-template-values:
+  method: POST
+  x-permissions:
+    - role: developer
+      states: {}
+  description: |
+    Set template values on a contract instance. Called by lib-escrow when binding
+    a contract to an escrow agreement.
+  request:
+    contractInstanceId: uuid
+    templateValues:
+      # Key-value pairs like:
+      # EscrowId: uuid
+      # PartyA_EscrowWalletId: uuid
+      # PartyA_WalletId: uuid
+      # etc.
+  response:
+    updated: boolean
+  errors:
+    - CONTRACT_NOT_FOUND
+    - INVALID_TEMPLATE_KEY
+```
+
+These endpoints enable the "contract as brain, escrow as vault" model where:
+1. lib-escrow creates per-party escrow wallets/containers
+2. lib-escrow sets template values on the bound contract
+3. After deposits, lib-escrow queries contract for asset requirement status
+4. On fulfillment, lib-escrow calls contract to execute all distributions
+
+---
+
+*This specification is implementation-ready. lib-currency and lib-inventory require no changes (escrow uses their existing transfer APIs). lib-contract requires the endpoints defined in Appendix A (lock/unlock/transfer-party) and Appendix B (asset checking/execution).*

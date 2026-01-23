@@ -125,10 +125,10 @@ public partial class CharacterService : ICharacterService
             // Create character model
             var character = new CharacterModel
             {
-                CharacterId = characterId.ToString(),
+                CharacterId = characterId,
                 Name = body.Name,
-                RealmId = body.RealmId.ToString(),
-                SpeciesId = body.SpeciesId.ToString(),
+                RealmId = body.RealmId,
+                SpeciesId = body.SpeciesId,
                 BirthDate = body.BirthDate,
                 Status = body.Status,
                 CreatedAt = now,
@@ -255,16 +255,16 @@ public partial class CharacterService : ICharacterService
             }
 
             // Handle species migration (used for species merge operations)
-            if (body.SpeciesId.HasValue && body.SpeciesId.Value != Guid.Parse(character.SpeciesId))
+            if (body.SpeciesId.HasValue && body.SpeciesId.Value != character.SpeciesId)
             {
                 changedFields.Add("speciesId");
-                character.SpeciesId = body.SpeciesId.Value.ToString();
+                character.SpeciesId = body.SpeciesId.Value;
             }
 
             character.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Save updated character
-            var characterKey = BuildCharacterKey(character.RealmId, character.CharacterId);
+            var characterKey = BuildCharacterKey(character.RealmId.ToString(), character.CharacterId.ToString());
             await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
 
@@ -313,21 +313,21 @@ public partial class CharacterService : ICharacterService
             }
 
             var realmId = character.RealmId;
-            var characterKey = BuildCharacterKey(realmId, character.CharacterId);
+            var characterKey = BuildCharacterKey(realmId.ToString(), character.CharacterId.ToString());
 
             // Delete character from state store
             await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .DeleteAsync(characterKey, cancellationToken);
 
             // Remove from realm index
-            await RemoveCharacterFromRealmIndexAsync(realmId, character.CharacterId, cancellationToken);
+            await RemoveCharacterFromRealmIndexAsync(realmId.ToString(), character.CharacterId.ToString(), cancellationToken);
 
             _logger.LogInformation("Character deleted: {CharacterId} from realm: {RealmId}", body.CharacterId, realmId);
 
             // Publish realm left event (reason: deletion)
             await PublishCharacterRealmLeftEventAsync(
                 body.CharacterId,
-                Guid.Parse(realmId),
+                realmId,
                 "deletion");
 
             // Publish character deleted event
@@ -452,10 +452,10 @@ public partial class CharacterService : ICharacterService
 
             var response = new EnrichedCharacterResponse
             {
-                CharacterId = Guid.Parse(character.CharacterId),
+                CharacterId = character.CharacterId,
                 Name = character.Name,
-                RealmId = Guid.Parse(character.RealmId),
-                SpeciesId = Guid.Parse(character.SpeciesId),
+                RealmId = character.RealmId,
+                SpeciesId = character.SpeciesId,
                 BirthDate = character.BirthDate,
                 DeathDate = character.DeathDate,
                 Status = character.Status,
@@ -648,8 +648,8 @@ public partial class CharacterService : ICharacterService
             {
                 CharacterId = body.CharacterId,
                 Name = character.Name,
-                RealmId = Guid.Parse(character.RealmId),
-                SpeciesId = Guid.Parse(character.SpeciesId),
+                RealmId = character.RealmId,
+                SpeciesId = character.SpeciesId,
                 BirthDate = character.BirthDate,
                 DeathDate = character.DeathDate.Value,
                 CompressedAt = DateTimeOffset.UtcNow,
@@ -809,7 +809,7 @@ public partial class CharacterService : ICharacterService
             // Get/update reference tracking data
             var refCountKey = $"{REF_COUNT_KEY_PREFIX}{body.CharacterId}";
             var refData = await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
-                .GetAsync(refCountKey, cancellationToken) ?? new RefCountData { CharacterId = body.CharacterId.ToString() };
+                .GetAsync(refCountKey, cancellationToken) ?? new RefCountData { CharacterId = body.CharacterId };
 
             // Track when refCount first hit zero
             if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
@@ -1094,10 +1094,10 @@ public partial class CharacterService : ICharacterService
     {
         return new CharacterArchiveModel
         {
-            CharacterId = archive.CharacterId.ToString(),
+            CharacterId = archive.CharacterId,
             Name = archive.Name,
-            RealmId = archive.RealmId.ToString(),
-            SpeciesId = archive.SpeciesId.ToString(),
+            RealmId = archive.RealmId,
+            SpeciesId = archive.SpeciesId,
             BirthDateUnix = archive.BirthDate.ToUnixTimeSeconds(),
             DeathDateUnix = archive.DeathDate.ToUnixTimeSeconds(),
             CompressedAtUnix = archive.CompressedAt.ToUnixTimeSeconds(),
@@ -1112,10 +1112,10 @@ public partial class CharacterService : ICharacterService
     {
         return new CharacterArchive
         {
-            CharacterId = Guid.Parse(model.CharacterId),
+            CharacterId = model.CharacterId,
             Name = model.Name,
-            RealmId = Guid.Parse(model.RealmId),
-            SpeciesId = Guid.Parse(model.SpeciesId),
+            RealmId = model.RealmId,
+            SpeciesId = model.SpeciesId,
             BirthDate = DateTimeOffset.FromUnixTimeSeconds(model.BirthDateUnix),
             DeathDate = DateTimeOffset.FromUnixTimeSeconds(model.DeathDateUnix),
             CompressedAt = DateTimeOffset.FromUnixTimeSeconds(model.CompressedAtUnix),
@@ -1260,7 +1260,7 @@ public partial class CharacterService : ICharacterService
             // Apply filters
             if (statusFilter.HasValue && character.Status != statusFilter.Value)
                 continue;
-            if (speciesFilter.HasValue && character.SpeciesId != speciesFilter.Value.ToString())
+            if (speciesFilter.HasValue && character.SpeciesId != speciesFilter.Value)
                 continue;
 
             filteredCharacters.Add(character);
@@ -1381,10 +1381,10 @@ public partial class CharacterService : ICharacterService
     {
         return new CharacterResponse
         {
-            CharacterId = Guid.Parse(model.CharacterId),
+            CharacterId = model.CharacterId,
             Name = model.Name,
-            RealmId = Guid.Parse(model.RealmId),
-            SpeciesId = Guid.Parse(model.SpeciesId),
+            RealmId = model.RealmId,
+            SpeciesId = model.SpeciesId,
             BirthDate = model.BirthDate,
             DeathDate = model.DeathDate,
             Status = model.Status,
@@ -1406,10 +1406,10 @@ public partial class CharacterService : ICharacterService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            CharacterId = Guid.Parse(character.CharacterId),
+            CharacterId = character.CharacterId,
             Name = character.Name,
-            RealmId = Guid.Parse(character.RealmId),
-            SpeciesId = Guid.Parse(character.SpeciesId),
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate
         };
 
@@ -1426,10 +1426,10 @@ public partial class CharacterService : ICharacterService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            CharacterId = Guid.Parse(character.CharacterId),
+            CharacterId = character.CharacterId,
             Name = character.Name,
-            RealmId = Guid.Parse(character.RealmId),
-            SpeciesId = Guid.Parse(character.SpeciesId),
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
             Status = character.Status.ToString(),
             CreatedAt = character.CreatedAt,
@@ -1450,10 +1450,10 @@ public partial class CharacterService : ICharacterService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            CharacterId = Guid.Parse(character.CharacterId),
+            CharacterId = character.CharacterId,
             Name = character.Name,
-            RealmId = Guid.Parse(character.RealmId),
-            SpeciesId = Guid.Parse(character.SpeciesId),
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
             Status = character.Status.ToString(),
             CreatedAt = character.CreatedAt,
@@ -1530,13 +1530,14 @@ public partial class CharacterService : ICharacterService
 
 /// <summary>
 /// Character data model for lib-state storage.
+/// Uses Guid types for type-safe ID handling per IMPLEMENTATION TENETS.
 /// </summary>
 internal class CharacterModel
 {
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid CharacterId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string RealmId { get; set; } = string.Empty;
-    public string SpeciesId { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
+    public Guid SpeciesId { get; set; }
     public CharacterStatus Status { get; set; } = CharacterStatus.Alive;
 
     // Store as DateTimeOffset directly - lib-state handles serialization
@@ -1548,13 +1549,14 @@ internal class CharacterModel
 
 /// <summary>
 /// Archive data model for compressed characters.
+/// Uses Guid types for type-safe ID handling per IMPLEMENTATION TENETS.
 /// </summary>
 internal class CharacterArchiveModel
 {
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid CharacterId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string RealmId { get; set; } = string.Empty;
-    public string SpeciesId { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
+    public Guid SpeciesId { get; set; }
     public long BirthDateUnix { get; set; }
     public long DeathDateUnix { get; set; }
     public long CompressedAtUnix { get; set; }
@@ -1566,10 +1568,11 @@ internal class CharacterArchiveModel
 
 /// <summary>
 /// Reference count tracking data for cleanup eligibility.
+/// Uses Guid type for type-safe ID handling per IMPLEMENTATION TENETS.
 /// </summary>
 internal class RefCountData
 {
-    public string CharacterId { get; set; } = string.Empty;
+    public Guid CharacterId { get; set; }
     public long? ZeroRefSinceUnix { get; set; }
 }
 

@@ -1982,7 +1982,7 @@ public class OrchestratorProcessingPoolTests
             ProcessorId = $"{poolType}-{Guid.NewGuid():N}",
             AppId = $"bannou-pool-{poolType}-{i:D4}",
             PoolType = poolType,
-            Status = i < availableCount ? "available" : "busy",
+            Status = i < availableCount ? OrchestratorService.ProcessorStatus.Available : OrchestratorService.ProcessorStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
             LastUpdated = DateTimeOffset.UtcNow.AddMinutes(-1)
         }).ToList();
