@@ -1124,16 +1124,6 @@ public class SubscriptionConfigurationTests
     }
 
     [Fact]
-    public void Configuration_StateStoreName_ShouldHaveDefault()
-    {
-        // Arrange
-        var config = new SubscriptionServiceConfiguration();
-
-        // Act & Assert
-        Assert.Equal("subscription-statestore", config.StateStoreName);
-    }
-
-    [Fact]
     public void Configuration_AuthorizationSuffix_ShouldHaveDefault()
     {
         // Arrange

@@ -2439,7 +2439,6 @@ public class AssetServiceTests
     public async Task BulkGetAssetsAsync_WithIncludeDownloadUrlsFalse_ShouldNotGenerateUrls()
     {
         // Arrange
-        _configuration.StatestoreName = STATE_STORE;
         _configuration.AssetKeyPrefix = "asset:";
         _configuration.DownloadTokenTtlSeconds = 3600;
         var service = CreateService();
@@ -2492,7 +2491,6 @@ public class AssetServiceTests
     public async Task BulkGetAssetsAsync_WithIncludeDownloadUrlsTrue_ShouldGenerateUrls()
     {
         // Arrange
-        _configuration.StatestoreName = STATE_STORE;
         _configuration.AssetKeyPrefix = "asset:";
         _configuration.DownloadTokenTtlSeconds = 3600;
         var service = CreateService();

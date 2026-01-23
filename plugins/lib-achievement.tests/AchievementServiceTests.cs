@@ -114,9 +114,6 @@ public class AchievementServiceTests
     {
         var config = new AchievementServiceConfiguration();
 
-        Assert.Equal("achievement-definition", config.DefinitionStoreName);
-        Assert.Equal("achievement-progress", config.ProgressStoreName);
-        Assert.Equal("achievement-unlock", config.UnlockStoreName);
         Assert.True(config.AutoSyncOnUnlock);
         Assert.Equal(3, config.SyncRetryAttempts);
         Assert.Equal(60, config.SyncRetryDelaySeconds);
@@ -130,9 +127,6 @@ public class AchievementServiceTests
     {
         var config = new AchievementServiceConfiguration
         {
-            DefinitionStoreName = "custom-def",
-            ProgressStoreName = "custom-progress",
-            UnlockStoreName = "custom-unlock",
             AutoSyncOnUnlock = false,
             SyncRetryAttempts = 5,
             SyncRetryDelaySeconds = 120,
@@ -141,9 +135,6 @@ public class AchievementServiceTests
             RareThresholdPercent = 10.0
         };
 
-        Assert.Equal("custom-def", config.DefinitionStoreName);
-        Assert.Equal("custom-progress", config.ProgressStoreName);
-        Assert.Equal("custom-unlock", config.UnlockStoreName);
         Assert.False(config.AutoSyncOnUnlock);
         Assert.Equal(5, config.SyncRetryAttempts);
         Assert.Equal(120, config.SyncRetryDelaySeconds);

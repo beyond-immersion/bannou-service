@@ -879,13 +879,4 @@ public class GameServiceConfigurationTests
         Assert.NotNull(config);
     }
 
-    [Fact]
-    public void Configuration_StateStoreName_ShouldHaveDefault()
-    {
-        // Arrange
-        var config = new GameServiceServiceConfiguration();
-
-        // Act & Assert - StateStoreName has a default value
-        Assert.Equal("game-service-statestore", config.StateStoreName);
-    }
 }

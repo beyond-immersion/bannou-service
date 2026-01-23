@@ -125,9 +125,6 @@ public class AnalyticsServiceTests
         Assert.Equal(0.06, config.Glicko2DefaultVolatility);
         Assert.Equal(0.5, config.Glicko2SystemConstant);
         Assert.Equal(1000, config.EventBufferSize);
-        Assert.Equal("analytics-summary", config.SummaryStoreName);
-        Assert.Equal("analytics-rating", config.RatingStoreName);
-        Assert.Equal("analytics-history", config.HistoryStoreName);
         Assert.Equal(5, config.EventBufferFlushIntervalSeconds);
         Assert.Equal(300, config.SummaryCacheTtlSeconds);
     }
@@ -141,10 +138,7 @@ public class AnalyticsServiceTests
             Glicko2DefaultDeviation = 400.0,
             Glicko2DefaultVolatility = 0.08,
             Glicko2SystemConstant = 0.6,
-            EventBufferSize = 500,
-            SummaryStoreName = "custom-summary",
-            RatingStoreName = "custom-rating",
-            HistoryStoreName = "custom-history"
+            EventBufferSize = 500
         };
 
         Assert.Equal(1200.0, config.Glicko2DefaultRating);
@@ -152,9 +146,6 @@ public class AnalyticsServiceTests
         Assert.Equal(0.08, config.Glicko2DefaultVolatility);
         Assert.Equal(0.6, config.Glicko2SystemConstant);
         Assert.Equal(500, config.EventBufferSize);
-        Assert.Equal("custom-summary", config.SummaryStoreName);
-        Assert.Equal("custom-rating", config.RatingStoreName);
-        Assert.Equal("custom-history", config.HistoryStoreName);
     }
 
     #endregion
