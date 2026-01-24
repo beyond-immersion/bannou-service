@@ -437,7 +437,7 @@ Escrow Integration Flow
 
 7. **Batch credit is non-atomic**: Individual credit operations in a batch can succeed or fail independently. A batch can return partial success (some items credited, some failed). The batch-level idempotency key prevents replaying the entire batch.
 
-8. **Autogain task duplicates internal models**: CurrencyAutogainTaskService defines its own `CurrencyDefinitionModel`, `BalanceModel`, and `WalletModel` classes identical to those in CurrencyService. This duplication exists because the service models are `internal` to the scoped service class, and the background hosted service cannot access them.
+8. **Autogain task shares namespace-level internal models**: CurrencyAutogainTaskService uses the same `CurrencyDefinitionModel`, `BalanceModel`, and `WalletModel` classes defined at namespace level in CurrencyService.cs. Both the scoped service and the background hosted service access the same model definitions, ensuring no field drift during JSON round-trips.
 
 ### Design Considerations (Requires Planning)
 
@@ -455,8 +455,4 @@ Escrow Integration Flow
 
 7. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
 
-8. **UpdateExchangeRate has no ETag**: `UpdateExchangeRateAsync` (line 1435) reads the definition without ETag and saves with plain `SaveAsync`. Concurrent rate updates are last-write-wins. For a financial service, exchange rate updates should use optimistic concurrency to prevent race conditions between admin rate-setting operations.
-
-9. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
-
-10. **Hold index never cleaned up**: When holds transition to Captured/Released states, they remain in the `hold-wallet:{walletId}:{currencyDefId}` index list. `GetTotalHeldAmountAsync` filters by Active status so correctness is maintained, but the index grows unboundedly. A cleanup sweep (either periodic or on-read with threshold) would prevent performance degradation for wallets with many historical holds.
+8. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.

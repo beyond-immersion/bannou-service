@@ -1486,35 +1486,49 @@ public partial class CurrencyService : ICurrencyService
         {
             var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
             var key = $"{DEF_PREFIX}{body.CurrencyDefinitionId}";
-            var definition = await store.GetAsync(key, cancellationToken);
 
-            if (definition is null) return (StatusCodes.NotFound, null);
-            if (definition.IsBaseCurrency) return (StatusCodes.BadRequest, null);
-
-            var previousRate = definition.ExchangeRateToBase ?? 0;
-            definition.ExchangeRateToBase = body.ExchangeRateToBase;
-            definition.ExchangeRateUpdatedAt = DateTimeOffset.UtcNow;
-            definition.ModifiedAt = DateTimeOffset.UtcNow;
-
-            await store.SaveAsync(key, definition, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("currency.exchange_rate.updated", new CurrencyExchangeRateUpdatedEvent
+            for (var attempt = 0; attempt < 3; attempt++)
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CurrencyDefinitionId = body.CurrencyDefinitionId,
-                CurrencyCode = definition.Code,
-                PreviousRate = previousRate,
-                NewRate = body.ExchangeRateToBase,
-                BaseCurrencyCode = "base",
-                UpdatedAt = DateTimeOffset.UtcNow
-            }, cancellationToken);
+                var (definition, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
-            return (StatusCodes.OK, new UpdateExchangeRateResponse
-            {
-                Definition = MapDefinitionToResponse(definition),
-                PreviousRate = previousRate
-            });
+                if (definition is null) return (StatusCodes.NotFound, null);
+                if (definition.IsBaseCurrency) return (StatusCodes.BadRequest, null);
+
+                var previousRate = definition.ExchangeRateToBase ?? 0;
+                definition.ExchangeRateToBase = body.ExchangeRateToBase;
+                definition.ExchangeRateUpdatedAt = DateTimeOffset.UtcNow;
+                definition.ModifiedAt = DateTimeOffset.UtcNow;
+
+                var saveResult = await store.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+                if (saveResult != null)
+                {
+                    await _messageBus.TryPublishAsync("currency.exchange_rate.updated", new CurrencyExchangeRateUpdatedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        CurrencyDefinitionId = body.CurrencyDefinitionId,
+                        CurrencyCode = definition.Code,
+                        PreviousRate = previousRate,
+                        NewRate = body.ExchangeRateToBase,
+                        BaseCurrencyCode = "base",
+                        UpdatedAt = DateTimeOffset.UtcNow
+                    }, cancellationToken);
+
+                    return (StatusCodes.OK, new UpdateExchangeRateResponse
+                    {
+                        Definition = MapDefinitionToResponse(definition),
+                        PreviousRate = previousRate
+                    });
+                }
+
+                _logger.LogDebug(
+                    "Concurrent modification during exchange rate update for {CurrencyDefinitionId}, retrying (attempt {Attempt})",
+                    body.CurrencyDefinitionId, attempt + 1);
+            }
+
+            _logger.LogWarning("Exchange rate update failed after retries for {CurrencyDefinitionId} due to concurrent modifications",
+                body.CurrencyDefinitionId);
+            return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
         {
@@ -2062,6 +2076,10 @@ public partial class CurrencyService : ICurrencyService
             // Update Redis cache after MySQL write
             await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
 
+            // Remove completed hold from wallet index to prevent unbounded index growth
+            await RemoveFromListAsync(StateStoreDefinitions.CurrencyHolds,
+                $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId, cancellationToken);
+
             await RecordIdempotencyAsync(body.IdempotencyKey, hold.HoldId, cancellationToken);
 
             // Fetch wallet for event - data integrity issue if missing
@@ -2148,6 +2166,10 @@ public partial class CurrencyService : ICurrencyService
 
             // Update Redis cache after MySQL write
             await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
+
+            // Remove completed hold from wallet index to prevent unbounded index growth
+            await RemoveFromListAsync(StateStoreDefinitions.CurrencyHolds,
+                $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId, cancellationToken);
 
             // Fetch wallet for event - data integrity issue if missing
             var wallet = await GetWalletByIdAsync(hold.WalletId, cancellationToken);
@@ -2730,6 +2752,27 @@ public partial class CurrencyService : ICurrencyService
         }
     }
 
+    private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
+    {
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "currency-index", key, Guid.NewGuid().ToString(), 15, ct);
+        if (!lockResponse.Success)
+        {
+            _logger.LogDebug("Could not acquire index lock for removal on key {Key} in store {Store}", key, storeName);
+            return;
+        }
+
+        var store = _stateStoreFactory.GetStore<string>(storeName);
+        var existing = await store.GetAsync(key, ct);
+        if (string.IsNullOrEmpty(existing)) return;
+
+        var list = BannouJson.Deserialize<List<string>>(existing) ?? new List<string>();
+        if (list.Remove(value))
+        {
+            await store.SaveAsync(key, BannouJson.Serialize(list), cancellationToken: ct);
+        }
+    }
+
     #endregion
 
     #region Mapping Helpers
@@ -2836,113 +2879,6 @@ public partial class CurrencyService : ICurrencyService
 
     #endregion
 
-    #region Internal Models
-
-    internal class CurrencyDefinitionModel
-    {
-        public string DefinitionId { get; set; } = "";
-        public string Code { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string? Description { get; set; }
-        public string Scope { get; set; } = "";
-        public List<string>? RealmsAvailable { get; set; }
-        public string Precision { get; set; } = "";
-        public bool Transferable { get; set; } = true;
-        public bool Tradeable { get; set; } = true;
-        public bool? AllowNegative { get; set; }
-        public double? PerWalletCap { get; set; }
-        public string? CapOverflowBehavior { get; set; }
-        public double? GlobalSupplyCap { get; set; }
-        public double? DailyEarnCap { get; set; }
-        public double? WeeklyEarnCap { get; set; }
-        public string? EarnCapResetTime { get; set; }
-        public bool AutogainEnabled { get; set; }
-        public string? AutogainMode { get; set; }
-        public double? AutogainAmount { get; set; }
-        public string? AutogainInterval { get; set; }
-        public double? AutogainCap { get; set; }
-        public bool Expires { get; set; }
-        public string? ExpirationPolicy { get; set; }
-        public DateTimeOffset? ExpirationDate { get; set; }
-        public string? ExpirationDuration { get; set; }
-        public string? SeasonId { get; set; }
-        public bool LinkedToItem { get; set; }
-        public string? LinkedItemTemplateId { get; set; }
-        public string? LinkageMode { get; set; }
-        public bool IsBaseCurrency { get; set; }
-        public double? ExchangeRateToBase { get; set; }
-        public DateTimeOffset? ExchangeRateUpdatedAt { get; set; }
-        public string? IconAssetId { get; set; }
-        public string? DisplayFormat { get; set; }
-        public bool IsActive { get; set; } = true;
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset? ModifiedAt { get; set; }
-    }
-
-    internal class WalletModel
-    {
-        public string WalletId { get; set; } = "";
-        public string OwnerId { get; set; } = "";
-        public string OwnerType { get; set; } = "";
-        public string? RealmId { get; set; }
-        public WalletStatus Status { get; set; } = WalletStatus.Active;
-        public string? FrozenReason { get; set; }
-        public DateTimeOffset? FrozenAt { get; set; }
-        public string? FrozenBy { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset? LastActivityAt { get; set; }
-    }
-
-    internal class BalanceModel
-    {
-        public string WalletId { get; set; } = "";
-        public string CurrencyDefinitionId { get; set; } = "";
-        public double Amount { get; set; }
-        public DateTimeOffset? LastAutogainAt { get; set; }
-        public double DailyEarned { get; set; }
-        public double WeeklyEarned { get; set; }
-        public DateTimeOffset DailyResetAt { get; set; }
-        public DateTimeOffset WeeklyResetAt { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset LastModifiedAt { get; set; }
-    }
-
-    internal class TransactionModel
-    {
-        public string TransactionId { get; set; } = "";
-        public string? SourceWalletId { get; set; }
-        public string? TargetWalletId { get; set; }
-        public string CurrencyDefinitionId { get; set; } = "";
-        public double Amount { get; set; }
-        public string TransactionType { get; set; } = "";
-        public string? ReferenceType { get; set; }
-        public string? ReferenceId { get; set; }
-        public string? EscrowId { get; set; }
-        public string IdempotencyKey { get; set; } = "";
-        public DateTimeOffset Timestamp { get; set; }
-        public double? SourceBalanceBefore { get; set; }
-        public double? SourceBalanceAfter { get; set; }
-        public double? TargetBalanceBefore { get; set; }
-        public double? TargetBalanceAfter { get; set; }
-    }
-
-    internal class HoldModel
-    {
-        public string HoldId { get; set; } = "";
-        public string WalletId { get; set; } = "";
-        public string CurrencyDefinitionId { get; set; } = "";
-        public double Amount { get; set; }
-        public HoldStatus Status { get; set; } = HoldStatus.Active;
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset ExpiresAt { get; set; }
-        public string? ReferenceType { get; set; }
-        public string? ReferenceId { get; set; }
-        public double? CapturedAmount { get; set; }
-        public DateTimeOffset? CompletedAt { get; set; }
-    }
-
-    #endregion
-
     #region Balance Cache Helpers
 
     /// <summary>
@@ -3042,3 +2978,128 @@ public partial class CurrencyService : ICurrencyService
 
     #endregion
 }
+
+#region Internal Models (shared with CurrencyAutogainTaskService)
+
+/// <summary>
+/// Internal model for currency definitions.
+/// Used by both CurrencyService and CurrencyAutogainTaskService.
+/// </summary>
+internal class CurrencyDefinitionModel
+{
+    public string DefinitionId { get; set; } = "";
+    public string Code { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string? Description { get; set; }
+    public string Scope { get; set; } = "";
+    public List<string>? RealmsAvailable { get; set; }
+    public string Precision { get; set; } = "";
+    public bool Transferable { get; set; } = true;
+    public bool Tradeable { get; set; } = true;
+    public bool? AllowNegative { get; set; }
+    public double? PerWalletCap { get; set; }
+    public string? CapOverflowBehavior { get; set; }
+    public double? GlobalSupplyCap { get; set; }
+    public double? DailyEarnCap { get; set; }
+    public double? WeeklyEarnCap { get; set; }
+    public string? EarnCapResetTime { get; set; }
+    public bool AutogainEnabled { get; set; }
+    public string? AutogainMode { get; set; }
+    public double? AutogainAmount { get; set; }
+    public string? AutogainInterval { get; set; }
+    public double? AutogainCap { get; set; }
+    public bool Expires { get; set; }
+    public string? ExpirationPolicy { get; set; }
+    public DateTimeOffset? ExpirationDate { get; set; }
+    public string? ExpirationDuration { get; set; }
+    public string? SeasonId { get; set; }
+    public bool LinkedToItem { get; set; }
+    public string? LinkedItemTemplateId { get; set; }
+    public string? LinkageMode { get; set; }
+    public bool IsBaseCurrency { get; set; }
+    public double? ExchangeRateToBase { get; set; }
+    public DateTimeOffset? ExchangeRateUpdatedAt { get; set; }
+    public string? IconAssetId { get; set; }
+    public string? DisplayFormat { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? ModifiedAt { get; set; }
+}
+
+/// <summary>
+/// Internal model for wallet ownership and status.
+/// Used by both CurrencyService and CurrencyAutogainTaskService.
+/// </summary>
+internal class WalletModel
+{
+    public string WalletId { get; set; } = "";
+    public string OwnerId { get; set; } = "";
+    public string OwnerType { get; set; } = "";
+    public string? RealmId { get; set; }
+    public WalletStatus Status { get; set; } = WalletStatus.Active;
+    public string? FrozenReason { get; set; }
+    public DateTimeOffset? FrozenAt { get; set; }
+    public string? FrozenBy { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? LastActivityAt { get; set; }
+}
+
+/// <summary>
+/// Internal model for balance records.
+/// Used by both CurrencyService and CurrencyAutogainTaskService.
+/// </summary>
+internal class BalanceModel
+{
+    public string WalletId { get; set; } = "";
+    public string CurrencyDefinitionId { get; set; } = "";
+    public double Amount { get; set; }
+    public DateTimeOffset? LastAutogainAt { get; set; }
+    public double DailyEarned { get; set; }
+    public double WeeklyEarned { get; set; }
+    public DateTimeOffset DailyResetAt { get; set; }
+    public DateTimeOffset WeeklyResetAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset LastModifiedAt { get; set; }
+}
+
+/// <summary>
+/// Internal model for transaction records.
+/// </summary>
+internal class TransactionModel
+{
+    public string TransactionId { get; set; } = "";
+    public string? SourceWalletId { get; set; }
+    public string? TargetWalletId { get; set; }
+    public string CurrencyDefinitionId { get; set; } = "";
+    public double Amount { get; set; }
+    public string TransactionType { get; set; } = "";
+    public string? ReferenceType { get; set; }
+    public string? ReferenceId { get; set; }
+    public string? EscrowId { get; set; }
+    public string IdempotencyKey { get; set; } = "";
+    public DateTimeOffset Timestamp { get; set; }
+    public double? SourceBalanceBefore { get; set; }
+    public double? SourceBalanceAfter { get; set; }
+    public double? TargetBalanceBefore { get; set; }
+    public double? TargetBalanceAfter { get; set; }
+}
+
+/// <summary>
+/// Internal model for authorization holds.
+/// </summary>
+internal class HoldModel
+{
+    public string HoldId { get; set; } = "";
+    public string WalletId { get; set; } = "";
+    public string CurrencyDefinitionId { get; set; } = "";
+    public double Amount { get; set; }
+    public HoldStatus Status { get; set; } = HoldStatus.Active;
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset ExpiresAt { get; set; }
+    public string? ReferenceType { get; set; }
+    public string? ReferenceId { get; set; }
+    public double? CapturedAmount { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+}
+
+#endregion
