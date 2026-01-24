@@ -441,7 +441,7 @@ Circuit Breaker State Machine
 
 5. **Rate limiting (MaxSavesPerMinute)**: Configuration property exists but no rate limiting implementation is present in the Save endpoint. The property is defined but not enforced.
 
-6. **MaxTotalSizeBytesPerOwner quota**: Configuration property exists but quota enforcement is not implemented in the Save endpoint. Owners can exceed their storage limit.
+6. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists (line 578 of SaveLoadService.cs) but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit. Also see Bug #4 (raw vs compressed size mismatch in the check).
 
 7. **Thumbnail upload and storage**: ThumbnailMaxSizeBytes and ThumbnailAllowedFormats are configured, and SaveVersionManifest has ThumbnailAssetId, but no thumbnail validation or upload logic exists in the Save endpoint.
 
@@ -475,7 +475,13 @@ Circuit Breaker State Machine
 
 1. **TotalSizeBytes accumulates compressed size inconsistently**: PromoteVersion adds `CompressedSizeBytes ?? SizeBytes` to slot.TotalSizeBytes, but AdminCleanup subtracts `version.SizeBytes` (uncompressed). This causes slot size tracking to drift over time for compressed saves.
 
-2. **AdminCleanup bytesFreed double-counting**: The `bytesFreed` variable is accumulated across all slots but also subtracted from individual slot.TotalSizeBytes in the per-slot update. If a slot has versions from multiple categories, the bytesFreed represents all categories but the slot update applies the total, not the per-slot portion.
+2. **AdminCleanup bytesFreed double-counting**: The `bytesFreed` variable (line 2623 of SaveLoadService.cs) is accumulated across ALL slots in the outer loop. At line 2677, `slot.TotalSizeBytes -= bytesFreed` subtracts the cumulative total from the current slot. For the first slot this is correct, but for subsequent slots, it subtracts the sum of ALL previously freed bytes plus its own, massively over-decrementing TotalSizeBytes.
+
+3. **PerformRollingCleanupAsync does not delete assets**: The save-time rolling cleanup (lines 70-73 of VersionCleanupManager.cs) deletes version manifests and hot cache entries but does NOT call `_assetClient.DeleteAssetAsync`. Assets remain orphaned in MinIO until the scheduled `CleanupOldVersionsAsync` runs (default 60 min interval). For high-frequency saves with low MaxVersions (e.g., QUICK_SAVE with MaxVersions=1), a new save immediately orphans the old version's asset.
+
+4. **Storage quota check mixes raw and compressed sizes**: Line 578 of SaveLoadService.cs: `slot.TotalSizeBytes + body.Data.Length > MaxTotalSizeBytesPerOwner`. The `slot.TotalSizeBytes` tracks compressed sizes (line 720 adds `compressedSize`), but `body.Data.Length` is the raw uncompressed data size. This means the check uses an inconsistent unit, potentially rejecting saves that would fit after compression.
+
+5. **Storage quota check is per-slot, not per-owner**: Line 578 only checks the current `slot.TotalSizeBytes` against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. The config name suggests per-owner enforcement but the implementation is per-slot.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -516,3 +522,7 @@ Circuit Breaker State Machine
 7. **Schema migration path is forward-only**: SchemaMigrator only builds forward adjacency (previousVersion -> currentVersion). There is no support for backward/downgrade migration. Version graph is a linked list, not a DAG.
 
 8. **Pending upload tracking set grows without bounds**: If uploads fail and entries expire from TTL but are not removed from the tracking set, the set can grow with orphaned IDs. The worker cleans orphans only when processing finds them, not proactively.
+
+9. **PerformRollingCleanupAsync scans from version 1**: Line 54 of VersionCleanupManager.cs iterates `for (var v = 1; v <= slot.LatestVersion ...)`, loading each version by number. For long-lived slots where many early versions were already cleaned up (returning null), this scans N missing keys before finding any existing version. No "earliest surviving version" is tracked in slot metadata.
+
+10. **Circuit breaker is reinstantiated every processing cycle**: Line 102 of SaveUploadWorker.cs creates `new StorageCircuitBreaker(...)` on every `ProcessPendingUploadsAsync` call (every 100ms by default). While state is Redis-coordinated, each instantiation reads Redis state, and the frequent object creation is unnecessary overhead. Could be a singleton or cached instance.

@@ -51,7 +51,7 @@
 | # | Plugin | Endpoints | File | Status |
 |---|--------|-----------|------|--------|
 | 24 | lib-connect | 5 | `CONNECT.md` | [x] |
-| 25 | lib-behavior | 6 | `BEHAVIOR.md` | [ ] |
+| 25 | lib-behavior | 6 | `BEHAVIOR.md` | [x] |
 | 26 | lib-analytics | 8 | `ANALYTICS.md` | [x] |
 | 27 | lib-website | 17 | `WEBSITE.md` | [x] |
 | 28 | lib-mapping | 18 | `MAPPING.md` | [x] |
@@ -62,8 +62,8 @@
 | 33 | lib-achievement | 11 | `ACHIEVEMENT.md` | [x] |
 | 34 | lib-auth | 13 | `AUTH.md` | [x] |
 | 35 | lib-account | 16 | `ACCOUNT.md` | [x] |
-| 36 | lib-orchestrator | 22 | `ORCHESTRATOR.md` | [ ] |
-| 37 | lib-save-load | 26 | `SAVE-LOAD.md` | [ ] |
+| 36 | lib-orchestrator | 22 | `ORCHESTRATOR.md` | [x] |
+| 37 | lib-save-load | 26 | `SAVE-LOAD.md` | [x] |
 | 38 | lib-documentation | 27 | `DOCUMENTATION.md` | [ ] |
 | 39 | lib-contract | 30 | `CONTRACT.md` | [ ] |
 | 40 | lib-currency | 32 | `CURRENCY.md` | [ ] |

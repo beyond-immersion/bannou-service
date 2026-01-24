@@ -417,6 +417,12 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 - **Pool metrics never reset**: `JobsCompleted1h` and `JobsFailed1h` increment indefinitely. Despite the "1h" suffix, there is no hourly reset mechanism.
 - **Lease expiry not enforced**: When a processor lease expires (`ExpiresAt` passes), nothing reclaims the processor. The lease remains in the hash indefinitely until explicitly released. The processor is effectively lost from the pool.
 
+- **Processing pool operations have no concurrency control**: `AcquireProcessorAsync`, `ReleaseProcessorAsync`, and `UpdatePoolMetricsAsync` all use non-atomic read-modify-write patterns. They call `GetListAsync` -> mutate -> `SetListAsync` (and similarly for hashes) without ETags or retries. Two concurrent `AcquireProcessor` requests can both read the same available list, both pop the same processor, and each create a separate lease for it - effectively double-allocating the processor.
+
+- **Routing index update silently fails under concurrency**: `UpdateRoutingIndexAsync` in OrchestratorStateManager.cs uses `TrySaveAsync` with ETag but has NO retry loop (unlike `UpdateHeartbeatIndexAsync` which retries 3 times). If an ETag mismatch occurs during concurrent routing updates, the service name is silently not added to the routing index. The service becomes invisible to routing queries with no error logged.
+
+- **Log stream always reported as Stdout**: Line 1701 of OrchestratorService.cs hardcodes `Stream = LogEntryStream.Stdout` for all parsed log entries. Docker multiplexes stdout and stderr in its log output format but this parsing ignores the stream indicator, reporting all output as stdout.
+
 ### Intentional Quirks
 
 - **Secure WebSocket mode (default)**: When `SecureWebsocket=true`, the orchestrator publishes a blank permission registration with no endpoints. This makes it completely inaccessible via WebSocket - only service-to-service calls work. This is intentional: orchestrator operations are admin-only and should not be exposed to game clients.
@@ -434,6 +440,12 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 - **Backend detection at request time**: `GetOrchestratorAsync` is called per-request, not at startup. This allows the backend to change dynamically (e.g., Docker socket becomes available after orchestrator starts).
 - **Partial failure reporting in topology changes**: Each topology change is applied independently. If 3 of 5 changes succeed, the response reports partial success with per-change error details. The already-applied changes are NOT rolled back.
 - **Service enable/disable flags are generated from preset services list**: When deploying, the orchestrator does not inherit `*_SERVICE_ENABLED` vars from its own environment. Instead, it sets `SERVICES_ENABLED=false` and explicitly enables only the services listed in the preset for each node.
+
+- **GetOrchestratorAsync TTL check is ineffective for scoped service**: Since `OrchestratorService` is scoped (per-request), the `_orchestrator` field starts null every request and is populated on first access within the request. The TTL-based cache invalidation logic (lines 174-203) checks if cache age exceeds `CacheTtlMinutes` (default 5 min), but since the service instance lives only for the duration of one request (seconds at most), this check can never trigger. The caching only provides within-request reuse when multiple endpoint methods call `GetOrchestratorAsync`.
+
+- **HttpClient created per-call in OpenResty invalidation**: `InvalidateOpenRestryRoutingCacheAsync` creates `new HttpClient()` with `using` on every invocation. This is the classic socket exhaustion anti-pattern in .NET - each disposal closes the socket immediately, but DNS entries remain cached, and under high deployment frequency could exhaust ephemeral ports. Should use `IHttpClientFactory`.
+
+- **Method name typo**: `InvalidateOpenRestryRoutingCacheAsync` uses "Restry" instead of "Resty" (the product is OpenResty). This typo is consistent throughout the codebase (3 call sites) so is functionally harmless but may cause confusion when searching.
 
 ---
 
