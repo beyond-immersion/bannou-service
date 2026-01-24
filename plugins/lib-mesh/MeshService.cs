@@ -367,11 +367,42 @@ public partial class MeshService : IMeshService
                 }
             }
 
+            // Filter out degraded endpoints (stale heartbeat)
+            var degradationThreshold = DateTimeOffset.UtcNow.AddSeconds(-_configuration.DegradationThresholdSeconds);
+            var healthyEndpoints = endpoints
+                .Where(e => e.LastSeen >= degradationThreshold)
+                .ToList();
+
+            // Filter out overloaded endpoints (above load threshold)
+            if (healthyEndpoints.Count > 1)
+            {
+                var underThreshold = healthyEndpoints
+                    .Where(e => e.LoadPercent <= _configuration.LoadThresholdPercent)
+                    .ToList();
+                if (underThreshold.Count > 0)
+                {
+                    healthyEndpoints = underThreshold;
+                }
+            }
+
+            // Fall back to all endpoints if filtering removed everything
+            if (healthyEndpoints.Count == 0)
+            {
+                healthyEndpoints = endpoints;
+            }
+
+            // Determine effective algorithm (use configured default when request uses default value)
+            var effectiveAlgorithm = body.Algorithm;
+            if (effectiveAlgorithm == default && Enum.TryParse<LoadBalancerAlgorithm>(_configuration.DefaultLoadBalancer, true, out var configuredAlgorithm))
+            {
+                effectiveAlgorithm = configuredAlgorithm;
+            }
+
             // Apply load balancing algorithm
-            var selectedEndpoint = SelectEndpoint(endpoints, body.AppId, body.Algorithm);
+            var selectedEndpoint = SelectEndpoint(healthyEndpoints, body.AppId, effectiveAlgorithm);
 
             // Get alternates (other healthy endpoints)
-            var alternates = endpoints
+            var alternates = healthyEndpoints
                 .Where(e => e.InstanceId != selectedEndpoint.InstanceId)
                 .Take(_configuration.MaxTopEndpointsReturned)
                 .ToList();

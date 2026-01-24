@@ -225,6 +225,8 @@ public class CurrencyAutogainTaskService : BackgroundService
                 return false;
             }
 
+            if (string.IsNullOrEmpty(definition.AutogainInterval)) return false;
+
             TimeSpan interval;
             try { interval = XmlConvert.ToTimeSpan(definition.AutogainInterval); }
             catch { return false; }
