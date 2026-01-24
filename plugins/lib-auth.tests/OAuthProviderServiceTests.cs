@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
@@ -35,6 +36,7 @@ public class OAuthProviderServiceTests : IDisposable
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OAuthProviderService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly OAuthProviderService _service;
     private readonly List<HttpClient> _createdHttpClients = new();
     private readonly List<HttpResponseMessage> _createdResponses = new();
@@ -73,6 +75,10 @@ public class OAuthProviderServiceTests : IDisposable
             SteamApiKey = "test-steam-api-key",
             SteamAppId = "123456"
         };
+        _appConfiguration = new AppConfiguration
+        {
+            ServiceDomain = "localhost"
+        };
 
         // Setup state store factory
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
@@ -89,6 +95,7 @@ public class OAuthProviderServiceTests : IDisposable
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
     }
@@ -170,6 +177,7 @@ public class OAuthProviderServiceTests : IDisposable
             _mockAccountClient.Object,
             mockFactory.Object,
             configOverride ?? _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
     }
@@ -294,6 +302,7 @@ public class OAuthProviderServiceTests : IDisposable
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
             configWithMock,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
 

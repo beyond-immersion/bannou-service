@@ -62,6 +62,13 @@ public class AuthServiceTests
             SteamApiKey = "test-steam-api-key",
             SteamAppId = "123456"
         };
+        _appConfiguration = new AppConfiguration
+        {
+            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
+            JwtIssuer = "test-issuer",
+            JwtAudience = "test-audience",
+            ServiceDomain = "localhost"
+        };
         _mockAccountClient = new Mock<IAccountClient>();
         _mockSubscriptionClient = new Mock<ISubscriptionClient>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
@@ -111,6 +118,7 @@ public class AuthServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
+            _appConfiguration,
             _mockLogger.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
@@ -542,6 +550,7 @@ public class AuthServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             emptyConfig,
+            _appConfiguration,
             _mockLogger.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
@@ -800,6 +809,7 @@ public class AuthServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
+            _appConfiguration,
             _mockLogger.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
@@ -884,6 +894,7 @@ public class AuthServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             configWithoutSteam,
+            _appConfiguration,
             _mockLogger.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
@@ -923,6 +934,7 @@ public class AuthServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
+            _appConfiguration,
             _mockLogger.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
@@ -971,6 +983,7 @@ public class AuthServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             realConfig,
+            _appConfiguration,
             _mockLogger.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,

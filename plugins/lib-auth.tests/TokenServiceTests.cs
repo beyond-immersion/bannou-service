@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -29,6 +30,7 @@ public class TokenServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<TokenService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly TokenService _service;
 
     public TokenServiceTests()
@@ -47,6 +49,12 @@ public class TokenServiceTests
         {
             JwtExpirationMinutes = 60
         };
+        _appConfiguration = new AppConfiguration
+        {
+            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
+            JwtIssuer = "test-issuer",
+            JwtAudience = "test-audience"
+        };
 
         // Setup state store factory to return the string store
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
@@ -57,6 +65,7 @@ public class TokenServiceTests
             _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockLogger.Object);
     }

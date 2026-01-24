@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -28,6 +29,7 @@ public class OrchestratorServiceTests
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly AppConfiguration _appConfiguration;
 
     public OrchestratorServiceTests()
     {
@@ -43,6 +45,7 @@ public class OrchestratorServiceTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
@@ -58,6 +61,7 @@ public class OrchestratorServiceTests
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
@@ -638,6 +642,7 @@ public class ServiceHealthMonitorTests
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
 
     public ServiceHealthMonitorTests()
     {
@@ -649,6 +654,7 @@ public class ServiceHealthMonitorTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
     }
 
     private ServiceHealthMonitor CreateMonitor()
@@ -656,6 +662,7 @@ public class ServiceHealthMonitorTests
         return new ServiceHealthMonitor(
             _mockLogger.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object);
     }
@@ -804,6 +811,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
 
     // Event handler captured from the mock
     private Action<ServiceHeartbeatEvent>? _heartbeatHandler;
@@ -818,6 +826,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
     }
 
     private ServiceHealthMonitor CreateMonitorWithEventCapture()
@@ -835,6 +844,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         return new ServiceHealthMonitor(
             _mockLogger.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object);
     }
@@ -1330,6 +1340,7 @@ public class OrchestratorResetToDefaultTests
     private readonly Mock<IBackendDetector> _mockBackendDetector;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
 
     public OrchestratorResetToDefaultTests()
     {
@@ -1347,6 +1358,7 @@ public class OrchestratorResetToDefaultTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
 
         // Setup logger factory
         _mockLoggerFactory
@@ -1361,6 +1373,7 @@ public class OrchestratorResetToDefaultTests
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
@@ -1695,6 +1708,7 @@ public class OrchestratorProcessingPoolTests
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
@@ -1716,6 +1730,7 @@ public class OrchestratorProcessingPoolTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
+        _appConfiguration = new AppConfiguration();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
@@ -1731,6 +1746,7 @@ public class OrchestratorProcessingPoolTests
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
+            _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
