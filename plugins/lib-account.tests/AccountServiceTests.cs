@@ -166,12 +166,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -185,14 +179,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -228,12 +214,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -247,14 +227,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -385,12 +357,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -404,14 +370,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -451,12 +409,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -470,14 +422,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -510,12 +454,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -529,14 +467,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -577,12 +507,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
@@ -596,14 +520,6 @@ public class AccountServiceTests
                 (key, data, options, ct) => savedAccount = data)
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -656,12 +572,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest());
@@ -683,12 +603,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = -5 });
@@ -710,12 +634,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { PageSize = -10 });
@@ -737,12 +665,16 @@ public class AccountServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
-        // Mock empty accounts list
-        _mockListStore
-            .Setup(s => s.GetAsync(
-                "accounts-list",
+        // Mock empty JSON query result
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = 0 });
@@ -782,12 +714,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock account save
         _mockAccountStore
@@ -798,14 +724,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        // Mock list save
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -844,12 +762,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -860,13 +772,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -903,12 +808,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -919,13 +818,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -954,12 +846,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -970,13 +856,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         var accountIds = new List<Guid>();
 
@@ -1018,12 +897,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -1034,13 +907,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Truncate to second precision to match Unix timestamp storage
         var beforeCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -1092,12 +958,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Mock GetWithETagAsync for accounts-list
-        _mockListStore
-            .Setup(s => s.GetWithETagAsync(
-                "accounts-list",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Mock saves
         _mockAccountStore
@@ -1108,13 +968,6 @@ public class AccountServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        _mockListStore
-            .Setup(s => s.SaveAsync(
-                "accounts-list",
-                It.IsAny<List<string>>(),
-                It.IsAny<StateOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
