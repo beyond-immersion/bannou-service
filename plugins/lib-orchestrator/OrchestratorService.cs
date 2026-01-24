@@ -1693,15 +1693,37 @@ public partial class OrchestratorService : IOrchestratorService
             var logsText = await orchestrator.GetContainerLogsAsync(appName, tail, sinceTime, cancellationToken);
 
             // Parse log text into LogEntry objects
-            var logEntries = logsText
-                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                .Select(line => new LogEntry
+            // Docker logs with Timestamps=true format: "2024-01-01T12:00:00.123456789Z message"
+            // Stderr section is appended after a "[STDERR]" marker by ReadDockerLogStreamAsync
+            var logEntries = new List<LogEntry>();
+            var currentStream = LogEntryStream.Stdout;
+
+            foreach (var line in logsText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (line == "[STDERR]")
                 {
-                    Timestamp = DateTimeOffset.UtcNow, // Would parse from log line
-                    Stream = LogEntryStream.Stdout,
-                    Message = line
-                })
-                .ToList();
+                    currentStream = LogEntryStream.Stderr;
+                    continue;
+                }
+
+                var timestamp = DateTimeOffset.UtcNow;
+                var message = line;
+
+                // Try to parse Docker timestamp prefix (ISO 8601 with nanoseconds)
+                var spaceIndex = line.IndexOf(' ');
+                if (spaceIndex > 0 && DateTimeOffset.TryParse(line[..spaceIndex], out var parsed))
+                {
+                    timestamp = parsed;
+                    message = line[(spaceIndex + 1)..];
+                }
+
+                logEntries.Add(new LogEntry
+                {
+                    Timestamp = timestamp,
+                    Stream = currentStream,
+                    Message = message
+                });
+            }
 
             var response = new LogsResponse
             {

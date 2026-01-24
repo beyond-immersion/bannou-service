@@ -385,17 +385,11 @@ Dispute Resolution
 
 ### Bugs (Fix Immediately)
 
-1. **TotalCount is filtered result count, not true total**: `ListEscrowsAsync` sets `TotalCount` to the post-pagination `results.Count`, which is capped by `limit`. This means the client cannot determine the true total number of matching escrows for pagination UI.
+*All bugs in this section have been fixed.*
 
-2. **Status index not cleaned on expiration**: Since no expiration processor exists, status index entries for expired escrows accumulate indefinitely. If an escrow expires without being cancelled, its status index entry remains under the pre-expiration status forever.
+1. ~~**TotalCount is filtered result count, not true total**: `ListEscrowsAsync` sets `TotalCount` to the post-pagination `results.Count`, which is capped by `limit`. This means the client cannot determine the true total number of matching escrows for pagination UI.~~ **FIXED**: TotalCount now captures the count before pagination is applied.
 
-3. **Non-atomic read-modify-write on party pending counts**: `CreateEscrow` reads existing count, increments, and saves without ETags or distributed locks. Concurrent escrow creations for the same party can result in incorrect pending counts.
-
-4. **Non-atomic read-modify-write on agreement model**: All modifications (deposit, consent, dispute, etc.) read the agreement, modify in-place, and save without ETags. Concurrent operations on the same escrow can lose writes.
-
-5. **Idempotency check doesn't verify request parameters**: In `DepositAsync` (lines 21-31), the idempotency lookup returns the cached response if the key exists, but doesn't verify the request's escrowId, partyId, or other parameters match the original request. A caller could submit the same idempotency key with different parameters and receive a cached response for a different escrow/party combination.
-
-6. **Token record update has no ETag protection**: In `DepositAsync` (lines 90-92), the token record is marked as used and saved without ETag verification. Two concurrent deposits with the same token could both validate successfully, both mark the token as used, and both proceed - though only one would succeed due to agreement-level conflicts.
+2. ~~**Idempotency check doesn't verify request parameters**: The idempotency lookup returned the cached response if the key exists, without verifying the request's escrowId or partyId match the original request.~~ **FIXED**: Idempotency check now stores and verifies both EscrowId and PartyId, returning BadRequest on mismatch.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -417,14 +411,16 @@ Dispute Resolution
 
 ### Design Considerations (Requires Planning)
 
-1. **No distributed locking**: The service performs read-modify-write cycles on the agreement model without any distributed lock protection. Under high concurrency (e.g., multiple parties depositing simultaneously), last-write-wins can cause lost deposits or incorrect state.
+1. **No distributed locking / non-atomic read-modify-write**: The service performs read-modify-write cycles without distributed lock or ETag protection. Affected areas include: the agreement model (all modifications: deposit, consent, dispute, etc.), party pending counts (concurrent CreateEscrow for same party), and token records (concurrent deposits with same token). Under high concurrency, last-write-wins can cause lost deposits, incorrect counts, or inconsistent state.
 
-2. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
+2. **Status index not cleaned on expiration**: Since no expiration processor exists, status index entries for expired escrows accumulate indefinitely. If an escrow expires without being cancelled, its status index entry remains under the pre-expiration status forever. Needs either a periodic cleanup timer or expiration handling in query paths.
 
-3. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation - only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
+3. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
 
-4. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
+4. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation - only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
 
-5. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
+5. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
 
-6. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
+6. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
+
+7. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.

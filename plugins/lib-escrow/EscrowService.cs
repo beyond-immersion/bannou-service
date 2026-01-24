@@ -807,6 +807,7 @@ internal class IdempotencyRecord
 {
     public string Key { get; set; } = string.Empty;
     public Guid EscrowId { get; set; }
+    public Guid PartyId { get; set; }
     public string Operation { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }

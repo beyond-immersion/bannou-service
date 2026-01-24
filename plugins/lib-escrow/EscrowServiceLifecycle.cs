@@ -277,6 +277,8 @@ public partial class EscrowService
             var limit = body.Limit ?? 50;
             var offset = body.Offset ?? 0;
 
+            int totalCount;
+
             if (body.PartyId != null)
             {
                 var allAgreements = await AgreementStore.QueryAsync(
@@ -293,7 +295,10 @@ public partial class EscrowService
                     filtered = filtered.Where(a => statusSet.Contains(a.Status));
                 }
 
-                results = filtered
+                var allFiltered = filtered.ToList();
+                totalCount = allFiltered.Count;
+
+                results = allFiltered
                     .Skip(offset)
                     .Take(limit)
                     .Select(MapToApiModel)
@@ -305,6 +310,8 @@ public partial class EscrowService
                 var allAgreements = await AgreementStore.QueryAsync(
                     a => statusSet.Contains(a.Status),
                     cancellationToken);
+
+                totalCount = allAgreements.Count;
 
                 results = allAgreements
                     .Skip(offset)
@@ -318,6 +325,8 @@ public partial class EscrowService
                     a => true,
                     cancellationToken);
 
+                totalCount = allAgreements.Count;
+
                 results = allAgreements
                     .Skip(offset)
                     .Take(limit)
@@ -328,7 +337,7 @@ public partial class EscrowService
             return (StatusCodes.OK, new ListEscrowsResponse
             {
                 Escrows = results,
-                TotalCount = results.Count
+                TotalCount = totalCount
             });
         }
         catch (Exception ex)

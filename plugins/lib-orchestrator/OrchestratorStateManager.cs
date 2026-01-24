@@ -436,27 +436,49 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     {
         if (_routingIndexStore == null) return;
 
-        try
+        const int maxRetries = 3;
+
+        for (int retry = 0; retry < maxRetries; retry++)
         {
-            var (index, etag) = await _routingIndexStore.GetWithETagAsync(ROUTING_INDEX_KEY);
-
-            index ??= new RoutingIndex();
-            index.ServiceNames.Add(serviceName);
-            index.LastUpdated = DateTimeOffset.UtcNow;
-
-            if (etag != null)
+            try
             {
-                await _routingIndexStore.TrySaveAsync(ROUTING_INDEX_KEY, index, etag);
+                var (index, etag) = await _routingIndexStore.GetWithETagAsync(ROUTING_INDEX_KEY);
+
+                index ??= new RoutingIndex();
+                index.ServiceNames.Add(serviceName);
+                index.LastUpdated = DateTimeOffset.UtcNow;
+
+                string? savedEtag;
+                if (etag != null)
+                {
+                    savedEtag = await _routingIndexStore.TrySaveAsync(ROUTING_INDEX_KEY, index, etag);
+                }
+                else
+                {
+                    savedEtag = await _routingIndexStore.SaveAsync(ROUTING_INDEX_KEY, index);
+                }
+
+                if (savedEtag != null)
+                {
+                    return; // Success
+                }
+
+                // TrySaveAsync returned null (ETag mismatch due to concurrent modification) - retry
+                _logger.LogDebug(
+                    "Routing index update for {ServiceName} failed due to concurrent modification, retrying ({Retry}/{MaxRetries})",
+                    serviceName, retry + 1, maxRetries);
             }
-            else
+            catch (Exception ex)
             {
-                await _routingIndexStore.SaveAsync(ROUTING_INDEX_KEY, index);
+                _logger.LogWarning(ex,
+                    "Failed to update routing index for {ServiceName} (attempt {Retry}/{MaxRetries})",
+                    serviceName, retry + 1, maxRetries);
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to update routing index for {ServiceName}", serviceName);
-        }
+
+        _logger.LogWarning(
+            "Failed to update routing index for {ServiceName} after {MaxRetries} retries - service may not appear in routing queries",
+            serviceName, maxRetries);
     }
 
     /// <summary>

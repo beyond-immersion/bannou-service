@@ -23,6 +23,13 @@ public partial class EscrowService
             var existingRecord = await IdempotencyStore.GetAsync(idempotencyKey, cancellationToken);
             if (existingRecord != null)
             {
+                if (existingRecord.EscrowId != body.EscrowId || existingRecord.PartyId != body.PartyId)
+                {
+                    _logger.LogWarning("Idempotency key {IdempotencyKey} reused with different parameters (original escrow: {OriginalEscrowId}, new: {NewEscrowId})",
+                        body.IdempotencyKey, existingRecord.EscrowId, body.EscrowId);
+                    return (StatusCodes.BadRequest, null);
+                }
+
                 _logger.LogInformation("Idempotent deposit request {IdempotencyKey} already processed", body.IdempotencyKey);
                 if (existingRecord.Result is DepositResponse cachedResponse)
                 {
@@ -200,6 +207,7 @@ public partial class EscrowService
             {
                 Key = body.IdempotencyKey,
                 EscrowId = body.EscrowId,
+                PartyId = body.PartyId,
                 Operation = "Deposit",
                 CreatedAt = now,
                 ExpiresAt = now.AddHours(24),
