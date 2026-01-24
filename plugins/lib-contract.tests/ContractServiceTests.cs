@@ -3081,4 +3081,267 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     }
 
     #endregion
+
+    #region Concurrency Lock Failure Tests
+
+    [Fact]
+    public async Task ProposeContractInstanceAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Draft;
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        // Override lock to fail for this contract
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "contract-instance",
+                contractId.ToString(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new ProposeContractInstanceRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.ProposeContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        // Override lock to fail for this contract
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "contract-instance",
+                contractId.ToString(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "milestone_1"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task TerminateContractInstanceAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        // Override lock to fail for this contract
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "contract-instance",
+                contractId.ToString(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new TerminateContractInstanceRequest
+        {
+            ContractId = contractId,
+            RequestingEntityId = Guid.NewGuid(),
+            RequestingEntityType = EntityType.Character,
+            Reason = "test termination"
+        };
+
+        // Act
+        var (status, response) = await service.TerminateContractInstanceAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ExecuteContractAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        // Override lock to fail for this contract
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "contract-instance",
+                contractId.ToString(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new ExecuteContractRequest { ContractInstanceId = contractId };
+
+        // Act
+        var (status, response) = await service.ExecuteContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region Ordering Correctness Tests
+
+    [Fact]
+    public async Task CompleteMilestoneAsync_TrySaveFails_DoesNotExecutePreboundApis()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "test_milestone",
+                Name = "Test Milestone",
+                Status = MilestoneStatus.Active,
+                Required = true,
+                Sequence = 1,
+                OnComplete = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "currency",
+                        Endpoint = "/currency/credit",
+                        PayloadTemplate = "{}",
+                        Description = "Pay on completion"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        // TrySaveAsync returns null (concurrent modification)
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var request = new CompleteMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "test_milestone"
+        };
+
+        // Act
+        var (status, response) = await service.CompleteMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify prebound APIs were NOT executed (persist failed, so side effects should not fire)
+        _mockNavigator.Verify(
+            n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task FailMilestoneAsync_TrySaveFails_DoesNotExecutePreboundApis()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "test_milestone",
+                Name = "Test Milestone",
+                Status = MilestoneStatus.Active,
+                Required = false,
+                Sequence = 1,
+                OnExpire = new List<PreboundApiModel>
+                {
+                    new()
+                    {
+                        ServiceName = "currency",
+                        Endpoint = "/currency/debit",
+                        PayloadTemplate = "{}",
+                        Description = "Penalize on failure"
+                    }
+                }
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        // TrySaveAsync returns null (concurrent modification)
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var request = new FailMilestoneRequest
+        {
+            ContractId = contractId,
+            MilestoneCode = "test_milestone",
+            Reason = "test failure"
+        };
+
+        // Act
+        var (status, response) = await service.FailMilestoneAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify prebound APIs were NOT executed
+        _mockNavigator.Verify(
+            n => n.ExecutePreboundApiAsync(
+                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
 }

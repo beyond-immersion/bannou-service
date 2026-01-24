@@ -2074,6 +2074,167 @@ public class OrchestratorProcessingPoolTests
     }
 
     #endregion
+
+    #region AcquireProcessorAsync Lock Tests
+
+    [Fact]
+    public async Task AcquireProcessorAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Override lock to fail for this pool type
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "orchestrator-pool",
+                "actor-shared",
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new AcquireProcessorRequest { PoolType = "actor-shared" };
+
+        // Act
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ReleaseProcessorAsync Lock Tests
+
+    [Fact]
+    public async Task ReleaseProcessorAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var leaseId = Guid.NewGuid();
+        var poolType = "actor-shared";
+
+        // Setup: known pool types
+        _mockStateManager
+            .Setup(x => x.GetListAsync<string>("orchestrator:pools:known"))
+            .ReturnsAsync(new List<string> { poolType });
+
+        // Setup: lease exists in this pool
+        var lease = new OrchestratorService.ProcessorLease
+        {
+            LeaseId = leaseId,
+            ProcessorId = "proc-001",
+            AppId = "bannou-pool-actor-shared-0001",
+            PoolType = poolType,
+            AcquiredAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5)
+        };
+        var leases = new Dictionary<string, OrchestratorService.ProcessorLease>
+        {
+            [leaseId.ToString()] = lease
+        };
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(
+                It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .ReturnsAsync(leases);
+
+        // Override lock to fail for this pool
+        var failedLockResponse = new Mock<ILockResponse>();
+        failedLockResponse.Setup(l => l.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "orchestrator-pool",
+                poolType,
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse.Object);
+
+        var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
+
+        // Act
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region ReleaseProcessorAsync Event Publication Tests
+
+    [Fact]
+    public async Task ReleaseProcessorAsync_SuccessfulRelease_PublishesProcessorReleasedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var leaseId = Guid.NewGuid();
+        var poolType = "actor-shared";
+        var processorId = "proc-001";
+
+        // Setup: known pool types
+        _mockStateManager
+            .Setup(x => x.GetListAsync<string>("orchestrator:pools:known"))
+            .ReturnsAsync(new List<string> { poolType });
+
+        // Setup: lease exists in this pool
+        var lease = new OrchestratorService.ProcessorLease
+        {
+            LeaseId = leaseId,
+            ProcessorId = processorId,
+            AppId = "bannou-pool-actor-shared-0001",
+            PoolType = poolType,
+            AcquiredAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5)
+        };
+        var leases = new Dictionary<string, OrchestratorService.ProcessorLease>
+        {
+            [leaseId.ToString()] = lease
+        };
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(
+                It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .ReturnsAsync(leases);
+
+        // Setup: available processors list
+        _mockStateManager
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(
+                It.Is<string>(s => s.Contains($"pool:{poolType}:available"))))
+            .ReturnsAsync(new List<OrchestratorService.ProcessorInstance>());
+
+        // Setup: message bus to capture published event
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
+
+        // Act
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Released);
+        Assert.Equal(processorId, response.ProcessorId);
+
+        // Verify the ProcessorReleasedEvent was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "orchestrator.processor.released",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
 }
 
 /// <summary>
