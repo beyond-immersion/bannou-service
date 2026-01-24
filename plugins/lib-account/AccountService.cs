@@ -27,7 +27,6 @@ public partial class AccountService : IAccountService
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
     private const string PROVIDER_INDEX_KEY_PREFIX = "provider-index-"; // provider:externalId -> accountId
     private const string AUTH_METHODS_KEY_PREFIX = "auth-methods-"; // accountId -> List<AuthMethodInfo>
-    private const string ACCOUNT_LIST_KEY = "accounts-list"; // Sorted list of all account IDs for pagination
     private const string ACCOUNT_CREATED_TOPIC = "account.created";
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
     private const string ACCOUNT_DELETED_TOPIC = "account.deleted";
@@ -742,7 +741,7 @@ public partial class AccountService : IAccountService
             OAuthProvider.Google => AuthProvider.Google,
             OAuthProvider.Steam => AuthProvider.Steam,
             OAuthProvider.Twitch => AuthProvider.Twitch,
-            _ => AuthProvider.Google // Default fallback
+            _ => throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unknown OAuth provider has no AuthProvider mapping")
         };
     }
 
@@ -947,6 +946,21 @@ public partial class AccountService : IAccountService
             // Remove email index
             var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
+
+            // Remove provider index entries to prevent orphaned lookups
+            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
+            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken);
+            if (authMethods != null)
+            {
+                var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+                foreach (var method in authMethods)
+                {
+                    var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{method.Provider}:{method.ExternalId}";
+                    await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
+                }
+                await authMethodsStore.DeleteAsync(authMethodsKey, cancellationToken);
+            }
 
             // Remove from accounts list index
             await RemoveAccountFromIndexAsync(accountId.ToString(), cancellationToken);

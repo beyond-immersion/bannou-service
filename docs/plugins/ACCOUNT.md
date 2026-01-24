@@ -78,7 +78,6 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 | `IStateStoreFactory` | Creates typed state store instances for reading/writing account data |
 | `IMessageBus` | Publishes lifecycle and error events to RabbitMQ |
 | `IEventConsumer` | Event handler registration (currently unused - no subscriptions) |
-| `AccountEventPublisher` | **Exists but unused** - see Stubs section below |
 | `AccountPermissionRegistration` | Generated class that registers the service's permission matrix via messaging event on startup |
 
 ## API Endpoints (Implementation Notes)
@@ -129,17 +128,11 @@ auth-methods-{id}: [ AuthMethodInfo, ... ] ────────────�
   ├─ ExternalId    ──► account ID                       │
   └─ LinkedAt                                           │
                                                         │
-On Delete: email-index removed, accounts-list cleaned   │
-           provider-index entries LEFT ORPHANED ◄───────┘
+On Delete: email-index removed, accounts-list cleaned,  │
+           provider-index + auth-methods removed ◄──────┘
 ```
 
 ## Stubs & Unimplemented Features
-
-### AccountEventPublisher (unused class)
-
-`AccountEventPublisher.cs` exists as a type-safe event publisher class extending `EventPublisherBase`. It provides `PublishAccountCreatedAsync`, `PublishAccountUpdatedAsync`, and `PublishAccountDeletedAsync` methods. However, **AccountService does not use this class**. Instead, it has its own private inline methods (`PublishAccountCreatedEventAsync`, `PublishAccountUpdatedEventAsync`, `PublishAccountDeletedEventAsync`) that publish events directly via `_messageBus.TryPublishAsync()`.
-
-The `AccountEventPublisher` is not injected into the service constructor and is never instantiated. It appears to be scaffolding for a planned pattern where services delegate event publishing to dedicated publisher classes, but the service was implemented before that pattern was adopted.
 
 ### IEventConsumer Registration (no handlers)
 
@@ -152,20 +145,15 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 - **Audit trail**: Account mutations publish events but don't maintain a per-account change history. An extension could store a changelog for compliance/debugging.
 - **Email change**: There is no endpoint for changing an account's email address. The email index would need to be atomically swapped (delete old index, create new index, update account record) with proper concurrency handling.
 - **Bulk operations**: No batch create/update/delete endpoints exist. The only batch-adjacent operation is the `list` endpoint.
-- **Use AccountEventPublisher**: The unused publisher class could replace the inline publishing methods, consolidating event construction logic and making the service implementation slimmer.
 
 ## Known Quirks & Caveats
 
-1. **Unix epoch timestamp storage**: `AccountModel` stores timestamps as `long` Unix epoch values (`CreatedAtUnix`, `UpdatedAtUnix`, `DeletedAtUnix`) with `[JsonIgnore]` computed `DateTimeOffset` properties. This works around System.Text.Json serialization issues with `DateTimeOffset` but means the raw state store data shows epoch numbers, not human-readable dates.
+1. **Unix epoch timestamp storage (intentional)**: `AccountModel` stores timestamps as `long` Unix epoch values (`CreatedAtUnix`, `UpdatedAtUnix`, `DeletedAtUnix`) with `[JsonIgnore]` computed `DateTimeOffset` properties. This is a deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization across platforms. The computed properties provide ergonomic access in code while the epoch values serialize reliably. Raw state store data shows epoch numbers, not human-readable dates - this is acceptable since the store is never queried directly by operators.
 
-2. **Password hash in by-email response**: The `GetAccountByEmailAsync` endpoint intentionally includes `PasswordHash` in its response, unlike other endpoints. This is specifically for the Auth service's login flow where it needs to verify the password. If Account's by-email endpoint is ever exposed more broadly, this would be a security concern.
+2. **Password hash in by-email response (intentional, internal-only)**: `GetAccountByEmailAsync` includes `PasswordHash` in its response, unlike other endpoints. This exists specifically for the Auth service's `BCrypt.Verify` call during login. The Account service is internal-only (never internet-facing) and `by-email` requires admin-level permissions, so this is not a security concern within the architecture. The regular `get` endpoint omits the hash.
 
-3. **Soft-delete with index cleanup**: Deleting an account is a soft-delete (the record remains with `DeletedAt` set), but the email index and accounts-list entries are removed immediately. This means a deleted account cannot be found by email lookup or listed, but can still be loaded directly by ID (and will return 404 because of the `DeletedAt` check).
+3. **Soft-delete with immediate index removal (correct behavior)**: Deleting an account sets `DeletedAt` but immediately removes the email index and accounts-list entries. This is the intended behavior: deleted accounts disappear from lookup paths (can't log in, can't be listed) but remain loadable by ID for audit/recovery. The `DeletedAt` check returns 404 for direct loads, completing the soft-delete semantics.
 
-4. **OAuthProvider to AuthProvider fallback**: `MapOAuthProviderToAuthProvider` has a default case that maps unknown providers to `AuthProvider.Google`. This is a silent fallback that could mask bugs if new OAuth providers are added without updating the mapping.
+4. **Admin auto-assignment is creation-time only**: The `ShouldAssignAdminRole` check runs only during `CreateAccountAsync`. Changing `AdminEmails` or `AdminEmailDomain` configuration does not retroactively promote or demote existing accounts. This is acceptable - operational role changes for existing accounts should use the explicit `update` endpoint rather than implicit config-driven mutation.
 
-5. **Admin auto-assignment is creation-time only**: The `ShouldAssignAdminRole` check runs only during `CreateAccountAsync`. If the `AdminEmails` or `AdminEmailDomain` configuration changes after an account is created, existing accounts are not retroactively promoted or demoted.
-
-6. **accounts-list ordering**: New accounts are appended to the end of the list, and the list endpoint reverses it for newest-first display. This means the list grows unboundedly and reversal is an O(n) operation on the full list for every unfiltered page request.
-
-7. **No provider index cleanup on account deletion**: When an account is soft-deleted, the email index is removed but `provider-index-` entries are not cleaned up. This means an OAuth lookup for a deleted account's provider ID will find the account ID, load the account, and then return 404 due to the `DeletedAt` check. It works correctly but leaves orphaned index entries.
+5. **accounts-list unbounded growth (design limitation)**: New accounts are appended to a single `accounts-list` key, reversed on every unfiltered page request (O(n)). This approach doesn't scale well beyond tens of thousands of accounts. Fixing this requires migrating to cursor-based pagination using the MySQL backend's query capabilities or a sorted set structure - a larger design change that affects the list endpoint, create, delete, and the retry logic in `RemoveAccountFromIndexAsync`.

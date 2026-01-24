@@ -17,7 +17,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 | lib-messaging (IMessageBus) | Publishing session lifecycle events and audit events |
 | lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password |
 | lib-subscription (ISubscriptionClient) | Fetches active subscriptions during token generation and subscription change propagation |
-| Program.Configuration (static) | JWT secret, issuer, audience, and ServiceDomain (not from DI-injected config) |
+| AppConfiguration (DI singleton) | JWT secret, issuer, audience, and ServiceDomain via constructor-injected config |
 
 **External NuGet dependencies:**
 - `Microsoft.IdentityModel.Tokens` (8.15.0) - JWT creation and validation
@@ -96,7 +96,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `SteamAppId` | `AUTH_STEAM_APP_ID` | null | Steam App ID for ticket validation |
 | `BcryptWorkFactor` | `AUTH_BCRYPT_WORK_FACTOR` | 12 | BCrypt work factor for password hashing (existing hashes at other factors still validate) |
 
-**Note:** JWT core settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) are NOT in AuthServiceConfiguration. They live in the app-wide `Program.Configuration` and are accessed via static reference.
+**Note:** JWT core settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) are NOT in AuthServiceConfiguration. They live in the app-wide `AppConfiguration` singleton, which is constructor-injected into `TokenService`, `AuthService`, and `OAuthProviderService`. This is because JWT is cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config - nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints.
 
 ## DI Services & Helpers
 
@@ -104,6 +104,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 |---------|------|
 | `ILogger<AuthService>` | Structured logging |
 | `AuthServiceConfiguration` | Typed access to auth-specific config (OAuth, mock, TTLs) |
+| `AppConfiguration` | App-wide config: JWT secret/issuer/audience, ServiceDomain, EffectiveAppId |
 | `IAccountClient` | Service mesh client for account CRUD operations |
 | `ISubscriptionClient` | Service mesh client for subscription queries |
 | `IStateStoreFactory` | Redis state store access (sessions, password resets, account-session indexes) |
@@ -193,7 +194,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Known Quirks & Caveats
 
-1. **JWT config accessed via static `Program.Configuration`, not DI**: TokenService reads JWT secret/issuer/audience from the static `Program.Configuration` rather than from DI-injected `AuthServiceConfiguration`. This is intentional — the webhost configures JWT Bearer middleware at startup before DI is available, and nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints. JWT settings are cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config. The trade-off is that TokenService uses a static reference instead of constructor injection, making it slightly harder to test in isolation.
+1. **JWT config in AppConfiguration, not AuthServiceConfiguration**: JWT settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) live in the app-wide `AppConfiguration` singleton rather than `AuthServiceConfiguration`. This is intentional — nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints. JWT is cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config. `TokenService`, `AuthService`, and `OAuthProviderService` all receive `AppConfiguration` via constructor injection.
 
 2. **ValidateTokenResponse.SessionId contains the session key, not the session ID**: `ValidateTokenResponse.SessionId` is set to `Guid.Parse(sessionKey)` - the internal Redis lookup key - not `sessionData.SessionId` (the human-facing identifier). This is intentional so Connect service tracks WebSocket connections by the same key used in `account-sessions` index and `SessionInvalidatedEvent`, but the field name is misleading.
 
