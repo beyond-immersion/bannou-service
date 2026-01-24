@@ -81,7 +81,8 @@ public partial class GameSessionService : IGameSessionService
 
     /// <summary>
     /// Removes an account subscription from the local filter cache.
-    /// Called when a subscription is cancelled.
+    /// If the account has no remaining subscriptions, the entry is evicted entirely
+    /// to prevent unbounded cache growth from accounts that cancel all subscriptions.
     /// Thread-safe for concurrent access.
     /// </summary>
     /// <param name="accountId">The account ID to update.</param>
@@ -90,9 +91,16 @@ public partial class GameSessionService : IGameSessionService
     {
         if (_accountSubscriptions.TryGetValue(accountId, out var stubs))
         {
+            bool shouldRemoveEntry;
             lock (stubs)
             {
                 stubs.Remove(stubName);
+                shouldRemoveEntry = stubs.Count == 0;
+            }
+
+            if (shouldRemoveEntry)
+            {
+                _accountSubscriptions.TryRemove(accountId, out _);
             }
         }
     }
@@ -1649,10 +1657,18 @@ public partial class GameSessionService : IGameSessionService
         {
             if (_accountSubscriptions.TryGetValue(accountId, out var existingSet))
             {
+                bool shouldRemoveEntry;
                 lock (existingSet)
                 {
                     existingSet.Remove(stubName);
+                    shouldRemoveEntry = existingSet.Count == 0;
                 }
+
+                if (shouldRemoveEntry)
+                {
+                    _accountSubscriptions.TryRemove(accountId, out _);
+                }
+
                 _logger.LogDebug("Removed {StubName} from subscription cache for account {AccountId}", stubName, accountId);
             }
         }
@@ -1705,8 +1721,10 @@ public partial class GameSessionService : IGameSessionService
             }
             else
             {
-                _logger.LogDebug("No subscriptions found for account {AccountId}", accountId);
-                _accountSubscriptions[accountId] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // Do not cache empty sets for unsubscribed accounts to prevent unbounded cache growth.
+                // Unsubscribed accounts will be re-checked on their next connect event, which also
+                // handles the case where a subscription.updated event was missed during a restart.
+                _logger.LogDebug("No subscriptions found for account {AccountId}, not caching", accountId);
             }
         }
         catch (Exception ex)

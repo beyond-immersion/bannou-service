@@ -254,8 +254,6 @@ None identified.
 
 2. **Combat style transitions are limited**: Only specific transitions exist (DEFENSIVE->BALANCED->AGGRESSIVE->BERSERKER). TACTICAL is only reachable via ambush success. No general transition matrix.
 
-3. **No concurrency on evolution**: Two simultaneous `RecordExperience` calls could both read version N, both evolve independently, and last-writer-wins at version N+1. One evolution is silently lost.
+3. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
 
-4. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
-
-5. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires.
+4. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires.

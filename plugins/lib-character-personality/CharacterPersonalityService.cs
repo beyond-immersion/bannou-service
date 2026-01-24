@@ -179,7 +179,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         {
             var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-            var data = await store.GetAsync(key, cancellationToken);
+            var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
             if (data == null)
             {
@@ -187,7 +187,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Evaluate whether evolution occurs
+            // Evaluate whether evolution occurs (probability rolled once, not per-retry)
             var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
             var roll = Random.Shared.NextDouble();
             var evolved = roll < evolutionProbability;
@@ -203,46 +203,66 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             if (evolved)
             {
                 var affectedTraits = GetAffectedTraits(body.ExperienceType);
-                var changedTraits = new List<TraitValue>();
 
-                foreach (var (trait, direction) in affectedTraits)
+                // Optimistic concurrency retry loop: re-read fresh data on conflict
+                for (var attempt = 0; attempt < 3; attempt++)
                 {
-                    if (data.Traits.TryGetValue(trait, out var currentValue))
+                    if (attempt > 0)
                     {
-                        var shift = (float)((_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * body.Intensity) * direction);
-                        var newValue = Math.Clamp(currentValue + shift, -1.0f, 1.0f);
-                        data.Traits[trait] = newValue;
-
-                        changedTraits.Add(new TraitValue
+                        (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                        if (data == null)
                         {
-                            Axis = Enum.Parse<TraitAxis>(trait),
-                            Value = newValue
-                        });
+                            _logger.LogWarning("Personality for character {CharacterId} deleted during evolution retry", body.CharacterId);
+                            return (StatusCodes.NotFound, null);
+                        }
                     }
+
+                    // Apply trait shifts to fresh data each attempt
+                    var changedTraits = new List<TraitValue>();
+                    foreach (var (trait, direction) in affectedTraits)
+                    {
+                        if (data.Traits.TryGetValue(trait, out var currentValue))
+                        {
+                            var shift = (float)((_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * body.Intensity) * direction);
+                            var newValue = Math.Clamp(currentValue + shift, -1.0f, 1.0f);
+                            data.Traits[trait] = newValue;
+
+                            changedTraits.Add(new TraitValue
+                            {
+                                Axis = Enum.Parse<TraitAxis>(trait),
+                                Value = newValue
+                            });
+                        }
+                    }
+
+                    data.Version++;
+                    data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                    var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                    if (saveResult != null)
+                    {
+                        result.ChangedTraits = changedTraits;
+                        result.NewVersion = data.Version;
+
+                        await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            CharacterId = body.CharacterId,
+                            ExperienceType = body.ExperienceType.ToString(),
+                            Intensity = body.Intensity,
+                            Version = data.Version,
+                            AffectedTraits = affectedTraits.Keys.ToList()
+                        }, cancellationToken: cancellationToken);
+
+                        _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
+                            body.CharacterId, data.Version);
+                        break;
+                    }
+
+                    _logger.LogDebug("Concurrent modification during personality evolution for character {CharacterId}, retrying (attempt {Attempt})",
+                        body.CharacterId, attempt + 1);
                 }
-
-                data.Version++;
-                data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-                result.ChangedTraits = changedTraits;
-                result.NewVersion = data.Version;
-
-                // Publish evolution event using typed events per IMPLEMENTATION TENETS (TENET 5)
-                await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    CharacterId = body.CharacterId,
-                    ExperienceType = body.ExperienceType.ToString(),
-                    Intensity = body.Intensity,
-                    Version = data.Version,
-                    AffectedTraits = affectedTraits.Keys.ToList()
-                }, cancellationToken: cancellationToken);
-
-                _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
-                    body.CharacterId, data.Version);
             }
 
             return (StatusCodes.OK, result);
@@ -550,7 +570,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         {
             var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-            var data = await store.GetAsync(key, cancellationToken);
+            var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
             if (data == null)
             {
@@ -558,7 +578,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Evaluate whether evolution occurs
+            // Evaluate whether evolution occurs (probability rolled once, not per-retry)
             var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
             var roll = Random.Shared.NextDouble();
             var evolved = roll < evolutionProbability;
@@ -572,32 +592,51 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             if (evolved)
             {
-                result.PreviousPreferences = MapToCombatPreferences(data);
-
-                // Apply combat experience effects
-                ApplyCombatEvolution(data, body.ExperienceType, body.Intensity);
-
-                data.Version++;
-                data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-
-                result.NewPreferences = MapToCombatPreferences(data);
-                result.NewVersion = data.Version;
-
-                // Publish evolution event using typed events per IMPLEMENTATION TENETS (TENET 5)
-                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
+                // Optimistic concurrency retry loop: re-read fresh data on conflict
+                for (var attempt = 0; attempt < 3; attempt++)
                 {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    CharacterId = body.CharacterId,
-                    ExperienceType = body.ExperienceType.ToString(),
-                    Intensity = body.Intensity,
-                    Version = data.Version
-                }, cancellationToken: cancellationToken);
+                    if (attempt > 0)
+                    {
+                        (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                        if (data == null)
+                        {
+                            _logger.LogWarning("Combat preferences for character {CharacterId} deleted during evolution retry", body.CharacterId);
+                            return (StatusCodes.NotFound, null);
+                        }
+                    }
 
-                _logger.LogInformation("Combat preferences evolved for character {CharacterId}, new version {Version}",
-                    body.CharacterId, data.Version);
+                    result.PreviousPreferences = MapToCombatPreferences(data);
+
+                    // Apply combat experience effects to fresh data each attempt
+                    ApplyCombatEvolution(data, body.ExperienceType, body.Intensity);
+
+                    data.Version++;
+                    data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                    var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                    if (saveResult != null)
+                    {
+                        result.NewPreferences = MapToCombatPreferences(data);
+                        result.NewVersion = data.Version;
+
+                        await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            CharacterId = body.CharacterId,
+                            ExperienceType = body.ExperienceType.ToString(),
+                            Intensity = body.Intensity,
+                            Version = data.Version
+                        }, cancellationToken: cancellationToken);
+
+                        _logger.LogInformation("Combat preferences evolved for character {CharacterId}, new version {Version}",
+                            body.CharacterId, data.Version);
+                        break;
+                    }
+
+                    _logger.LogDebug("Concurrent modification during combat evolution for character {CharacterId}, retrying (attempt {Attempt})",
+                        body.CharacterId, attempt + 1);
+                }
             }
 
             return (StatusCodes.OK, result);
