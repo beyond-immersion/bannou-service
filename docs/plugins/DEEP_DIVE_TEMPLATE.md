@@ -5,6 +5,34 @@
 
 ---
 
+## Process Instructions
+
+When building a deep dive for a plugin, follow this process:
+
+1. **Read all source code thoroughly**: Read the service implementation, helper services, interfaces, models, events, configuration, and tests. Do not skim - read every method body, every branch, every error handler.
+
+2. **Build the document structure**: Fill in sections 1-12 based on verifiable source code. Every statement must trace back to a specific line of code.
+
+3. **Compile a comprehensive quirks list**: After understanding the full codebase, identify every non-obvious behavior, potential issue, and design decision. Be thorough - it is better to flag something that turns out to be intentional than to miss a real bug. Look for:
+   - Encoding mismatches, type confusion, off-by-one errors
+   - Dead code, unused parameters, unused stores
+   - Missing cleanup (orphaned state, leaked indexes)
+   - Inconsistent error handling (swallowed exceptions, wrong status codes)
+   - Race conditions, missing synchronization, stale data propagation
+   - Missing validation, unchecked nulls, silent failures
+   - Naming confusion (field names that don't match semantics)
+   - Hardcoded values that should be configurable
+   - Backward compatibility concerns for new fields
+
+4. **Categorize each quirk** into one of three sections:
+   - **Bugs (Fix Immediately)**: Clear defects that will cause incorrect behavior, data corruption, crashes, or security issues in production. These have unambiguous fixes.
+   - **Intentional Quirks (Documented Behavior)**: Non-obvious behaviors that are deliberate design decisions. They may surprise developers but are correct. These stay as permanent documentation.
+   - **Design Considerations (Requires Planning)**: Issues that are likely bugs or missing implementation, but where the fix involves architectural decisions, cross-service coordination, or trade-offs that need discussion before proceeding.
+
+5. **Verify with a build**: After identifying bugs, confirm the document's accuracy by checking that identified code patterns actually exist. Cross-reference with tests to understand intended behavior vs. actual behavior.
+
+---
+
 ## Document Structure
 
 ### 1. Header
@@ -154,7 +182,19 @@ Technical observations about ways the plugin could be improved or extended. No s
 
 ### 13. Known Quirks & Caveats
 
-Non-obvious behaviors, workarounds, or implementation decisions that a developer should be aware of when working with this plugin. Things that "work but might surprise you."
+Organized into three categories based on the nature and urgency of each finding.
+
+#### Bugs (Fix Immediately)
+
+Clear defects that will cause incorrect behavior, data corruption, crashes, or security issues in production. These have unambiguous fixes that can be implemented without design discussion.
+
+#### Intentional Quirks (Documented Behavior)
+
+Non-obvious behaviors that are deliberate design decisions. They may surprise developers but are correct as implemented. These serve as permanent documentation to prevent "fixing" things that aren't broken.
+
+#### Design Considerations (Requires Planning)
+
+Issues that are likely bugs, missing implementation, or design oversights, but where the fix involves architectural trade-offs, cross-service coordination, or decisions that need discussion before proceeding. Each entry should note what the concern is and what makes the fix non-trivial.
 
 ---
 

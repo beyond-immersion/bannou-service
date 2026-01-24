@@ -13,7 +13,6 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
 | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
-| `ACCOUNT_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts for account index update operations |
 | `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
 
 ### Achievement
@@ -24,7 +23,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACHIEVEMENT_MOCK_PLATFORM_SYNC` | bool | `false` | Enable mock mode for platform sync (returns success without ... |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (optional - not implemented) |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (optional - not implemente... |
-| `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
+| `ACHIEVEMENT_PROGRESS_TTL_SECONDS` | int | `0` | TTL in seconds for progress data in Redis (0 = no expiry, pr... |
 | `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | double | `5.0` | Threshold percentage below which an achievement is considere... |
 | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | int | `60` | How often to recalculate achievement rarity percentages |
 | `ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before first rarity calculation (allows ser... |
@@ -700,9 +699,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 526
+- **Total properties**: 525
 - **Required (no default)**: 40
-- **Optional (has default)**: 486
+- **Optional (has default)**: 485
 
 ## Environment Variable Naming Convention
 

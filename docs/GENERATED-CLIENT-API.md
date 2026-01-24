@@ -9,7 +9,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 
 | Service | Proxy Property | Methods | Description |
 |---------|---------------|---------|-------------|
-| [Bannou Account Service API](#account) | `client.Account` | 13 | Internal account management service (CRUD operations only, n... |
+| [Bannou Account Service API](#account) | `client.Account` | 16 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
@@ -98,6 +98,9 @@ Internal account management service (CRUD operations only, never exposed to inte
 | `UpdateAccountAsync` | `UpdateAccountRequest` | `AccountResponse` | Update account |
 | `DeleteAccountEventAsync` | `DeleteAccountRequest` | *(fire-and-forget)* | Delete account |
 | `UpdatePasswordhashEventAsync` | `UpdatePasswordRequest` | *(fire-and-forget)* | Update account password hash |
+| `BatchgetaccountsAsync` | `BatchGetAccountsRequest` | `BatchGetAccountsResponse` | Get multiple accounts by ID |
+| `CountaccountsAsync` | `CountAccountsRequest` | `CountAccountsResponse` | Count accounts matching filters |
+| `BulkupdaterolesAsync` | `BulkUpdateRolesRequest` | `BulkUpdateRolesResponse` | Bulk update roles for multiple accounts |
 | `UpdateVerificationstatusEventAsync` | `UpdateVerificationRequest` | *(fire-and-forget)* | Update email verification status |
 
 ### Authentication Methods
@@ -1653,7 +1656,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 40
-- **Total methods**: 530
+- **Total methods**: 533
 
 ---
 

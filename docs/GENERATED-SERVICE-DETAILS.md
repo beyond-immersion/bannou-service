@@ -9,7 +9,7 @@ This document provides a compact reference of all Bannou services and their API 
 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
-| [Account](#account) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
+| [Account](#account) | 2.0.0 | 16 | Internal account management service (CRUD operations only, n... |
 | [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Analytics](#analytics) | 1.0.0 | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
@@ -72,11 +72,14 @@ Internal account management service (CRUD operations only, never exposed to inte
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `POST` | `/account/batch-get` | Get multiple accounts by ID | admin |
+| `POST` | `/account/count` | Count accounts matching filters | admin |
 | `POST` | `/account/create` | Create new account | admin |
 | `POST` | `/account/delete` | Delete account | admin |
 | `POST` | `/account/get` | Get account by ID | admin |
 | `POST` | `/account/list` | List accounts with filtering | admin |
 | `POST` | `/account/password/update` | Update account password hash | user |
+| `POST` | `/account/roles/bulk-update` | Bulk update roles for multiple accounts | admin |
 | `POST` | `/account/update` | Update account | admin |
 | `POST` | `/account/verification/update` | Update email verification status | user |
 
@@ -1653,7 +1656,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 40
-- **Total endpoints**: 536
+- **Total endpoints**: 539
 
 ---
 

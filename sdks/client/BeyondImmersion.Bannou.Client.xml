@@ -4251,6 +4251,36 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AccountProxy.BatchGetAccountsAsync(BeyondImmersion.BannouService.Account.BatchGetAccountsRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get multiple accounts by ID
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing BatchGetAccountsResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AccountProxy.CountAccountsAsync(BeyondImmersion.BannouService.Account.CountAccountsRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Count accounts matching filters
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CountAccountsResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AccountProxy.BulkUpdateRolesAsync(BeyondImmersion.BannouService.Account.BulkUpdateRolesRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Bulk update roles for multiple accounts
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing BulkUpdateRolesResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.AccountProxy.UpdateVerificationStatusEventAsync(BeyondImmersion.BannouService.Account.UpdateVerificationRequest,System.UInt16,System.Threading.CancellationToken)">
             <summary>
             Update email verification status
@@ -13803,6 +13833,116 @@
             Whether there are pages before this one
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Account.BatchGetAccountsRequest">
+            <summary>
+            Request to get multiple accounts by ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsRequest.AccountIds">
+            <summary>
+            List of account IDs to retrieve (max 100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Account.CountAccountsRequest">
+            <summary>
+            Request to count accounts matching optional filters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.CountAccountsRequest.Email">
+            <summary>
+            Filter by email (contains match)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.CountAccountsRequest.DisplayName">
+            <summary>
+            Filter by display name (contains match)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.CountAccountsRequest.Verified">
+            <summary>
+            Filter by verification status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.CountAccountsRequest.Role">
+            <summary>
+            Filter by role membership (checks JSON array containment)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Account.BulkUpdateRolesRequest">
+            <summary>
+            Request to update roles for multiple accounts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BulkUpdateRolesRequest.AccountIds">
+            <summary>
+            List of account IDs to update (max 100)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BulkUpdateRolesRequest.AddRoles">
+            <summary>
+            Roles to add to all specified accounts (null to skip)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BulkUpdateRolesRequest.RemoveRoles">
+            <summary>
+            Roles to remove from all specified accounts (null to skip)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse">
+            <summary>
+            Response containing found accounts and IDs not found
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.Accounts">
+            <summary>
+            Successfully retrieved accounts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.NotFound">
+            <summary>
+            Account IDs that were not found or are deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Account.CountAccountsResponse">
+            <summary>
+            Response containing account count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.CountAccountsResponse.Count">
+            <summary>
+            Number of accounts matching the filters
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Account.BulkUpdateRolesResponse">
+            <summary>
+            Response containing bulk update results (partial success)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BulkUpdateRolesResponse.Succeeded">
+            <summary>
+            Account IDs that were successfully updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BulkUpdateRolesResponse.Failed">
+            <summary>
+            Account IDs that failed with reasons
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Account.BulkOperationFailure">
+            <summary>
+            Details of a failed bulk operation item
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BulkOperationFailure.AccountId">
+            <summary>
+            Account ID that failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BulkOperationFailure.Error">
+            <summary>
+            Human-readable error reason
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Achievement.EntityType">
             <summary>
             Type of entity that can earn achievements
@@ -17937,7 +18077,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.Provider">
             <summary>
-            OAuth provider type
+            Authentication provider type
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.InitOAuthResponse">
