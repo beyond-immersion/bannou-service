@@ -282,7 +282,11 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     /// <inheritdoc/>
     public bool Cancel(string eventId)
     {
-        var cancelled = _pendingEvents.TryRemove(eventId, out _);
+        if (!Guid.TryParse(eventId, out var parsedId))
+        {
+            return false;
+        }
+        var cancelled = _pendingEvents.TryRemove(parsedId, out _);
         if (cancelled)
         {
             _logger.LogDebug("Cancelled scheduled event {EventId}", eventId);

@@ -400,6 +400,11 @@ public sealed class ActorPoolManager : IActorPoolManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
 
+        if (!Guid.TryParse(templateId, out var parsedTemplateId))
+        {
+            return Array.Empty<ActorAssignment>();
+        }
+
         // Get all actor IDs from the index
         var index = await GetActorIndexAsync(ct);
         var allActorIds = index.ActorsByNode.Values.SelectMany(ids => ids).ToList();
@@ -415,7 +420,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         foreach (var actorId in allActorIds)
         {
             var assignment = await store.GetAsync(actorId, ct);
-            if (assignment != null && assignment.TemplateId == templateId)
+            if (assignment != null && assignment.TemplateId == parsedTemplateId)
             {
                 assignments.Add(assignment);
             }

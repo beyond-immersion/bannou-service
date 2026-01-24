@@ -43,6 +43,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         _mockMessageBus = new Mock<IMessageBus>();
         _mockNavigator = new Mock<IServiceNavigator>();
         _mockLogger = new Mock<ILogger<EscrowService>>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -104,7 +105,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             _mockNavigator.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
-            Configuration);
+            Configuration,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests

@@ -1297,7 +1297,7 @@ public class ActorServiceTests
                 ActorId = "remote-actor-1",
                 NodeId = remoteNodeId,
                 NodeAppId = "app-remote-001",
-                TemplateId = Guid.NewGuid().ToString(),
+                TemplateId = Guid.NewGuid(),
                 Category = "event-brain",
                 Status = ActorStatus.Running
             });
@@ -1349,7 +1349,7 @@ public class ActorServiceTests
                 ActorId = "remote-actor-2",
                 NodeId = remoteNodeId,
                 NodeAppId = "app-remote-002",
-                TemplateId = Guid.NewGuid().ToString(),
+                TemplateId = Guid.NewGuid(),
                 Category = "event-brain",
                 Status = ActorStatus.Running
             });
@@ -1409,7 +1409,7 @@ public class ActorServiceTests
                 ActorId = "remote-actor-3",
                 NodeId = remoteNodeId,
                 NodeAppId = "app-remote-003",
-                TemplateId = Guid.NewGuid().ToString(),
+                TemplateId = Guid.NewGuid(),
                 Category = "event-brain",
                 Status = ActorStatus.Running
             });
@@ -1472,7 +1472,7 @@ public class ActorServiceTests
                 ActorId = "remote-actor-4",
                 NodeId = remoteNodeId,
                 NodeAppId = "app-remote-004",
-                TemplateId = Guid.NewGuid().ToString(),
+                TemplateId = Guid.NewGuid(),
                 Category = "event-brain",
                 Status = ActorStatus.Running
             });

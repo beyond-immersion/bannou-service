@@ -83,10 +83,10 @@ Full-custody orchestration layer for multi-party asset exchanges. Manages the co
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `contract.fulfilled` | `ContractFulfilledEvent` | Triggers release when bound contract is fulfilled (schema-defined, handler not yet implemented) |
-| `contract.terminated` | `ContractTerminatedEvent` | Triggers refund when bound contract is terminated (schema-defined, handler not yet implemented) |
+| `contract.fulfilled` | `ContractFulfilledEvent` | Queries for escrows with matching BoundContractId and transitions them to Finalizing (publishes EscrowFinalizingEvent). |
+| `contract.terminated` | `ContractTerminatedEvent` | Queries for escrows with matching BoundContractId and transitions them directly to Refunded (publishes EscrowRefundedEvent). |
 
-Note: `RegisterEventConsumers()` is currently empty. The event subscriptions are defined in the schema but not yet wired up in the service implementation.
+Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops and respect the escrow state machine (only valid state transitions are applied).
 
 ---
 
@@ -345,7 +345,7 @@ Dispute Resolution
 
 ## Stubs & Unimplemented Features
 
-1. **Event consumer registration empty**: `RegisterEventConsumers()` is a no-op. The schema defines subscriptions to `contract.fulfilled` and `contract.terminated` events for automatic release/refund of contract-bound escrows, but the handlers are not implemented. Currently, condition verification must be triggered externally via the `/escrow/verify-condition` endpoint.
+1. **~~Event consumer registration empty~~** (FIXED): `RegisterEventConsumers()` now registers handlers for `contract.fulfilled` (transitions bound escrows to Finalizing) and `contract.terminated` (transitions bound escrows to Refunded). Uses QueryAsync to find escrows by BoundContractId and ETag-based concurrency for state transitions. The `/escrow/verify-condition` endpoint remains available for manual verification.
 
 2. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment "Validate deposits (placeholder - real impl would check with currency/inventory services)". No actual cross-service validation is performed. The validation always passes (empty failure list).
 
@@ -367,7 +367,7 @@ Dispute Resolution
 
 1. **Background expiration processor**: Implement `IHostedService` that periodically scans the status index for escrows past their `ExpiresAt`, applies grace period, transitions to `Expired`, and auto-refunds deposits.
 
-2. **Contract event consumers**: Wire up `contract.fulfilled` and `contract.terminated` event handlers to automatically trigger release or refund for contract-bound escrows without manual verification.
+2. **~~Contract event consumers~~** (DONE): Handlers for `contract.fulfilled` and `contract.terminated` are now implemented in `EscrowServiceEvents.cs`.
 
 3. **Cross-service asset validation**: Implement actual calls to currency/inventory services in `ValidateEscrowAsync` to verify deposited assets are still held and unchanged.
 
@@ -385,13 +385,13 @@ Dispute Resolution
 
 ### Tenet Violations (Fix Immediately)
 
-#### 1. FOUNDATION TENETS (T6) - Missing Constructor Null Checks and IEventConsumer Registration
+#### 1. FOUNDATION TENETS (T6) - Missing Constructor Null Checks
 
-**File**: `plugins/lib-escrow/EscrowService.cs`, lines 197-209
+**File**: `plugins/lib-escrow/EscrowService.cs`, constructor
 
-The constructor stores all dependencies directly without `?? throw new ArgumentNullException(nameof(...))` guards. Per T6, all injected dependencies must have explicit null checks. Additionally, the constructor does not accept `IEventConsumer` and does not call `RegisterEventConsumers(eventConsumer)`, even though the `EscrowServiceEvents.cs` partial class defines the method.
+The constructor stores all dependencies directly without `?? throw new ArgumentNullException(nameof(...))` guards. Per T6, all injected dependencies must have explicit null checks. (IEventConsumer registration is now implemented - the constructor accepts `IEventConsumer` and calls `RegisterEventConsumers(eventConsumer)`.)
 
-**Fix**: Add null-check guards for all constructor parameters. Add `IEventConsumer eventConsumer` parameter, call `ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer))`, and call `RegisterEventConsumers(eventConsumer)`.
+**Fix**: Add null-check guards for all constructor parameters.
 
 ---
 
@@ -577,13 +577,9 @@ Per CLAUDE.md general rule: "Avoid `?? string.Empty` as it hides bugs by silentl
 
 ---
 
-#### 12. IMPLEMENTATION TENETS (T3) - Event Consumer Registration Not Called From Constructor
+#### 12. ~~IMPLEMENTATION TENETS (T3) - Event Consumer Registration Not Called From Constructor~~ (FIXED)
 
-**File**: `plugins/lib-escrow/EscrowService.cs`, constructor (lines 197-209)
-
-The constructor does not inject `IEventConsumer` or call `RegisterEventConsumers()`. While the current `RegisterEventConsumers()` body is empty, the schema defines subscriptions to `contract.fulfilled` and `contract.terminated` events. Per T3/T6, the constructor MUST accept `IEventConsumer`, null-check it, and call `RegisterEventConsumers(eventConsumer)` -- even if the method body is currently empty -- to maintain the pattern for when handlers are implemented.
-
-**Fix**: Add `IEventConsumer eventConsumer` to constructor, add null check, call `RegisterEventConsumers(eventConsumer)`.
+The constructor now accepts `IEventConsumer`, stores it as `_eventConsumer`, and calls `RegisterEventConsumers(eventConsumer)`. Handlers for `contract.fulfilled` and `contract.terminated` are registered and implemented in `EscrowServiceEvents.cs`.
 
 ---
 

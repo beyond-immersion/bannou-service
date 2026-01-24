@@ -272,6 +272,90 @@ Container Deletion Strategies
 
 ---
 
+## Tenet Violations (Fix Immediately)
+
+### 1. IMPLEMENTATION TENETS (T21): Hardcoded Index Lock Timeout
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, lines 1912 and 1938
+
+The `AddToListAsync` and `RemoveFromListAsync` methods use a hardcoded `15` second lock timeout instead of a configuration property. Per T21, any tunable value (limits, timeouts, thresholds) MUST be a configuration property.
+
+**Fix**: Add a `ListLockTimeoutSeconds` property to `schemas/inventory-configuration.yaml` with default `15`, regenerate, and replace the hardcoded `15` with `_configuration.ListLockTimeoutSeconds`.
+
+### 2. IMPLEMENTATION TENETS (T25/T21): DefaultWeightContribution Config Is String Requiring Enum.Parse in Business Logic
+
+**File**: `schemas/inventory-configuration.yaml`, line 16; `plugins/lib-inventory/InventoryService.cs`, line 127
+
+The `DefaultWeightContribution` configuration property is defined as `type: string` in the schema. This forces `Enum.TryParse<WeightContribution>` in business logic (line 127). Per T25, Enum.Parse belongs only at system boundaries (deserialization, external input), not in service business logic. The configuration system IS a boundary, but the parse occurs per-request inside CreateContainerAsync rather than once at startup.
+
+**Fix**: Parse the config value once in the constructor and store it as a `WeightContribution` typed field, or change the schema property to reference the WeightContribution enum type so the generated config class uses the enum directly.
+
+### 3. QUALITY TENETS (T10): Validation Failures Logged at Warning Instead of Debug
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, lines 75, 80, 85, 90, 95, 111, 119, 276, 503, 657, 667, 677, 907, 1001, 1007, 1096, 1117, 1245, 528
+
+T10 specifies that "Expected Outcomes" (resource not found, validation failures) should be logged at Debug level. The service logs input validation failures at Warning level. Per T7, these are 400-class responses representing expected user input issues, not security events or unexpected failures.
+
+**Fix**: Change `LogWarning` to `LogDebug` for all input validation failures and expected business rule violations that return 400 BadRequest.
+
+### 4. CLAUDE.md: `?? string.Empty` Without Justification Comment
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, line 1335
+
+Uses `containerEtag ?? string.Empty` without the required explanatory comment. Per CLAUDE.md rules, `?? string.Empty` requires either (1) a comment explaining the coalesce can never execute (compiler satisfaction), or (2) defensive coding for external service with error logging.
+
+**Fix**: Either validate the ETag is non-null with a throw or log, or add a justifying comment explaining why empty string is safe for `TrySaveAsync` in this context.
+
+### 5. QUALITY TENETS (T16): Duplicate Assembly Attributes
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, lines 14-15; `plugins/lib-inventory/AssemblyInfo.cs`, lines 5-6
+
+The `[assembly: InternalsVisibleTo]` attributes are declared in both files redundantly.
+
+**Fix**: Remove the duplicate declarations and the `using System.Runtime.CompilerServices;` import from `InventoryService.cs` (keep them only in `AssemblyInfo.cs`).
+
+### 6. IMPLEMENTATION TENETS (T9): TransferItem Lacks Distributed Lock
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, lines 965-1071
+
+The `TransferItemAsync` method reads source and target containers and validates tradeable/bound state without acquiring a distributed lock. A concurrent modification could change the item state between validation and the delegated `MoveItemAsync` call.
+
+**Fix**: Acquire a distributed lock on the source container before performing tradeable/bound validation.
+
+### 7. IMPLEMENTATION TENETS (T9): DeleteContainer Lacks Distributed Lock
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, lines 467-587
+
+The `DeleteContainerAsync` method performs significant state modifications (item destruction/transfer, index cleanup, container deletion, cache invalidation) without acquiring a distributed lock. Concurrent operations could add items to a container being deleted.
+
+**Fix**: Acquire a distributed lock on the container ID before performing deletion operations.
+
+### 8. IMPLEMENTATION TENETS (T9): SplitStack Does Not Update Container UsedSlots
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, lines 1074-1207
+
+After a successful split, a new item instance is created in the same container but the container's `UsedSlots` counter is never incremented. No distributed lock is acquired on the container. This leaves capacity tracking inconsistent.
+
+**Fix**: Acquire a lock on the container, increment `UsedSlots` after creating the new instance, and save the updated container state.
+
+### 9. IMPLEMENTATION TENETS (T9): MergeStacks Container Update Lacks Distributed Lock
+
+**File**: `plugins/lib-inventory/InventoryService.cs`, lines 1327-1340
+
+The `MergeStacksAsync` method modifies container slot counts without acquiring a distributed lock. Uses `TrySaveAsync` with ETags but has no retry on conflict -- ETag failure leaves slot count permanently stale.
+
+**Fix**: Acquire a distributed lock on the affected container before modifying its slot count, or add retry logic on ETag conflict.
+
+### 10. QUALITY TENETS (T10): Missing Debug-Level Operation Entry Logging
+
+**File**: `plugins/lib-inventory/InventoryService.cs`
+
+T10 requires "Operation Entry (Debug): Log input parameters" for all operations. Most endpoint methods lack Debug-level entry logging. Only `CreateContainerAsync` has an entry log (line 69), but at Information level rather than Debug.
+
+**Fix**: Add `_logger.LogDebug(...)` entry logging at the beginning of each endpoint method. Change line 69 from `LogInformation` to `LogDebug` for the entry log.
+
+---
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
