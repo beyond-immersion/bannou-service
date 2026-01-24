@@ -2530,6 +2530,9 @@ public partial class OrchestratorService : IOrchestratorService
             var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
             var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
 
+            // Reclaim any expired leases before checking availability
+            await ReclaimExpiredLeasesAsync(body.PoolType, availableKey, leasesKey);
+
             // Try to get an available processor from the pool
             var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey);
 
@@ -3172,6 +3175,64 @@ public partial class OrchestratorService : IOrchestratorService
         var knownPoolsKey = "orchestrator:pools:known";
         var knownPools = await _stateManager.GetListAsync<string>(knownPoolsKey);
         return knownPools ?? new List<string>();
+    }
+
+    /// <summary>
+    /// Reclaims expired leases by returning their processors to the available list.
+    /// Called before checking availability to ensure expired leases don't permanently consume processors.
+    /// </summary>
+    /// <param name="poolType">The pool type for logging.</param>
+    /// <param name="availableKey">Redis key for the available processors list.</param>
+    /// <param name="leasesKey">Redis key for the leases hash.</param>
+    private async Task ReclaimExpiredLeasesAsync(string poolType, string availableKey, string leasesKey)
+    {
+        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
+        if (leases == null || leases.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var expiredLeaseIds = new List<string>();
+
+        foreach (var kvp in leases)
+        {
+            if (kvp.Value.ExpiresAt < now)
+            {
+                expiredLeaseIds.Add(kvp.Key);
+            }
+        }
+
+        if (expiredLeaseIds.Count == 0)
+        {
+            return;
+        }
+
+        // Return expired processors to the available list
+        var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+
+        foreach (var leaseId in expiredLeaseIds)
+        {
+            var expiredLease = leases[leaseId];
+
+            availableProcessors.Add(new ProcessorInstance
+            {
+                ProcessorId = expiredLease.ProcessorId,
+                AppId = expiredLease.AppId,
+                PoolType = poolType,
+                Status = ProcessorStatus.Available,
+                LastUpdated = now
+            });
+
+            leases.Remove(leaseId);
+
+            _logger.LogInformation(
+                "Reclaimed expired lease {LeaseId} for processor {ProcessorId} in pool {PoolType} (expired at {ExpiresAt})",
+                leaseId, expiredLease.ProcessorId, poolType, expiredLease.ExpiresAt);
+        }
+
+        await _stateManager.SetListAsync(availableKey, availableProcessors);
+        await _stateManager.SetHashAsync(leasesKey, leases);
     }
 
     /// <summary>

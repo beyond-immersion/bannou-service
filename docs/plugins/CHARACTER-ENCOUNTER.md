@@ -386,10 +386,7 @@ Index Architecture
     - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterServiceEvents.cs`, line 71
     - **Note**: If `TryPublishErrorAsync` details parameter is explicitly typed as `object?` for diagnostic metadata (not a published event schema), this may be acceptable as infrastructure diagnostic data rather than a service event. Verify against `IMessageBus.TryPublishErrorAsync` signature.
 
-17. **[IMPLEMENTATION]** Index operations use read-modify-write without ETags (optimistic concurrency). Per T9 (Multi-Instance Safety), services must be safe to run as multiple instances. Methods `AddToCharacterIndexAsync` (line 1603), `AddToGlobalCharacterIndexAsync` (line 1625), `AddToCustomTypeIndexAsync` (line 1668), `AddToLocationIndexAsync` (line 1881), `UpdatePairIndexesAsync` (line 1835), and their remove counterparts all read an index, modify it, and save without ETag checks. Under concurrent recordings for the same character, this can cause lost updates.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 1603-1691, 1835-1903
-    - **Wrong**: `await indexStore.GetAsync(key, ct)` then `await indexStore.SaveAsync(key, index, ct)` without ETag
-    - **Should be**: Use `GetWithETagAsync` + `TrySaveAsync` with retry on conflict, or use distributed locks
+17. **[IMPLEMENTATION]** ~~Index operations use read-modify-write without ETags (optimistic concurrency).~~ **FIXED**: All 10 index operations now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry on conflict, matching the established ETag concurrency pattern used by perspective updates.
 
 18. **[FOUNDATION]** Duplicate `[assembly: InternalsVisibleTo("lib-character-encounter.tests")]` attribute. This attribute is declared in both `AssemblyInfo.cs` (line 5) and `CharacterEncounterService.cs` (line 10). While not a compilation error (the compiler deduplicates), it indicates maintenance debt.
     - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 10
@@ -456,4 +453,4 @@ Index Architecture
 
 8. **FindPerspective scans character index**: Finding a specific perspective by (encounterId, characterId) requires loading the character's entire perspective index and then loading each perspective until finding one matching the encounter. There is no direct encounter-to-perspective index.
 
-9. **Index operations are not atomic**: All index update methods (`AddToCharacterIndexAsync`, `AddToGlobalCharacterIndexAsync`, `AddToCustomTypeIndexAsync`, `AddToLocationIndexAsync`, `UpdatePairIndexesAsync`, etc.) use read-modify-write without ETags. Two concurrent encounter recordings for the same character could both read the same index state, both add their perspective ID, and save—the second save overwrites the first, losing an entry. This is mitigated by the scoped service lifetime (requests are typically serialized per character) but could occur under high concurrency.
+9. ~~**Index operations are not atomic**~~: **FIXED**: All index update methods now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry loops. Concurrent modifications are detected via ETag mismatch and retried, preventing lost updates under high concurrency.

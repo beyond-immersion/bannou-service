@@ -478,8 +478,8 @@ public partial class InventoryService : IInventoryService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get items in container
-            var items = new List<ItemInstanceResponse>();
+            // Get items in container - abort if item service is unreachable to prevent orphaning items
+            List<ItemInstanceResponse> items;
             try
             {
                 var itemsResponse = await _navigator.Item.ListItemsByContainerAsync(
@@ -489,8 +489,9 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Failed to get items for container deletion: {StatusCode}", ex.StatusCode);
-                // Proceed with deletion even if items can't be fetched
+                _logger.LogError(ex, "Cannot delete container {ContainerId}: unable to determine contained items (status {StatusCode})",
+                    body.ContainerId, ex.StatusCode);
+                return (StatusCodes.ServiceUnavailable, null);
             }
 
             var itemCount = items.Count;
