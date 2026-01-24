@@ -624,7 +624,7 @@ public partial class CurrencyService : ICurrencyService
         {
             var store = _stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
             var walletKey = $"{WALLET_PREFIX}{body.WalletId}";
-            var wallet = await store.GetAsync(walletKey, cancellationToken);
+            var (wallet, walletEtag) = await store.GetWithETagAsync(walletKey, cancellationToken);
 
             if (wallet is null) return (StatusCodes.NotFound, null);
             if (wallet.Status == WalletStatus.Closed) return (StatusCodes.BadRequest, null);
@@ -632,6 +632,15 @@ public partial class CurrencyService : ICurrencyService
             var destKey = $"{WALLET_PREFIX}{body.TransferRemainingTo}";
             var destWallet = await store.GetAsync(destKey, cancellationToken);
             if (destWallet is null) return (StatusCodes.NotFound, null);
+
+            // Acquire wallet lock to prevent concurrent close/transfer operations
+            await using var walletLock = await _lockProvider.LockAsync(
+                "currency-wallet", body.WalletId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!walletLock.Success)
+            {
+                _logger.LogWarning("Could not acquire wallet lock for close on wallet {WalletId}", body.WalletId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Verify no active holds exist before closing
             var balances = await GetAllBalancesForWalletAsync(wallet.WalletId, cancellationToken);
@@ -665,7 +674,12 @@ public partial class CurrencyService : ICurrencyService
             }
 
             wallet.Status = WalletStatus.Closed;
-            await store.SaveAsync(walletKey, wallet, cancellationToken: cancellationToken);
+            var newWalletEtag = await store.TrySaveAsync(walletKey, wallet, walletEtag ?? string.Empty, cancellationToken);
+            if (newWalletEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected closing wallet {WalletId}", body.WalletId);
+                return (StatusCodes.Conflict, null);
+            }
 
             await _messageBus.TryPublishAsync("currency-wallet.closed", new CurrencyWalletClosedEvent
             {
@@ -1334,6 +1348,21 @@ public partial class CurrencyService : ICurrencyService
 
             var toAmount = Math.Round(body.FromAmount * rate, 8, MidpointRounding.ToEven);
 
+            // Pre-validate wallet cap on target currency before debiting source
+            if (toDef.PerWalletCap is not null &&
+                toDef.CapOverflowBehavior == CapOverflowBehavior.Reject.ToString())
+            {
+                var targetBalance = await GetOrCreateBalanceAsync(
+                    body.WalletId.ToString(), body.ToCurrencyId.ToString(), cancellationToken);
+                if (targetBalance.Amount + toAmount > toDef.PerWalletCap.Value)
+                {
+                    _logger.LogWarning(
+                        "Conversion would exceed wallet cap on target currency {CurrencyId}: current={Current}, credit={Credit}, cap={Cap}",
+                        body.ToCurrencyId, targetBalance.Amount, toAmount, toDef.PerWalletCap.Value);
+                    return ((StatusCodes)422, null);
+                }
+            }
+
             // Debit source currency
             var debitKey = $"{body.IdempotencyKey}:debit";
             var (debitStatus, debitResp) = await DebitCurrencyAsync(new DebitCurrencyRequest
@@ -1348,7 +1377,7 @@ public partial class CurrencyService : ICurrencyService
 
             if (debitStatus != StatusCodes.OK || debitResp is null) return (debitStatus, null);
 
-            // Credit target currency
+            // Credit target currency (bypass earn cap - conversions are exchanges, not earnings)
             var creditKey = $"{body.IdempotencyKey}:credit";
             var (creditStatus, creditResp) = await CreditCurrencyAsync(new CreditCurrencyRequest
             {
@@ -1357,10 +1386,28 @@ public partial class CurrencyService : ICurrencyService
                 Amount = toAmount,
                 TransactionType = TransactionType.Conversion_credit,
                 IdempotencyKey = creditKey,
-                ReferenceType = "conversion"
+                ReferenceType = "conversion",
+                BypassEarnCap = true
             }, cancellationToken);
 
-            if (creditStatus != StatusCodes.OK || creditResp is null) return (creditStatus, null);
+            if (creditStatus != StatusCodes.OK || creditResp is null)
+            {
+                // Compensate: reverse the debit since credit failed
+                var compensateKey = $"{body.IdempotencyKey}:compensate";
+                await CreditCurrencyAsync(new CreditCurrencyRequest
+                {
+                    WalletId = body.WalletId,
+                    CurrencyDefinitionId = body.FromCurrencyId,
+                    Amount = body.FromAmount,
+                    TransactionType = TransactionType.Conversion_credit,
+                    IdempotencyKey = compensateKey,
+                    ReferenceType = "conversion_reversal",
+                    BypassEarnCap = true
+                }, cancellationToken);
+
+                _logger.LogWarning("Conversion credit failed for wallet {WalletId}, reversed debit", body.WalletId);
+                return (creditStatus, null);
+            }
 
             await RecordIdempotencyAsync(body.IdempotencyKey, debitResp.Transaction.TransactionId.ToString(), cancellationToken);
 
@@ -1867,6 +1914,17 @@ public partial class CurrencyService : ICurrencyService
             var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId.ToString(), cancellationToken);
             if (definition is null) return (StatusCodes.NotFound, null);
 
+            // Acquire balance lock to serialize holds against balance changes
+            var balanceLockKey = $"{body.WalletId}:{body.CurrencyDefinitionId}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire balance lock for hold creation on wallet {WalletId}, currency {CurrencyId}",
+                    body.WalletId, body.CurrencyDefinitionId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var balance = await GetOrCreateBalanceAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
             var currentHeld = await GetTotalHeldAmountAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
             var effectiveBalance = balance.Amount - currentHeld;
@@ -1964,6 +2022,15 @@ public partial class CurrencyService : ICurrencyService
             if (hold is null) return (StatusCodes.NotFound, null);
             if (hold.Status != HoldStatus.Active) return (StatusCodes.BadRequest, null);
             if (body.CaptureAmount > hold.Amount) return (StatusCodes.BadRequest, null);
+
+            // Acquire hold lock to prevent concurrent captures on the same hold
+            await using var holdLock = await _lockProvider.LockAsync(
+                "currency-hold", body.HoldId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!holdLock.Success)
+            {
+                _logger.LogWarning("Could not acquire hold lock for capture on hold {HoldId}", body.HoldId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Debit the captured amount
             var debitKey = $"{body.IdempotencyKey}:hold-capture";
@@ -2352,6 +2419,13 @@ public partial class CurrencyService : ICurrencyService
         var periodsElapsed = (int)(elapsed.TotalSeconds / interval.TotalSeconds);
 
         if (periodsElapsed <= 0) return balance;
+
+        // Acquire autogain lock to prevent concurrent autogain application
+        await using var autogainLock = await _lockProvider.LockAsync(
+            "currency-autogain", $"{balance.WalletId}:{balance.CurrencyDefinitionId}",
+            Guid.NewGuid().ToString(), 10, ct);
+        if (!autogainLock.Success)
+            return balance; // Skip, will be applied on next access
 
         var previousBalance = balance.Amount;
         double gain;

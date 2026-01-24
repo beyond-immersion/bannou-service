@@ -966,8 +966,18 @@ public partial class ContractService
             _logger.LogInformation("Executing contract: {ContractId}", body.ContractInstanceId);
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+            // Acquire contract lock for execution
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", body.ContractInstanceId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractInstanceId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -1038,8 +1048,12 @@ public partial class ContractService
             model.ExecutionDistributions = distributions;
             model.UpdatedAt = now;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (newEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractInstanceId);
+                return (StatusCodes.Conflict, null);
+            }
 
             var response = new ExecuteContractResponse
             {

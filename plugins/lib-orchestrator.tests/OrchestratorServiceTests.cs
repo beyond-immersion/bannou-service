@@ -28,6 +28,7 @@ public class OrchestratorServiceTests
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly AppConfiguration _appConfiguration;
 
@@ -51,7 +52,20 @@ public class OrchestratorServiceTests
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private OrchestratorService CreateService()
@@ -67,6 +81,7 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
+            _mockLockProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1338,6 +1353,7 @@ public class OrchestratorResetToDefaultTests
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
@@ -1352,6 +1368,7 @@ public class OrchestratorResetToDefaultTests
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _configuration = new OrchestratorServiceConfiguration
         {
@@ -1364,6 +1381,18 @@ public class OrchestratorResetToDefaultTests
         _mockLoggerFactory
             .Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private OrchestratorService CreateService()
@@ -1379,6 +1408,7 @@ public class OrchestratorResetToDefaultTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
+            _mockLockProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1714,6 +1744,7 @@ public class OrchestratorProcessingPoolTests
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public OrchestratorProcessingPoolTests()
@@ -1736,7 +1767,20 @@ public class OrchestratorProcessingPoolTests
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private OrchestratorService CreateService()
@@ -1752,6 +1796,7 @@ public class OrchestratorProcessingPoolTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
+            _mockLockProvider.Object,
             _mockEventConsumer.Object);
     }
 

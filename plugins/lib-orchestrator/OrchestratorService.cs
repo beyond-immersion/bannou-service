@@ -29,6 +29,7 @@ public partial class OrchestratorService : IOrchestratorService
     private readonly IServiceHealthMonitor _healthMonitor;
     private readonly ISmartRestartManager _restartManager;
     private readonly IBackendDetector _backendDetector;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly PresetLoader _presetLoader;
     private readonly ILoggerFactory _loggerFactory;
 
@@ -104,6 +105,7 @@ public partial class OrchestratorService : IOrchestratorService
         IServiceHealthMonitor healthMonitor,
         ISmartRestartManager restartManager,
         IBackendDetector backendDetector,
+        IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
@@ -116,6 +118,7 @@ public partial class OrchestratorService : IOrchestratorService
         _healthMonitor = healthMonitor;
         _restartManager = restartManager;
         _backendDetector = backendDetector;
+        _lockProvider = lockProvider;
 
         // Create preset loader with configured presets directory
         var presetsPath = configuration.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
@@ -2515,6 +2518,15 @@ public partial class OrchestratorService : IOrchestratorService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Acquire pool lock to serialize pool state changes
+            await using var poolLock = await _lockProvider.LockAsync(
+                "orchestrator-pool", body.PoolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+            if (!poolLock.Success)
+            {
+                _logger.LogWarning("Could not acquire pool lock for acquire in pool {PoolType}", body.PoolType);
+                return (StatusCodes.Conflict, null);
+            }
+
             var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
             var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
 
@@ -2620,6 +2632,15 @@ public partial class OrchestratorService : IOrchestratorService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Acquire pool lock to serialize pool state changes
+            await using var poolLock = await _lockProvider.LockAsync(
+                "orchestrator-pool", poolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+            if (!poolLock.Success)
+            {
+                _logger.LogWarning("Could not acquire pool lock for release in pool {PoolType}", poolType);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Remove the lease
             var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
             var currentLeases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
@@ -2643,6 +2664,17 @@ public partial class OrchestratorService : IOrchestratorService
 
             // Update metrics
             await UpdatePoolMetricsAsync(poolType, body.Success);
+
+            // Publish typed event for analytics aggregation
+            await _messageBus.TryPublishAsync("orchestrator.processor.released", new ProcessorReleasedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                PoolType = poolType,
+                ProcessorId = lease.ProcessorId,
+                Success = body.Success,
+                LeaseDurationMs = (long)(DateTimeOffset.UtcNow - lease.AcquiredAt).TotalMilliseconds
+            }, cancellationToken);
 
             _logger.LogInformation(
                 "ReleaseProcessor: Released processor {ProcessorId} back to pool {PoolType}, success={Success}",
@@ -3292,6 +3324,31 @@ public partial class OrchestratorService : IOrchestratorService
         public int JobsFailed1h { get; set; }
         public int AvgProcessingTimeMs { get; set; }
         public DateTimeOffset LastScaleEvent { get; set; }
+    }
+
+    /// <summary>
+    /// Event published when a processor is released back to the pool.
+    /// Used by the Analytics service for pool utilization tracking.
+    /// </summary>
+    internal sealed class ProcessorReleasedEvent
+    {
+        /// <summary>Unique event identifier.</summary>
+        public Guid EventId { get; set; }
+
+        /// <summary>When the release occurred.</summary>
+        public DateTimeOffset Timestamp { get; set; }
+
+        /// <summary>The pool type the processor belongs to.</summary>
+        public string PoolType { get; set; } = string.Empty;
+
+        /// <summary>The processor that was released.</summary>
+        public string ProcessorId { get; set; } = string.Empty;
+
+        /// <summary>Whether the processing job completed successfully.</summary>
+        public bool Success { get; set; }
+
+        /// <summary>How long the lease was held in milliseconds.</summary>
+        public long LeaseDurationMs { get; set; }
     }
 
     #endregion

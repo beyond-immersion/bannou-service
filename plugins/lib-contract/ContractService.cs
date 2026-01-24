@@ -623,6 +623,16 @@ public partial class ContractService : IContractService
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+            // Acquire contract lock for state transition
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
@@ -637,13 +647,11 @@ public partial class ContractService : IContractService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Update status
-            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}draft", body.ContractId.ToString(), cancellationToken);
-
             model.Status = ContractStatus.Proposed;
             model.ProposedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
+            // Persist first
             var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
@@ -651,9 +659,11 @@ public partial class ContractService : IContractService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Then update indexes
+            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}draft", body.ContractId.ToString(), cancellationToken);
             await AddToListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
 
-            // Publish event
+            // Then publish events
             await PublishContractProposedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Proposed contract: {ContractId}", body.ContractId);
@@ -679,6 +689,16 @@ public partial class ContractService : IContractService
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+            // Acquire contract lock for state transition
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
@@ -949,6 +969,16 @@ public partial class ContractService : IContractService
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+            // Acquire contract lock for state transition
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
@@ -975,13 +1005,12 @@ public partial class ContractService : IContractService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Remove from current status index
-            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}{model.Status.ToString().ToLowerInvariant()}", body.ContractId.ToString(), cancellationToken);
-
+            var previousStatus = model.Status.ToString().ToLowerInvariant();
             model.Status = ContractStatus.Terminated;
             model.TerminatedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
+            // Persist first
             var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
@@ -989,9 +1018,11 @@ public partial class ContractService : IContractService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Then update indexes
+            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}{previousStatus}", body.ContractId.ToString(), cancellationToken);
             await AddToListAsync($"{STATUS_INDEX_PREFIX}terminated", body.ContractId.ToString(), cancellationToken);
 
-            // Publish event
+            // Then publish events
             await PublishContractTerminatedEventAsync(model, body.RequestingEntityId,
                 body.RequestingEntityType.ToString(), body.Reason, false, cancellationToken);
 
@@ -1098,6 +1129,16 @@ public partial class ContractService : IContractService
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+            // Acquire contract lock for state transition
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
@@ -1123,14 +1164,6 @@ public partial class ContractService : IContractService
             milestone.CompletedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Execute onComplete prebound APIs in configured batch size
-            var apisExecuted = 0;
-            if (milestone.OnComplete?.Count > 0)
-            {
-                apisExecuted = await ExecutePreboundApisBatchedAsync(
-                    model, milestone.OnComplete, "milestone.completed", cancellationToken);
-            }
-
             // Activate next milestone if any
             var currentIndex = model.Milestones?.FindIndex(m => m.Code == body.MilestoneCode) ?? -1;
             if (currentIndex >= 0 && currentIndex + 1 < (model.Milestones?.Count ?? 0))
@@ -1146,17 +1179,31 @@ public partial class ContractService : IContractService
 
             if (allRequiredComplete && model.Status == ContractStatus.Active)
             {
-                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
                 model.Status = ContractStatus.Fulfilled;
-                await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
-                await PublishContractFulfilledEventAsync(model, cancellationToken);
             }
 
+            // Persist first
             var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
                 return (StatusCodes.Conflict, null);
+            }
+
+            // Then update indexes (if status changed to fulfilled)
+            if (allRequiredComplete && model.Status == ContractStatus.Fulfilled)
+            {
+                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+                await PublishContractFulfilledEventAsync(model, cancellationToken);
+            }
+
+            // Then execute prebound APIs (side effects after persist)
+            var apisExecuted = 0;
+            if (milestone.OnComplete?.Count > 0)
+            {
+                apisExecuted = await ExecutePreboundApisBatchedAsync(
+                    model, milestone.OnComplete, "milestone.completed", cancellationToken);
             }
 
             // Publish milestone completed event
@@ -1188,6 +1235,16 @@ public partial class ContractService : IContractService
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+            // Acquire contract lock for state transition
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
@@ -1221,13 +1278,7 @@ public partial class ContractService : IContractService
             milestone.FailedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Execute onExpire prebound APIs in configured batch size
-            if (milestone.OnExpire?.Count > 0)
-            {
-                await ExecutePreboundApisBatchedAsync(
-                    model, milestone.OnExpire, "milestone.failed", cancellationToken);
-            }
-
+            // Persist first
             var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
@@ -1235,6 +1286,14 @@ public partial class ContractService : IContractService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Then execute prebound APIs (side effects after persist)
+            if (milestone.OnExpire?.Count > 0)
+            {
+                await ExecutePreboundApisBatchedAsync(
+                    model, milestone.OnExpire, "milestone.failed", cancellationToken);
+            }
+
+            // Then publish events
             await PublishMilestoneFailedEventAsync(model, milestone, body.Reason ?? "Milestone failed",
                 milestone.Required, triggeredBreach, cancellationToken);
 
@@ -1303,6 +1362,16 @@ public partial class ContractService : IContractService
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
             var instanceStore = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+            // Acquire contract lock for state transition
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var (model, etag) = await instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
@@ -1388,6 +1457,15 @@ public partial class ContractService : IContractService
             if (breachModel == null)
             {
                 return (StatusCodes.NotFound, null);
+            }
+
+            // Acquire contract lock to serialize breach state changes
+            await using var contractLock = await _lockProvider.LockAsync(
+                "contract-instance", breachModel.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            if (!contractLock.Success)
+            {
+                _logger.LogWarning("Could not acquire contract lock for {ContractId}", breachModel.ContractId);
+                return (StatusCodes.Conflict, null);
             }
 
             if (breachModel.Status != BreachStatus.Detected && breachModel.Status != BreachStatus.Cure_period)
