@@ -908,8 +908,9 @@ public partial class SceneService : ISceneService
                 return (StatusCodes.Forbidden, null);
             }
 
-            // Get index entry
-            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            // Get index entry with ETag for optimistic concurrency
+            var indexKey = $"{SCENE_INDEX_PREFIX}{sceneIdStr}";
+            var (indexEntry, indexEtag) = await indexStore.GetWithETagAsync(indexKey, cancellationToken);
 
             // Release checkout
             await checkoutStore.DeleteAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
@@ -917,7 +918,12 @@ public partial class SceneService : ISceneService
             {
                 indexEntry.IsCheckedOut = false;
                 indexEntry.CheckedOutBy = null;
-                await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
+                var newIndexEtag = await indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
+                if (newIndexEtag == null)
+                {
+                    _logger.LogWarning("DiscardCheckout: Concurrent modification on scene index {SceneId}", body.SceneId);
+                    return (StatusCodes.Conflict, null);
+                }
             }
 
             // Publish event

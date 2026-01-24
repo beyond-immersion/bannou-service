@@ -1240,9 +1240,9 @@ public partial class MusicService : IMusicService
         {
             var cache = _stateStoreFactory.GetStore<GenerateCompositionResponse>(
                 StateStoreDefinitions.MusicCompositions);
-            // Compositions with explicit seed are deterministic - cache for 24 hours (86400 seconds)
+            // Compositions with explicit seed are deterministic - cache with configured TTL
             await cache.SaveAsync(cacheKey, response,
-                new StateOptions { Ttl = 86400 }, cancellationToken);
+                new StateOptions { Ttl = _configuration.CompositionCacheTtlSeconds }, cancellationToken);
             _logger.LogDebug("Cached composition {CacheKey}", cacheKey);
         }
         catch (Exception ex)

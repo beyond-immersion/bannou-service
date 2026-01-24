@@ -18,13 +18,6 @@ x-service-configuration:
       env: DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP
       default: true
 
-    # Session Configuration
-    SessionTtlSeconds:
-      type: integer
-      description: TTL for informal session tracking (24 hours default)
-      env: DOCUMENTATION_SESSION_TTL_SECONDS
-      default: 86400
-
     # Content Size Limits
     MaxContentSizeBytes:
       type: integer

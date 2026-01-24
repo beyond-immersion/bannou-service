@@ -53,4 +53,10 @@ public class MusicServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public string? ForceServiceId { get; set; }
 
+    /// <summary>
+    /// TTL in seconds for cached deterministic compositions
+    /// Environment variable: MUSIC_COMPOSITION_CACHE_TTL_SECONDS
+    /// </summary>
+    public int CompositionCacheTtlSeconds { get; set; } = 86400;
+
 }

@@ -1145,7 +1145,6 @@ public class DocumentationConfigurationTests
         // Assert - Verify all default values are set correctly
         Assert.NotNull(config);
         Assert.True(config.SearchIndexRebuildOnStartup, "SearchIndexRebuildOnStartup should default to true");
-        Assert.Equal(86400, config.SessionTtlSeconds); // 24 hours
         Assert.Equal(524288, config.MaxContentSizeBytes); // 500KB
         Assert.Equal(7, config.TrashcanTtlDays);
         Assert.Equal(200, config.VoiceSummaryMaxLength);
@@ -1174,7 +1173,6 @@ public class DocumentationConfigurationTests
         var config = new DocumentationServiceConfiguration
         {
             SearchIndexRebuildOnStartup = false,
-            SessionTtlSeconds = 3600,
             MaxContentSizeBytes = 1048576, // 1MB
             TrashcanTtlDays = 30,
             VoiceSummaryMaxLength = 500,
@@ -1188,7 +1186,6 @@ public class DocumentationConfigurationTests
 
         // Assert
         Assert.False(config.SearchIndexRebuildOnStartup);
-        Assert.Equal(3600, config.SessionTtlSeconds);
         Assert.Equal(1048576, config.MaxContentSizeBytes);
         Assert.Equal(30, config.TrashcanTtlDays);
         Assert.Equal(500, config.VoiceSummaryMaxLength);

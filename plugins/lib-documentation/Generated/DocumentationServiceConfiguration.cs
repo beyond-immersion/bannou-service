@@ -60,12 +60,6 @@ public class DocumentationServiceConfiguration : IServiceConfiguration
     public bool SearchIndexRebuildOnStartup { get; set; } = true;
 
     /// <summary>
-    /// TTL for informal session tracking (24 hours default)
-    /// Environment variable: DOCUMENTATION_SESSION_TTL_SECONDS
-    /// </summary>
-    public int SessionTtlSeconds { get; set; } = 86400;
-
-    /// <summary>
     /// Maximum document content size in bytes (500KB default)
     /// Environment variable: DOCUMENTATION_MAX_CONTENT_SIZE_BYTES
     /// </summary>
