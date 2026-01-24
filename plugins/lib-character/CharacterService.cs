@@ -161,7 +161,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error creating character: {Name}", body.Name);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -202,7 +202,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error getting character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -294,7 +294,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error updating character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -355,7 +355,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error deleting character: {CharacterId}", body.CharacterId);
-            return StatusCodes.BadGateway;
+            return StatusCodes.ServiceUnavailable;
         }
         catch (Exception ex)
         {
@@ -399,7 +399,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error listing characters");
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -440,7 +440,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error getting characters by realm: {RealmId}", body.RealmId);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -587,7 +587,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error getting enriched character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -736,7 +736,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error compressing character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -781,7 +781,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error getting archive for character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
@@ -894,7 +894,7 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Dependency error checking references for character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.BadGateway, null);
+            return (StatusCodes.ServiceUnavailable, null);
         }
         catch (Exception ex)
         {
