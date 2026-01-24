@@ -144,8 +144,6 @@ subscription.updated (Renewed)
 
 1. **`AuthorizationSuffix` config property**: Defined in schema and generated configuration class but never referenced in service implementation. Should be either wired up or removed.
 
-2. **Missing subscription-index maintenance**: The `SubscriptionExpirationService` reads a `"subscription-index"` key to find subscriptions to check for expiration, but the main service never populates this index. The background worker will find no subscriptions to expire.
-
 ---
 
 ## Potential Extensions
@@ -179,6 +177,8 @@ None identified.
 
 1. **No optimistic concurrency**: Two simultaneous cancellations or renewals could produce inconsistent state. The `IsActive` flag could be toggled unexpectedly if a cancel and renew arrive simultaneously.
 
-2. **Service index maintenance on delete**: No endpoint exists to delete subscriptions. The `service-subscriptions:{serviceId}` and `account-subscriptions:{accountId}` indexes grow indefinitely with cancelled/expired entries.
+2. **Service/account index maintenance on delete**: No endpoint exists to delete subscriptions. The `service-subscriptions:{serviceId}` and `account-subscriptions:{accountId}` indexes grow indefinitely with cancelled/expired entries. (The global `subscription-index` is cleaned by the expiration worker, but per-service and per-account indexes are not.)
 
 3. **Event publishing without transactional guarantee**: State store update and event publish are separate operations. If the service crashes between saving and publishing, dependent services (Auth, GameSession) won't learn about the change until the next direct query.
+
+4. **Internal model uses string types for GUIDs**: `SubscriptionDataModel` stores `SubscriptionId`, `AccountId`, and `ServiceId` as `string` rather than `Guid`. Requires `Guid.Parse()` at every boundary (event publishing, response mapping). Violates IMPLEMENTATION TENETS (type safety for internal models).

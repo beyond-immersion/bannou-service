@@ -27,6 +27,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string PARENT_INDEX_PREFIX = "parent-index:";
     private const string ALL_TYPES_KEY = "all-types";
+    private const int MAX_HIERARCHY_DEPTH = 20;
 
     public RelationshipTypeService(
         IStateStoreFactory stateStoreFactory,
@@ -287,7 +288,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var depth = 0;
             var currentParentId = currentType.ParentTypeId;
 
-            while (!string.IsNullOrEmpty(currentParentId))
+            while (!string.IsNullOrEmpty(currentParentId) && depth < MAX_HIERARCHY_DEPTH)
             {
                 depth++;
                 if (currentParentId == ancestorIdStr)
@@ -338,9 +339,11 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             var ancestors = new List<RelationshipTypeResponse>();
             var currentParentId = currentType.ParentTypeId;
+            var iterations = 0;
 
-            while (!string.IsNullOrEmpty(currentParentId))
+            while (!string.IsNullOrEmpty(currentParentId) && iterations < MAX_HIERARCHY_DEPTH)
             {
+                iterations++;
                 var parentKey = BuildTypeKey(currentParentId);
                 var parentType = await store.GetAsync(parentKey, cancellationToken);
 
@@ -1064,13 +1067,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     private static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code}";
     private static string BuildParentIndexKey(string parentId) => $"{PARENT_INDEX_PREFIX}{parentId}";
 
-    private async Task<List<string>> GetChildTypeIdsAsync(string parentId, bool recursive, CancellationToken cancellationToken)
+    private async Task<List<string>> GetChildTypeIdsAsync(string parentId, bool recursive, CancellationToken cancellationToken, int currentDepth = 0)
     {
         var parentIndexKey = BuildParentIndexKey(parentId);
         var directChildren = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType)
             .GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
-        if (!recursive || directChildren.Count == 0)
+        if (!recursive || directChildren.Count == 0 || currentDepth >= MAX_HIERARCHY_DEPTH)
         {
             return directChildren;
         }
@@ -1078,7 +1081,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         var allChildren = new List<string>(directChildren);
         foreach (var childId in directChildren)
         {
-            var grandchildren = await GetChildTypeIdsAsync(childId, true, cancellationToken);
+            var grandchildren = await GetChildTypeIdsAsync(childId, true, cancellationToken, currentDepth + 1);
             allChildren.AddRange(grandchildren);
         }
 
