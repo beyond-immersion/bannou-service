@@ -31,7 +31,7 @@ public partial class AuthService
 
     /// <summary>
     /// Handles account.deleted events.
-    /// Invalidates all sessions for the deleted account.
+    /// Invalidates all sessions and cleans up OAuth links for the deleted account.
     /// </summary>
     /// <param name="evt">The event data.</param>
     public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
@@ -40,8 +40,9 @@ public partial class AuthService
             evt.AccountId, evt.Email);
 
         await InvalidateAccountSessionsAsync(evt.AccountId);
+        await _oauthService.CleanupOAuthLinksForAccountAsync(evt.AccountId);
 
-        _logger.LogInformation("Successfully invalidated sessions for deleted account: {AccountId}",
+        _logger.LogInformation("Successfully invalidated sessions and cleaned up OAuth links for deleted account: {AccountId}",
             evt.AccountId);
     }
 

@@ -477,6 +477,9 @@ public class OAuthProviderService : IOAuthProviderService
                 newAccount.AccountId.ToString(),
                 cancellationToken: cancellationToken);
 
+            // Maintain reverse index for cleanup on account deletion
+            await AddToAccountOAuthLinksIndexAsync(newAccount.AccountId, oauthLinkKey, cancellationToken);
+
             _logger.LogInformation("Created new account {AccountId} and linked to {Provider} user {ProviderId}",
                 newAccount.AccountId, providerName, userInfo.ProviderId);
 
@@ -618,6 +621,74 @@ public class OAuthProviderService : IOAuthProviderService
 
         // Neither configured - return null to indicate provider should be disabled
         return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task CleanupOAuthLinksForAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var indexKey = $"account-oauth-links:{accountId}";
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+            var linkKeys = await indexStore.GetAsync(indexKey, cancellationToken);
+
+            if (linkKeys == null || linkKeys.Count == 0)
+            {
+                _logger.LogDebug("No OAuth links found for account {AccountId}", accountId);
+                return;
+            }
+
+            var linkStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
+
+            foreach (var linkKey in linkKeys)
+            {
+                await linkStore.DeleteAsync(linkKey, cancellationToken);
+            }
+
+            // Remove the reverse index itself
+            await indexStore.DeleteAsync(indexKey, cancellationToken);
+
+            _logger.LogInformation("Cleaned up {Count} OAuth link(s) for deleted account {AccountId}",
+                linkKeys.Count, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to cleanup OAuth links for account {AccountId}", accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "CleanupOAuthLinks",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Adds an OAuth link key to the account's reverse index for cleanup on deletion.
+    /// </summary>
+    private async Task AddToAccountOAuthLinksIndexAsync(Guid accountId, string oauthLinkKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var indexKey = $"account-oauth-links:{accountId}";
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+
+            var existingLinks = await indexStore.GetAsync(indexKey, cancellationToken) ?? new List<string>();
+
+            if (!existingLinks.Contains(oauthLinkKey))
+            {
+                existingLinks.Add(oauthLinkKey);
+            }
+
+            await indexStore.SaveAsync(indexKey, existingLinks, cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: link still works, just won't be cleaned up on account deletion
+            _logger.LogWarning(ex, "Failed to add OAuth link to reverse index for account {AccountId}", accountId);
+        }
     }
 
     #region OAuth Response Models

@@ -77,6 +77,13 @@ public interface IOAuthProviderService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Mock Steam user info.</returns>
     Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cleans up all OAuth links for a deleted account using the reverse index.
+    /// </summary>
+    /// <param name="accountId">The account ID being deleted.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task CleanupOAuthLinksForAccountAsync(Guid accountId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
