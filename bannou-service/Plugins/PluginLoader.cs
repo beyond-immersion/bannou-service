@@ -961,8 +961,9 @@ public class PluginLoader
     /// Registers service permissions for all enabled plugins with the Permission service.
     /// This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
     /// </summary>
+    /// <param name="appId">The effective app ID for this service instance</param>
     /// <returns>True if all permissions were registered successfully</returns>
-    public async Task<bool> RegisterServicePermissionsAsync()
+    public async Task<bool> RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering service permissions for {ServiceCount} services: {ServiceNames}",
             _resolvedServices.Count, string.Join(", ", _resolvedServices.Keys));
@@ -980,7 +981,7 @@ public class PluginLoader
                     attempt++;
                     try
                     {
-                        await service.RegisterServicePermissionsAsync();
+                        await service.RegisterServicePermissionsAsync(appId);
                         _logger.LogInformation("Permissions registered successfully for service: {PluginName} (attempt {Attempt})", pluginName, attempt);
                         break;
                     }

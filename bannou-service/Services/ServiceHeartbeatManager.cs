@@ -241,7 +241,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         try
         {
             _logger.LogDebug("Re-registering permissions as part of heartbeat...");
-            var success = await _pluginLoader.RegisterServicePermissionsAsync();
+            var success = await _pluginLoader.RegisterServicePermissionsAsync(AppId);
             if (success)
             {
                 _logger.LogDebug("Permission heartbeat completed successfully");

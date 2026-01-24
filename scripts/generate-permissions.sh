@@ -180,7 +180,8 @@ public static class ${SERVICE_PASCAL}PermissionRegistration
     /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
     /// </summary>
     /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
-    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId)
+    /// <param name="appId">The effective app ID for this service instance</param>
+    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId, string appId)
     {
         return new ServiceRegistrationEvent
         {
@@ -189,7 +190,7 @@ public static class ${SERVICE_PASCAL}PermissionRegistration
             ServiceId = instanceId,
             ServiceName = ServiceId,
             Version = ServiceVersion,
-            AppId = Program.Configuration.EffectiveAppId,
+            AppId = appId,
             Endpoints = GetEndpoints()
         };
     }
@@ -297,9 +298,12 @@ cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
     /// Registers service permissions via event publishing.
     /// Should only be called after messaging infrastructure is confirmed.
     /// </summary>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
+    /// <param name="messageBus">The message bus for publishing events</param>
+    /// <param name="appId">The effective app ID for this service instance</param>
+    /// <param name="logger">Optional logger for diagnostics</param>
+    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
     {
-        var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
+        var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID), appId);
 
         var success = await messageBus.TryPublishAsync(
             "permission.service-registered",

@@ -445,7 +445,7 @@ public static class Program
                 if (PluginLoader != null)
                 {
                     Logger.Log(LogLevel.Information, null, "Registering service permissions with Permission service...");
-                    if (!await PluginLoader.RegisterServicePermissionsAsync())
+                    if (!await PluginLoader.RegisterServicePermissionsAsync(Configuration.EffectiveAppId))
                     {
                         Logger.Log(LogLevel.Error, null, "Service permission registration failed - exiting application.");
                         return 1;
