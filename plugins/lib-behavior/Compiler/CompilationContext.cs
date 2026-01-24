@@ -146,6 +146,9 @@ public sealed class CompilationContext
     /// <summary>
     /// Tries to get an input variable index.
     /// </summary>
+    /// <param name="name">The variable name.</param>
+    /// <param name="index">When this method returns, contains the index if found.</param>
+    /// <returns>True if the input variable exists; otherwise, false.</returns>
     public bool TryGetInput(string name, out byte index)
     {
         return _inputVariables.TryGetValue(name, out index);
@@ -154,6 +157,9 @@ public sealed class CompilationContext
     /// <summary>
     /// Tries to get an output variable index.
     /// </summary>
+    /// <param name="name">The variable name.</param>
+    /// <param name="index">When this method returns, contains the index if found.</param>
+    /// <returns>True if the output variable exists; otherwise, false.</returns>
     public bool TryGetOutput(string name, out byte index)
     {
         return _outputVariables.TryGetValue(name, out index);
@@ -162,6 +168,9 @@ public sealed class CompilationContext
     /// <summary>
     /// Tries to get a local variable index.
     /// </summary>
+    /// <param name="name">The variable name.</param>
+    /// <param name="index">When this method returns, contains the index if found.</param>
+    /// <returns>True if the local variable exists; otherwise, false.</returns>
     public bool TryGetLocal(string name, out byte index)
     {
         return _localVariables.TryGetValue(name, out index);

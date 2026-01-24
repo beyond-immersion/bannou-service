@@ -486,75 +486,34 @@ Memory Relevance Scoring (Keyword-Based)
 
 ## Tenet Violations (Fix Immediately)
 
-1. **[QUALITY]** T0: Tenet number "(T23)" referenced in source code comments. Comments in `EntityResolver.cs` (lines 57, 87) and `ControlGate.cs` (lines 115, 167) include the text "per IMPLEMENTATION TENETS (T23)". Per T0, source code must never reference specific tenet numbers -- use only category names like "IMPLEMENTATION TENETS" without the parenthetical number.
-   - **Files**: `plugins/lib-behavior/Coordination/EntityResolver.cs:57,87`, `plugins/lib-behavior/Control/ControlGate.cs:115,167`
-   - **Wrong**: `// Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)`
-   - **Correct**: `// Yield to ensure proper async pattern per IMPLEMENTATION TENETS`
+*No violations remaining. Previous violations have been addressed:*
+- *#1-4: Fixed (tenet numbers removed, null-forgiving operators replaced, StateStoreDefinitions used)*
+- *#7-9: Fixed (compiler-satisfaction comments added, XML docs completed)*
+- *#13: Incorrect (XML documentation already exists)*
+- *#5-6, #10-14: Reclassified as design considerations (see Design Considerations section)*
 
-2. **[IMPLEMENTATION]** CLAUDE.md rule: Null-forgiving operator (`!`) used in `EntityResolver.cs`. Lines 217 and 232 use `out value!` and `value = default!` which are explicitly forbidden by CLAUDE.md ("Never use null-forgiving operators"). These hide null reference exceptions and can cause segfaults.
-   - **File**: `plugins/lib-behavior/Coordination/EntityResolver.cs:217,232`
-   - **Wrong**: `if (dictionary.TryGetValue(key, out value!))` and `value = default!;`
-   - **Correct**: Use explicit nullable return pattern or `[MaybeNullWhen(false)]` attribute on the out parameter.
+### Design Consideration: ValueTask.FromResult() for Synchronous Hot Paths
 
-3. **[IMPLEMENTATION]** CLAUDE.md rule: Null-forgiving operator (`!`) used in `IMemoryStore.cs` line 213: `.ToDictionary(kv => kv.Key, kv => kv.Value!)`. The `Value!` null-forgiving suppresses a nullable warning. Should use explicit null check or filter.
-   - **File**: `plugins/lib-behavior/Cognition/IMemoryStore.cs:213`
-   - **Wrong**: `kv => kv.Value!`
-   - **Correct**: Filter out null values before the ToDictionary, or use `kv.Value ?? throw new InvalidOperationException("...")`.
+The following classes use `ValueTask.FromResult()` without `async/await` in methods with `Async` naming convention:
+- `GoapPlanner.PlanAsync` and `ValidatePlanAsync`
+- `FilterAttentionHandler`, `AssessSignificanceHandler`, `EvaluateGoalImpactHandler`
+- All CoreEmitters (Attention, Movement, Vocalization, Generic, Interaction, Combat, Expression)
+- `BehaviorLayerBase`
 
-4. **[IMPLEMENTATION]** T21/T4: Hardcoded state store name "behavior-statestore" in `BehaviorBundleManager.cs` line 18. The generated `StateStoreDefinitions.Behavior` constant exists (in `bannou-service/Generated/StateStoreDefinitions.cs:74`) and should be used instead. The comment on line 16 even acknowledges this: "Matches StateStoreDefinitions.BehaviorStatestore after next regeneration" but the constant already exists as `StateStoreDefinitions.Behavior`.
-   - **File**: `plugins/lib-behavior/BehaviorBundleManager.cs:18`
-   - **Wrong**: `private const string BehaviorStore = "behavior-statestore";`
-   - **Correct**: Use `StateStoreDefinitions.Behavior` directly in all `GetStore<>()` calls.
+**This is intentional and NOT a T23 violation.** T23 states "All methods returning `Task` or `Task<T>` MUST use the `async` keyword" - it does not mention `ValueTask`. `ValueTask` is specifically designed for performance-critical hot paths where you want to avoid heap allocation when the result is available synchronously. The GOAP planner and cognition handlers are CPU-bound synchronous computations that execute frequently during NPC behavior loops. Adding `async/await` would add state machine overhead without any benefit.
 
-5. **[IMPLEMENTATION]** T23: `GoapPlanner.PlanAsync` and `ValidatePlanAsync` are non-async methods returning `ValueTask<T>` using `ValueTask.FromResult<>()`. Per T23, Task-returning methods named with `Async` suffix must be async with await. These methods contain multiple return points via `ValueTask.FromResult()` without any await.
-   - **File**: `plugins/lib-behavior/Goap/GoapPlanner.cs:46-165,168-221`
-   - **Current**: `public ValueTask<GoapPlan?> PlanAsync(...) { ... return ValueTask.FromResult<GoapPlan?>(plan); }`
-   - **Note**: This is a borderline case. The GOAP planner is intentionally CPU-bound and synchronous. ValueTask allows avoiding heap allocation when the result is synchronous. T23 intends to prevent sync-over-async deadlocks. If performance justifies synchronous execution, consider removing `Async` suffix or adding async/await with Task.Yield().
+### Design Consideration: IHttpClientFactory for Presigned URLs
 
-6. **[IMPLEMENTATION]** T23: Multiple handler classes use `ValueTask.FromResult()` without async/await in methods with `Async` naming convention. Affected files:
-   - `plugins/lib-behavior/Handlers/FilterAttentionHandler.cs:81`
-   - `plugins/lib-behavior/Handlers/AssessSignificanceHandler.cs:95`
-   - `plugins/lib-behavior/Handlers/EvaluateGoalImpactHandler.cs:71`
-   - `plugins/lib-behavior/Handlers/CoreEmitters/AttentionEmitters.cs:38,72`
-   - `plugins/lib-behavior/Handlers/CoreEmitters/MovementEmitters.cs:39,74,107`
-   - `plugins/lib-behavior/Handlers/CoreEmitters/VocalizationEmitters.cs:43,82`
-   - `plugins/lib-behavior/Handlers/CoreEmitters/GenericEmitters.cs:61,67,135,180`
-   - `plugins/lib-behavior/Handlers/CoreEmitters/InteractionEmitters.cs:39,72,116`
-   - `plugins/lib-behavior/Handlers/CoreEmitters/CombatEmitters.cs:39,74,121`
-   - `plugins/lib-behavior/Handlers/CoreEmitters/ExpressionEmitters.cs:43,49,52`
-   - `plugins/lib-behavior/Stack/BehaviorLayerBase.cs:225,264,268`
-   - **Note**: Same assessment as #5. These are synchronous computations returning ValueTask for interface compatibility. Consider whether the interface itself should define these as synchronous (returning `T` directly) or document the intentional deviation.
+`BehaviorService.cs` uses `IHttpClientFactory` to upload/download bytecode via presigned MinIO/S3 URLs. This is NOT a T4 violation - T4 prohibits direct Redis/RabbitMQ/HTTP for service-to-service calls. Presigned URLs are external storage endpoints, and the pattern is standard for asset services that want to avoid routing large binary data through the service mesh.
 
-7. **[QUALITY]** CLAUDE.md rule: `?? string.Empty` without proper justification comment in `FileLocalizationProvider.cs`. Lines 461 and 471 use `k.Key.ToString() ?? string.Empty` and `kvp.Value.ToString() ?? string.Empty` within the `FlattenDictionary` method. The coercion silently hides a potential null from a dictionary key/value ToString(), which could indicate data corruption in localization files. Should either validate and fail, or add a defensive coding comment per the acceptable patterns in CLAUDE.md.
-   - **File**: `plugins/lib-behavior/Dialogue/FileLocalizationProvider.cs:461,471`
-   - **Wrong**: `k => k.Key.ToString() ?? string.Empty` (silent coercion without comment)
-   - **Correct**: Add compiler-satisfaction comment or throw on null key (data corruption).
+### Design Consideration: Static CognitionConstants
 
-8. **[QUALITY]** CLAUDE.md rule: `?? string.Empty` in `AbmlDialogueExpressionContext.cs` line 240: `value.ToString() ?? string.Empty`. The `FormatValue` method's default case silently coerces unknown types to empty string. This hides bugs for unexpected types. Should have a compiler-satisfaction comment (ToString() on non-null object theoretically can but practically never returns null).
-   - **File**: `plugins/lib-behavior/Dialogue/AbmlDialogueExpressionContext.cs:240`
-   - **Wrong**: `_ => value.ToString() ?? string.Empty` (no justification comment)
-   - **Correct**: Add comment: `// ToString() on non-null object cannot return null in practice; coalesce satisfies compiler nullable analysis`
+`CognitionConstants` uses static mutable state with first-call-wins initialization. This is intentional for performance - within a single process, all service instances share the same environment configuration. The thread-unsafe `Reset()` method is test-only.
 
-9. **[QUALITY]** T19: `CompilationContext.TryGetInput`, `TryGetOutput`, and `TryGetLocal` methods (lines 149-168) lack `<param>` and `<returns>` XML documentation tags. They only have `<summary>` tags. T19 requires public methods to have complete XML documentation including all param and returns tags.
-   - **File**: `plugins/lib-behavior/Compiler/CompilationContext.cs:149-168`
-   - **Wrong**: `/// <summary>Tries to get an input variable index.</summary>`
-   - **Correct**: Add `<param name="name">...</param>`, `<param name="index">...</param>`, `<returns>...</returns>`
+### Design Consideration: In-Memory Runtime State
 
-10. **[IMPLEMENTATION]** T4 (potential): Direct `IHttpClientFactory` usage for presigned URL uploads/downloads in `BehaviorService.cs` lines 450-454 and 601-602. The service creates raw HttpClient instances to PUT/GET bytecode to/from presigned URLs. While presigned URLs are external (MinIO/S3) and cannot use lib-mesh, this pattern means the behavior service has direct knowledge of the storage backend's HTTP protocol. Consider whether the Asset service should provide binary upload/download methods that handle transfer internally.
-    - **File**: `plugins/lib-behavior/BehaviorService.cs:450-454,601-602`
-    - **Note**: Presigned URL pattern is standard for asset services and may be an accepted exception. The IHttpClientFactory usage itself is not a T4 violation (T4 prohibits direct Redis/RabbitMQ/HTTP for service-to-service calls, not external storage). This is informational.
+`EntityStateRegistry` and `BehaviorModelCache` use in-memory `ConcurrentDictionary` as runtime state stores. This is intentional - these are per-process behavior execution components, not service-level persistent state. The behavior system is designed to run co-located with the actor that owns the entities.
 
-11. **[IMPLEMENTATION]** T9 (minor): `CognitionConstants` uses static mutable state (`private static float/int/bool`) shared across all instances in the process. The `Initialize()` method is idempotent (first-call-wins), but `Reset()` (internal, for tests) modifies shared state without synchronization beyond a simple boolean check. In multi-instance single-process deployments, the first instance's configuration silently wins.
-    - **File**: `plugins/lib-behavior/Cognition/CognitionTypes.cs:28-294`
-    - **Note**: Idempotent first-call-wins is intentional for performance. Within a single process, all service instances share environment configuration. The thread-unsafe `Reset()` is test-only. This is a minor concern, not a critical violation.
+### Design Consideration: SemaphoreSlim.Wait() in FileLocalizationProvider
 
-12. **[IMPLEMENTATION]** T9 (informational): `EntityStateRegistry` and `BehaviorModelCache` use in-memory `ConcurrentDictionary` as authoritative state stores. If behavior services run distributed, entity state and model cache on one instance are invisible to others. However, these are runtime evaluation components (per-process behavior execution state), not service-level persistent state. The behavior system is designed to run co-located with the actor that owns the entities.
-    - **Files**: `plugins/lib-behavior/Control/EntityStateRegistry.cs:28`, `plugins/lib-behavior/BehaviorModelCache.cs:34-248`
-    - **Note**: These are per-process runtime caches by design. Document as intentional T9 exception for behavior runtime components.
-
-13. **[QUALITY]** T19: `IMemoryStore.cs` line 210 - the `Perception.FromDictionary` static method (starting around line 195) has no XML documentation (no `<summary>`, `<param>`, or `<returns>` tags). This is a public static method on a public record that should be fully documented.
-    - **File**: `plugins/lib-behavior/Cognition/IMemoryStore.cs:195-215`
-
-14. **[IMPLEMENTATION]** T23 (informational): `FileLocalizationProvider` inner class `YamlFileLocalizationSource.EnsureLocaleLoaded` at line 356 calls `_loadLock.Wait()` (synchronous SemaphoreSlim wait). While `SemaphoreSlim.Wait()` is not the same as `Task.Wait()`, blocking on a semaphore in a service that runs in an async context risks thread pool starvation. The method is intentionally synchronous for hot-path performance as documented in the comment.
-    - **File**: `plugins/lib-behavior/Dialogue/FileLocalizationProvider.cs:356`
-    - **Note**: This is `SemaphoreSlim.Wait()`, not `Task.Wait()`. T23 specifically targets Task. The synchronous design is documented and intentional. Not a strict T23 violation but worth monitoring.
+`YamlFileLocalizationSource.EnsureLocaleLoaded` uses synchronous `SemaphoreSlim.Wait()` for hot-path performance. This is NOT a T23 violation - T23 specifically targets `Task`, not semaphores. The synchronous design is documented and intentional for minimizing latency on frequently-accessed locale data.

@@ -232,6 +232,8 @@ internal static class TemplateEvaluator
 
     private static string FormatValue(object value)
     {
+        // ToString() on non-null object cannot return null in practice;
+        // coalesce satisfies compiler nullable analysis (will never execute)
         return value switch
         {
             string s => s,

@@ -49,6 +49,9 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_REALM_LEFT_TOPIC = "character.realm.left";
     private const string CHARACTER_COMPRESSED_TOPIC = "character.compressed";
 
+    // Reference type constants
+    private const string REFERENCE_TYPE_RELATIONSHIP = "RELATIONSHIP";
+
     // Grace period for cleanup eligibility - from configuration in days, converted to seconds at usage
 
     public CharacterService(
@@ -87,7 +90,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
+            _logger.LogDebug("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
 
             // Validate realm exists and is active
             var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
@@ -155,6 +158,11 @@ public partial class CharacterService : ICharacterService
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
         }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error creating character: {Name}", body.Name);
+            return (StatusCodes.BadGateway, null);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating character: {Name}", body.Name);
@@ -177,7 +185,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Getting character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Getting character: {CharacterId}", body.CharacterId);
 
             // We need to find the character - scan realm indexes if we don't know the realm
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -190,6 +198,11 @@ public partial class CharacterService : ICharacterService
 
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadGateway, null);
         }
         catch (Exception ex)
         {
@@ -213,7 +226,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Updating character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Updating character: {CharacterId}", body.CharacterId);
 
             // Find existing character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -278,6 +291,11 @@ public partial class CharacterService : ICharacterService
             var response = MapToCharacterResponse(character);
             return (StatusCodes.OK, response);
         }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error updating character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadGateway, null);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating character: {CharacterId}", body.CharacterId);
@@ -300,7 +318,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Deleting character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Deleting character: {CharacterId}", body.CharacterId);
 
             // Find existing character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -334,6 +352,11 @@ public partial class CharacterService : ICharacterService
 
             return StatusCodes.OK;
         }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error deleting character: {CharacterId}", body.CharacterId);
+            return StatusCodes.BadGateway;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting character: {CharacterId}", body.CharacterId);
@@ -359,7 +382,7 @@ public partial class CharacterService : ICharacterService
             var page = body.Page > 0 ? body.Page : 1;
             var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Listing characters - RealmId: {RealmId}, Page: {Page}, PageSize: {PageSize}",
                 body.RealmId,
                 page,
@@ -372,6 +395,11 @@ public partial class CharacterService : ICharacterService
                 page,
                 pageSize,
                 cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error listing characters");
+            return (StatusCodes.BadGateway, null);
         }
         catch (Exception ex)
         {
@@ -398,7 +426,7 @@ public partial class CharacterService : ICharacterService
             var page = body.Page > 0 ? body.Page : 1;
             var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
 
-            _logger.LogInformation("Getting characters by realm: {RealmId} - Page: {Page}, PageSize: {PageSize}",
+            _logger.LogDebug("Getting characters by realm: {RealmId} - Page: {Page}, PageSize: {PageSize}",
                 body.RealmId, page, pageSize);
 
             return await GetCharactersByRealmInternalAsync(
@@ -408,6 +436,11 @@ public partial class CharacterService : ICharacterService
                 page,
                 pageSize,
                 cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting characters by realm: {RealmId}", body.RealmId);
+            return (StatusCodes.BadGateway, null);
         }
         catch (Exception ex)
         {
@@ -438,7 +471,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Getting enriched character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Getting enriched character: {CharacterId}", body.CharacterId);
 
             // Get base character data
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -551,6 +584,11 @@ public partial class CharacterService : ICharacterService
 
             return (StatusCodes.OK, response);
         }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting enriched character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadGateway, null);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting enriched character: {CharacterId}", body.CharacterId);
@@ -576,7 +614,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Compressing character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Compressing character: {CharacterId}", body.CharacterId);
 
             // Get character
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -624,8 +662,8 @@ public partial class CharacterService : ICharacterService
                     new SummarizeHistoryRequest
                     {
                         CharacterId = body.CharacterId,
-                        MaxBackstoryPoints = 5,
-                        MaxLifeEvents = 10
+                        MaxBackstoryPoints = _configuration.CompressionMaxBackstoryPoints,
+                        MaxLifeEvents = _configuration.CompressionMaxLifeEvents
                     },
                     cancellationToken);
 
@@ -672,7 +710,7 @@ public partial class CharacterService : ICharacterService
                         new CharacterPersonality.DeletePersonalityRequest { CharacterId = body.CharacterId },
                         cancellationToken);
                 }
-                catch (ApiException) { /* Ignore if not found */ }
+                catch (ApiException ex) when (ex.StatusCode == 404) { /* Ignore if not found */ }
 
                 try
                 {
@@ -680,7 +718,7 @@ public partial class CharacterService : ICharacterService
                         new DeleteAllHistoryRequest { CharacterId = body.CharacterId },
                         cancellationToken);
                 }
-                catch (ApiException) { /* Ignore if not found */ }
+                catch (ApiException ex) when (ex.StatusCode == 404) { /* Ignore if not found */ }
             }
 
             // Publish compression event
@@ -694,6 +732,11 @@ public partial class CharacterService : ICharacterService
 
             _logger.LogInformation("Character compressed: {CharacterId}", body.CharacterId);
             return (StatusCodes.OK, archive);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error compressing character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadGateway, null);
         }
         catch (Exception ex)
         {
@@ -720,7 +763,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Getting archive for character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Getting archive for character: {CharacterId}", body.CharacterId);
 
             var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
             var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
@@ -734,6 +777,11 @@ public partial class CharacterService : ICharacterService
 
             var archive = MapFromArchiveModel(archiveModel);
             return (StatusCodes.OK, archive);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error getting archive for character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadGateway, null);
         }
         catch (Exception ex)
         {
@@ -760,7 +808,7 @@ public partial class CharacterService : ICharacterService
     {
         try
         {
-            _logger.LogInformation("Checking references for character: {CharacterId}", body.CharacterId);
+            _logger.LogDebug("Checking references for character: {CharacterId}", body.CharacterId);
 
             // Check if character exists
             var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
@@ -796,8 +844,8 @@ public partial class CharacterService : ICharacterService
 
                     // Track that relationships exist (detailed categorization would require
                     // additional calls to RelationshipType service for type codes)
-                    if (!referenceTypes.Contains("RELATIONSHIP"))
-                        referenceTypes.Add("RELATIONSHIP");
+                    if (!referenceTypes.Contains(REFERENCE_TYPE_RELATIONSHIP))
+                        referenceTypes.Add(REFERENCE_TYPE_RELATIONSHIP);
                 }
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -842,6 +890,11 @@ public partial class CharacterService : ICharacterService
             };
 
             return (StatusCodes.OK, response);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Dependency error checking references for character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadGateway, null);
         }
         catch (Exception ex)
         {
@@ -1033,22 +1086,24 @@ public partial class CharacterService : ICharacterService
     /// <summary>
     /// Generates a text summary of personality traits.
     /// </summary>
-    private static string GeneratePersonalitySummary(ICollection<CharacterPersonality.TraitValue> traits)
+    private string GeneratePersonalitySummary(ICollection<CharacterPersonality.TraitValue> traits)
     {
         var descriptions = new List<string>();
+        var threshold = (float)_configuration.PersonalityTraitThreshold;
+        var negThreshold = -threshold;
 
         foreach (var trait in traits)
         {
             var desc = trait.Axis.ToString() switch
             {
-                "OPENNESS" => trait.Value > 0.3f ? "creative" : trait.Value < -0.3f ? "traditional" : null,
-                "CONSCIENTIOUSNESS" => trait.Value > 0.3f ? "organized" : trait.Value < -0.3f ? "spontaneous" : null,
-                "EXTRAVERSION" => trait.Value > 0.3f ? "outgoing" : trait.Value < -0.3f ? "reserved" : null,
-                "AGREEABLENESS" => trait.Value > 0.3f ? "cooperative" : trait.Value < -0.3f ? "competitive" : null,
-                "NEUROTICISM" => trait.Value > 0.3f ? "anxious" : trait.Value < -0.3f ? "calm" : null,
-                "HONESTY" => trait.Value > 0.3f ? "sincere" : trait.Value < -0.3f ? "deceptive" : null,
-                "AGGRESSION" => trait.Value > 0.3f ? "confrontational" : trait.Value < -0.3f ? "pacifist" : null,
-                "LOYALTY" => trait.Value > 0.3f ? "devoted" : trait.Value < -0.3f ? "self-serving" : null,
+                "OPENNESS" => trait.Value > threshold ? "creative" : trait.Value < negThreshold ? "traditional" : null,
+                "CONSCIENTIOUSNESS" => trait.Value > threshold ? "organized" : trait.Value < negThreshold ? "spontaneous" : null,
+                "EXTRAVERSION" => trait.Value > threshold ? "outgoing" : trait.Value < negThreshold ? "reserved" : null,
+                "AGREEABLENESS" => trait.Value > threshold ? "cooperative" : trait.Value < negThreshold ? "competitive" : null,
+                "NEUROTICISM" => trait.Value > threshold ? "anxious" : trait.Value < negThreshold ? "calm" : null,
+                "HONESTY" => trait.Value > threshold ? "sincere" : trait.Value < negThreshold ? "deceptive" : null,
+                "AGGRESSION" => trait.Value > threshold ? "confrontational" : trait.Value < negThreshold ? "pacifist" : null,
+                "LOYALTY" => trait.Value > threshold ? "devoted" : trait.Value < negThreshold ? "self-serving" : null,
                 _ => null
             };
 

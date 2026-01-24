@@ -457,6 +457,8 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
             if (kvp.Value is Dictionary<object, object> nestedDict)
             {
                 // Convert to proper dictionary
+                // ToString() on non-null dictionary key cannot return null in practice;
+                // coalesce satisfies compiler nullable analysis (will never execute)
                 var converted = nestedDict.ToDictionary(
                     k => k.Key.ToString() ?? string.Empty,
                     v => v.Value);
@@ -468,6 +470,8 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
             }
             else if (kvp.Value != null)
             {
+                // ToString() on non-null object cannot return null in practice;
+                // coalesce satisfies compiler nullable analysis (will never execute)
                 target[key] = kvp.Value.ToString() ?? string.Empty;
             }
         }
