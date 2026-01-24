@@ -987,11 +987,12 @@ public partial class ConnectService : IConnectService
         int messageLength,
         CancellationToken cancellationToken)
     {
-        BinaryMessage? message = null;
+        BinaryMessage? parsedMessage = null;
         try
         {
             // Parse binary message using protocol class
-            message = BinaryMessage.Parse(buffer, messageLength);
+            var message = BinaryMessage.Parse(buffer, messageLength);
+            parsedMessage = message;
 
             _logger.LogDebug("Binary message from session {SessionId}: {Message}",
                 sessionId, message.ToString());
@@ -1127,12 +1128,12 @@ public partial class ConnectService : IConnectService
             await PublishErrorEventAsync("HandleBinaryMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
 
             // Send error response using already-parsed message (avoids double-parse)
-            if (message != null)
+            if (parsedMessage.HasValue)
             {
                 try
                 {
                     var errorResponse = MessageRouter.CreateErrorResponse(
-                        message, ResponseCodes.RequestError, "Internal server error");
+                        parsedMessage.Value, ResponseCodes.RequestError, "Internal server error");
 
                     await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
                 }

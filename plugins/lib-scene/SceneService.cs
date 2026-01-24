@@ -672,8 +672,8 @@ public partial class SceneService : ISceneService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = body.InstanceId,
-                SceneAssetId = body.SceneAssetId ?? Guid.Empty,
-                RegionId = body.RegionId ?? Guid.Empty,
+                SceneAssetId = body.SceneAssetId,
+                RegionId = body.RegionId,
                 Metadata = body.Metadata
             };
 

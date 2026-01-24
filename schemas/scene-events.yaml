@@ -164,8 +164,6 @@ components:
       description: Published when a scene instance is removed from the game world
       required:
         - instanceId
-        - sceneAssetId
-        - regionId
       properties:
         instanceId:
           type: string
@@ -174,11 +172,13 @@ components:
         sceneAssetId:
           type: string
           format: uuid
-          description: Source scene asset ID
+          nullable: true
+          description: Source scene asset ID (null if not provided by caller)
         regionId:
           type: string
           format: uuid
-          description: Region where the instance was located
+          nullable: true
+          description: Region where the instance was located (null if not provided by caller)
         destroyedBy:
           type: string
           nullable: true

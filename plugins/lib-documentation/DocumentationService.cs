@@ -1709,18 +1709,17 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
-            var (docIds, etag) = await guidListStore.GetWithETagAsync(indexKey, cancellationToken);
+            var (docIds, etag) = await guidSetStore.GetWithETagAsync(indexKey, cancellationToken);
             docIds ??= [];
 
-            if (!docIds.Contains(documentId))
+            if (docIds.Add(documentId))
             {
-                docIds.Add(documentId);
-                var result = await guidListStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                var result = await guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
                 if (result != null)
                 {
                     break;
@@ -1761,16 +1760,16 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
-            var (docIds, etag) = await guidListStore.GetWithETagAsync(indexKey, cancellationToken);
+            var (docIds, etag) = await guidSetStore.GetWithETagAsync(indexKey, cancellationToken);
 
             if (docIds != null && docIds.Remove(documentId))
             {
-                var result = await guidListStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                var result = await guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
                 if (result != null)
                 {
                     return;

@@ -122,8 +122,7 @@ paths:
       - name: platform
         in: query
         schema:
-          type: string
-          enum: [windows, macos, linux]
+          $ref: '#/components/schemas/Platform'
         description: Filter by platform
       responses:
         '200':
@@ -427,6 +426,11 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Platform:
+      type: string
+      enum: [windows, macos, linux]
+      description: Target operating system platform
+
     StatusResponse:
       description: Health and version status information for the website service
       type: object
@@ -462,6 +466,7 @@ components:
       - content
       - contentType
       - published
+      - lastModified
       properties:
         slug:
           type: string
@@ -513,6 +518,7 @@ components:
       - slug
       - title
       - published
+      - lastModified
       properties:
         slug:
           type: string
@@ -880,9 +886,7 @@ components:
       - checksum
       properties:
         platform:
-          type: string
-          enum: [windows, macos, linux]
-          description: Target operating system platform
+          $ref: '#/components/schemas/Platform'
         version:
           type: string
           description: Version number of the game client

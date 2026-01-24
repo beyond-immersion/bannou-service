@@ -1324,7 +1324,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 if (encounter == null) continue;
 
                 // Delete all other perspectives for this encounter
-                perspectivesDeleted += await DeleteEncounterPerspectivesAsync(encounterId, cancellationToken);
+                var otherPerspectivesDeleted = await DeleteEncounterPerspectivesAsync(encounterId, cancellationToken);
+                perspectivesDeleted += otherPerspectivesDeleted;
 
                 // Delete the encounter
                 await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
@@ -1340,14 +1341,14 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     await RemoveFromLocationIndexAsync(encounter.LocationId.Value, encounterId, cancellationToken);
                 }
 
-                // Publish event
+                // Publish event (+1 for target character's perspective deleted in first loop)
                 await _messageBus.TryPublishAsync(ENCOUNTER_DELETED_TOPIC, new EncounterDeletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     EncounterId = encounterId,
                     ParticipantIds = participantIds,
-                    PerspectivesDeleted = encounter.ParticipantIds.Count,
+                    PerspectivesDeleted = otherPerspectivesDeleted + 1,
                     DeletedByCharacterCleanup = true,
                     CleanupCharacterId = body.CharacterId
                 }, cancellationToken: cancellationToken);
@@ -2005,30 +2006,45 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         var (needsDecay, _) = CalculateDecay(perspective);
         if (!needsDecay) return perspective;
 
-        var decayAmount = GetDecayAmount(perspective);
-        var previousStrength = perspective.MemoryStrength;
-        perspective.MemoryStrength = Math.Max(0, perspective.MemoryStrength - decayAmount);
-        perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        // Re-fetch with ETag for optimistic concurrency (prevents double-decay from concurrent reads)
+        var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{perspective.PerspectiveId}";
+        var (freshPerspective, etag) = await store.GetWithETagAsync(perspectiveKey, cancellationToken);
+        if (freshPerspective == null) return perspective;
 
-        await store.SaveAsync($"{PERSPECTIVE_KEY_PREFIX}{perspective.PerspectiveId}", perspective, cancellationToken: cancellationToken);
+        // Recalculate on fresh data in case another instance already decayed
+        var (stillNeedsDecay, _) = CalculateDecay(freshPerspective);
+        if (!stillNeedsDecay) return freshPerspective;
+
+        var decayAmount = GetDecayAmount(freshPerspective);
+        var previousStrength = freshPerspective.MemoryStrength;
+        freshPerspective.MemoryStrength = Math.Max(0, freshPerspective.MemoryStrength - decayAmount);
+        freshPerspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        var saveResult = await store.TrySaveAsync(perspectiveKey, freshPerspective, etag ?? string.Empty, cancellationToken);
+        if (saveResult == null)
+        {
+            // Concurrent modification - another instance likely already applied decay
+            _logger.LogDebug("Concurrent modification during lazy decay for perspective {PerspectiveId}, skipping", perspective.PerspectiveId);
+            return freshPerspective;
+        }
 
         // Check if faded below threshold
-        if (previousStrength >= _configuration.MemoryFadeThreshold && perspective.MemoryStrength < _configuration.MemoryFadeThreshold)
+        if (previousStrength >= _configuration.MemoryFadeThreshold && freshPerspective.MemoryStrength < _configuration.MemoryFadeThreshold)
         {
             await _messageBus.TryPublishAsync(ENCOUNTER_MEMORY_FADED_TOPIC, new EncounterMemoryFadedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                EncounterId = perspective.EncounterId,
-                CharacterId = perspective.CharacterId,
-                PerspectiveId = perspective.PerspectiveId,
+                EncounterId = freshPerspective.EncounterId,
+                CharacterId = freshPerspective.CharacterId,
+                PerspectiveId = freshPerspective.PerspectiveId,
                 PreviousStrength = previousStrength,
-                NewStrength = perspective.MemoryStrength,
+                NewStrength = freshPerspective.MemoryStrength,
                 FadeThreshold = (float)_configuration.MemoryFadeThreshold
             }, cancellationToken: cancellationToken);
         }
 
-        return perspective;
+        return freshPerspective;
     }
 
     private (bool needsDecay, bool willFade) CalculateDecay(PerspectiveData perspective)

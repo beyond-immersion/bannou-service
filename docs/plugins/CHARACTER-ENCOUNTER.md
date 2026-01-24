@@ -330,11 +330,7 @@ Index Architecture
 
 ### Bugs (Fix Immediately)
 
-1. **DeleteByCharacter double-counts perspectives**: The method first deletes the target character's perspectives (incrementing `perspectivesDeleted`), then calls `DeleteEncounterPerspectivesAsync` for each encounter which attempts to delete ALL perspectives including the already-deleted ones. The already-deleted perspectives return null from the store so they are skipped, but the reported `perspectivesDeleted` count may be inaccurate because it sums both passes.
-
-2. **Lazy decay has no ETag concurrency control**: The `ApplyLazyDecayAsync` method uses `store.SaveAsync` without ETag protection, unlike `DecayMemoriesAsync` which uses `GetWithETagAsync` + `TrySaveAsync`. Two concurrent reads of the same stale perspective could both calculate and apply decay, resulting in double-decay (perspective strength reduced twice). This is particularly problematic because lazy decay happens during read operations (`QueryByCharacter`, `QueryBetween`, `QueryByLocation`, `GetPerspective`, `GetSentiment`).
-
-3. **EncounterDeletedEvent assumes one perspective per participant**: `PerspectivesDeleted = encounter.ParticipantIds.Count` assumes every participant has exactly one perspective. If data inconsistency exists (orphaned perspectives, missing perspectives), the event reports the wrong count.
+1. **Lazy decay has no ETag concurrency control**: The `ApplyLazyDecayAsync` method uses `store.SaveAsync` without ETag protection, unlike `DecayMemoriesAsync` which uses `GetWithETagAsync` + `TrySaveAsync`. Two concurrent reads of the same stale perspective could both calculate and apply decay, resulting in double-decay (perspective strength reduced twice). This is particularly problematic because lazy decay happens during read operations (`QueryByCharacter`, `QueryBetween`, `QueryByLocation`, `GetPerspective`, `GetSentiment`).
 
 ### Intentional Quirks (Documented Behavior)
 

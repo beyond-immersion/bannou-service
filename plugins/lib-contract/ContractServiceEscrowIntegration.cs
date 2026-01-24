@@ -1367,7 +1367,7 @@ public partial class ContractService
     /// Returns REMAINDER_SENTINEL (-1) when the clause specifies "remainder" to signal the caller
     /// should query the source wallet balance and use the full remaining amount.
     /// </summary>
-    private static double ParseClauseAmount(ClauseDefinition clause, ContractInstanceModel contract)
+    private double ParseClauseAmount(ClauseDefinition clause, ContractInstanceModel contract)
     {
         var amountStr = clause.GetProperty("amount");
         var amountType = clause.GetProperty("amount_type") ?? "flat";
@@ -1388,6 +1388,8 @@ public partial class ContractService
                     return resolvedAmount;
                 }
             }
+            _logger.LogWarning("Clause {ClauseId} has unparseable amount {Amount}, defaulting to 0",
+                clause.Id, amountStr);
             return 0;
         }
 
@@ -1400,6 +1402,13 @@ public partial class ContractService
                 {
                     return Math.Floor(baseAmount * rawAmount / 100.0);
                 }
+                _logger.LogWarning("Clause {ClauseId} has percentage amount_type but base_amount {BaseAmount} is not a valid number, defaulting to 0",
+                    clause.Id, baseVal);
+            }
+            else
+            {
+                _logger.LogWarning("Clause {ClauseId} has percentage amount_type but no base_amount in template values, defaulting to 0",
+                    clause.Id);
             }
             return 0;
         }
