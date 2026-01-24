@@ -92,6 +92,7 @@ public class TokenService : ITokenService
         }
 
         // Store session data in Redis
+        var now = DateTimeOffset.UtcNow;
         var sessionData = new SessionDataModel
         {
             AccountId = account.AccountId,
@@ -100,8 +101,9 @@ public class TokenService : ITokenService
             Roles = account.Roles?.ToList() ?? new List<string>(),
             Authorizations = authorizations,
             SessionId = sessionId,
-            CreatedAt = DateTimeOffset.UtcNow,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
+            CreatedAt = now,
+            LastActiveAt = now,
+            ExpiresAt = now.AddMinutes(_configuration.JwtExpirationMinutes)
         };
 
         await _sessionService.SaveSessionAsync(sessionKey, sessionData, _configuration.JwtExpirationMinutes * 60, cancellationToken);
@@ -221,7 +223,7 @@ public class TokenService : ITokenService
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appConfiguration.JwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
+            var key = Encoding.UTF8.GetBytes(_appConfiguration.JwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
 
             try
             {
@@ -277,6 +279,11 @@ public class TokenService : ITokenService
                     return (StatusCodes.Unauthorized, null);
                 }
 
+                // Update last activity timestamp and re-save with remaining TTL
+                var remainingSeconds = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                sessionData.LastActiveAt = DateTimeOffset.UtcNow;
+                await _sessionService.SaveSessionAsync(sessionKey, sessionData, remainingSeconds, cancellationToken);
+
                 // Return sessionKey as SessionId so Connect service tracks connections by the same
                 // key used in account-sessions index and published in SessionInvalidatedEvent
                 return (StatusCodes.OK, new ValidateTokenResponse
@@ -286,7 +293,7 @@ public class TokenService : ITokenService
                     SessionId = Guid.Parse(sessionKey),
                     Roles = sessionData.Roles,
                     Authorizations = sessionData.Authorizations,
-                    RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
+                    RemainingTime = remainingSeconds
                 });
             }
             catch (SecurityTokenException ex)

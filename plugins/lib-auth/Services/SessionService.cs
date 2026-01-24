@@ -70,11 +70,17 @@ public class SessionService : ISessionService
                 {
                     if (result.SessionData.ExpiresAt > DateTimeOffset.UtcNow)
                     {
+                        // LastActiveAt falls back to CreatedAt for sessions created before
+                        // this field was introduced (LastActiveAtUnix defaults to 0)
+                        var lastActive = result.SessionData.LastActiveAtUnix > 0
+                            ? result.SessionData.LastActiveAt
+                            : result.SessionData.CreatedAt;
+
                         sessions.Add(new SessionInfo
                         {
                             SessionId = Guid.Parse(result.SessionData.SessionId),
                             CreatedAt = result.SessionData.CreatedAt,
-                            LastActive = result.SessionData.CreatedAt,
+                            LastActive = lastActive,
                             DeviceInfo = new DeviceInfo
                             {
                                 DeviceType = DeviceInfoDeviceType.Desktop,

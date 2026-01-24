@@ -315,7 +315,7 @@ public partial class AuthService : IAuthService
                 provider, userInfo.ProviderId, userInfo.Email);
 
             // Find or create account linked to this OAuth identity
-            var account = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
+            var (account, isNewAccount) = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for OAuth user: {ProviderId}", userInfo.ProviderId);
@@ -332,7 +332,7 @@ public partial class AuthService : IAuthService
                 account.AccountId, provider);
 
             // Publish audit event for successful OAuth login
-            await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), userInfo.ProviderId, sessionId, isNewAccount: false);
+            await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), userInfo.ProviderId, sessionId, isNewAccount);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -392,14 +392,15 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Steam ticket validated successfully for SteamID: {SteamId}", steamId);
 
             // Find or create account linked to this Steam identity
+            var suffix = steamId.Length >= 6 ? steamId.Substring(steamId.Length - 6) : steamId;
             var userInfo = new Services.OAuthUserInfo
             {
                 ProviderId = steamId,
-                DisplayName = $"Steam_{steamId.Substring(steamId.Length - 6)}", // Last 6 chars of Steam ID
+                DisplayName = $"Steam_{suffix}",
                 Email = null // Steam doesn't provide email
             };
 
-            var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
+            var (account, isNewAccount) = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
@@ -415,7 +416,7 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Steam authentication successful for account {AccountId}", account.AccountId);
 
             // Publish audit event for successful Steam login
-            await PublishSteamLoginSuccessfulEventAsync(account.AccountId, steamId, sessionId, isNewAccount: false);
+            await PublishSteamLoginSuccessfulEventAsync(account.AccountId, steamId, sessionId, isNewAccount);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -448,6 +449,11 @@ public partial class AuthService : IAuthService
             {
                 return (StatusCodes.BadRequest, null);
             }
+
+            // The jwt parameter is generated from schema x-permissions but intentionally unused here.
+            // Refresh tokens are designed to work when the access token has expired - validating
+            // the JWT would defeat the purpose of the refresh flow. The refresh token alone is
+            // the credential for obtaining a new access token.
 
             // Validate refresh token
             var accountId = await _tokenService.ValidateRefreshTokenAsync(body.RefreshToken, cancellationToken);
@@ -568,32 +574,33 @@ public partial class AuthService : IAuthService
             {
                 _logger.LogInformation("AllSessions logout requested for account: {AccountId}", validateResponse.AccountId);
 
-                // Get all sessions for the account using our new efficient method
-                var accountSessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
+                // Get session keys directly from the index (no need to load full session data first)
+                var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(validateResponse.AccountId.ToString(), cancellationToken);
 
-                if (accountSessions.Count > 0)
+                if (sessionKeys.Count > 0)
                 {
-                    // Get session keys from index to delete all sessions
-                    var indexKey = $"account-sessions:{validateResponse.AccountId}";
-                    var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
-                    var sessionKeys = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
+                    var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
-                    if (sessionKeys != null && sessionKeys.Count > 0)
+                    // Load session data to get SessionIds for reverse index cleanup, then delete
+                    foreach (var key in sessionKeys)
                     {
-                        // Delete all sessions
-                        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-                        var deleteTasks = sessionKeys.Select(key =>
-                            sessionStore.DeleteAsync($"session:{key}", cancellationToken));
-                        await Task.WhenAll(deleteTasks);
+                        var sessionData = await sessionStore.GetAsync($"session:{key}", cancellationToken);
+                        await sessionStore.DeleteAsync($"session:{key}", cancellationToken);
 
-                        // Remove the account sessions index
-                        await sessionIndexStore.DeleteAsync(indexKey, cancellationToken);
-
-                        invalidatedSessions.AddRange(sessionKeys);
-
-                        _logger.LogInformation("All {SessionCount} sessions logged out for account: {AccountId}",
-                            sessionKeys.Count, validateResponse.AccountId);
+                        // Clean up reverse index if session data was still available
+                        if (sessionData != null && !string.IsNullOrEmpty(sessionData.SessionId))
+                        {
+                            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionData.SessionId, cancellationToken);
+                        }
                     }
+
+                    // Remove the account sessions index
+                    await _sessionService.DeleteAccountSessionsIndexAsync(validateResponse.AccountId.ToString(), cancellationToken);
+
+                    invalidatedSessions.AddRange(sessionKeys);
+
+                    _logger.LogInformation("All {SessionCount} sessions logged out for account: {AccountId}",
+                        sessionKeys.Count, validateResponse.AccountId);
                 }
                 else
                 {
@@ -1004,7 +1011,7 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Using mock OAuth provider for {Provider}", provider);
 
         var userInfo = await _oauthService.GetMockUserInfoAsync(provider, cancellationToken);
-        var account = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
+        var (account, _) = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
         if (account == null)
         {
             return (StatusCodes.InternalServerError, null);
@@ -1033,7 +1040,7 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Using mock Steam provider");
 
         var userInfo = await _oauthService.GetMockSteamUserInfoAsync(cancellationToken);
-        var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
+        var (account, _) = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
         if (account == null)
         {
             return (StatusCodes.InternalServerError, null);
@@ -1419,20 +1426,4 @@ public partial class AuthService : IAuthService
     }
 
     #endregion
-}
-
-/// <summary>
-/// Wrapper class for storing string values in IStateStore (since value types need a class wrapper).
-/// </summary>
-internal class StringWrapper
-{
-    public string Value { get; set; } = "";
-}
-
-/// <summary>
-/// Wrapper class for storing Guid? values in IStateStore (since value types need a class wrapper).
-/// </summary>
-internal class GuidWrapper
-{
-    public Guid? Value { get; set; }
 }

@@ -353,12 +353,86 @@ public class SteamAchievementSyncTests : IDisposable
 
     #endregion
 
+    #region IsConfigured Tests
+
+    [Fact]
+    public void IsConfigured_WithBothCredentials_ReturnsTrue()
+    {
+        // Arrange - default configuration has both SteamApiKey and SteamAppId
+        var sync = CreateSync();
+
+        // Assert
+        Assert.True(sync.IsConfigured);
+    }
+
+    [Fact]
+    public void IsConfigured_WithMissingApiKey_ReturnsFalse()
+    {
+        // Arrange
+        var config = new AchievementServiceConfiguration
+        {
+            SteamApiKey = null,
+            SteamAppId = "480"
+        };
+
+        var sync = new SteamAchievementSync(
+            config,
+            _mockAccountClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockLogger.Object);
+
+        // Assert
+        Assert.False(sync.IsConfigured);
+    }
+
+    [Fact]
+    public void IsConfigured_WithEmptyApiKey_ReturnsFalse()
+    {
+        // Arrange
+        var config = new AchievementServiceConfiguration
+        {
+            SteamApiKey = "",
+            SteamAppId = "480"
+        };
+
+        var sync = new SteamAchievementSync(
+            config,
+            _mockAccountClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockLogger.Object);
+
+        // Assert
+        Assert.False(sync.IsConfigured);
+    }
+
+    [Fact]
+    public void IsConfigured_WithMissingAppId_ReturnsFalse()
+    {
+        // Arrange
+        var config = new AchievementServiceConfiguration
+        {
+            SteamApiKey = "test-key",
+            SteamAppId = null
+        };
+
+        var sync = new SteamAchievementSync(
+            config,
+            _mockAccountClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockLogger.Object);
+
+        // Assert
+        Assert.False(sync.IsConfigured);
+    }
+
+    #endregion
+
     #region UnlockAsync Configuration Validation Tests
 
     [Fact]
-    public async Task UnlockAsync_MissingSteamApiKey_ReturnsDisabled()
+    public async Task UnlockAsync_MissingSteamApiKey_ReturnsFailure()
     {
-        // Arrange - Steam sync disabled when API key not configured
+        // Arrange - Steam sync not configured when API key is missing
         var config = new AchievementServiceConfiguration
         {
             SteamApiKey = null,
@@ -374,16 +448,15 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
 
-        // Assert - Success=true indicates graceful disable, not failure
-        Assert.True(result.Success);
-        Assert.Equal("disabled", result.SyncId);
-        Assert.Null(result.ErrorMessage);
+        // Assert - defense-in-depth: returns failure when called without configuration
+        Assert.False(result.Success);
+        Assert.Contains("not configured", result.ErrorMessage);
     }
 
     [Fact]
-    public async Task UnlockAsync_MissingSteamAppId_ReturnsDisabled()
+    public async Task UnlockAsync_MissingSteamAppId_ReturnsFailure()
     {
-        // Arrange - Steam sync disabled when App ID not configured
+        // Arrange - Steam sync not configured when App ID is missing
         var config = new AchievementServiceConfiguration
         {
             SteamApiKey = "test-key",
@@ -399,38 +472,9 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
 
-        // Assert - Success=true indicates graceful disable, not failure
-        Assert.True(result.Success);
-        Assert.Equal("disabled", result.SyncId);
-        Assert.Null(result.ErrorMessage);
-    }
-
-    #endregion
-
-    #region UnlockAsync Mock Mode Tests
-
-    [Fact]
-    public async Task UnlockAsync_MockModeEnabled_ReturnsSuccessWithoutApiCall()
-    {
-        // Arrange
-        _configuration.MockPlatformSync = true;
-        var sync = CreateSync();
-
-        // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
-
-        // Assert
-        Assert.True(result.Success);
-        Assert.StartsWith("mock-", result.SyncId);
-
-        // Verify no HTTP call was made
-        _mockHttpMessageHandler
-            .Protected()
-            .Verify(
-                "SendAsync",
-                Times.Never(),
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>());
+        // Assert - defense-in-depth: returns failure when called without configuration
+        Assert.False(result.Success);
+        Assert.Contains("not configured", result.ErrorMessage);
     }
 
     #endregion
@@ -547,30 +591,6 @@ public class SteamAchievementSyncTests : IDisposable
     #region SetProgressAsync Tests
 
     [Fact]
-    public async Task SetProgressAsync_MockModeEnabled_ReturnsSuccessWithoutApiCall()
-    {
-        // Arrange
-        _configuration.MockPlatformSync = true;
-        var sync = CreateSync();
-
-        // Act
-        var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100);
-
-        // Assert
-        Assert.True(result.Success);
-        Assert.StartsWith("mock-", result.SyncId);
-
-        // Verify no HTTP call was made
-        _mockHttpMessageHandler
-            .Protected()
-            .Verify(
-                "SendAsync",
-                Times.Never(),
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>());
-    }
-
-    [Fact]
     public async Task SetProgressAsync_SuccessfulApiCall_ReturnsSuccess()
     {
         // Arrange
@@ -586,9 +606,9 @@ public class SteamAchievementSyncTests : IDisposable
     }
 
     [Fact]
-    public async Task SetProgressAsync_MissingSteamApiKey_ReturnsDisabled()
+    public async Task SetProgressAsync_MissingSteamApiKey_ReturnsFailure()
     {
-        // Arrange - Steam sync disabled when API key not configured
+        // Arrange - Steam sync not configured when API key is missing
         var config = new AchievementServiceConfiguration
         {
             SteamApiKey = null,
@@ -604,10 +624,9 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100);
 
-        // Assert - Success=true indicates graceful disable, not failure
-        Assert.True(result.Success);
-        Assert.Equal("disabled", result.SyncId);
-        Assert.Null(result.ErrorMessage);
+        // Assert - defense-in-depth: returns failure when called without configuration
+        Assert.False(result.Success);
+        Assert.Contains("not configured", result.ErrorMessage);
     }
 
     #endregion

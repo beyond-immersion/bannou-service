@@ -173,6 +173,12 @@ public class SessionDataModel
     public long ExpiresAtUnix { get; set; }
 
     /// <summary>
+    /// Last activity time as Unix timestamp. Updated on each successful token validation.
+    /// Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
+    public long LastActiveAtUnix { get; set; }
+
+    /// <summary>
     /// Session creation time as DateTimeOffset.
     /// Computed property - not serialized.
     /// </summary>
@@ -192,5 +198,16 @@ public class SessionDataModel
     {
         get => DateTimeOffset.FromUnixTimeSeconds(ExpiresAtUnix);
         set => ExpiresAtUnix = value.ToUnixTimeSeconds();
+    }
+
+    /// <summary>
+    /// Last activity time as DateTimeOffset. Updated on each successful token validation.
+    /// Computed property - not serialized.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DateTimeOffset LastActiveAt
+    {
+        get => DateTimeOffset.FromUnixTimeSeconds(LastActiveAtUnix);
+        set => LastActiveAtUnix = value.ToUnixTimeSeconds();
     }
 }

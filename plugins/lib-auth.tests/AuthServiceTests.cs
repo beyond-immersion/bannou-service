@@ -31,7 +31,6 @@ public class AuthServiceTests
     private readonly Mock<IStateStore<AuthService.PasswordResetData>> _mockPasswordResetStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
-    private readonly Mock<IStateStore<StringWrapper>> _mockStringWrapperStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ISessionService> _mockSessionService;
@@ -75,7 +74,6 @@ public class AuthServiceTests
         _mockPasswordResetStore = new Mock<IStateStore<AuthService.PasswordResetData>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
-        _mockStringWrapperStore = new Mock<IStateStore<StringWrapper>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockTokenService = new Mock<ITokenService>();
         _mockSessionService = new Mock<ISessionService>();
@@ -89,8 +87,6 @@ public class AuthServiceTests
             .Returns(_mockSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(It.IsAny<string>()))
             .Returns(_mockListStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<StringWrapper>(It.IsAny<string>()))
-            .Returns(_mockStringWrapperStore.Object);
 
         // Setup default behavior for state stores
         _mockPasswordResetStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AuthService.PasswordResetData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -98,8 +94,6 @@ public class AuthServiceTests
         _mockSessionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
-        _mockStringWrapperStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<StringWrapper>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
@@ -790,7 +784,7 @@ public class AuthServiceTests
             Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account);
+            .ReturnsAsync((account, false));
 
         // Mock token service
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
@@ -858,7 +852,7 @@ public class AuthServiceTests
             Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account);
+            .ReturnsAsync((account, false));
 
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
@@ -973,7 +967,7 @@ public class AuthServiceTests
             Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync((AccountResponse?)null);
+            .ReturnsAsync(((AccountResponse?)null, false));
 
         var realConfig = new AuthServiceConfiguration
         {
