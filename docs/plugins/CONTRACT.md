@@ -432,17 +432,11 @@ Prebound API Batched Execution
 
 ### Bugs (Fix Immediately)
 
-1. **Lazy expiration in consent flow does not check TrySaveAsync result**: At `ContractService.cs:717`, when a consent attempt discovers the consent deadline has expired, `TrySaveAsync` is called to transition the contract to Expired status, but the return value is discarded. If a concurrent modification occurred, the save fails silently while status index operations have already executed (removed from "proposed" at line 714, added to "expired" at line 718). The contract remains Proposed in the store but the indexes reflect Expired.
+1. ~~**Lazy expiration in consent flow does not check TrySaveAsync result**~~ **FIXED**: Expiration now checks the TrySaveAsync result and only performs index operations if the save succeeded.
 
-2. **Status index corruption on ETag conflict in state transitions**: In `ProposeContractInstance` (line 641), `TerminateContractInstance` (line 966), `CompleteMilestone` (lines 1136-1138), and `ConsentToContract` (lines 755, 764/777), one or both index operations (remove from old status, add to new status) are performed BEFORE the `TrySaveAsync` call. If the save returns null (conflict), the code correctly returns 409 but does NOT roll back the already-executed index changes. The contract becomes invisible to status-based queries or appears under the wrong status index.
+2. ~~**Status index corruption on ETag conflict in ConsentToContract**~~ **FIXED**: Consent flow restructured to perform all index operations and event publications AFTER the successful TrySaveAsync, preventing index corruption on concurrent modification. (Note: ProposeContractInstance, TerminateContractInstance, and CompleteMilestone still have this pattern - see Design Considerations.)
 
-3. **Guardian operations lack ETag concurrency protection**: `LockContract` (`ContractServiceEscrowIntegration.cs:101`), `UnlockContract` (`:188`), and `TransferContractParty` (`:286`) all use plain `SaveAsync` without ETags. Two concurrent lock requests on an unlocked contract can both read `GuardianId == null`, both pass the check, and both write — last writer wins the guardian identity. This contrasts with the main contract operations (Propose, Consent, Terminate, Milestone) which properly use `TrySaveAsync` with ETags.
-
-4. **MaxActiveContractsPerEntity counts all contracts, not just active ones**: At `ContractService.cs:522-526`, the entity limit check reads the party index (`party-idx:{type}:{id}`) which accumulates ALL contract IDs ever associated with the entity (draft, proposed, active, terminated, fulfilled, expired). Party indexes are never pruned on termination or fulfillment. The effective behavior is "max total contracts ever" rather than "max active contracts" despite the configuration property name.
-
-5. **Prebound APIs executed before ETag save in CompleteMilestone**: At `ContractService.cs:1117-1118`, milestone `onComplete` prebound APIs are executed via `ExecutePreboundApisBatchedAsync` (which calls external services) BEFORE the `TrySaveAsync` at line 1142. If the save fails due to concurrent modification, the APIs have already fired (e.g., currency transfers, item moves). The milestone is not marked complete but side effects are irreversible. Same pattern exists in `FailMilestone` at line 1214 for `onExpire` APIs.
-
-6. **Consent flow publishes events before persistence**: At `ContractService.cs:748` (consent-received), `:772` (activated), and `:780` (accepted), events are published BEFORE the final `TrySaveAsync` at line 783. If the save fails (Conflict), events have been published for state changes that didn't persist. Downstream consumers may react to phantom state transitions.
+3. ~~**Guardian operations lack ETag concurrency protection**~~ **FIXED**: LockContract, UnlockContract, and TransferContractParty now use `GetWithETagAsync` and `TrySaveAsync` with conflict detection. TransferContractParty also moves index operations to after successful save.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -487,6 +481,14 @@ Prebound API Batched Execution
 8. **Serial clause execution within type category**: Fee clauses and distribution clauses each execute sequentially (clause-by-clause), not in parallel. Only the APIs within a single milestone's callback list are batched in parallel.
 
 9. **QueryActiveContracts wildcard matching**: Template code filtering uses `StartsWith` with `TrimEnd('*')`, meaning "trade*" matches "trade_goods", "trade_services", etc. The asterisk is only meaningful at the end of the pattern.
+
+10. **Status index corruption in ProposeContractInstance, TerminateContractInstance, CompleteMilestone**: These methods still perform index operations BEFORE TrySaveAsync (same pattern that was fixed in ConsentToContract). Should be restructured to defer index operations until after successful save.
+
+11. **MaxActiveContractsPerEntity counts all contracts, not just active ones**: The party index accumulates ALL contract IDs ever associated with an entity (including terminated, fulfilled, expired). Party indexes are never pruned. The effective limit is "max total contracts ever" rather than "max active". Fixing requires either pruning indexes on termination/fulfillment, or filtering by status at check time.
+
+12. **Prebound APIs executed before ETag save**: In CompleteMilestone and FailMilestone, prebound APIs (currency transfers, item moves) execute BEFORE TrySaveAsync. If the save fails, external side effects are irreversible. Needs saga pattern or compensation logic.
+
+13. **Events published before persistence in some flows**: ProposeContractInstance, CompleteMilestone, FailMilestone still publish events before the final TrySaveAsync. On conflict, phantom events reach downstream consumers.
 
 10. **ParseClauseAmount percentage mode silently returns 0 on missing base_amount**: At `ContractServiceEscrowIntegration.cs:1386-1393`, when a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method silently returns 0 with no warning log. A percentage-typed fee clause could execute as a zero-amount transfer without any indication of failure.
 

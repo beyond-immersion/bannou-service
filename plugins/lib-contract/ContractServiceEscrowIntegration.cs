@@ -63,8 +63,8 @@ public partial class ContractService
             }
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -98,8 +98,12 @@ public partial class ContractService
             model.LockedAt = now;
             model.UpdatedAt = now;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (savedEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract lock: {ContractId}", body.ContractInstanceId);
+                return (StatusCodes.Conflict, null);
+            }
 
             var response = new LockContractResponse
             {
@@ -154,8 +158,8 @@ public partial class ContractService
             }
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -185,8 +189,12 @@ public partial class ContractService
             model.LockedAt = null;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (savedEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract unlock: {ContractId}", body.ContractInstanceId);
+                return (StatusCodes.Conflict, null);
+            }
 
             var response = new UnlockContractResponse
             {
@@ -239,8 +247,8 @@ public partial class ContractService
             }
 
             var instanceKey = $"{INSTANCE_PREFIX}{body.ContractInstanceId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
+            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
 
             if (model == null)
             {
@@ -272,21 +280,24 @@ public partial class ContractService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Update party indexes
-            var oldPartyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
-            await RemoveFromListAsync(oldPartyIndexKey, body.ContractInstanceId.ToString(), cancellationToken);
-
             // Transfer the party
             var previousEntityId = party.EntityId;
+            var previousEntityType = party.EntityType;
             var role = party.Role;
             party.EntityId = body.ToEntityId;
             party.EntityType = body.ToEntityType;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(instanceKey, model, cancellationToken: cancellationToken);
+            var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (savedEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for contract transfer: {ContractId}", body.ContractInstanceId);
+                return (StatusCodes.Conflict, null);
+            }
 
-            // Update party indexes
+            // Update party indexes (after successful save)
+            var oldPartyIndexKey = $"{PARTY_INDEX_PREFIX}{previousEntityType}:{previousEntityId}";
+            await RemoveFromListAsync(oldPartyIndexKey, body.ContractInstanceId.ToString(), cancellationToken);
             var newPartyIndexKey = $"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}";
             await AddToListAsync(newPartyIndexKey, body.ContractInstanceId.ToString(), cancellationToken);
 

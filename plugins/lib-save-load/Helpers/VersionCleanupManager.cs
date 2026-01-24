@@ -67,10 +67,24 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
                 continue;
             }
 
-            // Delete version and hot cache entry
+            // Delete version, hot cache entry, and asset
             await versionStore.DeleteAsync(versionKey, cancellationToken);
             var hotKey = HotSaveEntry.GetStateKey(slot.SlotId, v);
             await hotCacheStore.DeleteAsync(hotKey, cancellationToken);
+
+            if (!string.IsNullOrEmpty(manifest.AssetId))
+            {
+                try
+                {
+                    await _assetClient.DeleteAssetAsync(
+                        new DeleteAssetRequest { AssetId = manifest.AssetId },
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete asset {AssetId} during rolling cleanup", manifest.AssetId);
+                }
+            }
 
             cleanedUp++;
             slot.VersionCount--;

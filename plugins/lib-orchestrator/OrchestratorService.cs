@@ -2999,28 +2999,49 @@ public partial class OrchestratorService : IOrchestratorService
                 });
             }
 
-            // Remove idle instances
-            var removedIds = availableInstances
-                .Take(toRemove)
-                .Select(p => p.ProcessorId)
-                .ToHashSet();
+            // Remove idle instances and teardown their containers
+            var instancesToRemove = availableInstances.Take(toRemove).ToList();
+            var orchestrator = await GetOrchestratorAsync(cancellationToken);
+            var removedCount = 0;
 
-            availableInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
-            currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+            foreach (var instance in instancesToRemove)
+            {
+                _logger.LogInformation(
+                    "CleanupPool: Tearing down idle worker {ProcessorId} with app-id {AppId}",
+                    instance.ProcessorId, instance.AppId);
+
+                var teardownResult = await orchestrator.TeardownServiceAsync(
+                    instance.AppId,
+                    removeVolumes: false,
+                    cancellationToken);
+
+                if (teardownResult.Success)
+                {
+                    availableInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                    currentInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                    removedCount++;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "CleanupPool: Failed to teardown worker {ProcessorId}: {Message}",
+                        instance.ProcessorId, teardownResult.Message);
+                }
+            }
 
             await _stateManager.SetListAsync(instancesKey, currentInstances);
             await _stateManager.SetListAsync(availableKey, availableInstances);
 
             _logger.LogInformation(
                 "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
-                removedIds.Count, body.PoolType, currentInstances.Count);
+                removedCount, body.PoolType, currentInstances.Count);
 
             return (StatusCodes.OK, new CleanupPoolResponse
             {
                 PoolType = body.PoolType,
-                InstancesRemoved = removedIds.Count,
+                InstancesRemoved = removedCount,
                 CurrentInstances = currentInstances.Count,
-                Message = $"Cleaned up {removedIds.Count} idle processor(s)"
+                Message = $"Cleaned up {removedCount} idle processor(s)"
             });
         }
         catch (Exception ex)

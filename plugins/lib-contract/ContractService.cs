@@ -711,11 +711,14 @@ public partial class ContractService : IContractService
                         body.ContractId, model.ProposedAt, deadline);
 
                     // Transition to expired
-                    await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
                     model.Status = ContractStatus.Expired;
                     model.UpdatedAt = DateTimeOffset.UtcNow;
-                    await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                    var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+                    if (expiredEtag != null)
+                    {
+                        await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+                        await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                    }
 
                     return (StatusCodes.BadRequest, null);
                 }
@@ -743,17 +746,12 @@ public partial class ContractService : IContractService
             party.ConsentedAt = DateTimeOffset.UtcNow;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Publish consent received event
-            var remainingConsents = model.Parties?.Count(p => p.ConsentStatus != ConsentStatus.Consented) ?? 0;
-            await PublishConsentReceivedEventAsync(model, party, remainingConsents, cancellationToken);
-
             // Check if all parties have consented
+            var remainingConsents = model.Parties?.Count(p => p.ConsentStatus != ConsentStatus.Consented) ?? 0;
             var allConsented = model.Parties?.All(p => p.ConsentStatus == ConsentStatus.Consented) ?? false;
 
             if (allConsented)
             {
-                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
-
                 model.AcceptedAt = DateTimeOffset.UtcNow;
 
                 // Check if we should activate immediately or wait for effectiveFrom
@@ -761,30 +759,45 @@ public partial class ContractService : IContractService
                 {
                     model.Status = ContractStatus.Active;
                     model.EffectiveFrom = DateTimeOffset.UtcNow;
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
 
                     // Activate first milestone if any
                     if (model.Milestones?.Count > 0)
                     {
                         model.Milestones[0].Status = MilestoneStatus.Active;
                     }
-
-                    await PublishContractActivatedEventAsync(model, cancellationToken);
                 }
                 else
                 {
                     model.Status = ContractStatus.Pending;
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
                 }
-
-                await PublishContractAcceptedEventAsync(model, cancellationToken);
             }
 
+            // Persist state change first, then perform side effects
             var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
                 return (StatusCodes.Conflict, null);
+            }
+
+            // Side effects: index updates and events (only after successful save)
+            await PublishConsentReceivedEventAsync(model, party, remainingConsents, cancellationToken);
+
+            if (allConsented)
+            {
+                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+
+                if (model.Status == ContractStatus.Active)
+                {
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractActivatedEventAsync(model, cancellationToken);
+                }
+                else
+                {
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
+                }
+
+                await PublishContractAcceptedEventAsync(model, cancellationToken);
             }
 
             return (StatusCodes.OK, MapInstanceToResponse(model));

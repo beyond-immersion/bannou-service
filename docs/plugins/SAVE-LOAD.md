@@ -473,15 +473,11 @@ Circuit Breaker State Machine
 
 ### Bugs (Fix Immediately)
 
-1. **TotalSizeBytes accumulates compressed size inconsistently**: PromoteVersion adds `CompressedSizeBytes ?? SizeBytes` to slot.TotalSizeBytes, but AdminCleanup subtracts `version.SizeBytes` (uncompressed). This causes slot size tracking to drift over time for compressed saves.
+1. ~~**TotalSizeBytes accumulates compressed size inconsistently**~~ **FIXED**: AdminCleanup now uses `CompressedSizeBytes ?? SizeBytes` consistently with how TotalSizeBytes is accumulated.
 
-2. **AdminCleanup bytesFreed double-counting**: The `bytesFreed` variable (line 2623 of SaveLoadService.cs) is accumulated across ALL slots in the outer loop. At line 2677, `slot.TotalSizeBytes -= bytesFreed` subtracts the cumulative total from the current slot. For the first slot this is correct, but for subsequent slots, it subtracts the sum of ALL previously freed bytes plus its own, massively over-decrementing TotalSizeBytes.
+2. ~~**AdminCleanup bytesFreed double-counting**~~ **FIXED**: Per-slot `slotBytesFreed` is now tracked separately and only the current slot's freed bytes are subtracted from its TotalSizeBytes.
 
-3. **PerformRollingCleanupAsync does not delete assets**: The save-time rolling cleanup (lines 70-73 of VersionCleanupManager.cs) deletes version manifests and hot cache entries but does NOT call `_assetClient.DeleteAssetAsync`. Assets remain orphaned in MinIO until the scheduled `CleanupOldVersionsAsync` runs (default 60 min interval). For high-frequency saves with low MaxVersions (e.g., QUICK_SAVE with MaxVersions=1), a new save immediately orphans the old version's asset.
-
-4. **Storage quota check mixes raw and compressed sizes**: Line 578 of SaveLoadService.cs: `slot.TotalSizeBytes + body.Data.Length > MaxTotalSizeBytesPerOwner`. The `slot.TotalSizeBytes` tracks compressed sizes (line 720 adds `compressedSize`), but `body.Data.Length` is the raw uncompressed data size. This means the check uses an inconsistent unit, potentially rejecting saves that would fit after compression.
-
-5. **Storage quota check is per-slot, not per-owner**: Line 578 only checks the current `slot.TotalSizeBytes` against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. The config name suggests per-owner enforcement but the implementation is per-slot.
+3. ~~**PerformRollingCleanupAsync does not delete assets**~~ **FIXED**: Rolling cleanup now calls `_assetClient.DeleteAssetAsync` for versions that have an AssetId, preventing orphaned assets between cleanup cycles.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -526,3 +522,7 @@ Circuit Breaker State Machine
 9. **PerformRollingCleanupAsync scans from version 1**: Line 54 of VersionCleanupManager.cs iterates `for (var v = 1; v <= slot.LatestVersion ...)`, loading each version by number. For long-lived slots where many early versions were already cleaned up (returning null), this scans N missing keys before finding any existing version. No "earliest surviving version" is tracked in slot metadata.
 
 10. **Circuit breaker is reinstantiated every processing cycle**: Line 102 of SaveUploadWorker.cs creates `new StorageCircuitBreaker(...)` on every `ProcessPendingUploadsAsync` call (every 100ms by default). While state is Redis-coordinated, each instantiation reads Redis state, and the frequent object creation is unnecessary overhead. Could be a singleton or cached instance.
+
+11. **Storage quota check mixes raw and compressed sizes**: The save quota check compares `slot.TotalSizeBytes + body.Data.Length` against `MaxTotalSizeBytesPerOwner`. The `slot.TotalSizeBytes` tracks compressed sizes, but `body.Data.Length` is the raw uncompressed data. The check happens pre-compression so the compressed size is unknown. Options: check after compression (changes error timing), use a compression ratio estimate, or accept the conservative over-estimate.
+
+12. **Storage quota check is per-slot, not per-owner**: The quota check only examines the current slot's TotalSizeBytes against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. True per-owner enforcement requires querying all slots for the owner before each save.

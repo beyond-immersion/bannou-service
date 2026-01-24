@@ -405,17 +405,11 @@ Archive System
 
 ### Bugs (Fix Immediately)
 
-1. **TotalContentSizeBytes is always an estimate**: `GetNamespaceStats` calculates content size as `documents * 10000` (10KB average). This could be wildly inaccurate for namespaces with very large or very small documents.
+1. ~~**DeleteOrphanDocumentsAsync saves namespace index without ETag**~~ **FIXED**: Now uses `GetWithETagAsync` and `TrySaveAsync` with a 3-attempt retry loop, consistent with `AddDocumentToNamespaceIndexAsync`.
 
-2. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. If these 10 are old documents and newer ones exist further in the list, the reported timestamp will be stale.
+2. ~~**SaveArchiveAsync has race condition on archive list**~~ **FIXED**: Now uses `GetWithETagAsync` and `TrySaveAsync` with a 3-attempt retry loop for the namespace archive list update.
 
-3. **DeleteOrphanDocumentsAsync saves namespace index without ETag**: At `DocumentationService.cs:3190`, the orphan deletion method reads the namespace doc list, removes orphan IDs, and calls `SaveAsync()` without ETag protection. Meanwhile, `AddDocumentToNamespaceIndexAsync` (line 1717) uses `TrySaveAsync` with ETag retry loops. If a new document is added to the namespace during orphan deletion (e.g., during a truncated-then-retry sync scenario), the non-ETag save at line 3190 will silently overwrite the concurrent addition. The document exists in the store but becomes invisible to list/pagination operations.
-
-4. **Namespace document list type inconsistency**: The same key `ns-docs:{namespaceId}` is accessed as `List<Guid>` in write-path methods (`AddDocumentToNamespaceIndexAsync` line 1712, `RemoveDocumentFromNamespaceIndexAsync` line 1764) but as `HashSet<Guid>` in read-path methods (`DeleteOrphanDocumentsAsync` line 3141, `GetAllNamespaceDocumentsAsync` line 3374, `RestoreFromBundleAsync` line 3551, `GetNamespaceDocumentCountAsync` line 3126). While JSON array serialization round-trips both types, if duplicates accumulate in the List (from race conditions), reading as HashSet silently deduplicates them. Conversely, `RestoreFromBundleAsync` saves a `HashSet<Guid>` which the Add/Remove methods then read back as `List<Guid>`.
-
-5. **SaveArchiveAsync has race condition on archive list**: At `DocumentationService.cs:3476-3484`, the archive list for a namespace is read, a new ID is added, and the list is saved WITHOUT ETag protection. Concurrent archive creations for the same namespace can overwrite each other, losing archive entries from the list. The archive metadata itself (stored by ID) is safe, but the list used by `ListDocumentationArchives` becomes incomplete.
-
-6. **Search index retains stale terms on document update**: When `IndexDocument()` is called during document update (line 3110), `NamespaceIndex.AddDocument()` replaces the document in `_documents` and adds all new terms to the inverted index, but does NOT remove old terms that are no longer in the updated content (`SearchIndexService.cs:216-250`). After a content update that removes a term, searching for that old term still returns the document because the inverted index entry persists and the document still exists in `_documents`. Only a full index rebuild clears these stale entries.
+3. **Namespace document list type inconsistency**: The same key `ns-docs:{namespaceId}` is accessed as `List<Guid>` in write-path methods (`AddDocumentToNamespaceIndexAsync`, `RemoveDocumentFromNamespaceIndexAsync`) but as `HashSet<Guid>` in read-path methods (`DeleteOrphanDocumentsAsync`, `GetAllNamespaceDocumentsAsync`, `RestoreFromBundleAsync`). While JSON array serialization round-trips both types, if duplicates accumulate in the List (from race conditions), reading as HashSet silently deduplicates them.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -456,3 +450,9 @@ Archive System
 8. **ContentTransformService.GenerateSlug has dead GeneratedRegex and runtime regex**: The class declares `NonSlugCharRegex()` (`[^a-z0-9\-]`) as a source-generated regex but never uses it. Instead, `GenerateSlug()` at line 114 uses a runtime-compiled `Regex.Replace(slug, @"[^a-z0-9\-/]", "")` with a different pattern (includes `/` for path separators). The generated regex is dead code. Minor performance concern since the runtime regex is compiled per-call during sync (once per file).
 
 9. **MaxConcurrentSyncs naming is misleading**: The configuration property `MaxConcurrentSyncs` and its env var `DOCUMENTATION_MAX_CONCURRENT_SYNCS` suggest parallel operation, but in `RepositorySyncSchedulerService.ProcessScheduledSyncsAsync()` (line 186), each sync is `await`-ed sequentially in a `foreach` loop. The value is actually "max syncs per scheduler cycle" — a rate limit, not a concurrency limit.
+
+10. **TotalContentSizeBytes is always an estimate**: `GetNamespaceStats` calculates content size as `documents * 10000` (10KB average). Accurate sizing requires iterating all documents (N+1 queries). Consider tracking actual content size in namespace metadata during CRUD operations.
+
+11. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. Newer documents further in the list are missed. Consider maintaining a `LastUpdatedAt` field on a namespace metadata record.
+
+12. **Search index retains stale terms on document update**: `NamespaceIndex.AddDocument()` replaces the document and adds new terms, but does NOT remove old terms no longer in the updated content. Searching for removed terms still returns the document. Fix requires maintaining a term-to-document reverse index or removing the old document's terms before re-indexing.

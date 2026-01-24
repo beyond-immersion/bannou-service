@@ -2633,9 +2633,14 @@ public partial class SaveLoadService : ISaveLoadService
                     .Where(v => !v.IsPinned && v.CreatedAt < cutoffDate)
                     .ToList();
 
+                long slotBytesFreed = 0;
+
                 foreach (var version in versionsToDelete)
                 {
-                    bytesFreed += version.SizeBytes;
+                    // Use CompressedSizeBytes when available, consistent with how TotalSizeBytes is accumulated
+                    var versionSize = version.CompressedSizeBytes ?? version.SizeBytes;
+                    slotBytesFreed += versionSize;
+                    bytesFreed += versionSize;
                     versionsDeleted++;
 
                     if (!body.DryRun)
@@ -2672,9 +2677,9 @@ public partial class SaveLoadService : ISaveLoadService
                 }
                 else if (!body.DryRun && versionsToDelete.Count > 0)
                 {
-                    // Update slot metadata
+                    // Update slot metadata with per-slot freed bytes only
                     slot.VersionCount = remainingVersions;
-                    slot.TotalSizeBytes -= bytesFreed;
+                    slot.TotalSizeBytes -= slotBytesFreed;
                     slot.UpdatedAt = DateTimeOffset.UtcNow;
                     await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
                 }

@@ -13376,6 +13376,26 @@
             Character ID that triggered the cleanup (if applicable)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterCompressedEvent">
+            <summary>
+            Published to character.compressed when a character is compressed to archive format
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.EventName">
+            <summary>
+            Event type identifier: character.compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.CharacterId">
+            <summary>
+            ID of the compressed character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.DeletedSourceData">
+            <summary>
+            Whether source data was deleted after compression
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent">
             <summary>
             Published when a character's participation in a historical event is recorded

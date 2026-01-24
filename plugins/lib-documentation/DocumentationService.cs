@@ -3180,14 +3180,35 @@ public partial class DocumentationService : IDocumentationService
             }
         }
 
-        // Update namespace document list to remove orphan IDs
+        // Update namespace document list to remove orphan IDs (with ETag protection)
         if (orphanIds.Count > 0)
         {
-            foreach (var orphanId in orphanIds)
+            const int maxRetries = 3;
+            for (int retry = 0; retry < maxRetries; retry++)
             {
-                docIds.Remove(orphanId);
+                var (currentIds, etag) = await docsStore.GetWithETagAsync(docsKey, cancellationToken);
+                if (currentIds == null) break;
+
+                foreach (var orphanId in orphanIds)
+                {
+                    currentIds.Remove(orphanId);
+                }
+
+                string? savedEtag;
+                if (etag != null)
+                {
+                    savedEtag = await docsStore.TrySaveAsync(docsKey, currentIds, etag, cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    savedEtag = await docsStore.SaveAsync(docsKey, currentIds, cancellationToken: cancellationToken);
+                }
+
+                if (savedEtag != null) break;
+
+                _logger.LogDebug("Namespace doc list update for {Namespace} had ETag conflict, retrying ({Retry}/{MaxRetries})",
+                    namespaceId, retry + 1, maxRetries);
             }
-            await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
         }
 
         return deletedCount;
@@ -3473,14 +3494,34 @@ public partial class DocumentationService : IDocumentationService
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
 
-        // Also update the namespace archive list
+        // Also update the namespace archive list (with ETag protection)
         var listKey = $"{ARCHIVE_KEY_PREFIX}list:{archive.Namespace}";
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-        var archiveIds = await listStore.GetAsync(listKey, cancellationToken) ?? [];
-        if (!archiveIds.Contains(archive.ArchiveId))
+
+        const int maxRetries = 3;
+        for (int retry = 0; retry < maxRetries; retry++)
         {
+            var (archiveIds, etag) = await listStore.GetWithETagAsync(listKey, cancellationToken);
+            archiveIds ??= [];
+
+            if (archiveIds.Contains(archive.ArchiveId)) break;
+
             archiveIds.Add(archive.ArchiveId);
-            await listStore.SaveAsync(listKey, archiveIds, cancellationToken: cancellationToken);
+
+            string? savedEtag;
+            if (etag != null)
+            {
+                savedEtag = await listStore.TrySaveAsync(listKey, archiveIds, etag, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                savedEtag = await listStore.SaveAsync(listKey, archiveIds, cancellationToken: cancellationToken);
+            }
+
+            if (savedEtag != null) break;
+
+            _logger.LogDebug("Archive list update for namespace {Namespace} had ETag conflict, retrying ({Retry}/{MaxRetries})",
+                archive.Namespace, retry + 1, maxRetries);
         }
     }
 

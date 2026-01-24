@@ -421,21 +421,23 @@ Escrow Integration Flow
 
 ### Bugs (Fix Immediately)
 
-1. **Event topic naming inconsistency**: Entity-creation events use hyphenated prefixes (`currency-wallet.created`, `currency-definition.created`, `currency-definition.updated`) while all state-change events use dot-only prefixes (`currency.wallet.frozen/unfrozen/closed`, `currency.credited/debited/transferred`, `currency.hold.*`, `currency.autogain.*`). Subscribers must account for both `currency-wallet.*` and `currency.wallet.*` patterns for wallet events.
+_All bugs have been fixed or reclassified._
 
-2. **CloseWallet does not check for active holds**: When closing a wallet and transferring balances, the implementation does not verify whether active authorization holds exist. This could result in transferring funds that are logically reserved, leaving holds pointing at a closed wallet with zero balance.
+1. ~~**Event topic naming inconsistency**~~: **FIXED** - Wallet state-change events (`frozen`, `unfrozen`, `closed`) now use the schema-correct hyphenated prefix (`currency-wallet.*`) matching the entity lifecycle pattern used by creation events.
 
-3. **Hold index never cleaned up**: When holds transition to Captured/Released states, they remain in the `hold-wallet:{walletId}:{currencyDefId}` index list. `GetTotalHeldAmountAsync` filters by Active status, so correctness is maintained, but the index grows unboundedly.
+2. ~~**CloseWallet does not check for active holds**~~: **FIXED** - CloseWallet now iterates all balances and checks `GetTotalHeldAmountAsync` for each. Returns 400 if any balance has active holds, preventing transfer of logically reserved funds.
 
-4. **Debit and Transfer ignore active holds in sufficiency check**: `DebitCurrency` (line 994: `balance.Amount < body.Amount`) and `TransferCurrency` (line 1098: `sourceBalance.Amount < body.Amount`) check raw `balance.Amount` without subtracting active hold amounts. `GetBalance` correctly reports `effectiveAmount = balance.Amount - lockedAmount`, but mutation operations bypass this. A wallet with 100 balance and 80 in active holds can debit up to 100, overdrawing past logically reserved amounts.
+3. ~~**Hold index never cleaned up**~~: Reclassified as Design Consideration #11 (correctness maintained via Active status filter; performance concern only).
 
-5. **CaptureHold debits before hold status save**: `CaptureHoldAsync` calls `DebitCurrencyAsync` (line 1953) before the hold's `TrySaveAsync` with ETag (line 1971). If the ETag save fails (concurrent modification), the debit has already executed irreversibly but the hold remains Active. The hold amount continues to be counted in effective balance calculations while the actual balance has been reduced, effectively double-deducting.
+4. ~~**Debit and Transfer ignore active holds in sufficiency check**~~: **FIXED** - `DebitCurrencyAsync` and `TransferCurrencyAsync` now call `GetTotalHeldAmountAsync` within their distributed lock and check `balance.Amount - heldAmount < body.Amount` instead of raw balance. Effective balance is now consistently enforced across read and write paths.
 
-6. **Lazy autogain has no distributed lock**: `ApplyAutogainIfNeededAsync` (called from GetBalance/BatchGetBalances) modifies the balance and calls `SaveBalanceAsync` without any lock. The task-mode autogain correctly acquires a `"currency-autogain"` lock (line 207 in CurrencyAutogainTaskService), but the lazy path does not participate in this locking protocol. If task mode is enabled while lazy path is also triggered (which happens for any GetBalance call regardless of mode), both paths race on the same balance with last-write-wins.
+5. ~~**CaptureHold debits before hold status save**~~: Reclassified as Design Consideration #12 (requires distributed lock on hold or saga/compensation pattern).
 
-7. **CloseWallet has no ETag or distributed lock**: `CloseWalletAsync` (line 656) saves wallet status change with plain `SaveAsync` (no ETag). The balance transfers at lines 641-653 occur before the wallet status is set to Closed, so concurrent credit/debit/transfer operations during the transfer phase will succeed against a wallet that is mid-closure.
+6. ~~**Lazy autogain has no distributed lock**~~: Reclassified as Design Consideration #13 (requires lazy path to participate in `currency-autogain` locking protocol).
 
-8. **CreateHold has no lock on effective balance check**: `CreateHoldAsync` calculates `effectiveBalance = balance.Amount - currentHeld` (line 1855) and checks sufficiency (line 1857) without any distributed lock. Between the check and the hold save at line 1889, another concurrent CreateHold on the same wallet+currency can pass the same check, causing total active holds to exceed actual balance.
+7. ~~**CloseWallet has no ETag or distributed lock**~~: Reclassified as Design Consideration #14 (requires ETag-based optimistic concurrency or distributed lock for atomicity with balance transfers).
+
+8. ~~**CreateHold has no lock on effective balance check**~~: Reclassified as Design Consideration #15 (requires distributed lock on wallet+currency to prevent concurrent holds exceeding balance).
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -476,3 +478,13 @@ Escrow Integration Flow
 9. **UpdateExchangeRate has no ETag**: `UpdateExchangeRateAsync` (line 1435) reads the definition without ETag and saves with plain `SaveAsync`. Concurrent rate updates are last-write-wins. For a financial service, exchange rate updates should use optimistic concurrency to prevent race conditions between admin rate-setting operations.
 
 10. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
+
+11. **Hold index never cleaned up**: When holds transition to Captured/Released states, they remain in the `hold-wallet:{walletId}:{currencyDefId}` index list. `GetTotalHeldAmountAsync` filters by Active status so correctness is maintained, but the index grows unboundedly. A cleanup sweep (either periodic or on-read with threshold) would prevent performance degradation for wallets with many historical holds.
+
+12. **CaptureHold debit-before-save ordering**: `CaptureHoldAsync` debits the wallet before saving the hold status change with ETag. If the ETag save fails (concurrent modification), the debit is irreversible but the hold remains Active, causing double-deduction. Requires either a distributed lock on the hold preventing concurrent captures, or a saga pattern with compensating credit on hold save failure.
+
+13. **Lazy autogain has no distributed lock**: `ApplyAutogainIfNeededAsync` (called from GetBalance/BatchGetBalances) modifies the balance without locking. The task-mode autogain correctly acquires a `"currency-autogain"` lock, but the lazy path does not participate. Both paths can race on the same balance with last-write-wins. The lazy path needs to acquire the same lock, or autogain should be exclusively task-mode.
+
+14. **CloseWallet has no ETag or distributed lock**: `CloseWalletAsync` saves wallet status with plain `SaveAsync`. Balance transfers occur before the status is set to Closed, so concurrent operations can succeed against a mid-closure wallet. Needs ETag-based optimistic concurrency (read-with-etag, transfer, try-save-with-etag) or a distributed lock on the wallet.
+
+15. **CreateHold has no lock on effective balance check**: `CreateHoldAsync` calculates effective balance and checks sufficiency without a distributed lock. Between the check and the hold save, another concurrent CreateHold can pass the same check, causing total active holds to exceed actual balance. Needs a distributed lock on `{walletId}:{currencyDefId}` (similar to the balance lock used by debit/transfer) to serialize hold creation.

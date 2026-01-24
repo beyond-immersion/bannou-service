@@ -537,7 +537,7 @@ public partial class CurrencyService : ICurrencyService
                 return (StatusCodes.Conflict, null);
             }
 
-            await _messageBus.TryPublishAsync("currency.wallet.frozen", new CurrencyWalletFrozenEvent
+            await _messageBus.TryPublishAsync("currency-wallet.frozen", new CurrencyWalletFrozenEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -589,7 +589,7 @@ public partial class CurrencyService : ICurrencyService
                 return (StatusCodes.Conflict, null);
             }
 
-            await _messageBus.TryPublishAsync("currency.wallet.unfrozen", new CurrencyWalletUnfrozenEvent
+            await _messageBus.TryPublishAsync("currency-wallet.unfrozen", new CurrencyWalletUnfrozenEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -633,9 +633,21 @@ public partial class CurrencyService : ICurrencyService
             var destWallet = await store.GetAsync(destKey, cancellationToken);
             if (destWallet is null) return (StatusCodes.NotFound, null);
 
+            // Verify no active holds exist before closing
+            var balances = await GetAllBalancesForWalletAsync(wallet.WalletId, cancellationToken);
+            foreach (var balance in balances)
+            {
+                var heldAmount = await GetTotalHeldAmountAsync(wallet.WalletId, balance.CurrencyDefinitionId, cancellationToken);
+                if (heldAmount > 0)
+                {
+                    _logger.LogWarning("Cannot close wallet {WalletId}: active holds exist for currency {CurrencyId} (held: {HeldAmount})",
+                        body.WalletId, balance.CurrencyDefinitionId, heldAmount);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
             // Transfer remaining balances
             var transferredBalances = new List<TransferredBalance>();
-            var balances = await GetAllBalancesForWalletAsync(wallet.WalletId, cancellationToken);
             foreach (var balance in balances)
             {
                 if (balance.Amount > 0)
@@ -655,7 +667,7 @@ public partial class CurrencyService : ICurrencyService
             wallet.Status = WalletStatus.Closed;
             await store.SaveAsync(walletKey, wallet, cancellationToken: cancellationToken);
 
-            await _messageBus.TryPublishAsync("currency.wallet.closed", new CurrencyWalletClosedEvent
+            await _messageBus.TryPublishAsync("currency-wallet.closed", new CurrencyWalletClosedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -989,11 +1001,15 @@ public partial class CurrencyService : ICurrencyService
 
             var balance = await GetOrCreateBalanceAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
 
-            // Check sufficient funds
+            // Check sufficient funds (accounting for active holds)
             var allowNegative = IsNegativeAllowed(definition, body.AllowNegative);
-            if (!allowNegative && balance.Amount < body.Amount)
+            if (!allowNegative)
             {
-                return ((StatusCodes)422, null);
+                var heldAmount = await GetTotalHeldAmountAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
+                if (balance.Amount - heldAmount < body.Amount)
+                {
+                    return ((StatusCodes)422, null);
+                }
             }
 
             var balanceBefore = balance.Amount;
@@ -1095,7 +1111,8 @@ public partial class CurrencyService : ICurrencyService
             }
 
             var sourceBalance = await GetOrCreateBalanceAsync(body.SourceWalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
-            if (sourceBalance.Amount < body.Amount)
+            var sourceHeldAmount = await GetTotalHeldAmountAsync(body.SourceWalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
+            if (sourceBalance.Amount - sourceHeldAmount < body.Amount)
             {
                 return ((StatusCodes)422, null);
             }
