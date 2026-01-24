@@ -58,6 +58,7 @@ public partial class ConnectService : IConnectService
 
     // Pending RPCs awaiting client responses (MessageId -> RPC info for response forwarding)
     private readonly ConcurrentDictionary<ulong, PendingRPCInfo> _pendingRPCs = new();
+    private Timer? _pendingRPCCleanupTimer;
 
     /// <summary>
     /// Prefix for session-specific queue routing keys.
@@ -1196,8 +1197,7 @@ public partial class ConnectService : IConnectService
                 await using var scope = _serviceScopeFactory.CreateAsyncScope();
                 var navigator = scope.ServiceProvider.GetRequiredService<IServiceNavigator>();
 
-                // Use Warning level to ensure visibility even when app logging is set to Warning
-                _logger.LogWarning("WebSocket -> ServiceNavigator: {Method} {Path}",
+                _logger.LogDebug("WebSocket -> ServiceNavigator: {Method} {Path}",
                     httpMethod, path);
 
                 // Execute via ServiceNavigator - uses zero-copy byte forwarding
@@ -1630,6 +1630,9 @@ public partial class ConnectService : IConnectService
         // Client event subscriptions are created dynamically per-session via lib-messaging
         // using SubscribeDynamicRawAsync when sessions connect
         _logger.LogInformation("Client event subscriptions will be created per-session via lib-messaging");
+
+        // Start periodic cleanup of expired pending RPCs to prevent memory leaks
+        _pendingRPCCleanupTimer = new Timer(CleanupExpiredPendingRPCs, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
     #endregion

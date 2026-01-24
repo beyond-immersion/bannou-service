@@ -414,7 +414,7 @@ public partial class LocationService : ILocationService
 
             var ancestors = new List<LocationModel>();
             var currentParentId = model.ParentLocationId;
-            var maxDepth = 10; // Safety limit
+            var maxDepth = 20; // Safety limit (matches IsDescendantOf and UpdateDescendantDepths)
             var depth = 0;
 
             while (currentParentId.HasValue && depth < maxDepth)

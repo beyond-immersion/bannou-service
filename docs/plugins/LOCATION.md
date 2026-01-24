@@ -221,7 +221,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **~~GetAncestors depth limit inconsistency~~** *(FIXED)*: `GetAncestorsAsync` used max depth 10 while `IsDescendantOfAsync` and `UpdateDescendantDepthsAsync` used max depth 20. A tree created 15 levels deep would return truncated ancestors. Fixed to use 20 consistently.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -241,7 +241,7 @@ None identified.
 
 1. **N+1 query pattern**: `LoadLocationsByIdsAsync` issues one state store call per location ID. List operations for realms with hundreds of locations generate hundreds of individual calls. No bulk-get optimization exists.
 
-2. **Hardcoded depth limits inconsistency**: `GetAncestors` uses max depth 10, while `CollectDescendantsAsync`, `IsDescendantOfAsync`, and `UpdateDescendantDepthsAsync` use max depth 20. A tree deeper than 10 levels would return truncated ancestors.
+2. **~~Hardcoded depth limits inconsistency~~** *(FIXED - moved to Bugs)*: Resolved by setting GetAncestors to use max depth 20, consistent with other operations.
 
 3. **LocationType stored as string**: The internal `LocationModel` stores `LocationType` as a string, not the generated enum. Response mapping uses `Enum.Parse<LocationType>()` which could throw on invalid stored values.
 

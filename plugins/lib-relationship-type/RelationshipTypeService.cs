@@ -1010,6 +1010,33 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Merged relationship type {SourceId} into {TargetId}, migrated {MigratedCount} relationships (failed: {FailedCount})",
                 body.SourceTypeId, body.TargetTypeId, migratedCount, failedCount);
 
+            // Handle delete-after-merge if requested and all migrations succeeded
+            var sourceDeleted = false;
+            if (body.DeleteAfterMerge)
+            {
+                if (failedCount > 0)
+                {
+                    _logger.LogWarning("Skipping delete-after-merge for relationship type {SourceId}: {FailedCount} migrations failed",
+                        body.SourceTypeId, failedCount);
+                }
+                else
+                {
+                    var deleteResult = await DeleteRelationshipTypeAsync(
+                        new DeleteRelationshipTypeRequest { RelationshipTypeId = body.SourceTypeId },
+                        cancellationToken);
+
+                    if (deleteResult == StatusCodes.OK)
+                    {
+                        sourceDeleted = true;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Delete-after-merge failed for relationship type {SourceId} with status {Status}",
+                            body.SourceTypeId, deleteResult);
+                    }
+                }
+            }
+
             return (StatusCodes.OK, new MergeRelationshipTypeResponse
             {
                 SourceTypeId = body.SourceTypeId,
@@ -1017,7 +1044,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 RelationshipsMigrated = migratedCount,
                 RelationshipsFailed = failedCount,
                 MigrationErrors = migrationErrors,
-                SourceDeleted = false // Source remains as deprecated for historical references
+                SourceDeleted = sourceDeleted
             });
         }
         catch (Exception ex)

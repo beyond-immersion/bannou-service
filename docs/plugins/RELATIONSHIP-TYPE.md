@@ -218,7 +218,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **~~`DeleteAfterMerge` parameter ignored~~** *(FIXED)*: The `MergeRelationshipTypeRequest.DeleteAfterMerge` parameter was defined in the schema but the implementation hardcoded `SourceDeleted = false` without checking the parameter. Now calls `DeleteRelationshipTypeAsync` when requested and all migrations succeeded.
 
 ### Intentional Quirks (Documented Behavior)
 

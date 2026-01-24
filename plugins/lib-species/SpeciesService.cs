@@ -1088,12 +1088,39 @@ public partial class SpeciesService : ISpeciesService
             // Publish species merged event for downstream services (analytics, achievements)
             await PublishSpeciesMergedEventAsync(sourceModel, targetModel, migratedCount, cancellationToken);
 
+            // Handle delete-after-merge if requested and all migrations succeeded
+            var sourceDeleted = false;
+            if (body.DeleteAfterMerge)
+            {
+                if (failedCount > 0)
+                {
+                    _logger.LogWarning("Skipping delete-after-merge for species {SourceId}: {FailedCount} character migrations failed",
+                        body.SourceSpeciesId, failedCount);
+                }
+                else
+                {
+                    var deleteResult = await DeleteSpeciesAsync(
+                        new DeleteSpeciesRequest { SpeciesId = body.SourceSpeciesId },
+                        cancellationToken);
+
+                    if (deleteResult == StatusCodes.OK)
+                    {
+                        sourceDeleted = true;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Delete-after-merge failed for species {SourceId} with status {Status}",
+                            body.SourceSpeciesId, deleteResult);
+                    }
+                }
+            }
+
             return (StatusCodes.OK, new MergeSpeciesResponse
             {
                 SourceSpeciesId = body.SourceSpeciesId,
                 TargetSpeciesId = body.TargetSpeciesId,
                 CharactersMigrated = migratedCount,
-                SourceDeleted = false // Source remains as deprecated for historical references
+                SourceDeleted = sourceDeleted
             });
         }
         catch (Exception ex)

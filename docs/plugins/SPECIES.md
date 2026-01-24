@@ -211,7 +211,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. **`DeleteAfterMerge` parameter is ignored**: The `MergeSpeciesRequest.DeleteAfterMerge` parameter is defined in the schema (line 1840 in generated meta: "If true, hard-delete the source species after successful merge") but the service implementation at line 1096 hardcodes `SourceDeleted = false` without checking the parameter. The delete-after-merge feature is documented but not implemented.
+1. **~~`DeleteAfterMerge` parameter ignored~~** *(FIXED)*: The `MergeSpeciesRequest.DeleteAfterMerge` parameter was defined in the schema but the implementation hardcoded `SourceDeleted = false` without checking the parameter. Now calls `DeleteSpeciesAsync` when requested and all migrations succeeded.
 
 ### Intentional Quirks (Documented Behavior)
 
