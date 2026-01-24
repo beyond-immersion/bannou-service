@@ -72,3 +72,14 @@ x-service-configuration:
       description: Convergence tolerance for Glicko-2 volatility iteration (smaller = more precise but slower)
       default: 0.000001
       env: ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE
+    # Controller History Retention
+    ControllerHistoryRetentionDays:
+      type: integer
+      description: Days to retain controller history records (0 = indefinite retention)
+      default: 90
+      env: ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS
+    ControllerHistoryCleanupBatchSize:
+      type: integer
+      description: Maximum records to delete per cleanup invocation
+      default: 5000
+      env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE

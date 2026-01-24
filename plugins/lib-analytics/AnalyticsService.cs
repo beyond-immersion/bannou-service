@@ -51,8 +51,7 @@ public partial class AnalyticsService : IAnalyticsService
     private readonly ILogger<AnalyticsService> _logger;
     private readonly AnalyticsServiceConfiguration _configuration;
 
-    // State store key prefixes
-    private const string CONTROLLER_INDEX_PREFIX = "analytics-controller-index";
+    // State store key prefixes (controller index prefix removed - MySQL handles queries natively)
     private const string EVENT_BUFFER_INDEX_KEY = "analytics-event-buffer-index";
     private const string EVENT_BUFFER_ENTRY_PREFIX = "analytics-event-buffer-entry";
     private const string SESSION_MAPPING_PREFIX = "analytics-session-mapping";
@@ -115,20 +114,6 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     private static string GetControllerKey(Guid gameServiceId, Guid accountId, DateTimeOffset timestamp)
         => $"{gameServiceId}:controller:{accountId}:{timestamp:o}";
-
-    /// <summary>
-    /// Generates the key for the controller history index.
-    /// Format: analytics-controller-index:gameServiceId
-    /// </summary>
-    private static string GetControllerIndexKey(Guid gameServiceId)
-        => $"{CONTROLLER_INDEX_PREFIX}:{gameServiceId}";
-
-    /// <summary>
-    /// Generates the key for controller history by account.
-    /// Format: analytics-controller-index:gameServiceId:account:accountId
-    /// </summary>
-    private static string GetControllerAccountIndexKey(Guid gameServiceId, Guid accountId)
-        => $"{CONTROLLER_INDEX_PREFIX}:{gameServiceId}:account:{accountId}";
 
     /// <summary>
     /// Implementation of IngestEvent operation.
@@ -684,7 +669,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistory);
+            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
             var eventId = Guid.NewGuid();
             var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
 
@@ -701,15 +686,6 @@ public partial class AnalyticsService : IAnalyticsService
             };
 
             await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
-            await controllerStore.AddToSetAsync(
-                GetControllerIndexKey(body.GameServiceId),
-                key,
-                cancellationToken: cancellationToken);
-            await controllerStore.AddToSetAsync(
-                GetControllerAccountIndexKey(body.GameServiceId, body.AccountId),
-                key,
-                cancellationToken: cancellationToken);
-
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -752,76 +728,94 @@ public partial class AnalyticsService : IAnalyticsService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistory);
-            var indexKey = body.AccountId.HasValue
-                ? GetControllerAccountIndexKey(body.GameServiceId, body.AccountId.Value)
-                : GetControllerIndexKey(body.GameServiceId);
-            var eventKeys = await controllerStore.GetSetAsync<string>(indexKey, cancellationToken);
+            var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
+                StateStoreDefinitions.AnalyticsHistoryData);
 
-            if (eventKeys.Count == 0)
+            var conditions = new List<QueryCondition>
             {
-                return (StatusCodes.OK, new QueryControllerHistoryResponse
+                new QueryCondition
                 {
-                    Events = new List<ControllerHistoryEvent>()
+                    Path = "$.GameServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.GameServiceId.ToString()
+                }
+            };
+
+            if (body.AccountId.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.AccountId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.AccountId.Value.ToString()
                 });
             }
 
-            var events = new List<ControllerHistoryData>();
-
-            foreach (var eventKey in eventKeys)
+            if (body.TargetEntityId.HasValue)
             {
-                var historyEvent = await controllerStore.GetAsync(eventKey, cancellationToken);
-                if (historyEvent == null)
+                conditions.Add(new QueryCondition
                 {
-                    continue;
-                }
-
-                if (body.AccountId.HasValue && historyEvent.AccountId != body.AccountId.Value)
-                {
-                    continue;
-                }
-
-                if (body.TargetEntityId.HasValue && historyEvent.TargetEntityId != body.TargetEntityId.Value)
-                {
-                    continue;
-                }
-
-                if (body.TargetEntityType.HasValue && historyEvent.TargetEntityType != body.TargetEntityType.Value)
-                {
-                    continue;
-                }
-
-                if (body.StartTime.HasValue && historyEvent.Timestamp < body.StartTime.Value)
-                {
-                    continue;
-                }
-
-                if (body.EndTime.HasValue && historyEvent.Timestamp > body.EndTime.Value)
-                {
-                    continue;
-                }
-
-                events.Add(historyEvent);
+                    Path = "$.TargetEntityId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.TargetEntityId.Value.ToString()
+                });
             }
 
-            var ordered = events
-                .OrderByDescending(e => e.Timestamp)
-                .Take(body.Limit)
-                .Select(evt => new ControllerHistoryEvent
+            if (body.TargetEntityType.HasValue)
+            {
+                conditions.Add(new QueryCondition
                 {
-                    EventId = evt.EventId,
-                    AccountId = evt.AccountId,
-                    TargetEntityId = evt.TargetEntityId,
-                    TargetEntityType = evt.TargetEntityType,
-                    Action = evt.Action,
-                    Timestamp = evt.Timestamp,
-                    SessionId = evt.SessionId
+                    Path = "$.TargetEntityType",
+                    Operator = QueryOperator.Equals,
+                    Value = (int)body.TargetEntityType.Value
+                });
+            }
+
+            if (body.StartTime.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.Timestamp",
+                    Operator = QueryOperator.GreaterThanOrEqual,
+                    Value = body.StartTime.Value.ToString("o")
+                });
+            }
+
+            if (body.EndTime.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.Timestamp",
+                    Operator = QueryOperator.LessThanOrEqual,
+                    Value = body.EndTime.Value.ToString("o")
+                });
+            }
+
+            var sortSpec = new JsonSortSpec { Path = "$.Timestamp", Descending = true };
+
+            var result = await historyStore.JsonQueryPagedAsync(
+                conditions,
+                0,
+                body.Limit,
+                sortSpec,
+                cancellationToken);
+
+            var events = result.Items
+                .Select(item => new ControllerHistoryEvent
+                {
+                    EventId = item.Value.EventId,
+                    AccountId = item.Value.AccountId,
+                    TargetEntityId = item.Value.TargetEntityId,
+                    TargetEntityType = item.Value.TargetEntityType,
+                    Action = item.Value.Action,
+                    Timestamp = item.Value.Timestamp,
+                    SessionId = item.Value.SessionId
                 })
                 .ToList();
 
             return (StatusCodes.OK, new QueryControllerHistoryResponse
             {
-                Events = ordered
+                Events = events
             });
         }
         catch (Exception ex)
@@ -834,6 +828,112 @@ public partial class AnalyticsService : IAnalyticsService
                 ex.Message,
                 dependency: null,
                 endpoint: "post:/analytics/controller-history/query",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Implementation of CleanupControllerHistory operation.
+    /// Deletes controller history records older than the configured retention period.
+    /// </summary>
+    public async Task<(StatusCodes, CleanupControllerHistoryResponse?)> CleanupControllerHistoryAsync(
+        CleanupControllerHistoryRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
+            body.DryRun, body.OlderThanDays, body.GameServiceId);
+
+        try
+        {
+            var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
+            if (retentionDays <= 0)
+            {
+                _logger.LogInformation("Controller history cleanup skipped: retention days is 0 (indefinite retention)");
+                return (StatusCodes.OK, new CleanupControllerHistoryResponse
+                {
+                    RecordsDeleted = 0,
+                    DryRun = body.DryRun
+                });
+            }
+
+            var cutoffTime = DateTimeOffset.UtcNow.AddDays(-retentionDays);
+            var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
+                StateStoreDefinitions.AnalyticsHistoryData);
+
+            var conditions = new List<QueryCondition>
+            {
+                new QueryCondition
+                {
+                    Path = "$.Timestamp",
+                    Operator = QueryOperator.LessThan,
+                    Value = cutoffTime.ToString("o")
+                }
+            };
+
+            if (body.GameServiceId.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.GameServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.GameServiceId.Value.ToString()
+                });
+            }
+
+            if (body.DryRun)
+            {
+                var count = await historyStore.JsonCountAsync(conditions, cancellationToken);
+                _logger.LogInformation("Controller history cleanup dry run: {Count} records would be deleted", count);
+                return (StatusCodes.OK, new CleanupControllerHistoryResponse
+                {
+                    RecordsDeleted = count,
+                    DryRun = true
+                });
+            }
+
+            var batchSize = _configuration.ControllerHistoryCleanupBatchSize;
+            var totalDeleted = 0L;
+            var regularStore = _stateStoreFactory.GetStore<ControllerHistoryData>(
+                StateStoreDefinitions.AnalyticsHistoryData);
+
+            // Delete in batches to avoid overwhelming the database
+            while (totalDeleted < batchSize)
+            {
+                var batchLimit = Math.Min(100, (int)(batchSize - totalDeleted));
+                var batch = await historyStore.JsonQueryPagedAsync(
+                    conditions, 0, batchLimit, null, cancellationToken);
+
+                if (batch.Items.Count == 0)
+                {
+                    break;
+                }
+
+                foreach (var item in batch.Items)
+                {
+                    await regularStore.DeleteAsync(item.Key, cancellationToken);
+                    totalDeleted++;
+                }
+            }
+
+            _logger.LogInformation("Controller history cleanup completed: {DeletedCount} records deleted", totalDeleted);
+            return (StatusCodes.OK, new CleanupControllerHistoryResponse
+            {
+                RecordsDeleted = totalDeleted,
+                DryRun = false
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up controller history");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "CleanupControllerHistory",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/analytics/controller-history/cleanup",
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);

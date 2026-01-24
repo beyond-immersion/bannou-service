@@ -103,7 +103,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MeshService>` | Scoped | Structured logging |
-| `MeshServiceConfiguration` | Singleton | All 22 config properties above |
+| `MeshServiceConfiguration` | Singleton | All 23 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Heartbeat and mapping event subscription |
 | `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores) |

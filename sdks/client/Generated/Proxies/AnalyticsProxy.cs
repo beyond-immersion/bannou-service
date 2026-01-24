@@ -167,4 +167,22 @@ public sealed class AnalyticsProxy
         return _client.InvokeAsync<QueryControllerHistoryRequest, QueryControllerHistoryResponse>(
             "POST", "/analytics/controller-history/query", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Cleanup expired controller history
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupControllerHistoryResponse on success.</returns>
+    public Task<ApiResponse<CleanupControllerHistoryResponse>> CleanupControllerHistoryAsync(
+        CleanupControllerHistoryRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupControllerHistoryRequest, CleanupControllerHistoryResponse>(
+            "POST", "/analytics/controller-history/cleanup", request, channel, timeout, cancellationToken);
+    }
 }

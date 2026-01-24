@@ -69,4 +69,9 @@ public partial interface IAnalyticsService : IBannouService
         /// </summary>
         Task<(StatusCodes, QueryControllerHistoryResponse?)> QueryControllerHistoryAsync(QueryControllerHistoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CleanupControllerHistory operation
+        /// </summary>
+        Task<(StatusCodes, CleanupControllerHistoryResponse?)> CleanupControllerHistoryAsync(CleanupControllerHistoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

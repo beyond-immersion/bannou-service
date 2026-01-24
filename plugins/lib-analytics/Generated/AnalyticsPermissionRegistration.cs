@@ -125,6 +125,21 @@ public static class AnalyticsPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/analytics/controller-history/cleanup",
+            Method = ServiceEndpointMethod.POST,
+            Description = "cleanupControllerHistory",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

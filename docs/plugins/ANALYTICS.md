@@ -3,7 +3,7 @@
 > **Plugin**: lib-analytics
 > **Schema**: schemas/analytics-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history (Redis)
+> **State Stores**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history (Redis), analytics-history-data (MySQL)
 
 ## Overview
 
@@ -33,7 +33,7 @@ The Analytics plugin is the central event aggregation point for all game-related
 
 ## State Storage
 
-**Redis stores** handle event buffering, session mappings, and resolution caches. The service validates the summary store is Redis at runtime via `EnsureSummaryStoreRedisAsync()` for buffer operations. **MySQL store** (`analytics-summary-data`) provides server-side filtering, sorting, and pagination for entity summary queries.
+**Redis stores** handle event buffering, session mappings, and resolution caches. The service validates the summary store is Redis at runtime via `EnsureSummaryStoreRedisAsync()` for buffer operations. **MySQL stores** provide server-side filtering, sorting, and pagination: `analytics-summary-data` for entity summaries, `analytics-history-data` for controller possession history with configurable retention.
 
 | Key Pattern | Store | Purpose |
 |-------------|-------|---------|
@@ -45,9 +45,7 @@ The Analytics plugin is the central event aggregation point for all game-related
 | `analytics-realm-game-service-cache:{realmId}` | analytics-summary (Redis) | Realm to game service ID cache (TTL: SummaryCacheTtlSeconds) |
 | `analytics-character-realm-cache:{characterId}` | analytics-summary (Redis) | Character to realm ID cache (TTL: SummaryCacheTtlSeconds) |
 | `{gameServiceId}:{ratingType}:{entityType}:{entityId}` | analytics-rating (Redis) | Glicko-2 skill rating data per entity per rating type |
-| `{gameServiceId}:controller:{accountId}:{timestamp:o}` | analytics-history (Redis) | Individual controller history events |
-| `analytics-controller-index:{gameServiceId}` | analytics-history (Redis) | Set of controller event keys per game service |
-| `analytics-controller-index:{gameServiceId}:account:{accountId}` | analytics-history (Redis) | Set of controller event keys per account |
+| `{gameServiceId}:controller:{accountId}:{timestamp:o}` | analytics-history-data (MySQL) | Individual controller history events |
 
 ## Events
 
@@ -89,6 +87,8 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 | `EventBufferLockExpiryBaseSeconds` | `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | 10 | Base distributed lock expiry (actual = max(this, 2x flush interval)) |
 | `RatingUpdateLockExpirySeconds` | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | 30 | Distributed lock expiry for skill rating update operations |
 | `Glicko2VolatilityConvergenceTolerance` | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | 1e-06 | Convergence tolerance for volatility iteration |
+| `ControllerHistoryRetentionDays` | `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | 90 | Days to retain controller history records (0 = indefinite) |
+| `ControllerHistoryCleanupBatchSize` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | 5000 | Maximum records to delete per cleanup invocation |
 
 ## DI Services & Helpers
 
@@ -119,9 +119,9 @@ Get returns a single entity's aggregated statistics by composite key from the My
 
 Get returns the current Glicko-2 rating or default values if no rating exists (not 404). Update takes a match with 2+ results, acquires a distributed lock on the game+ratingType combination, loads current ratings, snapshots pre-match values, calculates all Glicko-2 updates using original opponent ratings (order-independent), saves all ratings, then publishes `analytics.rating.updated` per player. Returns Conflict if the lock cannot be acquired (another update for the same game+type is in progress).
 
-### Controller History (`/analytics/controller-history/record`, `/analytics/controller-history/query`)
+### Controller History (`/analytics/controller-history/record`, `/analytics/controller-history/query`, `/analytics/controller-history/cleanup`)
 
-Records are stored individually and indexed in two sets: by game service (all events) and by account (per-account events). Query uses the account-specific or global index depending on whether `AccountId` is provided, loads all events from the index, filters in memory, sorts by timestamp descending, and applies limit.
+Records are stored in the MySQL `analytics-history-data` store. Query uses MySQL JSON functions via `JsonQueryPagedAsync` for server-side filtering (gameServiceId, accountId, targetEntityId, targetEntityType, time range), sorting by timestamp descending, and limit. Cleanup endpoint (admin-only) deletes records older than `ControllerHistoryRetentionDays` (default 90 days) in batches, with dry-run preview support.
 
 ## Visual Aid
 
@@ -204,14 +204,12 @@ Milestones are defined as a hardcoded array of thresholds. There is no API to de
 
 1. **Session mapping TTL too short for long sessions**: `SaveGameSessionMappingAsync` uses `SummaryCacheTtlSeconds` (default 300s = 5 min) as TTL. Game sessions can last hours. After expiry, every action event requires a full game-session service lookup, adding latency and inter-service traffic. The mapping should either have a much longer TTL, no TTL (cleaned up on session deletion), or use a separate TTL configuration.
 
-2. **Controller history accumulates indefinitely**: Events in `analytics-history` store have no TTL and no cleanup mechanism. Sets and entries grow without bound over time. Needs a retention policy (time-based TTL, count-based cap, or a cleanup endpoint).
+2. **Milestone thresholds are hardcoded**: The array defines thresholds as `{ 10, 25, 50, 100, 250, 500, 1000, ... }`. Per the tenets, hardcoded tunables should be configuration properties. Different games may want different milestone progressions. This should be either a configuration property or a per-game-service API.
 
-3. **Milestone thresholds are hardcoded**: The array defines thresholds as `{ 10, 25, 50, 100, 250, 500, 1000, ... }`. Per the tenets, hardcoded tunables should be configuration properties. Different games may want different milestone progressions. This should be either a configuration property or a per-game-service API.
+3. **Summary data config name is misleading**: `SummaryCacheTtlSeconds` is used for session mappings, game service caches, realm caches, and character caches, but NOT for entity summary data. Summaries persist in MySQL indefinitely. The configuration name implies summaries are cached with this TTL, but they're not. Consider renaming to clarify scope.
 
-4. **Summary data config name is misleading**: `SummaryCacheTtlSeconds` is used for session mappings, game service caches, realm caches, and character caches, but NOT for entity summary data. Summaries persist in MySQL indefinitely. The configuration name implies summaries are cached with this TTL, but they're not. Consider renaming to clarify scope.
+4. **Realm events use `EntityType.Custom`**: Realm participation/lore events use `EntityType.Custom` because the enum lacks a Realm value. This makes realm analytics indistinguishable from other custom entities in queries. Adding a `Realm` value to the EntityType enum (in the schema) would fix this.
 
-5. **Realm events use `EntityType.Custom`**: Realm participation/lore events use `EntityType.Custom` because the enum lacks a Realm value. This makes realm analytics indistinguishable from other custom entities in queries. Adding a `Realm` value to the EntityType enum (in the schema) would fix this.
+5. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `SummaryCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
 
-6. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `SummaryCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
-
-7. **Plugin lifecycle holds service reference past scope disposal**: `AnalyticsServicePlugin.OnStartAsync` creates a DI scope with `using var scope`, resolves `IAnalyticsService`, stores the reference as `_service`, then the scope is disposed at method exit. For scoped services, the stored reference is technically invalid after scope disposal. The reference continues to be used in `OnRunningAsync` and `OnShutdownAsync`. In practice this works because the service has no disposable dependencies that the scope would clean up, but it violates DI lifetime expectations.
+6. **Plugin lifecycle holds service reference past scope disposal**: `AnalyticsServicePlugin.OnStartAsync` creates a DI scope with `using var scope`, resolves `IAnalyticsService`, stores the reference as `_service`, then the scope is disposed at method exit. For scoped services, the stored reference is technically invalid after scope disposal. The reference continues to be used in `OnRunningAsync` and `OnShutdownAsync`. In practice this works because the service has no disposable dependencies that the scope would clean up, but it violates DI lifetime expectations.

@@ -222,6 +222,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/QueryControllerHistoryResponse'
 
+  /analytics/controller-history/cleanup:
+    post:
+      summary: Cleanup expired controller history
+      description: |
+        Deletes controller history records older than the configured retention period.
+        Runs in batches to avoid overwhelming the database. Returns count of deleted records.
+      operationId: cleanupControllerHistory
+      tags:
+      - Controller History
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupControllerHistoryRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupControllerHistoryResponse'
+
 components:
   schemas:
     # ============================================
@@ -775,6 +801,41 @@ components:
           format: uuid
           nullable: true
           description: Associated game session ID
+
+    CleanupControllerHistoryRequest:
+      type: object
+      description: Request to cleanup expired controller history records
+      additionalProperties: false
+      properties:
+        dryRun:
+          type: boolean
+          description: Preview cleanup without deleting records
+          default: true
+        olderThanDays:
+          type: integer
+          nullable: true
+          description: Override configured retention period (null uses ControllerHistoryRetentionDays config)
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Limit cleanup to specific game service (null cleans all)
+
+    CleanupControllerHistoryResponse:
+      type: object
+      description: Result of controller history cleanup
+      additionalProperties: false
+      required:
+      - recordsDeleted
+      - dryRun
+      properties:
+        recordsDeleted:
+          type: integer
+          format: int64
+          description: Records deleted (or would be deleted if dry run)
+        dryRun:
+          type: boolean
+          description: Whether this was a preview-only run
 
 # Service Registration Information
 x-service-registration:

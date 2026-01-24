@@ -113,4 +113,16 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     /// </summary>
     public double Glicko2VolatilityConvergenceTolerance { get; set; } = 1e-06;
 
+    /// <summary>
+    /// Days to retain controller history records (0 = indefinite retention)
+    /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS
+    /// </summary>
+    public int ControllerHistoryRetentionDays { get; set; } = 90;
+
+    /// <summary>
+    /// Maximum records to delete per cleanup invocation
+    /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE
+    /// </summary>
+    public int ControllerHistoryCleanupBatchSize { get; set; } = 5000;
+
 }

@@ -138,6 +138,19 @@ public interface IAnalyticsController : BeyondImmersion.BannouService.Controller
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryControllerHistoryResponse>> QueryControllerHistoryAsync(QueryControllerHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Cleanup expired controller history
+    /// </summary>
+
+    /// <remarks>
+    /// Deletes controller history records older than the configured retention period.
+    /// <br/>Runs in batches to avoid overwhelming the database. Returns count of deleted records.
+    /// </remarks>
+
+    /// <returns>Cleanup completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupControllerHistoryResponse>> CleanupControllerHistoryAsync(CleanupControllerHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -323,6 +336,23 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
     {
 
         var (statusCode, result) = await _implementation.QueryControllerHistoryAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Cleanup expired controller history
+    /// </summary>
+    /// <remarks>
+    /// Deletes controller history records older than the configured retention period.
+    /// <br/>Runs in batches to avoid overwhelming the database. Returns count of deleted records.
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("analytics/controller-history/cleanup")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupControllerHistoryResponse>> CleanupControllerHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupControllerHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CleanupControllerHistoryAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

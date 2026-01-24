@@ -173,7 +173,7 @@ subscription.updated (Renewed)
 
 4. **Query endpoint has no permissions**: `/subscription/query` has an empty `x-permissions` array, meaning any authenticated caller can query. This is intentional for service-to-service internal calls (Auth and GameSession need to call this without admin elevation).
 
-5. **Renewal extends from current expiration**: `RenewSubscriptionAsync` with `extensionDays` adds days from the current expiration date (not "now"). If a subscription expired 5 days ago and you add 30 days, it expires 25 days from now.
+5. **Renewal logic depends on expiration state**: `RenewSubscriptionAsync` with `extensionDays` extends from current expiration if still valid, but from "now" if already expired. Specifically: if `currentExpiration > now`, extends from `currentExpiration`; otherwise extends from `now`. A subscription that expired 5 days ago with 30-day extension expires 30 days from now (not 25).
 
 ### Design Considerations (Requires Planning)
 

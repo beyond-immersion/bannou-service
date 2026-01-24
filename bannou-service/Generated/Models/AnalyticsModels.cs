@@ -839,6 +839,54 @@ public partial class ControllerHistoryEvent
 
 }
 
+/// <summary>
+/// Request to cleanup expired controller history records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupControllerHistoryRequest
+{
+
+    /// <summary>
+    /// Preview cleanup without deleting records
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = true;
+
+    /// <summary>
+    /// Override configured retention period (null uses ControllerHistoryRetentionDays config)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("olderThanDays")]
+    public int? OlderThanDays { get; set; } = default!;
+
+    /// <summary>
+    /// Limit cleanup to specific game service (null cleans all)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of controller history cleanup
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupControllerHistoryResponse
+{
+
+    /// <summary>
+    /// Records deleted (or would be deleted if dry run)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recordsDeleted")]
+    public long RecordsDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this was a preview-only run
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

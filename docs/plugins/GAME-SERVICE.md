@@ -154,7 +154,7 @@ None identified.
 
 3. **Unix timestamps for dates**: `CreatedAtUnix` and `UpdatedAtUnix` stored as `long` (seconds since epoch), converted to `DateTimeOffset` in API responses.
 
-4. **Update cannot clear description**: Since `null` means "don't change" in the update request, there's no way to explicitly set description back to null once it has a value.
+4. **Update cannot set description to null**: Since `null` means "don't change" in the update request, there's no way to explicitly set description back to null once it has a value. However, setting to empty string `""` works — the null check (`body.Description != null`) passes for empty strings.
 
 ### Design Considerations (Requires Planning)
 
@@ -163,3 +163,5 @@ None identified.
 2. **No event consumers**: Three lifecycle events are published but no service currently subscribes to them. They exist for future integration (e.g., analytics tracking, subscription cleanup on delete).
 
 3. **No concurrency control on updates**: Two simultaneous updates to the same service will both succeed — last writer wins. Acceptable given admin-only access and low write frequency.
+
+4. **Dead event handler comment**: Line 39 references `GameServiceServiceEvents.cs` for event handler registration, but this file doesn't exist. The service is wired to support event consumers but none are defined.

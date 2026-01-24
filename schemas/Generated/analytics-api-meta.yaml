@@ -571,6 +571,55 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Query controller history\",\n    \"description\": \"Query who controlled
         what entity during a time range.\\nUseful for audit trails and replays.\\n\",\n    \"tags\": [\n        \"Controller
         History\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryControllerHistory\"\n}"
+  /analytics/controller-history/cleanup:
+    post:
+      summary: Cleanup expired controller history
+      description: |
+        Deletes controller history records older than the configured retention period.
+        Runs in batches to avoid overwhelming the database. Returns count of deleted records.
+      operationId: cleanupControllerHistory
+      tags:
+      - Controller History
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupControllerHistoryRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupControllerHistoryResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupControllerHistoryRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupControllerHistoryRequest\": {\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Request to cleanup expired controller history records\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"dryRun\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Preview cleanup without deleting records\",\n                    \"default\"\
+        : true\n                },\n                \"olderThanDays\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Override configured retention period
+        (null uses ControllerHistoryRetentionDays config)\"\n                },\n                \"gameServiceId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Limit cleanup to specific game service (null cleans all)\"\n     \
+        \           }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupControllerHistoryResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupControllerHistoryResponse\": {\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Result of controller history cleanup\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"recordsDeleted\",\n                \"dryRun\"\n            ],\n    \
+        \        \"properties\": {\n                \"recordsDeleted\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"format\": \"int64\",\n                    \"description\": \"Records deleted (or would be deleted
+        if dry run)\"\n                },\n                \"dryRun\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this was a preview-only run\"\n                }\n            }\n   \
+        \     }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cleanup expired controller history\",\n    \"description\": \"Deletes controller
+        history records older than the configured retention period.\\nRuns in batches to avoid overwhelming the database.
+        Returns count of deleted records.\\n\",\n    \"tags\": [\n        \"Controller History\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"cleanupControllerHistory\"\n}"
 components:
   schemas:
     EntityType:
@@ -1090,6 +1139,39 @@ components:
           format: uuid
           nullable: true
           description: Associated game session ID
+    CleanupControllerHistoryRequest:
+      type: object
+      description: Request to cleanup expired controller history records
+      additionalProperties: false
+      properties:
+        dryRun:
+          type: boolean
+          description: Preview cleanup without deleting records
+          default: true
+        olderThanDays:
+          type: integer
+          nullable: true
+          description: Override configured retention period (null uses ControllerHistoryRetentionDays config)
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Limit cleanup to specific game service (null cleans all)
+    CleanupControllerHistoryResponse:
+      type: object
+      description: Result of controller history cleanup
+      additionalProperties: false
+      required:
+      - recordsDeleted
+      - dryRun
+      properties:
+        recordsDeleted:
+          type: integer
+          format: int64
+          description: Records deleted (or would be deleted if dry run)
+        dryRun:
+          type: boolean
+          description: Whether this was a preview-only run
 x-service-registration:
   serviceId: "analytics"
   serviceName: "Analytics Service"

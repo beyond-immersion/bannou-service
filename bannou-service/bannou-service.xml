@@ -26847,6 +26847,19 @@
             <returns>Controller history retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.CleanupControllerHistoryAsync(BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cleanup expired controller history
+            </summary>
+            <remarks>
+            Deletes controller history records older than the configured retention period.
+            <br/>Runs in batches to avoid overwhelming the database. Returns count of deleted records.
+            </remarks>
+            <returns>Cleanup completed</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Analytics.AnalyticsClient">
             <summary>
             Client implementation for the Analytics service.
@@ -27025,6 +27038,19 @@
             <br/>Useful for audit trails and replays.
             </remarks>
             <returns>Controller history retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.CleanupControllerHistoryAsync(BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cleanup expired controller history
+            </summary>
+            <remarks>
+            Deletes controller history records older than the configured retention period.
+            <br/>Runs in batches to avoid overwhelming the database. Returns count of deleted records.
+            </remarks>
+            <returns>Cleanup completed</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ObjectResponseResult`1">
@@ -27574,6 +27600,41 @@
         <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.SessionId">
             <summary>
             Associated game session ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest">
+            <summary>
+            Request to cleanup expired controller history records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest.DryRun">
+            <summary>
+            Preview cleanup without deleting records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest.OlderThanDays">
+            <summary>
+            Override configured retention period (null uses ControllerHistoryRetentionDays config)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest.GameServiceId">
+            <summary>
+            Limit cleanup to specific game service (null cleans all)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryResponse">
+            <summary>
+            Result of controller history cleanup
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryResponse.RecordsDeleted">
+            <summary>
+            Records deleted (or would be deleted if dry run)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryResponse.DryRun">
+            <summary>
+            Whether this was a preview-only run
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.IAssetClient">
@@ -75841,7 +75902,10 @@
             <summary>Agent memory and cognitive state</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsHistory">
-            <summary>Controller possession history</summary>
+            <summary>Event buffer and legacy controller history (Redis for backward compatibility)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsHistoryData">
+            <summary>Controller possession history for queryable audit trails (MySQL for server-side filtering)</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsRating">
             <summary>Glicko-2 skill ratings</summary>

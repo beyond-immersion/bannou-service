@@ -198,7 +198,12 @@ x-state-stores:
     backend: redis
     prefix: "analytics:hist"
     service: Analytics
-    purpose: Controller possession history
+    purpose: Event buffer and legacy controller history (Redis for backward compatibility)
+
+  analytics-history-data:
+    backend: mysql
+    service: Analytics
+    purpose: Controller possession history for queryable audit trails (MySQL for server-side filtering)
 
   # ============================================================================
   # Leaderboard Stores
