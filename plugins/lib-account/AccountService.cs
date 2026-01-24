@@ -6,7 +6,6 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -231,7 +230,7 @@ public partial class AccountService : IAccountService
             foreach (var (account, authMethods) in batchResults)
             {
                 // Check if any auth method matches the provider filter
-                if (authMethods.Any(m => m.Provider.ToString() == providerFilter.ToString()))
+                if (authMethods.Any(m => m.Provider == providerFilter))
                 {
                     filteredAccounts.Add(new AccountResponse
                     {
@@ -713,8 +712,9 @@ public partial class AccountService : IAccountService
             }
 
             // Check if this provider is already linked on this account
+            var mappedProvider = MapOAuthProviderToAuthProvider(body.Provider);
             var existingMethod = authMethods.FirstOrDefault(m =>
-                m.Provider.ToString() == body.Provider.ToString() && m.ExternalId == body.ExternalId);
+                m.Provider == mappedProvider && m.ExternalId == body.ExternalId);
 
             if (existingMethod != null)
             {
@@ -882,7 +882,7 @@ public partial class AccountService : IAccountService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get auth methods for account: {AccountId}", accountId);
-            _ = PublishErrorEventAsync("GetAuthMethodsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId });
+            await PublishErrorEventAsync("GetAuthMethodsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId });
             throw; // Don't mask state store failures - empty list should mean "no auth methods", not "error"
         }
     }

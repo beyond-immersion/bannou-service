@@ -443,4 +443,137 @@ None identified.
 
 ---
 
+## Tenet Violations
+
+### QUALITY TENETS
+
+#### Logging Standards (T10)
+
+| File | Line | Description |
+|------|------|-------------|
+| `OrchestratorService.cs` | 226 | `LogInformation("Executing GetInfrastructureHealth operation")` - Operation entry should be `LogDebug` per T10 |
+| `OrchestratorService.cs` | 328 | `LogInformation("Executing GetServicesHealth operation")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 385 | `LogInformation("Executing ShouldRestartService operation...")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 406 | `LogInformation("Executing GetBackends operation")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 427 | `LogInformation("Executing GetPresets operation")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 1074 | `LogInformation("Executing GetServiceRouting operation")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 1136 | `LogInformation("Executing GetStatus operation")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 2115 | `LogInformation("Executing GetContainerStatus operation...")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 2144 | `LogInformation("Executing RollbackConfiguration operation...")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 2233 | `LogInformation("Executing GetConfigVersion operation")` - Operation entry should be `LogDebug` |
+| `OrchestratorService.cs` | 767 | `"[DryRun] Would deploy node {NodeName}..."` - Bracket tag prefix `[DryRun]` violates T10 format rules. Use structured template without brackets. |
+| `OrchestratorService.cs` | 1025 | `"[DryRun] Would deploy {deployedServices.Count} node(s)"` - Bracket tag prefix `[DryRun]` violates T10. |
+| `SmartRestartManager.cs` | 43 | `LogInformation("Initializing Docker client with host: {DockerHost}")` - Initialization detail should be `LogDebug` |
+| `SmartRestartManager.cs` | 48 | `LogInformation("Docker client initialized successfully")` - Initialization confirmation should be `LogDebug` |
+| `SmartRestartManager.cs` | 92-93 | `LogInformation("Restarting service: {ServiceName}...")` - Operation entry should be `LogDebug` |
+| `SmartRestartManager.cs` | 202-203 | `LogInformation("Waiting for {ServiceName} to become healthy...")` - Polling state should be `LogDebug` |
+| `BackendDetector.cs` | 47 | `LogInformation("Detecting available container orchestration backends...")` - Operation entry should be `LogDebug` |
+| `DockerComposeOrchestrator.cs` | 87-89 | `LogInformation("DockerComposeOrchestrator configured...")` - Constructor logging should be `LogDebug` |
+| `DockerComposeOrchestrator.cs` | 1022 | `LogInformation("Listing infrastructure services...")` - Operation entry should be `LogDebug` |
+| `PortainerOrchestrator.cs` | 549 | `LogInformation("Listing infrastructure services (Portainer mode)")` - Operation entry should be `LogDebug` |
+
+**What's wrong**: T10 requires operation entry to be at `Debug` level, not `Information`. Information is reserved for significant state changes (business decisions). Bracket tag prefixes like `[DryRun]` are explicitly forbidden.
+
+**Fix**: Change `LogInformation` to `LogDebug` for operation entry points. Remove bracket prefixes and use structured message templates (e.g., `"DryRun mode: would deploy node {NodeName}..."`).
+
+---
+
+#### XML Documentation (T19)
+
+| File | Line | Description |
+|------|------|-------------|
+| `DockerComposeOrchestrator.cs` | 1064 | `public void Dispose()` - Missing XML documentation on public method |
+| `BackendDetector.cs` | 340-346 | `internal static class LoggerExtensions` / `CreateLogger<T>` - Missing XML documentation on internal members (acceptable for internal, but public members of internal class still benefit from docs) |
+
+**What's wrong**: T19 requires XML documentation on all public members.
+
+**Fix**: Add `<summary>` tags to the `Dispose()` method.
+
+---
+
+### IMPLEMENTATION TENETS
+
+#### JSON Serialization (T20)
+
+| File | Line | Description |
+|------|------|-------------|
+| `PortainerOrchestrator.cs` | 42-46 | `private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true }` - Direct `System.Text.Json.JsonSerializerOptions` usage |
+
+**What's wrong**: T20 mandates all JSON serialization use `BannouJson`. The comment explains Portainer API uses camelCase which differs from `BannouJson.Options`, but T20 explicitly states "even with custom options!" is forbidden.
+
+**Fix**: Either extend `BannouJson` to support alternate serialization profiles (e.g., `BannouJson.ExternalApiOptions`) or document this as a T20 exception for external API communication (similar to the null-coalesce external service pattern). The comment at line 40 explains the reasoning but doesn't constitute a formal tenet exception.
+
+---
+
+#### Multi-Instance Safety (T9)
+
+| File | Line | Description |
+|------|------|-------------|
+| `OrchestratorService.cs` | 50 | `private DeploymentConfiguration? _lastKnownDeployment` - In-memory authoritative state that can diverge across instances |
+| `OrchestratorService.cs` | 39-44 | `private IContainerOrchestrator? _orchestrator` / `_orchestratorCachedAt` - In-memory cache fields on scoped service (see Design Considerations note - these are harmless per-request caches but the pattern is misleading) |
+| `DockerComposeOrchestrator.cs` | 64-68 | `_discoveredNetwork`, `_networkDiscoveryAttempted`, `_discoveredInfrastructureHosts`, `_infrastructureDiscoveryAttempted` - In-memory caches on non-scoped orchestrator instances that can become stale |
+
+**What's wrong**: T9 forbids in-memory authoritative state. `_lastKnownDeployment` is mutated on line 1011 and read on line 1116 as the authoritative deployment ID source. If multiple orchestrator instances exist, they would have divergent views. The DockerComposeOrchestrator caches are acceptable for single-instance backends but could cause issues if the orchestrator is horizontally scaled.
+
+**Fix**: For `_lastKnownDeployment`, always read from `_stateManager.GetCurrentConfigurationAsync()` instead of caching in-memory. For DockerComposeOrchestrator, the caches are acceptable given the backend is inherently single-node, but add a comment documenting this assumption.
+
+---
+
+#### Configuration-First (T21)
+
+| File | Line | Description |
+|------|------|-------------|
+| `DockerComposeOrchestrator.cs` | 677 | `var imageName = "bannou:latest"` - Hardcoded Docker image name. Should be configurable for custom builds/registries. |
+| `DockerSwarmOrchestrator.cs` | 369 | `var imageName = "bannou:latest"` - Same hardcoded Docker image name. |
+| `SmartRestartManager.cs` | 20 | `private const int DEFAULT_RESTART_TIMEOUT_SECONDS = 120` - Hardcoded tunable. Should come from configuration. |
+| `SmartRestartManager.cs` | 21 | `private const int HEALTH_CHECK_INTERVAL_MS = 2000` - Hardcoded tunable. Should be configurable. |
+| `SmartRestartManager.cs` | 119 | `WaitBeforeKillSeconds = 30` - Hardcoded timeout tunable. |
+| `DockerComposeOrchestrator.cs` | 82-85 | Fallback values `"bannou_default"`, `"/app/provisioning/certificates"`, etc. using `??` on configuration values - These are acceptable defaults but ideally all defaults are schema-defined. |
+
+**What's wrong**: T21 states hardcoded tunables are forbidden - numeric literals representing limits, timeouts, or thresholds need configuration properties. Docker image names are also tunables that should be configurable to support different registries or image tags.
+
+**Fix**: Add configuration properties for `DockerImageName` (default: `"bannou:latest"`), `RestartTimeoutSeconds` (default: 120), `HealthCheckIntervalMs` (default: 2000), and `WaitBeforeKillSeconds` (default: 30) to the orchestrator configuration schema.
+
+---
+
+#### Async Method Pattern (T23)
+
+| File | Line | Description |
+|------|------|-------------|
+| `OrchestratorService.cs` | 2037 | `_ = PublishErrorEventAsync(...)` - Fire-and-forget discards the Task without awaiting. The `_` discard means exceptions are silently lost and the async operation may not complete. |
+| `SmartRestartManager.cs` | 56 | `await Task.CompletedTask` placed AFTER a try-catch block (line 40-54) that contains only synchronous code. The await is unreachable if an exception is thrown and re-thrown. The method should either be made properly async or restructured. |
+
+**What's wrong**: T23 requires all Task-returning methods to use async/await properly. Discarding a Task with `_ =` means the operation is fire-and-forget, losing any exceptions. The `SmartRestartManager.InitializeAsync` has `await Task.CompletedTask` after a `throw` in the catch block, making it dead code in the error path.
+
+**Fix**: For line 2037, change to `await PublishErrorEventAsync(...)`. For SmartRestartManager.InitializeAsync, remove the trailing `await Task.CompletedTask` since the method already throws on failure and has no actual async work (the Docker client creation is synchronous). If the interface requires `Task`, keep `async` keyword and place `await Task.CompletedTask` inside the try block after sync work.
+
+---
+
+#### Using Statement Pattern (T24)
+
+| File | Line | Description |
+|------|------|-------------|
+| `DockerComposeOrchestrator.cs` | 636-637 | `var stdout = new MemoryStream(); var stderr = new MemoryStream();` - MemoryStream instances created without `using` statements. While MemoryStream.Dispose() is a no-op for unmanaged resources, the pattern violates T24's requirement to use `using` for all disposables. |
+
+**What's wrong**: T24 requires `using` statements for all IDisposable objects in method scope. MemoryStream implements IDisposable and should be wrapped with `using`.
+
+**Fix**: Change to `using var stdout = new MemoryStream(); using var stderr = new MemoryStream();`. Note: the `stdout` stream is used as a parameter to `new StreamReader(stdout)` which itself uses `using`, but the StreamReader does not own the stream in all code paths. Both should have explicit `using`.
+
+---
+
+### FOUNDATION TENETS
+
+#### Error Handling (T7)
+
+| File | Line | Description |
+|------|------|-------------|
+| `DockerSwarmOrchestrator.cs` | 350 | `catch` - Bare catch without exception variable. Swallows all exceptions silently with no logging. |
+| `KubernetesOrchestrator.cs` | 57 | `catch` - Bare catch without exception variable in constructor. Falls back to kubeconfig without logging what failed. |
+
+**What's wrong**: T7 requires proper error handling with exception context. Bare `catch` blocks swallow exceptions without any logging or context, making debugging impossible.
+
+**Fix**: Change to `catch (Exception ex)` and add appropriate debug logging: `_logger.LogDebug(ex, "In-cluster config not available, falling back to kubeconfig")` for KubernetesOrchestrator, and `_logger.LogDebug(ex, "Failed to list service tasks for {ServiceId}", serviceId)` for DockerSwarmOrchestrator.
+
+---
+
 *This document describes the orchestrator plugin as implemented. For architectural context, see [TENETS.md](../reference/TENETS.md) and [BANNOU_DESIGN.md](../BANNOU_DESIGN.md).*

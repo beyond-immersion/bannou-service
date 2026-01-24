@@ -321,13 +321,13 @@ Per T22, "retained for future use" is not an allowed suppression exception.
 
 **Fix**: Remove the field, import, and constructor parameter. Add back when needed.
 
-### 9. IMPLEMENTATION TENETS (T9): TOCTOU Race in Template Code Uniqueness
+### 9. ~~IMPLEMENTATION TENETS (T9): TOCTOU Race in Template Code Uniqueness~~ FIXED
 
-**File**: `plugins/lib-item/ItemService.cs`, lines 78-130
+**File**: `plugins/lib-item/ItemService.cs`
 
-`CreateItemTemplateAsync` checks code uniqueness via `GetAsync` then writes. In multi-instance deployment, two instances could simultaneously pass the check and both create templates with the same code.
+~~`CreateItemTemplateAsync` checks code uniqueness via `GetAsync` then writes. In multi-instance deployment, two instances could simultaneously pass the check and both create templates with the same code.~~
 
-**Fix**: Use `IDistributedLockProvider` to lock on `item-code:{gameId}:{code}`, or use `TrySaveAsync` with null etag on the code index key.
+**Fixed**: Code index key is now claimed atomically using `GetWithETagAsync` + `TrySaveAsync` before saving the template. If the claim fails (another instance created between read and write), returns `Conflict`.
 
 ### 10. QUALITY TENETS (T10): Missing/Wrong-Level Operation Entry Logging
 

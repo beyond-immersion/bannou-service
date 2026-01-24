@@ -57,12 +57,12 @@ public partial class AchievementService : IAchievementService
         IEnumerable<IPlatformAchievementSync> platformSyncs,
         IDistributedLockProvider lockProvider)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _platformSyncs = platformSyncs ?? throw new ArgumentNullException(nameof(platformSyncs));
-        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _platformSyncs = platformSyncs;
+        _lockProvider = lockProvider;
 
         RegisterEventConsumers(eventConsumer);
     }

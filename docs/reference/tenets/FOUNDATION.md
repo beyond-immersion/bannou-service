@@ -538,14 +538,14 @@ public partial class ServiceNameService : IServiceNameService
         IEventConsumer eventConsumer,
         IAuthClient authClient)
     {
+        // NRT-protected parameters: no null checks needed - compiler enforces non-null at call sites
         _stateStore = stateStoreFactory.GetStore<ServiceModel>(StateStoreDefinitions.ServiceName);
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _authClient = authClient;
 
         // Register event handlers via partial class
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 
