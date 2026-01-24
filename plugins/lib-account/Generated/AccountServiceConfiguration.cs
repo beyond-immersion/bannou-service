@@ -66,12 +66,6 @@ public class AccountServiceConfiguration : IServiceConfiguration
     public string? AdminEmailDomain { get; set; }
 
     /// <summary>
-    /// Maximum retry attempts for account index update operations
-    /// Environment variable: ACCOUNT_INDEX_UPDATE_MAX_RETRIES
-    /// </summary>
-    public int IndexUpdateMaxRetries { get; set; } = 3;
-
-    /// <summary>
     /// Number of accounts to process per batch in list operations
     /// Environment variable: ACCOUNT_LIST_BATCH_SIZE
     /// </summary>

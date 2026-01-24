@@ -20,9 +20,9 @@ public class AccountServiceTests
     private readonly AccountServiceConfiguration _configuration;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<AccountModel>> _mockAccountStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<AuthMethodInfo>>> _mockAuthMethodsStore;
+    private readonly Mock<IJsonQueryableStateStore<AccountModel>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -34,9 +34,9 @@ public class AccountServiceTests
         _configuration = new AccountServiceConfiguration();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockAccountStore = new Mock<IStateStore<AccountModel>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockAuthMethodsStore = new Mock<IStateStore<List<AuthMethodInfo>>>();
+        _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<AccountModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -45,14 +45,14 @@ public class AccountServiceTests
             .Setup(f => f.GetStore<AccountModel>(ACCOUNT_STATE_STORE))
             .Returns(_mockAccountStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<List<string>>(ACCOUNT_STATE_STORE))
-            .Returns(_mockListStore.Object);
-        _mockStateStoreFactory
             .Setup(f => f.GetStore<string>(ACCOUNT_STATE_STORE))
             .Returns(_mockStringStore.Object);
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<AuthMethodInfo>>(ACCOUNT_STATE_STORE))
             .Returns(_mockAuthMethodsStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<AccountModel>(ACCOUNT_STATE_STORE))
+            .Returns(_mockJsonQueryableStore.Object);
     }
 
     #region Permission Registration Tests

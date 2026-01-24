@@ -13,7 +13,7 @@ The Account plugin is an internal-only CRUD service for managing user accounts. 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (IStateStoreFactory) | All persistence - account records, email indices, provider indices, auth methods, and the pagination index |
+| lib-state (IStateStoreFactory) | All persistence - account records, email indices, provider indices, auth methods. Uses IJsonQueryableStateStore for paginated listing via MySQL JSON queries |
 | lib-messaging (IMessageBus) | Publishing lifecycle events (created/updated/deleted) and error events |
 | Permission service (via AccountPermissionRegistration) | Registers its endpoint permission matrix on startup via a messaging event |
 
@@ -40,7 +40,6 @@ All data types are stored in the same logical store, differentiated by key prefi
 | `email-index-{email_lowercase}` | `string` (accountId) | Email-to-account lookup index for login flows |
 | `provider-index-{provider}:{externalId}` | `string` (accountId) | OAuth provider-to-account lookup index |
 | `auth-methods-{accountId}` | `List<AuthMethodInfo>` | OAuth methods linked to an account (provider, external ID, method ID, link timestamp) |
-| `accounts-list` | `List<string>` (accountIds) | Ordered list of all account IDs for paginated listing |
 
 ## Events
 
@@ -66,8 +65,7 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 |----------|---------|---------|---------|
 | `AdminEmails` | `ACCOUNT_ADMIN_EMAILS` | null (optional) | Comma-separated list of email addresses that automatically receive the "admin" role on account creation |
 | `AdminEmailDomain` | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | null (optional) | Email domain suffix (e.g., "@company.com") that grants automatic admin role to all matching addresses |
-| `IndexUpdateMaxRetries` | `ACCOUNT_INDEX_UPDATE_MAX_RETRIES` | 3 | Maximum retry attempts when updating the `accounts-list` index with optimistic concurrency |
-| `ListBatchSize` | `ACCOUNT_LIST_BATCH_SIZE` | 100 | Number of accounts loaded per batch when applying filters in the list endpoint |
+| `ListBatchSize` | `ACCOUNT_LIST_BATCH_SIZE` | 100 | Number of accounts loaded per batch when applying provider filter in the list endpoint |
 
 ## DI Services & Helpers
 
@@ -86,10 +84,10 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 
 Standard CRUD operations (`create`, `get`, `update`, `delete`, `list`) on account records with optimistic concurrency via ETags on all mutation operations. The `list` endpoint has two execution paths:
 
-- **Unfiltered path**: Loads only the page of account IDs needed from the `accounts-list` index (newest-first ordering via list reversal), then loads each account individually.
-- **Filtered path**: Scans all accounts in batches of `ListBatchSize`, applies in-memory filters (email, displayName, provider, verified status), then paginates the results.
+- **Standard path** (no provider filter): Uses `IJsonQueryableStateStore.JsonQueryPagedAsync()` to query account records directly from MySQL with server-side pagination, filtering (email, displayName, verified), and sorting (newest-first via `$.CreatedAtUnix` descending). The `$.AccountId exists` condition acts as a type discriminator to match only account records in the shared store.
+- **Provider-filtered path** (rare admin operation): Queries all matching accounts from MySQL, then loads auth methods for each and filters by provider in-memory. Auth methods are stored in separate keys so provider filtering cannot be a single JSON query.
 
-The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cleans up the email index and removes the ID from the pagination list.
+The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cleans up the email index and provider index entries.
 
 ### Account Lookup
 
@@ -109,9 +107,6 @@ Add/remove OAuth provider links. Adding a method creates both the auth method en
 ## State Store Key Relationships
 
 ```
-accounts-list: [ "guid-1", "guid-2", "guid-3", ... ]
-       │
-       ▼ (each entry is an account ID)
 account-{id} ──────────────────────────────────────────┐
   ├─ AccountId (Guid)                                   │
   ├─ Email ──► email-index-{email} ──► account ID      │
@@ -128,7 +123,10 @@ auth-methods-{id}: [ AuthMethodInfo, ... ] ────────────�
   ├─ ExternalId    ──► account ID                       │
   └─ LinkedAt                                           │
                                                         │
-On Delete: email-index removed, accounts-list cleaned,  │
+Listing: JsonQueryPagedAsync with $.AccountId exists    │
+         discriminator queries account records directly │
+                                                        │
+On Delete: email-index removed,                         │
            provider-index + auth-methods removed ◄──────┘
 ```
 
@@ -140,7 +138,6 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 
 ## Potential Extensions
 
-- **Account search/query**: The current `list` endpoint loads all accounts into memory for filtering. A proper query mechanism using the MySQL backend's query capabilities (via the state store's query API) would be more efficient for large account volumes.
 - **Account merge**: No mechanism exists to merge two accounts (e.g., when a user registers with email then later tries to register with the same OAuth provider under a different email). The data model supports multiple auth methods per account, but there's no merge workflow.
 - **Audit trail**: Account mutations publish events but don't maintain a per-account change history. An extension could store a changelog for compliance/debugging.
 - **Email change**: There is no endpoint for changing an account's email address. The email index would need to be atomically swapped (delete old index, create new index, update account record) with proper concurrency handling.
@@ -152,8 +149,6 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 
 2. **Password hash in by-email response (intentional, internal-only)**: `GetAccountByEmailAsync` includes `PasswordHash` in its response, unlike other endpoints. This exists specifically for the Auth service's `BCrypt.Verify` call during login. The Account service is internal-only (never internet-facing) and `by-email` requires admin-level permissions, so this is not a security concern within the architecture. The regular `get` endpoint omits the hash.
 
-3. **Soft-delete with immediate index removal (correct behavior)**: Deleting an account sets `DeletedAt` but immediately removes the email index and accounts-list entries. This is the intended behavior: deleted accounts disappear from lookup paths (can't log in, can't be listed) but remain loadable by ID for audit/recovery. The `DeletedAt` check returns 404 for direct loads, completing the soft-delete semantics.
+3. **Soft-delete with immediate index removal (correct behavior)**: Deleting an account sets `DeletedAt` but immediately removes the email index and provider index entries. This is the intended behavior: deleted accounts disappear from lookup paths (can't log in, can't be listed) but remain loadable by ID for audit/recovery. The `DeletedAt` check returns 404 for direct loads, and the `$.DeletedAtUnix notExists` query condition excludes them from listings.
 
 4. **Admin auto-assignment is creation-time only**: The `ShouldAssignAdminRole` check runs only during `CreateAccountAsync`. Changing `AdminEmails` or `AdminEmailDomain` configuration does not retroactively promote or demote existing accounts. This is acceptable - operational role changes for existing accounts should use the explicit `update` endpoint rather than implicit config-driven mutation.
-
-5. **accounts-list unbounded growth (design limitation)**: New accounts are appended to a single `accounts-list` key, reversed on every unfiltered page request (O(n)). This approach doesn't scale well beyond tens of thousands of accounts. Fixing this requires migrating to cursor-based pagination using the MySQL backend's query capabilities or a sorted set structure - a larger design change that affects the list endpoint, create, delete, and the retry logic in `RemoveAccountFromIndexAsync`.

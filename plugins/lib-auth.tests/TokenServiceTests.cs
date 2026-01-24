@@ -105,13 +105,13 @@ public class TokenServiceTests
     }
 
     [Fact]
-    public void GenerateRefreshToken_ShouldReturn32CharacterGuidFormat()
+    public void GenerateRefreshToken_ShouldReturn64CharacterHexString()
     {
         // Act
         var token = _service.GenerateRefreshToken();
 
-        // Assert - Guid.ToString("N") produces 32 hex characters
-        Assert.Equal(32, token.Length);
+        // Assert - 32 random bytes converted to lowercase hex produces 64 characters
+        Assert.Equal(64, token.Length);
         Assert.True(token.All(c => char.IsLetterOrDigit(c)));
     }
 
@@ -278,19 +278,28 @@ public class TokenServiceTests
     #region GenerateAccessTokenAsync Tests
 
     [Fact]
-    public async Task GenerateAccessTokenAsync_WithEmptyJwtSecret_ShouldThrowArgumentException()
+    public async Task GenerateAccessTokenAsync_WithEmptyJwtSecret_ShouldThrowInvalidOperationException()
     {
-        // Arrange - JWT config now comes from Program.Configuration
-        // Empty JwtSecret causes SymmetricSecurityKey to throw ArgumentException
-        TestConfigurationHelper.ConfigureJwt(jwtSecret: "", jwtIssuer: "test-issuer", jwtAudience: "test-audience");
+        // Arrange - Create a service with empty JwtSecret in injected AppConfiguration
+        var emptySecretConfig = new AppConfiguration
+        {
+            JwtSecret = "",
+            JwtIssuer = "test-issuer",
+            JwtAudience = "test-audience"
+        };
+        var serviceWithEmptySecret = new TokenService(
+            _mockStateStoreFactory.Object,
+            _mockSubscriptionClient.Object,
+            _mockSessionService.Object,
+            _configuration,
+            emptySecretConfig,
+            _mockMessageBus.Object,
+            _mockLogger.Object);
         var account = CreateTestAccount();
 
-        // Act & Assert - SymmetricSecurityKey throws ArgumentException for zero-length key
-        await Assert.ThrowsAsync<ArgumentException>(() =>
-            _service.GenerateAccessTokenAsync(account));
-
-        // Cleanup - restore valid config for other tests
-        TestConfigurationHelper.ConfigureJwt();
+        // Act & Assert - Empty JwtSecret throws InvalidOperationException (misconfigured service)
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            serviceWithEmptySecret.GenerateAccessTokenAsync(account));
     }
 
     [Fact]

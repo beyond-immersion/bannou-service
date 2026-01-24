@@ -110,7 +110,12 @@ public class TokenService : ITokenService
         await _sessionService.AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
         await _sessionService.AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
-        var key = Encoding.UTF8.GetBytes(_appConfiguration.JwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
+        if (string.IsNullOrWhiteSpace(_appConfiguration.JwtSecret))
+        {
+            throw new InvalidOperationException("JWT secret not configured");
+        }
+
+        var key = Encoding.UTF8.GetBytes(_appConfiguration.JwtSecret);
         var tokenHandler = new JwtSecurityTokenHandler();
 
         var claims = new List<Claim>

@@ -432,7 +432,10 @@ public class AuthServiceTests
     [Fact]
     public async Task ValidateTokenAsync_WithMalformedJwt_ShouldReturnUnauthorized()
     {
-        // Arrange
+        // Arrange - TokenService returns Unauthorized for malformed JWTs
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("not-a-valid-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.Unauthorized, (ValidateTokenResponse?)null));
         var service = CreateAuthService();
 
         // Act - pass a clearly invalid JWT format
@@ -571,6 +574,9 @@ public class AuthServiceTests
     public async Task InitOAuthAsync_ShouldReturnAuthorizationUrl()
     {
         // Arrange
+        _mockOAuthService
+            .Setup(o => o.GetAuthorizationUrl(Provider.Discord, "https://example.com/callback", "test-state"))
+            .Returns("https://discord.com/oauth2/authorize?client_id=test&state=test-state");
         var service = CreateAuthService();
 
         // Act

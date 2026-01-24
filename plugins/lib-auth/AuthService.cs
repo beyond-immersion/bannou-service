@@ -911,6 +911,12 @@ public partial class AuthService : IAuthService
         string jwt,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(jwt))
+        {
+            _logger.LogWarning("JWT token is null or empty for validation");
+            return (StatusCodes.Unauthorized, null);
+        }
+
         return await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
     }
 
