@@ -56,6 +56,14 @@ public partial class AnalyticsService
             "realm-history.lore.updated",
             async (svc, evt) => await ((AnalyticsService)svc).HandleRealmLoreUpdatedAsync(evt));
 
+        // Cache invalidation events
+        eventConsumer.RegisterHandler<IAnalyticsService, CharacterUpdatedEvent>(
+            "character.updated",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleCharacterUpdatedForCacheInvalidationAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, RealmUpdatedEvent>(
+            "realm.updated",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleRealmUpdatedForCacheInvalidationAsync(evt));
     }
 
     /// <summary>

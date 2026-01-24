@@ -40,10 +40,10 @@ The Analytics plugin is the central event aggregation point for all game-related
 | `{gameServiceId}:{entityType}:{entityId}` | analytics-summary-data (MySQL) | Entity summary aggregations (event counts, aggregates, timestamps) |
 | `analytics-event-buffer-entry:{eventId}` | analytics-summary (Redis) | Individual buffered event entries awaiting flush |
 | `analytics-event-buffer-index` | analytics-summary (Redis) | Sorted set of buffered event keys (scored by timestamp) |
-| `analytics-session-mapping:{sessionId}` | analytics-summary (Redis) | Game session to game service ID cache (TTL: SummaryCacheTtlSeconds) |
-| `analytics-game-service-cache:{stubName}` | analytics-summary (Redis) | Game type stub to service ID cache (TTL: SummaryCacheTtlSeconds) |
-| `analytics-realm-game-service-cache:{realmId}` | analytics-summary (Redis) | Realm to game service ID cache (TTL: SummaryCacheTtlSeconds) |
-| `analytics-character-realm-cache:{characterId}` | analytics-summary (Redis) | Character to realm ID cache (TTL: SummaryCacheTtlSeconds) |
+| `analytics-session-mapping:{sessionId}` | analytics-summary (Redis) | Game session to game service ID cache (TTL: SessionMappingTtlSeconds) |
+| `analytics-game-service-cache:{stubName}` | analytics-summary (Redis) | Game type stub to service ID cache (TTL: ResolutionCacheTtlSeconds) |
+| `analytics-realm-game-service-cache:{realmId}` | analytics-summary (Redis) | Realm to game service ID cache (TTL: ResolutionCacheTtlSeconds) |
+| `analytics-character-realm-cache:{characterId}` | analytics-summary (Redis) | Character to realm ID cache (TTL: ResolutionCacheTtlSeconds) |
 | `{gameServiceId}:{ratingType}:{entityType}:{entityId}` | analytics-rating (Redis) | Glicko-2 skill rating data per entity per rating type |
 | `{gameServiceId}:controller:{accountId}:{timestamp:o}` | analytics-history-data (MySQL) | Individual controller history events |
 
@@ -174,17 +174,16 @@ Direct API
 
 The Glicko-2 algorithm includes a concept of "rating period decay" where a player's rating deviation increases over time when they don't play. The `CalculateGlicko2Update` handles the no-games case (deviation increases by volatility), but there is no scheduled task or event that triggers this decay for inactive players. Players who stop playing retain their last RD indefinitely.
 
-### Custom Milestone Definitions
+### Per-Game Milestone Definitions
 
-Milestones are defined as a hardcoded array of thresholds. There is no API to define custom milestone values per game service or score type. All entities use the same threshold set regardless of context.
+Milestones are configurable via `MilestoneThresholds` as a global comma-separated list. There is no API to define custom milestone values per game service or score type. All entities use the same configured threshold set regardless of context.
 
 ## Potential Extensions
 
 - **Rating period scheduling**: A background task that periodically increases RD for inactive players (common in competitive games)
-- **Custom milestones**: Configuration or API for game-specific milestone definitions
+- **Per-game milestones**: API for game-specific milestone definitions (currently global config only)
 - **Event replay**: Ability to reprocess buffered events after a bug fix (currently events are deleted after processing)
 - **Time-series queries**: Adding time-bucketed aggregations for trend analysis
-- **Realm EntityType**: Adding a `Realm` value to the `EntityType` enum to properly distinguish realm analytics from custom entities
 
 ## Known Quirks & Caveats
 

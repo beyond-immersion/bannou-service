@@ -334,6 +334,12 @@ Index Architecture
 
 2. **DecayMemories calculates decay amount twice**: In the `DecayMemoriesAsync` method, `CalculateDecay` is called first (which internally calls `GetDecayAmount`), then `GetDecayAmount` is called again separately to apply the actual decay. Between these two calls, time advances, so the actual decay applied may differ slightly from what was calculated in the check.
 
+3. **Lazy decay has no ETag concurrency control**: The `ApplyLazyDecayAsync` method (lines 1998-2030) uses `store.SaveAsync` without ETag protection, unlike `DecayMemoriesAsync` which uses `GetWithETagAsync` + `TrySaveAsync`. Two concurrent reads of the same stale perspective could both calculate and apply decay, resulting in double-decay (perspective strength reduced twice). This is particularly problematic because lazy decay happens during read operations (`QueryByCharacter`, `QueryBetween`, `QueryByLocation`, `GetPerspective`, `GetSentiment`).
+
+4. **ApplyLazyDecayAsync also calculates decay twice**: Same pattern as Bug #2—`ApplyLazyDecayAsync` at lines 2003 and 2006 calls `CalculateDecay` (which calls `GetDecayAmount`) then calls `GetDecayAmount` again to apply the actual decay. Time advances between calls.
+
+5. **EncounterDeletedEvent assumes one perspective per participant**: At line 1350, `PerspectivesDeleted = encounter.ParticipantIds.Count` assumes every participant has exactly one perspective. If data inconsistency exists (orphaned perspectives, missing perspectives), the event reports the wrong count.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Pair key sorting**: Pair indexes use the lexicographically smaller GUID first (`charA < charB ? A:B : B:A`) to ensure both directions of a relationship map to the same index key.
@@ -369,3 +375,7 @@ Index Architecture
 7. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
 
 8. **FindPerspective scans character index**: Finding a specific perspective by (encounterId, characterId) requires loading the character's entire perspective index and then loading each perspective until finding one matching the encounter. There is no direct encounter-to-perspective index.
+
+9. **Index operations are not atomic**: All index update methods (`AddToCharacterIndexAsync`, `AddToGlobalCharacterIndexAsync`, `AddToCustomTypeIndexAsync`, `AddToLocationIndexAsync`, `UpdatePairIndexesAsync`, etc.) use read-modify-write without ETags. Two concurrent encounter recordings for the same character could both read the same index state, both add their perspective ID, and save—the second save overwrites the first, losing an entry. This is mitigated by the scoped service lifetime (requests are typically serialized per character) but could occur under high concurrency.
+
+10. **GetSentiment loads encounters redundantly**: In `GetSentimentAsync` (line 900-901), the encounter is loaded to... do nothing with it. The perspective is then found via `GetEncounterPerspectivesAsync` which loads the encounter AGAIN. The encounter load at line 900 is vestigial code that wastes a state store call per encounter.

@@ -389,6 +389,10 @@ Authoring Workflow
 
 2. **Orphaned spatial/type indexes on channel reset**: When `ClearChannelDataAsync` runs (reset takeover mode), it deletes objects and the region index but leaves spatial and type indexes pointing to deleted objects. Subsequent queries will attempt to load deleted objects (returning null, filtered out) but the index entries persist indefinitely.
 
+3. **Grace period warning never triggers**: In `AuthorityHeartbeatAsync` (lines 486-487), the warning check is performed AFTER extending the expiry to `now + AuthorityTimeoutSeconds`. The remaining time will always be approximately `AuthorityTimeoutSeconds`, so the `< AuthorityGracePeriodSeconds` condition will never be true unless `AuthorityGracePeriodSeconds > AuthorityTimeoutSeconds` (a misconfiguration). The check should evaluate remaining time BEFORE extending, not after.
+
+4. **Index operations are not atomic**: The spatial, type, and region index operations (lines 1862-1979) perform read-modify-write on Redis lists without atomicity. Two concurrent requests adding objects to the same index cell could both read the same list, both add their object, and save—the second save overwrites the first, losing an object. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Static ConcurrentDictionary for subscriptions**: `IngestSubscriptions` and `EventAggregationBuffers` are `static readonly` fields. This means subscription state survives across scoped service instances within the same process. This is intentional -- subscriptions must outlive individual HTTP requests.
@@ -418,3 +422,15 @@ Authoring Workflow
 5. **Definition index is a single key**: All definition IDs are stored in one `List<Guid>`. With hundreds of definitions, this key becomes large and every CRUD operation requires loading/saving the entire list. A Redis SET or secondary index would scale better.
 
 6. **Per-kind TTL conventions**: Durable kinds (terrain, static_geometry, navigation, ownership) use `-1` meaning no TTL. Ephemeral kinds (combat_effects at 30s, visual_effects at 60s) auto-expire from Redis. If an ephemeral object's spatial index entry outlives the object, queries will find the index entry but the object load returns null (safely filtered out, but wastes a round-trip).
+
+7. **MaxAffordanceCandidates applies per-kind, not total**: In `QueryAffordanceAsync` (lines 1052-1058), `MaxAffordanceCandidates` is passed to each kind query individually, then results are combined with `AddRange`. With 3 kinds and a limit of 1000, you could evaluate up to 3000 candidates total, not 1000.
+
+8. **Cached affordance metadata is overwritten**: When returning a cached affordance result (lines 1033-1040), the `QueryMetadata` is replaced with placeholder values (`KindsSearched = []`, `ObjectsEvaluated = 0`, `CandidatesGenerated = 0`). The original search statistics from the cached response are lost—only `CacheHit = true` is accurate.
+
+9. **Objects without position get origin coordinates**: In `QueryAffordanceAsync` (line 1086), when a candidate object has `null` Position but passes the score threshold, the response uses `new Position3D { X = 0, Y = 0, Z = 0 }` as a default. This could place affordance locations at the world origin unexpectedly.
+
+10. **Custom affordance exclusions check property existence, not value**: In `AffordanceScorer.ScoreCustomAffordance` (lines 206-212), the exclusions logic checks if a property EXISTS on the object data, regardless of its value. Configuring `excludes: { is_occupied: true }` will exclude objects with `is_occupied: false` too. This is intentional (simple implementation) but could be surprising.
+
+11. **Unknown affordance types search all map kinds**: In `AffordanceScorer.GetKindsForAffordanceType` (lines 24-26), the `Custom` type and the fallback case (`_`) both return ALL `MapKind` values. An unknown affordance type triggers the most expensive possible query, searching every kind.
+
+12. **ExtractFeatures returns null for single-feature results**: In `AffordanceScorer.ExtractFeatures` (line 139), the method always adds `objectType` to the features dictionary, then returns `null` if `features.Count <= 1`. When no relevant data properties are found, the result is always null (only objectType exists, count == 1).

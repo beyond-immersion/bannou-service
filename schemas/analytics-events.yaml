@@ -43,6 +43,13 @@ info:
     - topic: realm-history.lore.updated
       event: RealmLoreUpdatedEvent
       handler: HandleRealmLoreUpdated
+    # Cache invalidation events
+    - topic: character.updated
+      event: CharacterUpdatedEvent
+      handler: HandleCharacterUpdatedForCacheInvalidation
+    - topic: realm.updated
+      event: RealmUpdatedEvent
+      handler: HandleRealmUpdatedForCacheInvalidation
   x-event-publications:
     # Published when a score/stat is updated (leaderboards and achievements subscribe)
     - topic: analytics.score.updated

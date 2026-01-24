@@ -54,7 +54,7 @@
 | 25 | lib-behavior | 6 | `BEHAVIOR.md` | [ ] |
 | 26 | lib-analytics | 8 | `ANALYTICS.md` | [x] |
 | 27 | lib-website | 17 | `WEBSITE.md` | [x] |
-| 28 | lib-mapping | 18 | `MAPPING.md` | [ ] |
+| 28 | lib-mapping | 18 | `MAPPING.md` | [x] |
 | 29 | lib-character-encounter | 19 | `CHARACTER-ENCOUNTER.md` | [ ] |
 | 30 | lib-scene | 19 | `SCENE.md` | [ ] |
 | 31 | lib-escrow | 20 | `ESCROW.md` | [ ] |
