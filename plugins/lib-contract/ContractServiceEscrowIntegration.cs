@@ -1107,6 +1107,9 @@ public partial class ContractService
     {
         var distributions = new List<DistributionRecordModel>();
 
+        // Ensure built-in clause types are registered before execution
+        await EnsureBuiltInClauseTypesAsync(ct);
+
         // Load the template to get clause definitions
         var templateKey = $"{TEMPLATE_PREFIX}{contract.TemplateId}";
         var template = await _stateStoreFactory.GetStore<ContractTemplateModel>(StateStoreDefinitions.Contract)
