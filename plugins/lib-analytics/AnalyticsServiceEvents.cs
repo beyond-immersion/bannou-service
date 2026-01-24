@@ -470,7 +470,7 @@ public partial class AnalyticsService
                 EventId = evt.EventId,
                 GameServiceId = gameServiceId.Value,
                 EntityId = evt.RealmId,
-                EntityType = EntityType.Custom, // Realm is not in EntityType enum
+                EntityType = EntityType.Realm,
                 EventType = "history.participation.recorded",
                 Timestamp = evt.Timestamp,
                 Value = 1,
@@ -522,7 +522,7 @@ public partial class AnalyticsService
                 EventId = evt.EventId,
                 GameServiceId = gameServiceId.Value,
                 EntityId = evt.RealmId,
-                EntityType = EntityType.Custom, // Realm is not in EntityType enum
+                EntityType = EntityType.Realm,
                 EventType = "history.lore.created",
                 Timestamp = evt.Timestamp,
                 Value = evt.ElementCount,
@@ -579,7 +579,7 @@ public partial class AnalyticsService
                 EventId = evt.EventId,
                 GameServiceId = gameServiceId.Value,
                 EntityId = evt.RealmId,
-                EntityType = EntityType.Custom, // Realm is not in EntityType enum
+                EntityType = EntityType.Realm,
                 EventType = "history.lore.updated",
                 Timestamp = evt.Timestamp,
                 Value = evt.ElementCount,

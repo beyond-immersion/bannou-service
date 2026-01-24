@@ -307,3 +307,13 @@ None identified.
 5. **No event consumption**: Inventory doesn't listen for item events (destroy, bind, modify). If an item is destroyed directly via lib-item (bypassing inventory), the container's UsedSlots/ContentsWeight counters become stale.
 
 6. **Lock timeout not configurable per-operation**: All operations use the same `LockTimeoutSeconds`. Quick operations (update metadata) and slow operations (delete with destroy) share the same timeout.
+
+7. **Cache errors are non-fatal**: Lines 2017-2018, 2036-2037, 2053-2054 - cache lookup failures, write failures, and invalidation failures are all logged at debug/warning level but don't fail operations. Container operations succeed even if Redis cache is unavailable.
+
+8. **Nesting depth validation uses parent's limit**: Line 116 - when creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children, not its own creation.
+
+9. **Missing parent returns BadRequest not NotFound**: Line 110-112 - if `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound. Logged as warning.
+
+10. **Container deletion with "destroy" continues on item failure**: Lines 518-522 - when deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed.
+
+11. **Merge stack source destruction failure non-fatal**: Lines 1322-1325 - when stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity.

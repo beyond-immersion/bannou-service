@@ -90,10 +90,16 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     public double Glicko2SystemConstant { get; set; } = 0.5;
 
     /// <summary>
-    /// TTL in seconds for cached entity summaries
-    /// Environment variable: ANALYTICS_SUMMARY_CACHE_TTL_SECONDS
+    /// TTL in seconds for resolution caches (game service, realm, character lookups)
+    /// Environment variable: ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS
     /// </summary>
-    public int SummaryCacheTtlSeconds { get; set; } = 300;
+    public int ResolutionCacheTtlSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// TTL in seconds for game session mappings (should exceed typical session duration)
+    /// Environment variable: ANALYTICS_SESSION_MAPPING_TTL_SECONDS
+    /// </summary>
+    public int SessionMappingTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// Base lock expiry time in seconds for event buffer flush operations (actual expiry is max of this and 2x flush interval)

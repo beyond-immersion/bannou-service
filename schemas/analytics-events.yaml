@@ -100,6 +100,7 @@ components:
             - character
             - guild
             - actor
+            - realm
             - custom
           description: Type of entity
         scoreType:
@@ -162,6 +163,7 @@ components:
             - character
             - guild
             - actor
+            - realm
             - custom
           description: Type of entity
         ratingType:
@@ -224,6 +226,7 @@ components:
             - character
             - guild
             - actor
+            - realm
             - custom
           description: Type of entity
         milestoneType:

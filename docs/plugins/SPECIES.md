@@ -211,7 +211,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **`DeleteAfterMerge` parameter is ignored**: The `MergeSpeciesRequest.DeleteAfterMerge` parameter is defined in the schema (line 1840 in generated meta: "If true, hard-delete the source species after successful merge") but the service implementation at line 1096 hardcodes `SourceDeleted = false` without checking the parameter. The delete-after-merge feature is documented but not implemented.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -238,3 +238,13 @@ None identified.
 4. **Merge without distributed lock on character list**: The paginated character migration reads and updates characters without locking. A new character created during merge could be missed.
 
 5. **TraitModifiers stored as untyped object**: No schema validation on trait modifier structure. Game-specific data stored as arbitrary JSON.
+
+6. **Page fetch error during merge stops migration**: Lines 1073-1077 - if fetching a page of characters fails during merge, `hasMorePages` is set to false which terminates the loop. Characters on subsequent pages are silently un-migrated. No retry mechanism.
+
+7. **Realm validation is sequential**: `ValidateRealmsAsync` (lines 92-113) iterates through each realm ID and calls `ValidateRealmAsync` sequentially. For N realms, N sequential API calls.
+
+8. **Realm service unavailability throws wrapper exception**: Line 85 wraps RealmService exceptions in `InvalidOperationException("Cannot validate realm ... RealmService unavailable")`. This provides context but changes the exception type.
+
+9. **Seed with updateExisting duplicates change tracking logic**: Lines 770-821 duplicate the same `changedFields` tracking pattern from `UpdateSpeciesAsync` (lines 454-503). Changes to update logic need to be made in both places.
+
+10. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` (called at line 1089) receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.

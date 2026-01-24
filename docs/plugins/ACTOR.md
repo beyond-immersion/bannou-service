@@ -441,3 +441,17 @@ None identified.
 7. **Template index optimistic concurrency**: Template creation uses optimistic concurrency (GetWithETag + TrySave) for the index. Under high concurrent creation load, retries may be needed. No retry logic is implemented - conflicts return immediately.
 
 8. **Encounter phase strings unvalidated**: Encounter phases are arbitrary strings. No state machine validates transitions. "initializing" → "victory" is as valid as "initializing" → "combat" → "victory". Application logic in ABML behaviors enforces meaningful transitions.
+
+9. **Template index optimistic concurrency failures silently succeed**: Lines 163-167 and 453-457 - if `TrySaveAsync` fails for the template index during create/delete, the operation logs a warning but the template IS saved/deleted. The index may be temporarily inconsistent with actual templates.
+
+10. **One category = one template**: Line 127-132 checks if `category:{name}` already exists before creating. A category can only have one template. To change template behavior for a category, you must update or delete the existing template first.
+
+11. **ForceStopActors stops actors sequentially**: Lines 424-440 stop each actor in a foreach loop with individual try-catch. If stopping one actor fails, others continue. Partial stop failures are logged but don't prevent template deletion.
+
+12. **Fresh options query waits one tick approximately**: Lines 1121-1128 inject a perception then `Task.Delay(DefaultTickIntervalMs)` - this waits roughly one tick duration but doesn't actually synchronize with the behavior loop. The actor may not have processed the perception yet.
+
+13. **GetEncounter returns OK with null encounter**: Lines 1558-1565 return `StatusCodes.OK` with `HasActiveEncounter=false` when actor has no encounter, rather than returning NotFound. Callers must check the flag.
+
+14. **Auto-spawn failure returns NotFound**: Lines 731-734 - if auto-spawn attempt fails (e.g., max instances exceeded, conflict), `GetActor` returns NotFound rather than the actual failure status. The true failure reason is only logged.
+
+15. **ListActors nodeId filter not implemented**: Line 986-987 has a comment "nodeId filtering not applicable in bannou mode" but the filter is never applied even in pool mode. The filter parameter exists but is ignored.

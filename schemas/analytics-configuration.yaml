@@ -47,12 +47,18 @@ x-service-configuration:
       description: Glicko-2 system constant (tau) - controls volatility change speed
       default: 0.5
       env: ANALYTICS_GLICKO2_SYSTEM_CONSTANT
-    # Summary Cache Configuration
-    SummaryCacheTtlSeconds:
+    # Resolution Cache Configuration
+    ResolutionCacheTtlSeconds:
       type: integer
-      description: TTL in seconds for cached entity summaries
+      description: TTL in seconds for resolution caches (game service, realm, character lookups)
       default: 300
-      env: ANALYTICS_SUMMARY_CACHE_TTL_SECONDS
+      env: ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS
+    # Session Mapping Configuration
+    SessionMappingTtlSeconds:
+      type: integer
+      description: TTL in seconds for game session mappings (should exceed typical session duration)
+      default: 3600
+      env: ANALYTICS_SESSION_MAPPING_TTL_SECONDS
     # Event Buffer Lock Configuration
     EventBufferLockExpiryBaseSeconds:
       type: integer

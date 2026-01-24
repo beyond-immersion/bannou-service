@@ -45,10 +45,11 @@ Dual-model item management with templates (definitions/prototypes) and instances
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{templateId}` | `ItemTemplateModel` | Template definition |
-| `tpl-code:{gameId}:{CODE}` | `string` | Code+game → template ID index |
+| `tpl:{templateId}` | `ItemTemplateModel` | Template definition |
+| `tpl-code:{gameId}:{code}` | `string` | Code+game → template ID index |
 | `tpl-game:{gameId}` | `List<string>` | All template IDs for a game |
-| `{instanceId}` | `ItemInstanceModel` | Instance data |
+| `all-templates` | `List<string>` | Global index of all template IDs |
+| `inst:{instanceId}` | `ItemInstanceModel` | Instance data |
 | `inst-container:{containerId}` | `List<string>` | Instance IDs in container |
 | `inst-template:{templateId}` | `List<string>` | Instance IDs of a template |
 
@@ -269,4 +270,20 @@ None identified.
 
 5. **No event consumption**: The item service is purely a publisher. It doesn't react to external events (e.g., container deletion). The inventory service is responsible for calling `DestroyItemInstance` when needed.
 
-6. **Instance cache invalidation gap**: Cache invalidation happens on modify/destroy but not on bind. A recently-cached instance could serve stale binding state for up to 15 minutes.
+6. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified.
+
+7. **Destroy bypasses destroyable check with "admin" reason**: Line 680 - if `body.Reason == "admin"`, the template's `Destroyable` flag is ignored. This allows admin-level destruction of indestructible items.
+
+8. **BatchGetItemInstances is sequential**: Lines 834-845 fetch each instance one by one in a foreach loop rather than parallel fetching. Could be slow for large batches.
+
+9. **Empty container/template index not cleaned up**: After `RemoveFromListAsync`, if the list becomes empty, it remains as an empty JSON array `[]` in the store rather than being deleted.
+
+10. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. Large containers lose items silently.
+
+11. **ListItemsByTemplate filters AFTER fetching all instances**: Lines 793-801 fetch all instances then filter by RealmId in memory. For templates with many instances, this fetches far more data than needed.
+
+12. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
+
+13. **Deprecate is idempotent (no conflict)**: Unlike other services that return Conflict if already deprecated, `DeprecateItemTemplateAsync` will re-deprecate with a new timestamp, overwriting the original deprecation timestamp.
+
+14. **CreateInstance validates IsActive but not IsDeprecated**: Line 413 checks `!template.IsActive` but not `template.IsDeprecated`. A deprecated but still-active template can continue spawning new instances.

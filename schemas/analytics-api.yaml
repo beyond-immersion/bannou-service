@@ -261,6 +261,7 @@ components:
       - character
       - guild
       - actor
+      - realm
       - custom
 
     ControllerAction:

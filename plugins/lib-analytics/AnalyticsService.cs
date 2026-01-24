@@ -1113,14 +1113,24 @@ public partial class AnalyticsService : IAnalyticsService
     private static string GetSessionMappingKey(Guid sessionId)
         => $"{SESSION_MAPPING_PREFIX}:{sessionId}";
 
-    private StateOptions? BuildSummaryCacheOptions()
+    private StateOptions? BuildResolutionCacheOptions()
     {
-        if (_configuration.SummaryCacheTtlSeconds <= 0)
+        if (_configuration.ResolutionCacheTtlSeconds <= 0)
         {
             return null;
         }
 
-        return new StateOptions { Ttl = _configuration.SummaryCacheTtlSeconds };
+        return new StateOptions { Ttl = _configuration.ResolutionCacheTtlSeconds };
+    }
+
+    private StateOptions? BuildSessionMappingCacheOptions()
+    {
+        if (_configuration.SessionMappingTtlSeconds <= 0)
+        {
+            return null;
+        }
+
+        return new StateOptions { Ttl = _configuration.SessionMappingTtlSeconds };
     }
 
     private async Task<bool> EnsureSummaryStoreRedisAsync(CancellationToken cancellationToken)
@@ -1188,7 +1198,7 @@ public partial class AnalyticsService : IAnalyticsService
         }
 
         var stubName = gameType.Trim().ToLowerInvariant();
-        var cacheOptions = BuildSummaryCacheOptions();
+        var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
             var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
@@ -1369,7 +1379,7 @@ public partial class AnalyticsService : IAnalyticsService
     {
         var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
-        var cacheOptions = BuildSummaryCacheOptions();
+        var cacheOptions = BuildSessionMappingCacheOptions();
         await mappingStore.SaveAsync(mappingKey, new GameSessionMappingData
         {
             SessionId = sessionId,
@@ -1392,7 +1402,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     private async Task<Guid?> ResolveGameServiceIdForRealmAsync(Guid realmId, CancellationToken cancellationToken)
     {
-        var cacheOptions = BuildSummaryCacheOptions();
+        var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
             var cacheStore = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
@@ -1479,7 +1489,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     private async Task<Guid?> ResolveGameServiceIdForCharacterAsync(Guid characterId, CancellationToken cancellationToken)
     {
-        var cacheOptions = BuildSummaryCacheOptions();
+        var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
             var cacheStore = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
@@ -2015,6 +2025,7 @@ public partial class AnalyticsService : IAnalyticsService
             EntityType.Character => AnalyticsScoreUpdatedEventEntityType.Character,
             EntityType.Guild => AnalyticsScoreUpdatedEventEntityType.Guild,
             EntityType.Actor => AnalyticsScoreUpdatedEventEntityType.Actor,
+            EntityType.Realm => AnalyticsScoreUpdatedEventEntityType.Realm,
             EntityType.Custom => AnalyticsScoreUpdatedEventEntityType.Custom,
             _ => AnalyticsScoreUpdatedEventEntityType.Custom
         };
@@ -2029,6 +2040,7 @@ public partial class AnalyticsService : IAnalyticsService
             EntityType.Character => AnalyticsRatingUpdatedEventEntityType.Character,
             EntityType.Guild => AnalyticsRatingUpdatedEventEntityType.Guild,
             EntityType.Actor => AnalyticsRatingUpdatedEventEntityType.Actor,
+            EntityType.Realm => AnalyticsRatingUpdatedEventEntityType.Realm,
             EntityType.Custom => AnalyticsRatingUpdatedEventEntityType.Custom,
             _ => AnalyticsRatingUpdatedEventEntityType.Custom
         };
@@ -2043,6 +2055,7 @@ public partial class AnalyticsService : IAnalyticsService
             EntityType.Character => AnalyticsMilestoneReachedEventEntityType.Character,
             EntityType.Guild => AnalyticsMilestoneReachedEventEntityType.Guild,
             EntityType.Actor => AnalyticsMilestoneReachedEventEntityType.Actor,
+            EntityType.Realm => AnalyticsMilestoneReachedEventEntityType.Realm,
             EntityType.Custom => AnalyticsMilestoneReachedEventEntityType.Custom,
             _ => AnalyticsMilestoneReachedEventEntityType.Custom
         };

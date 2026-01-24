@@ -58,7 +58,8 @@ public class AnalyticsServiceTests
             Glicko2SystemConstant = 0.5,
             EventBufferSize = 100,
             EventBufferFlushIntervalSeconds = 5,
-            SummaryCacheTtlSeconds = 300
+            ResolutionCacheTtlSeconds = 300,
+            SessionMappingTtlSeconds = 3600
         };
 
         // Minimal mock setup - just enough to construct the service
@@ -131,7 +132,8 @@ public class AnalyticsServiceTests
         Assert.Equal(0.5, config.Glicko2SystemConstant);
         Assert.Equal(1000, config.EventBufferSize);
         Assert.Equal(5, config.EventBufferFlushIntervalSeconds);
-        Assert.Equal(300, config.SummaryCacheTtlSeconds);
+        Assert.Equal(300, config.ResolutionCacheTtlSeconds);
+        Assert.Equal(3600, config.SessionMappingTtlSeconds);
         Assert.Equal(30, config.RatingUpdateLockExpirySeconds);
     }
 

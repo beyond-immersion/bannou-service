@@ -293,3 +293,15 @@ None identified.
 6. **Lock timeout is hardcoded 60 seconds**: All `_lockProvider.LockAsync` calls use a 60-second expiry. Not configurable. Long-running operations under lock (e.g., multiple voice/permission calls) could approach this limit.
 
 7. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+
+8. **Chat allows messages from non-members**: `SendChatMessageAsync` (line 1435) looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
+
+9. **Whisper to non-existent target silently succeeds**: Lines 1468-1487 - if the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
+
+10. **Chat returns OK when no players exist**: Line 1461 returns `StatusCodes.OK` even when all players have left (no WebSocket sessions to deliver to). From the sender's perspective, the message "sent" successfully.
+
+11. **Move action special-cased for empty data**: Line 617 - `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
+
+12. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` (lines 576-626) verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
+
+13. **Lock owner is random GUID per call**: Lines 444, 696, 868, 1066, 1330 all use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.

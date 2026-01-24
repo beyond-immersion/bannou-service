@@ -50,8 +50,11 @@ public enum EntityType
     [System.Runtime.Serialization.EnumMember(Value = @"actor")]
     Actor = 3,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"realm")]
+    Realm = 4,
+
     [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
+    Custom = 5,
 
 }
 #pragma warning restore CS1591

@@ -78,6 +78,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -249,6 +250,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -387,6 +389,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -461,6 +464,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -587,6 +591,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -684,6 +689,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -791,6 +797,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -865,6 +872,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -1010,6 +1018,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -1091,6 +1100,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -1216,6 +1226,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         },
@@ -1354,6 +1365,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         }
@@ -1440,6 +1452,7 @@ public partial class AnalyticsController
                 "character",
                 "guild",
                 "actor",
+                "realm",
                 "custom"
             ]
         },

@@ -407,11 +407,9 @@ Connection Mode Behavior Matrix
 
 5. **Rate limit window enforcement**: `RateLimitWindowMinutes` is configured but the actual sliding window implementation in `MessageRouter.CheckRateLimit` is simplified - the window tracking in `ConnectionState` may not precisely enforce the configured window.
 
-6. **MaxConcurrentConnections enforcement**: The config value exists but no gate or semaphore prevents connections beyond this limit. The `WebSocketConnectionManager` does not check count before accepting.
+6. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
 
-7. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
-
-8. **DefaultServices/AuthenticatedServices config**: These arrays are defined in configuration but capability determination is entirely event-driven from Permission service. The config values are not used in the current implementation.
+7. **DefaultServices/AuthenticatedServices config**: These arrays are defined in configuration but capability determination is entirely event-driven from Permission service. The config values are not used in the current implementation.
 
 ---
 
@@ -484,3 +482,13 @@ Connection Mode Behavior Matrix
 7. **Instance ID non-deterministic**: `_instanceId` is generated as `MachineName-{random8chars}`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
 
 8. **No graceful shutdown**: When the application shuts down, WebSocket connections are abruptly terminated. There is no mechanism to send close frames or drain pending messages before exit (only `ConnectionShutdownTimeoutSeconds` for the WebSocketConnectionManager's internal cleanup).
+
+9. **Session subsumed skips account index removal**: Lines 866-870 - when a session is "subsumed" by a new connection (same session ID), the old connection's cleanup skips RemoveSessionFromAccountAsync. This is intentional (session is still active) but means account index removal only happens once per unique session lifecycle.
+
+10. **Disconnect event published before account index removal**: Lines 816-846 - the `session.disconnected` event is published before the session is removed from the account index. Race condition: consumers receiving the event might still see the session in GetAccountSessions.
+
+11. **RabbitMQ subscription retained during reconnection window**: Lines 871-889 - for non-forced disconnects, the RabbitMQ subscription is NOT immediately unsubscribed. Messages queue up during the reconnection window. Only forced disconnects unsubscribe immediately.
+
+12. **Internal mode skips capability initialization entirely**: Lines 603-652 - internal mode connections skip all service mapping, capability manifest, and RabbitMQ subscription setup. They only get peer routing capability.
+
+13. **Connection state created before auth validation**: Lines 590-591 - a new ConnectionState is allocated before checking connection limits. On high load, rejected connections still allocate and GC these objects.

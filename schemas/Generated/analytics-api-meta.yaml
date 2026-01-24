@@ -63,7 +63,7 @@ paths:
         : \"Additional event-specific data\"\n                }\n            }\n        },\n        \"EntityType\": {\n  \
         \          \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\"\
         : [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"\
-        actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+        actor\",\n                \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/IngestEventResponse\"\
         ,\n    \"$defs\": {\n        \"IngestEventResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after ingesting an event\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -125,8 +125,8 @@ paths:
         \                    \"nullable\": true,\n                    \"description\": \"Additional event-specific data\"\n\
         \                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n    \
         \        \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n                \"account\"\
-        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
-        \n            ]\n        }\n    }\n}"
+        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"realm\"\
+        ,\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/IngestEventBatchResponse\"\
         ,\n    \"$defs\": {\n        \"IngestEventBatchResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after batch event ingestion\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -181,7 +181,7 @@ paths:
         : \"Entity type to summarize\"\n                }\n            }\n        },\n        \"EntityType\": {\n        \
         \    \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\":
         [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\"\
-        ,\n                \"custom\"\n            ]\n        }\n    }\n}"
+        ,\n                \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntitySummaryResponse\"\
         ,\n    \"$defs\": {\n        \"EntitySummaryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Aggregated statistics for an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -204,8 +204,8 @@ paths:
         \       },\n                    \"description\": \"Aggregated numeric values (sums, averages)\"\n                }\n\
         \            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Type of entity being tracked\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
-        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n\
-        \    }\n}"
+        ,\n                \"guild\",\n                \"actor\",\n                \"realm\",\n                \"custom\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get entity statistics summary\",\n    \"description\": \"Retrieve aggregated
         statistics for an entity. Summaries include total counts,\\naverages, and derived metrics computed from ingested events.\\\
         n\",\n    \"tags\": [\n        \"Statistics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEntitySummary\"\
@@ -256,7 +256,7 @@ paths:
         results to skip\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\":
         \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n           \
         \     \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n     \
-        \           \"custom\"\n            ]\n        }\n    }\n}"
+        \           \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryEntitySummariesResponse\"\
         ,\n    \"$defs\": {\n        \"QueryEntitySummariesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response containing queried entity summaries\",\n            \"additionalProperties\": false,\n \
@@ -287,7 +287,7 @@ paths:
         values (sums, averages)\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"\
         type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n   \
         \             \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\"\
-        ,\n                \"custom\"\n            ]\n        }\n    }\n}"
+        ,\n                \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query entity summaries with filters\",\n    \"description\": \"Query multiple
         entity summaries with filtering and sorting options.\\nUseful for dashboards and reporting.\\n\",\n    \"tags\": [\n\
         \        \"Statistics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryEntitySummaries\"\n}"
@@ -332,7 +332,7 @@ paths:
         (e.g., overall, ranked, casual)\"\n                }\n            }\n        },\n        \"EntityType\": {\n     \
         \       \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\"\
         : [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"\
-        actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+        actor\",\n                \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SkillRatingResponse\"\
         ,\n    \"$defs\": {\n        \"SkillRatingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Glicko-2 skill rating for an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -355,8 +355,8 @@ paths:
         \                \"nullable\": true,\n                    \"description\": \"Timestamp of last rated match\"\n   \
         \             }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n       \
         \     \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n                \"account\",\n\
-        \                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"character\",\n                \"guild\",\n                \"actor\",\n                \"realm\"\
+        ,\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get entity Glicko-2 skill rating\",\n    \"description\": \"Retrieve the
         current Glicko-2 skill rating for an entity.\\nReturns rating, rating deviation (RD), and volatility.\\n\",\n    \"\
         tags\": [\n        \"Skill Ratings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSkillRating\"\n\
@@ -412,7 +412,7 @@ paths:
         for the match\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"\
         string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n             \
         \   \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n       \
-        \         \"custom\"\n            ]\n        }\n    }\n}"
+        \         \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateSkillRatingResponse\"\
         ,\n    \"$defs\": {\n        \"UpdateSkillRatingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after updating skill ratings\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -437,7 +437,7 @@ paths:
         \"Change in rating (can be negative)\"\n                }\n            }\n        },\n        \"EntityType\": {\n\
         \            \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"\
         enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n            \
-        \    \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+        \    \"actor\",\n                \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update entity skill rating after match\",\n    \"description\": \"Update
         skill ratings for entities after a match result.\\nUses Glicko-2 algorithm to compute new ratings based on outcomes.\\
         nService-only endpoint - typically called by game-session service.\\n\",\n    \"tags\": [\n        \"Skill Ratings\"\
@@ -483,9 +483,9 @@ paths:
         : \"Game session ID (if applicable)\"\n                }\n            }\n        },\n        \"EntityType\": {\n \
         \           \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"\
         enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n            \
-        \    \"actor\",\n                \"custom\"\n            ]\n        },\n        \"ControllerAction\": {\n        \
-        \    \"type\": \"string\",\n            \"description\": \"Type of controller action\",\n            \"enum\": [\n\
-        \                \"possess\",\n                \"release\"\n            ]\n        }\n    }\n}"
+        \    \"actor\",\n                \"realm\",\n                \"custom\"\n            ]\n        },\n        \"ControllerAction\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of controller action\",\n            \"\
+        enum\": [\n                \"possess\",\n                \"release\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Record controller possession event\",\n    \"description\": \"Record when
         an account takes or releases control of an entity.\\nUsed for tracking which player controlled which character/actor
@@ -537,7 +537,7 @@ paths:
         : \"Maximum results to return\"\n                }\n            }\n        },\n        \"EntityType\": {\n       \
         \     \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\"\
         : [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"\
-        actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+        actor\",\n                \"realm\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryControllerHistoryResponse\"\
         ,\n    \"$defs\": {\n        \"QueryControllerHistoryResponse\": {\n            \"type\": \"object\",\n          \
         \  \"description\": \"Response containing controller history\",\n            \"additionalProperties\": false,\n  \
@@ -564,10 +564,10 @@ paths:
         nullable\": true,\n                    \"description\": \"Associated game session ID\"\n                }\n      \
         \      }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"\
         Type of entity being tracked\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
-        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n\
-        \        \"ControllerAction\": {\n            \"type\": \"string\",\n            \"description\": \"Type of controller
-        action\",\n            \"enum\": [\n                \"possess\",\n                \"release\"\n            ]\n   \
-        \     }\n    }\n}"
+        ,\n                \"guild\",\n                \"actor\",\n                \"realm\",\n                \"custom\"\n\
+        \            ]\n        },\n        \"ControllerAction\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of controller action\",\n            \"enum\": [\n                \"possess\",\n                \"release\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query controller history\",\n    \"description\": \"Query who controlled
         what entity during a time range.\\nUseful for audit trails and replays.\\n\",\n    \"tags\": [\n        \"Controller
         History\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryControllerHistory\"\n}"
@@ -630,6 +630,7 @@ components:
       - character
       - guild
       - actor
+      - realm
       - custom
     ControllerAction:
       type: string

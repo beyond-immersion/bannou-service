@@ -236,7 +236,7 @@ None identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. The depth calculation would produce incorrect values. `MatchesHierarchy` and `GetAncestors` have iteration limits to prevent infinite loops.
+1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. The depth calculation would produce incorrect values. **WARNING**: Contrary to what might be expected, `MatchesHierarchy` (lines 290-306) and `GetAncestors` (lines 342-351) have NO iteration limits - they use unbounded `while (!string.IsNullOrEmpty(currentParentId))` loops that would infinite loop on circular hierarchies.
 
 2. **Code index not cleaned on delete**: When a type is deleted, its code index entry is removed. However, if the code was reassigned between deprecation and deletion (unlikely given code immutability), the index could become stale.
 
@@ -244,4 +244,10 @@ None identified.
 
 4. **Recursive child query unbounded**: `GetChildRelationshipTypes` with `recursive=true` traverses the full subtree. Deep hierarchies with many branches could generate many state store calls.
 
-5. **Seed multi-pass has fixed iteration limit**: The dependency resolution algorithm uses a max iteration counter. Extremely deep dependency chains could fail to resolve within the limit.
+5. **Seed multi-pass has fixed iteration limit**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2` (line 672). For a list of N types, max 2N passes. Extremely deep dependency chains could fail to resolve within the limit.
+
+6. **Merge page fetch error stops pagination**: Like species merge, if `ListRelationshipsByTypeAsync` fails on a page, the migration loop terminates. Relationships on subsequent pages remain un-migrated.
+
+7. **Recursive child query is sequential and unbounded**: `GetChildTypeIdsAsync` with `recursive=true` (lines 1040-1058) traverses the full subtree via recursive calls. Each level generates a state store call for the parent index, and deep/wide hierarchies could generate many sequential calls.
+
+8. **Depth is snapshot at creation, never updated**: A type's `Depth` field is set based on parent's depth at creation time (line 407: `depth = parent.Depth + 1`). If a parent's depth changes later, children's depths become stale. The `Depth` field is not recomputed on parent reassignment.
