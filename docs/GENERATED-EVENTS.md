@@ -110,6 +110,12 @@ This document lists all events defined in Bannou's event schemas.
 | `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
 | `GoapPlanGeneratedEvent` | Custom | `goap-plan-generated` | Event published when the GOAP planner generates a ... |
 
+### Character
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CharacterCompressedEvent` | Custom | `character-compressed` | Published when a character is compressed to archiv... |
+
 ### Character Encounter
 
 | Event | Type | Likely Topic | Description |

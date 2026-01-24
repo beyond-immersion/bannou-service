@@ -131,6 +131,13 @@ public sealed class CompilationContext
             return existing;
         }
 
+        if (_localVariables.Count >= 256)
+        {
+            throw new InvalidOperationException(
+                $"Maximum local variable count (256) exceeded when allocating '{name}'. " +
+                "Consider reducing variable usage or splitting into multiple flows.");
+        }
+
         var index = _nextLocalIndex++;
         _localVariables[name] = index;
         return index;

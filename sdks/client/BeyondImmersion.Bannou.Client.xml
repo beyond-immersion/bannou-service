@@ -46270,6 +46270,11 @@
             Peer's SIP endpoint for direct connection
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.Platform">
+            <summary>
+            Target operating system platform
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Website.StatusResponse">
             <summary>
             Health and version status information for the website service
@@ -46747,7 +46752,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.DownloadInfo.Platform">
             <summary>
-            Target operating system platform
+            Target platform for this download
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.DownloadInfo.Version">
@@ -49902,6 +49907,31 @@
         <member name="P:BeyondImmersion.BannouService.Events.EncounterDeletedEvent.CleanupCharacterId">
             <summary>
             Character ID that triggered the cleanup (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterCompressedEvent">
+            <summary>
+            Published when a character is compressed to archive format
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.Timestamp">
+            <summary>
+            When the compression occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.CharacterId">
+            <summary>
+            ID of the compressed character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.DeletedSourceData">
+            <summary>
+            Whether source data was deleted after compression
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent">
@@ -58588,12 +58618,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.SceneAssetId">
             <summary>
-            Source scene asset ID
+            Source scene asset ID (null if not provided by caller)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.RegionId">
             <summary>
-            Region where the instance was located
+            Region where the instance was located (null if not provided by caller)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.DestroyedBy">

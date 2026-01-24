@@ -18,7 +18,7 @@ Multi-currency management service for game economies. Handles the full lifecycle
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for definitions, wallets, balances, transactions, holds; Redis caching for balances and holds; Redis idempotency store |
-| lib-state (`IDistributedLockProvider`) | Balance-level locks for atomic credit/debit/transfer; index-level locks for list operations; autogain locks to prevent concurrent modification |
+| lib-state (`IDistributedLockProvider`) | Balance-level locks for atomic credit/debit/transfer/hold-creation; hold-level locks for capture serialization; wallet-level locks for close operations; index-level locks for list operations; autogain locks to prevent concurrent modification |
 | lib-messaging (`IMessageBus`) | Publishing all currency events (balance, wallet lifecycle, autogain, cap, hold, exchange rate); error event publishing via TryPublishErrorAsync |
 | lib-mesh (`IServiceNavigator`) | Injected but not actively used in current implementation (reserved for future cross-service calls) |
 
@@ -122,7 +122,7 @@ This plugin does not consume external events.
 | `ILogger<CurrencyService>` | Scoped | Structured logging |
 | `CurrencyServiceConfiguration` | Singleton | All 11 config properties |
 | `IStateStoreFactory` | Singleton | Access to all 8 state stores |
-| `IDistributedLockProvider` | Singleton | Balance locks, index locks, autogain locks |
+| `IDistributedLockProvider` | Singleton | Balance locks (`currency-balance`), hold locks (`currency-hold`), wallet locks (`currency-wallet`), index locks (`currency-index`), autogain locks (`currency-autogain`) |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IServiceNavigator` | Scoped | Cross-service client access (reserved) |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
@@ -151,7 +151,7 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 
 ### Balance Operations (6 endpoints)
 
-- **GetBalance** (`/currency/balance/get`): Validates wallet and definition exist. Gets or creates balance record. Applies lazy autogain if currency is autogain-enabled. Resets daily/weekly earn caps if periods elapsed. Calculates locked amount from active holds. Returns amount, lockedAmount, effectiveAmount, earnCapInfo, and autogainInfo.
+- **GetBalance** (`/currency/balance/get`): Validates wallet and definition exist. Gets or creates balance record. Applies lazy autogain if currency is autogain-enabled (acquires `currency-autogain` lock on `{walletId}:{currencyDefId}`, skips if lock unavailable). Resets daily/weekly earn caps if periods elapsed. Calculates locked amount from active holds. Returns amount, lockedAmount, effectiveAmount, earnCapInfo, and autogainInfo.
 - **BatchGetBalances** (`/currency/balance/batch-get`): Iterates query list. For each, gets balance, applies lazy autogain, calculates locked amounts. Returns list of balance results. No locking between items - individual consistency per balance.
 - **CreditCurrency** (`/currency/credit`): Validates amount > 0. Checks idempotency. Validates wallet exists and is not frozen (returns 422 if frozen). Acquires distributed lock on `walletId:currencyDefId`. Resets earn caps. Enforces daily/weekly earn caps (publishes `earn_cap.reached` when limited). Enforces per-wallet cap with configurable overflow behavior (reject returns 422, cap_and_lose truncates and publishes `wallet_cap.reached`). Updates balance and earn-tracking counters. Records transaction. Records idempotency key. Publishes `currency.credited`. Returns transaction record and cap-applied info.
 - **DebitCurrency** (`/currency/debit`): Validates amount > 0. Checks idempotency. Validates wallet not frozen. Acquires distributed lock. Checks sufficient funds (negative allowed if definition or transaction-level override permits). Debits balance. Records transaction. Publishes `currency.debited`. Returns 422 for insufficient funds.
@@ -161,7 +161,7 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 ### Conversion Operations (4 endpoints)
 
 - **CalculateConversion** (`/currency/convert/calculate`): Looks up both currency definitions. Calculates effective rate via base-currency pivot: `fromRate / toRate` where each rate is `ExchangeRateToBase` (1.0 for base currency itself). Returns calculated amount rounded to 8 decimal places, effective rate, and two-step conversion path. Returns 422 if exchange rates are missing.
-- **ExecuteConversion** (`/currency/convert/execute`): Checks idempotency. Validates wallet not frozen. Calculates rate. Debits source currency (transaction type `Conversion_debit`). Credits target currency (transaction type `Conversion_credit`). Uses sub-keys for idempotency on debit/credit legs. Returns both transaction records and effective rate.
+- **ExecuteConversion** (`/currency/convert/execute`): Checks idempotency. Validates wallet not frozen. Calculates rate. Pre-validates target currency wallet cap (if `PerWalletCap` set with `CapOverflowBehavior.Reject`, checks whether `toAmount` would exceed cap before debiting source). Debits source currency (transaction type `Conversion_debit`). Credits target currency (transaction type `Conversion_credit`) with `BypassEarnCap=true` (conversions are exchanges, not earnings). If credit fails after successful debit, issues a compensating credit to the source currency (idempotency key `{key}:compensate`, `BypassEarnCap=true`) to reverse the debit. Uses sub-keys for idempotency on debit/credit legs. Returns both transaction records and effective rate.
 - **GetExchangeRate** (`/currency/exchange-rate/get`): Looks up both definitions. Calculates effective rate and inverse rate. Returns both rates plus individual rates-to-base. Returns 422 if rates undefined.
 - **UpdateExchangeRate** (`/currency/exchange-rate/update`): Validates currency is not the base currency (returns BadRequest). Updates `ExchangeRateToBase` and `ExchangeRateUpdatedAt`. Publishes `currency.exchange_rate.updated` with previous and new rates. Returns updated definition.
 
@@ -184,8 +184,8 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 
 ### Authorization Hold Operations (4 endpoints)
 
-- **CreateHold** (`/currency/hold/create`): Validates amount > 0. Checks idempotency. Validates wallet and definition exist. Calculates effective balance (amount minus current active holds). Returns 422 if effective balance insufficient. Clamps expiry to `HoldMaxDurationDays`. Saves hold with Active status to MySQL. Updates Redis hold cache. Adds to wallet-currency hold index. Publishes `currency.hold.created`.
-- **CaptureHold** (`/currency/hold/capture`): Checks idempotency. Reads hold from MySQL with ETag. Validates status is Active. Validates captureAmount does not exceed hold amount. Debits the captured amount (transaction type `Fee`). Updates hold to Captured status with capturedAmount and completedAt. Uses optimistic concurrency on hold save. Updates Redis cache. Calculates and reports amountReleased (hold - captured). Publishes `currency.hold.captured`. Returns hold record, transaction, and new balance.
+- **CreateHold** (`/currency/hold/create`): Validates amount > 0. Checks idempotency. Validates wallet and definition exist. Acquires `currency-balance` distributed lock on `{walletId}:{currencyDefId}` (30s TTL) to serialize against concurrent balance changes and hold creation. Calculates effective balance (amount minus current active holds). Returns 422 if effective balance insufficient. Clamps expiry to `HoldMaxDurationDays`. Saves hold with Active status to MySQL. Updates Redis hold cache. Adds to wallet-currency hold index. Publishes `currency.hold.created`.
+- **CaptureHold** (`/currency/hold/capture`): Checks idempotency. Reads hold from MySQL with ETag. Validates status is Active. Acquires `currency-hold` distributed lock on `{holdId}` (30s TTL) to prevent concurrent captures on the same hold. Validates captureAmount does not exceed hold amount. Debits the captured amount (transaction type `Fee`). Updates hold to Captured status with capturedAmount and completedAt. Uses optimistic concurrency on hold save. Updates Redis cache. Calculates and reports amountReleased (hold - captured). Publishes `currency.hold.captured`. Returns hold record, transaction, and new balance.
 - **ReleaseHold** (`/currency/hold/release`): Reads hold from MySQL with ETag. Validates status is Active. Sets status to Released with completedAt. Uses optimistic concurrency. Updates Redis cache. Publishes `currency.hold.released`. No balance modification - funds simply become available again.
 - **GetHold** (`/currency/hold/get`): Checks Redis hold cache first. On cache miss, reads from MySQL. Populates cache for future reads. Returns hold record with all fields including status, amounts, and timestamps.
 
@@ -328,8 +328,10 @@ Conversion System (Base Currency Pivot)
     toAmount = 100 * 25.0 = 2500 B
 
   ExecuteConversion:
+    0. Pre-validate: target wallet cap on B (Reject behavior only)
     1. Debit  100 A  (type=Conversion_debit)
-    2. Credit 2500 B (type=Conversion_credit)
+    2. Credit 2500 B (type=Conversion_credit, BypassEarnCap=true)
+       If credit fails: compensating credit 100 A (key="{key}:compensate")
     Both idempotent via sub-keys: "{key}:debit", "{key}:credit"
 
 
@@ -445,26 +447,16 @@ Escrow Integration Flow
 
 3. **List indexes are read-modify-write under lock**: The `AddToListAsync` helper acquires a 15-second lock, reads the existing JSON list, appends, and saves. Under high concurrency with many wallets holding the same currency, the `bal-currency:` index lock could become a bottleneck.
 
-4. **No transaction rollback on partial conversion failure**: If `ExecuteConversion` successfully debits the source currency but the credit to the target fails, the source debit remains. The idempotency keys prevent double-processing on retry, but the intermediate state leaves the user with less of the source currency and none of the target.
+4. **Balance cache may serve stale data**: With a 60-second cache TTL, a balance read immediately after a credit by another service could return the pre-credit value. This is acceptable for display purposes but problematic if used for authorization decisions. The hold mechanism (which bypasses cache) should be used for authoritative balance checks.
 
-5. **Balance cache may serve stale data**: With a 60-second cache TTL, a balance read immediately after a credit by another service could return the pre-credit value. This is acceptable for display purposes but problematic if used for authorization decisions. The hold mechanism (which bypasses cache) should be used for authoritative balance checks.
+5. **Hold-to-balance relationship is eventually consistent**: Hold indexes and balance amounts are not updated atomically. A brief window exists where a hold is created but the effective balance calculation might not yet reflect it (if the hold index write succeeds but the caller reads from a different instance before replication).
 
-6. **Hold-to-balance relationship is eventually consistent**: Hold indexes and balance amounts are not updated atomically. A brief window exists where a hold is created but the effective balance calculation might not yet reflect it (if the hold index write succeeds but the caller reads from a different instance before replication).
+6. **Double-spending window on conversion**: The debit and credit legs of a conversion are separate operations. Between the debit and credit, the wallet temporarily has less currency. A concurrent balance check during this window would see the reduced balance. The credit follows immediately so the window is small. If the credit fails, a compensating credit reverses the debit.
 
-7. **Double-spending window on conversion**: The debit and credit legs of a conversion are separate operations. Between the debit and credit, the wallet temporarily has less currency. A concurrent balance check during this window would see the reduced balance. The credit follows immediately so the window is small.
+7. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
 
-8. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
+8. **UpdateExchangeRate has no ETag**: `UpdateExchangeRateAsync` (line 1435) reads the definition without ETag and saves with plain `SaveAsync`. Concurrent rate updates are last-write-wins. For a financial service, exchange rate updates should use optimistic concurrency to prevent race conditions between admin rate-setting operations.
 
-9. **UpdateExchangeRate has no ETag**: `UpdateExchangeRateAsync` (line 1435) reads the definition without ETag and saves with plain `SaveAsync`. Concurrent rate updates are last-write-wins. For a financial service, exchange rate updates should use optimistic concurrency to prevent race conditions between admin rate-setting operations.
+9. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
 
-10. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
-
-11. **Hold index never cleaned up**: When holds transition to Captured/Released states, they remain in the `hold-wallet:{walletId}:{currencyDefId}` index list. `GetTotalHeldAmountAsync` filters by Active status so correctness is maintained, but the index grows unboundedly. A cleanup sweep (either periodic or on-read with threshold) would prevent performance degradation for wallets with many historical holds.
-
-12. **CaptureHold debit-before-save ordering**: `CaptureHoldAsync` debits the wallet before saving the hold status change with ETag. If the ETag save fails (concurrent modification), the debit is irreversible but the hold remains Active, causing double-deduction. Requires either a distributed lock on the hold preventing concurrent captures, or a saga pattern with compensating credit on hold save failure.
-
-13. **Lazy autogain has no distributed lock**: `ApplyAutogainIfNeededAsync` (called from GetBalance/BatchGetBalances) modifies the balance without locking. The task-mode autogain correctly acquires a `"currency-autogain"` lock, but the lazy path does not participate. Both paths can race on the same balance with last-write-wins. The lazy path needs to acquire the same lock, or autogain should be exclusively task-mode.
-
-14. **CloseWallet has no ETag or distributed lock**: `CloseWalletAsync` saves wallet status with plain `SaveAsync`. Balance transfers occur before the status is set to Closed, so concurrent operations can succeed against a mid-closure wallet. Needs ETag-based optimistic concurrency (read-with-etag, transfer, try-save-with-etag) or a distributed lock on the wallet.
-
-15. **CreateHold has no lock on effective balance check**: `CreateHoldAsync` calculates effective balance and checks sufficiency without a distributed lock. Between the check and the hold save, another concurrent CreateHold can pass the same check, causing total active holds to exceed actual balance. Needs a distributed lock on `{walletId}:{currencyDefId}` (similar to the balance lock used by debit/transfer) to serialize hold creation.
+10. **Hold index never cleaned up**: When holds transition to Captured/Released states, they remain in the `hold-wallet:{walletId}:{currencyDefId}` index list. `GetTotalHeldAmountAsync` filters by Active status so correctness is maintained, but the index grows unboundedly. A cleanup sweep (either periodic or on-read with threshold) would prevent performance degradation for wallets with many historical holds.

@@ -679,6 +679,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_KAMAILIO_HOST` | string | `localhost` | Kamailio SIP server host |
 | `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for Kamailio service requests |
 | `VOICE_KAMAILIO_RPC_PORT` | int | `5080` | Kamailio JSON-RPC port (typically 5080, not SIP port 5060) |
+| `VOICE_KAMAILIO_SIP_PORT` | int | `5060` | Kamailio SIP signaling port for client registration |
 | `VOICE_P2P_MAX_PARTICIPANTS` | int | `8` | Maximum participants in P2P voice sessions |
 | `VOICE_RTPENGINE_HOST` | string | `localhost` | RTPEngine media relay host |
 | `VOICE_RTPENGINE_PORT` | int | `22222` | RTPEngine control port |
@@ -692,9 +693,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 518
+- **Total properties**: 519
 - **Required (no default)**: 40
-- **Optional (has default)**: 478
+- **Optional (has default)**: 479
 
 ## Environment Variable Naming Convention
 

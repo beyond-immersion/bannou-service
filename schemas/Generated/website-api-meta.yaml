@@ -77,38 +77,38 @@ paths:
         ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
         page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
-        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
-        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
-        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
-        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
-        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
-        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
-        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
-        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
-        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
-        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
-        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
-        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
-        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
-        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
-        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
-        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
-        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
-        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        ,\n                \"published\",\n                \"lastModified\"\n            ],\n            \"properties\": {\n\
+        \                \"slug\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\"\
+        ,\n                    \"description\": \"URL-friendly identifier for the page\"\n                },\n           \
+        \     \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display title
+        of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
+        \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
+        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
+        \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the page is publicly
+        visible\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Date and time when the page was published\"\n                },\n                \"lastModified\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Date and time of the last modification\"\n                },\n                \"author\": {\n                \
+        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name or
+        identifier of the page author\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Custom
+        metadata for the page\"\n                },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\"\
+        ,\n                    \"description\": \"Search engine optimization settings for the page\"\n                }\n\
+        \            }\n        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization
+        and social media sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\
+        \n                },\n                \"keywords\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph
+        title for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
         for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
@@ -239,11 +239,7 @@ paths:
       - name: platform
         in: query
         schema:
-          type: string
-          enum:
-          - windows
-          - macos
-          - linux
+          $ref: '#/components/schemas/Platform'
         description: Filter by platform
       responses:
         '200':
@@ -263,20 +259,21 @@ paths:
         \         \"description\": \"Download details for a specific game client version and platform\",\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"platform\"\
         ,\n                \"version\",\n                \"url\",\n                \"size\",\n                \"checksum\"\
-        \n            ],\n            \"properties\": {\n                \"platform\": {\n                    \"type\": \"\
-        string\",\n                    \"enum\": [\n                        \"windows\",\n                        \"macos\"\
-        ,\n                        \"linux\"\n                    ],\n                    \"description\": \"Target operating
-        system platform\"\n                },\n                \"version\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Version number of the game client\"\n                },\n                \"\
-        url\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                  \
-        \  \"description\": \"Download URL for the game client\"\n                },\n                \"size\": {\n      \
-        \              \"type\": \"integer\",\n                    \"description\": \"File size in bytes\"\n             \
-        \   },\n                \"checksum\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"SHA256 checksum\"\n                },\n                \"releaseNotes\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Release notes or changelog for
-        this version\"\n                },\n                \"minimumRequirements\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Minimum system requirements
-        for the client\"\n                }\n            }\n        }\n    }\n}"
+        \n            ],\n            \"properties\": {\n                \"platform\": {\n                    \"description\"\
+        : \"Target platform for this download\",\n                    \"$ref\": \"#/$defs/Platform\"\n                },\n\
+        \                \"version\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Version number of the game client\"\n                },\n                \"url\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uri\",\n                    \"description\": \"Download URL for the
+        game client\"\n                },\n                \"size\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"File size in bytes\"\n                },\n                \"checksum\": {\n   \
+        \                 \"type\": \"string\",\n                    \"description\": \"SHA256 checksum\"\n              \
+        \  },\n                \"releaseNotes\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Release notes or changelog for this version\"\n                },\n\
+        \                \"minimumRequirements\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Minimum system requirements for the client\"\n                }\n\
+        \            }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"windows\",\n                \"macos\",\n                \"linux\"\n            ],\n           \
+        \ \"description\": \"Target operating system platform\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get download links for game clients\",\n    \"description\": \"\",\n  \
         \  \"tags\": [\n        \"Downloads\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getDownloads\"\n\
         }"
@@ -468,18 +465,19 @@ paths:
         \    \"items\": {\n        \"$ref\": \"#/$defs/PageMetadata\"\n    },\n    \"$defs\": {\n        \"PageMetadata\"\
         : {\n            \"description\": \"Summary metadata for a CMS page without full content\",\n            \"type\"\
         : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"slug\"\
-        ,\n                \"title\",\n                \"published\"\n            ],\n            \"properties\": {\n    \
-        \            \"slug\": {\n                    \"type\": \"string\",\n                    \"description\": \"URL-friendly
-        identifier for the page\"\n                },\n                \"title\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display title of the page\"\n                },\n                \"published\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the page is publicly
-        visible\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Date and time when the page was published\"\n                },\n                \"lastModified\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Date and time of the last modification\"\n                },\n                \"author\": {\n                \
-        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name or
-        identifier of the page author\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"title\",\n                \"published\",\n                \"lastModified\"\n            ],\n\
+        \            \"properties\": {\n                \"slug\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\
+        \n                },\n                \"published\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether the page is publicly visible\"\n                },\n                \"publishedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Date and time when the page was published\"\n    \
+        \            },\n                \"lastModified\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last modification\"\n\
+        \                },\n                \"author\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\n         \
+        \       }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all CMS pages\",\n    \"description\": \"\",\n    \"tags\": [\n  \
         \      \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listPages\"\n}"
     post:
@@ -509,38 +507,38 @@ paths:
         ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
         page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
-        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
-        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
-        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
-        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
-        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
-        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
-        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
-        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
-        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
-        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
-        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
-        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
-        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
-        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
-        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
-        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
-        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
-        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        ,\n                \"published\",\n                \"lastModified\"\n            ],\n            \"properties\": {\n\
+        \                \"slug\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\"\
+        ,\n                    \"description\": \"URL-friendly identifier for the page\"\n                },\n           \
+        \     \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display title
+        of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
+        \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
+        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
+        \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the page is publicly
+        visible\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Date and time when the page was published\"\n                },\n                \"lastModified\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Date and time of the last modification\"\n                },\n                \"author\": {\n                \
+        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name or
+        identifier of the page author\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Custom
+        metadata for the page\"\n                },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\"\
+        ,\n                    \"description\": \"Search engine optimization settings for the page\"\n                }\n\
+        \            }\n        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization
+        and social media sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\
+        \n                },\n                \"keywords\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph
+        title for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
         for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
@@ -548,38 +546,38 @@ paths:
         ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
         page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
-        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
-        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
-        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
-        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
-        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
-        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
-        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
-        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
-        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
-        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
-        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
-        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
-        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
-        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
-        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
-        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
-        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
-        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        ,\n                \"published\",\n                \"lastModified\"\n            ],\n            \"properties\": {\n\
+        \                \"slug\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\"\
+        ,\n                    \"description\": \"URL-friendly identifier for the page\"\n                },\n           \
+        \     \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display title
+        of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
+        \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
+        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
+        \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the page is publicly
+        visible\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Date and time when the page was published\"\n                },\n                \"lastModified\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Date and time of the last modification\"\n                },\n                \"author\": {\n                \
+        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name or
+        identifier of the page author\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Custom
+        metadata for the page\"\n                },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\"\
+        ,\n                    \"description\": \"Search engine optimization settings for the page\"\n                }\n\
+        \            }\n        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization
+        and social media sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\
+        \n                },\n                \"keywords\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph
+        title for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
         for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
@@ -619,38 +617,38 @@ paths:
         ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
         page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
-        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
-        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
-        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
-        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
-        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
-        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
-        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
-        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
-        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
-        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
-        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
-        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
-        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
-        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
-        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
-        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
-        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
-        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        ,\n                \"published\",\n                \"lastModified\"\n            ],\n            \"properties\": {\n\
+        \                \"slug\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\"\
+        ,\n                    \"description\": \"URL-friendly identifier for the page\"\n                },\n           \
+        \     \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display title
+        of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
+        \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
+        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
+        \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the page is publicly
+        visible\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Date and time when the page was published\"\n                },\n                \"lastModified\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Date and time of the last modification\"\n                },\n                \"author\": {\n                \
+        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name or
+        identifier of the page author\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Custom
+        metadata for the page\"\n                },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\"\
+        ,\n                    \"description\": \"Search engine optimization settings for the page\"\n                }\n\
+        \            }\n        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization
+        and social media sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\
+        \n                },\n                \"keywords\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph
+        title for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
         for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
@@ -658,38 +656,38 @@ paths:
         ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
         page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
-        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
-        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
-        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
-        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
-        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
-        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
-        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
-        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
-        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
-        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
-        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
-        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
-        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
-        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
-        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
-        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
-        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
-        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        ,\n                \"published\",\n                \"lastModified\"\n            ],\n            \"properties\": {\n\
+        \                \"slug\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\"\
+        ,\n                    \"description\": \"URL-friendly identifier for the page\"\n                },\n           \
+        \     \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display title
+        of the page\"\n                },\n                \"content\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"HTML, Markdown, or custom template content\"\n                },\n          \
+        \      \"contentType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
+        \              \"html\",\n                        \"markdown\",\n                        \"blazor\"\n            \
+        \        ],\n                    \"description\": \"Format of the page content\"\n                },\n           \
+        \     \"template\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Template name for custom layouts\"\n                },\n                \"published\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the page is publicly
+        visible\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Date and time when the page was published\"\n                },\n                \"lastModified\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Date and time of the last modification\"\n                },\n                \"author\": {\n                \
+        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name or
+        identifier of the page author\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Custom
+        metadata for the page\"\n                },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\"\
+        ,\n                    \"description\": \"Search engine optimization settings for the page\"\n                }\n\
+        \            }\n        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization
+        and social media sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\
+        \n                },\n                \"keywords\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph
+        title for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
         for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
@@ -1067,6 +1065,13 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    Platform:
+      type: string
+      enum:
+      - windows
+      - macos
+      - linux
+      description: Target operating system platform
     StatusResponse:
       description: Health and version status information for the website service
       type: object
@@ -1104,6 +1109,7 @@ components:
       - content
       - contentType
       - published
+      - lastModified
       properties:
         slug:
           type: string
@@ -1157,6 +1163,7 @@ components:
       - slug
       - title
       - published
+      - lastModified
       properties:
         slug:
           type: string
@@ -1525,12 +1532,8 @@ components:
       - checksum
       properties:
         platform:
-          type: string
-          enum:
-          - windows
-          - macos
-          - linux
-          description: Target operating system platform
+          description: Target platform for this download
+          $ref: '#/components/schemas/Platform'
         version:
           type: string
           description: Version number of the game client

@@ -205,7 +205,7 @@ Messaging Architecture
 
 ### Bugs (Fix Immediately)
 
-1. **Dead-letter exchange hardcoded vs config**: `RabbitMQMessageSubscriber.CreateDeadLetterArguments()` hardcodes `"bannou-dlx"` for the dead-letter exchange, but `MessagingServiceConfiguration.DeadLetterExchange` (default `"bannou-dlx"`) exists and is not used. If the config value is changed, queue setup won't respect it.
+None identified.
 
 ### Intentional Quirks (Documented Behavior)
 

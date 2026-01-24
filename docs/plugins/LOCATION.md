@@ -253,6 +253,6 @@ State Store Layout
 
 9. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
 
-14. **ListLocationsByParent returns NotFound for missing parent**: Lines 264-267 - if the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
+10. **ListLocationsByParent returns NotFound for missing parent**: Lines 264-267 - if the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
 
-15. **Undeprecate returns BadRequest not Conflict**: Line 1005 - unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
+11. **Undeprecate returns BadRequest not Conflict**: Line 1005 - unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.

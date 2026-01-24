@@ -139,7 +139,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -631,13 +632,8 @@ public partial class WebsiteController
             ],
             "properties": {
                 "platform": {
-                    "type": "string",
-                    "enum": [
-                        "windows",
-                        "macos",
-                        "linux"
-                    ],
-                    "description": "Target operating system platform"
+                    "description": "Target platform for this download",
+                    "$ref": "#/$defs/Platform"
                 },
                 "version": {
                     "type": "string",
@@ -667,6 +663,15 @@ public partial class WebsiteController
                     "description": "Minimum system requirements for the client"
                 }
             }
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "windows",
+                "macos",
+                "linux"
+            ],
+            "description": "Target operating system platform"
         }
     }
 }
@@ -1130,7 +1135,8 @@ public partial class WebsiteController
             "required": [
                 "slug",
                 "title",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1237,7 +1243,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1351,7 +1358,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1521,7 +1529,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {
@@ -1635,7 +1644,8 @@ public partial class WebsiteController
                 "title",
                 "content",
                 "contentType",
-                "published"
+                "published",
+                "lastModified"
             ],
             "properties": {
                 "slug": {

@@ -10842,11 +10842,8 @@ export interface components {
     };
     /** @description Download details for a specific game client version and platform */
     DownloadInfo: {
-      /**
-       * @description Target operating system platform
-       * @enum {string}
-       */
-      platform: 'windows' | 'macos' | 'linux';
+      /** @description Target platform for this download */
+      platform: components['schemas']['Platform'];
       /** @description Version number of the game client */
       version: string;
       /**
@@ -16205,7 +16202,7 @@ export interface components {
        * Format: date-time
        * @description Date and time of the last modification
        */
-      lastModified?: string;
+      lastModified: string;
       /** @description Name or identifier of the page author */
       author?: string | null;
       /** @description Custom metadata for the page */
@@ -16232,7 +16229,7 @@ export interface components {
        * Format: date-time
        * @description Date and time of the last modification
        */
-      lastModified?: string;
+      lastModified: string;
       /** @description Name or identifier of the page author */
       author?: string | null;
     };
@@ -30058,7 +30055,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Filter by platform */
-        platform?: 'windows' | 'macos' | 'linux';
+        platform?: components['schemas']['Platform'];
       };
       header?: never;
       path?: never;

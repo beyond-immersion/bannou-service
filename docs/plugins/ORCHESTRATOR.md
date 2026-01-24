@@ -18,7 +18,8 @@ Central intelligence for Bannou environment management and service orchestration
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Redis persistence for heartbeats, routing, configuration versioning, and processing pool state |
-| lib-messaging (`IMessageBus`) | Publishing health pings, service mapping broadcasts, deployment events, and error events |
+| lib-state (`IDistributedLockProvider`) | Pool-level locks for atomic acquire/release operations (15-second TTL) |
+| lib-messaging (`IMessageBus`) | Publishing health pings, service mapping broadcasts, deployment events, processor released events, and error events |
 | lib-mesh (`IServiceNavigator`) | Cross-service invocation (permission registration) |
 | `IContainerOrchestrator` (internal) | Backend abstraction for container lifecycle: deploy, teardown, scale, restart, logs, status |
 | `IBackendDetector` (internal) | Detects available container backends (Docker socket, Portainer, Kubernetes) |
@@ -77,6 +78,7 @@ Central intelligence for Bannou environment management and service orchestration
 | `orchestrator.health-ping` | `OrchestratorHealthPingEvent` | Infrastructure health check verifies pub/sub path |
 | `bannou.full-service-mappings` | `FullServiceMappingsEvent` | After any routing change (deploy, teardown, topology update, reset) |
 | `orchestrator.deployment` | `DeploymentEvent` | Deploy/teardown started, completed, or failed |
+| `orchestrator.processor.released` | `ProcessorReleasedEvent` | Processor released back to pool (includes pool type, success/failure, lease duration) |
 | `permission.service-registered` | `ServiceRegistrationEvent` | Service startup: registers permissions (or blank in secure mode) |
 | (error topic via `TryPublishErrorAsync`) | Error event | Any unexpected internal failure |
 
@@ -125,6 +127,7 @@ Central intelligence for Bannou environment management and service orchestration
 | `ILogger<OrchestratorService>` | Scoped | Structured logging |
 | `OrchestratorServiceConfiguration` | Singleton | All 23 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access (via IOrchestratorStateManager) |
+| `IDistributedLockProvider` | Singleton | Pool-level distributed locks (`orchestrator-pool`, 15s TTL) |
 | `IMessageBus` | Scoped | Event publishing |
 | `IServiceNavigator` | Scoped | Cross-service communication |
 | `IOrchestratorStateManager` | Singleton | State operations: heartbeats, routings, config versions, pool data |
@@ -185,9 +188,9 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Processing Pool Management (4 endpoints)
 
-- **AcquireProcessor** (`/orchestrator/processing-pool/acquire`): Validates pool type. Gets available processor list from Redis. Pops first available, creates lease (Guid-based) with timeout (default 300s). Stores lease in hash. Returns 503 if no processors available. Returns processor ID, app-id, lease ID, expiry.
+- **AcquireProcessor** (`/orchestrator/processing-pool/acquire`): Validates pool type. Acquires `orchestrator-pool` distributed lock on `{poolType}` (15s TTL) to prevent concurrent read-modify-write races. Gets available processor list from Redis. Pops first available, creates lease (Guid-based) with timeout (default 300s). Stores lease in hash. Returns 503 if no processors available. Returns processor ID, app-id, lease ID, expiry.
 
-- **ReleaseProcessor** (`/orchestrator/processing-pool/release`): Searches all known pool types for the lease ID. Removes lease from hash, returns processor to available list. Updates pool metrics (job success/failure count). Returns release confirmation.
+- **ReleaseProcessor** (`/orchestrator/processing-pool/release`): Searches all known pool types for the lease ID (read-only, outside lock). Once target pool is identified, acquires `orchestrator-pool` distributed lock on `{poolType}` (15s TTL). Removes lease from hash, returns processor to available list. Updates pool metrics (job success/failure count). Publishes `orchestrator.processor.released` event with pool type, processor ID, success/failure, and lease duration. Returns release confirmation.
 
 - **GetPoolStatus** (`/orchestrator/processing-pool/status`): Reads instance list, available list, leases hash, and config for pool type. Computes total/available/busy instance counts. If `includeMetrics=true`, reads metrics data (jobs completed/failed 1h, avg processing time, last scale event). Returns `PoolStatusResponse`.
 
@@ -268,8 +271,8 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
     Scale Up:  Deploy new containers --> Pending --> Available (after self-reg)
     Scale Down: Available --> Teardown container --> Remove from state
-    Acquire:    Available.pop() --> Create Lease --> Return processor info
-    Release:    Remove Lease --> Available.push() --> Update metrics
+    Acquire:    Lock(pool) --> Available.pop() --> Create Lease --> Return processor info
+    Release:    Find pool --> Lock(pool) --> Remove Lease --> Available.push() --> Update metrics --> Publish event
     Cleanup:    Available.excess(minInstances) --> Remove from state
 ```
 
@@ -414,7 +417,6 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 - **Pool metrics never reset**: `JobsCompleted1h` and `JobsFailed1h` increment indefinitely. Despite the "1h" suffix, there is no hourly reset mechanism.
 - **Lease expiry not enforced**: When a processor lease expires (`ExpiresAt` passes), nothing reclaims the processor. The lease remains in the hash indefinitely until explicitly released. The processor is effectively lost from the pool.
-- **Processing pool operations have no concurrency control**: `AcquireProcessorAsync`, `ReleaseProcessorAsync`, and `UpdatePoolMetricsAsync` all use non-atomic read-modify-write patterns. They call `GetListAsync` -> mutate -> `SetListAsync` (and similarly for hashes) without ETags or retries. Two concurrent `AcquireProcessor` requests can both read the same available list, both pop the same processor, and each create a separate lease for it - effectively double-allocating the processor.
 
 ### Intentional Quirks
 

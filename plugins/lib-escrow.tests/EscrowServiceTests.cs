@@ -653,6 +653,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         // Arrange
         var service = CreateService();
         var escrowId = Guid.NewGuid();
+        var partyId = Guid.NewGuid();
         var cachedResponse = new DepositResponse { FullyFunded = true };
 
         _mockIdempotencyStore
@@ -661,6 +662,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             {
                 Key = "dup-key",
                 EscrowId = escrowId,
+                PartyId = partyId,
                 Operation = "Deposit",
                 Result = cachedResponse
             });
@@ -669,7 +671,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var (status, response) = await service.DepositAsync(new DepositRequest
         {
             EscrowId = escrowId,
-            PartyId = Guid.NewGuid(),
+            PartyId = partyId,
             PartyType = "player",
             IdempotencyKey = "dup-key"
         });

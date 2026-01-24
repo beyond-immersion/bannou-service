@@ -2207,7 +2207,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         Assert.Equal(contractId.ToString(), capturedContext["contract.id"]);
         Assert.Equal(templateId.ToString(), capturedContext["contract.templateId"]);
         Assert.Equal("employment_contract", capturedContext["contract.templateCode"]);
-        Assert.Equal("active", capturedContext["contract.status"]);
+        Assert.Equal("fulfilled", capturedContext["contract.status"]);
 
         // Verify party shortcuts
         Assert.Equal(employerId.ToString(), capturedContext["contract.party.employer.entityId"]);
@@ -3276,7 +3276,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
                 It.IsAny<ServiceClients.PreboundApiDefinition>(),
-                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -3338,7 +3338,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
                 It.IsAny<ServiceClients.PreboundApiDefinition>(),
-                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

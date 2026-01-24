@@ -12234,12 +12234,7 @@
             "name": "platform",
             "in": "query",
             "schema": {
-              "type": "string",
-              "enum": [
-                "windows",
-                "macos",
-                "linux"
-              ]
+              "$ref": "#/components/schemas/Platform"
             },
             "description": "Filter by platform"
           }
@@ -21140,13 +21135,8 @@
         ],
         "properties": {
           "platform": {
-            "type": "string",
-            "enum": [
-              "windows",
-              "macos",
-              "linux"
-            ],
-            "description": "Target operating system platform"
+            "description": "Target platform for this download",
+            "$ref": "#/components/schemas/Platform"
           },
           "version": {
             "type": "string",
@@ -31080,7 +31070,8 @@
           "title",
           "content",
           "contentType",
-          "published"
+          "published",
+          "lastModified"
         ],
         "properties": {
           "slug": {
@@ -31148,7 +31139,8 @@
         "required": [
           "slug",
           "title",
-          "published"
+          "published",
+          "lastModified"
         ],
         "properties": {
           "slug": {

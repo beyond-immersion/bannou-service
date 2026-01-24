@@ -888,18 +888,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 });
             }
 
-            var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
-            var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
-
             var totalSentiment = 0.0f;
             var totalWeight = 0.0f;
             var emotionCounts = new Dictionary<EmotionalImpact, int>();
 
             foreach (var encounterId in encounterIds)
             {
-                var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
-                if (encounter == null) continue;
-
                 // Find the perspective for our character
                 var perspectives = await GetEncounterPerspectivesAsync(encounterId, cancellationToken);
                 var perspective = perspectives.FirstOrDefault(p => p.CharacterId == body.CharacterId);

@@ -13378,12 +13378,17 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterCompressedEvent">
             <summary>
-            Published to character.compressed when a character is compressed to archive format
+            Published when a character is compressed to archive format
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.EventName">
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.EventId">
             <summary>
-            Event type identifier: character.compressed
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.Timestamp">
+            <summary>
+            When the compression occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterCompressedEvent.CharacterId">
@@ -22080,12 +22085,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.SceneAssetId">
             <summary>
-            Source scene asset ID
+            Source scene asset ID (null if not provided by caller)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.RegionId">
             <summary>
-            Region where the instance was located
+            Region where the instance was located (null if not provided by caller)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.DestroyedBy">
@@ -74250,6 +74255,11 @@
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.Platform">
+            <summary>
+            Target operating system platform
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Website.StatusResponse">
             <summary>
             Health and version status information for the website service
@@ -74727,7 +74737,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.DownloadInfo.Platform">
             <summary>
-            Target operating system platform
+            Target platform for this download
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.DownloadInfo.Version">

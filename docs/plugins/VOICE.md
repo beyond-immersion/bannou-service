@@ -204,9 +204,7 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 
 ### Bugs (Fix Immediately)
 
-1. **Kamailio RPC port in SIP registrar URI**: `ScaledTierCoordinator` (line 102) uses `KamailioRpcPort` (5080, the JSON-RPC port) in the SIP registrar URI. SIP registration should use port 5060. This would cause SIP registration failures in production scaled tier.
-
-2. **Blocking error publish in RtpEngineClient**: Line 504 uses `.GetAwaiter().GetResult()` to synchronously publish an error event in an async exception handler. Could deadlock in production under certain synchronization contexts.
+None identified.
 
 ### Intentional Quirks (Documented Behavior)
 

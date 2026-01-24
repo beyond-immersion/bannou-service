@@ -8469,8 +8469,7 @@ paths:
       - name: platform
         in: query
         schema:
-          type: string
-          enum: [windows, macos, linux]
+          $ref: '#/components/schemas/Platform'
         description: Filter by platform
       responses:
         '200':
@@ -15831,9 +15830,8 @@ components:
       - checksum
       properties:
         platform:
-          type: string
-          enum: [windows, macos, linux]
-          description: Target operating system platform
+          description: Target platform for this download
+          $ref: '#/components/schemas/Platform'
         version:
           type: string
           description: Version number of the game client
@@ -24021,6 +24019,7 @@ components:
       - content
       - contentType
       - published
+      - lastModified
       properties:
         slug:
           type: string
@@ -24072,6 +24071,7 @@ components:
       - slug
       - title
       - published
+      - lastModified
       properties:
         slug:
           type: string

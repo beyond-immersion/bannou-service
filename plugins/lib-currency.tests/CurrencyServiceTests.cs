@@ -1,11 +1,17 @@
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using BalanceModel = BeyondImmersion.BannouService.Currency.CurrencyService.BalanceModel;
+using CurrencyDefinitionModel = BeyondImmersion.BannouService.Currency.CurrencyService.CurrencyDefinitionModel;
+using HoldModel = BeyondImmersion.BannouService.Currency.CurrencyService.HoldModel;
+using TransactionModel = BeyondImmersion.BannouService.Currency.CurrencyService.TransactionModel;
+using WalletModel = BeyondImmersion.BannouService.Currency.CurrencyService.WalletModel;
 
 namespace BeyondImmersion.BannouService.Currency.Tests;
 

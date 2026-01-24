@@ -20,6 +20,9 @@ info:
     - topic: character.deleted
       event: CharacterDeletedEvent
       description: Published when a character is soft-deleted
+    - topic: character.compressed
+      event: CharacterCompressedEvent
+      description: Published when a character is compressed to archive format
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/character-lifecycle-events.yaml
@@ -66,10 +69,6 @@ x-lifecycle:
         nullable: true  # NRT: Optional property MUST be nullable
         description: Timestamp when the character was last updated
 
-    # Character compression event (manual, not lifecycle)
-    - topic: character.compressed
-      event: CharacterCompressedEvent
-      description: Published when a character is compressed to archive format
 
 paths: {}  # Events don't have HTTP paths
 

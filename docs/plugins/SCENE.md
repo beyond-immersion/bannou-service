@@ -407,9 +407,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 ### Bugs (Fix Immediately)
 
-1. **Reference resolution reads from annotations, not referenceSceneId**: The schema provides `referenceSceneId` as a proper typed field on SceneNode, but the resolution logic reads from `annotations.reference.sceneAssetId` via dictionary casting. This mismatch means reference nodes using the schema-defined field will not be resolved.
-
-2. **Reference resolution relies on specific YAML deserialization runtime type**: In `ResolveReferencesRecursiveAsync`, annotations are cast to `IDictionary<string, object>`. This assumes YamlDotNet's deserializer produces this specific runtime type. If YAML contains annotations in a format that produces a different runtime type (e.g., `ExpandoObject` or a concrete class), the cast fails silently and reference resolution doesn't work.
+None identified.
 
 ### Intentional Quirks (Documented Behavior)
 

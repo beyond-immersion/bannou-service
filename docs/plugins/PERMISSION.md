@@ -218,7 +218,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. **Inconsistent role determination between two methods**: `DetermineHighestPriorityRole` (PermissionService.cs:1386, used for `session.connected`) checks only "admin" and "user" (priority: admin > user > anonymous, default: "anonymous"), while `DetermineHighestRoleFromEvent` (PermissionServiceEvents.cs:294, used for `session.updated`) checks "admin", "developer", and "user" (priority: admin > developer > user, default: "user"). A developer connecting for the first time gets role "user" (their "developer" role is ignored), but updating the session later correctly assigns "developer".
+None identified.
 
 ### Intentional Quirks (Documented Behavior)
 

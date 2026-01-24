@@ -886,6 +886,7 @@ components:
       - checksum
       properties:
         platform:
+          description: Target platform for this download
           $ref: '#/components/schemas/Platform'
         version:
           type: string

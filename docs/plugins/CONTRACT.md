@@ -18,7 +18,7 @@ Binding agreement management between entities with milestone-based progression, 
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Redis persistence for templates, instances, breaches, indexes, clause types, and idempotency cache |
-| lib-state (`IDistributedLockProvider`) | Index-level locks for concurrent list modification safety (15-second TTL) |
+| lib-state (`IDistributedLockProvider`) | Contract-instance locks for state transition serialization (60-second TTL); index-level locks for concurrent list modification safety (15-second TTL) |
 | lib-messaging (`IMessageBus`) | Publishing contract lifecycle events, prebound API execution events, error events |
 | lib-mesh (`IServiceNavigator`) | Executing prebound APIs (milestone callbacks, clause validation, clause execution) |
 | lib-mesh (`IEventConsumer`) | Event consumer registration (reserved for future event subscriptions) |
@@ -119,7 +119,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | `ILogger<ContractService>` | Scoped | Structured logging |
 | `ContractServiceConfiguration` | Singleton | All 9 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access |
-| `IDistributedLockProvider` | Singleton | Index-level distributed locks |
+| `IDistributedLockProvider` | Singleton | Contract-instance locks (`contract-instance`, 60s TTL) for mutation serialization; index-level locks (15s TTL) for list operations |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IServiceNavigator` | Scoped | Prebound API execution (milestone callbacks, clause execution) |
 | `IEventConsumer` | Scoped | Event consumer registration (unused in v1) |
@@ -144,23 +144,23 @@ Service lifetime is **Scoped** (per-request). No background services. Partial cl
 ### Instance Operations (7 endpoints)
 
 - **CreateContractInstance** (`/contract/instance/create`): Loads template, validates active. Checks party count against template min/max AND config hard cap. Checks `MaxActiveContractsPerEntity` per party via party indexes. Creates parties with Pending consent. Merges template default terms with request terms (instance overrides template, custom terms merged). Creates milestone instances from template definitions. Saves with Draft status. Updates template, status, and party indexes.
-- **ProposeContractInstance** (`/contract/instance/propose`): Transitions Draft to Proposed. Uses ETag-based optimistic concurrency (returns Conflict on race). Updates status indexes. Publishes `contract.proposed`.
-- **ConsentToContract** (`/contract/instance/consent`): Guardian enforcement (Forbidden if locked). Requires Proposed status. Lazy expiration check: computes deadline from ProposedAt + DefaultConsentTimeoutDays, transitions to Expired if past. Validates party exists and has not already consented. Records consent with timestamp. On all-consented: transitions to Active (immediate) or Pending (future effectiveFrom). Activates first milestone on activation. Publishes consent-received, and conditionally accepted/activated.
+- **ProposeContractInstance** (`/contract/instance/propose`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Transitions Draft to Proposed. Uses ETag-based optimistic concurrency. Persists state first, then updates status indexes, then publishes `contract.proposed`.
+- **ConsentToContract** (`/contract/instance/consent`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Requires Proposed status. Lazy expiration check: computes deadline from ProposedAt + DefaultConsentTimeoutDays, transitions to Expired if past. Validates party exists and has not already consented. Records consent with timestamp. On all-consented: transitions to Active (immediate) or Pending (future effectiveFrom). Activates first milestone on activation. Persists state first, then publishes consent-received, and conditionally accepted/activated.
 - **GetContractInstance** (`/contract/instance/get`): Simple key lookup, returns full instance response.
 - **QueryContractInstances** (`/contract/instance/query`): Uses party index, template index, or status index union based on provided filters. Requires at least one filter (partyEntityId+type, templateId, or statuses). Bulk loads, applies additional status/template filters, paginates. Requires at least one filter criterion or returns BadRequest.
-- **TerminateContractInstance** (`/contract/instance/terminate`): Guardian enforcement (Forbidden if locked). Validates requesting entity is a party. Transitions to Terminated. ETag concurrency. Publishes `contract.terminated`.
+- **TerminateContractInstance** (`/contract/instance/terminate`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Validates requesting entity is a party. Transitions to Terminated. ETag concurrency. Persists state first, then updates indexes, then publishes `contract.terminated`.
 - **GetContractInstanceStatus** (`/contract/instance/get-status`): Aggregates milestone progress, pending consents, active breaches, and days until expiration. Breach IDs loaded in bulk with status filtering.
 
 ### Milestone Operations (3 endpoints)
 
-- **CompleteMilestone** (`/contract/milestone/complete`): Validates milestone in Active or Pending state. Marks Completed. Executes onComplete prebound APIs in configured batch size (parallel within batch, sequential between batches). Activates next milestone by sequence. If all required milestones complete: transitions contract from Active to Fulfilled. ETag concurrency. Publishes milestone completed event.
-- **FailMilestone** (`/contract/milestone/fail`): Validates Active or Pending state. Required milestones get Failed status (triggers breach flag); optional milestones get Skipped. Executes onExpire prebound APIs in batches. ETag concurrency. Publishes milestone failed event with wasRequired and triggeredBreach flags.
+- **CompleteMilestone** (`/contract/milestone/complete`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Validates milestone in Active or Pending state. Marks Completed. Activates next milestone by sequence. If all required milestones complete: transitions contract from Active to Fulfilled. ETag concurrency. Persists state first, then updates indexes, then executes onComplete prebound APIs in configured batch size (parallel within batch, sequential between batches), then publishes milestone completed event.
+- **FailMilestone** (`/contract/milestone/fail`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Validates Active or Pending state. Required milestones get Failed status (triggers breach flag); optional milestones get Skipped. ETag concurrency. Persists state first, then executes onExpire prebound APIs in batches, then publishes milestone failed event with wasRequired and triggeredBreach flags.
 - **GetMilestone** (`/contract/milestone/get`): Returns single milestone status by code within a contract.
 
 ### Breach Operations (3 endpoints)
 
-- **ReportBreach** (`/contract/breach/report`): Creates breach record with Detected or Cure_period status based on terms.GracePeriodForCure (parsed as ISO 8601 "PnD" format). Links breach ID to contract instance. ETag concurrency on instance. Publishes `contract.breach.detected`.
-- **CureBreach** (`/contract/breach/cure`): Validates breach in Detected or Cure_period state. Marks Cured with timestamp. ETag concurrency on breach. Publishes `contract.breach.cured` with cure evidence.
+- **ReportBreach** (`/contract/breach/report`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Creates breach record with Detected or Cure_period status based on terms.GracePeriodForCure (parsed as ISO 8601 "PnD" format). Links breach ID to contract instance. ETag concurrency on instance. Publishes `contract.breach.detected`.
+- **CureBreach** (`/contract/breach/cure`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Validates breach in Detected or Cure_period state. Marks Cured with timestamp. ETag concurrency on breach. Publishes `contract.breach.cured` with cure evidence.
 - **GetBreach** (`/contract/breach/get`): Simple key lookup by breach ID.
 
 ### Metadata Operations (2 endpoints)
@@ -188,7 +188,7 @@ Service lifetime is **Scoped** (per-request). No background services. Partial cl
 
 - **SetContractTemplateValues** (`/contract/instance/set-template-values`): Validates key format (alphanumeric + underscore regex). Merges with existing template values (additive). Publishes `contract.templatevalues.set`.
 - **CheckAssetRequirements** (`/contract/instance/check-asset-requirements`): Requires template values set. Parses clauses from template's CustomTerms["clauses"] JSON array. Filters for asset_requirement type. For each requirement: resolves check_location via template substitution, queries balance via registered handler (currency/balance/get for currency, inventory for items). Returns per-party satisfaction with current/required/missing amounts.
-- **ExecuteContract** (`/contract/instance/execute`): Idempotency via both instance's ExecutedAt field and explicit idempotency key cache. Requires Fulfilled status. Requires template values set. Parses clauses, separates into fees (execute first) and distributions (execute second). Each clause: loads clause type handler, builds transfer payload with template substitution, supports flat/percentage/remainder amount types. Remainder queries source wallet balance. Currency uses /currency/transfer; items use /inventory/transfer. Records distributions. Marks ExecutedAt. Publishes `contract.executed`.
+- **ExecuteContract** (`/contract/instance/execute`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Uses ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync`). Idempotency via both instance's ExecutedAt field and explicit idempotency key cache. Requires Fulfilled status. Requires template values set. Parses clauses, separates into fees (execute first) and distributions (execute second). Each clause: loads clause type handler, builds transfer payload with template substitution, supports flat/percentage/remainder amount types. Remainder queries source wallet balance. Currency uses /currency/transfer; items use /inventory/transfer. Records distributions. Marks ExecutedAt. Publishes `contract.executed`.
 
 ---
 
@@ -440,7 +440,7 @@ Prebound API Batched Execution
 
 4. **Index lock failure is non-fatal**: When AddToListAsync/RemoveFromListAsync cannot acquire the 15-second distributed lock, the operation logs a warning but returns without error. The index may become stale.
 
-5. **Optimistic concurrency via ETag**: ProposeContractInstance, ConsentToContract, TerminateContractInstance, CompleteMilestone, FailMilestone, and CureBreach all use ETag-based optimistic concurrency. Concurrent modifications return Conflict (409), and the caller should retry.
+5. **Distributed lock + optimistic concurrency**: All mutating methods (ProposeContract, Consent, Terminate, CompleteMilestone, FailMilestone, ReportBreach, CureBreach, ExecuteContract) acquire a `contract-instance` distributed lock (60s TTL) before reading state, and additionally use ETag-based optimistic concurrency on save. Lock acquisition failure returns Conflict (409).
 
 6. **Guardian blocks consent and termination**: A locked contract returns Forbidden for both ConsentToContract and TerminateContractInstance. The guardian (typically an escrow) has exclusive control.
 
@@ -466,24 +466,14 @@ Prebound API Batched Execution
 
 5. **Template terms merge is shallow**: MergeTerms performs a single-level merge. CustomTerms dictionary merge is also shallow (instance values override template values by key, no deep merge of nested objects).
 
-6. **No distributed lock on contract state transitions**: Unlike the index operations which use distributed locks, contract instance state transitions rely solely on ETag optimistic concurrency. High-contention scenarios may see frequent retries.
+6. **Prebound API failures are non-blocking**: Failed prebound API executions (milestone callbacks) publish failure events but do not fail the milestone completion. The milestone is still marked complete even if its onComplete APIs fail.
 
-7. **Prebound API failures are non-blocking**: Failed prebound API executions (milestone callbacks) publish failure events but do not fail the milestone completion. The milestone is still marked complete even if its onComplete APIs fail.
+7. **Serial clause execution within type category**: Fee clauses and distribution clauses each execute sequentially (clause-by-clause), not in parallel. Only the APIs within a single milestone's callback list are batched in parallel.
 
-8. **Serial clause execution within type category**: Fee clauses and distribution clauses each execute sequentially (clause-by-clause), not in parallel. Only the APIs within a single milestone's callback list are batched in parallel.
+8. **QueryActiveContracts wildcard matching**: Template code filtering uses `StartsWith` with `TrimEnd('*')`, meaning "trade*" matches "trade_goods", "trade_services", etc. The asterisk is only meaningful at the end of the pattern.
 
-9. **QueryActiveContracts wildcard matching**: Template code filtering uses `StartsWith` with `TrimEnd('*')`, meaning "trade*" matches "trade_goods", "trade_services", etc. The asterisk is only meaningful at the end of the pattern.
+9. **MaxActiveContractsPerEntity counts all contracts, not just active ones**: The party index accumulates ALL contract IDs ever associated with an entity (including terminated, fulfilled, expired). Party indexes are never pruned. The effective limit is "max total contracts ever" rather than "max active". Fixing requires either pruning indexes on termination/fulfillment, or filtering by status at check time.
 
-10. **Status index corruption in ProposeContractInstance, TerminateContractInstance, CompleteMilestone**: These methods still perform index operations BEFORE TrySaveAsync (same pattern that was fixed in ConsentToContract). Should be restructured to defer index operations until after successful save.
-
-11. **MaxActiveContractsPerEntity counts all contracts, not just active ones**: The party index accumulates ALL contract IDs ever associated with an entity (including terminated, fulfilled, expired). Party indexes are never pruned. The effective limit is "max total contracts ever" rather than "max active". Fixing requires either pruning indexes on termination/fulfillment, or filtering by status at check time.
-
-12. **Prebound APIs executed before ETag save**: In CompleteMilestone and FailMilestone, prebound APIs (currency transfers, item moves) execute BEFORE TrySaveAsync. If the save fails, external side effects are irreversible. Needs saga pattern or compensation logic.
-
-13. **Events published before persistence in some flows**: ProposeContractInstance, CompleteMilestone, FailMilestone still publish events before the final TrySaveAsync. On conflict, phantom events reach downstream consumers.
-
-14. **ParseClauseAmount percentage mode returns 0 on missing base_amount**: When a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method logs a warning and returns 0. A percentage-typed fee clause executes as a zero-amount transfer. Whether this should fail the clause execution entirely (returning a failure status instead of 0) is a design decision.
+10. **ParseClauseAmount percentage mode returns 0 on missing base_amount**: When a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method logs a warning and returns 0. A percentage-typed fee clause executes as a zero-amount transfer. Whether this should fail the clause execution entirely (returning a failure status instead of 0) is a design decision.
 
 11. **QueryAssetBalanceAsync returns 0 on all failure paths**: At `ContractServiceEscrowIntegration.cs:791-882`, all error conditions in balance queries (non-200 status, missing response body, no recognized balance fields, parse failures, exceptions) return 0. For the "remainder" case (`amount="remainder"`), a query failure silently results in transferring 0 instead of failing the clause execution. Combined with Design #4 (non-transactional execution), this means a failed balance query can cause a clause to execute a zero-amount transfer while subsequent clauses proceed normally.
-
-12. **ExecuteContract has no ETag or distributed lock protection**: At `ContractServiceEscrowIntegration.cs:958-1031`, the execute flow reads the contract with plain `GetAsync` (no ETag), executes all clauses (potentially calling external services), then saves with plain `SaveAsync`. Two concurrent ExecuteContract calls on the same contract could both pass the `ExecutedAt.HasValue` check, execute clauses twice, and save (last writer's distributions overwrite first's). The idempotency key cache mitigates this only when the SAME key is used across calls.

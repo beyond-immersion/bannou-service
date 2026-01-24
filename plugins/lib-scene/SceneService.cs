@@ -1667,75 +1667,68 @@ public partial class SceneService : ISceneService
         List<ResolvedReference> resolved, List<UnresolvedReference> unresolved, List<string> errors,
         CancellationToken cancellationToken)
     {
-        if (node.NodeType == NodeType.Reference && node.Annotations != null)
+        if (node.NodeType == NodeType.Reference)
         {
-            // Annotations is object? - need to cast to dictionary
-            if (node.Annotations is IDictionary<string, object> annotationsDict &&
-                annotationsDict.TryGetValue("reference", out var refObj) &&
-                refObj is IDictionary<string, object> refDict &&
-                refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+            var referencedSceneId = GetReferenceSceneId(node);
+            if (!string.IsNullOrEmpty(referencedSceneId))
             {
-                var referencedSceneId = sceneIdObj?.ToString();
-                if (!string.IsNullOrEmpty(referencedSceneId))
+                if (depth > maxDepth)
                 {
-                    if (depth > maxDepth)
+                    unresolved.Add(new UnresolvedReference
+                    {
+                        NodeId = node.NodeId,
+                        RefId = node.RefId,
+                        ReferencedSceneId = Guid.Parse(referencedSceneId),
+                        Reason = UnresolvedReferenceReason.Depth_exceeded
+                    });
+                    errors.Add($"Reference at node '{node.RefId}' exceeds max depth {maxDepth}");
+                }
+                else if (visited.Contains(referencedSceneId))
+                {
+                    unresolved.Add(new UnresolvedReference
+                    {
+                        NodeId = node.NodeId,
+                        RefId = node.RefId,
+                        ReferencedSceneId = Guid.Parse(referencedSceneId),
+                        Reason = UnresolvedReferenceReason.Circular_reference,
+                        CyclePath = visited.Select(Guid.Parse).ToList()
+                    });
+                    errors.Add($"Circular reference detected at node '{node.RefId}'");
+                }
+                else
+                {
+                    var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
+                    var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{referencedSceneId}", cancellationToken);
+
+                    if (indexEntry == null)
                     {
                         unresolved.Add(new UnresolvedReference
                         {
                             NodeId = node.NodeId,
                             RefId = node.RefId,
                             ReferencedSceneId = Guid.Parse(referencedSceneId),
-                            Reason = UnresolvedReferenceReason.Depth_exceeded
+                            Reason = UnresolvedReferenceReason.Not_found
                         });
-                        errors.Add($"Reference at node '{node.RefId}' exceeds max depth {maxDepth}");
-                    }
-                    else if (visited.Contains(referencedSceneId))
-                    {
-                        unresolved.Add(new UnresolvedReference
-                        {
-                            NodeId = node.NodeId,
-                            RefId = node.RefId,
-                            ReferencedSceneId = Guid.Parse(referencedSceneId),
-                            Reason = UnresolvedReferenceReason.Circular_reference,
-                            CyclePath = visited.Select(Guid.Parse).ToList()
-                        });
-                        errors.Add($"Circular reference detected at node '{node.RefId}'");
+                        errors.Add($"Referenced scene '{referencedSceneId}' not found");
                     }
                     else
                     {
-                        var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
-                        var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{referencedSceneId}", cancellationToken);
-
-                        if (indexEntry == null)
+                        var referencedScene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
+                        if (referencedScene != null)
                         {
-                            unresolved.Add(new UnresolvedReference
+                            resolved.Add(new ResolvedReference
                             {
                                 NodeId = node.NodeId,
                                 RefId = node.RefId,
                                 ReferencedSceneId = Guid.Parse(referencedSceneId),
-                                Reason = UnresolvedReferenceReason.Not_found
+                                ReferencedVersion = referencedScene.Version,
+                                Scene = referencedScene,
+                                Depth = depth
                             });
-                            errors.Add($"Referenced scene '{referencedSceneId}' not found");
-                        }
-                        else
-                        {
-                            var referencedScene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
-                            if (referencedScene != null)
-                            {
-                                resolved.Add(new ResolvedReference
-                                {
-                                    NodeId = node.NodeId,
-                                    RefId = node.RefId,
-                                    ReferencedSceneId = Guid.Parse(referencedSceneId),
-                                    ReferencedVersion = referencedScene.Version,
-                                    Scene = referencedScene,
-                                    Depth = depth
-                                });
 
-                                // Recursively resolve references in the referenced scene
-                                visited.Add(referencedSceneId);
-                                await ResolveReferencesRecursiveAsync(referencedScene.Root, depth + 1, maxDepth, visited, resolved, unresolved, errors, cancellationToken);
-                            }
+                            // Recursively resolve references in the referenced scene
+                            visited.Add(referencedSceneId);
+                            await ResolveReferencesRecursiveAsync(referencedScene.Root, depth + 1, maxDepth, visited, resolved, unresolved, errors, cancellationToken);
                         }
                     }
                 }
@@ -1752,6 +1745,30 @@ public partial class SceneService : ISceneService
         }
     }
 
+    /// <summary>
+    /// Extracts the referenced scene ID from a reference node.
+    /// Checks the typed ReferenceSceneId field first, falls back to annotations for backward compatibility.
+    /// </summary>
+    private static string? GetReferenceSceneId(SceneNode node)
+    {
+        // Primary: use the typed schema field
+        if (node.ReferenceSceneId.HasValue)
+        {
+            return node.ReferenceSceneId.Value.ToString();
+        }
+
+        // Fallback: annotations-based lookup for backward compatibility with legacy scene data
+        if (node.Annotations is IDictionary<string, object> annotationsDict &&
+            annotationsDict.TryGetValue("reference", out var refObj) &&
+            refObj is IDictionary<string, object> refDict &&
+            refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+        {
+            return sceneIdObj?.ToString();
+        }
+
+        return null;
+    }
+
     private HashSet<string> ExtractSceneReferences(SceneNode root)
     {
         var references = new HashSet<string>();
@@ -1761,18 +1778,12 @@ public partial class SceneService : ISceneService
 
     private void ExtractSceneReferencesRecursive(SceneNode node, HashSet<string> references)
     {
-        if (node.NodeType == NodeType.Reference && node.Annotations != null)
+        if (node.NodeType == NodeType.Reference)
         {
-            if (node.Annotations is IDictionary<string, object> annotationsDict &&
-                annotationsDict.TryGetValue("reference", out var refObj) &&
-                refObj is IDictionary<string, object> refDict &&
-                refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+            var sceneId = GetReferenceSceneId(node);
+            if (!string.IsNullOrEmpty(sceneId))
             {
-                var sceneId = sceneIdObj?.ToString();
-                if (!string.IsNullOrEmpty(sceneId))
-                {
-                    references.Add(sceneId);
-                }
+                references.Add(sceneId);
             }
         }
 
@@ -1817,18 +1828,12 @@ public partial class SceneService : ISceneService
 
     private void FindReferenceNodesRecursive(SceneNode node, string targetSceneId, List<SceneNode> nodes)
     {
-        if (node.NodeType == NodeType.Reference && node.Annotations != null)
+        if (node.NodeType == NodeType.Reference)
         {
-            if (node.Annotations is IDictionary<string, object> annotationsDict &&
-                annotationsDict.TryGetValue("reference", out var refObj) &&
-                refObj is IDictionary<string, object> refDict &&
-                refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+            var sceneId = GetReferenceSceneId(node);
+            if (sceneId == targetSceneId)
             {
-                var sceneId = sceneIdObj?.ToString();
-                if (sceneId == targetSceneId)
-                {
-                    nodes.Add(node);
-                }
+                nodes.Add(node);
             }
         }
 

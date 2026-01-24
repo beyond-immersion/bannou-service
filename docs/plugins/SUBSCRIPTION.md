@@ -161,7 +161,7 @@ subscription.updated (Renewed)
 
 ### Bugs (Fix Immediately)
 
-1. **Subscription-index not populated**: The `SubscriptionExpirationService` background worker reads `"subscription-index"` to find expired subscriptions, but `CreateSubscriptionAsync` never adds entries to this index. The expiration worker silently finds nothing. Subscriptions expire in theory (via the event) but the background check cannot detect them.
+None identified.
 
 ### Intentional Quirks (Documented Behavior)
 

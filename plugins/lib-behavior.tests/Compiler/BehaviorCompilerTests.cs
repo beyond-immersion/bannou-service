@@ -469,4 +469,40 @@ public class BehaviorCompilerTests
         // The behavior depends on implementation - we just verify no exception is thrown
         Assert.NotNull(result);
     }
+
+    // =========================================================================
+    // LOCAL VARIABLE LIMIT TESTS
+    // =========================================================================
+
+    [Fact]
+    public void CompilationContext_GetOrAllocateLocal_ThrowsAt257thVariable()
+    {
+        var context = new CompilationContext();
+
+        // Allocate 256 locals (the maximum)
+        for (var i = 0; i < 256; i++)
+        {
+            var index = context.GetOrAllocateLocal($"var_{i}");
+            Assert.Equal((byte)i, index);
+        }
+
+        // The 257th allocation should throw
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => context.GetOrAllocateLocal("overflow_var"));
+        Assert.Contains("Maximum local variable count (256) exceeded", ex.Message);
+        Assert.Contains("overflow_var", ex.Message);
+    }
+
+    [Fact]
+    public void CompilationContext_GetOrAllocateLocal_ExistingVariablesDoNotCount()
+    {
+        var context = new CompilationContext();
+
+        // Allocate one local
+        context.GetOrAllocateLocal("existing");
+
+        // Re-requesting the same name returns the existing index without consuming a slot
+        var index = context.GetOrAllocateLocal("existing");
+        Assert.Equal((byte)0, index);
+    }
 }
