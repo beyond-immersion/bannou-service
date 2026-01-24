@@ -112,7 +112,7 @@ public sealed class ControlGate : IControlGate
     public async Task<bool> TakeControlAsync(ControlOptions options)
     {
 
-        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
         await Task.Yield();
 
         lock (_lock)
@@ -164,7 +164,7 @@ public sealed class ControlGate : IControlGate
     public async Task ReturnControlAsync(ControlHandoff handoff)
     {
 
-        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
         await Task.Yield();
 
         lock (_lock)

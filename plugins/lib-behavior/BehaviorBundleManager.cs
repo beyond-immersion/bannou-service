@@ -12,11 +12,6 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// </summary>
 public class BehaviorBundleManager : IBehaviorBundleManager
 {
-    /// <summary>
-    /// Behavior state store name. Matches StateStoreDefinitions.BehaviorStatestore after next regeneration.
-    /// </summary>
-    private const string BehaviorStore = "behavior-statestore";
-
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IAssetClient _assetClient;
     private readonly BehaviorServiceConfiguration _configuration;
@@ -69,7 +64,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
             assetId,
             bundleId ?? "none");
 
-        var metadataStore = _stateStoreFactory.GetStore<BehaviorMetadata>(BehaviorStore);
+        var metadataStore = _stateStoreFactory.GetStore<BehaviorMetadata>(StateStoreDefinitions.Behavior);
         var metadataKey = $"{_configuration.BehaviorMetadataKeyPrefix}{behaviorId}";
 
         // Check if behavior already exists (for determining create vs update)
@@ -125,7 +120,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
 
         _logger.LogDebug("Adding behavior {BehaviorId} to bundle {BundleId}", behaviorId, bundleId);
 
-        var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(BehaviorStore);
+        var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(StateStoreDefinitions.Behavior);
         var membershipKey = $"{_configuration.BundleMembershipKeyPrefix}{bundleId}";
 
         // Get or create bundle membership
@@ -163,7 +158,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
 
         _logger.LogDebug("Creating asset bundle for behavior bundle {BundleId}", bundleId);
 
-        var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(BehaviorStore);
+        var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(StateStoreDefinitions.Behavior);
         var membershipKey = $"{_configuration.BundleMembershipKeyPrefix}{bundleId}";
 
         var membership = await membershipStore.GetAsync(membershipKey, cancellationToken);
@@ -221,7 +216,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
-        var metadataStore = _stateStoreFactory.GetStore<BehaviorMetadata>(BehaviorStore);
+        var metadataStore = _stateStoreFactory.GetStore<BehaviorMetadata>(StateStoreDefinitions.Behavior);
         var metadataKey = $"{_configuration.BehaviorMetadataKeyPrefix}{behaviorId}";
 
         return await metadataStore.GetAsync(metadataKey, cancellationToken);
@@ -239,7 +234,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(bundleId, nameof(bundleId));
 
-        var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(BehaviorStore);
+        var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(StateStoreDefinitions.Behavior);
         var membershipKey = $"{_configuration.BundleMembershipKeyPrefix}{bundleId}";
 
         return await membershipStore.GetAsync(membershipKey, cancellationToken);
@@ -259,7 +254,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
 
         _logger.LogDebug("Removing behavior {BehaviorId}", behaviorId);
 
-        var metadataStore = _stateStoreFactory.GetStore<BehaviorMetadata>(BehaviorStore);
+        var metadataStore = _stateStoreFactory.GetStore<BehaviorMetadata>(StateStoreDefinitions.Behavior);
         var metadataKey = $"{_configuration.BehaviorMetadataKeyPrefix}{behaviorId}";
 
         var metadata = await metadataStore.GetAsync(metadataKey, cancellationToken);
@@ -275,7 +270,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         // Remove from bundle if it was in one
         if (!string.IsNullOrWhiteSpace(metadata.BundleId))
         {
-            var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(BehaviorStore);
+            var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(StateStoreDefinitions.Behavior);
             var membershipKey = $"{_configuration.BundleMembershipKeyPrefix}{metadata.BundleId}";
 
             var membership = await membershipStore.GetAsync(membershipKey, cancellationToken);
@@ -306,7 +301,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
-        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(BehaviorStore);
+        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);
         var key = $"{_configuration.GoapMetadataKeyPrefix}{behaviorId}";
 
         metadata.BehaviorId = behaviorId;
@@ -333,7 +328,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
-        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(BehaviorStore);
+        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);
         var key = $"{_configuration.GoapMetadataKeyPrefix}{behaviorId}";
 
         return await store.GetAsync(key, cancellationToken);
@@ -351,7 +346,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
-        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(BehaviorStore);
+        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);
         var key = $"{_configuration.GoapMetadataKeyPrefix}{behaviorId}";
 
         var existing = await store.GetAsync(key, cancellationToken);

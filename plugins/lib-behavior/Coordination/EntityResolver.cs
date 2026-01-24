@@ -54,7 +54,7 @@ public sealed class EntityResolver : IEntityResolver
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(bindingName);
 
-        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
         await Task.Yield();
 
         var reference = ResolveInternal(bindingName, bindings, context);
@@ -84,7 +84,7 @@ public sealed class EntityResolver : IEntityResolver
         CancellationToken ct = default)
     {
 
-        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
         await Task.Yield();
 
         var results = new Dictionary<string, EntityReference>(StringComparer.OrdinalIgnoreCase);
@@ -211,11 +211,12 @@ public sealed class EntityResolver : IEntityResolver
     private static bool TryGetCaseInsensitive<TValue>(
         IReadOnlyDictionary<string, TValue> dictionary,
         string key,
-        out TValue value)
+        [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TValue value)
     {
         // Try exact match first (most common case)
-        if (dictionary.TryGetValue(key, out value!))
+        if (dictionary.TryGetValue(key, out var foundValue))
         {
+            value = foundValue;
             return true;
         }
 
@@ -229,7 +230,7 @@ public sealed class EntityResolver : IEntityResolver
             }
         }
 
-        value = default!;
+        value = default;
         return false;
     }
 

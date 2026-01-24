@@ -209,8 +209,9 @@ public sealed class Perception
             // Source can be empty for perceptions from unknown/implicit sources
             Source = data.TryGetValue("source", out var src) ? src?.ToString() ?? string.Empty : string.Empty,
             Timestamp = data.TryGetValue("timestamp", out var ts) && ts is DateTimeOffset dto ? dto : DateTimeOffset.UtcNow,
+            // Where clause filters nulls; coalesce satisfies compiler nullable analysis (will never execute)
             Data = data.Where(kv => kv.Value != null)
-                        .ToDictionary(kv => kv.Key, kv => kv.Value!)
+                        .ToDictionary(kv => kv.Key, kv => kv.Value ?? throw new InvalidOperationException("Unexpected null after filter"))
         };
     }
 }
