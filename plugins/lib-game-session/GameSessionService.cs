@@ -1727,12 +1727,25 @@ public partial class GameSessionService : IGameSessionService
             var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
-            var existing = await store.GetAsync(key) ?? new SubscriberSessionsModel { AccountId = accountId };
-            existing.SessionIds.Add(sessionId);
-            existing.UpdatedAt = DateTimeOffset.UtcNow;
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                var (existing, etag) = await store.GetWithETagAsync(key);
+                var model = existing ?? new SubscriberSessionsModel { AccountId = accountId };
+                model.SessionIds.Add(sessionId);
+                model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await store.SaveAsync(key, existing);
-            _logger.LogDebug("Stored subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+                var result = await store.TrySaveAsync(key, model, etag ?? string.Empty);
+                if (result != null)
+                {
+                    _logger.LogDebug("Stored subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+                    return;
+                }
+
+                _logger.LogDebug("Concurrent modification on subscriber sessions for account {AccountId}, retrying (attempt {Attempt})",
+                    accountId, attempt + 1);
+            }
+
+            _logger.LogWarning("Failed to store subscriber session {SessionId} for account {AccountId} after retries", sessionId, accountId);
         }
         catch (Exception ex)
         {
@@ -1751,22 +1764,37 @@ public partial class GameSessionService : IGameSessionService
             var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
-            var existing = await store.GetAsync(key);
-            if (existing != null)
+            for (var attempt = 0; attempt < 3; attempt++)
             {
+                var (existing, etag) = await store.GetWithETagAsync(key);
+                if (existing == null)
+                {
+                    _logger.LogDebug("No subscriber sessions found for account {AccountId}, nothing to remove", accountId);
+                    return;
+                }
+
                 existing.SessionIds.Remove(sessionId);
                 existing.UpdatedAt = DateTimeOffset.UtcNow;
 
                 if (existing.SessionIds.Count == 0)
                 {
                     await store.DeleteAsync(key);
+                    _logger.LogDebug("Removed last subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+                    return;
                 }
-                else
+
+                var result = await store.TrySaveAsync(key, existing, etag ?? string.Empty);
+                if (result != null)
                 {
-                    await store.SaveAsync(key, existing);
+                    _logger.LogDebug("Removed subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+                    return;
                 }
+
+                _logger.LogDebug("Concurrent modification on subscriber sessions for account {AccountId}, retrying (attempt {Attempt})",
+                    accountId, attempt + 1);
             }
-            _logger.LogDebug("Removed subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+
+            _logger.LogWarning("Failed to remove subscriber session {SessionId} for account {AccountId} after retries", sessionId, accountId);
         }
         catch (Exception ex)
         {

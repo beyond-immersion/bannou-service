@@ -56,6 +56,7 @@ public partial class DocumentationService : IDocumentationService
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string ARCHIVE_KEY_PREFIX = "archive:";
     private const string SYNC_LOCK_PREFIX = "repo-sync:";
+    private const string ALL_NAMESPACES_KEY = "all-namespaces";
 
     // Static search result cache shared across scoped instances (performance optimization, not authoritative state)
     private static readonly SearchResultCache _searchCache = new();
@@ -1698,6 +1699,7 @@ public partial class DocumentationService : IDocumentationService
 
     /// <summary>
     /// Adds a document ID to the namespace document list for pagination support.
+    /// Also maintains the global namespace registry for search index rebuild.
     /// </summary>
     private async Task AddDocumentToNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
@@ -1709,6 +1711,14 @@ public partial class DocumentationService : IDocumentationService
         {
             docIds.Add(documentId);
             await guidListStore.SaveAsync(indexKey, docIds, cancellationToken: cancellationToken);
+        }
+
+        // Track namespace in global registry for search index rebuild on startup
+        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
+        var allNamespaces = await stringSetStore.GetAsync(ALL_NAMESPACES_KEY, cancellationToken) ?? [];
+        if (allNamespaces.Add(namespaceId))
+        {
+            await stringSetStore.SaveAsync(ALL_NAMESPACES_KEY, allNamespaces, cancellationToken: cancellationToken);
         }
     }
 

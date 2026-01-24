@@ -706,9 +706,10 @@ public partial class SceneService : ISceneService
             var sceneIdStr = body.SceneId.ToString();
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
+            var indexKey = $"{SCENE_INDEX_PREFIX}{sceneIdStr}";
 
-            // Get scene index
-            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            // Get scene index with ETag for optimistic concurrency
+            var (indexEntry, indexEtag) = await indexStore.GetWithETagAsync(indexKey, cancellationToken);
             if (indexEntry == null)
             {
                 _logger.LogWarning("CheckoutScene: Scene {SceneId} not found", body.SceneId);
@@ -756,10 +757,16 @@ public partial class SceneService : ISceneService
                 new StateOptions { Ttl = ttlSeconds },
                 cancellationToken);
 
-            // Update index
+            // Update index with optimistic concurrency
             indexEntry.IsCheckedOut = true;
             indexEntry.CheckedOutBy = checkoutState.EditorId;
-            await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
+            var newIndexEtag = await indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
+            if (newIndexEtag == null)
+            {
+                _logger.LogWarning("CheckoutScene: Concurrent modification on scene index {SceneId}", body.SceneId);
+                await checkoutStore.DeleteAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish event
             var eventModel = new SceneCheckedOutEvent
@@ -817,8 +824,9 @@ public partial class SceneService : ISceneService
                 return (StatusCodes.Conflict, null);
             }
 
-            // Get index entry
-            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            // Get index entry with ETag for optimistic concurrency
+            var indexKey = $"{SCENE_INDEX_PREFIX}{sceneIdStr}";
+            var (indexEntry, indexEtag) = await indexStore.GetWithETagAsync(indexKey, cancellationToken);
             if (indexEntry == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -840,7 +848,12 @@ public partial class SceneService : ISceneService
             await checkoutStore.DeleteAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
             indexEntry.IsCheckedOut = false;
             indexEntry.CheckedOutBy = null;
-            await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
+            var newIndexEtag = await indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
+            if (newIndexEtag == null)
+            {
+                _logger.LogWarning("CommitScene: Concurrent modification on scene index {SceneId}", body.SceneId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish committed event
             var eventModel = new SceneCommittedEvent

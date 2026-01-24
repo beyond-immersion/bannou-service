@@ -187,8 +187,8 @@ public class ClientEndpointMetadataTests
         // We expect hundreds of endpoints across all services
         var count = ClientEndpointMetadata.Count;
 
-        Assert.True(count > 300, $"Expected > 300 endpoints, got {count}");
-        Assert.True(count < 500, $"Expected < 500 endpoints, got {count}");
+        Assert.True(count > 500, $"Expected > 500 endpoints, got {count}");
+        Assert.True(count < 600, $"Expected < 600 endpoints, got {count}");
     }
 
     // =========================================================================

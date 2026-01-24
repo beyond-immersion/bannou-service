@@ -334,6 +334,22 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Acquire distributed lock to prevent concurrent rename/modification
+            await using var slotLock = await _lockProvider.LockAsync(
+                "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 30, cancellationToken);
+            if (!slotLock.Success)
+            {
+                _logger.LogWarning("Could not acquire slot lock for {SlotId} during rename", slot.SlotId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Re-read under lock to ensure consistency
+            slot = await slotStore.GetAsync(oldSlotKey, cancellationToken);
+            if (slot == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
             // Check if new name already exists
             var newSlotKey = SaveSlotMetadata.GetStateKey(
                 body.GameId, body.OwnerType.ToString(),

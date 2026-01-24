@@ -53,7 +53,10 @@ public class DocumentationServiceTests
         _mockRegistryStore = new Mock<IStateStore<HashSet<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<DocumentationService>>();
-        _configuration = new DocumentationServiceConfiguration();
+        _configuration = new DocumentationServiceConfiguration
+        {
+            SearchCacheTtlSeconds = 0 // Disable static cache to prevent test interference
+        };
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockSearchIndexService = new Mock<ISearchIndexService>();
         _mockGitSyncService = new Mock<IGitSyncService>();

@@ -153,13 +153,18 @@ public partial class ActorService : IActorService
             await templateStore.SaveAsync(templateId.ToString(), template, cancellationToken: cancellationToken);
             await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
 
-            // Add to template index
+            // Add to template index with optimistic concurrency
             var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+            var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
+            allIds ??= new List<string>();
             if (!allIds.Contains(templateId.ToString()))
             {
                 allIds.Add(templateId.ToString());
-                await indexStore.SaveAsync(ALL_TEMPLATES_KEY, allIds, cancellationToken: cancellationToken);
+                var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
+                if (indexResult == null)
+                {
+                    _logger.LogWarning("Concurrent modification on template index during create of {TemplateId}", templateId);
+                }
             }
 
             // Publish created event

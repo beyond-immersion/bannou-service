@@ -50,6 +50,9 @@ public class DocumentationServicePlugin : StandardServicePlugin<IDocumentationSe
         // Register background sync scheduler service
         services.AddHostedService<RepositorySyncSchedulerService>();
 
+        // Register search index rebuild service (runs once on startup)
+        services.AddHostedService<SearchIndexRebuildService>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 }

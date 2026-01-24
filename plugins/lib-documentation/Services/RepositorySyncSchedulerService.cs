@@ -78,6 +78,19 @@ public class RepositorySyncSchedulerService : BackgroundService
 
             try
             {
+                await CleanupStaleRepositoriesAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error during stale repository cleanup");
+            }
+
+            try
+            {
                 await Task.Delay(CheckInterval, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -206,6 +219,70 @@ public class RepositorySyncSchedulerService : BackgroundService
         else
         {
             _logger.LogDebug("No bindings needed sync this cycle");
+        }
+    }
+
+    /// <summary>
+    /// Cleans up stale repository directories that are no longer bound or haven't synced
+    /// within the configured GitStorageCleanupHours threshold.
+    /// </summary>
+    private async Task CleanupStaleRepositoriesAsync(CancellationToken cancellationToken)
+    {
+        var storagePath = _configuration.GitStoragePath ?? "/tmp/bannou-git-repos";
+        if (!Directory.Exists(storagePath))
+        {
+            return;
+        }
+
+        using var scope = _serviceProvider.CreateScope();
+        var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
+        var gitSyncService = scope.ServiceProvider.GetRequiredService<IGitSyncService>();
+
+        // Get all known binding IDs
+        var registryStore = stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
+        var bindingNamespaces = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken) ?? [];
+
+        var bindingStore = stateStoreFactory.GetStore<RepositoryBinding>(StateStoreDefinitions.Documentation);
+
+        // Build a set of valid binding IDs from the registry
+        var validBindingIds = new HashSet<string>();
+        foreach (var ns in bindingNamespaces)
+        {
+            var bindingKey = $"{BINDING_KEY_PREFIX}{ns}";
+            var binding = await bindingStore.GetAsync(bindingKey, cancellationToken);
+            if (binding != null)
+            {
+                validBindingIds.Add(binding.BindingId.ToString());
+            }
+        }
+
+        var cleanupThreshold = DateTimeOffset.UtcNow.AddHours(-_configuration.GitStorageCleanupHours);
+
+        foreach (var repoDir in Directory.GetDirectories(storagePath))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var dirName = Path.GetFileName(repoDir);
+
+            // Only consider directories that look like GUIDs (binding IDs)
+            if (!Guid.TryParse(dirName, out _))
+            {
+                continue;
+            }
+
+            // If the binding still exists, skip cleanup
+            if (validBindingIds.Contains(dirName))
+            {
+                continue;
+            }
+
+            // Orphaned repo directory (no binding) or stale - check last modification time
+            var dirInfo = new DirectoryInfo(repoDir);
+            if (dirInfo.LastWriteTimeUtc < cleanupThreshold.UtcDateTime)
+            {
+                _logger.LogInformation("Cleaning up stale repository directory: {Path}", repoDir);
+                await gitSyncService.CleanupRepositoryAsync(repoDir, cancellationToken);
+            }
         }
     }
 

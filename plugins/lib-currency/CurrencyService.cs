@@ -1940,14 +1940,9 @@ public partial class CurrencyService : ICurrencyService
 
             var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
 
-            // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
-            var hold = await TryGetHoldFromCacheAsync(holdKey, cancellationToken);
-            if (hold is null)
-            {
-                // Cache miss - read from MySQL
-                var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-                hold = await holdStore.GetAsync(holdKey, cancellationToken);
-            }
+            // Read from MySQL with ETag for optimistic concurrency
+            var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
+            var (hold, holdEtag) = await holdStore.GetWithETagAsync(holdKey, cancellationToken);
 
             if (hold is null) return (StatusCodes.NotFound, null);
             if (hold.Status != HoldStatus.Active) return (StatusCodes.BadRequest, null);
@@ -1973,8 +1968,12 @@ public partial class CurrencyService : ICurrencyService
             hold.CapturedAmount = body.CaptureAmount;
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
-            var captureHoldStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-            await captureHoldStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
+            var newHoldEtag = await holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
+            if (newHoldEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for hold {HoldId}", body.HoldId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Update Redis cache after MySQL write
             await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
@@ -2046,14 +2045,9 @@ public partial class CurrencyService : ICurrencyService
         {
             var holdKey = $"{HOLD_PREFIX}{body.HoldId}";
 
-            // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
-            var hold = await TryGetHoldFromCacheAsync(holdKey, cancellationToken);
-            if (hold is null)
-            {
-                // Cache miss - read from MySQL
-                var holdReadStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-                hold = await holdReadStore.GetAsync(holdKey, cancellationToken);
-            }
+            // Read from MySQL with ETag for optimistic concurrency
+            var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
+            var (hold, holdEtag) = await holdStore.GetWithETagAsync(holdKey, cancellationToken);
 
             if (hold is null) return (StatusCodes.NotFound, null);
             if (hold.Status != HoldStatus.Active) return (StatusCodes.BadRequest, null);
@@ -2061,8 +2055,12 @@ public partial class CurrencyService : ICurrencyService
             hold.Status = HoldStatus.Released;
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
-            var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
-            await holdStore.SaveAsync(holdKey, hold, cancellationToken: cancellationToken);
+            var newHoldEtag = await holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
+            if (newHoldEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for hold {HoldId}", body.HoldId);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Update Redis cache after MySQL write
             await UpdateHoldCacheAsync(holdKey, hold, cancellationToken);
