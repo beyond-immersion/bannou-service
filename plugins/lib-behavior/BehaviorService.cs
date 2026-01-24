@@ -527,7 +527,7 @@ public partial class BehaviorService : IBehaviorService
             {
                 IsValid = result.Success,
                 ValidationErrors = validationErrors,
-                SemanticWarnings = new List<string>(),
+                SemanticWarnings = result.Warnings.Select(w => w.Message).ToList(),
                 SchemaVersion = "1.0"
             });
         }

@@ -475,19 +475,20 @@ public partial class MappingService : IMappingService
                 return (StatusCodes.Unauthorized, null);
             }
 
+            // Check remaining time before extension to detect late heartbeats
+            string? warning = null;
+            var remainingBeforeExtend = (authority.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+            if (remainingBeforeExtend < _configuration.AuthorityGracePeriodSeconds)
+            {
+                warning = "Authority expiring soon, increase heartbeat frequency";
+            }
+
             // Extend authority
             var newExpiresAt = DateTimeOffset.UtcNow.AddSeconds(_configuration.AuthorityTimeoutSeconds);
             authority.ExpiresAt = newExpiresAt;
 
             await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
                 .SaveAsync(authorityKey, authority, cancellationToken: cancellationToken);
-
-            string? warning = null;
-            var remainingSeconds = (newExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
-            if (remainingSeconds < _configuration.AuthorityGracePeriodSeconds)
-            {
-                warning = "Authority expiring soon, increase heartbeat frequency";
-            }
 
             return (StatusCodes.OK, new AuthorityHeartbeatResponse
             {

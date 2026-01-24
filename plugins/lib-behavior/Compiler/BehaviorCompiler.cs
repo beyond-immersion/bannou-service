@@ -50,6 +50,7 @@ public sealed class BehaviorCompiler
     {
 
         var context = new CompilationContext(options);
+        IReadOnlyList<SemanticWarning> semanticWarnings = Array.Empty<SemanticWarning>();
 
         // Set model ID if provided
         if (options?.ModelId.HasValue == true)
@@ -66,13 +67,14 @@ public sealed class BehaviorCompiler
             if (options?.SkipSemanticAnalysis != true)
             {
                 var analysisResult = _analyzer.Analyze(document);
+                semanticWarnings = analysisResult.Warnings;
                 if (!analysisResult.IsValid)
                 {
                     foreach (var error in analysisResult.Errors)
                     {
                         context.AddError(error.Message);
                     }
-                    return new CompilationResult(false, null, context.Errors);
+                    return new CompilationResult(false, null, context.Errors, semanticWarnings);
                 }
             }
 
@@ -85,7 +87,7 @@ public sealed class BehaviorCompiler
             // Phase 3: Finalize
             if (context.HasErrors)
             {
-                return new CompilationResult(false, null, context.Errors);
+                return new CompilationResult(false, null, context.Errors, semanticWarnings);
             }
 
             // Add halt at end
@@ -94,12 +96,12 @@ public sealed class BehaviorCompiler
             // Build final output
             var bytecode = context.Finalize();
 
-            return new CompilationResult(true, bytecode, context.Errors);
+            return new CompilationResult(true, bytecode, context.Errors, semanticWarnings);
         }
         catch (Exception ex)
         {
             context.AddError($"Compilation failed: {ex.Message}");
-            return new CompilationResult(false, null, context.Errors);
+            return new CompilationResult(false, null, context.Errors, semanticWarnings);
         }
     }
 
@@ -191,17 +193,23 @@ public sealed class CompilationResult
     public byte[]? Bytecode { get; }
 
     /// <summary>
-    /// Compilation errors and warnings.
+    /// Compilation errors.
     /// </summary>
     public IReadOnlyList<CompilationError> Errors { get; }
 
     /// <summary>
+    /// Semantic warnings (non-fatal issues detected during analysis).
+    /// </summary>
+    public IReadOnlyList<SemanticWarning> Warnings { get; }
+
+    /// <summary>
     /// Creates a new compilation result.
     /// </summary>
-    public CompilationResult(bool success, byte[]? bytecode, IReadOnlyList<CompilationError> errors)
+    public CompilationResult(bool success, byte[]? bytecode, IReadOnlyList<CompilationError> errors, IReadOnlyList<SemanticWarning>? warnings = null)
     {
         Success = success;
         Bytecode = bytecode;
         Errors = errors;
+        Warnings = warnings ?? Array.Empty<SemanticWarning>();
     }
 }

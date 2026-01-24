@@ -987,10 +987,11 @@ public partial class ConnectService : IConnectService
         int messageLength,
         CancellationToken cancellationToken)
     {
+        BinaryMessage? message = null;
         try
         {
             // Parse binary message using protocol class
-            var message = BinaryMessage.Parse(buffer, messageLength);
+            message = BinaryMessage.Parse(buffer, messageLength);
 
             _logger.LogDebug("Binary message from session {SessionId}: {Message}",
                 sessionId, message.ToString());
@@ -1125,21 +1126,20 @@ public partial class ConnectService : IConnectService
             _logger.LogError(ex, "Error handling binary message from session {SessionId}", sessionId);
             await PublishErrorEventAsync("HandleBinaryMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
 
-            // Send generic error response if we can parse the message
-            try
+            // Send error response using already-parsed message (avoids double-parse)
+            if (message != null)
             {
-                var message = BinaryMessage.Parse(buffer, messageLength);
-                var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.RequestError, "Internal server error");
+                try
+                {
+                    var errorResponse = MessageRouter.CreateErrorResponse(
+                        message, ResponseCodes.RequestError, "Internal server error");
 
-                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
-            }
-            catch (Exception parseEx)
-            {
-                // If we can't even parse the message or send error response, log and continue
-                // This is a last resort - the outer exception handler already logged the original error
-                _logger.LogError(parseEx, "Failed to send error response to session {SessionId} - message may be corrupted", sessionId);
-                _ = PublishErrorEventAsync("HandleBinaryMessage", parseEx.GetType().Name, "Failed to send error response - message may be corrupted", details: new { SessionId = sessionId });
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                }
+                catch (Exception sendEx)
+                {
+                    _logger.LogError(sendEx, "Failed to send error response to session {SessionId}", sessionId);
+                }
             }
         }
     }
@@ -1896,6 +1896,32 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to forward RPC response to {ResponseChannel}", pendingRPC.ResponseChannel);
+        }
+    }
+
+    /// <summary>
+    /// Periodically removes expired pending RPCs to prevent memory leaks.
+    /// Called by _pendingRPCCleanupTimer every 30 seconds.
+    /// </summary>
+    private void CleanupExpiredPendingRPCs(object? state)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var expiredCount = 0;
+
+        foreach (var kvp in _pendingRPCs)
+        {
+            if (kvp.Value.TimeoutAt < now)
+            {
+                if (_pendingRPCs.TryRemove(kvp.Key, out _))
+                {
+                    expiredCount++;
+                }
+            }
+        }
+
+        if (expiredCount > 0)
+        {
+            _logger.LogInformation("Cleaned up {ExpiredCount} expired pending RPCs", expiredCount);
         }
     }
 

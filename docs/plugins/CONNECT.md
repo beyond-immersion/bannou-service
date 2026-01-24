@@ -435,11 +435,11 @@ Connection Mode Behavior Matrix
 
 ### Bugs (Fix Immediately)
 
-1. **_pendingRPCs memory leak**: The `ConcurrentDictionary<ulong, PendingRPCInfo>` for pending RPCs is never cleaned up for timed-out entries. If a client disconnects without responding to an RPC, the entry remains forever. No background cleanup task exists.
+1. **~~_pendingRPCs memory leak~~** *(FIXED)*: Added periodic cleanup timer (every 30s) that removes expired pending RPCs based on their `TimeoutAt` field.
 
-2. **Double-parse in error handler**: In `HandleBinaryMessageAsync`, when the outer catch fires, the code attempts to re-parse the same buffer to send an error response. If the first parse succeeded but routing failed, this is wasteful. If the first parse caused the exception, the second parse will also fail.
+2. **~~Double-parse in error handler~~** *(FIXED)*: Hoisted `BinaryMessage? message` to method scope so the catch block reuses the already-parsed message instead of re-parsing the buffer.
 
-3. **LogWarning used for routing visibility**: `RouteToServiceAsync` uses `LogWarning` for normal routing operations ("WebSocket -> ServiceNavigator") to ensure visibility in CI. This pollutes warning-level logs with non-warning traffic.
+3. **~~LogWarning used for routing visibility~~** *(FIXED)*: Changed to `LogDebug` since this is normal routing traffic, not a warning condition.
 
 ### Intentional Quirks (Documented Behavior)
 
