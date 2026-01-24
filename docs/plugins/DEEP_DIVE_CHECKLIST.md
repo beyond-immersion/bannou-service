@@ -17,17 +17,17 @@
 
 | # | Plugin | Endpoints | File | Status |
 |---|--------|-----------|------|--------|
-| 1 | lib-messaging | 4 | `MESSAGING.md` | [ ] |
-| 2 | lib-game-service | 5 | `GAME-SERVICE.md` | [ ] |
-| 3 | lib-state | 6 | `STATE.md` | [ ] |
-| 4 | lib-subscription | 7 | `SUBSCRIPTION.md` | [ ] |
-| 5 | lib-relationship | 7 | `RELATIONSHIP.md` | [ ] |
-| 6 | lib-voice | 7 | `VOICE.md` | [ ] |
-| 7 | lib-character-personality | 9 | `CHARACTER-PERSONALITY.md` | [ ] |
-| 8 | lib-realm | 10 | `REALM.md` | [ ] |
-| 9 | lib-character | 10 | `CHARACTER.md` | [ ] |
-| 10 | lib-realm-history | 10 | `REALM-HISTORY.md` | [ ] |
-| 11 | lib-character-history | 10 | `CHARACTER-HISTORY.md` | [ ] |
+| 1 | lib-messaging | 4 | `MESSAGING.md` | [x] |
+| 2 | lib-game-service | 5 | `GAME-SERVICE.md` | [x] |
+| 3 | lib-state | 6 | `STATE.md` | [x] |
+| 4 | lib-subscription | 7 | `SUBSCRIPTION.md` | [x] |
+| 5 | lib-relationship | 7 | `RELATIONSHIP.md` | [x] |
+| 6 | lib-voice | 7 | `VOICE.md` | [x] |
+| 7 | lib-character-personality | 9 | `CHARACTER-PERSONALITY.md` | [x] |
+| 8 | lib-realm | 10 | `REALM.md` | [x] |
+| 9 | lib-character | 10 | `CHARACTER.md` | [x] |
+| 10 | lib-realm-history | 10 | `REALM-HISTORY.md` | [x] |
+| 11 | lib-character-history | 10 | `CHARACTER-HISTORY.md` | [x] |
 
 ## Tier 2: Moderate Complexity (7-15 endpoints with non-trivial logic)
 
