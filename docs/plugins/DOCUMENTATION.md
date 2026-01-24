@@ -45,14 +45,14 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 |-------------|-----------|---------|
 | `{namespaceId}:{documentId}` | `StoredDocument` | Document content and metadata (note: DOC_KEY_PREFIX is empty; store adds `doc:` prefix) |
 | `slug-idx:{namespaceId}:{slug}` | `string` (GUID) | Slug-to-document-ID lookup index |
-| `ns-docs:{namespaceId}` | `List<Guid>` | All document IDs in a namespace (for pagination and rebuild) |
+| `ns-docs:{namespaceId}` | `List<Guid>` / `HashSet<Guid>` | All document IDs in a namespace (for pagination and rebuild). **Note**: add/remove methods use `List<Guid>`, but delete-orphans/restore/count methods use `HashSet<Guid>` — see Bug #4. |
 | `ns-trash:{namespaceId}` | `List<Guid>` | Trashcan document ID list per namespace |
 | `trash:{namespaceId}:{documentId}` | `TrashedDocument` | Soft-deleted document with TTL metadata |
 | `repo-binding:{namespaceId}` | `RepositoryBinding` | Repository binding configuration for a namespace |
 | `repo-bindings` | `HashSet<string>` | Global registry of all bound namespace IDs |
 | `all-namespaces` | `HashSet<string>` | Global registry of all namespaces (for search rebuild) |
 | `archive:{archiveId}` | `DocumentationArchive` | Archive metadata record |
-| `ns-archives:{namespaceId}` | `List<Guid>` | Archive IDs for a namespace |
+| `archive:list:{namespaceId}` | `List<Guid>` | Archive IDs for a namespace (ARCHIVE_KEY_PREFIX + "list:" + namespace) |
 | `repo-sync:{namespaceId}` | Distributed Lock | Prevents concurrent sync operations on same namespace |
 
 ---
@@ -100,7 +100,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `GitCloneTimeoutSeconds` | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | `300` | Git clone/pull timeout |
 | `SyncSchedulerEnabled` | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | `true` | Enable background sync scheduler |
 | `SyncSchedulerCheckIntervalMinutes` | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | `5` | How often scheduler checks for due syncs |
-| `MaxConcurrentSyncs` | `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | `3` | Max parallel sync operations per cycle |
+| `MaxConcurrentSyncs` | `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | `3` | Max sync operations per scheduler cycle (sequential despite name — see Design #9) |
 | `MaxDocumentsPerSync` | `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | `1000` | Max documents processed per sync |
 | `RepositorySyncCheckIntervalSeconds` | `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | `30` | Initial delay before first scheduler check |
 | `BulkOperationBatchSize` | `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | `10` | Documents per batch before yielding in bulk ops |
@@ -409,6 +409,14 @@ Archive System
 
 2. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. If these 10 are old documents and newer ones exist further in the list, the reported timestamp will be stale.
 
+3. **DeleteOrphanDocumentsAsync saves namespace index without ETag**: At `DocumentationService.cs:3190`, the orphan deletion method reads the namespace doc list, removes orphan IDs, and calls `SaveAsync()` without ETag protection. Meanwhile, `AddDocumentToNamespaceIndexAsync` (line 1717) uses `TrySaveAsync` with ETag retry loops. If a new document is added to the namespace during orphan deletion (e.g., during a truncated-then-retry sync scenario), the non-ETag save at line 3190 will silently overwrite the concurrent addition. The document exists in the store but becomes invisible to list/pagination operations.
+
+4. **Namespace document list type inconsistency**: The same key `ns-docs:{namespaceId}` is accessed as `List<Guid>` in write-path methods (`AddDocumentToNamespaceIndexAsync` line 1712, `RemoveDocumentFromNamespaceIndexAsync` line 1764) but as `HashSet<Guid>` in read-path methods (`DeleteOrphanDocumentsAsync` line 3141, `GetAllNamespaceDocumentsAsync` line 3374, `RestoreFromBundleAsync` line 3551, `GetNamespaceDocumentCountAsync` line 3126). While JSON array serialization round-trips both types, if duplicates accumulate in the List (from race conditions), reading as HashSet silently deduplicates them. Conversely, `RestoreFromBundleAsync` saves a `HashSet<Guid>` which the Add/Remove methods then read back as `List<Guid>`.
+
+5. **SaveArchiveAsync has race condition on archive list**: At `DocumentationService.cs:3476-3484`, the archive list for a namespace is read, a new ID is added, and the list is saved WITHOUT ETag protection. Concurrent archive creations for the same namespace can overwrite each other, losing archive entries from the list. The archive metadata itself (stored by ID) is safe, but the list used by `ListDocumentationArchives` becomes incomplete.
+
+6. **Search index retains stale terms on document update**: When `IndexDocument()` is called during document update (line 3110), `NamespaceIndex.AddDocument()` replaces the document in `_documents` and adds all new terms to the inverted index, but does NOT remove old terms that are no longer in the updated content (`SearchIndexService.cs:216-250`). After a content update that removes a term, searching for that old term still returns the document because the inverted index entry persists and the document still exists in `_documents`. Only a full index rebuild clears these stale entries.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Repository-bound namespaces reject manual mutations**: Any `Create`, `Update`, or `Delete` call on a namespace with an active binding (status not Disabled) returns 403 Forbidden. This enforces git as the single source of truth.
@@ -444,3 +452,7 @@ Archive System
 6. **Import onConflict=update overwrites all fields**: When importing with update policy, all document fields are overwritten including tags and metadata. There is no merge-with-existing-tags behavior - the import fully replaces.
 
 7. **RepositorySyncSchedulerService processes bindings sequentially**: Bindings are checked one at a time within each cycle. A slow sync operation blocks subsequent bindings until it completes or the scheduler moves to the next cycle after the interval.
+
+8. **ContentTransformService.GenerateSlug has dead GeneratedRegex and runtime regex**: The class declares `NonSlugCharRegex()` (`[^a-z0-9\-]`) as a source-generated regex but never uses it. Instead, `GenerateSlug()` at line 114 uses a runtime-compiled `Regex.Replace(slug, @"[^a-z0-9\-/]", "")` with a different pattern (includes `/` for path separators). The generated regex is dead code. Minor performance concern since the runtime regex is compiled per-call during sync (once per file).
+
+9. **MaxConcurrentSyncs naming is misleading**: The configuration property `MaxConcurrentSyncs` and its env var `DOCUMENTATION_MAX_CONCURRENT_SYNCS` suggest parallel operation, but in `RepositorySyncSchedulerService.ProcessScheduledSyncsAsync()` (line 186), each sync is `await`-ed sequentially in a `foreach` loop. The value is actually "max syncs per scheduler cycle" — a rate limit, not a concurrency limit.

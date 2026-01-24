@@ -421,11 +421,21 @@ Escrow Integration Flow
 
 ### Bugs (Fix Immediately)
 
-1. **Wallet lifecycle event topic inconsistency**: Created/closed events use hyphenated topics (`currency-wallet.created`, `currency.wallet.closed`) while frozen/unfrozen use dot-only topics (`currency.wallet.frozen`, `currency.wallet.unfrozen`). Subscribers must account for both patterns.
+1. **Event topic naming inconsistency**: Entity-creation events use hyphenated prefixes (`currency-wallet.created`, `currency-definition.created`, `currency-definition.updated`) while all state-change events use dot-only prefixes (`currency.wallet.frozen/unfrozen/closed`, `currency.credited/debited/transferred`, `currency.hold.*`, `currency.autogain.*`). Subscribers must account for both `currency-wallet.*` and `currency.wallet.*` patterns for wallet events.
 
 2. **CloseWallet does not check for active holds**: When closing a wallet and transferring balances, the implementation does not verify whether active authorization holds exist. This could result in transferring funds that are logically reserved, leaving holds pointing at a closed wallet with zero balance.
 
 3. **Hold index never cleaned up**: When holds transition to Captured/Released states, they remain in the `hold-wallet:{walletId}:{currencyDefId}` index list. `GetTotalHeldAmountAsync` filters by Active status, so correctness is maintained, but the index grows unboundedly.
+
+4. **Debit and Transfer ignore active holds in sufficiency check**: `DebitCurrency` (line 994: `balance.Amount < body.Amount`) and `TransferCurrency` (line 1098: `sourceBalance.Amount < body.Amount`) check raw `balance.Amount` without subtracting active hold amounts. `GetBalance` correctly reports `effectiveAmount = balance.Amount - lockedAmount`, but mutation operations bypass this. A wallet with 100 balance and 80 in active holds can debit up to 100, overdrawing past logically reserved amounts.
+
+5. **CaptureHold debits before hold status save**: `CaptureHoldAsync` calls `DebitCurrencyAsync` (line 1953) before the hold's `TrySaveAsync` with ETag (line 1971). If the ETag save fails (concurrent modification), the debit has already executed irreversibly but the hold remains Active. The hold amount continues to be counted in effective balance calculations while the actual balance has been reduced, effectively double-deducting.
+
+6. **Lazy autogain has no distributed lock**: `ApplyAutogainIfNeededAsync` (called from GetBalance/BatchGetBalances) modifies the balance and calls `SaveBalanceAsync` without any lock. The task-mode autogain correctly acquires a `"currency-autogain"` lock (line 207 in CurrencyAutogainTaskService), but the lazy path does not participate in this locking protocol. If task mode is enabled while lazy path is also triggered (which happens for any GetBalance call regardless of mode), both paths race on the same balance with last-write-wins.
+
+7. **CloseWallet has no ETag or distributed lock**: `CloseWalletAsync` (line 656) saves wallet status change with plain `SaveAsync` (no ETag). The balance transfers at lines 641-653 occur before the wallet status is set to Closed, so concurrent credit/debit/transfer operations during the transfer phase will succeed against a wallet that is mid-closure.
+
+8. **CreateHold has no lock on effective balance check**: `CreateHoldAsync` calculates `effectiveBalance = balance.Amount - currentHeld` (line 1855) and checks sufficiency (line 1857) without any distributed lock. Between the check and the hold save at line 1889, another concurrent CreateHold on the same wallet+currency can pass the same check, causing total active holds to exceed actual balance.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -462,3 +472,7 @@ Escrow Integration Flow
 7. **Double-spending window on conversion**: The debit and credit legs of a conversion are separate operations. Between the debit and credit, the wallet temporarily has less currency. A concurrent balance check during this window would see the reduced balance. The credit follows immediately so the window is small.
 
 8. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
+
+9. **UpdateExchangeRate has no ETag**: `UpdateExchangeRateAsync` (line 1435) reads the definition without ETag and saves with plain `SaveAsync`. Concurrent rate updates are last-write-wins. For a financial service, exchange rate updates should use optimistic concurrency to prevent race conditions between admin rate-setting operations.
+
+10. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.

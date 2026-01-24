@@ -64,9 +64,9 @@
 | 35 | lib-account | 16 | `ACCOUNT.md` | [x] |
 | 36 | lib-orchestrator | 22 | `ORCHESTRATOR.md` | [x] |
 | 37 | lib-save-load | 26 | `SAVE-LOAD.md` | [x] |
-| 38 | lib-documentation | 27 | `DOCUMENTATION.md` | [ ] |
-| 39 | lib-contract | 30 | `CONTRACT.md` | [ ] |
-| 40 | lib-currency | 32 | `CURRENCY.md` | [ ] |
+| 38 | lib-documentation | 27 | `DOCUMENTATION.md` | [x] |
+| 39 | lib-contract | 30 | `CONTRACT.md` | [x] |
+| 40 | lib-currency | 32 | `CURRENCY.md` | [x] |
 
 ---
 

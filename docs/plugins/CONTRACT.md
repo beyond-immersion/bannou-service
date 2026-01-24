@@ -432,7 +432,17 @@ Prebound API Batched Execution
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **Lazy expiration in consent flow does not check TrySaveAsync result**: At `ContractService.cs:717`, when a consent attempt discovers the consent deadline has expired, `TrySaveAsync` is called to transition the contract to Expired status, but the return value is discarded. If a concurrent modification occurred, the save fails silently while status index operations have already executed (removed from "proposed" at line 714, added to "expired" at line 718). The contract remains Proposed in the store but the indexes reflect Expired.
+
+2. **Status index corruption on ETag conflict in state transitions**: In `ProposeContractInstance` (line 641), `TerminateContractInstance` (line 966), `CompleteMilestone` (lines 1136-1138), and `ConsentToContract` (lines 755, 764/777), one or both index operations (remove from old status, add to new status) are performed BEFORE the `TrySaveAsync` call. If the save returns null (conflict), the code correctly returns 409 but does NOT roll back the already-executed index changes. The contract becomes invisible to status-based queries or appears under the wrong status index.
+
+3. **Guardian operations lack ETag concurrency protection**: `LockContract` (`ContractServiceEscrowIntegration.cs:101`), `UnlockContract` (`:188`), and `TransferContractParty` (`:286`) all use plain `SaveAsync` without ETags. Two concurrent lock requests on an unlocked contract can both read `GuardianId == null`, both pass the check, and both write — last writer wins the guardian identity. This contrasts with the main contract operations (Propose, Consent, Terminate, Milestone) which properly use `TrySaveAsync` with ETags.
+
+4. **MaxActiveContractsPerEntity counts all contracts, not just active ones**: At `ContractService.cs:522-526`, the entity limit check reads the party index (`party-idx:{type}:{id}`) which accumulates ALL contract IDs ever associated with the entity (draft, proposed, active, terminated, fulfilled, expired). Party indexes are never pruned on termination or fulfillment. The effective behavior is "max total contracts ever" rather than "max active contracts" despite the configuration property name.
+
+5. **Prebound APIs executed before ETag save in CompleteMilestone**: At `ContractService.cs:1117-1118`, milestone `onComplete` prebound APIs are executed via `ExecutePreboundApisBatchedAsync` (which calls external services) BEFORE the `TrySaveAsync` at line 1142. If the save fails due to concurrent modification, the APIs have already fired (e.g., currency transfers, item moves). The milestone is not marked complete but side effects are irreversible. Same pattern exists in `FailMilestone` at line 1214 for `onExpire` APIs.
+
+6. **Consent flow publishes events before persistence**: At `ContractService.cs:748` (consent-received), `:772` (activated), and `:780` (accepted), events are published BEFORE the final `TrySaveAsync` at line 783. If the save fails (Conflict), events have been published for state changes that didn't persist. Downstream consumers may react to phantom state transitions.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -464,7 +474,7 @@ None identified.
 
 2. **No pagination on index operations**: Party indexes and status indexes are unbounded lists. An entity with many contracts will have a large party-idx list that is loaded entirely on each query.
 
-3. **In-memory clause validation cache**: The `ConcurrentDictionary<string, CachedValidationResult>` in ContractServiceClauseValidation is per-instance, not distributed. In multi-instance deployments, each instance has its own cache (acceptable per IMPLEMENTATION TENETS for ConcurrentDictionary usage for caching).
+3. **In-memory clause validation cache is effectively request-scoped**: The `ConcurrentDictionary<string, CachedValidationResult>` in ContractServiceClauseValidation is an instance field on a Scoped service (`ServiceLifetime.Scoped`). Each HTTP request gets a new service instance with a fresh cache. The cache provides no cross-request benefit — it only helps within a single `ValidateAllClausesAsync` call if the same clause appears multiple times (unlikely). The staleness threshold configuration (`ClauseValidationCacheStalenessSeconds`) is effectively dead configuration since the cache never persists between requests.
 
 4. **Clause execution is not transactional**: If one clause in ExecuteContract fails, previously executed clauses are NOT rolled back. The distributions list will be partial, and the contract is still marked as executed with whatever succeeded.
 
@@ -477,3 +487,9 @@ None identified.
 8. **Serial clause execution within type category**: Fee clauses and distribution clauses each execute sequentially (clause-by-clause), not in parallel. Only the APIs within a single milestone's callback list are batched in parallel.
 
 9. **QueryActiveContracts wildcard matching**: Template code filtering uses `StartsWith` with `TrimEnd('*')`, meaning "trade*" matches "trade_goods", "trade_services", etc. The asterisk is only meaningful at the end of the pattern.
+
+10. **ParseClauseAmount percentage mode silently returns 0 on missing base_amount**: At `ContractServiceEscrowIntegration.cs:1386-1393`, when a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method silently returns 0 with no warning log. A percentage-typed fee clause could execute as a zero-amount transfer without any indication of failure.
+
+11. **QueryAssetBalanceAsync returns 0 on all failure paths**: At `ContractServiceEscrowIntegration.cs:791-882`, all error conditions in balance queries (non-200 status, missing response body, no recognized balance fields, parse failures, exceptions) return 0. For the "remainder" case (`amount="remainder"`), a query failure silently results in transferring 0 instead of failing the clause execution. Combined with Design #4 (non-transactional execution), this means a failed balance query can cause a clause to execute a zero-amount transfer while subsequent clauses proceed normally.
+
+12. **ExecuteContract has no ETag or distributed lock protection**: At `ContractServiceEscrowIntegration.cs:958-1031`, the execute flow reads the contract with plain `GetAsync` (no ETag), executes all clauses (potentially calling external services), then saves with plain `SaveAsync`. Two concurrent ExecuteContract calls on the same contract could both pass the `ExecutedAt.HasValue` check, execute clauses twice, and save (last writer's distributions overwrite first's). The idempotency key cache mitigates this only when the SAME key is used across calls.
