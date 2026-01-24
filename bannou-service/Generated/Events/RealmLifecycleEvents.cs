@@ -69,6 +69,14 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     public string Name { get; set; } = default!;
 
     /// <summary>
+    /// ID of the game service this realm belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
     /// Detailed description of the realm and its purpose
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
@@ -166,6 +174,14 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service this realm belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
     /// Detailed description of the realm and its purpose
@@ -273,6 +289,14 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service this realm belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
     /// Detailed description of the realm and its purpose

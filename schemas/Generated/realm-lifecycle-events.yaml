@@ -20,6 +20,7 @@ components:
       - realmId
       - code
       - name
+      - gameServiceId
       - isActive
       - isDeprecated
       - createdAt
@@ -39,37 +40,41 @@ components:
         name: &id003
           type: string
           description: "Display name of the realm"
-        description: &id004
+        gameServiceId: &id004
+          type: string
+          format: uuid
+          description: "ID of the game service this realm belongs to"
+        description: &id005
           type: string
           nullable: true
           description: "Detailed description of the realm and its purpose"
-        category: &id005
+        category: &id006
           type: string
           nullable: true
           description: "Category classification for organizing realms"
-        isActive: &id006
+        isActive: &id007
           type: boolean
           description: "Whether the realm is currently active and accessible"
-        isDeprecated: &id007
+        isDeprecated: &id008
           type: boolean
           description: "Whether the realm has been marked as deprecated"
-        deprecatedAt: &id008
+        deprecatedAt: &id009
           type: string
           format: date-time
           description: "Timestamp when the realm was deprecated"
-        deprecationReason: &id009
+        deprecationReason: &id010
           type: string
           nullable: true
           description: "Explanation for why the realm was deprecated"
-        metadata: &id010
+        metadata: &id011
           type: object
           additionalProperties: true
           description: "Additional custom key-value data associated with the realm"
-        createdAt: &id011
+        createdAt: &id012
           type: string
           format: date-time
           description: "Timestamp when the realm was created"
-        updatedAt: &id012
+        updatedAt: &id013
           type: string
           format: date-time
           description: "Timestamp when the realm was last updated"
@@ -86,6 +91,7 @@ components:
       - realmId
       - code
       - name
+      - gameServiceId
       - isActive
       - isDeprecated
       - createdAt
@@ -99,15 +105,16 @@ components:
         realmId: *id001
         code: *id002
         name: *id003
-        description: *id004
-        category: *id005
-        isActive: *id006
-        isDeprecated: *id007
-        deprecatedAt: *id008
-        deprecationReason: *id009
-        metadata: *id010
-        createdAt: *id011
-        updatedAt: *id012
+        gameServiceId: *id004
+        description: *id005
+        category: *id006
+        isActive: *id007
+        isDeprecated: *id008
+        deprecatedAt: *id009
+        deprecationReason: *id010
+        metadata: *id011
+        createdAt: *id012
+        updatedAt: *id013
         changedFields:
           type: array
           items:
@@ -126,6 +133,7 @@ components:
       - realmId
       - code
       - name
+      - gameServiceId
       - isActive
       - isDeprecated
       - createdAt
@@ -138,15 +146,16 @@ components:
         realmId: *id001
         code: *id002
         name: *id003
-        description: *id004
-        category: *id005
-        isActive: *id006
-        isDeprecated: *id007
-        deprecatedAt: *id008
-        deprecationReason: *id009
-        metadata: *id010
-        createdAt: *id011
-        updatedAt: *id012
+        gameServiceId: *id004
+        description: *id005
+        category: *id006
+        isActive: *id007
+        isDeprecated: *id008
+        deprecatedAt: *id009
+        deprecationReason: *id010
+        metadata: *id011
+        createdAt: *id012
+        updatedAt: *id013
         deletedReason:
           type: string
           nullable: true

@@ -289,6 +289,12 @@ public partial class AnalyticsService
                 "Buffering character participation recorded event for character {CharacterId}",
                 evt.CharacterId);
 
+            var gameServiceId = await ResolveGameServiceIdForCharacterAsync(evt.CharacterId, CancellationToken.None);
+            if (!gameServiceId.HasValue)
+            {
+                return;
+            }
+
             var metadata = new Dictionary<string, object>
             {
                 ["participationId"] = evt.ParticipationId,
@@ -299,7 +305,7 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = Guid.Empty, // History events are game-agnostic
+                GameServiceId = gameServiceId.Value,
                 EntityId = evt.CharacterId,
                 EntityType = EntityType.Character,
                 EventType = "history.participation.recorded",
@@ -337,6 +343,12 @@ public partial class AnalyticsService
                 "Buffering character backstory created event for character {CharacterId}",
                 evt.CharacterId);
 
+            var gameServiceId = await ResolveGameServiceIdForCharacterAsync(evt.CharacterId, CancellationToken.None);
+            if (!gameServiceId.HasValue)
+            {
+                return;
+            }
+
             var metadata = new Dictionary<string, object>
             {
                 ["elementCount"] = evt.ElementCount
@@ -345,7 +357,7 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = Guid.Empty, // History events are game-agnostic
+                GameServiceId = gameServiceId.Value,
                 EntityId = evt.CharacterId,
                 EntityType = EntityType.Character,
                 EventType = "history.backstory.created",
@@ -383,6 +395,12 @@ public partial class AnalyticsService
                 "Buffering character backstory updated event for character {CharacterId}",
                 evt.CharacterId);
 
+            var gameServiceId = await ResolveGameServiceIdForCharacterAsync(evt.CharacterId, CancellationToken.None);
+            if (!gameServiceId.HasValue)
+            {
+                return;
+            }
+
             var metadata = new Dictionary<string, object>
             {
                 ["elementCount"] = evt.ElementCount
@@ -396,7 +414,7 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = Guid.Empty, // History events are game-agnostic
+                GameServiceId = gameServiceId.Value,
                 EntityId = evt.CharacterId,
                 EntityType = EntityType.Character,
                 EventType = "history.backstory.updated",
@@ -434,6 +452,12 @@ public partial class AnalyticsService
                 "Buffering realm participation recorded event for realm {RealmId}",
                 evt.RealmId);
 
+            var gameServiceId = await ResolveGameServiceIdForRealmAsync(evt.RealmId, CancellationToken.None);
+            if (!gameServiceId.HasValue)
+            {
+                return;
+            }
+
             var metadata = new Dictionary<string, object>
             {
                 ["participationId"] = evt.ParticipationId,
@@ -444,7 +468,7 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = Guid.Empty, // History events are game-agnostic
+                GameServiceId = gameServiceId.Value,
                 EntityId = evt.RealmId,
                 EntityType = EntityType.Custom, // Realm is not in EntityType enum
                 EventType = "history.participation.recorded",
@@ -482,6 +506,12 @@ public partial class AnalyticsService
                 "Buffering realm lore created event for realm {RealmId}",
                 evt.RealmId);
 
+            var gameServiceId = await ResolveGameServiceIdForRealmAsync(evt.RealmId, CancellationToken.None);
+            if (!gameServiceId.HasValue)
+            {
+                return;
+            }
+
             var metadata = new Dictionary<string, object>
             {
                 ["elementCount"] = evt.ElementCount
@@ -490,7 +520,7 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = Guid.Empty, // History events are game-agnostic
+                GameServiceId = gameServiceId.Value,
                 EntityId = evt.RealmId,
                 EntityType = EntityType.Custom, // Realm is not in EntityType enum
                 EventType = "history.lore.created",
@@ -528,6 +558,12 @@ public partial class AnalyticsService
                 "Buffering realm lore updated event for realm {RealmId}",
                 evt.RealmId);
 
+            var gameServiceId = await ResolveGameServiceIdForRealmAsync(evt.RealmId, CancellationToken.None);
+            if (!gameServiceId.HasValue)
+            {
+                return;
+            }
+
             var metadata = new Dictionary<string, object>
             {
                 ["elementCount"] = evt.ElementCount
@@ -541,7 +577,7 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = Guid.Empty, // History events are game-agnostic
+                GameServiceId = gameServiceId.Value,
                 EntityId = evt.RealmId,
                 EntityType = EntityType.Custom, // Realm is not in EntityType enum
                 EventType = "history.lore.updated",

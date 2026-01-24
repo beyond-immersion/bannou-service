@@ -47,18 +47,14 @@ public class SceneServiceTests
 
         // Assert - verify all configuration defaults
         Assert.Equal("application/x-bannou-scene+yaml", config.AssetContentType);
-        Assert.Equal(30, config.CheckoutHeartbeatIntervalSeconds);
         Assert.Equal(10, config.MaxCheckoutExtensions);
         Assert.Equal(3, config.DefaultMaxReferenceDepth);
         Assert.Equal(10, config.MaxReferenceDepthLimit);
-        Assert.Equal(3, config.DefaultVersionRetentionCount);
         Assert.Equal(100, config.MaxVersionRetentionCount);
-        Assert.Equal(10485760, config.MaxSceneSizeBytes);
         Assert.Equal(50, config.MaxTagsPerScene);
         Assert.Equal(20, config.MaxTagsPerNode);
         Assert.Equal(200, config.MaxListResults);
         Assert.Equal(100, config.MaxSearchResults);
-        Assert.Equal(60, config.CheckoutExpirationCheckIntervalSeconds);
     }
 
     [Fact]

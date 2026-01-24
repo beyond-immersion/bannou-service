@@ -372,6 +372,7 @@ components:
       required:
       - code
       - name
+      - gameServiceId
       properties:
         code:
           type: string
@@ -384,6 +385,10 @@ components:
           minLength: 1
           maxLength: 100
           description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
         description:
           type: string
           maxLength: 2000
@@ -415,6 +420,11 @@ components:
           type: string
           format: uuid
           description: ID of the realm to update
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the game service this realm belongs to
         name:
           type: string
           minLength: 1
@@ -538,6 +548,7 @@ components:
       required:
       - code
       - name
+      - gameServiceId
       properties:
         code:
           type: string
@@ -545,6 +556,10 @@ components:
         name:
           type: string
           description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
         description:
           type: string
           nullable: true
@@ -571,6 +586,7 @@ components:
       - realmId
       - code
       - name
+      - gameServiceId
       - isActive
       - isDeprecated
       - createdAt
@@ -586,6 +602,10 @@ components:
         name:
           type: string
           description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
         description:
           type: string
           nullable: true

@@ -2,8 +2,10 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -43,6 +45,8 @@ public partial class AnalyticsService : IAnalyticsService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IGameSessionClient _gameSessionClient;
+    private readonly IRealmClient _realmClient;
+    private readonly ICharacterClient _characterClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<AnalyticsService> _logger;
     private readonly AnalyticsServiceConfiguration _configuration;
@@ -54,6 +58,8 @@ public partial class AnalyticsService : IAnalyticsService
     private const string EVENT_BUFFER_ENTRY_PREFIX = "analytics-event-buffer-entry";
     private const string SESSION_MAPPING_PREFIX = "analytics-session-mapping";
     private const string GAME_SERVICE_CACHE_PREFIX = "analytics-game-service-cache";
+    private const string REALM_GAME_SERVICE_CACHE_PREFIX = "analytics-realm-game-service-cache";
+    private const string CHARACTER_REALM_CACHE_PREFIX = "analytics-character-realm-cache";
     private const string BUFFER_LOCK_RESOURCE = "analytics-event-buffer-flush";
 
     // Glicko-2 scale conversion constant
@@ -70,6 +76,8 @@ public partial class AnalyticsService : IAnalyticsService
         IStateStoreFactory stateStoreFactory,
         IGameServiceClient gameServiceClient,
         IGameSessionClient gameSessionClient,
+        IRealmClient realmClient,
+        ICharacterClient characterClient,
         IDistributedLockProvider lockProvider,
         ILogger<AnalyticsService> logger,
         AnalyticsServiceConfiguration configuration,
@@ -79,6 +87,8 @@ public partial class AnalyticsService : IAnalyticsService
         _stateStoreFactory = stateStoreFactory;
         _gameServiceClient = gameServiceClient;
         _gameSessionClient = gameSessionClient;
+        _realmClient = realmClient;
+        _characterClient = characterClient;
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
@@ -1238,6 +1248,179 @@ public partial class AnalyticsService : IAnalyticsService
         await mappingStore.DeleteAsync(mappingKey, cancellationToken);
     }
 
+    /// <summary>
+    /// Resolves the game service ID for a given realm by looking up the realm via client.
+    /// Results are cached using the standard summary cache TTL.
+    /// </summary>
+    private async Task<Guid?> ResolveGameServiceIdForRealmAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        var cacheOptions = BuildSummaryCacheOptions();
+        if (cacheOptions != null)
+        {
+            var cacheStore = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+            var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
+            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            if (cached != null)
+            {
+                return cached.GameServiceId;
+            }
+        }
+
+        try
+        {
+            var realm = await _realmClient.GetRealmAsync(new GetRealmRequest
+            {
+                RealmId = realmId
+            }, cancellationToken);
+
+            if (realm == null)
+            {
+                _logger.LogError("Realm lookup returned no data for realm {RealmId}", realmId);
+                await _messageBus.TryPublishErrorAsync(
+                    "analytics",
+                    "ResolveGameServiceIdForRealm",
+                    "realm_lookup_empty",
+                    "Realm lookup returned no data",
+                    dependency: "realm",
+                    endpoint: "service:realm/get",
+                    details: $"realmId:{realmId}",
+                    stack: null,
+                    cancellationToken: cancellationToken);
+                return null;
+            }
+
+            if (cacheOptions != null)
+            {
+                var cacheStore = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+                var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
+                await cacheStore.SaveAsync(cacheKey, new RealmGameServiceCacheEntry
+                {
+                    GameServiceId = realm.GameServiceId,
+                    CachedAt = DateTimeOffset.UtcNow
+                }, cacheOptions, cancellationToken);
+            }
+
+            return realm.GameServiceId;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to resolve game service for realm {RealmId}", realmId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForRealm",
+                "realm_lookup_failed",
+                ex.Message,
+                dependency: "realm",
+                endpoint: "service:realm/get",
+                details: $"realmId:{realmId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for realm {RealmId}", realmId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForRealm",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "realm",
+                endpoint: "service:realm/get",
+                details: $"realmId:{realmId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the game service ID for a given character by looking up the character's realm,
+    /// then resolving the realm's game service ID.
+    /// Results are cached using the standard summary cache TTL.
+    /// </summary>
+    private async Task<Guid?> ResolveGameServiceIdForCharacterAsync(Guid characterId, CancellationToken cancellationToken)
+    {
+        var cacheOptions = BuildSummaryCacheOptions();
+        if (cacheOptions != null)
+        {
+            var cacheStore = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+            var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
+            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            if (cached != null)
+            {
+                return await ResolveGameServiceIdForRealmAsync(cached.RealmId, cancellationToken);
+            }
+        }
+
+        try
+        {
+            var character = await _characterClient.GetCharacterAsync(new GetCharacterRequest
+            {
+                CharacterId = characterId
+            }, cancellationToken);
+
+            if (character == null)
+            {
+                _logger.LogError("Character lookup returned no data for character {CharacterId}", characterId);
+                await _messageBus.TryPublishErrorAsync(
+                    "analytics",
+                    "ResolveGameServiceIdForCharacter",
+                    "character_lookup_empty",
+                    "Character lookup returned no data",
+                    dependency: "character",
+                    endpoint: "service:character/get",
+                    details: $"characterId:{characterId}",
+                    stack: null,
+                    cancellationToken: cancellationToken);
+                return null;
+            }
+
+            if (cacheOptions != null)
+            {
+                var cacheStore = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+                var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
+                await cacheStore.SaveAsync(cacheKey, new CharacterRealmCacheEntry
+                {
+                    RealmId = character.RealmId,
+                    CachedAt = DateTimeOffset.UtcNow
+                }, cacheOptions, cancellationToken);
+            }
+
+            return await ResolveGameServiceIdForRealmAsync(character.RealmId, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to resolve game service for character {CharacterId}", characterId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForCharacter",
+                "character_lookup_failed",
+                ex.Message,
+                dependency: "character",
+                endpoint: "service:character/get",
+                details: $"characterId:{characterId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for character {CharacterId}", characterId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForCharacter",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "character",
+                endpoint: "service:character/get",
+                details: $"characterId:{characterId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+    }
+
     private async Task<bool> BufferAnalyticsEventAsync(
         BufferedAnalyticsEvent bufferedEvent,
         CancellationToken cancellationToken,
@@ -1897,6 +2080,24 @@ internal class ControllerHistoryData
     public ControllerAction Action { get; set; }
     public DateTimeOffset Timestamp { get; set; }
     public Guid? SessionId { get; set; }
+}
+
+/// <summary>
+/// Cached mapping between realm IDs and game service IDs.
+/// </summary>
+internal sealed class RealmGameServiceCacheEntry
+{
+    public Guid GameServiceId { get; set; }
+    public DateTimeOffset CachedAt { get; set; }
+}
+
+/// <summary>
+/// Cached mapping between character IDs and realm IDs.
+/// </summary>
+internal sealed class CharacterRealmCacheEntry
+{
+    public Guid RealmId { get; set; }
+    public DateTimeOffset CachedAt { get; set; }
 }
 
 #endregion

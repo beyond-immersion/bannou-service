@@ -282,6 +282,7 @@ public partial class RealmService : IRealmService
                 RealmId = realmId.ToString(),
                 Code = code,
                 Name = body.Name,
+                GameServiceId = body.GameServiceId,
                 Description = body.Description,
                 Category = body.Category,
                 IsActive = body.IsActive,
@@ -367,6 +368,11 @@ public partial class RealmService : IRealmService
             {
                 model.IsActive = body.IsActive.Value;
                 changedFields.Add("isActive");
+            }
+            if (body.GameServiceId.HasValue && body.GameServiceId.Value != model.GameServiceId)
+            {
+                model.GameServiceId = body.GameServiceId.Value;
+                changedFields.Add("gameServiceId");
             }
             if (body.Metadata != null)
             {
@@ -599,6 +605,7 @@ public partial class RealmService : IRealmService
                             if (existingModel != null)
                             {
                                 existingModel.Name = seedRealm.Name;
+                                existingModel.GameServiceId = seedRealm.GameServiceId;
                                 if (seedRealm.Description != null) existingModel.Description = seedRealm.Description;
                                 if (seedRealm.Category != null) existingModel.Category = seedRealm.Category;
                                 existingModel.IsActive = seedRealm.IsActive;
@@ -623,6 +630,7 @@ public partial class RealmService : IRealmService
                         {
                             Code = code,
                             Name = seedRealm.Name,
+                            GameServiceId = seedRealm.GameServiceId,
                             Description = seedRealm.Description,
                             Category = seedRealm.Category,
                             IsActive = seedRealm.IsActive,
@@ -704,6 +712,7 @@ public partial class RealmService : IRealmService
             RealmId = Guid.Parse(model.RealmId),
             Code = model.Code,
             Name = model.Name,
+            GameServiceId = model.GameServiceId,
             Description = model.Description,
             Category = model.Category,
             IsActive = model.IsActive,
@@ -734,6 +743,7 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
+                GameServiceId = model.GameServiceId,
                 Category = model.Category,
                 IsActive = model.IsActive
             };
@@ -761,6 +771,7 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
+                GameServiceId = model.GameServiceId,
                 Description = model.Description,
                 Category = model.Category,
                 IsActive = model.IsActive,
@@ -796,6 +807,7 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
+                GameServiceId = model.GameServiceId,
                 Description = model.Description,
                 Category = model.Category,
                 IsActive = model.IsActive,
@@ -841,6 +853,7 @@ internal class RealmModel
     public string RealmId { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public Guid GameServiceId { get; set; }
     public string? Description { get; set; }
     public string? Category { get; set; }
     public bool IsActive { get; set; } = true;

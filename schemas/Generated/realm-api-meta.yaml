@@ -65,31 +65,33 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the realm\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n             \
-        \   },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n \
-        \               },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n               \
-        \ \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        this realm is deprecated and cannot be used for new entities\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\n     \
-        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n         \
-        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
-        for the realm\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
+        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
+        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
+        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
+        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
+        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
+        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
+        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get realm by ID\",\n    \"description\": \"\",\n    \"tags\": [\n     \
         \   \"Realm\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealm\"\n}"
   /realm/get-by-code:
@@ -129,31 +131,33 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the realm\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n             \
-        \   },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n \
-        \               },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n               \
-        \ \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        this realm is deprecated and cannot be used for new entities\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\n     \
-        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n         \
-        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
-        for the realm\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
+        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
+        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
+        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
+        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
+        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
+        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
+        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get realm by code\",\n    \"description\": \"Retrieve a realm using its
         unique code (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\", \\\"FANTASIA\\\")\",\n    \"tags\": [\n        \"Realm\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"getRealmByCode\"\n}"
@@ -213,31 +217,34 @@ paths:
         \                }\n            }\n        },\n        \"RealmResponse\": {\n            \"description\": \"Complete
         realm information returned from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"realmId\",\n                \"code\",\n                \"\
-        name\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\",\n      \
-        \          \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier of the realm\"\n                },\n                \"code\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\
-        \")\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Display name for the realm\"\n                },\n                \"description\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
-        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
-        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
+        name\",\n                \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n  \
+        \              \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Unique identifier of the realm\"\n                },\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g.,
+        \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"Display name for the realm\"\n                },\n           \
+        \     \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"ID of the game service this realm belongs to\"\n                },\n     \
+        \           \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Detailed description of the realm\"\n                },\n                \"\
+        category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Category for grouping realms\"\n                },\n                \"isActive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the realm is currently active
+        for gameplay\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this realm is deprecated and cannot be used for new entities\"\n\
+        \                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when this realm was deprecated\"\n                },\n                \"deprecationReason\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Additional custom metadata for the realm\"\n                },\n         \
+        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the realm was created\"\n                },\n           \
+        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the realm was last updated\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all realms\",\n    \"description\": \"Retrieve all realms with optional
         filtering\",\n    \"tags\": [\n        \"Realm\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listRealms\"\
         \n}"
@@ -270,51 +277,55 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateRealmRequest\"\
         ,\n    \"$defs\": {\n        \"CreateRealmRequest\": {\n            \"description\": \"Request to create a new realm
         with the specified properties\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"code\",\n                \"name\"\n            ],\n            \"\
-        properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 50,\n                    \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n          \
-        \          \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n               \
-        \ },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
-        \                    \"maxLength\": 100,\n                    \"description\": \"Display name for the realm\"\n  \
-        \              },\n                \"description\": {\n                    \"type\": \"string\",\n               \
-        \     \"maxLength\": 2000,\n                    \"nullable\": true,\n                    \"description\": \"Description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"maxLength\": 50,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Category for grouping (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\")\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether the realm is currently active for gameplay\"\n                },\n                \"metadata\": {\n  \
-        \                  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Additional metadata for the realm (JSON)\"\n      \
-        \          }\n            }\n        }\n    }\n}"
+        \            \"required\": [\n                \"code\",\n                \"name\",\n                \"gameServiceId\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 50,\n                    \"pattern\"\
+        : \"^[A-Z][A-Z0-9_]*$\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\
+        \"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n   \
+        \                 \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Display name for the realm\"\n                },\n                \"gameServiceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game
+        service this realm belongs to\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"maxLength\": 2000,\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Description of the realm\"\n                },\n                \"category\": {\n       \
+        \             \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Category for grouping (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\")\"\n          \
+        \      },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : true,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n           \
+        \     },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        realm (JSON)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the realm\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n             \
-        \   },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n \
-        \               },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n               \
-        \ \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        this realm is deprecated and cannot be used for new entities\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\n     \
-        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n         \
-        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
-        for the realm\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
+        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
+        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
+        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
+        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
+        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
+        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
+        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new realm\",\n    \"description\": \"\",\n    \"tags\": [\n    \
         \    \"Realm Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createRealm\"\n}"
   /realm/update:
@@ -348,47 +359,52 @@ paths:
         realm's properties\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
         \   \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n                \"\
         realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
-        \       \"description\": \"ID of the realm to update\"\n                },\n                \"name\": {\n        \
-        \            \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Display name for the realm\"\n  \
-        \              },\n                \"description\": {\n                    \"type\": \"string\",\n               \
-        \     \"maxLength\": 2000,\n                    \"nullable\": true,\n                    \"description\": \"Description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"maxLength\": 50,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Category for grouping\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
-        boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether the realm is currently
-        active\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n       \
-        \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata\"\n                }\n            }\n        }\n    }\n}"
+        \       \"description\": \"ID of the realm to update\"\n                },\n                \"gameServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"ID of the game service this realm belongs to\"\n                },\n\
+        \                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
+        \                   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"maxLength\": 2000,\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Description of the realm\"\n                },\n                \"category\": {\n       \
+        \             \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Category for grouping\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Whether the realm is currently active\"\n                },\n                \"metadata\": {\n               \
+        \     \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Additional metadata\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the realm\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n             \
-        \   },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n \
-        \               },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n               \
-        \ \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        this realm is deprecated and cannot be used for new entities\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\n     \
-        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n         \
-        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
-        for the realm\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
+        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
+        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
+        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
+        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
+        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
+        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
+        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update realm\",\n    \"description\": \"\",\n    \"tags\": [\n        \"\
         Realm Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateRealm\"\n}"
   /realm/delete:
@@ -475,31 +491,33 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the realm\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n             \
-        \   },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n \
-        \               },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n               \
-        \ \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        this realm is deprecated and cannot be used for new entities\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\n     \
-        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n         \
-        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
-        for the realm\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
+        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
+        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
+        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
+        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
+        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
+        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
+        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a realm\",\n    \"description\": \"Soft-delete a realm by marking
         it as deprecated.\\nDeprecated realms:\\n- Remain queryable for historical data\\n- Cannot be used for creating new
         entities (characters, locations, etc.)\\n- Can be hard-deleted after all references are removed\\n\",\n    \"tags\"\
@@ -544,31 +562,33 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the realm\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n             \
-        \   },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detailed description
-        of the realm\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n \
-        \               },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n               \
-        \ \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        this realm is deprecated and cannot be used for new entities\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\n     \
-        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n         \
-        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
-        for the realm\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the realm was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
+        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
+        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
+        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
+        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
+        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
+        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
+        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
+        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated realm\",\n    \"description\": \"Remove the deprecated
         status from a realm, making it\\navailable for new entities again.\\n\",\n    \"tags\": [\n        \"Realm Admin\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"undeprecateRealm\"\n}"
@@ -657,19 +677,21 @@ paths:
         exist\"\n                }\n            }\n        },\n        \"SeedRealm\": {\n            \"description\": \"Realm
         data used for seeding operations during service initialization\",\n            \"type\": \"object\",\n           \
         \ \"additionalProperties\": false,\n            \"required\": [\n                \"code\",\n                \"name\"\
-        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique code for the realm\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\
-        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Detailed description of the realm and its characteristics\"\
-        \n                },\n                \"category\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Category for grouping realms (e.g., \\\"MAIN\\\"\
-        , \\\"SPECIAL\\\", \\\"TEST\\\")\"\n                },\n                \"isActive\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether the realm is
-        currently active for gameplay\"\n                },\n                \"metadata\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Additional custom metadata for the realm (JSON)\"\n                }\n       \
-        \     }\n        }\n    }\n}"
+        ,\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n                \"code\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique code for the realm\"\n \
+        \               },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the game service this realm belongs to\"\n                },\n                \"description\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Detailed description of the realm and its characteristics\"\n                },\n                \"category\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Category for grouping realms (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\", \\\"TEST\\\")\"\n                },\n     \
+        \           \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n\
+        \                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
+        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
+        for the realm (JSON)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedRealmsResponse\"\
         ,\n    \"$defs\": {\n        \"SeedRealmsResponse\": {\n            \"description\": \"Summary of a realm seeding
         operation including counts and errors\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -748,6 +770,7 @@ components:
       required:
       - code
       - name
+      - gameServiceId
       properties:
         code:
           type: string
@@ -760,6 +783,10 @@ components:
           minLength: 1
           maxLength: 100
           description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
         description:
           type: string
           maxLength: 2000
@@ -790,6 +817,11 @@ components:
           type: string
           format: uuid
           description: ID of the realm to update
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the game service this realm belongs to
         name:
           type: string
           minLength: 1
@@ -906,6 +938,7 @@ components:
       required:
       - code
       - name
+      - gameServiceId
       properties:
         code:
           type: string
@@ -913,6 +946,10 @@ components:
         name:
           type: string
           description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
         description:
           type: string
           nullable: true
@@ -938,6 +975,7 @@ components:
       - realmId
       - code
       - name
+      - gameServiceId
       - isActive
       - isDeprecated
       - createdAt
@@ -953,6 +991,10 @@ components:
         name:
           type: string
           description: Display name for the realm
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this realm belongs to
         description:
           type: string
           nullable: true

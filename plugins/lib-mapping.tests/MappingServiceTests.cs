@@ -67,7 +67,6 @@ public class MappingServiceTests
         {
             AuthorityTimeoutSeconds = 60,
             AuthorityGracePeriodSeconds = 30,
-            AuthorityHeartbeatIntervalSeconds = 30,
             DefaultSpatialCellSize = 64.0,
             MaxObjectsPerQuery = 5000,
             MaxPayloadsPerPublish = 100,
@@ -188,7 +187,6 @@ public class MappingServiceTests
         // Assert - verify defaults from schema
         Assert.Equal(60, config.AuthorityTimeoutSeconds);
         Assert.Equal(30, config.AuthorityGracePeriodSeconds);
-        Assert.Equal(30, config.AuthorityHeartbeatIntervalSeconds);
         Assert.Equal(64.0, config.DefaultSpatialCellSize);
         Assert.Equal(5000, config.MaxObjectsPerQuery);
         Assert.Equal(100, config.MaxPayloadsPerPublish);

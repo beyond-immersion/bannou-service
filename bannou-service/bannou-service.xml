@@ -20702,6 +20702,11 @@
             Display name of the realm
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.Description">
             <summary>
             Detailed description of the realm and its purpose
@@ -20770,6 +20775,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.Name">
             <summary>
             Display name of the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.Description">
@@ -20845,6 +20855,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.Name">
             <summary>
             Display name of the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.Description">
@@ -32967,7 +32982,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest.StrengthBoost">
             <summary>
-            Amount to boost memory strength (capped at 1.0)
+            Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if not provided.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterRequest">
@@ -63368,6 +63383,11 @@
             Display name for the realm
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.Description">
             <summary>
             Description of the realm
@@ -63396,6 +63416,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.UpdateRealmRequest.RealmId">
             <summary>
             ID of the realm to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.UpdateRealmRequest.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.UpdateRealmRequest.Name">
@@ -63518,6 +63543,11 @@
             Display name for the realm
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.SeedRealm.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealm.Description">
             <summary>
             Detailed description of the realm and its characteristics
@@ -63556,6 +63586,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Name">
             <summary>
             Display name for the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Description">

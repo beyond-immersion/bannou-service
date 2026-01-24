@@ -1587,7 +1587,6 @@ public class ActorConfigurationTests
             DefaultAutoSaveIntervalSeconds = 60,
             DefaultActorsPerNode = 100,
             PerceptionQueueSize = 100,
-            MessageQueueSize = 50,
             DeploymentMode = "bannou"
         };
 
@@ -1596,7 +1595,6 @@ public class ActorConfigurationTests
         Assert.Equal(60, config.DefaultAutoSaveIntervalSeconds);
         Assert.Equal(100, config.DefaultActorsPerNode);
         Assert.Equal(100, config.PerceptionQueueSize);
-        Assert.Equal(50, config.MessageQueueSize);
         Assert.Equal("bannou", config.DeploymentMode);
     }
 }
