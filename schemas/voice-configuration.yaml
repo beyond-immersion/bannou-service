@@ -71,6 +71,11 @@ x-service-configuration:
       description: Kamailio JSON-RPC port (typically 5080, not SIP port 5060)
       env: VOICE_KAMAILIO_RPC_PORT
       default: 5080
+    KamailioSipPort:
+      type: integer
+      description: Kamailio SIP signaling port for client registration
+      env: VOICE_KAMAILIO_SIP_PORT
+      default: 5060
 
     # RTPEngine Configuration
     RtpEngineHost:

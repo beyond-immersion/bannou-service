@@ -66,8 +66,41 @@ x-lifecycle:
         nullable: true  # NRT: Optional property MUST be nullable
         description: Timestamp when the character was last updated
 
+    # Character compression event (manual, not lifecycle)
+    - topic: character.compressed
+      event: CharacterCompressedEvent
+      description: Published when a character is compressed to archive format
+
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas section - lifecycle events are auto-generated.
+components:
+  schemas:
+    CharacterCompressedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character is compressed to archive format
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - deletedSourceData
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the compression occurred
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the compressed character
+        deletedSourceData:
+          type: boolean
+          description: Whether source data was deleted after compression
+
+# NOTE: Lifecycle events are auto-generated from x-lifecycle definition.
 # CharacterCreatedEvent, CharacterUpdatedEvent, CharacterDeletedEvent
 # are generated to schemas/Generated/character-lifecycle-events.yaml

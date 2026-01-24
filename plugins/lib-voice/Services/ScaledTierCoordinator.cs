@@ -99,7 +99,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
         return new SipCredentials
         {
-            Registrar = $"sip:{_configuration.KamailioHost}:{_configuration.KamailioRpcPort}",
+            Registrar = $"sip:{_configuration.KamailioHost}:{_configuration.KamailioSipPort}",
             Username = username,
             Password = passwordHash[..32], // Use first 32 chars for password
             ConferenceUri = conferenceUri,

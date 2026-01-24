@@ -114,6 +114,12 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     public int KamailioRpcPort { get; set; } = 5080;
 
     /// <summary>
+    /// Kamailio SIP signaling port for client registration
+    /// Environment variable: VOICE_KAMAILIO_SIP_PORT
+    /// </summary>
+    public int KamailioSipPort { get; set; } = 5060;
+
+    /// <summary>
     /// RTPEngine media relay host
     /// Environment variable: VOICE_RTPENGINE_HOST
     /// </summary>

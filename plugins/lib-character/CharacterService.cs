@@ -684,7 +684,7 @@ public partial class CharacterService : ICharacterService
             }
 
             // Publish compression event
-            await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new
+            await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new CharacterCompressedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,

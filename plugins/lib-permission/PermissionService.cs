@@ -1381,7 +1381,7 @@ public partial class PermissionService : IPermissionService
 
     /// <summary>
     /// Determines the highest priority role from a collection of roles.
-    /// Priority: admin > user > anonymous
+    /// Priority: admin > developer > user > anonymous
     /// </summary>
     private static string DetermineHighestPriorityRole(ICollection<string>? roles)
     {
@@ -1394,6 +1394,12 @@ public partial class PermissionService : IPermissionService
         if (roles.Any(r => r.Equals("admin", StringComparison.OrdinalIgnoreCase)))
         {
             return "admin";
+        }
+
+        // Check for developer role
+        if (roles.Any(r => r.Equals("developer", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "developer";
         }
 
         // Check for user role

@@ -27,6 +27,7 @@ public partial class SubscriptionService : ISubscriptionService
     private const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
     private const string ACCOUNT_SUBSCRIPTIONS_PREFIX = "account-subscriptions:";
     private const string SERVICE_SUBSCRIPTIONS_PREFIX = "service-subscriptions:";
+    private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
     // Event topics
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
@@ -337,6 +338,9 @@ public partial class SubscriptionService : ISubscriptionService
             // Add to service index
             await AddToServiceIndexAsync(body.ServiceId.ToString(), subscriptionId.ToString(), cancellationToken);
 
+            // Add to global subscription index (used by expiration worker)
+            await AddToSubscriptionIndexAsync(subscriptionId.ToString(), cancellationToken);
+
             // Publish subscription.updated event
             await PublishSubscriptionUpdatedEventAsync(model, "created", cancellationToken);
 
@@ -580,6 +584,18 @@ public partial class SubscriptionService : ISubscriptionService
         {
             subscriptionIds.Add(subscriptionId);
             await listStore.SaveAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", subscriptionIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task AddToSubscriptionIndexAsync(string subscriptionId, CancellationToken cancellationToken)
+    {
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken) ?? new List<string>();
+
+        if (!subscriptionIds.Contains(subscriptionId))
+        {
+            subscriptionIds.Add(subscriptionId);
+            await listStore.SaveAsync(SUBSCRIPTION_INDEX_KEY, subscriptionIds, cancellationToken: cancellationToken);
         }
     }
 
