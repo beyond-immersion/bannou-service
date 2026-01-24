@@ -404,22 +404,20 @@ Actor State Model
 
 ### Bugs (Fix Immediately)
 
-1. **[QUALITY] Tenet number references in source code (T0 violation)**: `IActorRegistry.cs` line 5 and `ActorRegistry.cs` line 7 both reference "T9" directly in XML documentation comments (`Uses ConcurrentDictionary internally per T9 (Multi-Instance Safety)`). Also `ActorServiceEvents.cs` line 113 references "(T5)" in a comment. Per T0, source code must use category names (IMPLEMENTATION TENETS, FOUNDATION TENETS) not specific tenet numbers.
+1. **[IMPLEMENTATION] ScheduledEventManager uses in-memory authoritative state (T9 violation)**: `Handlers/ScheduleEventHandler.cs` lines 248-361. The `ScheduledEventManager` class stores pending scheduled events in a `ConcurrentDictionary<Guid, ScheduledEvent>` which is an in-memory-only store. In multi-instance deployments, scheduled events created on one instance would not be visible to other instances, and if the instance crashes, all pending events are lost. This should use distributed state (lib-state) for multi-instance safety.
 
-2. **[IMPLEMENTATION] ScheduledEventManager uses in-memory authoritative state (T9 violation)**: `Handlers/ScheduleEventHandler.cs` lines 248-361. The `ScheduledEventManager` class stores pending scheduled events in a `ConcurrentDictionary<string, ScheduledEvent>` which is an in-memory-only store. In multi-instance deployments, scheduled events created on one instance would not be visible to other instances, and if the instance crashes, all pending events are lost. This should use distributed state (lib-state) for multi-instance safety.
+2. **[IMPLEMENTATION] ActorRegistry is in-memory authoritative state for bannou mode (T9 concern)**: `Runtime/ActorRegistry.cs`. The entire `ActorRegistry` class stores actors in a `ConcurrentDictionary` which is instance-local. While the pool mode uses Redis-backed `ActorPoolManager` for distributed state, the local bannou mode treats this in-memory dictionary as authoritative. If multiple bannou instances run simultaneously (which the monoservice architecture allows), they would have divergent actor registries. The `ConcurrentDictionary` satisfies thread-safety but not multi-instance safety.
 
-3. **[IMPLEMENTATION] ActorRegistry is in-memory authoritative state for bannou mode (T9 concern)**: `Runtime/ActorRegistry.cs`. The entire `ActorRegistry` class stores actors in a `ConcurrentDictionary` which is instance-local. While the pool mode uses Redis-backed `ActorPoolManager` for distributed state, the local bannou mode treats this in-memory dictionary as authoritative. If multiple bannou instances run simultaneously (which the monoservice architecture allows), they would have divergent actor registries. The `ConcurrentDictionary` satisfies thread-safety but not multi-instance safety.
-
-4. **[IMPLEMENTATION] Anonymous objects passed to TryPublishErrorAsync details parameter (T5 violation)**: Multiple locations use anonymous objects for the `details` parameter of `TryPublishErrorAsync`:
+3. **[IMPLEMENTATION] Anonymous objects passed to TryPublishErrorAsync details parameter (T5 violation)**: Multiple locations use anonymous objects for the `details` parameter of `TryPublishErrorAsync`:
    - `ActorServiceEvents.cs` lines 142, 241, 275, 309, 343, 381
    - `PoolNode/ActorPoolNodeWorker.cs` lines 241, 308, 373, 453
    - `Runtime/ActorRunner.cs` lines 512, 608, 992, 1097
    - `Pool/PoolHealthMonitor.cs` lines 165-171
    Per FOUNDATION TENETS (T5), all events should use typed objects, not anonymous objects.
 
-5. **[IMPLEMENTATION] Anonymous object used as memory value in ProcessPerceptionsAsync (T5 violation)**: `Runtime/ActorRunner.cs` line 563. An anonymous object `new { perception.SourceId, perception.SourceType, perception.Data, perception.Urgency }` is stored as a memory value. This creates an untyped anonymous object that will have serialization issues and violates the typed events requirement.
+4. **[IMPLEMENTATION] Anonymous object used as memory value in ProcessPerceptionsAsync (T5 violation)**: `Runtime/ActorRunner.cs` line 563. An anonymous object `new { perception.SourceId, perception.SourceType, perception.Data, perception.Urgency }` is stored as a memory value. This creates an untyped anonymous object that will have serialization issues and violates the typed events requirement.
 
-6. **[IMPLEMENTATION] Hardcoded magic numbers for tunables (T21 violation)**: Multiple hardcoded numeric values that should be configuration:
+5. **[IMPLEMENTATION] Hardcoded magic numbers for tunables (T21 violation)**: Multiple hardcoded numeric values that should be configuration:
    - `Runtime/ActorRunner.cs` line 522: `Task.Delay(1000, ct)` - hardcoded 1-second error retry delay
    - `Runtime/ActorRunner.cs` line 979: `Task.Delay(50 * (attempt + 1), ct)` - hardcoded 50ms base retry delay for state persistence
    - `Runtime/ActorRunner.cs` line 249: `TimeSpan.FromSeconds(5)` - hardcoded 5-second stop timeout
@@ -427,49 +425,27 @@ Actor State Model
    - `Handlers/EmitPerceptionHandler.cs` line 102: `0.8f` - hardcoded default urgency for Event Brain instructions
    - `Handlers/QueryOptionsHandler.cs` line 91: `maxAgeMs = 5000` - hardcoded default max age
 
-7. **[IMPLEMENTATION] DeploymentMode compared as string instead of enum (T25 violation)**: Throughout the codebase, `_configuration.DeploymentMode` is a `string` type compared against magic string `"bannou"` in many locations:
+6. **[IMPLEMENTATION] DeploymentMode compared as string instead of enum (T25 violation)**: Throughout the codebase, `_configuration.DeploymentMode` is a `string` type compared against magic string `"bannou"` in many locations:
    - `ActorService.cs` lines 527, 534, 548, 626, 642, 681, 686, 838, 872, 993, 1085
    - `ActorServiceEvents.cs` lines 215, 253, 287, 321, 355
    - `Pool/PoolHealthMonitor.cs` line 60
    This should be a proper enum type for internal model type safety per IMPLEMENTATION TENETS (T25). The DeploymentMode has well-known values (bannou, pool-per-type, shared-pool, auto-scale) that should be represented as an enum.
 
-8. **[IMPLEMENTATION] ActorAssignment.TemplateId is string instead of Guid (T25 violation)**: `Pool/ActorAssignment.cs` line 35. The `TemplateId` property is declared as `string` but always stores a GUID value. Usage in `ActorService.cs` line 589 shows `TemplateId = body.TemplateId.ToString()` converting a Guid to string, and line 695 shows `Guid.TryParse(assignment.TemplateId, out var tid) ? tid : Guid.Empty` converting back. This should be a `Guid` type per T25.
+7. **[IMPLEMENTATION] Direct System.Text.Json usage instead of BannouJson (T20 violation)**: `ActorService.cs` lines 1330-1337 and `Runtime/ActorRunner.cs` line 12 (using directive). The `StartEncounterAsync` method directly uses `System.Text.Json.JsonElement` for deserialization/manipulation instead of using `BannouJson` as required by T20.
 
-9. **[IMPLEMENTATION] ScheduledEvent.Id is string instead of Guid (T25 violation)**: `Handlers/ScheduleEventHandler.cs` line 187. The `Id` property is declared as `string` but initialized with `Guid.NewGuid().ToString()` at line 140. This should be a `Guid` type per T25.
+8. **[QUALITY] Missing ApiException distinction in error handlers (T7 concern)**: Throughout `ActorService.cs`, all catch blocks catch only the generic `Exception` type. There is no distinction between `ApiException` (expected service errors) and unexpected `Exception` as required by T7. For example, the `SpawnActorAsync` method (line 647) catches all exceptions uniformly. Calls to remote services via mesh or pool manager could throw `ApiException` which should be handled distinctly.
 
-10. **[IMPLEMENTATION] ActorInstanceCreatedEvent.Status is string instead of enum (T25 violation)**: `ActorService.cs` line 626. The event's `Status` field is set with a string literal (`"running"` or `"pending"`) rather than using the `ActorStatus` enum type. Similarly, `ActorInstanceDeletedEvent` at line 894 uses `runner.Status.ToString().ToLowerInvariant()` to produce a string from an enum.
+9. **[QUALITY] PoolHealthMonitor error handling does not publish error events on general exceptions (T7 concern)**: `Pool/PoolHealthMonitor.cs` line 91. The catch block `catch (Exception ex)` only logs the error but does not publish an error event via `TryPublishErrorAsync`. Per T7, unexpected exceptions should be published as error events for monitoring.
 
-11. **[IMPLEMENTATION] Direct System.Text.Json usage instead of BannouJson (T20 violation)**: `ActorService.cs` lines 1330-1337 and `Runtime/ActorRunner.cs` line 12 (using directive). The `StartEncounterAsync` method directly uses `System.Text.Json.JsonElement` for deserialization/manipulation instead of using `BannouJson` as required by T20.
+10. **[IMPLEMENTATION] ScheduledEventManager.CheckEvents uses sync Timer callback with async fire-and-forget (T23 violation)**: `Handlers/ScheduleEventHandler.cs` line 303. The `CheckEvents` method is a sync `Timer` callback that calls `_ = FireEventAsync(evt)` discarding the Task. This means exceptions in `FireEventAsync` are silently lost and the async method is not properly awaited. Additionally, the Timer approach could lead to concurrent invocations if `FireEventAsync` takes longer than the check interval.
 
-12. **[IMPLEMENTATION] ActorPoolManager uses hardcoded store names instead of StateStoreDefinitions (T1/T4 violation)**: `Pool/ActorPoolManager.cs` lines 31-32. The constants `POOL_NODES_STORE = "actor-pool-nodes"` and `ACTOR_ASSIGNMENTS_STORE = "actor-assignments"` are hardcoded string literals rather than referencing `StateStoreDefinitions` constants. All state store names should come from the schema-first generated `StateStoreDefinitions` class per FOUNDATION TENETS.
+11. **[IMPLEMENTATION] ScheduledEventManager manual Dispose pattern instead of using statement (T24 consideration)**: `Handlers/ScheduleEventHandler.cs` lines 352-360. The `ScheduledEventManager` class implements `IDisposable` with a manual `_disposed` flag and `_timer.Dispose()`. While this is acceptable for class-owned resources (the Timer is owned by the class), the class is registered as a singleton service and relies on the DI container to dispose it. This is noted but may be acceptable.
 
-13. **[IMPLEMENTATION] Fire-and-forget async calls without await (T23 concern)**: `Runtime/ActorRunner.cs` lines 344, 370, 398. The encounter event publishing uses `_ = _messageBus.TryPublishAsync(...)` which discards the Task. While documented as "fire-and-forget for monitoring", this pattern means exceptions are silently swallowed and the async operation is not properly awaited. Per T23, Task-returning methods should be awaited.
+12. **[QUALITY] Missing XML param documentation on some internal classes**: `Pool/ActorAssignment.cs` - The `ActorAssignment` class properties have XML summary tags but the class itself has no `<remarks>` explaining its lifecycle or ownership. Similarly `Pool/PoolNodeState.cs` and `Pool/PoolCapacitySummary` lack detailed documentation about when/how they're created.
 
-14. **[QUALITY] Missing ApiException distinction in error handlers (T7 concern)**: Throughout `ActorService.cs`, all catch blocks catch only the generic `Exception` type. There is no distinction between `ApiException` (expected service errors) and unexpected `Exception` as required by T7. For example, the `SpawnActorAsync` method (line 647) catches all exceptions uniformly. Calls to remote services via mesh or pool manager could throw `ApiException` which should be handled distinctly.
+13. **[IMPLEMENTATION] ActorRunner._encounter field is accessed without synchronization (T9 concern)**: `Runtime/ActorRunner.cs` lines 54, 317-408. The `_encounter` field is read and written from both the behavior loop thread (via `CreateExecutionScopeAsync`, `GetStateSnapshot`) and potentially from external threads calling `StartEncounter`/`SetEncounterPhase`/`EndEncounter` on the runner directly. The `_statusLock` protects only the `_status` field but not `_encounter`. Race conditions could occur if `StartEncounterAsync` is called from the service thread while the behavior loop is executing.
 
-15. **[IMPLEMENTATION] etag ?? string.Empty usage without proper justification (CLAUDE.md null-coalescing rule)**: `ActorService.cs` lines 163, 361, 453. The pattern `etag ?? string.Empty` is used when the ETag could legitimately be null (first-time saves). While this may be a valid compiler-satisfaction pattern, there is no comment explaining why the coalesce is acceptable, which is required per the CLAUDE.md null-coalescing rules.
-
-16. **[QUALITY] PoolHealthMonitor error handling does not publish error events on general exceptions (T7 concern)**: `Pool/PoolHealthMonitor.cs` line 91. The catch block `catch (Exception ex)` only logs the error but does not publish an error event via `TryPublishErrorAsync`. Per T7, unexpected exceptions should be published as error events for monitoring.
-
-17. **[IMPLEMENTATION] QueryOptionsHandler maxAgeMs uses int literal default instead of configuration (T21 violation)**: `Handlers/QueryOptionsHandler.cs` line 91. The default `maxAgeMs = 5000` is a hardcoded tunable that should be defined in the service configuration schema.
-
-18. **[QUALITY] ActorRunner class is not sealed (potential T16 concern)**: `Runtime/ActorRunner.cs` line 22. The `ActorRunner` class is declared as `public class` but not `sealed`. Given that it implements `IActorRunner` and is not designed for inheritance, it should be sealed for proper encapsulation.
-
-19. **[QUALITY] ActorRegistry class is not sealed (T16 concern)**: `Runtime/ActorRegistry.cs` line 9. The `ActorRegistry` class is declared as `public class` but not `sealed`. It is a concrete implementation not designed for inheritance.
-
-20. **[IMPLEMENTATION] ScheduledEventManager.CheckEvents uses sync Timer callback with async fire-and-forget (T23 violation)**: `Handlers/ScheduleEventHandler.cs` line 303. The `CheckEvents` method is a sync `Timer` callback that calls `_ = FireEventAsync(evt)` discarding the Task. This means exceptions in `FireEventAsync` are silently lost and the async method is not properly awaited. Additionally, the Timer approach could lead to concurrent invocations if `FireEventAsync` takes longer than the check interval.
-
-21. **[IMPLEMENTATION] ScheduledEventManager manual Dispose pattern instead of using statement (T24 consideration)**: `Handlers/ScheduleEventHandler.cs` lines 352-360. The `ScheduledEventManager` class implements `IDisposable` with a manual `_disposed` flag and `_timer.Dispose()`. While this is acceptable for class-owned resources (the Timer is owned by the class), the class is registered as a singleton service and relies on the DI container to dispose it. This is noted but may be acceptable.
-
-22. **[QUALITY] Missing XML param documentation on some internal classes**: `Pool/ActorAssignment.cs` - The `ActorAssignment` class properties have XML summary tags but the class itself has no `<remarks>` explaining its lifecycle or ownership. Similarly `Pool/PoolNodeState.cs` and `Pool/PoolCapacitySummary` lack detailed documentation about when/how they're created.
-
-23. **[IMPLEMENTATION] ActorRunner._lastSourceAppId is non-atomic state shared across threads (T9 concern)**: `Runtime/ActorRunner.cs` line 51. The `_lastSourceAppId` field is written by the perception subscription handler (line 1109) on a RabbitMQ consumer thread and read by `PublishStateUpdateIfNeededAsync` (line 912) on the behavior loop thread. This is a simple string reference assignment which is atomic in .NET, but there is no memory barrier or volatile declaration ensuring visibility across threads. A `volatile` modifier or `Interlocked` usage would be more correct for multi-threaded access patterns.
-
-24. **[IMPLEMENTATION] ActorRunner._encounter field is accessed without synchronization (T9 concern)**: `Runtime/ActorRunner.cs` lines 54, 317-408. The `_encounter` field is read and written from both the behavior loop thread (via `CreateExecutionScopeAsync`, `GetStateSnapshot`) and potentially from external threads calling `StartEncounter`/`SetEncounterPhase`/`EndEncounter` on the runner directly. The `_statusLock` protects only the `_status` field but not `_encounter`. Race conditions could occur if `StartEncounterAsync` is called from the service thread while the behavior loop is executing.
-
-25. **[IMPLEMENTATION] Regex.Match without caching or timeout (potential performance/safety issue)**: `ActorService.cs` line 794. The `FindAutoSpawnTemplateAsync` method calls `Regex.Match(actorId, template.AutoSpawn.IdPattern)` on every GetActor request for non-existent actors, for every template with auto-spawn enabled. This compiles the regex fresh each time with no caching and no timeout, which could be vulnerable to ReDoS attacks if a malicious pattern is stored in a template.
-
-26. **[IMPLEMENTATION] ActorService.ListActorsAsync enumerates runners twice (performance)**: `ActorService.cs` lines 988-995. The code calls `runners.Count()` which enumerates the filtered LINQ query, then immediately calls `.Skip().Take().Select().ToList()` which enumerates it again. For large actor registries, this is inefficient. The `Count()` materializes the enumerable once, then the pagination re-enumerates it.
+14. **[IMPLEMENTATION] Regex.Match without caching or timeout (potential performance/safety issue)**: `ActorService.cs` line 794. The `FindAutoSpawnTemplateAsync` method calls `Regex.Match(actorId, template.AutoSpawn.IdPattern)` on every GetActor request for non-existent actors, for every template with auto-spawn enabled. This compiles the regex fresh each time with no caching and no timeout, which could be vulnerable to ReDoS attacks if a malicious pattern is stored in a template.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -488,6 +464,8 @@ Actor State Model
 7. **Character state publishing**: If an actor has a `CharacterId`, it publishes `character.state_update` events with feelings/goals/memories. This bridges the actor system to the character system without tight coupling.
 
 8. **Options query freshness**: `QueryOptions` with `Fresh` freshness injects a perception and waits one tick for the behavior to recompute options. This provides up-to-date choices at the cost of one tick latency.
+
+9. **Encounter event publishing is fire-and-forget**: `StartEncounter`/`SetEncounterPhase`/`EndEncounter` in ActorRunner use `_ = _messageBus.TryPublishAsync(...)` because the `IActorRunner` interface defines these methods as synchronous (`bool` return type). The events are monitoring-only and do not affect encounter state. Publishing failures are logged by `TryPublishAsync` internally but cannot be awaited by the caller.
 
 ### Design Considerations (Requires Planning)
 

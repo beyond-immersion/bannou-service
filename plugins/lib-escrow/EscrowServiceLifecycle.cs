@@ -182,16 +182,7 @@ public partial class EscrowService
 
             foreach (var party in partyModels)
             {
-                var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
-                var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
-                var newCount = new PartyPendingCount
-                {
-                    PartyId = party.PartyId,
-                    PartyType = party.PartyType,
-                    PendingCount = (existingCount?.PendingCount ?? 0) + 1,
-                    LastUpdated = now
-                };
-                await PartyPendingStore.SaveAsync(partyKey, newCount, cancellationToken: cancellationToken);
+                await IncrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
             }
 
             var createdEvent = new EscrowCreatedEvent

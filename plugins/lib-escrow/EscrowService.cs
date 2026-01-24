@@ -376,6 +376,79 @@ public partial class EscrowService : IEscrowService
     }
 
     /// <summary>
+    /// Atomically increments the pending escrow count for a party using optimistic concurrency.
+    /// </summary>
+    /// <param name="partyId">The party ID.</param>
+    /// <param name="partyType">The party type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    internal async Task IncrementPartyPendingCountAsync(Guid partyId, string partyType, CancellationToken cancellationToken = default)
+    {
+        var partyKey = GetPartyPendingKey(partyId, partyType);
+        var now = DateTimeOffset.UtcNow;
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (existing, etag) = await PartyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
+            var newCount = new PartyPendingCount
+            {
+                PartyId = partyId,
+                PartyType = partyType,
+                PendingCount = (existing?.PendingCount ?? 0) + 1,
+                LastUpdated = now
+            };
+
+            var saveResult = await PartyPendingStore.TrySaveAsync(partyKey, newCount, etag ?? string.Empty, cancellationToken);
+            if (saveResult != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on party pending count {PartyKey}, retrying increment (attempt {Attempt})",
+                partyKey, attempt + 1);
+        }
+
+        _logger.LogWarning("Failed to increment party pending count for {PartyType}:{PartyId} after 3 attempts",
+            partyType, partyId);
+    }
+
+    /// <summary>
+    /// Atomically decrements the pending escrow count for a party using optimistic concurrency.
+    /// Only decrements if current count is greater than zero.
+    /// </summary>
+    /// <param name="partyId">The party ID.</param>
+    /// <param name="partyType">The party type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    internal async Task DecrementPartyPendingCountAsync(Guid partyId, string partyType, CancellationToken cancellationToken = default)
+    {
+        var partyKey = GetPartyPendingKey(partyId, partyType);
+        var now = DateTimeOffset.UtcNow;
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (existing, etag) = await PartyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
+            if (existing == null || existing.PendingCount <= 0)
+            {
+                return;
+            }
+
+            existing.PendingCount--;
+            existing.LastUpdated = now;
+
+            var saveResult = await PartyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken);
+            if (saveResult != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on party pending count {PartyKey}, retrying decrement (attempt {Attempt})",
+                partyKey, attempt + 1);
+        }
+
+        _logger.LogWarning("Failed to decrement party pending count for {PartyType}:{PartyId} after 3 attempts",
+            partyType, partyId);
+    }
+
+    /// <summary>
     /// Maps internal model to API model.
     /// </summary>
     /// <param name="model">Internal model.</param>

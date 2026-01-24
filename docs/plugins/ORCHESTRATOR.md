@@ -415,8 +415,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Bugs
 
-- **Pool metrics never reset**: `JobsCompleted1h` and `JobsFailed1h` increment indefinitely. Despite the "1h" suffix, there is no hourly reset mechanism.
-- **Lease expiry not enforced**: When a processor lease expires (`ExpiresAt` passes), nothing reclaims the processor. The lease remains in the hash indefinitely until explicitly released. The processor is effectively lost from the pool.
+None identified.
 
 ### Intentional Quirks
 
@@ -426,6 +425,8 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 - **Rollback creates new version**: Rolling back from v5 to v3 creates v6 (a copy of v3 with new timestamp). The history trail is never overwritten. This is intentional for audit trail purposes.
 - **Reset to default resets mappings BEFORE teardown**: When resetting topology, routing mappings are updated to point to "bannou" FIRST, before tearing down the old containers. This ensures proxies get updated routes before old backends become unavailable - prevents request failures during the transition window.
 - **Config clear saves empty config as new version**: `ClearCurrentConfigurationAsync` does not delete the config entry but saves an empty `DeploymentConfiguration` with preset="default". This maintains the version history audit trail.
+- **Pool metrics window reset is lazy**: `JobsCompleted1h` and `JobsFailed1h` counters reset when the first operation occurs after the 1-hour window has elapsed (tracked via `WindowStart`). There is no background timer - the reset happens inline during `UpdatePoolMetricsAsync`.
+- **Expired lease reclamation is lazy**: When a processor lease expires (`ExpiresAt` passes), it is reclaimed during the next `AcquireProcessorAsync` call via `ReclaimExpiredLeasesAsync`. There is no background timer proactively scanning for expired leases. Pools with no acquire traffic will not reclaim expired processors until the next request arrives.
 
 ### Design Considerations
 

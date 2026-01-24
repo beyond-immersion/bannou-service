@@ -381,6 +381,254 @@ Authoring Workflow
 
 ---
 
+## Tenet Violations (Fix Immediately)
+
+### FOUNDATION TENETS - T6: Constructor Null Checks Missing
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 99-106
+**Issue**: The constructor assigns all dependencies directly without null-guard checks. Per T6 (Service Implementation Pattern), constructor dependencies MUST have explicit null checks with `ArgumentNullException`.
+
+```csharp
+// Current (no null checks):
+_messageBus = messageBus;
+_messageSubscriber = messageSubscriber;
+_stateStoreFactory = stateStoreFactory;
+_logger = logger;
+_configuration = configuration;
+_assetClient = assetClient;
+_httpClientFactory = httpClientFactory;
+_affordanceScorer = affordanceScorer;
+```
+
+**Fix**: Add `?? throw new ArgumentNullException(nameof(...))` to each assignment, e.g.:
+```csharp
+_messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+```
+
+---
+
+### IMPLEMENTATION TENETS - T7: Missing ApiException Catch Blocks
+
+**File**: `plugins/lib-mapping/MappingService.cs`, all public methods
+**Issue**: Every try-catch block catches only `Exception` and returns `InternalServerError`. Per T7 (Error Handling), services MUST distinguish between `ApiException` (expected downstream failures, log as Warning, propagate status) and `Exception` (unexpected, log as Error, emit error event).
+
+**Affected methods**: `CreateChannelAsync`, `ReleaseAuthorityAsync`, `AuthorityHeartbeatAsync`, `PublishMapUpdateAsync`, `PublishObjectChangesAsync`, `RequestSnapshotAsync`, `QueryPointAsync`, `QueryBoundsAsync`, `QueryObjectsByTypeAsync`, `QueryAffordanceAsync`, `CheckoutForAuthoringAsync`, `CommitAuthoringAsync`, `ReleaseAuthoringAsync`, `CreateDefinitionAsync`, `GetDefinitionAsync`, `ListDefinitionsAsync`, `UpdateDefinitionAsync`, `DeleteDefinitionAsync`.
+
+**Fix**: Add a `catch (ApiException ex)` block before the generic `catch (Exception ex)` in each method:
+```csharp
+catch (ApiException ex)
+{
+    _logger.LogWarning(ex, "Service call failed with status {Status}", ex.StatusCode);
+    return ((StatusCodes)ex.StatusCode, null);
+}
+```
+
+---
+
+### IMPLEMENTATION TENETS - T9: Non-Atomic Index Operations Without Distributed Locks
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 1859-1981
+**Issue**: All index operations (`UpdateSpatialIndexAsync`, `UpdateTypeIndexAsync`, `AddToRegionIndexAsync`, and their removal counterparts) perform non-atomic read-modify-write on shared state without distributed locks. The service does not inject `IDistributedLockProvider` at all. Per T9 (Multi-Instance Safety), operations requiring cross-instance consistency MUST use `IDistributedLockProvider`.
+
+While the authority model (single writer per channel) mitigates this in the normal case, the `accept_and_alert` mode explicitly allows concurrent writes from unauthorized publishers. Additionally, `IncrementVersionAsync` (line 2085) has the same non-atomic read-increment-write pattern.
+
+**Fix**: Inject `IDistributedLockProvider` and wrap index mutations and version increments with distributed locks when operating in `accept_and_alert` mode, or use ETags for optimistic concurrency on index writes.
+
+---
+
+### IMPLEMENTATION TENETS - T21: Hardcoded Tunables in AffordanceScorer
+
+**File**: `plugins/lib-mapping/Helpers/AffordanceScorer.cs`, lines 33-93
+**Issue**: The AffordanceScorer contains numerous hardcoded magic numbers that are tunables requiring configuration properties per T21 (Configuration-First):
+
+| Magic Number | Line | Purpose |
+|---|---|---|
+| `0.5` | 33, 147 | Base score for affordance candidates |
+| `0.3` | 42 | Cover rating weight multiplier |
+| `100.0` | 50 | Elevation divisor |
+| `0.3` | 50 | Max elevation bonus |
+| `0.05` | 58 | Sightlines weight multiplier |
+| `0.2` | 58 | Max sightlines bonus |
+| `1.2, 1.1, 1.0, 0.9, 0.8` | 71-76 | Actor size modifiers |
+| `0.2` | 83 | Stealth rating multiplier |
+| `0.1` | 197 | Preference match bonus |
+
+**Fix**: Define these as configuration properties in `schemas/mapping-configuration.yaml` (e.g., `AffordanceBaseScore`, `AffordanceCoverWeight`, `AffordanceElevationDivisor`, etc.) and read them from `MappingServiceConfiguration`.
+
+---
+
+### IMPLEMENTATION TENETS - T21: Hardcoded Exclusion Distance Tolerance
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 1072-1074
+**Issue**: The position exclusion tolerance `1.0` is a hardcoded tunable:
+```csharp
+Math.Abs(p.X - candidate.Position.X) < 1.0 &&
+Math.Abs(p.Y - candidate.Position.Y) < 1.0 &&
+Math.Abs(p.Z - candidate.Position.Z) < 1.0
+```
+
+Per T21, any tunable value (limits, timeouts, thresholds) MUST be a configuration property.
+
+**Fix**: Add `AffordanceExclusionToleranceUnits` to the configuration schema and replace the literal `1.0` with `_configuration.AffordanceExclusionToleranceUnits`.
+
+---
+
+### IMPLEMENTATION TENETS - T25: String Properties in Internal POCOs
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 2686-2715
+**Issue**: Several internal record classes use `string` for fields that should use stronger types per T25 (Internal Model Type Safety):
+
+- `AuthorityRecord.AuthorityAppId` (line 2687): This represents an application identifier. If there is an enum for app-ids, it should be used; otherwise, this is acceptable as a string since app-ids are arbitrary external identifiers.
+- `CheckoutRecord.EditorId` (line 2714): Same consideration -- if editor IDs are GUIDs in the API schema, this should be `Guid`.
+
+**Minor concern**: The `= string.Empty` default initializers on these properties are acceptable as they are property initializers for serialization compatibility (not `?? string.Empty` coercion), but review whether these fields should be nullable instead of defaulting to empty string, which could hide uninitialized state.
+
+---
+
+### QUALITY TENETS - T19: Missing XML Documentation on Internal Records
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 2670-2732
+**Issue**: The internal record classes (`ChannelRecord`, `AuthorityRecord`, `DefinitionRecord`, `DefinitionIndexEntry`, `CheckoutRecord`, `CachedAffordanceResult`) and their properties lack XML documentation comments. Per T19 (XML Documentation), all public and internal types and their members should have `<summary>` tags. Only `LongWrapper` and `EventAggregationBuffer` have documentation.
+
+**Fix**: Add `<summary>` tags to each internal class and their properties.
+
+---
+
+### QUALITY TENETS - T19: Missing XML Documentation on Private Helper Methods
+
+**File**: `plugins/lib-mapping/MappingService.cs`
+**Issue**: Multiple private/internal helper methods lack XML documentation:
+- `ProcessAuthorizedObjectChangesAsync` (line 607)
+- `HandleNonAuthorityObjectChangesAsync` (line 666)
+- `PublishUnauthorizedObjectChangesWarningAsync` (line 698)
+- `HandleNonAuthorityPublishAsync` (line 1631)
+- `ProcessPayloadsAsync` (line 1666)
+- `ProcessObjectChangeAsync` (line 1713)
+- `ProcessObjectChangeWithIndexCleanupAsync` (line 1719)
+- `UpdateSpatialIndexAsync` (line 1859)
+- `UpdateSpatialIndexForBoundsAsync` (line 1874)
+- `UpdateTypeIndexAsync` (line 1892)
+- `AddToRegionIndexAsync` (line 1908)
+- `RemoveFromRegionIndexAsync` (line 1922)
+- `RemoveFromSpatialIndexAsync` (line 1936)
+- `RemoveFromSpatialIndexForBoundsAsync` (line 1951)
+- `RemoveFromTypeIndexAsync` (line 1969)
+- `UploadLargePayloadToAssetAsync` (line 1985)
+- `ClearRequiresConsumeForAuthorityAsync` (line 2035)
+- `ClearChannelDataAsync` (line 2054)
+- `IncrementVersionAsync` (line 2085)
+- `QueryObjectsInRegionAsync` (line 2097)
+- `QueryObjectsInBoundsAsync` (line 2124)
+- All `Bounds*` geometry helpers (lines 2176-2203)
+- Affordance caching helpers (lines 2209-2248)
+- Event publishing helpers (lines 2254-2378)
+- Ingest helpers (lines 2381-2651)
+
+While T19 formally applies to public APIs, comprehensive XML documentation on internal methods improves maintainability for a service of this complexity.
+
+---
+
+### QUALITY TENETS - T19: Missing XML Documentation on AffordanceScorer Private Methods
+
+**File**: `plugins/lib-mapping/Helpers/AffordanceScorer.cs`, lines 145-248
+**Issue**: The `ScoreCustomAffordance` method (line 145) has XML documentation, but `TryGetJsonDouble` (line 221) and `TryGetJsonInt` (line 237) have it. This is consistent. No violation here for private methods -- keeping for completeness of audit.
+
+---
+
+### IMPLEMENTATION TENETS - T21: Configuration Property `MaxSpatialQueryResults` Misused
+
+**File**: `plugins/lib-mapping/MappingService.cs`, line 712
+**Issue**: The configuration property `MaxSpatialQueryResults` (documented as "Maximum distinct object types in warning summaries") is used as a `.Take()` limit on object types in warning payloads. The name suggests spatial query results, not warning summary truncation. This is potentially a naming issue or dead/misused configuration.
+
+**Fix**: Rename to `MaxWarningObjectTypeSummary` in the configuration schema to accurately reflect its purpose, or use a dedicated config property.
+
+---
+
+### IMPLEMENTATION TENETS - T7: Missing Error Event in HandleIngestEventAsync
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 2502-2505
+**Issue**: The catch block in `HandleIngestEventAsync` logs the error but does NOT call `TryPublishErrorAsync`. Per T7 (Error Handling), unexpected exceptions in service logic MUST emit error events for monitoring:
+
+```csharp
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Error handling ingest event for channel {ChannelId}", channelId);
+    // Missing: await _messageBus.TryPublishErrorAsync(...)
+}
+```
+
+**Fix**: Add `TryPublishErrorAsync` call after the `LogError`.
+
+---
+
+### IMPLEMENTATION TENETS - T23: Fire-and-Forget Task Discard
+
+**File**: `plugins/lib-mapping/MappingService.cs`, line 1609
+**Issue**: The authority expired event publish uses fire-and-forget discard pattern:
+```csharp
+_ = _messageBus.TryPublishAsync(AUTHORITY_EXPIRED_TOPIC, new MappingAuthorityExpiredEvent { ... });
+```
+
+Per T23 (Async Method Pattern), discarding tasks with `_ =` without awaiting means exceptions are silently lost and the operation timing is unpredictable. While this is documented as intentional ("fire-and-forget for monitoring"), it violates the principle that Task-returning calls should be awaited.
+
+**Fix**: Either await the call (preferred - TryPublishAsync is already safe and won't throw), or document this as an intentional exception with a comment explaining why fire-and-forget is acceptable here.
+
+---
+
+### QUALITY TENETS - T10: LogWarning Used for Non-Authority Rejection in accept_and_alert
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 2519, 2524
+**Issue**: Non-authority ingest handling logs at `LogWarning` level for both `reject_and_alert` and `accept_and_alert` modes:
+```csharp
+_logger.LogWarning("Rejecting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
+_logger.LogWarning("Accepting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
+```
+
+Per T10 guidelines, warnings are for expected failures (auth failures, permission denials). Non-authority publishing in `accept_and_alert` mode is a configured, expected behavior -- `LogInformation` would be more appropriate for the accept case since it represents a business decision, not a failure.
+
+**Fix**: Change the `accept_and_alert` log to `LogInformation` since it represents a configured business decision (the system is intentionally accepting the publish).
+
+---
+
+### FOUNDATION TENETS - T6: IStateStoreFactory Used Inline Instead of Pre-Built Stores
+
+**File**: `plugins/lib-mapping/MappingService.cs`, throughout
+**Issue**: The service calls `_stateStoreFactory.GetStore<T>(StateStoreDefinitions.Mapping)` on every operation (50+ occurrences) instead of creating typed state stores in the constructor as recommended by T6 (Service Implementation Pattern). The typical pattern is:
+```csharp
+_stateStore = stateStoreFactory.GetStore<Model>(StateStoreDefinitions.ServiceName);
+```
+
+While `GetStore<T>` may return cached instances internally, the pattern of calling it inline with different type parameters on every operation adds noise and makes it harder to understand the state access patterns.
+
+**Fix**: Create pre-built store fields in the constructor for the commonly used types:
+```csharp
+private readonly IStateStore<ChannelRecord> _channelStore;
+private readonly IStateStore<AuthorityRecord> _authorityStore;
+private readonly IStateStore<MapObject> _objectStore;
+private readonly IStateStore<List<Guid>> _indexStore;
+// etc.
+```
+
+---
+
+### IMPLEMENTATION TENETS - T5: Event Kind Field Uses .ToString() Instead of Enum String
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 2262, 2263, 2281, 2339, 2363, 2601, 429, 355, 722, 1615
+**Issue**: When publishing events, the `Kind` field is populated using `channel.Kind.ToString()`. The event schema defines `Kind` as a string field for cross-language compatibility, so the `.ToString()` conversion is necessary at the event boundary. However, multiple event models also use `.ToString()` on `NonAuthorityHandling` enums (line 2263) -- this is the correct pattern per T25 (convert at event boundary only).
+
+**Verdict**: This is acceptable per T25's "Event Model Conversions" section. No violation.
+
+---
+
+### IMPLEMENTATION TENETS - T24: EventAggregationBuffer Timer Callback Uses try/finally Without using
+
+**File**: `plugins/lib-mapping/MappingService.cs`, lines 2789-2799
+**Issue**: The `OnTimerElapsed` callback uses `Task.Run` with a try/finally block. The `finally` block calls `Dispose()` on the buffer itself. Per T24, this pattern is acceptable because the disposal scope extends beyond the creating method (class-owned resource with class's own `Dispose()`). However, the `Task.Run` fire-and-forget means if the flush fails, the error is silently swallowed.
+
+**Verdict**: The try/finally pattern is acceptable here (class-owned resource). The silent error swallowing is documented in Known Quirks #4.
+
+---
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix When Discovered)

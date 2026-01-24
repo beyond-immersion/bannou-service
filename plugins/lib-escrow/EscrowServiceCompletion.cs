@@ -96,14 +96,7 @@ public partial class EscrowService
                 // Decrement pending counts for all parties
                 foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
                 {
-                    var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
-                    var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
-                    if (existingCount != null && existingCount.PendingCount > 0)
-                    {
-                        existingCount.PendingCount--;
-                        existingCount.LastUpdated = now;
-                        await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
-                    }
+                    await DecrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
                 }
 
                 // Publish release event
@@ -228,14 +221,7 @@ public partial class EscrowService
                 // Decrement pending counts
                 foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
                 {
-                    var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
-                    var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
-                    if (existingCount != null && existingCount.PendingCount > 0)
-                    {
-                        existingCount.PendingCount--;
-                        existingCount.LastUpdated = now;
-                        await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
-                    }
+                    await DecrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
                 }
 
                 // Publish refund event
@@ -357,14 +343,7 @@ public partial class EscrowService
                 // Decrement pending counts
                 foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
                 {
-                    var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
-                    var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
-                    if (existingCount != null && existingCount.PendingCount > 0)
-                    {
-                        existingCount.PendingCount--;
-                        existingCount.LastUpdated = now;
-                        await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
-                    }
+                    await DecrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
                 }
 
                 // Publish cancel event
@@ -643,14 +622,7 @@ public partial class EscrowService
                 // Decrement pending counts
                 foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
                 {
-                    var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
-                    var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
-                    if (existingCount != null && existingCount.PendingCount > 0)
-                    {
-                        existingCount.PendingCount--;
-                        existingCount.LastUpdated = now;
-                        await PartyPendingStore.SaveAsync(partyKey, existingCount, cancellationToken: cancellationToken);
-                    }
+                    await DecrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
                 }
 
                 // Publish resolve event

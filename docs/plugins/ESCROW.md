@@ -456,20 +456,9 @@ Per T9, use `ConcurrentDictionary` for local caches, never plain `Dictionary`. W
 
 ---
 
-#### 5. IMPLEMENTATION TENETS (T9) - PartyPendingStore Non-Atomic Read-Modify-Write (No Distributed Lock)
+#### 5. ~~IMPLEMENTATION TENETS (T9) - PartyPendingStore Non-Atomic Read-Modify-Write~~ **FIXED**
 
-**File**: `plugins/lib-escrow/EscrowServiceLifecycle.cs`, lines 183-195
-```csharp
-var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
-var newCount = new PartyPendingCount { PendingCount = (existingCount?.PendingCount ?? 0) + 1 ... };
-await PartyPendingStore.SaveAsync(partyKey, newCount, ...);
-```
-
-Also in `EscrowServiceCompletion.cs` lines 99-106, 229-238, 358-367, 644-653.
-
-This is a non-atomic read-modify-write without ETag concurrency or distributed lock protection. Multiple instances can read the same count, increment, and write back, causing counter drift. Per T9, use `IDistributedLockProvider` for cross-instance coordination or ETag-based optimistic concurrency for state that requires consistency.
-
-**Fix**: Either use `GetWithETagAsync`/`TrySaveAsync` for the party pending store, or acquire a distributed lock around these operations.
+All PartyPendingStore increment/decrement operations now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry loops via extracted helper methods `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync`. All 6 call sites (lifecycle, completion x4, events) are updated.
 
 ---
 
@@ -596,13 +585,9 @@ Hardcoded default limit of 50 for pagination. Per T21, tunables must be configur
 
 ---
 
-#### 14. FOUNDATION TENETS (T6) - Missing IDistributedLockProvider Dependency
+#### 14. ~~FOUNDATION TENETS (T6) - Missing IDistributedLockProvider Dependency~~ **FIXED**
 
-**File**: `plugins/lib-escrow/EscrowService.cs`, constructor
-
-The service does not inject `IDistributedLockProvider` despite having multiple operations that perform non-atomic read-modify-write on the `PartyPendingStore`. Per T9, services with cross-instance coordination requirements should use `IDistributedLockProvider`.
-
-**Fix**: Add `IDistributedLockProvider` to the constructor and use it to protect party pending count modifications.
+PartyPendingStore concurrency is now handled via ETag-based optimistic concurrency (GetWithETagAsync + TrySaveAsync with 3-attempt retry), which is appropriate for simple counter operations. No distributed lock injection needed.
 
 ---
 
@@ -634,7 +619,7 @@ The `EscrowTopics.EscrowExpired` constant is defined and the event type exists i
 
 ### Design Considerations (Requires Planning)
 
-1. **Party pending count race condition**: The `PartyPendingStore` increment/decrement in `CreateEscrowAsync` and completion operations uses `GetAsync` + modify + `SaveAsync` (last-write-wins). Concurrent escrow creation/completion for the same party can cause the counter to drift by 1. This is informational only (no financial impact) and self-corrects over time. The agreement model mutations (deposit, consent, dispute, release, refund, cancel, resolve, verify, validate, reaffirm) are all protected by ETag-based optimistic concurrency with 3-attempt retry loops. Token marking is deferred until after successful agreement save to prevent token consumption on retry.
+1. ~~**Party pending count race condition**~~: **FIXED**: All `PartyPendingStore` operations now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry, matching the ETag concurrency pattern used by agreement mutations. The agreement model mutations (deposit, consent, dispute, release, refund, cancel, resolve, verify, validate, reaffirm) are all protected by ETag-based optimistic concurrency with 3-attempt retry loops. Token marking is deferred until after successful agreement save to prevent token consumption on retry.
 
 2. **Status index not cleaned on expiration**: Since no expiration processor exists, status index entries for expired escrows accumulate indefinitely. If an escrow expires without being cancelled, its status index entry remains under the pre-expiration status forever. Needs either a periodic cleanup timer or expiration handling in query paths.
 

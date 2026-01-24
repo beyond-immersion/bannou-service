@@ -255,14 +255,7 @@ public partial class EscrowService
             // Decrement pending counts
             foreach (var party in agreementModel.Parties ?? new List<EscrowPartyModel>())
             {
-                var partyKey = GetPartyPendingKey(party.PartyId, party.PartyType);
-                var existingCount = await PartyPendingStore.GetAsync(partyKey);
-                if (existingCount != null && existingCount.PendingCount > 0)
-                {
-                    existingCount.PendingCount--;
-                    existingCount.LastUpdated = now;
-                    await PartyPendingStore.SaveAsync(partyKey, existingCount);
-                }
+                await DecrementPartyPendingCountAsync(party.PartyId, party.PartyType);
             }
 
             // Publish refund event
