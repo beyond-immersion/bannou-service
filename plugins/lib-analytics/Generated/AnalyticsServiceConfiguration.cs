@@ -131,4 +131,10 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ControllerHistoryCleanupBatchSize { get; set; } = 5000;
 
+    /// <summary>
+    /// Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
+    /// Environment variable: ANALYTICS_MILESTONE_THRESHOLDS
+    /// </summary>
+    public string MilestoneThresholds { get; set; } = "10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000";
+
 }

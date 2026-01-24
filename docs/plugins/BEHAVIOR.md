@@ -463,3 +463,19 @@ Memory Relevance Scoring (Keyword-Based)
 6. **WorldState immutability creates GC pressure**: Every `SetNumeric`, `SetBoolean`, `SetString`, and `ApplyEffects` call creates a new `ImmutableDictionary` and thus a new `WorldState` instance. During A* search with many node expansions (up to 1000 at low urgency), this generates significant short-lived object allocations.
 
 7. **No plan cost upper bound**: The A* planner has no mechanism to abandon search if the best found plan exceeds a cost threshold. It will explore all nodes up to the limit even if the cheapest partial plan already exceeds a practical budget.
+
+8. **'in' operator requires array literal with max 16 elements**: The `in` operator in ABML expressions only supports static array literals (`x in ['a', 'b', 'c']`), not dynamic arrays. Additionally, the array is limited to 16 elements maximum (line 244 of StackExpressionCompiler.cs). Arrays with more elements produce a compiler error suggesting pre-computed boolean flags. The expansion emits short-circuit OR chains.
+
+9. **Array literals unsupported outside 'in' operator**: Standalone array literals in bytecode (`var arr = [1, 2, 3]`) are not supported. The compiler emits an error: "Array literals are only supported with the 'in' operator in bytecode." Dynamic collections require cloud-side execution.
+
+10. **VmConfig hardcoded limits not configurable**: Several VM limits are hardcoded in `VmConfig.cs` and not exposed via service configuration: MaxRegisters (256), MaxInstructions (65536), MaxJumpOffset (65535), MaxFunctionArgs (16), MaxNestingDepth (100). Only MaxConstants and MaxStrings are configurable.
+
+11. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
+
+12. **Memory store unbounded index growth**: `StoreExperienceAsync` appends to the memory index without enforcing `DefaultMemoryLimit`. The limit only affects queries (TakeLast in GetAllAsync). Over time, the index list grows unbounded. Eviction of old memories must be done manually via `RemoveAsync` or `ClearAsync`.
+
+13. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update falls back to unconditional save (lines 289-299 of ActorLocalMemoryStore.cs), potentially losing concurrent updates.
+
+14. **ClearAsync deletes memories sequentially**: Clearing an entity's memories iterates through each memory ID and issues individual delete calls (lines 234-237 of ActorLocalMemoryStore.cs). An entity with 100 memories generates 101 state store operations (100 deletes + 1 index delete).
+
+15. **Unreachable code in BinaryOperator switch**: The `BinaryOperator.In` case at line 207 of StackExpressionCompiler.cs is dead code - the `in` operator is handled by `CompileInOperator` at lines 181-184 before the switch is reached. The throw statement can never execute.
