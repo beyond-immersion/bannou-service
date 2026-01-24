@@ -66,6 +66,9 @@ public partial class AnalyticsService : IAnalyticsService
     // Maximum iterations for Glicko-2 volatility convergence
     private const int MaxVolatilityIterations = 100;
 
+    // Cached parsed milestone thresholds from configuration
+    private readonly int[] _milestoneThresholds;
+
     /// <summary>
     /// Initializes a new instance of the AnalyticsService.
     /// </summary>
@@ -91,7 +94,29 @@ public partial class AnalyticsService : IAnalyticsService
         _logger = logger;
         _configuration = configuration;
 
+        // Parse milestone thresholds from configuration
+        _milestoneThresholds = ParseMilestoneThresholds(configuration.MilestoneThresholds);
+
         RegisterEventConsumers(eventConsumer);
+    }
+
+    /// <summary>
+    /// Parses comma-separated milestone thresholds from configuration string.
+    /// </summary>
+    private static int[] ParseMilestoneThresholds(string thresholdsConfig)
+    {
+        if (string.IsNullOrWhiteSpace(thresholdsConfig))
+        {
+            return Array.Empty<int>();
+        }
+
+        return thresholdsConfig
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => int.TryParse(s, out var v) ? v : (int?)null)
+            .Where(v => v.HasValue)
+            .Select(v => v!.Value)
+            .OrderBy(v => v)
+            .ToArray();
     }
 
     /// <summary>
@@ -1991,10 +2016,7 @@ public partial class AnalyticsService : IAnalyticsService
         double newValue,
         CancellationToken cancellationToken)
     {
-        // Common milestone thresholds
-        int[] milestones = { 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000 };
-
-        foreach (var milestone in milestones)
+        foreach (var milestone in _milestoneThresholds)
         {
             // Check if we just crossed this milestone: was below, now at or above
             if (previousValue < milestone && newValue >= milestone)

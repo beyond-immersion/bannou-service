@@ -83,7 +83,9 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 | `Glicko2DefaultDeviation` | `ANALYTICS_GLICKO2_DEFAULT_DEVIATION` | 350.0 | Starting rating deviation (max uncertainty) |
 | `Glicko2DefaultVolatility` | `ANALYTICS_GLICKO2_DEFAULT_VOLATILITY` | 0.06 | Starting volatility (standard value) |
 | `Glicko2SystemConstant` | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | 0.5 | Tau - controls how quickly volatility changes |
-| `SummaryCacheTtlSeconds` | `ANALYTICS_SUMMARY_CACHE_TTL_SECONDS` | 300 | TTL for game service, session, realm, and character mapping caches |
+| `ResolutionCacheTtlSeconds` | `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | 300 | TTL for resolution caches (game service, realm, character lookups) |
+| `SessionMappingTtlSeconds` | `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | 3600 | TTL for game session mappings (should exceed typical session duration) |
+| `MilestoneThresholds` | `ANALYTICS_MILESTONE_THRESHOLDS` | 10,25,50,... | Comma-separated score thresholds that trigger milestone events |
 | `EventBufferLockExpiryBaseSeconds` | `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | 10 | Base distributed lock expiry (actual = max(this, 2x flush interval)) |
 | `RatingUpdateLockExpirySeconds` | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | 30 | Distributed lock expiry for skill rating update operations |
 | `Glicko2VolatilityConvergenceTolerance` | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | 1e-06 | Convergence tolerance for volatility iteration |
@@ -202,14 +204,4 @@ Milestones are defined as a hardcoded array of thresholds. There is no API to de
 
 ### Design Considerations (Requires Planning)
 
-1. **Session mapping TTL too short for long sessions**: `SaveGameSessionMappingAsync` uses `SummaryCacheTtlSeconds` (default 300s = 5 min) as TTL. Game sessions can last hours. After expiry, every action event requires a full game-session service lookup, adding latency and inter-service traffic. The mapping should either have a much longer TTL, no TTL (cleaned up on session deletion), or use a separate TTL configuration.
-
-2. **Milestone thresholds are hardcoded**: The array defines thresholds as `{ 10, 25, 50, 100, 250, 500, 1000, ... }`. Per the tenets, hardcoded tunables should be configuration properties. Different games may want different milestone progressions. This should be either a configuration property or a per-game-service API.
-
-3. **Summary data config name is misleading**: `SummaryCacheTtlSeconds` is used for session mappings, game service caches, realm caches, and character caches, but NOT for entity summary data. Summaries persist in MySQL indefinitely. The configuration name implies summaries are cached with this TTL, but they're not. Consider renaming to clarify scope.
-
-4. **Realm events use `EntityType.Custom`**: Realm participation/lore events use `EntityType.Custom` because the enum lacks a Realm value. This makes realm analytics indistinguishable from other custom entities in queries. Adding a `Realm` value to the EntityType enum (in the schema) would fix this.
-
-5. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `SummaryCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
-
-6. **Plugin lifecycle holds service reference past scope disposal**: `AnalyticsServicePlugin.OnStartAsync` creates a DI scope with `using var scope`, resolves `IAnalyticsService`, stores the reference as `_service`, then the scope is disposed at method exit. For scoped services, the stored reference is technically invalid after scope disposal. The reference continues to be used in `OnRunningAsync` and `OnShutdownAsync`. In practice this works because the service has no disposable dependencies that the scope would clean up, but it violates DI lifetime expectations.
+1. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `ResolutionCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
