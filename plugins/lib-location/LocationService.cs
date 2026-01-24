@@ -1417,10 +1417,10 @@ public partial class LocationService : ILocationService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Location service permissions...");
-        await LocationPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await LocationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

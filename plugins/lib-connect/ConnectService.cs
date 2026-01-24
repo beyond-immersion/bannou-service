@@ -2513,12 +2513,12 @@ public partial class ConnectService : IConnectService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Connect service permissions... (starting)");
         try
         {
-            await ConnectPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await ConnectPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("Connect service permissions registered via event (complete)");
         }
         catch (Exception ex)

@@ -28,6 +28,7 @@ public partial class AuthService : IAuthService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
 
     // Helper services for better separation of concerns and testability
     private readonly ITokenService _tokenService;
@@ -42,6 +43,7 @@ public partial class AuthService : IAuthService
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         ILogger<AuthService> logger,
         ITokenService tokenService,
         ISessionService sessionService,
@@ -53,6 +55,7 @@ public partial class AuthService : IAuthService
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _logger = logger;
         _tokenService = tokenService;
         _sessionService = sessionService;
@@ -61,10 +64,8 @@ public partial class AuthService : IAuthService
         // Register event handlers via partial class (AuthServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
 
-        // JWT config comes from core AppConfiguration (BANNOU_JWT_*), validated at startup in Program.cs
-        var jwtConfig = Program.Configuration;
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
-            jwtConfig.JwtSecret?.Length ?? 0, jwtConfig.JwtIssuer, jwtConfig.JwtAudience, _configuration.MockProviders);
+            _appConfiguration.JwtSecret?.Length ?? 0, _appConfiguration.JwtIssuer, _appConfiguration.JwtAudience, _configuration.MockProviders);
     }
 
     /// <summary>
@@ -83,7 +84,7 @@ public partial class AuthService : IAuthService
             }
 
             // If ServiceDomain is configured, derive WebSocket URL from it
-            var serviceDomain = Program.Configuration?.ServiceDomain;
+            var serviceDomain = _appConfiguration.ServiceDomain;
             if (!string.IsNullOrWhiteSpace(serviceDomain))
             {
                 return new Uri($"wss://{serviceDomain}/connect");
@@ -1221,10 +1222,10 @@ public partial class AuthService : IAuthService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Auth service permissions...");
-        await AuthPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await AuthPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

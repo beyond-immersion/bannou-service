@@ -853,10 +853,10 @@ public partial class RelationshipService : IRelationshipService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Relationship service permissions...");
-        await RelationshipPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await RelationshipPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

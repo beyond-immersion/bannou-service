@@ -1328,12 +1328,12 @@ public partial class AccountService : IAccountService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Account service permissions... (starting)");
         try
         {
-            await AccountPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await AccountPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("Account service permissions registered via event (complete)");
         }
         catch (Exception ex)

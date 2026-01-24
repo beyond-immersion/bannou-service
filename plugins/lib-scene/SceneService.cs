@@ -106,10 +106,10 @@ public partial class SceneService : ISceneService
     /// <summary>
     /// Registers this service's API permissions with the Permission service on startup.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Scene service permissions");
-        await ScenePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await ScenePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #region Scene CRUD Operations

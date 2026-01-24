@@ -2176,10 +2176,10 @@ public partial class GameSessionService : IGameSessionService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering GameSession service permissions...");
-        await GameSessionPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await GameSessionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

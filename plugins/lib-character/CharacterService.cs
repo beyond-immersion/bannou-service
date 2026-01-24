@@ -1508,12 +1508,12 @@ public partial class CharacterService : ICharacterService
     /// <summary>
     /// Registers this service's API permissions with the Permission service on startup.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Character service permissions...");
         try
         {
-            await CharacterPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await CharacterPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("Character service permissions registered via event");
         }
         catch (Exception ex)

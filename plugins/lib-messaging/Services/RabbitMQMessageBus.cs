@@ -2,6 +2,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -34,6 +35,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
 {
     private readonly RabbitMQConnectionManager _connectionManager;
     private readonly MessageRetryBuffer _retryBuffer;
+    private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
 
     // Track declared exchanges to avoid redeclaring
@@ -51,10 +53,12 @@ public sealed class RabbitMQMessageBus : IMessageBus
     public RabbitMQMessageBus(
         RabbitMQConnectionManager connectionManager,
         MessageRetryBuffer retryBuffer,
+        AppConfiguration appConfiguration,
         ILogger<RabbitMQMessageBus> logger)
     {
         _connectionManager = connectionManager;
         _retryBuffer = retryBuffer;
+        _appConfiguration = appConfiguration;
         _logger = logger;
     }
 
@@ -284,7 +288,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
                 Timestamp = DateTimeOffset.UtcNow,
                 ServiceId = Guid.Parse(Program.ServiceGUID),
                 ServiceName = serviceName,
-                AppId = Program.Configuration.EffectiveAppId,
+                AppId = _appConfiguration.EffectiveAppId,
                 Operation = operation,
                 ErrorType = errorType,
                 Message = message,

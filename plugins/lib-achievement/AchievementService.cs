@@ -1600,10 +1600,10 @@ public partial class AchievementService : IAchievementService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Achievement service permissions...");
-        await AchievementPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await AchievementPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

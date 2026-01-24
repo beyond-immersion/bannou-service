@@ -712,10 +712,10 @@ public partial class MeshService : IMeshService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Mesh service permissions...");
-        await MeshPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await MeshPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

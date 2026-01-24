@@ -22,6 +22,7 @@ public class OAuthProviderService : IOAuthProviderService
     private readonly IAccountClient _accountClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<OAuthProviderService> _logger;
 
@@ -41,6 +42,7 @@ public class OAuthProviderService : IOAuthProviderService
         IAccountClient accountClient,
         IHttpClientFactory httpClientFactory,
         AuthServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         IMessageBus messageBus,
         ILogger<OAuthProviderService> logger)
     {
@@ -48,6 +50,7 @@ public class OAuthProviderService : IOAuthProviderService
         _accountClient = accountClient;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _messageBus = messageBus;
         _logger = logger;
     }
@@ -604,7 +607,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <param name="configuredUri">The explicitly configured redirect URI (nullable)</param>
     /// <param name="provider">The provider name (discord, google, twitch)</param>
     /// <returns>The effective redirect URI, or null if neither is configured</returns>
-    private static string? GetEffectiveRedirectUri(string? configuredUri, string provider)
+    private string? GetEffectiveRedirectUri(string? configuredUri, string provider)
     {
         // If explicit redirect URI is configured, use it
         if (!string.IsNullOrWhiteSpace(configuredUri))
@@ -613,7 +616,7 @@ public class OAuthProviderService : IOAuthProviderService
         }
 
         // If ServiceDomain is configured, derive the redirect URI from it
-        var serviceDomain = Program.Configuration?.ServiceDomain;
+        var serviceDomain = _appConfiguration.ServiceDomain;
         if (!string.IsNullOrWhiteSpace(serviceDomain))
         {
             return $"https://{serviceDomain}/auth/oauth/{provider}/callback";

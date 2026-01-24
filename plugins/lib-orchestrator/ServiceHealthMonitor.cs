@@ -16,6 +16,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 {
     private readonly ILogger<ServiceHealthMonitor> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
 

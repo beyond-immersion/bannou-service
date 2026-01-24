@@ -1710,10 +1710,10 @@ public partial class ContractService : IContractService
     /// <summary>
     /// Registers this service's API permissions with the Permission service.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Contract service permissions...");
-        await ContractPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await ContractPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

@@ -1937,10 +1937,10 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Registers service permissions with the Permission service.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Matchmaking service permissions...");
-        await MatchmakingPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await MatchmakingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

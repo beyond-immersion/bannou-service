@@ -302,10 +302,10 @@ public partial class TestingService : ITestingService
     /// Unlike other services which use generated permission registration, Testing service
     /// uses a manually maintained registration since there's no testing-api.yaml schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Testing service permissions...");
-        await TestingPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await TestingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

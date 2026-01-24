@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Orchestrator;
 using Docker.DotNet;
 using Docker.DotNet.Models;
@@ -57,6 +58,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private readonly string _presetsHostPath;
     private readonly string _logsVolumeName;
 
+    private readonly AppConfiguration _appConfiguration;
+
     // Cached discovered network (lazy initialized)
     private string? _discoveredNetwork;
     private bool _networkDiscoveryAttempted;
@@ -64,9 +67,10 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private Dictionary<string, string>? _discoveredInfrastructureHosts;
     private bool _infrastructureDiscoveryAttempted;
 
-    public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, ILogger<DockerComposeOrchestrator> logger)
+    public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, AppConfiguration appConfiguration, ILogger<DockerComposeOrchestrator> logger)
     {
         _logger = logger;
+        _appConfiguration = appConfiguration;
 
         // Create Docker client using default configuration
         // Linux: unix:///var/run/docker.sock
@@ -702,7 +706,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             // Prepare application container environment
             // Get the orchestrator's own app-id to set as the mapping source
-            var orchestratorAppId = Program.Configuration.EffectiveAppId;
+            var orchestratorAppId = _appConfiguration.EffectiveAppId;
 
             var envList = new List<string>
             {

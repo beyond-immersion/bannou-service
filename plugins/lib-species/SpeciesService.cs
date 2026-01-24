@@ -1329,10 +1329,10 @@ public partial class SpeciesService : ISpeciesService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Species service permissions...");
-        await SpeciesPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await SpeciesPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

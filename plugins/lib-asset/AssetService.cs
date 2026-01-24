@@ -3675,10 +3675,10 @@ public partial class AssetService : IAssetService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Asset service permissions...");
-        await AssetPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await AssetPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

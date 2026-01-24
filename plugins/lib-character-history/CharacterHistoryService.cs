@@ -845,12 +845,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     /// <summary>
     /// Registers this service's API permissions with the Permission service on startup.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering CharacterHistory service permissions...");
         try
         {
-            await CharacterHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+            await CharacterHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
             _logger.LogInformation("CharacterHistory service permissions registered");
         }
         catch (Exception ex)

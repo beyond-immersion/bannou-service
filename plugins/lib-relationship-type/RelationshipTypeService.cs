@@ -1246,10 +1246,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering RelationshipType service permissions...");
-        await RelationshipTypePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await RelationshipTypePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

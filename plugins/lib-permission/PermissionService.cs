@@ -1203,10 +1203,10 @@ public partial class PermissionService : IPermissionService
     /// Even though Permission service publishes to itself, this follows the same pattern
     /// as other services for consistency.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Permission service permissions...");
-        await PermissionPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await PermissionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

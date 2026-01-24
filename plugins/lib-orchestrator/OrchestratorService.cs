@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Plugins;
@@ -22,6 +23,7 @@ public partial class OrchestratorService : IOrchestratorService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<OrchestratorService> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
     private readonly IServiceHealthMonitor _healthMonitor;
@@ -96,6 +98,7 @@ public partial class OrchestratorService : IOrchestratorService
         ILogger<OrchestratorService> logger,
         ILoggerFactory loggerFactory,
         OrchestratorServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager,
         IServiceHealthMonitor healthMonitor,
@@ -107,6 +110,7 @@ public partial class OrchestratorService : IOrchestratorService
         _logger = logger;
         _loggerFactory = loggerFactory;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _stateManager = stateManager;
         _eventManager = eventManager;
         _healthMonitor = healthMonitor;
@@ -2256,7 +2260,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// When SecureWebsocket is enabled (default), publishes a blank registration to make
     /// orchestrator inaccessible via WebSocket - only service-to-service calls work.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Orchestrator service permissions... (starting)");
         try
@@ -2272,7 +2276,7 @@ public partial class OrchestratorService : IOrchestratorService
                     ServiceId = Guid.Parse(Program.ServiceGUID),
                     ServiceName = OrchestratorPermissionRegistration.ServiceId,
                     Version = OrchestratorPermissionRegistration.ServiceVersion,
-                    AppId = Program.Configuration.EffectiveAppId,
+                    AppId = appId,
                     Endpoints = new List<ServiceEndpoint>() // Empty = no WebSocket access
                 };
 
@@ -2290,7 +2294,7 @@ public partial class OrchestratorService : IOrchestratorService
             else
             {
                 // Non-secure mode: register all endpoints for admin access (testing environments)
-                await OrchestratorPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+                await OrchestratorPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
                 _logger.LogInformation("Orchestrator service permissions registered via event (complete)");
             }
         }

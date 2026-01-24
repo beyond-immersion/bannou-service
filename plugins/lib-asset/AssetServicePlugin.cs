@@ -3,6 +3,7 @@ using Amazon.S3;
 using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Asset.Metrics;
 using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Asset.Processing;
@@ -30,7 +31,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
 
         // Register MinIO configuration options from AssetServiceConfiguration (IMPLEMENTATION TENETS)
         services.AddOptions<MinioStorageOptions>()
-            .Configure<AssetServiceConfiguration>((options, config) =>
+            .Configure<AssetServiceConfiguration, AppConfiguration>((options, config, appConfig) =>
             {
                 options.Endpoint = config.StorageEndpoint;
 
@@ -41,7 +42,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
                 }
                 else
                 {
-                    var serviceDomain = Program.Configuration?.ServiceDomain;
+                    var serviceDomain = appConfig.ServiceDomain;
                     if (!string.IsNullOrWhiteSpace(serviceDomain))
                     {
                         // Default: use ServiceDomain with port 9000 for direct MinIO access

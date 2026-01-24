@@ -654,10 +654,10 @@ public partial class SubscriptionService : ISubscriptionService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync()
+    public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Subscription service permissions...");
-        await SubscriptionPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        await SubscriptionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
     #endregion

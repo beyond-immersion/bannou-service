@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -22,6 +23,7 @@ public class TokenService : ITokenService
     private readonly ISubscriptionClient _subscriptionClient;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<TokenService> _logger;
 
@@ -33,6 +35,7 @@ public class TokenService : ITokenService
         ISubscriptionClient subscriptionClient,
         ISessionService sessionService,
         AuthServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         IMessageBus messageBus,
         ILogger<TokenService> logger)
     {
@@ -40,6 +43,7 @@ public class TokenService : ITokenService
         _subscriptionClient = subscriptionClient;
         _sessionService = sessionService;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _messageBus = messageBus;
         _logger = logger;
     }
@@ -47,9 +51,6 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
-        // Use core app configuration for JWT settings (validated at startup in Program.cs)
-        var jwtConfig = Program.Configuration;
-
         _logger.LogDebug("Generating access token for account {AccountId}", account.AccountId);
 
         // Generate opaque session key for JWT Redis key security
@@ -109,8 +110,7 @@ public class TokenService : ITokenService
         await _sessionService.AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
         await _sessionService.AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
-        // Generate JWT using core app configuration
-        var key = Encoding.UTF8.GetBytes(jwtConfig.JwtSecret!);
+        var key = Encoding.UTF8.GetBytes(_appConfiguration.JwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
         var tokenHandler = new JwtSecurityTokenHandler();
 
         var claims = new List<Claim>
@@ -134,8 +134,8 @@ public class TokenService : ITokenService
             NotBefore = DateTime.UtcNow,
             IssuedAt = DateTime.UtcNow,
             SigningCredentials = signingCredentials,
-            Issuer = jwtConfig.JwtIssuer,
-            Audience = jwtConfig.JwtAudience
+            Issuer = _appConfiguration.JwtIssuer,
+            Audience = _appConfiguration.JwtAudience
         };
 
         var jwt = tokenHandler.CreateToken(tokenDescriptor);
@@ -216,9 +216,7 @@ public class TokenService : ITokenService
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            // Use core app configuration for JWT settings (validated at startup in Program.cs)
-            var jwtConfig = Program.Configuration;
-            var key = Encoding.ASCII.GetBytes(jwtConfig.JwtSecret!);
+            var key = Encoding.ASCII.GetBytes(_appConfiguration.JwtSecret ?? throw new InvalidOperationException("JWT secret not configured"));
 
             try
             {
@@ -227,9 +225,9 @@ public class TokenService : ITokenService
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = jwtConfig.JwtIssuer,
+                    ValidIssuer = _appConfiguration.JwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtConfig.JwtAudience,
+                    ValidAudience = _appConfiguration.JwtAudience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
