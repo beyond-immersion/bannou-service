@@ -21,7 +21,8 @@ This document lists all state store components used in Bannou.
 | `agent-memories` | Redis | Actor | Agent memory and cognitive state |
 | `analytics-history` | Redis | Analytics | Controller possession history |
 | `analytics-rating` | Redis | Analytics | Glicko-2 skill ratings |
-| `analytics-summary` | Redis | Analytics | Entity statistics summaries |
+| `analytics-summary` | Redis | Analytics | Event buffer, session mappings, and resolution caches for analytics ingestion |
+| `analytics-summary-data` | MySQL | Analytics | Entity summary data for queryable analytics (MySQL for server-side filtering) |
 | `asset-processor-pool` | Redis | Asset | Processor pool node state and indexing |
 | `asset-statestore` | Redis | Asset | Asset upload tracking and bundle state |
 | `auth-statestore` | Redis | Auth | Session and token state (ephemeral) |
@@ -89,7 +90,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 79 stores (49 Redis, 30 MySQL)
+**Total**: 80 stores (49 Redis, 31 MySQL)
 
 ## Naming Conventions
 

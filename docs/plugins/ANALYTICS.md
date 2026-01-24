@@ -3,7 +3,7 @@
 > **Plugin**: lib-analytics
 > **Schema**: schemas/analytics-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: analytics-summary (Redis), analytics-rating (Redis), analytics-history (Redis)
+> **State Stores**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history (Redis)
 
 ## Overview
 
@@ -33,22 +33,21 @@ The Analytics plugin is the central event aggregation point for all game-related
 
 ## State Storage
 
-**All stores use Redis backend.** The service explicitly validates this at runtime via `EnsureSummaryStoreRedisAsync()` and returns InternalServerError if the summary store is not Redis.
+**Redis stores** handle event buffering, session mappings, and resolution caches. The service validates the summary store is Redis at runtime via `EnsureSummaryStoreRedisAsync()` for buffer operations. **MySQL store** (`analytics-summary-data`) provides server-side filtering, sorting, and pagination for entity summary queries.
 
 | Key Pattern | Store | Purpose |
 |-------------|-------|---------|
-| `{gameServiceId}:{entityType}:{entityId}` | analytics-summary | Entity summary aggregations (event counts, aggregates, timestamps) |
-| `analytics-summary-index:{gameServiceId}` | analytics-summary | Set of entity keys per game service (for query enumeration) |
-| `analytics-event-buffer-entry:{eventId}` | analytics-summary | Individual buffered event entries awaiting flush |
-| `analytics-event-buffer-index` | analytics-summary | Sorted set of buffered event keys (scored by timestamp) |
-| `analytics-session-mapping:{sessionId}` | analytics-summary | Game session to game service ID cache (TTL: SummaryCacheTtlSeconds) |
-| `analytics-game-service-cache:{stubName}` | analytics-summary | Game type stub to service ID cache (TTL: SummaryCacheTtlSeconds) |
-| `analytics-realm-game-service-cache:{realmId}` | analytics-summary | Realm to game service ID cache (TTL: SummaryCacheTtlSeconds) |
-| `analytics-character-realm-cache:{characterId}` | analytics-summary | Character to realm ID cache (TTL: SummaryCacheTtlSeconds) |
-| `{gameServiceId}:{ratingType}:{entityType}:{entityId}` | analytics-rating | Glicko-2 skill rating data per entity per rating type |
-| `{gameServiceId}:controller:{accountId}:{timestamp:o}` | analytics-history | Individual controller history events |
-| `analytics-controller-index:{gameServiceId}` | analytics-history | Set of controller event keys per game service |
-| `analytics-controller-index:{gameServiceId}:account:{accountId}` | analytics-history | Set of controller event keys per account |
+| `{gameServiceId}:{entityType}:{entityId}` | analytics-summary-data (MySQL) | Entity summary aggregations (event counts, aggregates, timestamps) |
+| `analytics-event-buffer-entry:{eventId}` | analytics-summary (Redis) | Individual buffered event entries awaiting flush |
+| `analytics-event-buffer-index` | analytics-summary (Redis) | Sorted set of buffered event keys (scored by timestamp) |
+| `analytics-session-mapping:{sessionId}` | analytics-summary (Redis) | Game session to game service ID cache (TTL: SummaryCacheTtlSeconds) |
+| `analytics-game-service-cache:{stubName}` | analytics-summary (Redis) | Game type stub to service ID cache (TTL: SummaryCacheTtlSeconds) |
+| `analytics-realm-game-service-cache:{realmId}` | analytics-summary (Redis) | Realm to game service ID cache (TTL: SummaryCacheTtlSeconds) |
+| `analytics-character-realm-cache:{characterId}` | analytics-summary (Redis) | Character to realm ID cache (TTL: SummaryCacheTtlSeconds) |
+| `{gameServiceId}:{ratingType}:{entityType}:{entityId}` | analytics-rating (Redis) | Glicko-2 skill rating data per entity per rating type |
+| `{gameServiceId}:controller:{accountId}:{timestamp:o}` | analytics-history (Redis) | Individual controller history events |
+| `analytics-controller-index:{gameServiceId}` | analytics-history (Redis) | Set of controller event keys per game service |
+| `analytics-controller-index:{gameServiceId}:account:{accountId}` | analytics-history (Redis) | Set of controller event keys per account |
 
 ## Events
 
@@ -114,7 +113,7 @@ Events are buffered in Redis using a two-part structure: individual event entrie
 
 ### Entity Summary (`/analytics/summary/get`, `/analytics/summary/query`)
 
-Get returns a single entity's aggregated statistics by composite key. Query enumerates the summary index set for a game service, loads all summaries, applies in-memory filtering (entityType, eventType, minEvents), sorts, and paginates. Supported sort fields: `totalevents`, `firsteventat`, `lasteventat`, `eventcount` (case-insensitive).
+Get returns a single entity's aggregated statistics by composite key from the MySQL `analytics-summary-data` store. Query uses MySQL JSON functions via `JsonQueryPagedAsync` for server-side filtering (gameServiceId, entityType, eventType existence, minEvents), sorting, and pagination. Supported sort fields: `totalevents`, `firsteventat`, `lasteventat`, `eventcount` (case-insensitive). This avoids loading all summaries into memory.
 
 ### Skill Rating (`/analytics/rating/get`, `/analytics/rating/update`)
 
@@ -189,7 +188,7 @@ Milestones are defined as a hardcoded array of thresholds. There is no API to de
 
 ### Intentional Behavior
 
-1. **Event ingestion requires Redis backend**: `EnsureSummaryStoreRedisAsync()` explicitly validates the backend is Redis and returns InternalServerError if not. The sorted set and set operations used for buffering are Redis-specific features that have no MySQL equivalent. This is validated per-request, not at startup.
+1. **Event ingestion requires Redis backend for buffer operations**: `EnsureSummaryStoreRedisAsync()` validates the `analytics-summary` store is Redis before buffer operations. The sorted set operations used for event buffering are Redis-specific. Summary data itself is persisted to MySQL (`analytics-summary-data`) during flush for queryability, while the buffer remains in Redis for high-throughput ingestion.
 
 2. **`GetSkillRating` returns default values instead of 404**: When no rating exists for an entity, the endpoint returns 200 with default rating values (1500/350/0.06) and `MatchesPlayed = 0`. This is intentional - callers should always get a usable rating without checking for 404. New players start at the default rating.
 
@@ -203,18 +202,16 @@ Milestones are defined as a hardcoded array of thresholds. There is no API to de
 
 ### Design Considerations (Requires Planning)
 
-1. **Query loads all summaries into memory**: `QueryEntitySummariesAsync` loads every entity summary for a game service into memory, applies filters, then paginates. For game services with thousands or millions of entities, this causes unbounded memory usage and latency. A proper fix requires server-side filtering via Redis SCAN with pattern matching, or moving summaries to MySQL with JSON queries.
+1. **Session mapping TTL too short for long sessions**: `SaveGameSessionMappingAsync` uses `SummaryCacheTtlSeconds` (default 300s = 5 min) as TTL. Game sessions can last hours. After expiry, every action event requires a full game-session service lookup, adding latency and inter-service traffic. The mapping should either have a much longer TTL, no TTL (cleaned up on session deletion), or use a separate TTL configuration.
 
-2. **Session mapping TTL too short for long sessions**: `SaveGameSessionMappingAsync` uses `SummaryCacheTtlSeconds` (default 300s = 5 min) as TTL. Game sessions can last hours. After expiry, every action event requires a full game-session service lookup, adding latency and inter-service traffic. The mapping should either have a much longer TTL, no TTL (cleaned up on session deletion), or use a separate TTL configuration.
+2. **Controller history accumulates indefinitely**: Events in `analytics-history` store have no TTL and no cleanup mechanism. Sets and entries grow without bound over time. Needs a retention policy (time-based TTL, count-based cap, or a cleanup endpoint).
 
-3. **Controller history accumulates indefinitely**: Events in `analytics-history` store have no TTL and no cleanup mechanism. Sets and entries grow without bound over time. Needs a retention policy (time-based TTL, count-based cap, or a cleanup endpoint).
+3. **Milestone thresholds are hardcoded**: The array defines thresholds as `{ 10, 25, 50, 100, 250, 500, 1000, ... }`. Per the tenets, hardcoded tunables should be configuration properties. Different games may want different milestone progressions. This should be either a configuration property or a per-game-service API.
 
-4. **Milestone thresholds are hardcoded**: The array defines thresholds as `{ 10, 25, 50, 100, 250, 500, 1000, ... }`. Per the tenets, hardcoded tunables should be configuration properties. Different games may want different milestone progressions. This should be either a configuration property or a per-game-service API.
+4. **Summary data config name is misleading**: `SummaryCacheTtlSeconds` is used for session mappings, game service caches, realm caches, and character caches, but NOT for entity summary data. Summaries persist in MySQL indefinitely. The configuration name implies summaries are cached with this TTL, but they're not. Consider renaming to clarify scope.
 
-5. **Summary data has no TTL (misleading config name)**: `SummaryCacheTtlSeconds` is used for session mappings, game service caches, realm caches, and character caches, but NOT for entity summary data. Summaries persist in Redis indefinitely. The configuration name implies summaries are cached with this TTL, but they're not. Either rename the config to clarify scope, or add actual summary TTL support.
+5. **Realm events use `EntityType.Custom`**: Realm participation/lore events use `EntityType.Custom` because the enum lacks a Realm value. This makes realm analytics indistinguishable from other custom entities in queries. Adding a `Realm` value to the EntityType enum (in the schema) would fix this.
 
-6. **Realm events use `EntityType.Custom`**: Realm participation/lore events use `EntityType.Custom` because the enum lacks a Realm value. This makes realm analytics indistinguishable from other custom entities in queries. Adding a `Realm` value to the EntityType enum (in the schema) would fix this.
+6. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `SummaryCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
 
-7. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `SummaryCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
-
-8. **Plugin lifecycle holds service reference past scope disposal**: `AnalyticsServicePlugin.OnStartAsync` creates a DI scope with `using var scope`, resolves `IAnalyticsService`, stores the reference as `_service`, then the scope is disposed at method exit. For scoped services, the stored reference is technically invalid after scope disposal. The reference continues to be used in `OnRunningAsync` and `OnShutdownAsync`. In practice this works because the service has no disposable dependencies that the scope would clean up, but it violates DI lifetime expectations.
+7. **Plugin lifecycle holds service reference past scope disposal**: `AnalyticsServicePlugin.OnStartAsync` creates a DI scope with `using var scope`, resolves `IAnalyticsService`, stores the reference as `_service`, then the scope is disposed at method exit. For scoped services, the stored reference is technically invalid after scope disposal. The reference continues to be used in `OnRunningAsync` and `OnShutdownAsync`. In practice this works because the service has no disposable dependencies that the scope would clean up, but it violates DI lifetime expectations.

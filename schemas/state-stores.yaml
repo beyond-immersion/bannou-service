@@ -181,7 +181,12 @@ x-state-stores:
     backend: redis
     prefix: "analytics:sum"
     service: Analytics
-    purpose: Entity statistics summaries
+    purpose: Event buffer, session mappings, and resolution caches for analytics ingestion
+
+  analytics-summary-data:
+    backend: mysql
+    service: Analytics
+    purpose: Entity summary data for queryable analytics (MySQL for server-side filtering)
 
   analytics-rating:
     backend: redis

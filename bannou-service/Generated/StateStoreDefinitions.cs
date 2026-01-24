@@ -52,8 +52,10 @@ public static class StateStoreDefinitions
     public const string AnalyticsHistory = "analytics-history";
     /// <summary>Glicko-2 skill ratings</summary>
     public const string AnalyticsRating = "analytics-rating";
-    /// <summary>Entity statistics summaries</summary>
+    /// <summary>Event buffer, session mappings, and resolution caches for analytics ingestion</summary>
     public const string AnalyticsSummary = "analytics-summary";
+    /// <summary>Entity summary data for queryable analytics (MySQL for server-side filtering)</summary>
+    public const string AnalyticsSummaryData = "analytics-summary-data";
 
     // Asset Service
     /// <summary>Processor pool node state and indexing</summary>
@@ -281,6 +283,7 @@ public static class StateStoreDefinitions
             [AnalyticsHistory] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:hist" },
             [AnalyticsRating] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:rating" },
             [AnalyticsSummary] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:sum" },
+            [AnalyticsSummaryData] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "analytics_summary_data" },
             [AssetProcessorPool] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset:pool" },
             [Asset] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset" },
             [Auth] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth" },
@@ -371,7 +374,8 @@ public static class StateStoreDefinitions
             [AgentMemories] = new StoreMetadata("Actor", "Agent memory and cognitive state", "redis"),
             [AnalyticsHistory] = new StoreMetadata("Analytics", "Controller possession history", "redis"),
             [AnalyticsRating] = new StoreMetadata("Analytics", "Glicko-2 skill ratings", "redis"),
-            [AnalyticsSummary] = new StoreMetadata("Analytics", "Entity statistics summaries", "redis"),
+            [AnalyticsSummary] = new StoreMetadata("Analytics", "Event buffer, session mappings, and resolution caches for analytics ingestion", "redis"),
+            [AnalyticsSummaryData] = new StoreMetadata("Analytics", "Entity summary data for queryable analytics (MySQL for server-side filtering)", "mysql"),
             [AssetProcessorPool] = new StoreMetadata("Asset", "Processor pool node state and indexing", "redis"),
             [Asset] = new StoreMetadata("Asset", "Asset upload tracking and bundle state", "redis"),
             [Auth] = new StoreMetadata("Auth", "Session and token state (ephemeral)", "redis"),

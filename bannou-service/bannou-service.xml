@@ -75847,7 +75847,10 @@
             <summary>Glicko-2 skill ratings</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsSummary">
-            <summary>Entity statistics summaries</summary>
+            <summary>Event buffer, session mappings, and resolution caches for analytics ingestion</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AnalyticsSummaryData">
+            <summary>Entity summary data for queryable analytics (MySQL for server-side filtering)</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AssetProcessorPool">
             <summary>Processor pool node state and indexing</summary>

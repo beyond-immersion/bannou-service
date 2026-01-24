@@ -52,7 +52,6 @@ public partial class AnalyticsService : IAnalyticsService
     private readonly AnalyticsServiceConfiguration _configuration;
 
     // State store key prefixes
-    private const string SUMMARY_INDEX_PREFIX = "analytics-summary-index";
     private const string CONTROLLER_INDEX_PREFIX = "analytics-controller-index";
     private const string EVENT_BUFFER_INDEX_KEY = "analytics-event-buffer-index";
     private const string EVENT_BUFFER_ENTRY_PREFIX = "analytics-event-buffer-entry";
@@ -116,13 +115,6 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     private static string GetControllerKey(Guid gameServiceId, Guid accountId, DateTimeOffset timestamp)
         => $"{gameServiceId}:controller:{accountId}:{timestamp:o}";
-
-    /// <summary>
-    /// Generates the key for the entity summary index.
-    /// Format: analytics-summary-index:gameServiceId
-    /// </summary>
-    private static string GetSummaryIndexKey(Guid gameServiceId)
-        => $"{SUMMARY_INDEX_PREFIX}:{gameServiceId}";
 
     /// <summary>
     /// Generates the key for the controller history index.
@@ -279,7 +271,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummary);
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
             var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
@@ -357,72 +349,90 @@ public partial class AnalyticsService : IAnalyticsService
                 }
             }
 
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummary);
-            var indexKey = GetSummaryIndexKey(body.GameServiceId);
-            var entityKeys = await summaryStore.GetSetAsync<string>(indexKey, cancellationToken);
+            var summaryDataStore = _stateStoreFactory.GetJsonQueryableStore<EntitySummaryData>(
+                StateStoreDefinitions.AnalyticsSummaryData);
 
-            if (entityKeys.Count == 0)
+            var conditions = new List<QueryCondition>
             {
-                return (StatusCodes.OK, new QueryEntitySummariesResponse
+                new QueryCondition
                 {
-                    Summaries = new List<EntitySummaryResponse>(),
-                    Total = 0
+                    Path = "$.GameServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.GameServiceId.ToString()
+                }
+            };
+
+            if (body.EntityType.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.EntityType",
+                    Operator = QueryOperator.Equals,
+                    Value = (int)body.EntityType.Value
                 });
             }
 
-            var summaries = new List<EntitySummaryData>();
-
-            foreach (var entityKey in entityKeys)
+            if (!string.IsNullOrEmpty(body.EventType))
             {
-                var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
-                if (summary == null)
+                conditions.Add(new QueryCondition
                 {
-                    await summaryStore.RemoveFromSetAsync(indexKey, entityKey, cancellationToken);
-                    continue;
-                }
-
-                if (body.EntityType.HasValue && summary.EntityType != body.EntityType.Value)
-                {
-                    continue;
-                }
-
-                if (!string.IsNullOrEmpty(body.EventType))
-                {
-                    if (summary.EventCounts == null || !summary.EventCounts.ContainsKey(body.EventType))
-                    {
-                        continue;
-                    }
-                }
-
-                if (body.MinEvents > 0 && summary.TotalEvents < body.MinEvents)
-                {
-                    continue;
-                }
-
-                summaries.Add(summary);
+                    Path = $"$.EventCounts.{body.EventType}",
+                    Operator = QueryOperator.Exists,
+                    Value = true
+                });
             }
 
-            var total = summaries.Count;
-            var ordered = ApplySummarySort(summaries, body);
-            var paged = ordered
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .Select(summary => new EntitySummaryResponse
+            if (body.MinEvents > 0)
+            {
+                conditions.Add(new QueryCondition
                 {
-                    EntityId = summary.EntityId,
-                    EntityType = summary.EntityType,
-                    TotalEvents = summary.TotalEvents,
-                    FirstEventAt = summary.FirstEventAt,
-                    LastEventAt = summary.LastEventAt,
-                    EventCounts = summary.EventCounts,
-                    Aggregates = summary.Aggregates
+                    Path = "$.TotalEvents",
+                    Operator = QueryOperator.GreaterThanOrEqual,
+                    Value = body.MinEvents
+                });
+            }
+
+            JsonSortSpec? sortSpec = null;
+            if (!string.IsNullOrWhiteSpace(body.SortBy))
+            {
+                var sortPath = body.SortBy.Trim().ToLowerInvariant() switch
+                {
+                    "totalevents" => "$.TotalEvents",
+                    "firsteventat" => "$.FirstEventAt",
+                    "lasteventat" => "$.LastEventAt",
+                    "eventcount" when !string.IsNullOrEmpty(body.EventType) => $"$.EventCounts.{body.EventType}",
+                    _ => (string?)null
+                };
+                if (sortPath != null)
+                {
+                    sortSpec = new JsonSortSpec { Path = sortPath, Descending = body.SortDescending };
+                }
+            }
+
+            var result = await summaryDataStore.JsonQueryPagedAsync(
+                conditions,
+                body.Offset,
+                body.Limit,
+                sortSpec,
+                cancellationToken);
+
+            var mapped = result.Items
+                .Select(item => new EntitySummaryResponse
+                {
+                    EntityId = item.Value.EntityId,
+                    EntityType = item.Value.EntityType,
+                    TotalEvents = item.Value.TotalEvents,
+                    FirstEventAt = item.Value.FirstEventAt,
+                    LastEventAt = item.Value.LastEventAt,
+                    EventCounts = item.Value.EventCounts,
+                    Aggregates = item.Value.Aggregates
                 })
                 .ToList();
 
             return (StatusCodes.OK, new QueryEntitySummariesResponse
             {
-                Summaries = paged,
-                Total = total
+                Summaries = mapped,
+                Total = (int)result.TotalCount
             });
         }
         catch (Exception ex)
@@ -1669,8 +1679,7 @@ public partial class AnalyticsService : IAnalyticsService
         IStateStore<BufferedAnalyticsEvent> bufferStore,
         CancellationToken cancellationToken)
     {
-        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummary);
-        var summaryOptions = BuildSummaryCacheOptions();
+        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
         var batchSize = Math.Max(1, _configuration.EventBufferSize);
 
         while (true)
@@ -1823,29 +1832,6 @@ public partial class AnalyticsService : IAnalyticsService
                     continue;
                 }
 
-                try
-                {
-                    await summaryStore.AddToSetAsync(
-                        GetSummaryIndexKey(summary.GameServiceId),
-                        entityKey,
-                        summaryOptions,
-                        cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error updating analytics summary index for {EntityKey}", entityKey);
-                    await _messageBus.TryPublishErrorAsync(
-                        "analytics",
-                        "FlushBufferedEventsBatch",
-                        "analytics_summary_index_failed",
-                        ex.Message,
-                        dependency: "state",
-                        endpoint: "state:summary",
-                        details: $"entityKey:{entityKey}",
-                        stack: ex.StackTrace,
-                        cancellationToken: cancellationToken);
-                }
-
                 foreach (var scoreEvent in scoreEvents)
                 {
                     await _messageBus.TryPublishAsync(
@@ -1917,54 +1903,6 @@ public partial class AnalyticsService : IAnalyticsService
                 await _messageBus.TryPublishAsync("analytics.milestone.reached", milestoneEvent, cancellationToken: cancellationToken);
             }
         }
-    }
-
-    /// <summary>
-    /// Applies sorting rules for entity summary queries.
-    /// </summary>
-    private IReadOnlyList<EntitySummaryData> ApplySummarySort(
-        List<EntitySummaryData> summaries,
-        QueryEntitySummariesRequest body)
-    {
-        if (string.IsNullOrWhiteSpace(body.SortBy))
-        {
-            return summaries;
-        }
-
-        var sortBy = body.SortBy.Trim().ToLowerInvariant();
-        var descending = body.SortDescending;
-
-        IEnumerable<EntitySummaryData> ordered = sortBy switch
-        {
-            "totalevents" => descending
-                ? summaries.OrderByDescending(s => s.TotalEvents)
-                : summaries.OrderBy(s => s.TotalEvents),
-            "firsteventat" => descending
-                ? summaries.OrderByDescending(s => s.FirstEventAt)
-                : summaries.OrderBy(s => s.FirstEventAt),
-            "lasteventat" => descending
-                ? summaries.OrderByDescending(s => s.LastEventAt)
-                : summaries.OrderBy(s => s.LastEventAt),
-            "eventcount" => OrderByEventCount(summaries, body.EventType, descending),
-            _ => summaries
-        };
-
-        return ordered.ToList();
-    }
-
-    private static IEnumerable<EntitySummaryData> OrderByEventCount(
-        List<EntitySummaryData> summaries,
-        string? eventType,
-        bool descending)
-    {
-        if (string.IsNullOrWhiteSpace(eventType))
-        {
-            return summaries;
-        }
-
-        return descending
-            ? summaries.OrderByDescending(s => s.EventCounts.GetValueOrDefault(eventType))
-            : summaries.OrderBy(s => s.EventCounts.GetValueOrDefault(eventType));
     }
 
     /// <summary>
