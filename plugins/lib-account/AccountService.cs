@@ -1258,6 +1258,273 @@ public partial class AccountService : IAccountService
     }
 
 
+    /// <summary>
+    /// Retrieves multiple accounts by ID in a single call.
+    /// Uses parallel key lookups for efficiency. Reports not-found and soft-deleted accounts separately.
+    /// </summary>
+    public async Task<(StatusCodes, BatchGetAccountsResponse?)> BatchGetAccountsAsync(
+        BatchGetAccountsRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Batch getting {Count} accounts", body.AccountIds.Count);
+
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var accounts = new List<AccountResponse>();
+            var notFound = new List<Guid>();
+
+            // Fetch all accounts in parallel for efficiency
+            var accountIds = body.AccountIds.ToList();
+            var fetchTasks = accountIds.Select(async accountId =>
+            {
+                var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+                return (accountId, account);
+            });
+
+            var results = await Task.WhenAll(fetchTasks);
+
+            // Process results: separate found from not-found, load auth methods for found accounts
+            var foundAccounts = new List<(Guid Id, AccountModel Model)>();
+            foreach (var (accountId, account) in results)
+            {
+                if (account == null || account.DeletedAt.HasValue)
+                {
+                    notFound.Add(accountId);
+                }
+                else
+                {
+                    foundAccounts.Add((accountId, account));
+                }
+            }
+
+            // Load auth methods in parallel for all found accounts
+            var authMethodTasks = foundAccounts.Select(async item =>
+            {
+                var authMethods = await GetAuthMethodsForAccountAsync(item.Id.ToString(), cancellationToken);
+                return (item.Model, authMethods);
+            });
+
+            var authResults = await Task.WhenAll(authMethodTasks);
+
+            foreach (var (account, authMethods) in authResults)
+            {
+                accounts.Add(new AccountResponse
+                {
+                    AccountId = account.AccountId,
+                    Email = account.Email,
+                    DisplayName = account.DisplayName,
+                    EmailVerified = account.IsVerified,
+                    CreatedAt = account.CreatedAt,
+                    UpdatedAt = account.UpdatedAt,
+                    Roles = account.Roles,
+                    AuthMethods = authMethods
+                });
+            }
+
+            var response = new BatchGetAccountsResponse
+            {
+                Accounts = accounts,
+                NotFound = notFound
+            };
+
+            _logger.LogInformation("Batch get completed: {Found} found, {NotFound} not found",
+                accounts.Count, notFound.Count);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in batch get accounts");
+            await PublishErrorEventAsync(
+                "BatchGetAccounts",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { Count = body.AccountIds.Count });
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Counts accounts matching optional filters using server-side SQL COUNT.
+    /// Supports email, displayName, verified, and role filters.
+    /// </summary>
+    public async Task<(StatusCodes, CountAccountsResponse?)> CountAccountsAsync(
+        CountAccountsRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Counting accounts with filters - Email: {Email}, DisplayName: {DisplayName}, Verified: {Verified}, Role: {Role}",
+                body.Email != null, body.DisplayName != null, body.Verified, body.Role);
+
+            var conditions = BuildAccountQueryConditions(body.Email, body.DisplayName, body.Verified);
+
+            // Role filter uses JSON array containment (JSON_CONTAINS on $.Roles)
+            if (!string.IsNullOrWhiteSpace(body.Role))
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.Roles",
+                    Operator = QueryOperator.In,
+                    Value = body.Role
+                });
+            }
+
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<AccountModel>(StateStoreDefinitions.Account);
+            var count = await jsonStore.JsonCountAsync(conditions, cancellationToken);
+
+            var response = new CountAccountsResponse
+            {
+                Count = count
+            };
+
+            _logger.LogInformation("Account count: {Count}", count);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error counting accounts");
+            await PublishErrorEventAsync(
+                "CountAccounts",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state");
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Updates roles for multiple accounts atomically per-account.
+    /// Supports adding and/or removing roles with optimistic concurrency.
+    /// Returns partial success results: succeeded and failed account IDs.
+    /// </summary>
+    public async Task<(StatusCodes, BulkUpdateRolesResponse?)> BulkUpdateRolesAsync(
+        BulkUpdateRolesRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Validate that at least one operation is specified
+            var hasAddRoles = body.AddRoles != null && body.AddRoles.Count > 0;
+            var hasRemoveRoles = body.RemoveRoles != null && body.RemoveRoles.Count > 0;
+
+            if (!hasAddRoles && !hasRemoveRoles)
+            {
+                _logger.LogWarning("Bulk update roles called with neither addRoles nor removeRoles");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            _logger.LogInformation("Bulk updating roles for {Count} accounts - AddRoles: {AddRoles}, RemoveRoles: {RemoveRoles}",
+                body.AccountIds.Count,
+                body.AddRoles != null ? string.Join(",", body.AddRoles) : "none",
+                body.RemoveRoles != null ? string.Join(",", body.RemoveRoles) : "none");
+
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+            var succeeded = new List<Guid>();
+            var failed = new List<BulkOperationFailure>();
+
+            // Process each account sequentially (ETag-based concurrency requires read-modify-write)
+            foreach (var accountId in body.AccountIds)
+            {
+                try
+                {
+                    var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+                    var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+                    if (account == null || account.DeletedAt.HasValue)
+                    {
+                        failed.Add(new BulkOperationFailure
+                        {
+                            AccountId = accountId,
+                            Error = "Account not found"
+                        });
+                        continue;
+                    }
+
+                    // Compute new roles
+                    var currentRoles = new HashSet<string>(account.Roles);
+                    var originalCount = currentRoles.Count;
+                    var originalRoles = new HashSet<string>(currentRoles);
+
+                    if (hasAddRoles)
+                    {
+                        foreach (var role in body.AddRoles!)
+                        {
+                            currentRoles.Add(role);
+                        }
+                    }
+
+                    if (hasRemoveRoles)
+                    {
+                        foreach (var role in body.RemoveRoles!)
+                        {
+                            currentRoles.Remove(role);
+                        }
+                    }
+
+                    // Check if roles actually changed
+                    if (currentRoles.SetEquals(originalRoles))
+                    {
+                        // No-op is success
+                        succeeded.Add(accountId);
+                        continue;
+                    }
+
+                    // Update and save
+                    account.Roles = currentRoles.ToList();
+                    account.UpdatedAt = DateTimeOffset.UtcNow;
+
+                    var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+                    if (newEtag == null)
+                    {
+                        failed.Add(new BulkOperationFailure
+                        {
+                            AccountId = accountId,
+                            Error = "Concurrent modification"
+                        });
+                        continue;
+                    }
+
+                    succeeded.Add(accountId);
+
+                    // Publish event for changed accounts
+                    await PublishAccountUpdatedEventAsync(account, new[] { "roles" });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating roles for account {AccountId}", accountId);
+                    failed.Add(new BulkOperationFailure
+                    {
+                        AccountId = accountId,
+                        Error = ex.Message
+                    });
+                }
+            }
+
+            var response = new BulkUpdateRolesResponse
+            {
+                Succeeded = succeeded,
+                Failed = failed
+            };
+
+            _logger.LogInformation("Bulk role update completed: {Succeeded} succeeded, {Failed} failed",
+                succeeded.Count, failed.Count);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in bulk update roles");
+            await PublishErrorEventAsync(
+                "BulkUpdateRoles",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { Count = body.AccountIds.Count });
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
     #region Permission Registration
 
     /// <summary>

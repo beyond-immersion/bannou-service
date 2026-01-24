@@ -114,10 +114,10 @@ public class AchievementServiceConfiguration : IServiceConfiguration
     public int SyncRetryDelaySeconds { get; set; } = 60;
 
     /// <summary>
-    /// TTL in seconds for cached progress data
-    /// Environment variable: ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS
+    /// TTL in seconds for progress data in Redis (0 = no expiry, progress persists indefinitely)
+    /// Environment variable: ACHIEVEMENT_PROGRESS_TTL_SECONDS
     /// </summary>
-    public int ProgressCacheTtlSeconds { get; set; } = 300;
+    public int ProgressTtlSeconds { get; set; } = 0;
 
     /// <summary>
     /// Delay in seconds before first rarity calculation (allows services to start)

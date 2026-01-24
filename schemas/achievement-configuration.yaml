@@ -64,11 +64,11 @@ x-service-configuration:
       default: 60
       env: ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS
     # Progress Tracking Configuration
-    ProgressCacheTtlSeconds:
+    ProgressTtlSeconds:
       type: integer
-      description: TTL in seconds for cached progress data
-      default: 300
-      env: ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS
+      description: TTL in seconds for progress data in Redis (0 = no expiry, progress persists indefinitely)
+      default: 0
+      env: ACHIEVEMENT_PROGRESS_TTL_SECONDS
     # Rarity Calculation Configuration
     RarityCalculationStartupDelaySeconds:
       type: integer

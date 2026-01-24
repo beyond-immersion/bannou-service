@@ -237,6 +237,60 @@ public sealed class AccountProxy
     }
 
     /// <summary>
+    /// Get multiple accounts by ID
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BatchGetAccountsResponse on success.</returns>
+    public Task<ApiResponse<BatchGetAccountsResponse>> BatchGetAccountsAsync(
+        BatchGetAccountsRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BatchGetAccountsRequest, BatchGetAccountsResponse>(
+            "POST", "/account/batch-get", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Count accounts matching filters
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CountAccountsResponse on success.</returns>
+    public Task<ApiResponse<CountAccountsResponse>> CountAccountsAsync(
+        CountAccountsRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CountAccountsRequest, CountAccountsResponse>(
+            "POST", "/account/count", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Bulk update roles for multiple accounts
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BulkUpdateRolesResponse on success.</returns>
+    public Task<ApiResponse<BulkUpdateRolesResponse>> BulkUpdateRolesAsync(
+        BulkUpdateRolesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BulkUpdateRolesRequest, BulkUpdateRolesResponse>(
+            "POST", "/account/roles/bulk-update", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Update email verification status
     /// </summary>
     /// <param name="request">The request payload.</param>

@@ -677,6 +677,179 @@ public partial class AccountListResponse
 
 }
 
+/// <summary>
+/// Request to get multiple accounts by ID
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchGetAccountsRequest
+{
+
+    /// <summary>
+    /// List of account IDs to retrieve (max 100)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
+    public System.Collections.Generic.ICollection<System.Guid> AccountIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+}
+
+/// <summary>
+/// Request to count accounts matching optional filters
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CountAccountsRequest
+{
+
+    /// <summary>
+    /// Filter by email (contains match)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
+    public string? Email { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by display name (contains match)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by verification status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("verified")]
+    public bool? Verified { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by role membership (checks JSON array containment)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    public string? Role { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to update roles for multiple accounts
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkUpdateRolesRequest
+{
+
+    /// <summary>
+    /// List of account IDs to update (max 100)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
+    public System.Collections.Generic.ICollection<System.Guid> AccountIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Roles to add to all specified accounts (null to skip)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("addRoles")]
+    public System.Collections.Generic.ICollection<string>? AddRoles { get; set; } = default!;
+
+    /// <summary>
+    /// Roles to remove from all specified accounts (null to skip)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("removeRoles")]
+    public System.Collections.Generic.ICollection<string>? RemoveRoles { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing found accounts and IDs not found
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchGetAccountsResponse
+{
+
+    /// <summary>
+    /// Successfully retrieved accounts
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accounts")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<AccountResponse> Accounts { get; set; } = new System.Collections.ObjectModel.Collection<AccountResponse>();
+
+    /// <summary>
+    /// Account IDs that were not found or are deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("notFound")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> NotFound { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+}
+
+/// <summary>
+/// Response containing account count
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CountAccountsResponse
+{
+
+    /// <summary>
+    /// Number of accounts matching the filters
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public long Count { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing bulk update results (partial success)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkUpdateRolesResponse
+{
+
+    /// <summary>
+    /// Account IDs that were successfully updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("succeeded")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> Succeeded { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Account IDs that failed with reasons
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failed")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BulkOperationFailure> Failed { get; set; } = new System.Collections.ObjectModel.Collection<BulkOperationFailure>();
+
+}
+
+/// <summary>
+/// Details of a failed bulk operation item
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkOperationFailure
+{
+
+    /// <summary>
+    /// Account ID that failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error reason
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Error { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

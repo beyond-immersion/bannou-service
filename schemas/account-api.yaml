@@ -313,6 +313,75 @@ paths:
         '404':
           description: Account not found
 
+  /account/batch-get:
+    post:
+      summary: Get multiple accounts by ID
+      operationId: batchGetAccounts
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetAccountsRequest'
+      responses:
+        '200':
+          description: Batch get completed (partial results possible)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGetAccountsResponse'
+
+  /account/count:
+    post:
+      summary: Count accounts matching filters
+      operationId: countAccounts
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountAccountsRequest'
+      responses:
+        '200':
+          description: Account count retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountAccountsResponse'
+
+  /account/roles/bulk-update:
+    post:
+      summary: Bulk update roles for multiple accounts
+      operationId: bulkUpdateRoles
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUpdateRolesRequest'
+      responses:
+        '200':
+          description: Bulk update completed (partial success possible)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUpdateRolesResponse'
+
   /account/verification/update:
     post:
       summary: Update email verification status
@@ -765,3 +834,139 @@ components:
         hasPreviousPage:
           type: boolean
           description: Whether there are pages before this one
+
+    # Bulk Operation Request Models
+    BatchGetAccountsRequest:
+      type: object
+      description: Request to get multiple accounts by ID
+      additionalProperties: false
+      required:
+      - accountIds
+      properties:
+        accountIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of account IDs to retrieve (max 100)
+
+    CountAccountsRequest:
+      type: object
+      description: Request to count accounts matching optional filters
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          nullable: true
+          description: Filter by email (contains match)
+        displayName:
+          type: string
+          nullable: true
+          description: Filter by display name (contains match)
+        verified:
+          type: boolean
+          nullable: true
+          description: Filter by verification status
+        role:
+          type: string
+          nullable: true
+          description: Filter by role membership (checks JSON array containment)
+
+    BulkUpdateRolesRequest:
+      type: object
+      description: Request to update roles for multiple accounts
+      additionalProperties: false
+      required:
+      - accountIds
+      properties:
+        accountIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of account IDs to update (max 100)
+        addRoles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Roles to add to all specified accounts (null to skip)
+        removeRoles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Roles to remove from all specified accounts (null to skip)
+
+    # Bulk Operation Response Models
+    BatchGetAccountsResponse:
+      type: object
+      description: Response containing found accounts and IDs not found
+      additionalProperties: false
+      required:
+      - accounts
+      - notFound
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountResponse'
+          description: Successfully retrieved accounts
+        notFound:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Account IDs that were not found or are deleted
+
+    CountAccountsResponse:
+      type: object
+      description: Response containing account count
+      additionalProperties: false
+      required:
+      - count
+      properties:
+        count:
+          type: integer
+          format: int64
+          description: Number of accounts matching the filters
+
+    BulkUpdateRolesResponse:
+      type: object
+      description: Response containing bulk update results (partial success)
+      additionalProperties: false
+      required:
+      - succeeded
+      - failed
+      properties:
+        succeeded:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Account IDs that were successfully updated
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkOperationFailure'
+          description: Account IDs that failed with reasons
+
+    BulkOperationFailure:
+      type: object
+      description: Details of a failed bulk operation item
+      additionalProperties: false
+      required:
+      - accountId
+      - error
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID that failed
+        error:
+          type: string
+          description: Human-readable error reason

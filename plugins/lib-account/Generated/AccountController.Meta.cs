@@ -2183,6 +2183,514 @@ public partial class AccountController
 
     #endregion
 
+    #region Meta Endpoints for BatchGetAccounts
+
+    private static readonly string _BatchGetAccounts_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BatchGetAccountsRequest",
+    "$defs": {
+        "BatchGetAccountsRequest": {
+            "type": "object",
+            "description": "Request to get multiple accounts by ID",
+            "additionalProperties": false,
+            "required": [
+                "accountIds"
+            ],
+            "properties": {
+                "accountIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "description": "List of account IDs to retrieve (max 100)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BatchGetAccounts_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BatchGetAccountsResponse",
+    "$defs": {
+        "BatchGetAccountsResponse": {
+            "type": "object",
+            "description": "Response containing found accounts and IDs not found",
+            "additionalProperties": false,
+            "required": [
+                "accounts",
+                "notFound"
+            ],
+            "properties": {
+                "accounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AccountResponse"
+                    },
+                    "description": "Successfully retrieved accounts"
+                },
+                "notFound": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Account IDs that were not found or are deleted"
+                }
+            }
+        },
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
+        },
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
+        },
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _BatchGetAccounts_Info = """
+{
+    "summary": "Get multiple accounts by ID",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "batchGetAccounts"
+}
+""";
+
+    /// <summary>Returns endpoint information for BatchGetAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/batch-get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchGetAccounts_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Account",
+            "POST",
+            "/account/batch-get",
+            _BatchGetAccounts_Info));
+
+    /// <summary>Returns request schema for BatchGetAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/batch-get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchGetAccounts_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/batch-get",
+            "request-schema",
+            _BatchGetAccounts_RequestSchema));
+
+    /// <summary>Returns response schema for BatchGetAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/batch-get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchGetAccounts_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/batch-get",
+            "response-schema",
+            _BatchGetAccounts_ResponseSchema));
+
+    /// <summary>Returns full schema for BatchGetAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/batch-get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BatchGetAccounts_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Account",
+            "POST",
+            "/account/batch-get",
+            _BatchGetAccounts_Info,
+            _BatchGetAccounts_RequestSchema,
+            _BatchGetAccounts_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CountAccounts
+
+    private static readonly string _CountAccounts_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CountAccountsRequest",
+    "$defs": {
+        "CountAccountsRequest": {
+            "type": "object",
+            "description": "Request to count accounts matching optional filters",
+            "additionalProperties": false,
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by email (contains match)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by display name (contains match)"
+                },
+                "verified": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Filter by verification status"
+                },
+                "role": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by role membership (checks JSON array containment)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CountAccounts_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CountAccountsResponse",
+    "$defs": {
+        "CountAccountsResponse": {
+            "type": "object",
+            "description": "Response containing account count",
+            "additionalProperties": false,
+            "required": [
+                "count"
+            ],
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Number of accounts matching the filters"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CountAccounts_Info = """
+{
+    "summary": "Count accounts matching filters",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "countAccounts"
+}
+""";
+
+    /// <summary>Returns endpoint information for CountAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/count/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CountAccounts_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Account",
+            "POST",
+            "/account/count",
+            _CountAccounts_Info));
+
+    /// <summary>Returns request schema for CountAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/count/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CountAccounts_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/count",
+            "request-schema",
+            _CountAccounts_RequestSchema));
+
+    /// <summary>Returns response schema for CountAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/count/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CountAccounts_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/count",
+            "response-schema",
+            _CountAccounts_ResponseSchema));
+
+    /// <summary>Returns full schema for CountAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/count/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CountAccounts_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Account",
+            "POST",
+            "/account/count",
+            _CountAccounts_Info,
+            _CountAccounts_RequestSchema,
+            _CountAccounts_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for BulkUpdateRoles
+
+    private static readonly string _BulkUpdateRoles_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkUpdateRolesRequest",
+    "$defs": {
+        "BulkUpdateRolesRequest": {
+            "type": "object",
+            "description": "Request to update roles for multiple accounts",
+            "additionalProperties": false,
+            "required": [
+                "accountIds"
+            ],
+            "properties": {
+                "accountIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "description": "List of account IDs to update (max 100)"
+                },
+                "addRoles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Roles to add to all specified accounts (null to skip)"
+                },
+                "removeRoles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Roles to remove from all specified accounts (null to skip)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkUpdateRoles_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkUpdateRolesResponse",
+    "$defs": {
+        "BulkUpdateRolesResponse": {
+            "type": "object",
+            "description": "Response containing bulk update results (partial success)",
+            "additionalProperties": false,
+            "required": [
+                "succeeded",
+                "failed"
+            ],
+            "properties": {
+                "succeeded": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Account IDs that were successfully updated"
+                },
+                "failed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BulkOperationFailure"
+                    },
+                    "description": "Account IDs that failed with reasons"
+                }
+            }
+        },
+        "BulkOperationFailure": {
+            "type": "object",
+            "description": "Details of a failed bulk operation item",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "error"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID that failed"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Human-readable error reason"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BulkUpdateRoles_Info = """
+{
+    "summary": "Bulk update roles for multiple accounts",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "bulkUpdateRoles"
+}
+""";
+
+    /// <summary>Returns endpoint information for BulkUpdateRoles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/roles/bulk-update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateRoles_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Account",
+            "POST",
+            "/account/roles/bulk-update",
+            _BulkUpdateRoles_Info));
+
+    /// <summary>Returns request schema for BulkUpdateRoles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/roles/bulk-update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateRoles_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/roles/bulk-update",
+            "request-schema",
+            _BulkUpdateRoles_RequestSchema));
+
+    /// <summary>Returns response schema for BulkUpdateRoles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/roles/bulk-update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateRoles_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/roles/bulk-update",
+            "response-schema",
+            _BulkUpdateRoles_ResponseSchema));
+
+    /// <summary>Returns full schema for BulkUpdateRoles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/roles/bulk-update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateRoles_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Account",
+            "POST",
+            "/account/roles/bulk-update",
+            _BulkUpdateRoles_Info,
+            _BulkUpdateRoles_RequestSchema,
+            _BulkUpdateRoles_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for UpdateVerificationStatus
 
     private static readonly string _UpdateVerificationStatus_RequestSchema = """

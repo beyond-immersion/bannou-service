@@ -247,6 +247,51 @@ public static class AccountPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/account/batch-get",
+            Method = ServiceEndpointMethod.POST,
+            Description = "batchGetAccounts",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/account/count",
+            Method = ServiceEndpointMethod.POST,
+            Description = "countAccounts",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/account/roles/bulk-update",
+            Method = ServiceEndpointMethod.POST,
+            Description = "bulkUpdateRoles",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/account/verification/update",
             Method = ServiceEndpointMethod.POST,
             Description = "updateVerificationStatus",
