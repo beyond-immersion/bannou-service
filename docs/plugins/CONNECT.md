@@ -457,6 +457,85 @@ Connection Mode Behavior Matrix
 
 11. **Anonymous object in HandleServiceErrorAsync**: The admin notification payload is constructed as an anonymous object, which technically violates the typed event pattern from QUALITY TENETS. This is an in-process notification, not a cross-service event.
 
+---
+
+## Tenet Violations (Fix Immediately)
+
+1. **[IMPLEMENTATION TENETS] Dead configuration properties (T21)** - Five configuration properties are defined in `ConnectServiceConfiguration` but never referenced in any service code: `DefaultServices`, `AuthenticatedServices`, `BinaryProtocolVersion`, `RabbitMqConnectionString`, and `ConnectUrl`. Per T21: "If a property is unused, remove it from the configuration schema."
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Generated/ConnectServiceConfiguration.cs` (generated from `schemas/connect-configuration.yaml`)
+   - **Lines**: 78 (`BinaryProtocolVersion`), 90 (`DefaultServices`), 96 (`AuthenticatedServices`), 120 (`RabbitMqConnectionString`), 132 (`ConnectUrl`)
+   - **Fix**: Remove these properties from `schemas/connect-configuration.yaml` and regenerate, OR wire them into the service implementation where they are logically needed (e.g., `BufferSize` is used but `BinaryProtocolVersion` is not).
+
+2. **[IMPLEMENTATION TENETS] Hardcoded tunables not in configuration (T21)** - Multiple hardcoded timeout/interval values that should be configuration properties:
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/ConnectService.cs`, line 1636 - Pending RPC cleanup interval hardcoded to `TimeSpan.FromSeconds(30)` (both initial delay and period).
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/ConnectService.cs`, line 1832 - RPC timeout default hardcoded to `30` seconds: `eventData.TimeoutSeconds > 0 ? eventData.TimeoutSeconds : 30`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/WebSocketConnectionManager.cs`, lines 26-27 - Cleanup timer interval hardcoded to `TimeSpan.FromSeconds(30)`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/WebSocketConnectionManager.cs`, line 279 - Inactive connection timeout hardcoded to `30` minutes: `TotalMinutes > 30`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Protocol/ConnectionState.cs`, line 213 - Pending message timeout hardcoded to `30` seconds: `sentAt.AddSeconds(30)`.
+   - **Fix**: Add configuration properties (e.g., `RpcCleanupIntervalSeconds`, `DefaultRpcTimeoutSeconds`, `ConnectionCleanupIntervalSeconds`, `InactiveConnectionTimeoutMinutes`, `PendingMessageTimeoutSeconds`) to `schemas/connect-configuration.yaml` and use them in service code.
+
+3. **[IMPLEMENTATION TENETS] `await Task.CompletedTask` anti-pattern (T23)** - Four occurrences of `await Task.CompletedTask` used to satisfy async signatures on synchronous methods. Per T23: methods that don't genuinely await should not be async, or should be refactored to await real operations.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/ConnectService.cs`
+   - **Lines**: 312 (`GetClientCapabilitiesAsync`), 1610 (`OnStartAsync`), 2201 (`ValidateSessionAsync`), 2227 (`InitializeSessionCapabilitiesAsync`)
+   - **Fix**: Either remove `async` and return `Task.FromResult` (if truly sync), or refactor to perform actual async work. Note: T23 says "Task-returning methods must be async with await" -- the intent is to prevent fire-and-forget bugs, not to force fake awaits. These methods should either be made synchronous (return `Task.CompletedTask` without async keyword) or refactored.
+
+4. **[IMPLEMENTATION TENETS] `.Wait()` synchronous blocking on Task (T23)** - The `WebSocketConnectionManager.Dispose()` method uses `.Wait()` to synchronously block on an async WebSocket close operation.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/WebSocketConnectionManager.cs`, line 313
+   - **Code**: `connection.WebSocket.CloseAsync(...).Wait(TimeSpan.FromSeconds(_connectionShutdownTimeoutSeconds));`
+   - **Fix**: Implement `IAsyncDisposable` with `DisposeAsync()` and use `await` instead of `.Wait()`. Alternatively, use a synchronous close mechanism if available.
+
+5. **[IMPLEMENTATION TENETS] Non-thread-safe Dictionary used for concurrent access (T9)** - `ConnectionState` uses plain `Dictionary<ushort, uint>` for `ChannelSequences` and `Dictionary<ulong, PendingMessageInfo>` for `PendingMessages`. These are accessed from the WebSocket message loop which can have concurrent access from timer callbacks and event handlers. While `ServiceMappings`/`GuidMappings` are protected by `_mappingsLock`, the channel sequences and pending messages have no synchronization.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Protocol/ConnectionState.cs`, lines 127-128
+   - **Fix**: Replace with `ConcurrentDictionary<ushort, uint>` and `ConcurrentDictionary<ulong, PendingMessageInfo>`, or add lock protection similar to `_mappingsLock`.
+
+6. **[QUALITY TENETS] Missing XML documentation on public properties (T19)** - Multiple public properties lack `<summary>` documentation:
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Protocol/MessageRouter.cs`, lines 226-238 - `MessageRouteInfo` properties: `Message`, `IsValid`, `ErrorCode`, `ErrorMessage`, `RouteType`, `TargetType`, `TargetId`, `ServiceName`, `Channel`, `Priority`, `RequiresResponse`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Protocol/MessageRouter.cs`, lines 292-294 - `RateLimitResult` properties: `IsAllowed`, `RemainingQuota`, `ResetTime`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/SessionModels.cs`, lines 20-23 - `ConnectionStateData` properties: `ConnectedAtUnix`, `LastActivityUnix`, `ReconnectionExpiresAtUnix`, `DisconnectedAtUnix`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/SessionModels.cs`, line 106 - `SessionHeartbeat.LastSeenUnix`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/SessionModels.cs`, line 140 - `SessionEvent.TimestampUnix`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Protocol/ConnectionState.cs`, line 426 - `PendingMessageInfo.ServiceName` (comment-only, no XML doc).
+   - **Fix**: Add `/// <summary>` documentation to all public properties. The Unix timestamp properties should document that they are serialization-friendly backing fields.
+
+7. **[QUALITY TENETS] Missing XML documentation on public enum members (T19)** - The `MessagePriority` enum members lack `<summary>` tags:
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Protocol/MessageRouter.cs`, lines 283-284
+   - **Members**: `Normal`, `High`
+   - **Fix**: Add `/// <summary>` documentation to each enum member.
+
+8. **[IMPLEMENTATION TENETS] Anonymous objects returned from event handlers (T5)** - The `ProcessAuthEventAsync`, `ProcessServiceRegistrationAsync`, `ProcessClientMessageEventAsync`, and `ProcessClientRPCEventAsync` methods return anonymous objects (`new { status = "processed", ... }`). Per T5: "All state changes publish typed events; no anonymous objects."
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/ConnectService.cs`
+   - **Lines**: 1694, 1733, 1773, 1778, 1784, 1840, 1845, 1851
+   - **Fix**: Define typed response classes (e.g., `EventProcessingResult`) and return those instead of anonymous objects.
+
+9. **[IMPLEMENTATION TENETS] Anonymous object used for admin notification payload (T5)** - The `HandleServiceErrorAsync` method constructs an anonymous object for the admin notification WebSocket payload. While this is an in-process notification (not a cross-service event), T5 requires typed event objects.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/ConnectServiceEvents.cs`, lines 92-106
+   - **Fix**: Define a typed `AdminNotificationPayload` class with the appropriate properties.
+
+10. **[IMPLEMENTATION TENETS] Anonymous objects in capability manifest construction (T5)** - Multiple locations construct anonymous objects for capability manifest entries and internal responses. These are serialized and sent to clients as WebSocket payloads.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/ConnectService.cs`
+    - **Lines**: 2267-2275 (API entries), 2282-2289 (shortcut entries), 2292-2300 (manifest), 2405-2413 (ProcessCapabilities API entries), 2427-2434 (ProcessCapabilities shortcuts), 2440-2448 (manifest dict), 2860-2867 (SendCapabilityManifestWithShortcuts APIs), 2874-2881 (shortcuts), 2884-2892 (manifest), 611-614 (internal response)
+    - **Fix**: Define typed classes for `CapabilityManifestEntry`, `ShortcutManifestEntry`, `CapabilityManifest`, and `InternalModeResponse`.
+
+11. **[QUALITY TENETS] Missing XML documentation on `WebSocketConnection.Metadata` purpose (T19)** - The `Metadata` property has a one-line summary but the class-level documentation does not describe the purpose of `Metadata` keys like `forced_disconnect`.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/WebSocketConnectionManager.cs`, line 340
+    - **Fix**: Add `<remarks>` documenting known metadata keys and their semantics, or convert to a typed flags/options class.
+
+12. **[IMPLEMENTATION TENETS] `string.Empty` default without validation (CLAUDE.md)** - Per CLAUDE.md null-coalescing rules, `string.Empty` defaults on properties can hide bugs. Several properties use `= string.Empty` as defaults without validation that they are set to meaningful values.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/Protocol/ConnectionState.cs`, lines 426, 453, 458
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/SessionModels.cs`, line 132
+    - **Properties**: `PendingMessageInfo.ServiceName`, `PendingRPCInfo.ServiceName`, `PendingRPCInfo.ResponseChannel`, `SessionEvent.EventType`
+    - **Fix**: Either make these nullable (and handle null at boundaries) or add validation that they are set to non-empty values before use. The `ServiceName = eventData.ServiceName ?? "unknown"` pattern at line 1828 confirms these can receive null/empty values silently.
+
+13. **[IMPLEMENTATION TENETS] `?? "unknown"` silent null coercion (CLAUDE.md)** - At line 1828, `ServiceName = eventData.ServiceName ?? "unknown"` silently coerces null to a sentinel string, hiding potential data issues from the publishing service.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/ConnectService.cs`, line 1828
+    - **Fix**: Log a warning when `ServiceName` is null (since it indicates the publisher failed to set required metadata), then use the "unknown" fallback defensively.
+
+14. **[QUALITY TENETS] Empty catch blocks suppress errors silently (T10/T7)** - Two empty catch blocks in `WebSocketConnectionManager` swallow exceptions without logging:
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-connect/WebSocketConnectionManager.cs`, lines 54-57 (AddConnection cleanup) and lines 316-318 (Dispose cleanup)
+    - **Fix**: Add at minimum a debug-level log message identifying what failed and why it's acceptable to ignore.
+
+---
+
 ### Design Considerations (Requires Planning)
 
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.

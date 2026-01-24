@@ -403,7 +403,7 @@ Dispute Resolution
 
 ### Design Considerations (Requires Planning)
 
-1. **No distributed locking / non-atomic read-modify-write**: The service performs read-modify-write cycles without distributed lock or ETag protection. Affected areas include: the agreement model (all modifications: deposit, consent, dispute, etc.), party pending counts (concurrent CreateEscrow for same party), and token records (concurrent deposits with same token). Under high concurrency, last-write-wins can cause lost deposits, incorrect counts, or inconsistent state.
+1. **Party pending count race condition**: The `PartyPendingStore` increment/decrement in `CreateEscrowAsync` and completion operations uses `GetAsync` + modify + `SaveAsync` (last-write-wins). Concurrent escrow creation/completion for the same party can cause the counter to drift by 1. This is informational only (no financial impact) and self-corrects over time. The agreement model mutations (deposit, consent, dispute, release, refund, cancel, resolve, verify, validate, reaffirm) are all protected by ETag-based optimistic concurrency with 3-attempt retry loops. Token marking is deferred until after successful agreement save to prevent token consumption on retry.
 
 2. **Status index not cleaned on expiration**: Since no expiration processor exists, status index entries for expired escrows accumulate indefinitely. If an escrow expires without being cancelled, its status index entry remains under the pre-expiration status forever. Needs either a periodic cleanup timer or expiration handling in query paths.
 

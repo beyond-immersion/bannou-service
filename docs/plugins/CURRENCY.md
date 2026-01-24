@@ -421,6 +421,178 @@ Escrow Integration Flow
 
 ## Known Quirks & Caveats
 
+### Tenet Violations (Fix Immediately)
+
+#### IMPLEMENTATION TENETS - T25: Internal Model Type Safety
+
+**File**: `plugins/lib-currency/CurrencyService.cs`, lines 2988-3103
+
+The internal models (`CurrencyDefinitionModel`, `WalletModel`, `BalanceModel`, `TransactionModel`, `HoldModel`) extensively use `string` for fields that have proper C# types:
+
+1. **String for Guid fields**: `DefinitionId`, `WalletId`, `OwnerId`, `TransactionId`, `HoldId`, `CurrencyDefinitionId`, `ReferenceId`, `EscrowId`, `SeasonId`, `LinkedItemTemplateId`, `IconAssetId` are all `string` but represent GUIDs. Per T25 they must be `Guid` or `Guid?`.
+
+2. **String for enum fields**: `Scope` (should be `CurrencyScope`), `Precision` (should be `CurrencyPrecision`), `CapOverflowBehavior` (should be `CapOverflowBehavior?`), `AutogainMode` (should be `AutogainMode?`), `ExpirationPolicy` (should be `ExpirationPolicy?`), `LinkageMode` (should be `ItemLinkageMode?`), `TransactionType` (should be `TransactionType`), `OwnerType` (should be `WalletOwnerType`).
+
+3. **`.ToString()` populating internal models** (lines 114-145, 293-306, 359-374, 389-391, 935-937, 953, 1035-1037, 1053, 1170-1172, 1192, 1965-1973, 2525): Enum and Guid values are converted to strings when creating models. Per T25, enums and Guids should be assigned directly.
+
+4. **String comparison for enum values** (lines 901-902, 1152-1153, 1353, 2455, 2704): `definition.CapOverflowBehavior == CapOverflowBehavior.Reject.ToString()` and `definition.AutogainMode == AutogainMode.Compound.ToString()` patterns. Per T25, these should be direct enum equality comparisons.
+
+5. **`Enum.Parse`/`Enum.TryParse` in mapping methods** (lines 2780-2878): `MapDefinitionToResponse`, `MapWalletToResponse`, `MapTransactionToRecord` all parse strings back to enums. If models used proper types, these would be unnecessary.
+
+**Fix**: Change all internal model properties to use their proper typed equivalents (Guid, enums, DateTimeOffset). Remove all `.ToString()` calls when populating models. Remove all `Enum.TryParse`/`Guid.Parse` calls in mapping methods and assign directly.
+
+---
+
+#### IMPLEMENTATION TENETS - T21: Configuration-First (Hardcoded Tunables)
+
+**File**: `plugins/lib-currency/CurrencyService.cs`
+
+1. **Hardcoded lock timeout `30` seconds** (lines 638, 848, 1009, 1112, 1120, 1934, 2042): All `LockAsync` calls use a hardcoded `30` second timeout. Per T21, this should be a configuration property (e.g., `BalanceLockTimeoutSeconds`).
+
+2. **Hardcoded autogain lock timeout `10` seconds** (line 2448): The autogain lock uses a hardcoded `10`. Should be a configuration property.
+
+3. **Hardcoded index lock timeout `15` seconds** (lines 2738, 2758): The `AddToListAsync`/`RemoveFromListAsync` helpers use hardcoded `15`. Should be a configuration property.
+
+4. **Hardcoded retry count `3`** (line 1490): `UpdateExchangeRateAsync` retries 3 times. Should be a configuration property (e.g., `ExchangeRateUpdateMaxRetries`).
+
+5. **Hardcoded rounding precision `8`** (lines 1300, 1349): Conversion calculations use `Math.Round(..., 8, ...)`. Should be a configuration property.
+
+**File**: `plugins/lib-currency/Services/CurrencyAutogainTaskService.cs`
+
+6. **Hardcoded autogain lock timeout `10` seconds** (line 209): Same as item 2 above.
+
+**Fix**: Define configuration properties in `schemas/currency-configuration.yaml` for each hardcoded tunable: `BalanceLockTimeoutSeconds`, `AutogainLockTimeoutSeconds`, `IndexLockTimeoutSeconds`, `ExchangeRateUpdateMaxRetries`, `ConversionRoundingPrecision`.
+
+---
+
+#### IMPLEMENTATION TENETS - T21: Dead Injected Dependency
+
+**File**: `plugins/lib-currency/CurrencyService.cs`, lines 28, 54, 61
+
+`IServiceNavigator _navigator` is injected and assigned but never used anywhere in the service. Per T21, unused dependencies indicate dead configuration or missing functionality.
+
+**Fix**: Remove `_navigator` from the constructor and field declaration, or implement the functionality that requires it.
+
+---
+
+#### FOUNDATION TENETS - T6: Missing Constructor Null Checks
+
+**File**: `plugins/lib-currency/CurrencyService.cs`, lines 59-66
+
+The constructor assigns dependencies without null-checking them via `?? throw new ArgumentNullException(...)` or `ArgumentNullException.ThrowIfNull()`. Per T6, all injected dependencies must have explicit null guards.
+
+```csharp
+// Current (violating):
+_messageBus = messageBus;
+_stateStoreFactory = stateStoreFactory;
+// ...
+
+// Required:
+_messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+_stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+// ...
+```
+
+**File**: `plugins/lib-currency/Services/CurrencyAutogainTaskService.cs`, lines 41-44
+
+Same issue: no null checks on constructor parameters.
+
+**Fix**: Add null-argument validation to all constructor parameters in both files.
+
+---
+
+#### IMPLEMENTATION TENETS - T7: Missing ApiException Catch
+
+**File**: `plugins/lib-currency/CurrencyService.cs` (all public methods)
+
+Every public method catches only `Exception` generically. Per T7, services making external calls should distinguish between `ApiException` (expected API errors - log as Warning, propagate status) and generic `Exception` (unexpected - log as Error, emit error event). While this service does not currently make inter-service calls via generated clients, the T7 pattern is the standard for all catch blocks and prepares for future service calls.
+
+**Fix**: Although currently the service only calls infrastructure (state stores, locks), if any `IMeshInvocationClient` or generated client calls are added in the future, `ApiException` catches must be added before the generic `Exception` catch. Consider adding the pattern proactively for consistency.
+
+---
+
+#### CLAUDE.md - `?? string.Empty` Without Justification Comment
+
+**File**: `plugins/lib-currency/CurrencyService.cs`, lines 533, 585, 677, 1502, 2069, 2160
+
+Six instances of `etag ?? string.Empty` in `TrySaveAsync` calls. Per CLAUDE.md rules, `?? string.Empty` requires an explanatory comment for one of two acceptable patterns. These are the "compiler satisfaction" pattern (GetWithETagAsync returns `string?` but TrySaveAsync requires `string`; if etag is null it means the entity was just created without a prior etag). Each usage needs a comment explaining why the coalesce is safe.
+
+**Fix**: Add a comment to each usage explaining the pattern, e.g.:
+```csharp
+// GetWithETagAsync returns nullable etag; coalesce satisfies TrySaveAsync's non-nullable parameter
+// (null etag means first-write scenario, string.Empty is acceptable as initial etag)
+var newEtag = await store.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
+```
+
+---
+
+#### QUALITY TENETS - T10: Missing Operation Entry Logging
+
+**File**: `plugins/lib-currency/CurrencyService.cs`
+
+Only `CreateCurrencyDefinitionAsync` (line 77) has an entry-level log statement. All other 30+ public methods lack Debug-level operation entry logging. Per T10, "Operation Entry (Debug): Log input parameters" is a required log point.
+
+**Fix**: Add `_logger.LogDebug(...)` at the entry of each public method with relevant input parameter context.
+
+---
+
+#### QUALITY TENETS - T19: Missing XML Documentation on Private/Internal Members
+
+**File**: `plugins/lib-currency/CurrencyService.cs`
+
+1. **Private helper methods without `<summary>`**: `ResolveCurrencyDefinitionAsync` (line 2266), `GetDefinitionByIdAsync` (line 2288), `GetWalletByIdAsync` (line 2294), `ResolveWalletAsync` (line 2300), `GetOrCreateBalanceAsync` (line 2321), `SaveBalanceAsync` (line 2356), `GetAllBalancesForWalletAsync` (line 2372), `GetWalletBalanceSummariesAsync` (line 2394), `ApplyAutogainIfNeededAsync` (line 2419), `RecordTransactionAsync` (line 2507), `CheckIdempotencyAsync` (line 2553), `RecordIdempotencyAsync` (line 2562), `InternalCreditAsync` (line 2568), `GetTotalHeldAmountAsync` (line 2584), `CalculateEffectiveRate` (line 2619), `ResetEarnCapsIfNeeded` (line 2634), `ApplyEarnCap` (line 2649), `IsNegativeAllowed` (line 2670), `BuildEarnCapInfo` (line 2675), `BuildAutogainInfo` (line 2691), `BuildOwnerKey` (line 2722), `GetNextWeeklyReset` (line 2727), `AddToListAsync` (line 2735), `RemoveFromListAsync` (line 2755), `MapDefinitionToResponse` (line 2780), `MapWalletToResponse` (line 2824), `MapTransactionToRecord` (line 2840), `MapHoldToRecord` (line 2862).
+
+2. **Internal model properties without `<summary>`**: All properties on `CurrencyDefinitionModel`, `WalletModel`, `BalanceModel`, `TransactionModel`, `HoldModel` (lines 2988-3103) lack XML documentation.
+
+**Fix**: Add `<summary>` tags to all private/internal methods and properties that do not already have them.
+
+---
+
+#### IMPLEMENTATION TENETS - T25: Unused Parameter in Method
+
+**File**: `plugins/lib-currency/CurrencyService.cs`, line 2634
+
+`ResetEarnCapsIfNeeded(BalanceModel balance, CurrencyDefinitionModel definition)` - the `definition` parameter is never used in the method body. The method only reads from `balance`.
+
+**Fix**: Remove the unused `definition` parameter or implement the intended functionality (perhaps earn cap reset time from definition?).
+
+---
+
+#### QUALITY TENETS - T16: Event Topic Naming
+
+**File**: `plugins/lib-currency/CurrencyService.cs`
+
+Event topics use inconsistent separators. Some use hyphens in the entity part (matching `{entity}.{action}`), others use dots for compound actions:
+
+- `currency-definition.updated` (line 313) -- entity part uses hyphen: correct per convention
+- `currency-wallet.created` (line 383) -- correct
+- `currency.earn_cap.reached` (line 874) -- uses underscores and 3 segments
+- `currency.wallet_cap.reached` (line 912) -- uses underscores and 3 segments
+- `currency.credited` (line 942) -- correct
+- `currency.debited` (line 1042) -- correct
+- `currency.transferred` (line 1178) -- correct
+- `currency.exchange_rate.updated` (line 1505) -- uses underscores and 3 segments
+- `currency.hold.created` (line 1988) -- 3 segments
+- `currency.hold.captured` (line 2103) -- 3 segments
+- `currency.hold.released` (line 2192) -- 3 segments
+- `currency.autogain.calculated` (line 2485) -- 3 segments
+
+Per T16/T5, the topic pattern is `{entity}.{action}` (2 segments). Topics like `currency.earn_cap.reached` and `currency.hold.created` use 3 segments and underscores. These should be `currency-earn-cap.reached`, `currency-wallet-cap.reached`, `currency-hold.created`, `currency-exchange-rate.updated`, etc.
+
+**Fix**: Standardize all event topics to `{kebab-case-entity}.{action}` format with exactly 2 segments (entity and action).
+
+---
+
+#### IMPLEMENTATION TENETS - T8: Cast to StatusCodes Instead of Enum Member
+
+**File**: `plugins/lib-currency/CurrencyService.cs`, lines 840, 892, 904, 1001, 1025, 1095, 1099, 1131, 1155, 1294, 1338, 1347, 1362, 1453, 1948
+
+15 instances of `(StatusCodes)422` -- casting a raw integer to the StatusCodes enum. Per T8, the service should use a defined enum member. If `UnprocessableEntity` is not in the StatusCodes enum, it should be added to the schema. Using raw casts bypasses compile-time type safety.
+
+**Fix**: Add `UnprocessableEntity = 422` to the StatusCodes enum (in the schema that generates it), then use `StatusCodes.UnprocessableEntity` instead of `(StatusCodes)422`.
+
+---
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Frozen wallet returns 422**: All balance-modifying operations on frozen wallets return HTTP 422 (Unprocessable Entity), not 403 or 409. This distinguishes it from auth failures and concurrency conflicts.

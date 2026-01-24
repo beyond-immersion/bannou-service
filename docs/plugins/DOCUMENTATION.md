@@ -403,6 +403,77 @@ Archive System
 
 ## Known Quirks & Caveats
 
+### Tenet Violations (Fix Immediately)
+
+**1. IMPLEMENTATION TENETS (T23: Async Method Pattern) -- `SearchIndexService.cs` lines 46, 121, 125, 134, 141, 150, 154, 163, 167, 176, 180**
+- **File**: `plugins/lib-documentation/Services/SearchIndexService.cs`
+- **Problem**: Multiple async methods use `await Task.CompletedTask` as a workaround to satisfy the `async` keyword when the method body is synchronous. T23 states: "No `Task.FromResult` without async" and the spirit is that async methods should actually await meaningful work. Using `await Task.CompletedTask` is equivalent to `Task.FromResult` -- it's a synchronous method pretending to be async.
+- **Fix**: Either make these methods genuinely async (e.g., introduce async state store queries), or change the interface to return synchronous results where the in-memory implementation has no I/O. If the interface must stay async (for the Redis implementation), the in-memory implementation should use `ValueTask<T>` with synchronous completion, or accept the pattern with a comment explaining the interface contract requirement.
+
+**2. IMPLEMENTATION TENETS (T23: Async Method Pattern) -- `GitSyncService.cs` lines 269, 410, 482**
+- **File**: `plugins/lib-documentation/Services/GitSyncService.cs`
+- **Problem**: Three locations use `.GetAwaiter().GetResult()` on `_messageBus.TryPublishErrorAsync()`. This is a synchronous blocking call on an async method, which T23 explicitly forbids (`.Result` or `.Wait()` on Task). The methods `GetHeadCommit`, `CloneRepository`, and `PullRepository` are synchronous, but they call async methods with blocking.
+- **Fix**: Make `CloneRepository` and `PullRepository` async (they are private, so the change is local). For `GetHeadCommit` (which returns `string?` per the interface), either change the interface to return `Task<string?>`, or use a fire-and-forget pattern for error publishing (e.g., `_ = _messageBus.TryPublishErrorAsync(...)` with a comment explaining the fire-and-forget).
+
+**3. IMPLEMENTATION TENETS (T21: Configuration-First) -- `DocumentationService.cs` lines 1961, 2835, 526, 1667**
+- **File**: `plugins/lib-documentation/DocumentationService.cs`
+- **Problem**: Several hardcoded magic numbers that should be configuration values:
+  - Line 1961: `var maxRelated = depth == RelatedDepth.Extended ? 10 : 5;` -- hardcoded related document limits
+  - Line 2835: `1800, // 30 minutes max sync time` -- hardcoded lock TTL (partially documented in quirk #9 but not configurable)
+  - Line 526: `var fetchLimit = hasTags || body.SortBy != default ? 1000 : pageSize;` -- hardcoded max fetch limit
+  - Line 1667: `foreach (var docId in docIds.Take(10))` -- hardcoded stats sampling limit
+- **Fix**: Add configuration properties for `MaxRelatedDocuments`, `MaxRelatedDocumentsExtended`, `SyncLockTtlSeconds`, `MaxFetchLimit`, and `StatsSampleSize` to the documentation-api.yaml schema configuration section, then use `_configuration.*` instead of literals.
+
+**4. IMPLEMENTATION TENETS (T9: Multi-Instance Safety) -- `RedisSearchIndexService.cs` lines 20-21**
+- **File**: `plugins/lib-documentation/Services/RedisSearchIndexService.cs`
+- **Problem**: Uses `HashSet<string> _initializedNamespaces` with `object _initLock` for tracking initialized indexes. T9 requires `ConcurrentDictionary` instead of plain collections with manual locks, and notes "No in-memory authoritative state". The `_initializedNamespaces` set is authoritative in that it determines whether index creation is attempted -- if the set says "initialized" but the index was dropped externally, the service will skip recreation.
+- **Fix**: Replace `HashSet<string>` + `object _initLock` with `ConcurrentDictionary<string, bool>` for thread-safety without manual locking, and add a comment noting this is a performance cache (not authoritative) since `EnsureIndexExistsAsync` is idempotent.
+
+**5. CLAUDE.md Rule (`?? string.Empty` without justification) -- `DocumentationService.cs` lines 1610, 1722, 1744, 1772, 1804, 1836**
+- **File**: `plugins/lib-documentation/DocumentationService.cs`
+- **Problem**: Six instances of `etag ?? string.Empty` passed to `TrySaveAsync`. The `etag` is nullable (from `GetWithETagAsync`), and passing empty string when null means "create if not exists" semantics. However, per CLAUDE.md rules, `?? string.Empty` requires either a "compiler satisfaction" comment or "external service defensive coding" with error logging. These have neither.
+- **Fix**: Add a comment explaining the pattern: `// etag is null when the key doesn't exist yet; passing empty string to TrySaveAsync signals "create new" semantics (will never match an existing ETag, so save always succeeds for new keys)`. Alternatively, if `TrySaveAsync` has a separate overload for creates, use that instead.
+
+**6. IMPLEMENTATION TENETS (T5: Event-Driven Architecture / Typed Events) -- `DocumentationService.cs` lines 141, 350, 3435 and `RedisSearchIndexService.cs` lines 122, 178, 281 and `GitSyncService.cs` lines 83, 96, 180, 234, 268, 303, 341, 409, 481**
+- **File**: Multiple files
+- **Problem**: The `details:` parameter in `TryPublishErrorAsync` calls uses anonymous objects (`new { ... }`). T5 states "no anonymous objects" for events. While `TryPublishErrorAsync` is an error reporting utility (not a domain event), the `details` parameter is serialized into the event payload. The anonymous object types are not reusable or documented.
+- **Fix**: Since `TryPublishErrorAsync` is an infrastructure convenience method that accepts `object? details`, and these are diagnostic error details (not domain events), this is a gray area. Add a comment in the service noting that error event details use anonymous objects as permitted by the TryPublishErrorAsync infrastructure API contract, OR define small typed record classes for error detail contexts.
+
+**7. QUALITY TENETS (T19: XML Documentation) -- `DocumentationService.cs` lines 3691-3745**
+- **File**: `plugins/lib-documentation/DocumentationService.cs`
+- **Problem**: The internal classes `DocumentationBundle`, `BundledDocument`, `StoredDocument`, and `TrashedDocument` have `<summary>` on the class level but their properties lack XML documentation (no `<summary>` tags on individual properties like `Version`, `Namespace`, `Documents`, `Slug`, `Title`, `Content`, `Category`, etc.).
+- **Fix**: Add `/// <summary>` XML doc comments to all properties of these internal sealed classes. While they are internal, T19 says "All public APIs documented" and internal types are best practice to document as well.
+
+**8. IMPLEMENTATION TENETS (T21: Configuration-First) -- `SearchIndexService.cs` line 200 `GenerateSearchSnippet` and line 1922 of `DocumentationService.cs`**
+- **File**: `plugins/lib-documentation/DocumentationService.cs` line 1922
+- **Problem**: `GenerateSearchSnippet` has a hardcoded default `snippetLength = 200` parameter. This is a tunable that affects search result presentation.
+- **Fix**: Add a `SearchSnippetLength` configuration property to the schema and use `_configuration.SearchSnippetLength` instead of a method parameter default.
+
+**9. IMPLEMENTATION TENETS (T20: JSON Serialization) -- `RedisSearchIndexService.cs` line 190**
+- **File**: `plugins/lib-documentation/Services/RedisSearchIndexService.cs`
+- **Problem**: `Task.Run(async () => { await EnsureIndexExistsAsync(...); })` is fire-and-forget with no await. This is not a T20 violation but it IS a T23 violation -- the returned Task is never awaited, meaning exceptions are silently swallowed (the catch only logs a warning). The calling `IndexDocument` method is `void`, so there's no way to propagate failures.
+- **Fix**: Since `IndexDocument` is defined as `void` in the interface (for both in-memory and Redis implementations), consider changing the interface to return `Task` and making it async, OR at minimum register an unobserved task exception handler, OR log at Error level instead of Warning since this is an infrastructure failure.
+
+**10. QUALITY TENETS (T16: Naming Conventions) -- `DocumentationService.cs` line 106**
+- **File**: `plugins/lib-documentation/DocumentationService.cs`
+- **Problem**: `ViewDocumentBySlugAsync` returns `(StatusCodes, object?)` instead of the standard tuple pattern `(StatusCodes, TResponse?)`. The `object?` return type breaks the strongly-typed return pattern established by T8.
+- **Fix**: Define a proper response type (e.g., `ViewDocumentBySlugResponse` with an `Html` string property) and return `(StatusCodes, ViewDocumentBySlugResponse?)`. The controller already casts the result to string, so a typed response would be cleaner.
+
+**11. FOUNDATION TENETS (T15: Browser-Facing Endpoints) -- `DocumentationController.cs` line 17, 42**
+- **File**: `plugins/lib-documentation/DocumentationController.cs`
+- **Problem**: The `ViewDocumentBySlug` and `RawDocumentBySlug` methods use GET with path parameters, which is documented as an intentional exception (Quirk #7). However, the controller file is a manual partial class file -- NOT in the Generated/ directory. Per the schema-first architecture, controller logic should be generated. Having a manually-authored controller partial class is unusual but not forbidden since the schema marks these as `x-manual-implementation`.
+- **Fix**: No fix needed -- this is correctly documented as an intentional pattern. Confirm `x-manual-implementation` is set in the schema. (NOT A VIOLATION -- included for completeness of audit)
+
+**12. IMPLEMENTATION TENETS (T24: Using Statement Pattern) -- `RedisSearchIndexService.cs` line 190**
+- **File**: `plugins/lib-documentation/Services/RedisSearchIndexService.cs`
+- **Problem**: The `Task.Run` lambda in `IndexDocument` creates a fire-and-forget task. While not a `using` violation per se, the task itself is a resource that could hold references. More critically, if the service is disposed while this task is running, it could access disposed resources.
+- **Fix**: Track the task and cancel it during disposal, or make `IndexDocument` async and await the call.
+
+**13. QUALITY TENETS (T10: Logging Standards) -- `DocumentationController.cs`**
+- **File**: `plugins/lib-documentation/DocumentationController.cs`
+- **Problem**: No logging in the manual controller partial class. When a `ViewDocumentBySlug` or `RawDocumentBySlug` request comes in and returns a non-OK status, the controller returns an error response but never logs the event. The service layer logs, but the controller's status-code-to-ActionResult mapping is invisible to monitoring.
+- **Fix**: Add structured logging for non-OK responses in the controller, or accept that the service layer logging is sufficient (which is the pattern for generated controllers).
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Repository-bound namespaces reject manual mutations**: Any `Create`, `Update`, or `Delete` call on a namespace with an active binding (status not Disabled) returns 403 Forbidden. This enforces git as the single source of truth.
