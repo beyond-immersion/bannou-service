@@ -921,10 +921,15 @@ public partial class AccountService : IAccountService
             if (body.Metadata != null)
             {
                 var newMetadata = ConvertToMetadataDictionary(body.Metadata);
-                if (newMetadata != null && !MetadataEquals(account.Metadata, newMetadata))
+                if (newMetadata != null)
                 {
-                    account.Metadata = newMetadata;
-                    changedFields.Add("metadata");
+                    // If existing metadata is null or differs from new metadata, update
+                    var hasChanged = account.Metadata == null || !MetadataEquals(account.Metadata, newMetadata);
+                    if (hasChanged)
+                    {
+                        account.Metadata = newMetadata;
+                        changedFields.Add("metadata");
+                    }
                 }
             }
 

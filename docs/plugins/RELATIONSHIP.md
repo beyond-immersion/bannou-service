@@ -183,3 +183,70 @@ None identified.
 4. **No optimistic concurrency**: Updates overwrite without version checking. Two concurrent updates to metadata will result in last-writer-wins with no conflict detection.
 
 5. **Type migration during merge**: The update endpoint allows changing `RelationshipTypeId`, which is used by the RelationshipType service during type merges. This modifies type indexes atomically but without distributed transaction guarantees — a crash between removing from old index and adding to new could leave the relationship in neither index.
+
+---
+
+## Tenet Violations (Audit)
+
+*Audit performed: 2026-01-24*
+
+### Category: IMPLEMENTATION TENETS
+
+1. **Multi-Instance Safety (T9)** - RelationshipService.cs:649-661, 667-679, 685-697, 702-711 - Read-modify-write sequences without distributed locks
+   - What's wrong: The `AddToEntityIndexAsync`, `AddToTypeIndexAsync`, `RemoveFromTypeIndexAsync`, and `AddToAllRelationshipsListAsync` methods perform read-modify-write operations on list indexes without distributed locking. Two concurrent requests could both read the same list, add their item, and save - causing one addition to be lost.
+   - Fix: Wrap each read-modify-write sequence with `IDistributedLockProvider.LockAsync()` using the index key as the resource ID, or use atomic state store operations if available.
+
+2. **Multi-Instance Safety (T9)** - RelationshipService.cs:393-405 - Composite key uniqueness check without distributed lock
+   - What's wrong: The create operation checks for existing composite key and then creates - a classic TOCTOU (time-of-check-time-of-use) race condition. Two concurrent creates for the same entity pair could both pass the uniqueness check and create duplicate relationships.
+   - Fix: Acquire a distributed lock on the composite key before the existence check and release after save.
+
+3. **Internal Model Type Safety (T25)** - RelationshipService.cs:868-924 - RelationshipModel uses string for GUIDs and Enums
+   - What's wrong: The internal `RelationshipModel` uses `string` for fields that should be typed:
+     - `RelationshipId`, `Entity1Id`, `Entity2Id`, `RelationshipTypeId` should be `Guid`
+     - `Entity1Type`, `Entity2Type` should be `EntityType` enum
+   - Fix: Change the internal POCO to use proper types (`Guid` and `EntityType`). This eliminates the need for `Guid.Parse()` and `Enum.Parse()` in `MapToResponse()` and business logic, and provides compile-time type safety.
+
+4. **Internal Model Type Safety (T25)** - RelationshipService.cs:737-742 - Enum.Parse in business logic (MapToResponse)
+   - What's wrong: `MapToResponse()` calls `Enum.Parse<EntityType>()` on every read operation. Per IMPLEMENTATION TENETS, enum parsing belongs only at system boundaries (deserialization), not in business logic.
+   - Fix: Change `RelationshipModel` to use `EntityType` enum directly. BannouJson handles enum serialization automatically in state stores.
+
+5. **Internal Model Type Safety (T25)** - RelationshipService.cs:107, 144, 151-155, 204, 249, 325, 326 - String comparisons for enum values
+   - What's wrong: Multiple lines compare enum values as strings (e.g., `r.Entity1Type == entity1Type` where both are strings converted via `.ToString()`). This is fragile and bypasses compile-time type safety.
+   - Fix: Use typed enum comparisons after fixing `RelationshipModel` to use proper types.
+
+6. **Internal Model Type Safety (T25)** - RelationshipService.cs:411-423, 501 - ToString() when populating internal model
+   - What's wrong: The create operation converts request enums and GUIDs to strings via `.ToString()` when populating `RelationshipModel`. Per IMPLEMENTATION TENETS, internal models should store proper types.
+   - Fix: Assign enums and GUIDs directly to the model after fixing `RelationshipModel` to use proper types.
+
+7. **Unused CancellationToken Parameter** - RelationshipService.cs:754, 778, 808 - CancellationToken parameters not used
+   - What's wrong: The `PublishRelationshipCreatedEventAsync`, `PublishRelationshipUpdatedEventAsync`, and `PublishRelationshipDeletedEventAsync` methods accept a `cancellationToken` parameter but never pass it to `TryPublishAsync`.
+   - Fix: Either pass the cancellation token to `_messageBus.TryPublishAsync()` if the overload supports it, or remove the parameter if it's not needed.
+
+### Category: QUALITY TENETS
+
+8. **Logging Standards (T10)** - RelationshipService.cs:68, 103, 200, 285, 383, 447, 470, 522, 554, 591, 858 - Operation entry logged at Information level instead of Debug
+   - What's wrong: Multiple operation entry points use `LogInformation` for routine operation starts. Per QUALITY TENETS, operation entry should be logged at Debug level, with Information reserved for significant business decisions/state changes.
+   - Fix: Change operation entry logs to `LogDebug`. Keep success/completion logs at Information level where they represent meaningful state changes (e.g., "Created relationship", "Ended relationship").
+
+9. **Logging Standards (T10)** - RelationshipService.cs:126, 225, 307 - Data inconsistency logged as Error without error event
+   - What's wrong: When a relationship ID is in an index but the model fails to load, the code logs an error but does not emit an error event via `TryPublishErrorAsync`. Per IMPLEMENTATION TENETS (T7), unexpected internal failures that warrant Error logging should also emit error events for monitoring.
+   - Fix: Call `await _messageBus.TryPublishErrorAsync(...)` when data inconsistency is detected, in addition to the error log.
+
+### Category: FOUNDATION TENETS
+
+10. **Service Implementation Pattern (T6)** - RelationshipService.cs:38-52 - Constructor param XML doc mismatch
+    - What's wrong: The constructor XML documentation lists `errorEventEmitter` as a parameter but the actual parameter is `eventConsumer`. This is a documentation error.
+    - Fix: Update the XML `<param name="errorEventEmitter">` to `<param name="eventConsumer">` with appropriate description.
+
+### Summary
+
+| Category | Count |
+|----------|-------|
+| IMPLEMENTATION TENETS | 7 |
+| QUALITY TENETS | 2 |
+| FOUNDATION TENETS | 1 |
+| **Total** | **10** |
+
+**Most Critical Issues**:
+1. **Multi-instance safety violations** (T9) - Race conditions in index updates and composite key checks could cause data loss or duplicate relationships in multi-instance deployments.
+2. **Internal model type safety** (T25) - Using strings for GUIDs and enums throughout the internal model creates fragile code and runtime parsing overhead.
