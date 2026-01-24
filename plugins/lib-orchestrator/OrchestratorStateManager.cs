@@ -18,6 +18,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
 {
     private readonly ILogger<OrchestratorStateManager> _logger;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
 
     // Store names matching lib-state configuration
     private const string HEARTBEATS_STORE = "orchestrator-heartbeats";
@@ -32,11 +33,6 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private const string CONFIG_VERSION_KEY = "version";
     private const string CONFIG_CURRENT_KEY = "current";
     private const string CONFIG_HISTORY_PREFIX = "history:";
-
-    // TTL values
-    private static readonly TimeSpan HEARTBEAT_TTL = TimeSpan.FromSeconds(90);
-    private static readonly TimeSpan ROUTING_TTL = TimeSpan.FromMinutes(5);
-    private static readonly int CONFIG_HISTORY_TTL_SECONDS = (int)TimeSpan.FromDays(30).TotalSeconds;
 
     // Cached stores (lazy initialization after InitializeAsync)
     private IStateStore<InstanceHealthStatus>? _heartbeatStore;
@@ -53,10 +49,12 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public OrchestratorStateManager(
         IStateStoreFactory stateStoreFactory,
-        ILogger<OrchestratorStateManager> logger)
+        ILogger<OrchestratorStateManager> logger,
+        OrchestratorServiceConfiguration configuration)
     {
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -167,7 +165,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             };
 
             // Save heartbeat with TTL
-            var options = new StateOptions { Ttl = (int)HEARTBEAT_TTL.TotalSeconds };
+            var options = new StateOptions { Ttl = _configuration.HeartbeatTtlSeconds };
             await _heartbeatStore.SaveAsync(heartbeat.AppId, healthStatus, options);
 
             // Update index to track this app ID
@@ -392,7 +390,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         {
             routing.LastUpdated = DateTimeOffset.UtcNow;
 
-            var options = new StateOptions { Ttl = (int)ROUTING_TTL.TotalSeconds };
+            var options = new StateOptions { Ttl = _configuration.RoutingTtlSeconds };
             await _routingStore.SaveAsync(serviceName, routing, options);
 
             // Update index
@@ -664,7 +662,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
                 LastUpdated = DateTimeOffset.UtcNow
             };
 
-            var options = new StateOptions { Ttl = (int)ROUTING_TTL.TotalSeconds };
+            var options = new StateOptions { Ttl = _configuration.RoutingTtlSeconds };
 
             foreach (var serviceName in index.ServiceNames)
             {
@@ -747,7 +745,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
 
             // Save to history with TTL
             var historyKey = $"{CONFIG_HISTORY_PREFIX}{newVersion}";
-            var historyOptions = new StateOptions { Ttl = CONFIG_HISTORY_TTL_SECONDS };
+            var historyOptions = new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.ConfigHistoryTtlDays).TotalSeconds };
             await _configStore.SaveAsync(historyKey, configuration, historyOptions);
 
             // Update current configuration (no TTL - always present)
@@ -860,7 +858,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
 
             // Save the rollback as a new version in history
             var historyKey = $"{CONFIG_HISTORY_PREFIX}{rollbackVersion}";
-            var historyOptions = new StateOptions { Ttl = CONFIG_HISTORY_TTL_SECONDS };
+            var historyOptions = new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.ConfigHistoryTtlDays).TotalSeconds };
             await _configStore.SaveAsync(historyKey, historicalConfig, historyOptions);
 
             // Update current configuration

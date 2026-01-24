@@ -162,6 +162,24 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public string? KubeconfigPath { get; set; }
 
     /// <summary>
+    /// TTL in seconds for service heartbeat entries in state store
+    /// Environment variable: ORCHESTRATOR_HEARTBEAT_TTL_SECONDS
+    /// </summary>
+    public int HeartbeatTtlSeconds { get; set; } = 90;
+
+    /// <summary>
+    /// TTL in seconds for service routing entries in state store
+    /// Environment variable: ORCHESTRATOR_ROUTING_TTL_SECONDS
+    /// </summary>
+    public int RoutingTtlSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// TTL in days for configuration history entries in state store
+    /// Environment variable: ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS
+    /// </summary>
+    public int ConfigHistoryTtlDays { get; set; } = 30;
+
+    /// <summary>
     /// Interval in seconds for polling container status during deploy
     /// Environment variable: ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS
     /// </summary>

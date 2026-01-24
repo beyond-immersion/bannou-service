@@ -530,33 +530,6 @@ public class TokenServiceTests
 
     #endregion
 
-    #region ExtractSessionKeyFromJwtAsync Tests
-
-    [Fact]
-    public async Task ExtractSessionKeyFromJwtAsync_WithInvalidJwt_ShouldReturnNull()
-    {
-        // Arrange
-        var invalidToken = "not.valid.jwt";
-
-        // Act
-        var result = await _service.ExtractSessionKeyFromJwtAsync(invalidToken);
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public async Task ExtractSessionKeyFromJwtAsync_WithEmptyString_ShouldReturnNull()
-    {
-        // Act
-        var result = await _service.ExtractSessionKeyFromJwtAsync("");
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    #endregion
-
     #region Helper Methods
 
     private static AccountResponse CreateTestAccount()

@@ -121,6 +121,23 @@ x-service-configuration:
       env: ORCHESTRATOR_KUBECONFIG_PATH
       example: "/path/to/.kube/config"
 
+    # State Manager TTL Configuration
+    HeartbeatTtlSeconds:
+      type: integer
+      description: TTL in seconds for service heartbeat entries in state store
+      env: ORCHESTRATOR_HEARTBEAT_TTL_SECONDS
+      default: 90
+    RoutingTtlSeconds:
+      type: integer
+      description: TTL in seconds for service routing entries in state store
+      env: ORCHESTRATOR_ROUTING_TTL_SECONDS
+      default: 300
+    ConfigHistoryTtlDays:
+      type: integer
+      description: TTL in days for configuration history entries in state store
+      env: ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS
+      default: 30
+
     # Polling Configuration
     ContainerStatusPollIntervalSeconds:
       type: integer

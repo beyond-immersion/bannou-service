@@ -51,3 +51,8 @@ x-service-configuration:
       env: CONTRACT_PREBOUND_API_TIMEOUT_MS
       default: 30000
       description: Timeout for individual prebound API calls in milliseconds
+    clauseValidationCacheStalenessSeconds:
+      type: integer
+      env: CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS
+      default: 15
+      description: Staleness threshold in seconds for cached clause validation results before revalidation

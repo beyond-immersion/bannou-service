@@ -10,18 +10,8 @@ using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Web;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -38,25 +28,13 @@ public partial class AuthService : IAuthService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
-    private readonly IHttpClientFactory _httpClientFactory;
 
     // Helper services for better separation of concerns and testability
     private readonly ITokenService _tokenService;
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
 
-    private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
-    private const string SESSION_UPDATED_TOPIC = "session.updated";
     private const string DEFAULT_CONNECT_URL = "ws://localhost:5014/connect";
-
-    // OAuth provider URLs
-    private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
-    private const string DISCORD_USER_URL = "https://discord.com/api/users/@me";
-    private const string GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-    private const string GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
-    private const string TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
-    private const string TWITCH_USER_URL = "https://api.twitch.tv/helix/users";
-    private const string STEAM_AUTH_URL = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/";
 
     public AuthService(
         IAccountClient accountClient,
@@ -65,7 +43,6 @@ public partial class AuthService : IAuthService
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
         ILogger<AuthService> logger,
-        IHttpClientFactory httpClientFactory,
         ITokenService tokenService,
         ISessionService sessionService,
         IOAuthProviderService oauthService,
@@ -77,7 +54,6 @@ public partial class AuthService : IAuthService
         _messageBus = messageBus;
         _configuration = configuration;
         _logger = logger;
-        _httpClientFactory = httpClientFactory;
         _tokenService = tokenService;
         _sessionService = sessionService;
         _oauthService = oauthService;
@@ -534,55 +510,20 @@ public partial class AuthService : IAuthService
         string? state,
         CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             _logger.LogInformation("Initializing OAuth for provider: {Provider}", provider);
 
-            string? authUrl = null;
-            var encodedState = HttpUtility.UrlEncode(state ?? Guid.NewGuid().ToString());
-
-            switch (provider)
+            var authUrl = _oauthService.GetAuthorizationUrl(provider, redirectUri, state);
+            if (authUrl == null)
             {
-                case Provider.Discord:
-                    if (string.IsNullOrWhiteSpace(_configuration.DiscordClientId))
-                    {
-                        _logger.LogError("Discord Client ID not configured");
-                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Discord Client ID not configured");
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    var discordRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.DiscordRedirectUri);
-                    authUrl = $"https://discord.com/oauth2/authorize?client_id={_configuration.DiscordClientId}&response_type=code&redirect_uri={discordRedirectUri}&scope=identify%20email&state={encodedState}";
-                    break;
-
-                case Provider.Google:
-                    if (string.IsNullOrWhiteSpace(_configuration.GoogleClientId))
-                    {
-                        _logger.LogError("Google Client ID not configured");
-                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Google Client ID not configured");
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    var googleRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.GoogleRedirectUri);
-                    authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_configuration.GoogleClientId}&response_type=code&redirect_uri={googleRedirectUri}&scope=openid%20email%20profile&state={encodedState}";
-                    break;
-
-                case Provider.Twitch:
-                    if (string.IsNullOrWhiteSpace(_configuration.TwitchClientId))
-                    {
-                        _logger.LogError("Twitch Client ID not configured");
-                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Twitch Client ID not configured");
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    var twitchRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.TwitchRedirectUri);
-                    authUrl = $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
-                    break;
-
-                default:
-                    _logger.LogWarning("Unknown OAuth provider: {Provider}", provider);
-                    return (StatusCodes.BadRequest, null);
+                await PublishErrorEventAsync("InitOAuth", "configuration_error",
+                    $"OAuth provider {provider} is not properly configured - check client ID and redirect URI settings",
+                    details: new { Provider = provider.ToString() });
+                return (StatusCodes.InternalServerError, null);
             }
 
-            _logger.LogDebug("Generated OAuth URL for {Provider}: {Url}", provider, authUrl);
+            _logger.LogDebug("Generated OAuth URL for {Provider}", provider);
             return (StatusCodes.OK, new InitOAuthResponse { AuthorizationUrl = new Uri(authUrl) });
         }
         catch (Exception ex)
@@ -617,13 +558,8 @@ public partial class AuthService : IAuthService
                 return StatusCodes.Unauthorized;
             }
 
-            // Extract session_key from JWT claims to identify which session to logout
-            var sessionKey = await _tokenService.ExtractSessionKeyFromJwtAsync(jwt);
-            if (sessionKey == null)
-            {
-                _logger.LogWarning("Could not extract session_key from JWT for logout");
-                return StatusCodes.Unauthorized;
-            }
+            // SessionId in ValidateTokenResponse is the internal session key (Guid.Parse(sessionKey))
+            var sessionKey = validateResponse.SessionId.ToString("N");
 
             var invalidatedSessions = new List<string>();
 
@@ -974,128 +910,7 @@ public partial class AuthService : IAuthService
         string jwt,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogInformation("Validating JWT token");
-
-            if (string.IsNullOrWhiteSpace(jwt))
-            {
-                _logger.LogWarning("JWT token is null or empty");
-                return (StatusCodes.Unauthorized, null);
-            }
-
-            // Validate JWT signature and extract claims
-            // Use core app configuration for JWT settings (validated at startup in Program.cs)
-            var jwtConfig = Program.Configuration;
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(jwtConfig.JwtSecret!);
-
-            try
-            {
-                var tokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtConfig.JwtIssuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtConfig.JwtAudience,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                };
-
-                var principal = tokenHandler.ValidateToken(jwt, tokenValidationParameters, out var validatedToken);
-
-                // Extract session_key from JWT claims
-                var sessionKeyClaimType = "session_key";
-                var sessionKeyClaim = principal.FindFirst(sessionKeyClaimType);
-                if (sessionKeyClaim == null)
-                {
-                    _logger.LogWarning("JWT token does not contain session_key claim");
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                var sessionKey = sessionKeyClaim.Value;
-
-                _logger.LogDebug("Validating session from JWT, SessionKey: {SessionKey}", sessionKey);
-
-                // Debug logging for session lookup
-                _logger.LogDebug("Looking up session state for SessionKey: {SessionKey}", sessionKey);
-
-                // Lookup session data from Redis
-                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-                var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
-
-                if (sessionData == null)
-                {
-                    _logger.LogWarning("Session not found, SessionKey: {SessionKey}", sessionKey);
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                _logger.LogDebug("Session loaded for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
-                    sessionData.AccountId, sessionKey, sessionData.ExpiresAt);
-
-                // Check if session has expired
-                if (sessionData.ExpiresAt < DateTimeOffset.UtcNow)
-                {
-                    _logger.LogWarning("Session expired, SessionKey: {SessionKey}, ExpiredAt: {ExpiresAt}", sessionKey, sessionData.ExpiresAt);
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                // Validate session data integrity - null roles or authorizations indicates data corruption
-                if (sessionData.Roles == null || sessionData.Authorizations == null)
-                {
-                    _logger.LogError(
-                        "Session data corrupted - null Roles or Authorizations. SessionKey: {SessionKey}, AccountId: {AccountId}, RolesNull: {RolesNull}, AuthNull: {AuthNull}",
-                        sessionKey, sessionData.AccountId, sessionData.Roles == null, sessionData.Authorizations == null);
-                    await PublishErrorEventAsync("ValidateToken", "session_data_corrupted", "Session has null Roles or Authorizations - data integrity failure");
-                    return (StatusCodes.Unauthorized, null);
-                }
-
-                _logger.LogDebug("Token validated successfully, AccountId: {AccountId}, SessionKey: {SessionKey}", sessionData.AccountId, sessionKey);
-
-                // Return session information
-                // IMPORTANT: Return sessionKey (not sessionData.SessionId) so Connect service
-                // tracks connections by the same key used in account-sessions index and
-                // published in SessionInvalidatedEvent for proper WebSocket disconnection
-                return (StatusCodes.OK, new ValidateTokenResponse
-                {
-                    Valid = true,
-                    AccountId = sessionData.AccountId,
-                    SessionId = Guid.Parse(sessionKey),
-                    Roles = sessionData.Roles,
-                    Authorizations = sessionData.Authorizations,
-                    RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
-                });
-            }
-            catch (SecurityTokenValidationException ex)
-            {
-                _logger.LogWarning(ex, "JWT token validation failed");
-                return (StatusCodes.Unauthorized, null);
-            }
-            catch (SecurityTokenMalformedException ex)
-            {
-                _logger.LogWarning(ex, "JWT token is malformed");
-                return (StatusCodes.Unauthorized, null);
-            }
-            catch (SecurityTokenException ex)
-            {
-                _logger.LogWarning(ex, "JWT security token error");
-                return (StatusCodes.Unauthorized, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error during JWT validation");
-                await PublishErrorEventAsync("ValidateToken", ex.GetType().Name, ex.Message);
-                return (StatusCodes.InternalServerError, null);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during token validation");
-            await PublishErrorEventAsync("ValidateToken", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return await _tokenService.ValidateTokenAsync(jwt, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -1378,50 +1193,6 @@ public partial class AuthService : IAuthService
         {
             _logger.LogError(ex, "Failed to propagate subscription changes for account {AccountId}", accountId);
             throw;
-        }
-    }
-
-    /// <summary>
-    /// Publish SessionUpdatedEvent to notify Permission service about role/authorization changes.
-    /// </summary>
-    private async Task PublishSessionUpdatedEventAsync(
-        Guid accountId,
-        string sessionId,
-        List<string> roles,
-        List<string> authorizations,
-        SessionUpdatedEventReason reason,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var eventModel = new SessionUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                AccountId = accountId,
-                SessionId = Guid.Parse(sessionId),
-                Roles = roles,
-                Authorizations = authorizations,
-                Reason = reason
-            };
-
-            await _messageBus.TryPublishAsync(SESSION_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published SessionUpdatedEvent for session {SessionId}, reason: {Reason}",
-                sessionId, reason);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish SessionUpdatedEvent for session {SessionId}", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "auth",
-                "PublishSessionUpdatedEvent",
-                "event_publishing_failed",
-                ex.Message,
-                dependency: "messaging",
-                endpoint: null,
-                details: $"sessionId={sessionId},reason={reason}",
-                stack: ex.StackTrace);
-            // Don't throw - session update succeeded, event publishing failure shouldn't fail the operation
         }
     }
 

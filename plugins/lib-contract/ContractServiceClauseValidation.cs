@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Contract;
 /// <remarks>
 /// <para>
 /// Clause validation uses lazy checking with configurable staleness to avoid
-/// excessive API calls. The default staleness threshold is 15 seconds.
+/// excessive API calls. The staleness threshold is configured via ClauseValidationCacheStalenessSeconds.
 /// </para>
 /// <para>
 /// Validation outcomes:
@@ -31,18 +31,13 @@ public partial class ContractService
     private readonly ConcurrentDictionary<string, CachedValidationResult> _validationCache = new();
 
     /// <summary>
-    /// Default staleness threshold for cached validation results (15 seconds).
-    /// </summary>
-    private static readonly TimeSpan DefaultStalenessThreshold = TimeSpan.FromSeconds(15);
-
-    /// <summary>
     /// Validates a contract clause by executing its prebound API and checking the response.
     /// Uses lazy validation with caching to avoid excessive API calls.
     /// </summary>
     /// <param name="contractId">The contract instance ID.</param>
     /// <param name="clause">The clause to validate (must have a prebound API with response validation).</param>
     /// <param name="context">Variable context for template substitution.</param>
-    /// <param name="stalenessThreshold">How old a cached result can be before revalidation. Defaults to 15 seconds.</param>
+    /// <param name="stalenessThreshold">How old a cached result can be before revalidation. Defaults to configured staleness threshold.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Validation result with outcome and details.</returns>
     public async Task<ClauseValidationResult> ValidateClauseAsync(
@@ -56,7 +51,7 @@ public partial class ContractService
         ArgumentNullException.ThrowIfNull(clause);
         ArgumentNullException.ThrowIfNull(context);
 
-        var threshold = stalenessThreshold ?? DefaultStalenessThreshold;
+        var threshold = stalenessThreshold ?? TimeSpan.FromSeconds(_configuration.ClauseValidationCacheStalenessSeconds);
         var cacheKey = $"{contractId}:{clause.ClauseId}";
 
         // Check cache first

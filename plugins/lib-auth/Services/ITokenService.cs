@@ -55,14 +55,6 @@ public interface ITokenService
     Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(string jwt, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Extracts the session key from a JWT without full validation.
-    /// Used for logout operations where we need the session key but don't need full validation.
-    /// </summary>
-    /// <param name="jwt">The JWT token.</param>
-    /// <returns>The session key if found, null otherwise.</returns>
-    Task<string?> ExtractSessionKeyFromJwtAsync(string jwt);
-
-    /// <summary>
     /// Generates a cryptographically secure token for password reset.
     /// </summary>
     /// <returns>A secure random token string.</returns>

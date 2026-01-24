@@ -75,7 +75,7 @@ public sealed class PoolHealthMonitor : BackgroundService
             CheckInterval.TotalSeconds, HeartbeatTimeout.TotalSeconds);
 
         // Wait a bit for initial node registrations
-        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(_configuration.PoolHealthMonitorStartupDelaySeconds), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {

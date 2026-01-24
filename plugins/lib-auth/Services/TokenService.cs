@@ -255,13 +255,31 @@ public class TokenService : ITokenService
                     return (StatusCodes.Unauthorized, null);
                 }
 
+                // Validate session data integrity - null roles or authorizations indicates data corruption
+                if (sessionData.Roles == null || sessionData.Authorizations == null)
+                {
+                    _logger.LogError(
+                        "Session data corrupted - null Roles or Authorizations. SessionKey: {SessionKey}, AccountId: {AccountId}, RolesNull: {RolesNull}, AuthNull: {AuthNull}",
+                        sessionKey, sessionData.AccountId, sessionData.Roles == null, sessionData.Authorizations == null);
+                    await _messageBus.TryPublishErrorAsync(
+                        "auth",
+                        "ValidateToken",
+                        "session_data_corrupted",
+                        "Session has null Roles or Authorizations - data integrity failure",
+                        endpoint: "post:/auth/validate",
+                        cancellationToken: cancellationToken);
+                    return (StatusCodes.Unauthorized, null);
+                }
+
+                // Return sessionKey as SessionId so Connect service tracks connections by the same
+                // key used in account-sessions index and published in SessionInvalidatedEvent
                 return (StatusCodes.OK, new ValidateTokenResponse
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
                     SessionId = Guid.Parse(sessionKey),
-                    Roles = sessionData.Roles ?? new List<string>(),
-                    Authorizations = sessionData.Authorizations ?? new List<string>(),
+                    Roles = sessionData.Roles,
+                    Authorizations = sessionData.Authorizations,
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
                 });
             }
@@ -290,29 +308,6 @@ public class TokenService : ITokenService
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<string?> ExtractSessionKeyFromJwtAsync(string jwt)
-    {
-        try
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jsonToken = tokenHandler.ReadJwtToken(jwt);
-            var sessionKeyClaim = jsonToken?.Claims?.FirstOrDefault(c => c.Type == "session_key");
-            return sessionKeyClaim?.Value;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error extracting session_key from JWT");
-            await _messageBus.TryPublishErrorAsync(
-                "auth",
-                "ExtractSessionKeyFromJwt",
-                ex.GetType().Name,
-                ex.Message,
-                endpoint: "post:/auth/validate");
-            return null;
         }
     }
 

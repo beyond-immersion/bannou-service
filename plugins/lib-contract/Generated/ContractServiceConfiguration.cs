@@ -101,4 +101,10 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int PreboundApiTimeoutMs { get; set; } = 30000;
 
+    /// <summary>
+    /// Staleness threshold in seconds for cached clause validation results before revalidation
+    /// Environment variable: CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS
+    /// </summary>
+    public int ClauseValidationCacheStalenessSeconds { get; set; } = 15;
+
 }
