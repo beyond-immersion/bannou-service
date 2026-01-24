@@ -47,12 +47,6 @@ x-service-configuration:
       default: 100
       description: Maximum actors this pool node can run. Overrides DefaultActorsPerNode when set.
 
-    ControlPlaneAppId:
-      type: string
-      env: ACTOR_CONTROL_PLANE_APP_ID
-      default: "bannou"
-      description: App-id of control plane for pool node registration. Pool nodes only.
-
     # === Pool Node Management (control plane settings) ===
     PoolNodeImage:
       type: string
@@ -110,19 +104,6 @@ x-service-configuration:
       env: ACTOR_PERCEPTION_QUEUE_SIZE
       default: 100
       description: Max perceptions queued per actor before dropping oldest
-
-    MessageQueueSize:
-      type: integer
-      env: ACTOR_MESSAGE_QUEUE_SIZE
-      default: 50
-      description: Max messages queued per actor before dropping oldest
-
-    # === State Update Transport ===
-    StateUpdateTransport:
-      type: string
-      env: ACTOR_STATE_UPDATE_TRANSPORT
-      default: "messaging"
-      description: "State update transport: messaging (default, works in bannou mode) or internal-connect (production)"
 
     # === GOAP Configuration ===
     GoapReplanThreshold:

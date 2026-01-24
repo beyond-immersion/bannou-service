@@ -1331,9 +1331,9 @@ paths:
         \          \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Character whose memory to refresh\"\n                },\n              \
         \  \"strengthBoost\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n \
-        \                   \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.2,\n\
-        \                    \"description\": \"Amount to boost memory strength (capped at 1.0)\"\n                }\n   \
-        \         }\n        }\n    }\n}"
+        \                   \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Amount to boost memory strength (capped at 1.0). Falls back to configured
+        MemoryRefreshBoost if not provided.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PerspectiveResponse\"\
         ,\n    \"$defs\": {\n        \"PerspectiveResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing a perspective\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -2142,8 +2142,9 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-          default: 0.2
-          description: Amount to boost memory strength (capped at 1.0)
+          nullable: true
+          description: Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if 
+            not provided.
     DeleteEncounterRequest:
       type: object
       description: Request to delete an encounter

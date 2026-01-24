@@ -1159,7 +1159,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             var previousStrength = perspective.MemoryStrength;
-            var boost = body.StrengthBoost;
+            var boost = body.StrengthBoost ?? (float)_configuration.MemoryRefreshBoost;
             perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0f, 1f);
             perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -2075,15 +2075,15 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         };
     }
 
-    private static float? GetDefaultSentimentShiftForOutcome(EncounterOutcome outcome)
+    private float? GetDefaultSentimentShiftForOutcome(EncounterOutcome outcome)
     {
         return outcome switch
         {
-            EncounterOutcome.POSITIVE => 0.2f,
-            EncounterOutcome.NEGATIVE => -0.2f,
+            EncounterOutcome.POSITIVE => (float)_configuration.SentimentShiftPositive,
+            EncounterOutcome.NEGATIVE => (float)_configuration.SentimentShiftNegative,
             EncounterOutcome.NEUTRAL => 0f,
-            EncounterOutcome.MEMORABLE => 0.1f,
-            EncounterOutcome.TRANSFORMATIVE => 0.3f,
+            EncounterOutcome.MEMORABLE => (float)_configuration.SentimentShiftMemorable,
+            EncounterOutcome.TRANSFORMATIVE => (float)_configuration.SentimentShiftTransformative,
             _ => 0f
         };
     }

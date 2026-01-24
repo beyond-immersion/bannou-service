@@ -76,6 +76,26 @@ x-service-configuration:
       description: Default memory strength boost when refreshing (0.0-1.0)
       env: CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST
       default: 0.2
+    SentimentShiftPositive:
+      type: number
+      description: Default sentiment shift for positive encounter outcomes
+      env: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_POSITIVE
+      default: 0.2
+    SentimentShiftNegative:
+      type: number
+      description: Default sentiment shift for negative encounter outcomes (should be negative)
+      env: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_NEGATIVE
+      default: -0.2
+    SentimentShiftMemorable:
+      type: number
+      description: Default sentiment shift for memorable encounter outcomes
+      env: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE
+      default: 0.1
+    SentimentShiftTransformative:
+      type: number
+      description: Default sentiment shift for transformative encounter outcomes
+      env: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE
+      default: 0.3
     SeedBuiltInTypesOnStartup:
       type: boolean
       description: Automatically seed built-in encounter types on service startup

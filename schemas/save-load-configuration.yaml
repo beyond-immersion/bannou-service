@@ -165,12 +165,6 @@ x-service-configuration:
       default: "image/jpeg,image/webp,image/png"
       description: Comma-separated list of allowed thumbnail MIME types
 
-    ThumbnailUrlTtlMinutes:
-      type: integer
-      env: SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES
-      default: 60
-      description: TTL for thumbnail pre-signed URLs
-
     # ═══════════════════════════════════════════════════════════════════════════
     # DELTA SAVE SETTINGS
     # ═══════════════════════════════════════════════════════════════════════════

@@ -447,11 +447,6 @@ x-service-configuration:
       description: Maximum seconds to wait for a synchronous processing job to complete
       default: 60
       env: ASSET_PROCESSING_JOB_MAX_WAIT_SECONDS
-    ProcessingJobPollIntervalSeconds:
-      type: integer
-      description: Interval in seconds to poll for job completion during synchronous wait
-      default: 2
-      env: ASSET_PROCESSING_JOB_POLL_INTERVAL_SECONDS
     ProcessingQueueCheckIntervalSeconds:
       type: integer
       description: Interval in seconds to check processing queue when no jobs are available

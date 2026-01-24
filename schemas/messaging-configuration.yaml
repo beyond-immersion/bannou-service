@@ -55,11 +55,6 @@ x-service-configuration:
       description: Enable RabbitMQ publisher confirms for reliability
       env: MESSAGING_ENABLE_CONFIRMS
       default: true
-    ConnectionTimeoutSeconds:
-      type: integer
-      description: Timeout in seconds for establishing RabbitMQ connection
-      env: MESSAGING_CONNECTION_TIMEOUT_SECONDS
-      default: 60
     ConnectionRetryCount:
       type: integer
       description: Number of connection retry attempts
@@ -70,12 +65,6 @@ x-service-configuration:
       description: Delay between connection retry attempts in milliseconds
       env: MESSAGING_CONNECTION_RETRY_DELAY_MS
       default: 1000
-    RequestTimeoutSeconds:
-      type: integer
-      description: Timeout in seconds for individual message operations
-      env: MESSAGING_REQUEST_TIMEOUT_SECONDS
-      default: 30
-
     # Subscription Settings
     DefaultPrefetchCount:
       type: integer

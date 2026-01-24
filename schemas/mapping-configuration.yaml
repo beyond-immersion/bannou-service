@@ -26,12 +26,6 @@ x-service-configuration:
       description: Grace period in seconds after missed heartbeat before authority released
       default: 30
       env: MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS
-    AuthorityHeartbeatIntervalSeconds:
-      type: integer
-      description: Recommended heartbeat interval for authorities (for client guidance)
-      default: 30
-      env: MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS
-
     # Spatial Indexing
     DefaultSpatialCellSize:
       type: number

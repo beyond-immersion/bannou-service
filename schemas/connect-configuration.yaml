@@ -16,11 +16,6 @@ x-service-configuration:
       description: Maximum number of concurrent WebSocket connections
       default: 10000
       env: CONNECT_MAX_CONCURRENT_CONNECTIONS
-    ConnectionTimeoutSeconds:
-      type: integer
-      description: WebSocket connection timeout in seconds
-      default: 300
-      env: CONNECT_CONNECTION_TIMEOUT_SECONDS
     HeartbeatIntervalSeconds:
       type: integer
       description: Interval between heartbeat messages
@@ -133,11 +128,6 @@ x-service-configuration:
       description: Timeout in seconds for HTTP client requests to backend services
 
     # === WebSocket Connection Management (Tier 2) ===
-    WebSocketKeepAliveIntervalSeconds:
-      type: integer
-      env: CONNECT_WEBSOCKET_KEEP_ALIVE_INTERVAL_SECONDS
-      default: 30
-      description: Interval in seconds for WebSocket keep-alive ping/pong
     ConnectionShutdownTimeoutSeconds:
       type: integer
       env: CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS

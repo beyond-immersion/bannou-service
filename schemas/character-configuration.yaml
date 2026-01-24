@@ -35,12 +35,6 @@ x-service-configuration:
       description: Maximum retry attempts when updating realm character index (optimistic concurrency)
       env: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
       default: 3
-    CharacterListUpdateMaxRetries:
-      type: integer
-      description: Maximum retry attempts when updating character list state (optimistic concurrency)
-      env: CHARACTER_LIST_UPDATE_MAX_RETRIES
-      default: 3
-
     # Cleanup Configuration
     CleanupGracePeriodDays:
       type: integer

@@ -328,7 +328,7 @@ public class BannouSessionManager : ISessionManager
             existingState.UserRoles = userRoles?.ToList();
 
             // Store updated state with extended TTL for reconnection window
-            await SetConnectionStateAsync(sessionId, existingState, reconnectionWindow.Add(TimeSpan.FromMinutes(1)));
+            await SetConnectionStateAsync(sessionId, existingState, reconnectionWindow.Add(TimeSpan.FromMinutes(_configuration.ReconnectionWindowExtensionMinutes)));
 
             // Store token -> sessionId mapping
             await SetReconnectionTokenAsync(reconnectionToken, sessionId, reconnectionWindow);

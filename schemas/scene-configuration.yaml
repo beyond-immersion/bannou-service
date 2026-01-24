@@ -33,11 +33,6 @@ x-service-configuration:
       description: Default lock TTL for checkout operations in minutes
       default: 60
       env: SCENE_DEFAULT_CHECKOUT_TTL_MINUTES
-    CheckoutHeartbeatIntervalSeconds:
-      type: integer
-      description: Expected heartbeat interval for checkout locks
-      default: 30
-      env: SCENE_CHECKOUT_HEARTBEAT_INTERVAL_SECONDS
     MaxCheckoutExtensions:
       type: integer
       description: Maximum number of times a checkout can be extended
@@ -57,11 +52,6 @@ x-service-configuration:
       env: SCENE_MAX_REFERENCE_DEPTH_LIMIT
 
     # Version History
-    DefaultVersionRetentionCount:
-      type: integer
-      description: Default number of versions to retain per scene
-      default: 3
-      env: SCENE_DEFAULT_VERSION_RETENTION_COUNT
     MaxVersionRetentionCount:
       type: integer
       description: Maximum versions that can be retained (configurable per game)
@@ -74,11 +64,6 @@ x-service-configuration:
       description: Maximum nodes allowed in a single scene
       default: 10000
       env: SCENE_MAX_NODE_COUNT
-    MaxSceneSizeBytes:
-      type: integer
-      description: Maximum scene document size in bytes (default 10MB)
-      default: 10485760
-      env: SCENE_MAX_SCENE_SIZE_BYTES
     MaxTagsPerScene:
       type: integer
       description: Maximum tags allowed per scene
@@ -102,9 +87,3 @@ x-service-configuration:
       default: 100
       env: SCENE_MAX_SEARCH_RESULTS
 
-    # Checkout Expiration Detection
-    CheckoutExpirationCheckIntervalSeconds:
-      type: integer
-      description: Interval for background checkout expiration detection
-      default: 60
-      env: SCENE_CHECKOUT_EXPIRATION_CHECK_INTERVAL_SECONDS
