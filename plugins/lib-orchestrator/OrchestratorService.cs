@@ -3176,11 +3176,20 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Updates pool metrics after a job completes.
+    /// Resets hourly counters when the 1-hour window has elapsed.
     /// </summary>
     private async Task UpdatePoolMetricsAsync(string poolType, bool success)
     {
         var metricsKey = string.Format(POOL_METRICS_KEY, poolType);
         var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+
+        // Reset counters if the 1-hour window has elapsed
+        if (metrics.WindowStart == default || DateTimeOffset.UtcNow - metrics.WindowStart >= TimeSpan.FromHours(1))
+        {
+            metrics.JobsCompleted1h = 0;
+            metrics.JobsFailed1h = 0;
+            metrics.WindowStart = DateTimeOffset.UtcNow;
+        }
 
         if (success)
         {
@@ -3324,6 +3333,7 @@ public partial class OrchestratorService : IOrchestratorService
         public int JobsFailed1h { get; set; }
         public int AvgProcessingTimeMs { get; set; }
         public DateTimeOffset LastScaleEvent { get; set; }
+        public DateTimeOffset WindowStart { get; set; }
     }
 
     /// <summary>

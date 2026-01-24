@@ -1604,90 +1604,176 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
-        var index = await indexStore.GetAsync(key, cancellationToken);
-        var isNewCharacter = index == null;
 
-        index ??= new CharacterIndexData { CharacterId = characterId };
-
-        if (!index.PerspectiveIds.Contains(perspectiveId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            index.PerspectiveIds.Add(perspectiveId);
-            await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+            var isNewCharacter = index == null;
+
+            index ??= new CharacterIndexData { CharacterId = characterId };
+
+            if (!index.PerspectiveIds.Contains(perspectiveId))
+            {
+                index.PerspectiveIds.Add(perspectiveId);
+                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification on character index {CharacterId}, retrying (attempt {Attempt})",
+                        characterId, attempt + 1);
+                    continue;
+                }
+            }
+
+            // Add to global character index if this is the character's first perspective
+            if (isNewCharacter)
+            {
+                await AddToGlobalCharacterIndexAsync(characterId, cancellationToken);
+            }
+
+            return;
         }
 
-        // Add to global character index if this is the character's first perspective
-        if (isNewCharacter)
-        {
-            await AddToGlobalCharacterIndexAsync(characterId, cancellationToken);
-        }
+        _logger.LogWarning("Failed to add perspective {PerspectiveId} to character index {CharacterId} after 3 attempts",
+            perspectiveId, characterId);
     }
 
     private async Task AddToGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
     {
         var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
-        var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken)
-            ?? new GlobalCharacterIndexData();
 
-        if (!globalIndex.CharacterIds.Contains(characterId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            globalIndex.CharacterIds.Add(characterId);
-            await globalIndexStore.SaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
+            var (globalIndex, etag) = await globalIndexStore.GetWithETagAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
+            globalIndex ??= new GlobalCharacterIndexData();
+
+            if (!globalIndex.CharacterIds.Contains(characterId))
+            {
+                globalIndex.CharacterIds.Add(characterId);
+                var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification on global character index, retrying (attempt {Attempt})", attempt + 1);
+                    continue;
+                }
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to add character {CharacterId} to global character index after 3 attempts", characterId);
     }
 
     private async Task RemoveFromCharacterIndexAsync(Guid characterId, Guid perspectiveId, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
-        var index = await indexStore.GetAsync(key, cancellationToken);
-        if (index != null)
+
+        for (var attempt = 0; attempt < 3; attempt++)
         {
+            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+            if (index == null)
+            {
+                return;
+            }
+
             index.PerspectiveIds.Remove(perspectiveId);
-            await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification on character index {CharacterId} during remove, retrying (attempt {Attempt})",
+                    characterId, attempt + 1);
+                continue;
+            }
 
             // Remove from global index if this was the character's last perspective
             if (index.PerspectiveIds.Count == 0)
             {
                 await RemoveFromGlobalCharacterIndexAsync(characterId, cancellationToken);
             }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove perspective {PerspectiveId} from character index {CharacterId} after 3 attempts",
+            perspectiveId, characterId);
     }
 
     private async Task RemoveFromGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
     {
         var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
-        var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
 
-        if (globalIndex != null)
+        for (var attempt = 0; attempt < 3; attempt++)
         {
+            var (globalIndex, etag) = await globalIndexStore.GetWithETagAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
+            if (globalIndex == null)
+            {
+                return;
+            }
+
             globalIndex.CharacterIds.Remove(characterId);
-            await globalIndexStore.SaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
+            var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification on global character index during remove, retrying (attempt {Attempt})", attempt + 1);
+                continue;
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove character {CharacterId} from global character index after 3 attempts", characterId);
     }
 
     private async Task AddToCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
-        var index = await indexStore.GetAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken)
-            ?? new CustomTypeIndexData();
 
-        if (!index.TypeCodes.Contains(typeCode))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            index.TypeCodes.Add(typeCode);
-            await indexStore.SaveAsync(CUSTOM_TYPE_INDEX_KEY, index, cancellationToken: cancellationToken);
+            var (index, etag) = await indexStore.GetWithETagAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
+            index ??= new CustomTypeIndexData();
+
+            if (!index.TypeCodes.Contains(typeCode))
+            {
+                index.TypeCodes.Add(typeCode);
+                var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification on custom type index, retrying (attempt {Attempt})", attempt + 1);
+                    continue;
+                }
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to add type code {TypeCode} to custom type index after 3 attempts", typeCode);
     }
 
     private async Task RemoveFromCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
-        var index = await indexStore.GetAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
 
-        if (index != null)
+        for (var attempt = 0; attempt < 3; attempt++)
         {
+            var (index, etag) = await indexStore.GetWithETagAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
+            if (index == null)
+            {
+                return;
+            }
+
             index.TypeCodes.Remove(typeCode);
-            await indexStore.SaveAsync(CUSTOM_TYPE_INDEX_KEY, index, cancellationToken: cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification on custom type index during remove, retrying (attempt {Attempt})", attempt + 1);
+                continue;
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove type code {TypeCode} from custom type index after 3 attempts", typeCode);
     }
 
     /// <summary>
@@ -1843,16 +1929,27 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             {
                 var pairKey = GetPairKey(participantIds[i], participantIds[j]);
                 var key = $"{PAIR_INDEX_PREFIX}{pairKey}";
-                var index = await indexStore.GetAsync(key, cancellationToken) ?? new PairIndexData
-                {
-                    CharacterIdA = participantIds[i] < participantIds[j] ? participantIds[i] : participantIds[j],
-                    CharacterIdB = participantIds[i] < participantIds[j] ? participantIds[j] : participantIds[i]
-                };
+                var charA = participantIds[i] < participantIds[j] ? participantIds[i] : participantIds[j];
+                var charB = participantIds[i] < participantIds[j] ? participantIds[j] : participantIds[i];
 
-                if (!index.EncounterIds.Contains(encounterId))
+                for (var attempt = 0; attempt < 3; attempt++)
                 {
-                    index.EncounterIds.Add(encounterId);
-                    await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+                    var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+                    index ??= new PairIndexData { CharacterIdA = charA, CharacterIdB = charB };
+
+                    if (!index.EncounterIds.Contains(encounterId))
+                    {
+                        index.EncounterIds.Add(encounterId);
+                        var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                        if (saveResult == null)
+                        {
+                            _logger.LogDebug("Concurrent modification on pair index {PairKey}, retrying (attempt {Attempt})",
+                                pairKey, attempt + 1);
+                            continue;
+                        }
+                    }
+
+                    break;
                 }
             }
         }
@@ -1868,11 +1965,25 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             {
                 var pairKey = GetPairKey(participantIds[i], participantIds[j]);
                 var key = $"{PAIR_INDEX_PREFIX}{pairKey}";
-                var index = await indexStore.GetAsync(key, cancellationToken);
-                if (index != null)
+
+                for (var attempt = 0; attempt < 3; attempt++)
                 {
+                    var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+                    if (index == null)
+                    {
+                        break;
+                    }
+
                     index.EncounterIds.Remove(encounterId);
-                    await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+                    var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                    if (saveResult == null)
+                    {
+                        _logger.LogDebug("Concurrent modification on pair index {PairKey} during remove, retrying (attempt {Attempt})",
+                            pairKey, attempt + 1);
+                        continue;
+                    }
+
+                    break;
                 }
             }
         }
@@ -1882,24 +1993,58 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
-        var index = await indexStore.GetAsync(key, cancellationToken) ?? new LocationIndexData { LocationId = locationId };
-        if (!index.EncounterIds.Contains(encounterId))
+
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            index.EncounterIds.Add(encounterId);
-            await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+            index ??= new LocationIndexData { LocationId = locationId };
+
+            if (!index.EncounterIds.Contains(encounterId))
+            {
+                index.EncounterIds.Add(encounterId);
+                var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification on location index {LocationId}, retrying (attempt {Attempt})",
+                        locationId, attempt + 1);
+                    continue;
+                }
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to add encounter {EncounterId} to location index {LocationId} after 3 attempts",
+            encounterId, locationId);
     }
 
     private async Task RemoveFromLocationIndexAsync(Guid locationId, Guid encounterId, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<LocationIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{LOCATION_INDEX_PREFIX}{locationId}";
-        var index = await indexStore.GetAsync(key, cancellationToken);
-        if (index != null)
+
+        for (var attempt = 0; attempt < 3; attempt++)
         {
+            var (index, etag) = await indexStore.GetWithETagAsync(key, cancellationToken);
+            if (index == null)
+            {
+                return;
+            }
+
             index.EncounterIds.Remove(encounterId);
-            await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification on location index {LocationId} during remove, retrying (attempt {Attempt})",
+                    locationId, attempt + 1);
+                continue;
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove encounter {EncounterId} from location index {LocationId} after 3 attempts",
+            encounterId, locationId);
     }
 
     private static string GetPairKey(Guid charA, Guid charB)
