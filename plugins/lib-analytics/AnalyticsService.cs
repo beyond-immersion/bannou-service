@@ -59,6 +59,9 @@ public partial class AnalyticsService : IAnalyticsService
     // Glicko-2 scale conversion constant
     private const double GlickoScale = 173.7178;
 
+    // Maximum iterations for Glicko-2 volatility convergence
+    private const int MaxVolatilityIterations = 100;
+
     /// <summary>
     /// Initializes a new instance of the AnalyticsService.
     /// </summary>
@@ -541,14 +544,18 @@ public partial class AnalyticsService : IAnalyticsService
                 var playerRating = currentRatings[key];
                 var previousRating = playerRating.Rating;
 
-                // Calculate opponents' combined effect
+                // Calculate opponents' combined effect using pairwise outcomes:
+                // player beat opponent (higher outcome) = 1.0, lost = 0.0, tied = 0.5
                 var opponents = body.Results.Where(r => r.EntityId != result.EntityId).ToList();
                 var (newRating, newRD, newVolatility) = CalculateGlicko2Update(
                     playerRating,
                     opponents.Select(o =>
                     {
                         var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
-                        return (currentRatings[oppKey], result.Outcome);
+                        var pairwiseOutcome = result.Outcome > o.Outcome ? 1.0
+                            : result.Outcome < o.Outcome ? 0.0
+                            : 0.5;
+                        return (currentRatings[oppKey], pairwiseOutcome);
                     }).ToList()
                 );
 
@@ -888,9 +895,16 @@ public partial class AnalyticsService : IAnalyticsService
             ? Math.Log(deltaSq - phiSq - v)
             : a - tau;
 
+        var iterations = 0;
         while (f(upperBound) < 0)
         {
             upperBound -= tau;
+            iterations++;
+            if (iterations >= MaxVolatilityIterations)
+            {
+                _logger.LogWarning("Glicko-2 upper bound search did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", MaxVolatilityIterations, sigma);
+                return sigma;
+            }
         }
 
         var lowerBound = a;
@@ -899,6 +913,7 @@ public partial class AnalyticsService : IAnalyticsService
         var fA = f(lowerBound);
         var fB = f(upperBound);
 
+        iterations = 0;
         while (Math.Abs(upperBound - lowerBound) > _configuration.Glicko2VolatilityConvergenceTolerance)
         {
             var c = lowerBound + (lowerBound - upperBound) * fA / (fB - fA);
@@ -916,6 +931,13 @@ public partial class AnalyticsService : IAnalyticsService
 
             upperBound = c;
             fB = fC;
+
+            iterations++;
+            if (iterations >= MaxVolatilityIterations)
+            {
+                _logger.LogWarning("Glicko-2 Illinois algorithm did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", MaxVolatilityIterations, sigma);
+                return sigma;
+            }
         }
 
         return Math.Exp(upperBound / 2);
@@ -1263,6 +1285,10 @@ public partial class AnalyticsService : IAnalyticsService
                 if (bufferStore != null && eventKey != null)
                 {
                     await bufferStore.DeleteAsync(eventKey, cancellationToken);
+                }
+                if (bufferIndexStore != null && eventKey != null)
+                {
+                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, eventKey, cancellationToken);
                 }
             }
             catch (Exception cleanupException)
@@ -1678,7 +1704,6 @@ public partial class AnalyticsService : IAnalyticsService
                     MilestoneName = $"{scoreType}_{milestone}"
                 };
                 await _messageBus.TryPublishAsync("analytics.milestone.reached", milestoneEvent, cancellationToken: cancellationToken);
-                break; // Only publish one milestone per event
             }
         }
     }
