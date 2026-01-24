@@ -770,10 +770,9 @@ public class AuthServiceTests
 
         // Mock OAuth service to return/create account
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Discord, // Note: Uses Discord enum with "steam" provider override
+            Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
-            It.IsAny<CancellationToken>(),
-            "steam"))
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
 
         // Mock token service
@@ -838,10 +837,9 @@ public class AuthServiceTests
             .ReturnsAsync(mockSteamInfo);
 
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Discord,
+            Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
-            It.IsAny<CancellationToken>(),
-            "steam"))
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
 
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
@@ -952,10 +950,9 @@ public class AuthServiceTests
 
         // Account creation fails
         _mockOAuthService.Setup(o => o.FindOrCreateOAuthAccountAsync(
-            Provider.Discord,
+            Provider.Steam,
             It.IsAny<Services.OAuthUserInfo>(),
-            It.IsAny<CancellationToken>(),
-            "steam"))
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync((AccountResponse?)null);
 
         var realConfig = new AuthServiceConfiguration

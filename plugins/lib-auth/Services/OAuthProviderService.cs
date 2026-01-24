@@ -381,7 +381,7 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     /// <inheritdoc/>
-    public async Task<AccountResponse?> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken, string? providerOverride = null)
+    public async Task<AccountResponse?> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken)
     {
         // Handle null userInfo gracefully - return null if no user info provided
         if (userInfo == null)
@@ -390,7 +390,7 @@ public class OAuthProviderService : IOAuthProviderService
             return null;
         }
 
-        var providerName = providerOverride ?? provider.ToString().ToLower();
+        var providerName = provider.ToString().ToLower();
         var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
 
         try
@@ -550,6 +550,11 @@ public class OAuthProviderService : IOAuthProviderService
                 var twitchRedirectUri = HttpUtility.UrlEncode(effectiveTwitchRedirect);
                 return $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
 
+            case Provider.Steam:
+                // Steam uses session tickets, not OAuth authorization URLs
+                _logger.LogWarning("Steam does not support OAuth authorization URLs - use /auth/steam/verify with session tickets");
+                return null;
+
             default:
                 _logger.LogWarning("Unknown OAuth provider: {Provider}", provider);
                 return null;
@@ -564,6 +569,7 @@ public class OAuthProviderService : IOAuthProviderService
             Provider.Discord => _configuration.MockDiscordId,
             Provider.Google => _configuration.MockGoogleId,
             Provider.Twitch => "mock-twitch-user-id-12345",
+            Provider.Steam => _configuration.MockSteamId,
             _ => Guid.NewGuid().ToString()
         };
 

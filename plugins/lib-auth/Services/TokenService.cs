@@ -146,7 +146,10 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public string GenerateRefreshToken()
     {
-        return Guid.NewGuid().ToString("N");
+        var tokenBytes = new byte[32]; // 256 bits of cryptographic randomness
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(tokenBytes);
+        return Convert.ToHexString(tokenBytes).ToLowerInvariant();
     }
 
     /// <inheritdoc/>

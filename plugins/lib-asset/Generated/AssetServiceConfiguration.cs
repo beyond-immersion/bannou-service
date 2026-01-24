@@ -378,6 +378,18 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string? AdditionalForbiddenContentTypes { get; set; }
 
     /// <summary>
+    /// Maximum retry attempts for optimistic concurrency index updates
+    /// Environment variable: ASSET_INDEX_OPTIMISTIC_RETRY_MAX_ATTEMPTS
+    /// </summary>
+    public int IndexOptimisticRetryMaxAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Base delay in milliseconds between optimistic retry attempts (multiplied by attempt number)
+    /// Environment variable: ASSET_INDEX_OPTIMISTIC_RETRY_BASE_DELAY_MS
+    /// </summary>
+    public int IndexOptimisticRetryBaseDelayMs { get; set; } = 10;
+
+    /// <summary>
     /// Number of source bundles that triggers async processing. Jobs with fewer bundles process synchronously.
     /// Environment variable: ASSET_METABUNDLE_ASYNC_SOURCE_BUNDLE_THRESHOLD
     /// </summary>
@@ -484,17 +496,5 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Environment variable: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS
     /// </summary>
     public int DefaultBundleCacheTtlHours { get; set; } = 24;
-
-    /// <summary>
-    /// Maximum retry attempts for optimistic concurrency index updates
-    /// Environment variable: ASSET_INDEX_OPTIMISTIC_RETRY_MAX_ATTEMPTS
-    /// </summary>
-    public int IndexOptimisticRetryMaxAttempts { get; set; } = 5;
-
-    /// <summary>
-    /// Base delay in milliseconds between optimistic retry attempts (multiplied by attempt number)
-    /// Environment variable: ASSET_INDEX_OPTIMISTIC_RETRY_BASE_DELAY_MS
-    /// </summary>
-    public int IndexOptimisticRetryBaseDelayMs { get; set; } = 10;
 
 }

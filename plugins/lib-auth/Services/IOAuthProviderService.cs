@@ -46,9 +46,8 @@ public interface IOAuthProviderService
     /// <param name="provider">The OAuth provider.</param>
     /// <param name="userInfo">The user info from the provider.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <param name="providerOverride">Optional provider name override (e.g., "steam" instead of using enum).</param>
     /// <returns>The linked account if successful, null otherwise.</returns>
-    Task<AccountResponse?> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken, string? providerOverride = null);
+    Task<AccountResponse?> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken);
 
     /// <summary>
     /// Generates the OAuth authorization URL for a provider.

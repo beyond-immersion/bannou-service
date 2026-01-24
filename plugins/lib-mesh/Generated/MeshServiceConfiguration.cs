@@ -174,6 +174,12 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int EndpointCacheTtlSeconds { get; set; } = 5;
 
     /// <summary>
+    /// Delay in seconds before health check service starts probing endpoints
+    /// Environment variable: MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int HealthCheckStartupDelaySeconds { get; set; } = 10;
+
+    /// <summary>
     /// Maximum top endpoints returned in health status queries
     /// Environment variable: MESH_MAX_TOP_ENDPOINTS_RETURNED
     /// </summary>
@@ -184,11 +190,5 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Environment variable: MESH_MAX_SERVICE_MAPPINGS_DISPLAYED
     /// </summary>
     public int MaxServiceMappingsDisplayed { get; set; } = 10;
-
-    /// <summary>
-    /// Delay in seconds before health check service starts probing endpoints
-    /// Environment variable: MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS
-    /// </summary>
-    public int HealthCheckStartupDelaySeconds { get; set; } = 10;
 
 }

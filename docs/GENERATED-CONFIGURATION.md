@@ -27,6 +27,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
 | `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | double | `5.0` | Threshold percentage below which an achievement is considere... |
 | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | int | `60` | How often to recalculate achievement rarity percentages |
+| `ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before first rarity calculation (allows ser... |
 | `ACHIEVEMENT_RARITY_THRESHOLD_EARNED_COUNT` | int | `100` | Minimum earned count for an achievement to be considered com... |
 | `ACHIEVEMENT_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for achievement sync (optional - Steam syn... |
 | `ACHIEVEMENT_STEAM_APP_ID` | string | **REQUIRED** | Steam App ID for achievement mapping (optional - Steam sync ... |
@@ -64,6 +65,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
 | `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached personality data |
 | `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | int | `15` | Interval in seconds between pool health check operations |
+| `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before pool health monitor starts checking ... |
 | `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
 | `ACTOR_POOL_NODE_CAPACITY` | int | `100` | Maximum actors this pool node can run. Overrides DefaultActo... |
 | `ACTOR_POOL_NODE_ID` | string | **REQUIRED** | If set, this instance runs as a pool node (not control plane... |
@@ -111,6 +113,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
 | `ASSET_FINAL_ASSET_PATH_PREFIX` | string | `assets` | Path prefix for final asset storage in bucket |
 | `ASSET_INDEX_KEY_PREFIX` | string | `asset-index:` | Key prefix for asset index entries in state store |
+| `ASSET_INDEX_OPTIMISTIC_RETRY_BASE_DELAY_MS` | int | `10` | Base delay in milliseconds between optimistic retry attempts... |
+| `ASSET_INDEX_OPTIMISTIC_RETRY_MAX_ATTEMPTS` | int | `5` | Maximum retry attempts for optimistic concurrency index upda... |
 | `ASSET_KEY_PREFIX` | string | `asset:` | Key prefix for asset entries in state store |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
 | `ASSET_MAX_BULK_GET_ASSETS` | int | `100` | Maximum number of asset IDs allowed in a single bulk get req... |
@@ -259,6 +263,14 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | bool | `true` | Automatically seed built-in encounter types on service start... |
 | `CHARACTER_ENCOUNTER_SERVER_SALT` | string | `bannou-dev-encounter-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 
+### Character Personality
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY` | double | `0.15` | Base chance for trait shift per evolution event (0.0-1.0) |
+| `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | double | `0.1` | Maximum magnitude of trait change per evolution event |
+| `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | double | `0.02` | Minimum magnitude of trait change per evolution event |
+
 ### Connect
 
 | Environment Variable | Type | Default | Description |
@@ -292,6 +304,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | int | `15` | Staleness threshold in seconds for cached clause validation ... |
 | `CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS` | int | `7` | Default number of days for parties to consent before proposa... |
 | `CONTRACT_DEFAULT_ENFORCEMENT_MODE` | string | `event_only` | Default enforcement mode for contracts (advisory, event_only... |
 | `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | int | `100` | Maximum active contracts per entity (0 for unlimited) |
@@ -308,6 +321,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CURRENCY_AUTOGAIN_BATCH_SIZE` | int | `1000` | For task mode - batch size per processing cycle |
 | `CURRENCY_AUTOGAIN_PROCESSING_MODE` | string | `lazy` | How autogain is calculated (lazy = on-demand at query time, ... |
 | `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | int | `60000` | For task mode - how often to process autogain in millisecond... |
+| `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before first autogain task cycle (allows se... |
 | `CURRENCY_BALANCE_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for balance cache entries |
 | `CURRENCY_DEFAULT_ALLOW_NEGATIVE` | bool | `false` | Default for currencies that do not specify allowNegative |
 | `CURRENCY_DEFAULT_PRECISION` | string | `decimal_2` | Default precision for currencies that do not specify |
@@ -335,7 +349,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | int | `30` | Interval in seconds between repository sync opportunity chec... |
 | `DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS` | int | `300` | TTL for search result caching |
 | `DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP` | bool | `true` | Whether to rebuild search index on service startup |
-| `DOCUMENTATION_SESSION_TTL_SECONDS` | int | `86400` | TTL for informal session tracking (24 hours default) |
+| `DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before search index rebuild starts (allows ... |
 | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | int | `5` | How often to check for repos needing sync |
 | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | bool | `true` | Enable background sync scheduler |
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
@@ -370,6 +384,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
 | `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
+| `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for optimistic concurrency on subscri... |
 | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `arcadia,generic` | Comma-separated list of supported game service stub names |
 
 ### Inventory
@@ -472,6 +487,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_ENDPOINT_TTL_SECONDS` | int | `90` | TTL for endpoint registration (should be > 2x heartbeat inte... |
 | `MESH_HEALTH_CHECK_ENABLED` | bool | `false` | Whether to perform active health checks on endpoints |
 | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | int | `60` | Interval between active health checks |
+| `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
 | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | int | `5` | Timeout for health check requests |
 | `MESH_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended interval between heartbeats |
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
@@ -517,18 +533,26 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
 | `MESSAGING_USE_MASSTRANSIT` | bool | `true` | Use MassTransit wrapper (true) or direct RabbitMQ.Client (fa... |
 
+### Music
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `MUSIC_COMPOSITION_CACHE_TTL_SECONDS` | int | `86400` | TTL in seconds for cached deterministic compositions |
+
 ### Orchestrator
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ORCHESTRATOR_CACHE_TTL_MINUTES` | int | `5` | Cache TTL in minutes for orchestrator data |
 | `ORCHESTRATOR_CERTIFICATES_HOST_PATH` | string | `/app/provisioning/certificates` | Host path for TLS certificates |
+| `ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS` | int | `30` | TTL in days for configuration history entries in state store |
 | `ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS` | int | `2` | Interval in seconds for polling container status during depl... |
 | `ORCHESTRATOR_DEFAULT_BACKEND` | string | `compose` | Default container orchestration backend when not specified i... |
 | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | int | `5` | Time in minutes before a service is marked as degraded |
 | `ORCHESTRATOR_DOCKER_HOST` | string | `unix:///var/run/docker.sock` | Docker host for direct Docker API access |
 | `ORCHESTRATOR_DOCKER_NETWORK` | string | `bannou_default` | Docker network name for deployed containers |
 | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Service heartbeat timeout in seconds |
+| `ORCHESTRATOR_HEARTBEAT_TTL_SECONDS` | int | `90` | TTL in seconds for service heartbeat entries in state store |
 | `ORCHESTRATOR_KUBECONFIG_PATH` | string | **REQUIRED** | Path to kubeconfig file (null uses default ~/.kube/config) |
 | `ORCHESTRATOR_KUBERNETES_NAMESPACE` | string | `default` | Kubernetes namespace for deployments |
 | `ORCHESTRATOR_LOGS_VOLUME` | string | `logs-data` | Docker volume name for logs |
@@ -540,6 +564,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
 | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
+| `ORCHESTRATOR_ROUTING_TTL_SECONDS` | int | `300` | TTL in seconds for service routing entries in state store |
 | `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
 ### Permission
@@ -674,9 +699,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 510
+- **Total properties**: 525
 - **Required (no default)**: 40
-- **Optional (has default)**: 470
+- **Optional (has default)**: 485
 
 ## Environment Variable Naming Convention
 

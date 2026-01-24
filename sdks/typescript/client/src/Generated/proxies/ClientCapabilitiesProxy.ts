@@ -36,9 +36,8 @@ export class ClientCapabilitiesProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ClientCapabilitiesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetClientCapabilitiesRequest'],
-      Schemas['ClientCapabilitiesResponse']
-    >('POST', '/client-capabilities', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetClientCapabilitiesRequest'], Schemas['ClientCapabilitiesResponse']>(
+      'POST', '/client-capabilities', request, channel, timeout
+    );
   }
 }

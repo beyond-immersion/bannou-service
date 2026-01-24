@@ -36,10 +36,9 @@ export class RelationshipTypeProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipTypeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetRelationshipTypeRequest'],
-      Schemas['RelationshipTypeResponse']
-    >('POST', '/relationship-type/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetRelationshipTypeRequest'], Schemas['RelationshipTypeResponse']>(
+      'POST', '/relationship-type/get', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class RelationshipTypeProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipTypeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetRelationshipTypeByCodeRequest'],
-      Schemas['RelationshipTypeResponse']
-    >('POST', '/relationship-type/get-by-code', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetRelationshipTypeByCodeRequest'], Schemas['RelationshipTypeResponse']>(
+      'POST', '/relationship-type/get-by-code', request, channel, timeout
+    );
   }
 
   /**
@@ -72,10 +70,9 @@ export class RelationshipTypeProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipTypeListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListRelationshipTypesRequest'],
-      Schemas['RelationshipTypeListResponse']
-    >('POST', '/relationship-type/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListRelationshipTypesRequest'], Schemas['RelationshipTypeListResponse']>(
+      'POST', '/relationship-type/list', request, channel, timeout
+    );
   }
 
   /**
@@ -90,10 +87,9 @@ export class RelationshipTypeProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipTypeListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetChildRelationshipTypesRequest'],
-      Schemas['RelationshipTypeListResponse']
-    >('POST', '/relationship-type/get-children', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetChildRelationshipTypesRequest'], Schemas['RelationshipTypeListResponse']>(
+      'POST', '/relationship-type/get-children', request, channel, timeout
+    );
   }
 
   /**
@@ -108,10 +104,9 @@ export class RelationshipTypeProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['MatchesHierarchyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['MatchesHierarchyRequest'],
-      Schemas['MatchesHierarchyResponse']
-    >('POST', '/relationship-type/matches-hierarchy', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['MatchesHierarchyRequest'], Schemas['MatchesHierarchyResponse']>(
+      'POST', '/relationship-type/matches-hierarchy', request, channel, timeout
+    );
   }
 
   /**
@@ -126,9 +121,8 @@ export class RelationshipTypeProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipTypeListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetAncestorsRequest'],
-      Schemas['RelationshipTypeListResponse']
-    >('POST', '/relationship-type/get-ancestors', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetAncestorsRequest'], Schemas['RelationshipTypeListResponse']>(
+      'POST', '/relationship-type/get-ancestors', request, channel, timeout
+    );
   }
 }

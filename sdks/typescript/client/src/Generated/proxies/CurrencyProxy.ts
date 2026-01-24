@@ -36,10 +36,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CurrencyDefinitionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCurrencyDefinitionRequest'],
-      Schemas['CurrencyDefinitionResponse']
-    >('POST', '/currency/definition/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCurrencyDefinitionRequest'], Schemas['CurrencyDefinitionResponse']>(
+      'POST', '/currency/definition/get', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListCurrencyDefinitionsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListCurrencyDefinitionsRequest'],
-      Schemas['ListCurrencyDefinitionsResponse']
-    >('POST', '/currency/definition/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListCurrencyDefinitionsRequest'], Schemas['ListCurrencyDefinitionsResponse']>(
+      'POST', '/currency/definition/list', request, channel, timeout
+    );
   }
 
   /**
@@ -73,11 +71,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['WalletResponse']>> {
     return this.client.invokeAsync<Schemas['CreateWalletRequest'], Schemas['WalletResponse']>(
-      'POST',
-      '/currency/wallet/create',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/wallet/create', request, channel, timeout
     );
   }
 
@@ -93,10 +87,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['WalletWithBalancesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetWalletRequest'],
-      Schemas['WalletWithBalancesResponse']
-    >('POST', '/currency/wallet/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetWalletRequest'], Schemas['WalletWithBalancesResponse']>(
+      'POST', '/currency/wallet/get', request, channel, timeout
+    );
   }
 
   /**
@@ -111,10 +104,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetOrCreateWalletResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetOrCreateWalletRequest'],
-      Schemas['GetOrCreateWalletResponse']
-    >('POST', '/currency/wallet/get-or-create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetOrCreateWalletRequest'], Schemas['GetOrCreateWalletResponse']>(
+      'POST', '/currency/wallet/get-or-create', request, channel, timeout
+    );
   }
 
   /**
@@ -130,11 +122,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetBalanceResponse']>> {
     return this.client.invokeAsync<Schemas['GetBalanceRequest'], Schemas['GetBalanceResponse']>(
-      'POST',
-      '/currency/balance/get',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/balance/get', request, channel, timeout
     );
   }
 
@@ -150,10 +138,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BatchGetBalancesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BatchGetBalancesRequest'],
-      Schemas['BatchGetBalancesResponse']
-    >('POST', '/currency/balance/batch-get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['BatchGetBalancesRequest'], Schemas['BatchGetBalancesResponse']>(
+      'POST', '/currency/balance/batch-get', request, channel, timeout
+    );
   }
 
   /**
@@ -168,10 +155,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CreditCurrencyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreditCurrencyRequest'],
-      Schemas['CreditCurrencyResponse']
-    >('POST', '/currency/credit', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreditCurrencyRequest'], Schemas['CreditCurrencyResponse']>(
+      'POST', '/currency/credit', request, channel, timeout
+    );
   }
 
   /**
@@ -186,10 +172,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DebitCurrencyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DebitCurrencyRequest'],
-      Schemas['DebitCurrencyResponse']
-    >('POST', '/currency/debit', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DebitCurrencyRequest'], Schemas['DebitCurrencyResponse']>(
+      'POST', '/currency/debit', request, channel, timeout
+    );
   }
 
   /**
@@ -204,10 +189,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['TransferCurrencyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['TransferCurrencyRequest'],
-      Schemas['TransferCurrencyResponse']
-    >('POST', '/currency/transfer', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['TransferCurrencyRequest'], Schemas['TransferCurrencyResponse']>(
+      'POST', '/currency/transfer', request, channel, timeout
+    );
   }
 
   /**
@@ -223,11 +207,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BatchCreditResponse']>> {
     return this.client.invokeAsync<Schemas['BatchCreditRequest'], Schemas['BatchCreditResponse']>(
-      'POST',
-      '/currency/batch-credit',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/batch-credit', request, channel, timeout
     );
   }
 
@@ -243,10 +223,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CalculateConversionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CalculateConversionRequest'],
-      Schemas['CalculateConversionResponse']
-    >('POST', '/currency/convert/calculate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CalculateConversionRequest'], Schemas['CalculateConversionResponse']>(
+      'POST', '/currency/convert/calculate', request, channel, timeout
+    );
   }
 
   /**
@@ -261,10 +240,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ExecuteConversionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ExecuteConversionRequest'],
-      Schemas['ExecuteConversionResponse']
-    >('POST', '/currency/convert/execute', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ExecuteConversionRequest'], Schemas['ExecuteConversionResponse']>(
+      'POST', '/currency/convert/execute', request, channel, timeout
+    );
   }
 
   /**
@@ -279,10 +257,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetExchangeRateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetExchangeRateRequest'],
-      Schemas['GetExchangeRateResponse']
-    >('POST', '/currency/exchange-rate/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetExchangeRateRequest'], Schemas['GetExchangeRateResponse']>(
+      'POST', '/currency/exchange-rate/get', request, channel, timeout
+    );
   }
 
   /**
@@ -297,10 +274,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['TransactionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetTransactionRequest'],
-      Schemas['TransactionResponse']
-    >('POST', '/currency/transaction/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetTransactionRequest'], Schemas['TransactionResponse']>(
+      'POST', '/currency/transaction/get', request, channel, timeout
+    );
   }
 
   /**
@@ -315,10 +291,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetTransactionHistoryResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetTransactionHistoryRequest'],
-      Schemas['GetTransactionHistoryResponse']
-    >('POST', '/currency/transaction/history', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetTransactionHistoryRequest'], Schemas['GetTransactionHistoryResponse']>(
+      'POST', '/currency/transaction/history', request, channel, timeout
+    );
   }
 
   /**
@@ -333,10 +308,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetTransactionsByReferenceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetTransactionsByReferenceRequest'],
-      Schemas['GetTransactionsByReferenceResponse']
-    >('POST', '/currency/transaction/by-reference', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetTransactionsByReferenceRequest'], Schemas['GetTransactionsByReferenceResponse']>(
+      'POST', '/currency/transaction/by-reference', request, channel, timeout
+    );
   }
 
   /**
@@ -351,10 +325,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetGlobalSupplyResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetGlobalSupplyRequest'],
-      Schemas['GetGlobalSupplyResponse']
-    >('POST', '/currency/stats/global-supply', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetGlobalSupplyRequest'], Schemas['GetGlobalSupplyResponse']>(
+      'POST', '/currency/stats/global-supply', request, channel, timeout
+    );
   }
 
   /**
@@ -369,10 +342,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EscrowDepositResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['EscrowDepositRequest'],
-      Schemas['EscrowDepositResponse']
-    >('POST', '/currency/escrow/deposit', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['EscrowDepositRequest'], Schemas['EscrowDepositResponse']>(
+      'POST', '/currency/escrow/deposit', request, channel, timeout
+    );
   }
 
   /**
@@ -387,10 +359,9 @@ export class CurrencyProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['EscrowReleaseResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['EscrowReleaseRequest'],
-      Schemas['EscrowReleaseResponse']
-    >('POST', '/currency/escrow/release', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['EscrowReleaseRequest'], Schemas['EscrowReleaseResponse']>(
+      'POST', '/currency/escrow/release', request, channel, timeout
+    );
   }
 
   /**
@@ -406,11 +377,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['EscrowRefundResponse']>> {
     return this.client.invokeAsync<Schemas['EscrowRefundRequest'], Schemas['EscrowRefundResponse']>(
-      'POST',
-      '/currency/escrow/refund',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/escrow/refund', request, channel, timeout
     );
   }
 
@@ -427,11 +394,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HoldResponse']>> {
     return this.client.invokeAsync<Schemas['CreateHoldRequest'], Schemas['HoldResponse']>(
-      'POST',
-      '/currency/hold/create',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/hold/create', request, channel, timeout
     );
   }
 
@@ -448,11 +411,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CaptureHoldResponse']>> {
     return this.client.invokeAsync<Schemas['CaptureHoldRequest'], Schemas['CaptureHoldResponse']>(
-      'POST',
-      '/currency/hold/capture',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/hold/capture', request, channel, timeout
     );
   }
 
@@ -469,11 +428,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HoldResponse']>> {
     return this.client.invokeAsync<Schemas['ReleaseHoldRequest'], Schemas['HoldResponse']>(
-      'POST',
-      '/currency/hold/release',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/hold/release', request, channel, timeout
     );
   }
 
@@ -490,11 +445,7 @@ export class CurrencyProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HoldResponse']>> {
     return this.client.invokeAsync<Schemas['GetHoldRequest'], Schemas['HoldResponse']>(
-      'POST',
-      '/currency/hold/get',
-      request,
-      channel,
-      timeout
+      'POST', '/currency/hold/get', request, channel, timeout
     );
   }
 }

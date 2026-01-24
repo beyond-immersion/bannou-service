@@ -16,8 +16,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 | lib-state (IStateStoreFactory) | All session data, refresh tokens, OAuth links, and password reset tokens in Redis |
 | lib-messaging (IMessageBus) | Publishing session lifecycle events and audit events |
 | lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password |
-| lib-subscription (ISubscriptionClient) | Fetches active subscriptions during token generation to embed authorizations in session |
-| IHttpClientFactory | HTTP calls to external OAuth providers (Discord, Google, Twitch, Steam APIs) |
+| lib-subscription (ISubscriptionClient) | Fetches active subscriptions during token generation and subscription change propagation |
 | Program.Configuration (static) | JWT secret, issuer, audience, and ServiceDomain (not from DI-injected config) |
 
 **External NuGet dependencies:**
@@ -75,8 +74,8 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `JwtExpirationMinutes` | `AUTH_JWT_EXPIRATION_MINUTES` | 60 | How long access tokens and sessions are valid |
-| `SessionTokenTtlDays` | `AUTH_SESSION_TOKEN_TTL_DAYS` | 30 | How long refresh tokens remain valid |
-| `PasswordResetTokenTtlMinutes` | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | 60 | How long password reset tokens remain valid |
+| `SessionTokenTtlDays` | `AUTH_SESSION_TOKEN_TTL_DAYS` | 7 | How long refresh tokens remain valid |
+| `PasswordResetTokenTtlMinutes` | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | 30 | How long password reset tokens remain valid |
 | `PasswordResetBaseUrl` | `AUTH_PASSWORD_RESET_BASE_URL` | required | Base URL for password reset links in emails |
 | `ConnectUrl` | `AUTH_CONNECT_URL` | `ws://localhost:5014/connect` | WebSocket URL returned to clients after authentication |
 | `MockProviders` | `AUTH_MOCK_PROVIDERS` | false | Enable mock OAuth for testing (bypasses real provider calls) |
@@ -94,6 +93,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `TwitchRedirectUri` | `AUTH_TWITCH_REDIRECT_URI` | null | Twitch OAuth callback URL (derived from ServiceDomain if not set) |
 | `SteamApiKey` | `AUTH_STEAM_API_KEY` | null | Steam Web API key for ticket validation |
 | `SteamAppId` | `AUTH_STEAM_APP_ID` | null | Steam App ID for ticket validation |
+| `BcryptWorkFactor` | `AUTH_BCRYPT_WORK_FACTOR` | 12 | BCrypt work factor for password hashing (existing hashes at other factors still validate) |
 
 **Note:** JWT core settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) are NOT in AuthServiceConfiguration. They live in the app-wide `Program.Configuration` and are accessed via static reference.
 
@@ -105,39 +105,42 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `AuthServiceConfiguration` | Typed access to auth-specific config (OAuth, mock, TTLs) |
 | `IAccountClient` | Service mesh client for account CRUD operations |
 | `ISubscriptionClient` | Service mesh client for subscription queries |
-| `IStateStoreFactory` | Redis state store access |
-| `IMessageBus` | Event publishing |
-| `IHttpClientFactory` | HTTP clients for OAuth provider API calls |
+| `IStateStoreFactory` | Redis state store access (sessions, password resets, account-session indexes) |
+| `IMessageBus` | Audit event publishing |
 | `ITokenService` | JWT generation, refresh token management, token validation |
-| `ISessionService` | Session CRUD, account-session indexing, invalidation, event publishing |
-| `IOAuthProviderService` | OAuth code exchange, user info retrieval, account linking |
+| `ISessionService` | Session CRUD, account-session indexing, invalidation, session lifecycle event publishing |
+| `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
 | `IEventConsumer` | Registers handlers for account.deleted, account.updated, subscription.updated |
 
 ## API Endpoints (Implementation Notes)
 
 ### Authentication (login, register)
 
-Login verifies password with `BCrypt.Verify` against the hash stored in Account service. Registration hashes with `BCrypt.HashPassword(workFactor: 12)` and creates the account. Both flows generate a JWT + refresh token and return a `ConnectUrl` for WebSocket connection. Failed logins publish audit events for brute force detection but always return 401 (no information leakage about whether the account exists).
+Login verifies password with `BCrypt.Verify` against the hash stored in Account service. Registration hashes with `BCrypt.HashPassword(workFactor: 12)` and creates the account. Both flows generate a JWT + refresh token via `ITokenService` and return a `ConnectUrl` for WebSocket connection. Failed logins publish audit events for brute force detection but always return 401 (no information leakage about whether the account exists).
 
 ### OAuth (init, callback)
 
-`InitOAuth` builds the authorization URL manually with a switch statement. `CompleteOAuth` exchanges the authorization code for user info via the provider's API, then finds-or-creates an account linked to that OAuth identity. The `oauth-link:{provider}:{providerId}` Redis key is the link between external identity and internal account.
+`InitOAuth` delegates to `OAuthProviderService.GetAuthorizationUrl` which builds the provider-specific authorization URL with appropriate client ID, redirect URI (with ServiceDomain fallback), and state parameter. `CompleteOAuth` exchanges the authorization code for user info via the provider's API through `IOAuthProviderService`, then finds-or-creates an account linked to that OAuth identity. The `oauth-link:{provider}:{providerId}` Redis key is the link between external identity and internal account.
 
 ### Steam
 
-Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint. Validates the ticket, checks VAC/publisher bans, then finds-or-creates an account. Steam doesn't provide an email, so accounts get a synthetic email like `steam_{steamId}@oauth.local`.
+Uses the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` endpoint via `IOAuthProviderService.ValidateSteamTicketAsync`. Validates the ticket, checks VAC/publisher bans, then finds-or-creates an account. Steam doesn't provide an email, so accounts get a synthetic email like `steam_{steamId}@oauth.local`.
 
 ### Tokens (validate, refresh)
 
-`ValidateToken` verifies the JWT signature, extracts the `session_key` claim, loads session data from Redis, checks expiry, and returns the session's roles and authorizations. `RefreshToken` validates the refresh token against Redis, loads the account fresh from Account service, generates a new access token + new refresh token, and rotates the old refresh token out.
+`ValidateToken` delegates to `TokenService.ValidateTokenAsync` which verifies the JWT signature, extracts the `session_key` claim, loads session data from Redis via `ISessionService`, validates data integrity (null checks on roles/authorizations), checks expiry, and returns the session's roles and authorizations. `RefreshToken` validates the refresh token against Redis, loads the account fresh from Account service, generates a new access token + new refresh token, and rotates the old refresh token out.
 
 ### Password (reset, confirm)
 
-`RequestPasswordReset` always returns 200 regardless of whether the account exists (prevents email enumeration). If the account exists, it generates a secure token, stores it in Redis with TTL, and "sends" an email (currently a mock that logs to console). `ConfirmPasswordReset` validates the token, hashes the new password, and updates it via Account service.
+`RequestPasswordReset` always returns 200 regardless of whether the account exists (prevents email enumeration). If the account exists, it generates a cryptographically secure token via `GenerateSecureToken()`, stores it in Redis with TTL, and "sends" an email (currently a mock that logs to console). `ConfirmPasswordReset` validates the token, hashes the new password, and updates it via Account service.
 
 ### Sessions (list, terminate)
 
-`GetSessions` validates the caller's JWT then returns all active sessions for their account. Expired sessions are lazily cleaned during this read. `TerminateSession` uses the session-id reverse index to find the session key, deletes it, and publishes `session.invalidated` for WebSocket disconnection.
+`GetSessions` validates the caller's JWT then returns all active sessions for their account. Expired sessions are lazily cleaned during this read. `TerminateSession` uses the session-id reverse index to find the session key, deletes it, and publishes `session.invalidated` via `ISessionService` for WebSocket disconnection.
+
+### Logout
+
+`LogoutAsync` validates the JWT via `ValidateTokenAsync` and uses the session key from the response directly. Supports single-session logout (deletes the current session) or all-sessions logout (fetches the account-sessions index and deletes all). Publishes `session.invalidated` via `ISessionService` after cleanup.
 
 ## Visual Aid
 
@@ -152,20 +155,21 @@ Login/Register/OAuth ──► TokenService.GenerateAccessTokenAsync()
                               │
                               ├─ session-id-index:{sessionId} ──► sessionKey
                               │
-                              └─ JWT (contains session_key claim)
+                              └─ JWT (contains only session_key claim - opaque Redis key)
                                      │
                                      ▼
-                              ValidateToken (called by Connect on WS upgrade)
+                              TokenService.ValidateTokenAsync (called by Connect on WS upgrade)
                                      │
                                      ├─ Verify JWT signature
-                                     ├─ Extract session_key
-                                     ├─ Load session from Redis
+                                     ├─ Extract session_key (opaque Redis lookup key)
+                                     ├─ Load session from Redis via SessionService
+                                     ├─ Validate data integrity (null roles/auths = corruption)
                                      └─ Return roles + authorizations + remaining time
 
-account.deleted event ──► InvalidateAllSessions ──► session.invalidated event
-                                                          │
-                                                          ▼
-                                                    Connect: disconnect WS
+account.deleted event ──► SessionService.InvalidateAllSessions ──► session.invalidated event
+                                                                          │
+                                                                          ▼
+                                                                    Connect: disconnect WS
 ```
 
 ## Stubs & Unimplemented Features
@@ -178,10 +182,6 @@ Password reset generates tokens and constructs reset URLs correctly, but the act
 
 Auth publishes 6 audit event types (login successful/failed, registration, OAuth, Steam, password reset) but no service subscribes to them. They exist for future security monitoring (brute force detection, anomaly alerts) but currently publish to topics nobody listens on.
 
-### ITokenService.ValidateTokenAsync (unused)
-
-TokenService has a complete `ValidateTokenAsync` implementation that is never called. AuthService has its own inline version of the same logic in its `ValidateTokenAsync` method. The TokenService version was created during the service extraction but the AuthService method was never refactored to delegate to it.
-
 ## Potential Extensions
 
 - **Rate limiting for login attempts**: The `auth.login.failed` events exist for brute force detection, but no service consumes them. A rate-limiting mechanism (per-IP or per-account) could consume these events and block repeated failures.
@@ -192,30 +192,12 @@ TokenService has a complete `ValidateTokenAsync` implementation that is never ca
 
 ## Known Quirks & Caveats
 
-1. **Duplicate SessionDataModel class**: AuthService.cs contains a `private class SessionDataModel` (line 1168) that is identical to the public `SessionDataModel` in `ISessionService.cs`. The public version is what SessionService uses. The private version appears to be dead code from before the service extraction, but since AuthService accesses the state store directly in some methods (ValidateToken, Logout), it may be using this private type for deserialization. If the two ever diverge, sessions will silently fail to deserialize.
+1. **JWT config split across two sources**: OAuth config, TTLs, and mock settings come from the DI-injected `AuthServiceConfiguration`. JWT secret/issuer/audience come from the static `Program.Configuration`. This split means JWT settings can't be overridden per-service and aren't visible in the auth configuration schema.
 
-2. **Dead code: HashPassword/VerifyPassword**: Lines 1197-1208 contain a base64 "hash" function that concatenates the password with the JWT secret. This is never called - the actual login uses `BCrypt.Net.BCrypt.Verify()`. These methods would be a critical security vulnerability if they were ever used accidentally.
+2. **ValidateTokenResponse.SessionId contains the session key, not the session ID**: `ValidateTokenResponse.SessionId` is set to `Guid.Parse(sessionKey)` - the internal Redis lookup key - not `sessionData.SessionId` (the human-facing identifier). This is intentional so Connect service tracks WebSocket connections by the same key used in `account-sessions` index and `SessionInvalidatedEvent`, but the field name is misleading.
 
-3. **Dead code: OnEventReceivedAsync**: A generic event routing method (line 1286) that only handles `account.deleted` via manual type checking. This is completely redundant with the typed `IEventConsumer` registration in `AuthServiceEvents.cs`. It appears to be from a previous event handling pattern that was never removed.
+3. **OAuth links have no TTL**: The `oauth-link:{provider}:{providerId}` key persists indefinitely in Redis. If an account is deleted, the link remains orphaned until the next login attempt for that OAuth identity (which detects the stale link and cleans it up). Meanwhile, orphaned links accumulate in Redis.
 
-4. **Steam uses Provider.Discord enum**: `VerifySteamAuthAsync` (line 425) and the mock (line 1258) pass `Provider.Discord` to `FindOrCreateOAuthAccountAsync` with a `"steam"` provider override string. The Provider enum lacks a Steam variant, so Discord is used as a placeholder. The override string is what's actually used for the Redis key, so it works correctly, but it's semantically wrong and fragile.
+4. **Account-sessions index lazy cleanup only**: Expired sessions are only removed from the `account-sessions:{accountId}` list when someone calls `GetAccountSessionsAsync`. If nobody lists sessions, expired entries accumulate in the list until the list's own TTL expires. The TTL is JwtExpiration + 5 minutes, but gets reset with each new login (since `AddSessionToAccountIndexAsync` re-saves the whole list), so active accounts accumulate stale entries.
 
-5. **Duplicate OAuth URL construction**: `InitOAuthAsync` builds OAuth authorization URLs with its own switch statement. `OAuthProviderService.GetAuthorizationUrl` does the same thing. The two implementations differ subtly: InitOAuth falls back to `_configuration.DiscordRedirectUri` directly (no ServiceDomain fallback), while OAuthProviderService uses `GetEffectiveRedirectUri` which tries ServiceDomain. This means InitOAuth and CompleteOAuth can construct different redirect URIs, which would cause OAuth failures.
-
-6. **ValidateTokenAsync not delegated to TokenService**: AuthService has its own inline `ValidateTokenAsync` (line 971) that duplicates logic from `TokenService.ValidateTokenAsync`. The AuthService version is what's actually called. The TokenService version is dead code. Both access `Program.Configuration.JwtSecret!` with a null-forgiving operator.
-
-7. **JWT config split across two sources**: OAuth config, TTLs, and mock settings come from the DI-injected `AuthServiceConfiguration`. JWT secret/issuer/audience come from the static `Program.Configuration`. This split means JWT settings can't be overridden per-service and aren't visible in the auth configuration schema.
-
-8. **SessionId field returns sessionKey, not sessionId**: `ValidateTokenResponse.SessionId` (line 1063) is set to `Guid.Parse(sessionKey)`, not to `sessionData.SessionId`. A comment explains this is intentional for Connect service WebSocket tracking, but it means the field name is misleading - what clients see as "SessionId" is actually the internal key.
-
-9. **OAuth links have no TTL**: The `oauth-link:{provider}:{providerId}` key persists indefinitely in Redis. If an account is deleted, the link remains orphaned until the next login attempt for that OAuth identity (which detects the stale link and cleans it up). Meanwhile, orphaned links accumulate in Redis.
-
-10. **BCrypt work factor hardcoded to 12**: The work factor for password hashing (lines 228, 889) is hardcoded rather than configurable. Changing it requires a code change and redeploy. Existing hashes at the old work factor continue to validate (BCrypt stores the factor in the hash), but new passwords always use 12.
-
-11. **Refresh token is a GUID, not cryptographically random**: `GenerateRefreshToken()` uses `Guid.NewGuid().ToString("N")`. While GUIDs are unique, they're not designed to be cryptographically unpredictable in the same way that `GenerateSecureToken()` (used for password reset) is. The 256-bit `GenerateSecureToken` method exists but isn't used for refresh tokens.
-
-12. **Account-sessions index lazy cleanup only**: Expired sessions are only removed from the `account-sessions:{accountId}` list when someone calls `GetAccountSessionsAsync`. If nobody lists sessions, expired entries accumulate in the list until the list's own TTL expires. The TTL is JwtExpiration + 5 minutes, but gets reset with each new login (since `AddSessionToAccountIndexAsync` re-saves the whole list), so active accounts accumulate stale entries.
-
-13. **Logout validates the full token before extracting session key**: `LogoutAsync` calls `ValidateTokenAsync` and then separately calls `ExtractSessionKeyFromJwtAsync`. The validate step already extracts and validates the session_key claim - the second extraction is redundant. If the JWT is expired but the user wants to logout, this pattern prevents logout of expired sessions.
-
-14. **Password reset always returns 200**: By design (email enumeration prevention), but this means there's no way for a legitimate user to know if the reset email was sent. The mock implementation logs to console, so in production without email integration, password resets silently succeed without doing anything useful.
+5. **Password reset always returns 200**: By design (email enumeration prevention), but this means there's no way for a legitimate user to know if the reset email was sent. The mock implementation logs to console, so in production without email integration, password resets silently succeed without doing anything useful.

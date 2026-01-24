@@ -30221,7 +30221,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.Provider">
             <summary>
-            OAuth provider type
+            Authentication provider type
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.InitOAuthResponse">

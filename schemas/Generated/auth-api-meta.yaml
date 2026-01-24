@@ -709,7 +709,8 @@ components:
       - google
       - discord
       - twitch
-      description: OAuth provider type
+      - steam
+      description: Authentication provider type
     InitOAuthResponse:
       type: object
       description: Response containing the OAuth authorization URL for redirect

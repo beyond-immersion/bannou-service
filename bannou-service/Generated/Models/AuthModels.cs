@@ -31,7 +31,7 @@ namespace BeyondImmersion.BannouService.Auth;
 using System = global::System;
 
 /// <summary>
-/// OAuth provider type
+/// Authentication provider type
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -46,6 +46,9 @@ public enum Provider
 
     [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
     Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
 
 }
 #pragma warning restore CS1591

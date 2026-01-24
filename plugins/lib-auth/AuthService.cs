@@ -201,7 +201,7 @@ public partial class AuthService : IAuthService
             }
 
             // Hash password before storing
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: 12);
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: _configuration.BcryptWorkFactor);
             _logger.LogInformation("Password hashed successfully for registration");
 
             // Create account via AccountClient service call
@@ -398,7 +398,7 @@ public partial class AuthService : IAuthService
                 Email = null // Steam doesn't provide email
             };
 
-            var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, cancellationToken, "steam");
+            var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
@@ -824,7 +824,7 @@ public partial class AuthService : IAuthService
             }
 
             // Hash the new password
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: 12);
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: _configuration.BcryptWorkFactor);
 
             // Update password via AccountClient
             await _accountClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
@@ -1026,8 +1026,7 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Using mock Steam provider");
 
         var userInfo = await _oauthService.GetMockSteamUserInfoAsync(cancellationToken);
-        // Use a fake provider for Steam since it's not in the enum
-        var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, cancellationToken, "steam");
+        var account = await _oauthService.FindOrCreateOAuthAccountAsync(Provider.Steam, userInfo, cancellationToken);
         if (account == null)
         {
             return (StatusCodes.InternalServerError, null);
@@ -1094,7 +1093,16 @@ public partial class AuthService : IAuthService
                     {
                         session.Roles = newRoles;
 
-                        await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
+                        // Preserve remaining TTL so sessions still expire on schedule
+                        var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                        if (remainingSeconds <= 0)
+                        {
+                            _logger.LogDebug("Session {SessionKey} already expired, skipping role update", sessionKey);
+                            continue;
+                        }
+
+                        await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                            new StateOptions { Ttl = remainingSeconds }, cancellationToken);
 
                         // Publish session.updated event for Permission service
                         await _sessionService.PublishSessionUpdatedEventAsync(
@@ -1166,7 +1174,16 @@ public partial class AuthService : IAuthService
                     {
                         session.Authorizations = authorizations;
 
-                        await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
+                        // Preserve remaining TTL so sessions still expire on schedule
+                        var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                        if (remainingSeconds <= 0)
+                        {
+                            _logger.LogDebug("Session {SessionKey} already expired, skipping authorization update", sessionKey);
+                            continue;
+                        }
+
+                        await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                            new StateOptions { Ttl = remainingSeconds }, cancellationToken);
 
                         // Publish session.updated event for Permission service
                         await _sessionService.PublishSessionUpdatedEventAsync(

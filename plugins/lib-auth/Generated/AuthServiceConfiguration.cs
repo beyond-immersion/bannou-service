@@ -168,6 +168,12 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? PasswordResetBaseUrl { get; set; }
 
     /// <summary>
+    /// BCrypt work factor for password hashing. Higher values are more secure but slower. Existing hashes at lower factors continue to validate.
+    /// Environment variable: AUTH_BCRYPT_WORK_FACTOR
+    /// </summary>
+    public int BcryptWorkFactor { get; set; } = 12;
+
+    /// <summary>
     /// Session token TTL in days for persistent sessions
     /// Environment variable: AUTH_SESSION_TOKEN_TTL_DAYS
     /// </summary>

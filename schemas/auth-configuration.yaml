@@ -129,6 +129,13 @@ x-service-configuration:
       env: AUTH_PASSWORD_RESET_BASE_URL
       example: "https://your-domain.com/reset-password"
 
+    # Security
+    BcryptWorkFactor:
+      type: integer
+      description: BCrypt work factor for password hashing. Higher values are more secure but slower. Existing hashes at lower factors continue to validate.
+      env: AUTH_BCRYPT_WORK_FACTOR
+      default: 12
+
     # Session Configuration
     SessionTokenTtlDays:
       type: integer

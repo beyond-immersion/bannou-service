@@ -36,10 +36,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ActorTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateActorTemplateRequest'],
-      Schemas['ActorTemplateResponse']
-    >('POST', '/actor/template/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateActorTemplateRequest'], Schemas['ActorTemplateResponse']>(
+      'POST', '/actor/template/create', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ActorTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateActorTemplateRequest'],
-      Schemas['ActorTemplateResponse']
-    >('POST', '/actor/template/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateActorTemplateRequest'], Schemas['ActorTemplateResponse']>(
+      'POST', '/actor/template/update', request, channel, timeout
+    );
   }
 
   /**
@@ -72,10 +70,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeleteActorTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeleteActorTemplateRequest'],
-      Schemas['DeleteActorTemplateResponse']
-    >('POST', '/actor/template/delete', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeleteActorTemplateRequest'], Schemas['DeleteActorTemplateResponse']>(
+      'POST', '/actor/template/delete', request, channel, timeout
+    );
   }
 
   /**
@@ -91,11 +88,7 @@ export class ActorProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ActorInstanceResponse']>> {
     return this.client.invokeAsync<Schemas['SpawnActorRequest'], Schemas['ActorInstanceResponse']>(
-      'POST',
-      '/actor/spawn',
-      request,
-      channel,
-      timeout
+      'POST', '/actor/spawn', request, channel, timeout
     );
   }
 
@@ -112,11 +105,7 @@ export class ActorProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StopActorResponse']>> {
     return this.client.invokeAsync<Schemas['StopActorRequest'], Schemas['StopActorResponse']>(
-      'POST',
-      '/actor/stop',
-      request,
-      channel,
-      timeout
+      'POST', '/actor/stop', request, channel, timeout
     );
   }
 
@@ -132,10 +121,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['InjectPerceptionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['InjectPerceptionRequest'],
-      Schemas['InjectPerceptionResponse']
-    >('POST', '/actor/inject-perception', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['InjectPerceptionRequest'], Schemas['InjectPerceptionResponse']>(
+      'POST', '/actor/inject-perception', request, channel, timeout
+    );
   }
 
   /**
@@ -149,10 +137,7 @@ export class ActorProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['StartEncounterRequest']>(
-      'POST',
-      '/actor/encounter/start',
-      request,
-      channel
+      'POST', '/actor/encounter/start', request, channel
     );
   }
 
@@ -168,10 +153,9 @@ export class ActorProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['UpdateEncounterPhaseResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateEncounterPhaseRequest'],
-      Schemas['UpdateEncounterPhaseResponse']
-    >('POST', '/actor/encounter/update-phase', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateEncounterPhaseRequest'], Schemas['UpdateEncounterPhaseResponse']>(
+      'POST', '/actor/encounter/update-phase', request, channel, timeout
+    );
   }
 
   /**
@@ -187,11 +171,7 @@ export class ActorProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['EndEncounterResponse']>> {
     return this.client.invokeAsync<Schemas['EndEncounterRequest'], Schemas['EndEncounterResponse']>(
-      'POST',
-      '/actor/encounter/end',
-      request,
-      channel,
-      timeout
+      'POST', '/actor/encounter/end', request, channel, timeout
     );
   }
 }
