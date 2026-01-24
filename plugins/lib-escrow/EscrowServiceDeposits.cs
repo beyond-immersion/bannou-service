@@ -11,6 +11,8 @@ public partial class EscrowService
 {
     /// <summary>
     /// Deposits assets into an escrow.
+    /// Uses optimistic concurrency (ETag) to prevent lost deposits from concurrent modifications.
+    /// Token marking is deferred until after agreement save to prevent token consumption on retry.
     /// </summary>
     public async Task<(StatusCodes, DepositResponse?)> DepositAsync(
         DepositRequest body,
@@ -18,7 +20,7 @@ public partial class EscrowService
     {
         try
         {
-            // Check idempotency
+            // Check idempotency (outside retry loop - read-only check)
             var idempotencyKey = GetIdempotencyKey(body.IdempotencyKey);
             var existingRecord = await IdempotencyStore.GetAsync(idempotencyKey, cancellationToken);
             if (existingRecord != null)
@@ -38,218 +40,243 @@ public partial class EscrowService
             }
 
             var agreementKey = GetAgreementKey(body.EscrowId);
-            var agreementModel = await AgreementStore.GetAsync(agreementKey, cancellationToken);
 
-            if (agreementModel == null)
+            for (var attempt = 0; attempt < 3; attempt++)
             {
-                return (StatusCodes.NotFound, null);
-            }
+                var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
-            if (agreementModel.Status != EscrowStatus.Pending_deposits &&
-                agreementModel.Status != EscrowStatus.Partially_funded)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
+                if (agreementModel == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
 
-            if (agreementModel.ExpiresAt <= DateTimeOffset.UtcNow)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var party = agreementModel.Parties?.FirstOrDefault(p =>
-                p.PartyId == body.PartyId && p.PartyType == body.PartyType);
-
-            if (party == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Validate deposit token if in full_consent mode
-            if (agreementModel.TrustMode == EscrowTrustMode.Full_consent)
-            {
-                if (string.IsNullOrEmpty(body.DepositToken))
+                if (agreementModel.Status != EscrowStatus.Pending_deposits &&
+                    agreementModel.Status != EscrowStatus.Partially_funded)
                 {
                     return (StatusCodes.BadRequest, null);
                 }
 
-                if (party.DepositTokenUsed)
+                if (agreementModel.ExpiresAt <= DateTimeOffset.UtcNow)
                 {
                     return (StatusCodes.BadRequest, null);
                 }
 
-                var tokenHash = HashToken(body.DepositToken);
-                var tokenKey = GetTokenKey(tokenHash);
-                var tokenRecord = await TokenStore.GetAsync(tokenKey, cancellationToken);
+                var party = agreementModel.Parties?.FirstOrDefault(p =>
+                    p.PartyId == body.PartyId && p.PartyType == body.PartyType);
 
-                if (tokenRecord == null ||
-                    tokenRecord.EscrowId != body.EscrowId ||
-                    tokenRecord.PartyId != body.PartyId ||
-                    tokenRecord.TokenType != TokenType.Deposit)
+                if (party == null)
                 {
-                    return (StatusCodes.Unauthorized, null);
+                    return (StatusCodes.NotFound, null);
                 }
 
-                if (tokenRecord.Used)
+                // Validate deposit token if in full_consent mode (read-only validation, marking deferred)
+                if (agreementModel.TrustMode == EscrowTrustMode.Full_consent)
                 {
-                    return (StatusCodes.BadRequest, null);
-                }
-
-                tokenRecord.Used = true;
-                tokenRecord.UsedAt = DateTimeOffset.UtcNow;
-                await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            var depositId = Guid.NewGuid();
-            var bundleId = Guid.NewGuid();
-
-            var assetModels = body.Assets?.Assets?.Select(MapAssetInputToModel).ToList()
-                ?? new List<EscrowAssetModel>();
-
-            var depositModel = new EscrowDepositModel
-            {
-                DepositId = depositId,
-                EscrowId = body.EscrowId,
-                PartyId = body.PartyId,
-                PartyType = body.PartyType,
-                Assets = new EscrowAssetBundleModel
-                {
-                    BundleId = bundleId,
-                    Assets = assetModels,
-                    Description = body.Assets?.Description,
-                    EstimatedValue = body.Assets?.EstimatedValue
-                },
-                DepositedAt = now,
-                DepositTokenUsed = body.DepositToken,
-                IdempotencyKey = body.IdempotencyKey
-            };
-
-            agreementModel.Deposits ??= new List<EscrowDepositModel>();
-            agreementModel.Deposits.Add(depositModel);
-
-            party.DepositTokenUsed = true;
-            party.DepositTokenUsedAt = now;
-
-            var expectedDeposit = agreementModel.ExpectedDeposits?.FirstOrDefault(ed =>
-                ed.PartyId == body.PartyId && ed.PartyType == body.PartyType);
-
-            if (expectedDeposit != null)
-            {
-                expectedDeposit.Fulfilled = true;
-            }
-
-            var allRequiredFulfilled = agreementModel.ExpectedDeposits?
-                .Where(ed => !ed.Optional)
-                .All(ed => ed.Fulfilled) ?? true;
-
-            var previousStatus = agreementModel.Status;
-            EscrowStatus newStatus;
-            var fullyFunded = false;
-
-            if (allRequiredFulfilled)
-            {
-                newStatus = EscrowStatus.Funded;
-                agreementModel.Status = newStatus;
-                agreementModel.FundedAt = now;
-                fullyFunded = true;
-            }
-            else
-            {
-                newStatus = EscrowStatus.Partially_funded;
-                agreementModel.Status = newStatus;
-            }
-
-            await AgreementStore.SaveAsync(agreementKey, agreementModel, cancellationToken: cancellationToken);
-
-            if (previousStatus != newStatus)
-            {
-                var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
-                await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
-
-                var newStatusKey = $"{GetStatusIndexKey(newStatus)}:{body.EscrowId}";
-                var statusEntry = new StatusIndexEntry
-                {
-                    EscrowId = body.EscrowId,
-                    Status = newStatus,
-                    ExpiresAt = agreementModel.ExpiresAt,
-                    AddedAt = now
-                };
-                await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
-            }
-
-            // Build release tokens if fully funded
-            var releaseTokens = new List<PartyToken>();
-            if (fullyFunded)
-            {
-                foreach (var p in agreementModel.Parties ?? new List<EscrowPartyModel>())
-                {
-                    if (p.ReleaseToken != null)
+                    if (string.IsNullOrEmpty(body.DepositToken))
                     {
-                        releaseTokens.Add(new PartyToken
-                        {
-                            PartyId = p.PartyId,
-                            PartyType = p.PartyType,
-                            Token = p.ReleaseToken
-                        });
+                        return (StatusCodes.BadRequest, null);
+                    }
+
+                    if (party.DepositTokenUsed)
+                    {
+                        return (StatusCodes.BadRequest, null);
+                    }
+
+                    var tokenHash = HashToken(body.DepositToken);
+                    var tokenKey = GetTokenKey(tokenHash);
+                    var tokenRecord = await TokenStore.GetAsync(tokenKey, cancellationToken);
+
+                    if (tokenRecord == null ||
+                        tokenRecord.EscrowId != body.EscrowId ||
+                        tokenRecord.PartyId != body.PartyId ||
+                        tokenRecord.TokenType != TokenType.Deposit)
+                    {
+                        return (StatusCodes.Unauthorized, null);
+                    }
+
+                    if (tokenRecord.Used)
+                    {
+                        return (StatusCodes.BadRequest, null);
                     }
                 }
-            }
 
-            var response = new DepositResponse
-            {
-                Escrow = MapToApiModel(agreementModel),
-                Deposit = MapDepositToApiModel(depositModel),
-                FullyFunded = fullyFunded,
-                ReleaseTokens = releaseTokens
-            };
+                var now = DateTimeOffset.UtcNow;
+                var depositId = Guid.NewGuid();
+                var bundleId = Guid.NewGuid();
 
-            var idempotencyRecord = new IdempotencyRecord
-            {
-                Key = body.IdempotencyKey,
-                EscrowId = body.EscrowId,
-                PartyId = body.PartyId,
-                Operation = "Deposit",
-                CreatedAt = now,
-                ExpiresAt = now.AddHours(24),
-                Result = response
-            };
-            await IdempotencyStore.SaveAsync(idempotencyKey, idempotencyRecord, cancellationToken: cancellationToken);
+                var assetModels = body.Assets?.Assets?.Select(MapAssetInputToModel).ToList()
+                    ?? new List<EscrowAssetModel>();
 
-            // Publish deposit received event
-            var depositEvent = new EscrowDepositReceivedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                EscrowId = body.EscrowId,
-                PartyId = body.PartyId,
-                PartyType = body.PartyType,
-                DepositId = depositId,
-                AssetSummary = GenerateAssetSummary(assetModels),
-                DepositsReceived = agreementModel.Deposits?.Count ?? 0,
-                DepositsExpected = agreementModel.ExpectedDeposits?.Count ?? 0,
-                FullyFunded = fullyFunded,
-                DepositedAt = now
-            };
-            await _messageBus.TryPublishAsync(EscrowTopics.EscrowDepositReceived, depositEvent, cancellationToken);
+                var depositModel = new EscrowDepositModel
+                {
+                    DepositId = depositId,
+                    EscrowId = body.EscrowId,
+                    PartyId = body.PartyId,
+                    PartyType = body.PartyType,
+                    Assets = new EscrowAssetBundleModel
+                    {
+                        BundleId = bundleId,
+                        Assets = assetModels,
+                        Description = body.Assets?.Description,
+                        EstimatedValue = body.Assets?.EstimatedValue
+                    },
+                    DepositedAt = now,
+                    DepositTokenUsed = body.DepositToken,
+                    IdempotencyKey = body.IdempotencyKey
+                };
 
-            if (fullyFunded)
-            {
-                var fundedEvent = new EscrowFundedEvent
+                agreementModel.Deposits ??= new List<EscrowDepositModel>();
+                agreementModel.Deposits.Add(depositModel);
+
+                party.DepositTokenUsed = true;
+                party.DepositTokenUsedAt = now;
+
+                var expectedDeposit = agreementModel.ExpectedDeposits?.FirstOrDefault(ed =>
+                    ed.PartyId == body.PartyId && ed.PartyType == body.PartyType);
+
+                if (expectedDeposit != null)
+                {
+                    expectedDeposit.Fulfilled = true;
+                }
+
+                var allRequiredFulfilled = agreementModel.ExpectedDeposits?
+                    .Where(ed => !ed.Optional)
+                    .All(ed => ed.Fulfilled) ?? true;
+
+                var previousStatus = agreementModel.Status;
+                EscrowStatus newStatus;
+                var fullyFunded = false;
+
+                if (allRequiredFulfilled)
+                {
+                    newStatus = EscrowStatus.Funded;
+                    agreementModel.Status = newStatus;
+                    agreementModel.FundedAt = now;
+                    fullyFunded = true;
+                }
+                else
+                {
+                    newStatus = EscrowStatus.Partially_funded;
+                    agreementModel.Status = newStatus;
+                }
+
+                var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
+                if (saveResult == null)
+                {
+                    _logger.LogDebug("Concurrent modification during deposit for escrow {EscrowId}, retrying (attempt {Attempt})",
+                        body.EscrowId, attempt + 1);
+                    continue;
+                }
+
+                // Agreement saved successfully - now perform secondary operations
+                // Mark deposit token as used (deferred to after agreement save for atomicity)
+                if (agreementModel.TrustMode == EscrowTrustMode.Full_consent && !string.IsNullOrEmpty(body.DepositToken))
+                {
+                    var tokenHash = HashToken(body.DepositToken);
+                    var tokenKey = GetTokenKey(tokenHash);
+                    var tokenRecord = await TokenStore.GetAsync(tokenKey, cancellationToken);
+                    if (tokenRecord != null)
+                    {
+                        tokenRecord.Used = true;
+                        tokenRecord.UsedAt = now;
+                        await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
+                    }
+                }
+
+                if (previousStatus != newStatus)
+                {
+                    var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
+                    await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
+
+                    var newStatusKey = $"{GetStatusIndexKey(newStatus)}:{body.EscrowId}";
+                    var statusEntry = new StatusIndexEntry
+                    {
+                        EscrowId = body.EscrowId,
+                        Status = newStatus,
+                        ExpiresAt = agreementModel.ExpiresAt,
+                        AddedAt = now
+                    };
+                    await StatusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
+                }
+
+                // Build release tokens if fully funded
+                var releaseTokens = new List<PartyToken>();
+                if (fullyFunded)
+                {
+                    foreach (var p in agreementModel.Parties ?? new List<EscrowPartyModel>())
+                    {
+                        if (p.ReleaseToken != null)
+                        {
+                            releaseTokens.Add(new PartyToken
+                            {
+                                PartyId = p.PartyId,
+                                PartyType = p.PartyType,
+                                Token = p.ReleaseToken
+                            });
+                        }
+                    }
+                }
+
+                var response = new DepositResponse
+                {
+                    Escrow = MapToApiModel(agreementModel),
+                    Deposit = MapDepositToApiModel(depositModel),
+                    FullyFunded = fullyFunded,
+                    ReleaseTokens = releaseTokens
+                };
+
+                var idempotencyRecord = new IdempotencyRecord
+                {
+                    Key = body.IdempotencyKey,
+                    EscrowId = body.EscrowId,
+                    PartyId = body.PartyId,
+                    Operation = "Deposit",
+                    CreatedAt = now,
+                    ExpiresAt = now.AddHours(24),
+                    Result = response
+                };
+                await IdempotencyStore.SaveAsync(idempotencyKey, idempotencyRecord, cancellationToken: cancellationToken);
+
+                // Publish deposit received event
+                var depositEvent = new EscrowDepositReceivedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     EscrowId = body.EscrowId,
-                    TotalDeposits = agreementModel.Deposits?.Count ?? 0,
-                    FundedAt = now
+                    PartyId = body.PartyId,
+                    PartyType = body.PartyType,
+                    DepositId = depositId,
+                    AssetSummary = GenerateAssetSummary(assetModels),
+                    DepositsReceived = agreementModel.Deposits?.Count ?? 0,
+                    DepositsExpected = agreementModel.ExpectedDeposits?.Count ?? 0,
+                    FullyFunded = fullyFunded,
+                    DepositedAt = now
                 };
-                await _messageBus.TryPublishAsync(EscrowTopics.EscrowFunded, fundedEvent, cancellationToken);
+                await _messageBus.TryPublishAsync(EscrowTopics.EscrowDepositReceived, depositEvent, cancellationToken);
+
+                if (fullyFunded)
+                {
+                    var fundedEvent = new EscrowFundedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        EscrowId = body.EscrowId,
+                        TotalDeposits = agreementModel.Deposits?.Count ?? 0,
+                        FundedAt = now
+                    };
+                    await _messageBus.TryPublishAsync(EscrowTopics.EscrowFunded, fundedEvent, cancellationToken);
+                }
+
+                _logger.LogInformation(
+                    "Deposit {DepositId} received for escrow {EscrowId} from party {PartyId}, new status: {Status}",
+                    depositId, body.EscrowId, body.PartyId, newStatus);
+
+                return (StatusCodes.OK, response);
             }
 
-            _logger.LogInformation(
-                "Deposit {DepositId} received for escrow {EscrowId} from party {PartyId}, new status: {Status}",
-                depositId, body.EscrowId, body.PartyId, newStatus);
-
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Failed to deposit for escrow {EscrowId} after 3 attempts due to concurrent modifications",
+                body.EscrowId);
+            return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
         {

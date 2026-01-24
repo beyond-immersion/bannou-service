@@ -323,6 +323,91 @@ Client                    Asset Service                     MinIO Storage
 
 None identified.
 
+## Tenet Violations (Fix Immediately)
+
+1. **[IMPLEMENTATION]** T25: `MetabundleJob.ErrorCode` uses `string?` instead of `MetabundleErrorCode?` enum type. The field stores enum values via `.ToString()` conversion (e.g., `job.ErrorCode = MetabundleErrorCode.CANCELLED.ToString()`), violating the internal model type safety tenet which requires POCOs to use proper types, not string representations.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 3811
+   - **Also**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 2187
+   - **Also**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetServiceEvents.cs` lines 67, 117
+   - **Fix**: Change `public string? ErrorCode { get; set; }` to `public MetabundleErrorCode? ErrorCode { get; set; }` and remove all `.ToString()` calls when assigning to it.
+
+2. **[IMPLEMENTATION]** T25: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use `string?` instead of an enum type. These are internal models used only within the service where error codes are known constants (e.g., `"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`).
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/IAssetProcessor.cs` lines 133, 202
+   - **Fix**: Define a `ProcessingErrorCode` enum (or use the generated one) and change the `ErrorCode` property to the enum type.
+
+3. **[IMPLEMENTATION]** T25: `AssetProcessingContext.AssetId` is `string` instead of `Guid`. The property receives values via `job.AssetId.ToString()` at the call site, converting a Guid to string unnecessarily. Same issue with `AssetProcessingContext.RealmId` being `string?` instead of `Guid?`.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/IAssetProcessor.cs` lines 55, 87
+   - **Also called with ToString()**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/AssetProcessingWorker.cs` lines 424, 430
+   - **Fix**: Change `AssetId` to `Guid` and `RealmId` to `Guid?`, remove `.ToString()` calls at call sites.
+
+4. **[IMPLEMENTATION]** T25: `InternalAssetRecord.AssetId` is `string` instead of `Guid`. Asset IDs are GUIDs throughout the system but stored as strings in this internal model.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/InternalAssetRecord.cs` line 12
+   - **Fix**: Change to `public required Guid AssetId { get; init; }`.
+
+5. **[IMPLEMENTATION]** T25: `BundleMetadata.BundleId` and related models (`StoredBundleAssetEntry.AssetId`, `StoredSourceBundleReference.BundleId`, `BundleCreationJob.JobId`, `BundleCreationJob.BundleId`, `BundleUploadSession.UploadId`, `BundleUploadSession.BundleId`, `StoredBundleVersionRecord.BundleId`) all use `string` instead of `Guid` for ID fields that are always GUIDs.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/BundleModels.cs` lines 13, 202, 243, 309, 314, 396, 401, 454
+   - **Fix**: Change all ID fields that represent GUIDs to `Guid` type.
+
+6. **[IMPLEMENTATION]** T23: `await Task.CompletedTask` is used as a hack to make synchronous methods appear async. The methods should either be truly synchronous (remove `async` keyword, return `Task.FromResult`) or actually perform async work. Using `await Task.CompletedTask` wastes a state machine allocation for no benefit.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/TextureProcessor.cs` line 59
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/ModelProcessor.cs` line 74
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/AudioProcessor.cs` line 70
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Health/AssetHealthChecks.cs` line 35
+   - **Fix**: Per T23, `Task.FromResult` without `async` is also prohibited. These methods should use proper async operations or the interface should allow synchronous overloads. If no async work is needed, refactor to use `ValueTask` or make the interface support sync paths.
+
+7. **[IMPLEMENTATION]** T20: `using System.Text.Json` imported in `AssetService.cs` but no `JsonSerializer` calls found. The import is unused dead code. While the webhook models use `[JsonPropertyName]` attributes from this namespace, those are in a different file.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 20
+   - **Fix**: Remove the unused `using System.Text.Json;` import.
+
+8. **[QUALITY]** T19: `AssetUploadNotification` class properties lack XML documentation. The class has a summary but none of its 7 public properties have XML docs.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Webhooks/MinioWebhookHandler.cs` lines 314-320
+   - **Fix**: Add `<summary>` XML comments to all properties.
+
+9. **[QUALITY]** T19: `AssetProcessingJobEvent` class has most properties missing XML documentation (only `Owner` has a summary). 12 out of 13 public properties lack docs.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3693-3711
+   - **Fix**: Add `<summary>` XML comments to all properties.
+
+10. **[QUALITY]** T19: `AssetProcessingRetryEvent` class properties lack XML documentation entirely.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3719-3725
+    - **Fix**: Add `<summary>` XML comments to all properties.
+
+11. **[QUALITY]** T19: `BundleDownloadToken` internal class properties lack XML documentation.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3733-3737
+    - **Fix**: Add `<summary>` XML comments to all properties.
+
+12. **[QUALITY]** T19: `MetabundleJobResult` internal class properties lack XML documentation.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3841-3845
+    - **Fix**: Add `<summary>` XML comments to all properties.
+
+13. **[QUALITY]** T19: `SourceBundleReferenceInternal` internal class properties lack XML documentation.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3853-3856
+    - **Fix**: Add `<summary>` XML comments to all properties.
+
+14. **[QUALITY]** T19: `MetabundleJobQueuedEvent.RequesterSessionId` property lacks XML documentation on the property itself (only a comment about it being nullable exists in the summary).
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 3894
+    - Note: Other properties in this class do have proper docs.
+    - **Fix**: Add `<summary>` XML comment.
+
+15. **[IMPLEMENTATION]** T21: `AssetProcessingWorker` uses a hardcoded constant `private const string ASSET_PREFIX = "asset:"` instead of referencing the configuration's `AssetKeyPrefix` property.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/AssetProcessingWorker.cs` line 51
+    - **Fix**: Use `_configuration.AssetKeyPrefix` instead of the hardcoded constant.
+
+16. **[IMPLEMENTATION]** CLAUDE.md rule: `bundleEtag ?? string.Empty` is used in three places to pass a fallback value to `TrySaveAsync`. The `GetWithETagAsync` method returns `string?` for the ETag, and when the value is null it means the record was just fetched without an ETag (which should not happen for an existing record that was found). This silently passes an empty string as the ETag, which may bypass optimistic concurrency. This is not an external-service defensive coding pattern nor a compiler satisfaction pattern.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 2956, 3091, 3201
+    - **Fix**: If `bundleEtag` is null after a successful `GetWithETagAsync`, this is an internal error and should throw (the record was found, so an ETag should exist). Use `bundleEtag ?? throw new InvalidOperationException("Expected ETag from state store")`.
+
+17. **[QUALITY]** T19: `MinioWebhookHandler` constructor parameters lack XML documentation (no `<param>` tags).
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Webhooks/MinioWebhookHandler.cs` lines 24-28
+    - **Fix**: Add a `<summary>` with `<param>` tags to the constructor.
+
+18. **[QUALITY]** T19: `UploadSession` model uses `= string.Empty` initializers on `Filename`, `ContentType`, `Owner`, and `StorageKey` properties, which makes them technically non-nullable but effectively unvalidated. These are `set` properties without `required`, meaning they can silently be left as empty strings. This does not match the documented external-service defensive pattern.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/UploadSession.cs` lines 17, 27, 39, 44
+    - **Fix**: Either make them `required` or validate at creation boundaries.
+
+19. **[IMPLEMENTATION]** T25: `SourceBundleReferenceInternal.Version` and `SourceBundleReferenceInternal.ContentHash` use `= string.Empty` default, effectively making Guid/version fields string-typed when they should be more strongly typed. `Version` in particular could be a structured type.
+    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3854, 3856
+    - **Fix**: At minimum, use `required` keyword to prevent empty defaults from hiding missing data.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Dual S3 clients**: Both `IMinioClient` and `IAmazonS3` are registered because the MinIO .NET SDK has a bug where pre-signed PUT URLs include Content-Type in the signature, causing uploads with different Content-Type headers to fail with 403. The AWS SDK is used exclusively for pre-signed URL generation while MinIO SDK handles bucket operations. See: https://github.com/minio/minio-dotnet/issues/1150

@@ -183,6 +183,73 @@ None. The service is feature-complete for its scope.
 
 None identified.
 
+## Tenet Violations (Fix Immediately)
+
+1. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `ParticipationData` internal POCO uses `string` for fields that have proper C# types. `ParticipationId`, `CharacterId`, and `EventId` should be `Guid`; `EventCategory` should be `EventCategory` enum; `Role` should be `ParticipationRole` enum.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 877-889
+   - **What's wrong**: Internal model stores GUIDs and enums as strings, requiring `Guid.Parse()` and `Enum.Parse<T>()` on every read (lines 761-766) and `.ToString()` on every write (lines 124-129).
+   - **Fix**: Change `ParticipationId`, `CharacterId`, `EventId` to `Guid` type. Change `EventCategory` to `EventCategory` enum type. Change `Role` to `ParticipationRole` enum type. Remove all `Guid.Parse`/`Enum.Parse` from `MapToHistoricalParticipation` and all `.ToString()` from `RecordParticipationAsync`.
+
+2. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `BackstoryElementData` internal POCO uses `string` for `ElementType` field that has a proper `BackstoryElementType` C# enum.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 905-913
+   - **What's wrong**: `ElementType` stored as `string`, requiring `Enum.Parse<BackstoryElementType>` on every read (line 778) and `.ToString()` on every write (line 791). Also means `GenerateBackstorySummary` (line 800-814) pattern-matches on raw strings ("ORIGIN", "TRAUMA") instead of using enum values.
+   - **Fix**: Change `ElementType` to `BackstoryElementType` enum type. Update `GenerateBackstorySummary` switch to use enum cases (`BackstoryElementType.Origin =>` etc.). Remove `Enum.Parse` from `MapToBackstoryElement` and `.ToString()` from `MapToBackstoryElementData`.
+
+3. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `BackstoryData` internal POCO uses `string` for `CharacterId` which should be `Guid`.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, line 896
+   - **What's wrong**: `CharacterId` stored as `string` in the backstory model, requiring `.ToString()` conversions when setting and `Guid.Parse` implications in upstream code.
+   - **Fix**: Change `CharacterId` to `Guid` type.
+
+4. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `GenerateParticipationSummary` uses string comparison for enum values.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 819-830
+   - **What's wrong**: Pattern matches on raw strings ("LEADER", "COMBATANT", "VICTIM", etc.) instead of using `ParticipationRole` enum values. This is fragile and bypasses compile-time safety.
+   - **Fix**: Once `ParticipationData.Role` is typed as `ParticipationRole` enum (per violation #1), update the switch to use `ParticipationRole.Leader =>` etc.
+
+5. **[IMPLEMENTATION TENETS - T7 Error Handling]** All catch blocks catch only `Exception` without distinguishing `ApiException` from unexpected exceptions.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 160, 226, 290, 344, 406, 478, 549, 594, 653, 736
+   - **What's wrong**: T7 requires catching `ApiException` first (for expected API errors from downstream services) and then `Exception` (for unexpected failures). All methods use a single `catch (Exception ex)` block.
+   - **Fix**: Add `catch (ApiException ex)` before `catch (Exception ex)` in each try-catch. Log ApiException as `LogWarning` and propagate its status code. Reserve `LogError` and `TryPublishErrorAsync` for the unexpected `Exception` catch.
+
+6. **[FOUNDATION TENETS - T6 Service Implementation Pattern]** Constructor does not perform null-argument validation on injected dependencies.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 53-56
+   - **What's wrong**: The T6 pattern shows `_messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus))` for all constructor parameters. This service assigns directly without null checks: `_messageBus = messageBus;`, `_logger = logger;`, etc.
+   - **Fix**: Add `?? throw new ArgumentNullException(nameof(paramName))` for `messageBus`, `stateStoreFactory`, `logger`, `configuration`, and `ArgumentNullException.ThrowIfNull(eventConsumer)`.
+
+7. **[IMPLEMENTATION TENETS - T21 Configuration-First / No Dead Configuration]** `_configuration` field is assigned but never referenced in any method.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 26, 56
+   - **What's wrong**: The `CharacterHistoryServiceConfiguration` is injected and stored, but never used anywhere in the service. T21 states "Every defined config property MUST be referenced in service code" and unused config means dead config.
+   - **Fix**: Either remove `_configuration` from the constructor and field declaration (since the configuration class only has the framework `ForceServiceId` property which is handled by the framework), or if the field is needed for future use, document why.
+
+8. **[IMPLEMENTATION TENETS - T21 Configuration-First / No Dead Configuration]** `_stateStoreFactory` field is assigned but never referenced after construction.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 24, 54
+   - **What's wrong**: The `IStateStoreFactory` is stored as a field, but the constructor passes the `stateStoreFactory` parameter directly to the helper constructors. The `_stateStoreFactory` field is never read by any method.
+   - **Fix**: Remove the `_stateStoreFactory` field. Pass `stateStoreFactory` directly to helper constructors (which is already done) without storing it.
+
+9. **[QUALITY TENETS - T19 XML Documentation]** Internal data model properties lack XML documentation.
+   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 877-913
+   - **What's wrong**: All properties on `ParticipationData`, `BackstoryData`, and `BackstoryElementData` classes lack `<summary>` XML documentation. While these are `internal` classes, T19 says "all public classes, interfaces, methods, and properties" - these classes have public properties.
+   - **Fix**: Add `/// <summary>` documentation to each property on the three internal data model classes.
+
+10. **[QUALITY TENETS - T19 XML Documentation]** `MapToHistoricalParticipation`, `MapToBackstoryElement`, `MapToBackstoryElementData`, `GenerateBackstorySummary`, `GenerateParticipationSummary`, and `FormatValue` methods lack XML `<param>` and `<returns>` tags.
+    - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 757, 774, 787, 800, 817, 835
+    - **What's wrong**: These private methods have no XML documentation at all. While private methods are less critical, the public `RegisterServicePermissionsAsync` method (line 848) also lacks `<param>` and `<returns>` tags.
+    - **Fix**: Add `<param>` tag for `appId` parameter on `RegisterServicePermissionsAsync`.
+
+11. **[QUALITY TENETS - Duplicate Assembly Attributes]** `InternalsVisibleTo` attributes declared in both `CharacterHistoryService.cs` and `AssemblyInfo.cs`.
+    - **Files**: `plugins/lib-character-history/CharacterHistoryService.cs` lines 10-11; `plugins/lib-character-history/AssemblyInfo.cs` lines 5-6
+    - **What's wrong**: `[assembly: InternalsVisibleTo("lib-character-history.tests")]` and `[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]` are declared in both files. This causes potential CS0579 duplicate attribute warnings.
+    - **Fix**: Remove the `[assembly: InternalsVisibleTo(...)]` declarations from `CharacterHistoryService.cs` (lines 10-11) and the `using System.Runtime.CompilerServices;` import (line 8). Keep them only in `AssemblyInfo.cs`.
+
+12. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `Guid.Parse()` used in business logic for GUID fields that should be typed.
+    - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 337-338, 761-763, 782
+    - **What's wrong**: `Guid.Parse(data.CharacterId)`, `Guid.Parse(data.EventId)`, `Guid.Parse(data.ParticipationId)` are called in business logic mapping methods. T25 states "Enum parsing belongs only at system boundaries" - the same applies to GUID parsing. If the POCO fields were `Guid` type (per violation #1), these parse calls would not be needed.
+    - **Fix**: This is resolved by fixing violation #1 (changing POCO fields to `Guid` type).
+
+13. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `.ToString()` used to populate internal model fields with enum and GUID values.
+    - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 124-129, 152, 791
+    - **What's wrong**: `body.EventCategory.ToString()`, `body.Role.ToString()`, `participationId.ToString()`, `body.CharacterId.ToString()`, `body.EventId.ToString()`, and `element.ElementType.ToString()` are used to populate internal POCO string fields. T25 explicitly forbids "`.ToString()` populating internal model."
+    - **Fix**: This is resolved by fixing violations #1 and #2 (changing POCO fields to proper types and assigning directly).
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Backstory returns NotFound; GetLore (realm-history) returns empty list**: Unlike the parallel realm-history service which returns OK with empty elements, character-history returns NotFound for missing backstory. Different design decisions in similar services.
