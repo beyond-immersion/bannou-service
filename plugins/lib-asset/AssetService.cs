@@ -17,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using StorageModels = BeyondImmersion.BannouService.Storage;
 
 namespace BeyondImmersion.BannouService.Asset;
@@ -2184,7 +2183,7 @@ public partial class AssetService : IAssetService
             job.Status = InternalJobStatus.Cancelled;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
-            job.ErrorCode = MetabundleErrorCode.CANCELLED.ToString();
+            job.ErrorCode = MetabundleErrorCode.CANCELLED;
             job.ErrorMessage = "Job cancelled by user request";
             await jobStore.SaveAsync(jobKey, job,
                 new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
@@ -3806,9 +3805,9 @@ internal sealed class MetabundleJob
     public long? ProcessingTimeMs { get; set; }
 
     /// <summary>
-    /// Error code if job failed.
+    /// Error code if job failed. Uses MetabundleErrorCode enum per IMPLEMENTATION TENETS T25.
     /// </summary>
-    public string? ErrorCode { get; set; }
+    public MetabundleErrorCode? ErrorCode { get; set; }
 
     /// <summary>
     /// Error message if job failed.

@@ -207,74 +207,21 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ## Tenet Violations (Fix Immediately)
 
-1. [IMPLEMENTATION] **Null-forgiving operator (`!`) used in ParseMilestoneThresholds** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, line 117.
-   The code `.Select(v => v!.Value)` uses a null-forgiving operator. Although the preceding `.Where(v => v.HasValue)` guarantees non-null, CLAUDE.md explicitly prohibits `variable!` usage anywhere in Bannou code. Should be rewritten to avoid the `!` operator, e.g., by using `.Select(v => v.GetValueOrDefault())` or pattern matching with `OfType<int>()` after filtering.
+1. [IMPLEMENTATION] **`?? string.Empty` used without justification (CLAUDE.md violation)** -
+   File: `plugins/lib-analytics/AnalyticsService.cs`.
+   `summaryEtag ?? string.Empty` coerces a potentially null ETag to empty string. If the API requires non-null, add a comment per CLAUDE.md acceptable patterns explaining the compiler satisfaction case.
 
-2. [IMPLEMENTATION] **Missing null checks in constructor (T6 violation)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, lines 87-95.
-   The constructor assigns all dependencies directly without null validation: `_messageBus = messageBus;`, `_stateStoreFactory = stateStoreFactory;`, etc. Per T6 (Service Implementation Pattern), all dependencies MUST use `?? throw new ArgumentNullException(nameof(...))` or `ArgumentNullException.ThrowIfNull(...)`. All 9 injected parameters lack null guards.
+2. [IMPLEMENTATION] **`string.Empty` default for internal POCO string fields (potential T25 boundary)** -
+   `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. While these are strings (not enums or GUIDs) so T25 is not strictly violated, the pattern silently allows empty-string entities which could mask bugs.
 
-3. [IMPLEMENTATION] **ApiException catches use LogError instead of LogWarning (T7 violation)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, lines 1277, 1369, 1480, 1567.
-   Per T7, `ApiException` is an expected API error and MUST be logged at Warning level. The code uses `_logger.LogError(ex, "Failed to resolve game service...")` for all ApiException catches. Should use `_logger.LogWarning`. Additionally, these emit error events via `TryPublishErrorAsync` which is incorrect for expected API failures per T7 ("Do NOT emit for: Not found (404)").
+3. [IMPLEMENTATION] **Local `Dictionary<string, SkillRatingData>` in UpdateSkillRatingAsync (T9 consideration)** -
+   `var currentRatings = new Dictionary<string, SkillRatingData>();` uses a plain `Dictionary` rather than `ConcurrentDictionary`. While this dictionary is method-local and protected by the distributed lock (making concurrent access unlikely within a single request), T9 explicitly states "Use ConcurrentDictionary for local caches, never plain Dictionary."
 
-4. [IMPLEMENTATION] **Hardcoded tunables in Glicko-2 clamping (T21 violation)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, line 1030.
-   `Math.Clamp(newRating, 100, 4000)` uses hardcoded min/max rating bounds. Line 1031: `Math.Clamp(newRD, 30, maxDeviation)` uses a hardcoded minimum RD of 30. Per T21, all tunable values (limits, thresholds, capacities) MUST be configuration properties. Should be `_configuration.Glicko2MinRating`, `_configuration.Glicko2MaxRating`, and `_configuration.Glicko2MinDeviation`.
+4. [QUALITY] **Operation-entry logging at Information level for high-throughput endpoints (T10 concern)** -
+   Per T10, "Operation Entry" should be logged at Debug level. The service logs at Information for every `IngestEvent`, `IngestEventBatch`, etc. For a high-throughput ingestion service, logging every single event at Information creates excessive log volume.
 
-5. [IMPLEMENTATION] **Hardcoded cleanup sub-batch size (T21 violation)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, line 929.
-   `Math.Min(100, ...)` uses a hardcoded value of 100 for the per-iteration delete batch limit during cleanup. Per T21, this tunable should be a configuration property (e.g., `ControllerHistoryCleanupSubBatchSize`).
+5. [QUALITY] **Validation failures logged at LogWarning but are not security events (T10 nuance)** -
+   Validation failures (invalid limit, offset, minEvents, sortBy, time range) are logged at Warning. Per T10, expected outcomes like validation failures should be logged at Debug level. Warning is reserved for security events.
 
-6. [IMPLEMENTATION] **Hardcoded MaxVolatilityIterations constant (T21 violation)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, line 67.
-   `private const int MaxVolatilityIterations = 100;` is a hardcoded tunable controlling convergence. Per T21, any numeric literal representing a limit must be a configuration property. Should be `_configuration.Glicko2MaxVolatilityIterations`.
-
-7. [QUALITY] **Unused `using System.Text.Json` import** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, line 17.
-   The `System.Text.Json` namespace is imported but `JsonSerializer`, `JsonDocument`, `JsonElement`, and `JsonValueKind` are never used anywhere in the file. This import should be removed. If it were used for direct serialization, it would also violate T20 (BannouJson only).
-
-8. [IMPLEMENTATION] **`?? string.Empty` used without justification (CLAUDE.md violation)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, line 1942.
-   `summaryEtag ?? string.Empty` coerces a potentially null ETag to empty string. The `summaryEtag` variable comes from `GetWithETagAsync` where a null ETag indicates a new entity (no prior version). The `TrySaveAsync` API should receive the actual null to indicate "create if not exists" vs the empty string which may have different semantics. If the API requires non-null, add a comment per CLAUDE.md acceptable patterns explaining the compiler satisfaction case.
-
-9. [IMPLEMENTATION] **`string.Empty` default for internal POCO string fields (potential T25 boundary)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`, lines 2113, 2135, 2162.
-   `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. While these are strings (not enums or GUIDs) so T25 is not strictly violated, the pattern silently allows empty-string entities which could mask bugs. Consider whether these should throw on empty/null assignment rather than defaulting to empty.
-
-10. [IMPLEMENTATION] **Local `Dictionary<string, SkillRatingData>` in UpdateSkillRatingAsync (T9 consideration)** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, line 565.
-    `var currentRatings = new Dictionary<string, SkillRatingData>();` uses a plain `Dictionary` rather than `ConcurrentDictionary`. Per T9, local caches should use `ConcurrentDictionary` for thread safety. While this dictionary is method-local and protected by the distributed lock (making concurrent access unlikely within a single request), T9 explicitly states "Use ConcurrentDictionary for local caches, never plain Dictionary." The same applies to line 1860 `var eventsByEntity = new Dictionary<...>()`.
-
-11. [QUALITY] **Operation-entry logging at Information level for high-throughput endpoints (T10 concern)** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, lines 149, 200, 280, 327, 471, 535, 692, 739, 870.
-    Per T10, "Operation Entry" should be logged at Debug level. The service logs at Information for every `IngestEvent`, `IngestEventBatch`, `GetEntitySummary`, `QueryEntitySummaries`, `GetSkillRating`, `UpdateSkillRating`, `RecordControllerEvent`, `QueryControllerHistory`, and `CleanupControllerHistory`. For a high-throughput ingestion service, logging every single event at Information creates excessive log volume. These should be `LogDebug` per T10 guidelines.
-
-12. [QUALITY] **Validation failures logged at LogWarning but are not security events (T10 nuance)** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, lines 333, 339, 345, 357, 745, 751.
-    Validation failures (invalid limit, offset, minEvents, sortBy, time range) are logged at Warning. Per T10, expected outcomes like validation failures should be logged at Debug level. Warning is reserved for "Security Events: Auth failures, permission denials." Input validation errors are expected business logic, not security concerns.
-
-13. [QUALITY] **Missing XML `<returns>` documentation on private helper methods** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, lines 1141, 1151, 1161, 1206, 1307, 1399, 1417, 1428, 1515, 1597, 1676, 1812.
-    Per T19, methods with return values should have `<returns>` documentation. Several private helpers (`BuildResolutionCacheOptions`, `BuildSessionMappingCacheOptions`, `EnsureSummaryStoreRedisAsync`, `ResolveGameServiceIdAsync`, `ResolveGameServiceIdForSessionAsync`, `ResolveGameServiceIdForRealmAsync`, `ResolveGameServiceIdForCharacterAsync`, `BufferAnalyticsEventAsync`, `FlushBufferedEventsIfNeededAsync`) have `<summary>` but lack `<returns>` tags. T19 says "All public classes, interfaces, methods" but private helpers with XML docs should still be complete.
-
-14. [QUALITY] **Missing XML `<param>` tags on constructor** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, lines 75-85.
-    The constructor has a `<summary>` (line 73) but no `<param>` tags for its 10 parameters. Per T19, all method parameters should be documented with `<param>` tags.
-
-15. [QUALITY] **Missing XML documentation on `BuildResolutionCacheOptions` and `BuildSessionMappingCacheOptions`** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, lines 1141, 1151.
-    These methods have no `<summary>` XML documentation at all. Per T19, all methods should have summary documentation.
-
-16. [IMPLEMENTATION] **Error events emitted for "not found" resolution failures (T7 violation)** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, lines 1248-1258, 1344-1355, 1451-1462, 1538-1549.
-    When realm/character/game-service lookups return null (not found), the code logs at Error and publishes error events via `TryPublishErrorAsync`. Per T7, "Do NOT emit for: Not found (404) - expected when resources don't exist." A realm or character not being found is an expected condition (the entity may have been deleted), not an internal error. These should log at Warning and NOT emit error events.
-
-17. [FOUNDATION] **`_serviceScope?.Dispose()` in Plugin without using statement (T24 consideration)** -
-    File: `plugins/lib-analytics/AnalyticsServicePlugin.cs`, lines 74, 147.
-    The plugin uses manual `.Dispose()` calls on `_serviceScope`. Per T24, this is acceptable since the scope's lifetime extends beyond the method (class-owned resource disposed in shutdown). However, line 74 is in `OnStartAsync` on the error path -- if `_service` is null, the scope is disposed manually in a method context. This could use `using` pattern for the error path since ownership is not transferred.
-
-18. [IMPLEMENTATION] **Missing `ArgumentNullException.ThrowIfNull` for `eventConsumer` in constructor** -
-    File: `plugins/lib-analytics/AnalyticsService.cs`, line 100.
-    Per T6, the standard pattern requires `ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));` before calling `RegisterEventConsumers`. The code calls `RegisterEventConsumers(eventConsumer)` directly without null validation, which would throw a NullReferenceException instead of a clear ArgumentNullException if null were passed.
+6. [QUALITY] **Missing XML documentation on private helper methods and constructor parameters** -
+   Several private helpers lack `<returns>` tags, the constructor lacks `<param>` tags, and `BuildResolutionCacheOptions`/`BuildSessionMappingCacheOptions` lack `<summary>` documentation.

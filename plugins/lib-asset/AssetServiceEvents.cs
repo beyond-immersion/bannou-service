@@ -64,7 +64,7 @@ public partial class AssetService
             job.Status = InternalJobStatus.Failed;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
-            job.ErrorCode = MetabundleErrorCode.TIMEOUT.ToString();
+            job.ErrorCode = MetabundleErrorCode.TIMEOUT;
             job.ErrorMessage = "Job timed out before processing could start";
             await jobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
@@ -114,7 +114,7 @@ public partial class AssetService
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
-            job.ErrorCode = MetabundleErrorCode.INTERNAL_ERROR.ToString();
+            job.ErrorCode = MetabundleErrorCode.INTERNAL_ERROR;
             job.ErrorMessage = ex.Message;
             await jobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
