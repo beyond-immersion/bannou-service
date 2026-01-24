@@ -2712,7 +2712,7 @@ public class AssetServiceTests
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
             UpdatedAt = DateTimeOffset.UtcNow,
             CompletedAt = DateTimeOffset.UtcNow,
-            ErrorCode = "TIMEOUT",
+            ErrorCode = MetabundleErrorCode.TIMEOUT,
             ErrorMessage = "Job timed out before processing could start"
         };
 

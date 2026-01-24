@@ -2068,7 +2068,7 @@ public partial class AssetService : IAssetService
                 CreatedAt = job.CreatedAt,
                 UpdatedAt = job.UpdatedAt,
                 ProcessingTimeMs = job.ProcessingTimeMs,
-                ErrorCode = job.ErrorCode,
+                ErrorCode = job.ErrorCode?.ToString(),  // Convert enum to string for API response
                 ErrorMessage = job.ErrorMessage
             };
 

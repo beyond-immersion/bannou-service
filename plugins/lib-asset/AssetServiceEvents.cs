@@ -464,12 +464,8 @@ public partial class AssetService
             _ => MetabundleJobStatus.Failed
         };
 
-        // Map error code
-        MetabundleErrorCode? errorCode = null;
-        if (!string.IsNullOrEmpty(job.ErrorCode) && Enum.TryParse<MetabundleErrorCode>(job.ErrorCode, true, out var parsed))
-        {
-            errorCode = parsed;
-        }
+        // Error code is already typed per IMPLEMENTATION TENETS T25
+        var errorCode = job.ErrorCode;
 
         await _eventEmitter.EmitMetabundleCreationCompleteAsync(
             sessionId,

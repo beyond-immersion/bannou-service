@@ -325,63 +325,27 @@ None identified.
 
 ## Tenet Violations (Fix Immediately)
 
-1. **[IMPLEMENTATION]** T25: `MetabundleJob.ErrorCode` uses `string?` instead of `MetabundleErrorCode?` enum type. The field stores enum values via `.ToString()` conversion (e.g., `job.ErrorCode = MetabundleErrorCode.CANCELLED.ToString()`), violating the internal model type safety tenet which requires POCOs to use proper types, not string representations.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 3811
-   - **Also**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 2187
-   - **Also**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetServiceEvents.cs` lines 67, 117
-   - **Fix**: Change `public string? ErrorCode { get; set; }` to `public MetabundleErrorCode? ErrorCode { get; set; }` and remove all `.ToString()` calls when assigning to it.
-
-2. **[IMPLEMENTATION]** T25: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use `string?` instead of an enum type. These are internal models used only within the service where error codes are known constants (e.g., `"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`).
+1. **[IMPLEMENTATION]** T25: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use `string?` instead of an enum type. These are internal models used only within the service where error codes are known constants (e.g., `"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`).
    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/IAssetProcessor.cs` lines 133, 202
    - **Fix**: Define a `ProcessingErrorCode` enum (or use the generated one) and change the `ErrorCode` property to the enum type.
 
-3. **[IMPLEMENTATION]** T25: `AssetProcessingContext.AssetId` is `string` instead of `Guid`. The property receives values via `job.AssetId.ToString()` at the call site, converting a Guid to string unnecessarily. Same issue with `AssetProcessingContext.RealmId` being `string?` instead of `Guid?`.
+2. **[IMPLEMENTATION]** T25: `AssetProcessingContext.AssetId` is `string` instead of `Guid`. The property receives values via `job.AssetId.ToString()` at the call site, converting a Guid to string unnecessarily. Same issue with `AssetProcessingContext.RealmId` being `string?` instead of `Guid?`.
    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/IAssetProcessor.cs` lines 55, 87
-   - **Also called with ToString()**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/AssetProcessingWorker.cs` lines 424, 430
    - **Fix**: Change `AssetId` to `Guid` and `RealmId` to `Guid?`, remove `.ToString()` calls at call sites.
 
-4. **[IMPLEMENTATION]** T25: `InternalAssetRecord.AssetId` is `string` instead of `Guid`. Asset IDs are GUIDs throughout the system but stored as strings in this internal model.
+3. **[IMPLEMENTATION]** T25: `InternalAssetRecord.AssetId` is `string` instead of `Guid`. Asset IDs are GUIDs throughout the system but stored as strings in this internal model.
    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/InternalAssetRecord.cs` line 12
    - **Fix**: Change to `public required Guid AssetId { get; init; }`.
 
-5. **[IMPLEMENTATION]** T25: `BundleMetadata.BundleId` and related models (`StoredBundleAssetEntry.AssetId`, `StoredSourceBundleReference.BundleId`, `BundleCreationJob.JobId`, `BundleCreationJob.BundleId`, `BundleUploadSession.UploadId`, `BundleUploadSession.BundleId`, `StoredBundleVersionRecord.BundleId`) all use `string` instead of `Guid` for ID fields that are always GUIDs.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/BundleModels.cs` lines 13, 202, 243, 309, 314, 396, 401, 454
+4. **[IMPLEMENTATION]** T25: `BundleMetadata.BundleId` and related models (`StoredBundleAssetEntry.AssetId`, `StoredSourceBundleReference.BundleId`, `BundleCreationJob.JobId`, `BundleCreationJob.BundleId`, `BundleUploadSession.UploadId`, `BundleUploadSession.BundleId`, `StoredBundleVersionRecord.BundleId`) all use `string` instead of `Guid` for ID fields that are always GUIDs.
+   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/BundleModels.cs`
    - **Fix**: Change all ID fields that represent GUIDs to `Guid` type.
 
-6. **[IMPLEMENTATION]** T23: `await Task.CompletedTask` is used as a hack to make synchronous methods appear async. The methods should either be truly synchronous (remove `async` keyword, return `Task.FromResult`) or actually perform async work. Using `await Task.CompletedTask` wastes a state machine allocation for no benefit.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/TextureProcessor.cs` line 59
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/ModelProcessor.cs` line 74
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/AudioProcessor.cs` line 70
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Health/AssetHealthChecks.cs` line 35
-   - **Fix**: Per T23, `Task.FromResult` without `async` is also prohibited. These methods should use proper async operations or the interface should allow synchronous overloads. If no async work is needed, refactor to use `ValueTask` or make the interface support sync paths.
+5. **[IMPLEMENTATION]** T23: `await Task.CompletedTask` is used as a hack to make synchronous methods appear async. The methods should either be truly synchronous or actually perform async work. Using `await Task.CompletedTask` wastes a state machine allocation for no benefit.
+   - **Files**: `TextureProcessor.cs`, `ModelProcessor.cs`, `AudioProcessor.cs`, `AssetHealthChecks.cs`
+   - **Fix**: Refactor to use `ValueTask` or make the interface support sync paths.
 
-7. **[IMPLEMENTATION]** T20: `using System.Text.Json` imported in `AssetService.cs` but no `JsonSerializer` calls found. The import is unused dead code. While the webhook models use `[JsonPropertyName]` attributes from this namespace, those are in a different file.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 20
-   - **Fix**: Remove the unused `using System.Text.Json;` import.
-
-8. **[QUALITY]** T19: `AssetUploadNotification` class properties lack XML documentation. The class has a summary but none of its 7 public properties have XML docs.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Webhooks/MinioWebhookHandler.cs` lines 314-320
-   - **Fix**: Add `<summary>` XML comments to all properties.
-
-9. **[QUALITY]** T19: `AssetProcessingJobEvent` class has most properties missing XML documentation (only `Owner` has a summary). 12 out of 13 public properties lack docs.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3693-3711
-   - **Fix**: Add `<summary>` XML comments to all properties.
-
-10. **[QUALITY]** T19: `AssetProcessingRetryEvent` class properties lack XML documentation entirely.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3719-3725
-    - **Fix**: Add `<summary>` XML comments to all properties.
-
-11. **[QUALITY]** T19: `BundleDownloadToken` internal class properties lack XML documentation.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3733-3737
-    - **Fix**: Add `<summary>` XML comments to all properties.
-
-12. **[QUALITY]** T19: `MetabundleJobResult` internal class properties lack XML documentation.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3841-3845
-    - **Fix**: Add `<summary>` XML comments to all properties.
-
-13. **[QUALITY]** T19: `SourceBundleReferenceInternal` internal class properties lack XML documentation.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3853-3856
-    - **Fix**: Add `<summary>` XML comments to all properties.
+6. **[QUALITY]** T19: Multiple internal classes lack XML documentation on their properties: `AssetUploadNotification`, `AssetProcessingJobEvent`, `AssetProcessingRetryEvent`, `BundleDownloadToken`, `MetabundleJobResult`, `SourceBundleReferenceInternal`.
 
 14. **[QUALITY]** T19: `MetabundleJobQueuedEvent.RequesterSessionId` property lacks XML documentation on the property itself (only a comment about it being nullable exists in the summary).
     - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 3894
