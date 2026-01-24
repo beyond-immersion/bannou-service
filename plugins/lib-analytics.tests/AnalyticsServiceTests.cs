@@ -1,9 +1,11 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Analytics;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -29,6 +31,8 @@ public class AnalyticsServiceTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IGameServiceClient> _mockGameServiceClient;
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
+    private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<AnalyticsService>> _mockLogger;
     private readonly AnalyticsServiceConfiguration _configuration;
@@ -40,6 +44,8 @@ public class AnalyticsServiceTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockGameServiceClient = new Mock<IGameServiceClient>();
         _mockGameSessionClient = new Mock<IGameSessionClient>();
+        _mockRealmClient = new Mock<IRealmClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<AnalyticsService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -98,6 +104,8 @@ public class AnalyticsServiceTests
             _mockStateStoreFactory.Object,
             _mockGameServiceClient.Object,
             _mockGameSessionClient.Object,
+            _mockRealmClient.Object,
+            _mockCharacterClient.Object,
             _mockLockProvider.Object,
             _mockLogger.Object,
             _configuration,
