@@ -4660,6 +4660,16 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing QueryControllerHistoryResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AnalyticsProxy.CleanupControllerHistoryAsync(BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Cleanup expired controller history
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CleanupControllerHistoryResponse on success.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.AssetProxy">
             <summary>
             Typed proxy for Asset Service API API endpoints.
@@ -16383,6 +16393,41 @@
             Associated game session ID
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest">
+            <summary>
+            Request to cleanup expired controller history records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest.DryRun">
+            <summary>
+            Preview cleanup without deleting records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest.OlderThanDays">
+            <summary>
+            Override configured retention period (null uses ControllerHistoryRetentionDays config)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryRequest.GameServiceId">
+            <summary>
+            Limit cleanup to specific game service (null cleans all)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryResponse">
+            <summary>
+            Result of controller history cleanup
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryResponse.RecordsDeleted">
+            <summary>
+            Records deleted (or would be deleted if dry run)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.CleanupControllerHistoryResponse.DryRun">
+            <summary>
+            Whether this was a preview-only run
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetType">
             <summary>
             Type classification for assets
@@ -19612,7 +19657,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.CharacterEncounter.RefreshMemoryRequest.StrengthBoost">
             <summary>
-            Amount to boost memory strength (capped at 1.0)
+            Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if not provided.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.CharacterEncounter.DeleteEncounterRequest">
@@ -40141,6 +40186,11 @@
             Display name for the realm
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.Description">
             <summary>
             Description of the realm
@@ -40169,6 +40219,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.UpdateRealmRequest.RealmId">
             <summary>
             ID of the realm to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.UpdateRealmRequest.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.UpdateRealmRequest.Name">
@@ -40291,6 +40346,11 @@
             Display name for the realm
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.SeedRealm.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealm.Description">
             <summary>
             Detailed description of the realm and its characteristics
@@ -40329,6 +40389,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Name">
             <summary>
             Display name for the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Description">
@@ -57165,6 +57230,11 @@
             Display name of the realm
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.Description">
             <summary>
             Detailed description of the realm and its purpose
@@ -57233,6 +57303,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.Name">
             <summary>
             Display name of the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.Description">
@@ -57308,6 +57383,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.Name">
             <summary>
             Display name of the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.GameServiceId">
+            <summary>
+            ID of the game service this realm belongs to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.Description">

@@ -39,7 +39,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ACTOR_CONTROL_PLANE_APP_ID` | string | `bannou` | App-id of control plane for pool node registration. Pool nod... |
 | `ACTOR_DEFAULT_ACTORS_PER_NODE` | int | `100` | Default capacity per pool node |
 | `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | int | `60` | Default interval for periodic state saves (0 to disable) |
 | `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | int | `60` | Default expiration time in minutes for actor memories |
@@ -56,7 +55,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results returned per query |
 | `ACTOR_MAX_POOL_NODES` | int | `10` | Maximum pool nodes allowed (auto-scale mode) |
 | `ACTOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Maximum retry attempts for memory store operations |
-| `ACTOR_MESSAGE_QUEUE_SIZE` | int | `50` | Max messages queued per actor before dropping oldest |
 | `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
 | `ACTOR_OPERATION_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for individual actor operations |
 | `ACTOR_PERCEPTION_FILTER_THRESHOLD` | double | `0.1` | Minimum urgency for perception to be processed (0.0-1.0) |
@@ -72,12 +70,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
 | `ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS` | int | `100` | Interval in milliseconds for checking scheduled events |
 | `ACTOR_SHORT_TERM_MEMORY_MINUTES` | int | `5` | Expiration time in minutes for short-term memories from high... |
-| `ACTOR_STATE_UPDATE_TRANSPORT` | string | `messaging` | State update transport: messaging (default, works in bannou ... |
 
 ### Analytics
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | int | `5000` | Maximum records to delete per cleanup invocation |
+| `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | int | `90` | Days to retain controller history records (0 = indefinite re... |
 | `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds to flush event buffer |
 | `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | int | `10` | Base lock expiry time in seconds for event buffer flush oper... |
 | `ANALYTICS_EVENT_BUFFER_SIZE` | int | `1000` | Maximum events to buffer before flushing to storage |
@@ -86,7 +85,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ANALYTICS_GLICKO2_DEFAULT_VOLATILITY` | double | `0.06` | Default volatility for new entities (0.06 is standard) |
 | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | double | `0.5` | Glicko-2 system constant (tau) - controls volatility change ... |
 | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | double | `1e-06` | Convergence tolerance for Glicko-2 volatility iteration (sma... |
-| `ANALYTICS_SUMMARY_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached entity summaries |
+| `ANALYTICS_MILESTONE_THRESHOLDS` | string | `10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000` | Comma-separated list of score thresholds that trigger milest... |
+| `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | int | `30` | Lock expiry time in seconds for skill rating update operatio... |
+| `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for resolution caches (game service, realm, c... |
+| `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | int | `3600` | TTL in seconds for game session mappings (should exceed typi... |
 
 ### Asset
 
@@ -131,7 +133,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_MULTIPART_THRESHOLD_MB` | int | `50` | File size threshold for multipart uploads in megabytes |
 | `ASSET_PROCESSING_BATCH_INTERVAL_SECONDS` | int | `5` | Delay in seconds between batch processing attempts |
 | `ASSET_PROCESSING_JOB_MAX_WAIT_SECONDS` | int | `60` | Maximum seconds to wait for a synchronous processing job to ... |
-| `ASSET_PROCESSING_JOB_POLL_INTERVAL_SECONDS` | int | `2` | Interval in seconds to poll for job completion during synchr... |
 | `ASSET_PROCESSING_MAX_RETRIES` | int | `5` | Maximum retry attempts for asset processing |
 | `ASSET_PROCESSING_MODE` | string | `both` | Service mode |
 | `ASSET_PROCESSING_POOL_TYPE` | string | `asset-processor` | Processing pool identifier for orchestrator |
@@ -239,7 +240,6 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | int | `30` | Grace period in days before cleanup of dead character refere... |
 | `CHARACTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size when not specified |
-| `CHARACTER_LIST_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating character list state (o... |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
 | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating realm character index (... |
 | `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
@@ -261,6 +261,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | double | `0.1` | Memory strength below which encounters are considered forgot... |
 | `CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST` | double | `0.2` | Default memory strength boost when refreshing (0.0-1.0) |
 | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | bool | `true` | Automatically seed built-in encounter types on service start... |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE` | double | `0.1` | Default sentiment shift for memorable encounter outcomes |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_NEGATIVE` | double | `-0.2` | Default sentiment shift for negative encounter outcomes (sho... |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_POSITIVE` | double | `0.2` | Default sentiment shift for positive encounter outcomes |
+| `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE` | double | `0.3` | Default sentiment shift for transformative encounter outcome... |
 | `CHARACTER_ENCOUNTER_SERVER_SALT` | string | `bannou-dev-encounter-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 
 ### Character Personality
@@ -280,7 +284,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
 | `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
 | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
-| `CONNECT_CONNECTION_TIMEOUT_SECONDS` | int | `300` | WebSocket connection timeout in seconds |
 | `CONNECT_DEFAULT_SERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
 | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
@@ -298,7 +301,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_SERVER_SALT` | string | `bannou-dev-connect-salt-change-in-production` | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL for client reconnection. Defaults to wss://{BA... |
-| `CONNECT_WEBSOCKET_KEEP_ALIVE_INTERVAL_SECONDS` | int | `30` | Interval in seconds for WebSocket keep-alive ping/pong |
 
 ### Contract
 
@@ -429,7 +431,6 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS` | int | `60` | Default TTL for cached affordance query results |
 | `MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds after missed heartbeat before author... |
-| `MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended heartbeat interval for authorities (for client g... |
 | `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
 | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
 | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | int | `100` | Window in milliseconds for batching rapid updates into singl... |
@@ -506,7 +507,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for HTTP callback delivery (network f... |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
-| `MESSAGING_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for establishing RabbitMQ connection |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
 | `MESSAGING_DEFAULT_AUTO_ACK` | bool | `false` | Default auto-acknowledge setting for subscriptions |
 | `MESSAGING_DEFAULT_EXCHANGE` | string | `bannou` | Default exchange name for publishing |
@@ -521,7 +521,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RABBITMQ_PORT` | int | `5672` | RabbitMQ server port |
 | `MESSAGING_RABBITMQ_USERNAME` | string | `guest` (insecure) | RabbitMQ username |
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
-| `MESSAGING_REQUEST_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for individual message operations |
 | `MESSAGING_RETRY_BUFFER_ENABLED` | bool | `true` | Enable retry buffer for failed event publishes |
 | `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | int | `5` | Interval between retry attempts for buffered messages |
 | `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `300` | Maximum age of buffered messages before node crash (prevents... |
@@ -624,7 +623,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before circuit opens |
 | `SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS` | string | `image/jpeg,image/webp,image/png` | Comma-separated list of allowed thumbnail MIME types |
 | `SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES` | int | `262144` | Maximum thumbnail size in bytes (default 256KB) |
-| `SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES` | int | `60` | TTL for thumbnail pre-signed URLs |
 | `SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS` | int | `100` | Interval between upload batch processing cycles |
 | `SAVE_LOAD_UPLOAD_BATCH_SIZE` | int | `5` | Number of pending uploads to process per batch cycle |
 | `SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed uploads before giving up |
@@ -636,16 +634,12 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `SCENE_ASSET_BUCKET` | string | `scenes` | lib-asset bucket for storing scene documents |
 | `SCENE_ASSET_CONTENT_TYPE` | string | `application/x-bannou-scene+yaml` | Content type for scene assets (YAML format) |
-| `SCENE_CHECKOUT_EXPIRATION_CHECK_INTERVAL_SECONDS` | int | `60` | Interval for background checkout expiration detection |
-| `SCENE_CHECKOUT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Expected heartbeat interval for checkout locks |
 | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
 | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
-| `SCENE_DEFAULT_VERSION_RETENTION_COUNT` | int | `3` | Default number of versions to retain per scene |
 | `SCENE_MAX_CHECKOUT_EXTENSIONS` | int | `10` | Maximum number of times a checkout can be extended |
 | `SCENE_MAX_LIST_RESULTS` | int | `200` | Maximum results returned in a single list query |
 | `SCENE_MAX_NODE_COUNT` | int | `10000` | Maximum nodes allowed in a single scene |
 | `SCENE_MAX_REFERENCE_DEPTH_LIMIT` | int | `10` | Hard limit on reference depth that cannot be exceeded by req... |
-| `SCENE_MAX_SCENE_SIZE_BYTES` | int | `10485760` | Maximum scene document size in bytes (default 10MB) |
 | `SCENE_MAX_SEARCH_RESULTS` | int | `100` | Maximum results returned in a single search query |
 | `SCENE_MAX_TAGS_PER_NODE` | int | `20` | Maximum tags allowed per node |
 | `SCENE_MAX_TAGS_PER_SCENE` | int | `50` | Maximum tags allowed per scene |
@@ -662,7 +656,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
-| `STATE_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of connection retry attempts |
 | `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations |
 | `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
 | `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
@@ -699,9 +692,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 525
+- **Total properties**: 518
 - **Required (no default)**: 40
-- **Optional (has default)**: 485
+- **Optional (has default)**: 478
 
 ## Environment Variable Naming Convention
 

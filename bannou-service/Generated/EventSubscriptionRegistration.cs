@@ -46,6 +46,8 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<RealmParticipationRecordedEvent>("realm-history.participation.recorded");
         EventSubscriptionRegistry.Register<RealmLoreCreatedEvent>("realm-history.lore.created");
         EventSubscriptionRegistry.Register<RealmLoreUpdatedEvent>("realm-history.lore.updated");
+        EventSubscriptionRegistry.Register<CharacterUpdatedEvent>("character.updated");
+        EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
 
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");

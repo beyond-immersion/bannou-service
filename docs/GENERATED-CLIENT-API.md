@@ -12,7 +12,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Account Service API](#account) | `client.Account` | 16 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 15 | Distributed actor management and execution for NPC brains, e... |
-| [Bannou Analytics Service API](#analytics) | `client.Analytics` | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
+| [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 12 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
@@ -193,6 +193,7 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 |--------|---------|----------|---------|
 | `RecordcontrollereventEventAsync` | `RecordControllerEventRequest` | *(fire-and-forget)* | Record controller possession event |
 | `QuerycontrollerhistoryAsync` | `QueryControllerHistoryRequest` | `QueryControllerHistoryResponse` | Query controller history |
+| `CleanupcontrollerhistoryAsync` | `CleanupControllerHistoryRequest` | `CleanupControllerHistoryResponse` | Cleanup expired controller history |
 
 ### Event Ingestion
 
@@ -1656,7 +1657,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 40
-- **Total methods**: 533
+- **Total methods**: 534
 
 ---
 

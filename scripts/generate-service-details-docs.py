@@ -3,7 +3,9 @@
 Generate Service Details Documentation from API Schema Files.
 
 This script scans *-api.yaml schema files and generates a compact reference
-document with service descriptions and API endpoints for each service.
+document with service descriptions and endpoint counts. If a deep dive
+document exists (docs/plugins/{SERVICE}.md), its ## Overview section is
+used in place of the schema's one-line description.
 
 Output: docs/GENERATED-SERVICE-DETAILS.md
 
@@ -13,7 +15,6 @@ Usage:
 
 import sys
 from pathlib import Path
-from collections import defaultdict
 
 # Use ruamel.yaml to parse YAML files
 try:
@@ -36,11 +37,6 @@ def extract_service_name(filename: str) -> str:
     # auth-api.yaml -> auth
     name = filename.replace('-api.yaml', '')
     return name
-
-
-def get_method_badge(method: str) -> str:
-    """Get a compact method indicator."""
-    return method.upper()
 
 
 def scan_api_schemas(schemas_dir: Path) -> dict:
@@ -128,7 +124,42 @@ def scan_api_schemas(schemas_dir: Path) -> dict:
     return services
 
 
-def generate_markdown(services: dict) -> str:
+def extract_deep_dive_overview(docs_dir: Path, service_key: str) -> str:
+    """Extract the ## Overview section from a deep dive document if it exists."""
+    deep_dive_file = docs_dir / 'plugins' / (service_key.upper() + '.md')
+    if not deep_dive_file.exists():
+        return ''
+
+    try:
+        content = deep_dive_file.read_text()
+    except Exception:
+        return ''
+
+    # Find the ## Overview section
+    lines = content.split('\n')
+    in_overview = False
+    overview_lines = []
+
+    for line in lines:
+        if line.strip() == '## Overview':
+            in_overview = True
+            continue
+        if in_overview:
+            # Stop at next heading or horizontal rule
+            if line.startswith('## ') or line.strip() == '---':
+                break
+            overview_lines.append(line)
+
+    # Strip leading/trailing blank lines
+    while overview_lines and not overview_lines[0].strip():
+        overview_lines.pop(0)
+    while overview_lines and not overview_lines[-1].strip():
+        overview_lines.pop()
+
+    return '\n'.join(overview_lines)
+
+
+def generate_markdown(services: dict, docs_dir: Path) -> str:
     """Generate markdown documentation from services."""
     lines = [
         "# Generated Service Details Reference",
@@ -136,7 +167,7 @@ def generate_markdown(services: dict) -> str:
         "> **Source**: `schemas/*-api.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
-        "This document provides a compact reference of all Bannou services and their API endpoints.",
+        "This document provides a compact reference of all Bannou services.",
         "",
         "## Service Overview",
         "",
@@ -167,34 +198,14 @@ def generate_markdown(services: dict) -> str:
         lines.append(f"**Version**: {svc['version']} | **Schema**: `schemas/{svc['source_file']}` | **Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})")
         lines.append("")
 
-        if svc['description']:
+        # Use deep dive overview if available, otherwise fall back to schema description
+        overview = extract_deep_dive_overview(docs_dir, service_key)
+        if overview:
+            lines.append(overview)
+        elif svc['description']:
             lines.append(svc['description'])
-            lines.append("")
 
-        if svc['endpoints']:
-            # Group endpoints by tag
-            by_tag = defaultdict(list)
-            for ep in svc['endpoints']:
-                tag = ep['tags'][0] if ep['tags'] else 'Other'
-                by_tag[tag].append(ep)
-
-            for tag in sorted(by_tag.keys()):
-                eps = by_tag[tag]
-                lines.append(f"### {tag}")
-                lines.append("")
-                lines.append("| Method | Path | Summary | Access |")
-                lines.append("|--------|------|---------|--------|")
-
-                for ep in sorted(eps, key=lambda x: x['path']):
-                    deprecated_marker = " ⚠️" if ep['deprecated'] else ""
-                    roles_str = ', '.join(ep['roles']) if ep['roles'] else 'authenticated'
-                    lines.append(f"| `{ep['method']}` | `{ep['path']}` | {ep['summary']}{deprecated_marker} | {roles_str} |")
-
-                lines.append("")
-        else:
-            lines.append("*No endpoints defined*")
-            lines.append("")
-
+        lines.append("")
         lines.append("---")
         lines.append("")
 
@@ -218,6 +229,7 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     schemas_dir = repo_root / 'schemas'
+    docs_dir = repo_root / 'docs'
 
     # Scan API schemas
     services = scan_api_schemas(schemas_dir)
@@ -228,7 +240,7 @@ def main():
         print("Warning: No API schemas found")
 
     # Generate markdown
-    markdown = generate_markdown(services)
+    markdown = generate_markdown(services, docs_dir)
 
     # Write output
     output_file = repo_root / 'docs' / 'GENERATED-SERVICE-DETAILS.md'

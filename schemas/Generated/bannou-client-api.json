@@ -33691,6 +33691,7 @@
           "realmId",
           "code",
           "name",
+          "gameServiceId",
           "isActive",
           "isDeprecated",
           "createdAt",
@@ -33709,6 +33710,11 @@
           "name": {
             "type": "string",
             "description": "Display name for the realm"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the game service this realm belongs to"
           },
           "description": {
             "type": "string",

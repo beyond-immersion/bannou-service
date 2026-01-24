@@ -3,7 +3,7 @@
 > **Source**: `schemas/*-api.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
-This document provides a compact reference of all Bannou services and their API endpoints.
+This document provides a compact reference of all Bannou services.
 
 ## Service Overview
 
@@ -12,7 +12,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Account](#account) | 2.0.0 | 16 | Internal account management service (CRUD operations only, n... |
 | [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
-| [Analytics](#analytics) | 1.0.0 | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
+| [Analytics](#analytics) | 1.0.0 | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset](#asset) | 1.0.0 | 20 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 13 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
@@ -59,43 +59,7 @@ Tracks which ac... |
 
 **Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml` | **Deep Dive**: [docs/plugins/ACCOUNT.md](plugins/ACCOUNT.md)
 
-Internal account management service (CRUD operations only, never exposed to internet).
-
-### Account Lookup
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/account/by-email` | Get account by email | admin |
-| `POST` | `/account/by-provider` | Get account by external provider ID | admin |
-
-### Account Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/account/batch-get` | Get multiple accounts by ID | admin |
-| `POST` | `/account/count` | Count accounts matching filters | admin |
-| `POST` | `/account/create` | Create new account | admin |
-| `POST` | `/account/delete` | Delete account | admin |
-| `POST` | `/account/get` | Get account by ID | admin |
-| `POST` | `/account/list` | List accounts with filtering | admin |
-| `POST` | `/account/password/update` | Update account password hash | user |
-| `POST` | `/account/roles/bulk-update` | Bulk update roles for multiple accounts | admin |
-| `POST` | `/account/update` | Update account | admin |
-| `POST` | `/account/verification/update` | Update email verification status | user |
-
-### Authentication Methods
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/account/auth-methods/add` | Add authentication method to account | admin |
-| `POST` | `/account/auth-methods/list` | Get authentication methods for account | admin |
-| `POST` | `/account/auth-methods/remove` | Remove authentication method from account | admin |
-
-### Profile Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/account/profile/update` | Update account profile | user |
+The Account plugin is an internal-only CRUD service for managing user accounts. It is never exposed directly to the internet - all external account operations go through the Auth service, which calls Account via lib-mesh. The plugin handles account creation, lookup (by ID, email, or OAuth provider), updates, soft-deletion, and authentication method management (linking/unlinking OAuth providers).
 
 ---
 
@@ -103,33 +67,7 @@ Internal account management service (CRUD operations only, never exposed to inte
 
 **Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md)
 
-Achievement and trophy system with progress tracking and platform synchronization.
-
-### Definitions
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/achievement/definition/create` | Create a new achievement definition | developer |
-| `POST` | `/achievement/definition/delete` | Delete achievement definition | developer |
-| `POST` | `/achievement/definition/get` | Get achievement definition | authenticated |
-| `POST` | `/achievement/definition/list` | List achievement definitions | user |
-| `POST` | `/achievement/definition/update` | Update achievement definition | developer |
-
-### Platform Sync
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/achievement/platform/status` | Get platform sync status | authenticated |
-| `POST` | `/achievement/platform/sync` | Manually trigger platform sync | admin |
-
-### Progress
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/achievement/list-unlocked` | List unlocked achievements | user |
-| `POST` | `/achievement/progress/get` | Get entity's achievement progress | user |
-| `POST` | `/achievement/progress/update` | Update achievement progress | authenticated |
-| `POST` | `/achievement/unlock` | Directly unlock an achievement | authenticated |
+The Achievement plugin provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service that periodically recalculates rarity percentages.
 
 ---
 
@@ -137,29 +75,7 @@ Achievement and trophy system with progress tracking and platform synchronizatio
 
 **Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Deep Dive**: [docs/plugins/ACTOR.md](plugins/ACTOR.md)
 
-Distributed actor management and execution for NPC brains, event coordinators,
-and other long-running behavior loops. Actors output behavioral state (feelings,
-goals, memories) to characters - NOT ...
-
-### Other
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/actor/encounter/end` | End an active encounter | developer |
-| `POST` | `/actor/encounter/get` | Get the current encounter state for an actor | admin |
-| `POST` | `/actor/encounter/start` | Start an encounter managed by an Event Brain actor | developer |
-| `POST` | `/actor/encounter/update-phase` | Update the phase of an active encounter | developer |
-| `POST` | `/actor/get` | Get actor instance (instantiate-on-access if template allows) | admin |
-| `POST` | `/actor/inject-perception` | Inject a perception event into an actor's queue (testing) | developer |
-| `POST` | `/actor/list` | List actors with optional filters | admin |
-| `POST` | `/actor/query-options` | Query an actor for its available options | authenticated |
-| `POST` | `/actor/spawn` | Spawn a new actor from a template | developer |
-| `POST` | `/actor/stop` | Stop a running actor | developer |
-| `POST` | `/actor/template/create` | Create an actor template (category definition) | developer |
-| `POST` | `/actor/template/delete` | Delete an actor template | developer |
-| `POST` | `/actor/template/get` | Get an actor template by ID or category | admin |
-| `POST` | `/actor/template/list` | List all actor templates | admin |
-| `POST` | `/actor/template/update` | Update an actor template | developer |
+Distributed actor management and execution for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters - NOT directly visible to players. Features multiple deployment modes (local `bannou`, `pool-per-type`, `shared-pool`, `auto-scale`), ABML behavior document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, encounter management for Event Brain actors, and pool-based distributed execution with heartbeat monitoring. The runtime (ActorRunner) executes configurable tick-based behavior loops with periodic state persistence and character state publishing.
 
 ---
 
@@ -167,35 +83,7 @@ goals, memories) to characters - NOT ...
 
 **Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml` | **Deep Dive**: [docs/plugins/ANALYTICS.md](plugins/ANALYTICS.md)
 
-Event ingestion, entity statistics, skill ratings (Glicko-2), and controller history tracking.
-
-### Controller History
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/analytics/controller-history/query` | Query controller history | admin |
-| `POST` | `/analytics/controller-history/record` | Record controller possession event | authenticated |
-
-### Event Ingestion
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/analytics/event/ingest` | Ingest a single analytics event | authenticated |
-| `POST` | `/analytics/event/ingest-batch` | Ingest multiple analytics events | authenticated |
-
-### Skill Ratings
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/analytics/rating/get` | Get entity Glicko-2 skill rating | admin |
-| `POST` | `/analytics/rating/update` | Update entity skill rating after match | authenticated |
-
-### Statistics
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/analytics/summary/get` | Get entity statistics summary | admin |
-| `POST` | `/analytics/summary/query` | Query entity summaries with filters | admin |
+The Analytics plugin is the central event aggregation point for all game-related statistics. It handles event ingestion (buffered via Redis sorted sets), entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. It publishes score updates and milestone events that are consumed by the Achievement and Leaderboard services for downstream processing. It subscribes to game session lifecycle events and character/realm history events to automatically ingest analytics data, resolving game service context via cached realm/character lookups.
 
 ---
 
@@ -203,37 +91,7 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 
 **Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md)
 
-Asset management service for storage, versioning, and distribution of large binary assets.
-
-### Assets
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/assets/bulk-get` | Batch asset metadata lookup | user |
-| `POST` | `/assets/delete` | Delete an asset | admin |
-| `POST` | `/assets/get` | Get asset metadata and download URL | user |
-| `POST` | `/assets/list-versions` | List all versions of an asset | user |
-| `POST` | `/assets/search` | Search assets by tags, type, or realm | user |
-| `POST` | `/assets/upload/complete` | Mark upload as complete, trigger processing | user |
-| `POST` | `/assets/upload/request` | Request upload URL for a new asset | user |
-
-### Bundles
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/bundles/create` | Create asset bundle from multiple assets | user |
-| `POST` | `/bundles/delete` | Soft-delete a bundle | user |
-| `POST` | `/bundles/get` | Get bundle manifest and download URL | user |
-| `POST` | `/bundles/job/cancel` | Cancel an async metabundle job | user |
-| `POST` | `/bundles/job/status` | Get async metabundle job status | user |
-| `POST` | `/bundles/list-versions` | List version history for a bundle | user |
-| `POST` | `/bundles/metabundle/create` | Create metabundle from source bundles | user |
-| `POST` | `/bundles/query` | Query bundles with advanced filters | user |
-| `POST` | `/bundles/query/by-asset` | Find all bundles containing a specific asset | user |
-| `POST` | `/bundles/resolve` | Compute optimal bundles for requested assets | user |
-| `POST` | `/bundles/restore` | Restore a soft-deleted bundle | user |
-| `POST` | `/bundles/update` | Update bundle metadata | user |
-| `POST` | `/bundles/upload/request` | Request upload URL for a pre-made bundle | user |
+The Asset service provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. It never routes raw asset data through the WebSocket gateway; instead, it issues pre-signed URLs so clients upload/download directly to the storage backend. The service also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding and optimization.
 
 ---
 
@@ -241,50 +99,7 @@ Asset management service for storage, versioning, and distribution of large bina
 
 **Version**: 4.0.0 | **Schema**: `schemas/auth-api.yaml` | **Deep Dive**: [docs/plugins/AUTH.md](plugins/AUTH.md)
 
-Authentication and session management service (Internet-facing).
-
-### Authentication
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/auth/login` | Login with email/password | anonymous |
-| `POST` | `/auth/logout` | Logout and invalidate tokens | user |
-| `POST` | `/auth/providers` | List available authentication providers | anonymous |
-| `POST` | `/auth/register` | Register new user account | anonymous |
-
-### OAuth
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/auth/oauth/{provider}/callback` | Complete OAuth2 flow (browser redirect callback) | anonymous |
-| `GET` | `/auth/oauth/{provider}/init` | Initialize OAuth2 flow (browser redirect) | anonymous |
-
-### Password
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/auth/password/confirm` | Confirm password reset with token | anonymous |
-| `POST` | `/auth/password/reset` | Request password reset | anonymous |
-
-### Sessions
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/auth/sessions/list` | Get active sessions for account | user |
-| `POST` | `/auth/sessions/terminate` | Terminate specific session | user |
-
-### Steam
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/auth/steam/verify` | Verify Steam Session Ticket | anonymous |
-
-### Tokens
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/auth/refresh` | Refresh access token | user |
-| `POST` | `/auth/validate` | Validate access token | user |
+The Auth plugin is the internet-facing authentication and session management service. It handles email/password login, OAuth provider integration (Discord, Google, Twitch), Steam session ticket verification, JWT token generation/validation, password reset flows, and session lifecycle management. It is the primary gateway between external users and the internal service mesh - after authenticating, clients receive a JWT and a WebSocket connect URL to establish persistent connections.
 
 ---
 
@@ -292,33 +107,7 @@ Authentication and session management service (Internet-facing).
 
 **Version**: 3.0.0 | **Schema**: `schemas/behavior-api.yaml` | **Deep Dive**: [docs/plugins/BEHAVIOR.md](plugins/BEHAVIOR.md)
 
-Arcadia Behavior Markup Language (ABML) API for character behavior management.
-
-### ABML
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/compile` | Compile ABML behavior definition | developer |
-
-### Cache
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/cache/get` | Get cached compiled behavior | developer |
-| `POST` | `/cache/invalidate` | Invalidate cached behavior | developer |
-
-### GOAP
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/goap/plan` | Generate GOAP plan | developer |
-| `POST` | `/goap/validate-plan` | Validate existing GOAP plan | developer |
-
-### Validation
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/validate` | Validate ABML definition | developer |
+ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime for NPC behavior management. The plugin provides three core subsystems: (1) a multi-phase ABML compiler pipeline (YAML parse, semantic analysis, variable registration, flow compilation, bytecode emission) that produces stack-based bytecode for a custom instruction set with 50+ opcodes across 7 categories, (2) an A* GOAP planner with urgency-tiered search parameters (low/medium/high) producing action sequences from world state and goal conditions, and (3) a 5-stage cognition pipeline (attention filtering, significance assessment, memory formation, goal impact evaluation, intention formation) with keyword-based memory retrieval. Supports streaming composition via continuation points and extension attachment, variant-based model caching with fallback chains, and behavior bundling through the asset service. The compiler outputs portable bytecode interpreted by both server and client SDKs.
 
 ---
 
@@ -326,32 +115,7 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md)
 
-Character management service for Arcadia game world.
-
-### Character Compression
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character/check-references` | Check reference count for cleanup eligibility | admin |
-| `POST` | `/character/compress` | Compress a dead character to archive format | admin |
-| `POST` | `/character/get-archive` | Get compressed archive data for a character | user |
-
-### Character Lookup
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character/by-realm` | Get all characters in a realm (primary query pattern) | user |
-| `POST` | `/character/get-enriched` | Get character with optional related data (personality, backstory, family) | user |
-
-### Character Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character/create` | Create new character | admin |
-| `POST` | `/character/delete` | Delete character (permanent removal) | admin |
-| `POST` | `/character/get` | Get character by ID | user |
-| `POST` | `/character/list` | List characters with filtering | user |
-| `POST` | `/character/update` | Update character | admin |
+The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with optional cross-service data (personality, backstory, family tree), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility.
 
 ---
 
@@ -359,51 +123,7 @@ Character management service for Arcadia game world.
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
 
-Character encounter tracking service for memorable interactions between characters.
-
-### Admin
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-encounter/decay-memories` | Trigger memory decay (maintenance) | admin |
-| `POST` | `/character-encounter/delete` | Delete encounter and perspectives | admin |
-| `POST` | `/character-encounter/delete-by-character` | Delete all encounters for a character | admin |
-
-### Encounter Type Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-encounter/type/create` | Create new encounter type | admin |
-| `POST` | `/character-encounter/type/delete` | Delete encounter type | admin |
-| `POST` | `/character-encounter/type/get` | Get encounter type by code | user |
-| `POST` | `/character-encounter/type/list` | List all encounter types | user |
-| `POST` | `/character-encounter/type/seed` | Seed default encounter types | admin |
-| `POST` | `/character-encounter/type/update` | Update encounter type | admin |
-
-### Perspectives
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-encounter/get-perspective` | Get character's view of encounter | user |
-| `POST` | `/character-encounter/refresh-memory` | Strengthen memory (referenced) | authenticated |
-| `POST` | `/character-encounter/update-perspective` | Update perspective (reflection) | authenticated |
-
-### Queries
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-encounter/batch-get` | Bulk sentiment for multiple targets | authenticated |
-| `POST` | `/character-encounter/get-sentiment` | Aggregate sentiment toward another character | user |
-| `POST` | `/character-encounter/has-met` | Quick check if two characters have met | user |
-| `POST` | `/character-encounter/query/between` | Get encounters between two characters | user |
-| `POST` | `/character-encounter/query/by-character` | Get character's encounters (paginated) | user |
-| `POST` | `/character-encounter/query/by-location` | Recent encounters at location | user |
-
-### Recording
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-encounter/record` | Record new encounter with perspectives | authenticated |
+Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay applied lazily on access (not via background jobs), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
 
 ---
 
@@ -411,32 +131,7 @@ Character encounter tracking service for memorable interactions between characte
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-HISTORY.md](plugins/CHARACTER-HISTORY.md)
 
-Historical event participation and backstory management for characters.
-
-### Backstory
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-history/add-backstory-element` | Add a single backstory element | admin |
-| `POST` | `/character-history/delete-backstory` | Delete all backstory for a character | admin |
-| `POST` | `/character-history/get-backstory` | Get machine-readable backstory elements for behavior system | user |
-| `POST` | `/character-history/set-backstory` | Set backstory elements for a character | admin |
-
-### Historical Events
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-history/delete-participation` | Delete a participation record | admin |
-| `POST` | `/character-history/get-event-participants` | Get all characters who participated in a historical event | user |
-| `POST` | `/character-history/get-participation` | Get all historical events a character participated in | user |
-| `POST` | `/character-history/record-participation` | Record character participation in a historical event | authenticated |
-
-### History Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-history/delete-all` | Delete all history data for a character | admin |
-| `POST` | `/character-history/summarize` | Generate text summaries for character compression | authenticated |
+Historical event participation and backstory management for characters. Tracks when characters participate in world events (wars, disasters, political upheavals) with role and significance tracking, and maintains machine-readable backstory elements (origin, occupation, training, trauma, fears, goals) for behavior system consumption. Provides template-based text summarization for character compression. Uses helper abstractions (`IDualIndexHelper`, `IBackstoryStorageHelper`) for storage patterns shared with the realm-history service.
 
 ---
 
@@ -444,31 +139,7 @@ Historical event participation and backstory management for characters.
 
 **Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
 
-Machine-readable personality traits for NPC behavior decisions.
-
-### Combat Preferences
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-personality/delete-combat` | Delete combat preferences for a character | admin |
-| `POST` | `/character-personality/evolve-combat` | Record combat experience that may evolve preferences | authenticated |
-| `POST` | `/character-personality/get-combat` | Get combat preferences for a character | user |
-| `POST` | `/character-personality/set-combat` | Create or update combat preferences for a character | admin |
-
-### Personality Evolution
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-personality/evolve` | Record an experience that may evolve personality | authenticated |
-
-### Personality Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/character-personality/batch-get` | Get personalities for multiple characters | authenticated |
-| `POST` | `/character-personality/delete` | Delete personality for a character | admin |
-| `POST` | `/character-personality/get` | Get personality for a character | user |
-| `POST` | `/character-personality/set` | Create or update personality for a character | admin |
+Machine-readable personality traits and combat preferences for NPC behavior decisions. Features probabilistic personality evolution based on character experiences (trauma, victory, corruption, etc.) and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes (e.g., -1.0 pacifist to +1.0 confrontational) that shift probabilistically based on experience intensity. Used by the Actor service's behavior system for decision-making.
 
 ---
 
@@ -476,32 +147,7 @@ Machine-readable personality traits for NPC behavior decisions.
 
 **Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml` | **Deep Dive**: [docs/plugins/CONNECT.md](plugins/CONNECT.md)
 
-Real-time communication and WebSocket connection management for Bannou services.
-
-### Client Capabilities
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/client-capabilities` | Get client capability manifest (GUID → API mappings) | user |
-
-### Internal Proxy
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/internal/proxy` | Internal API proxy for stateless requests | authenticated |
-
-### Session Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/connect/get-account-sessions` | Get all active WebSocket sessions for an account | admin |
-
-### WebSocket Connection
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `GET` | `/connect` | Establish WebSocket connection | authenticated |
-| `POST` | `/connect` | Establish WebSocket connection (POST variant) | authenticated |
+WebSocket-first edge gateway service providing zero-copy binary message routing between game clients and backend Bannou services. Manages persistent WebSocket connections with a 31-byte binary protocol header for request routing and a 16-byte response header. Implements client-salted GUID generation (SHA256-based, version 5/6/7 UUIDs) to prevent cross-session security exploits. Supports three connection modes (external, relayed, internal) with per-mode behavior differences for broadcast, auth, and capability handling. Features session shortcuts (pre-bound payload routing for game-specific flows), reconnection windows with token-based session restoration, per-session RabbitMQ subscriptions for server-to-client event delivery, rate limiting, meta endpoint introspection, peer-to-peer client routing, broadcast messaging, internal proxy for stateless HTTP forwarding, and admin notification forwarding for service error events. Registered as Singleton lifetime (unusual for Bannou services) because it maintains in-memory WebSocket connection state across all requests.
 
 ---
 
@@ -509,82 +155,7 @@ Real-time communication and WebSocket connection management for Bannou services.
 
 **Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md)
 
-Binding agreements between entities with milestone-based progression.
-
-### Breaches
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/breach/cure` | Mark breach as cured (system/admin action) | developer |
-| `POST` | `/contract/breach/get` | Get breach details | user |
-| `POST` | `/contract/breach/report` | Report a contract breach | user |
-
-### ClauseTypes
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/clause-type/list` | List all registered clause types | developer |
-| `POST` | `/contract/clause-type/register` | Register a new clause type | admin |
-
-### Constraints
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/check-constraint` | Check if entity can take action given contracts | user |
-| `POST` | `/contract/query-active` | Query active contracts for entity | user |
-
-### Execution
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/instance/check-asset-requirements` | Check if asset requirement clauses are satisfied | developer |
-| `POST` | `/contract/instance/execute` | Execute all contract clauses (idempotent) | developer |
-| `POST` | `/contract/instance/set-template-values` | Set template values on contract instance | developer |
-
-### Guardian
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/lock` | Lock contract under guardian custody | developer |
-| `POST` | `/contract/transfer-party` | Transfer party role to new entity | developer |
-| `POST` | `/contract/unlock` | Unlock contract from guardian custody | developer |
-
-### Instances
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/instance/consent` | Party consents to contract | user |
-| `POST` | `/contract/instance/create` | Create contract instance from template | user |
-| `POST` | `/contract/instance/get` | Get instance by ID | user |
-| `POST` | `/contract/instance/get-status` | Get current status and milestone progress | user |
-| `POST` | `/contract/instance/propose` | Propose contract to parties (starts consent flow) | user |
-| `POST` | `/contract/instance/query` | Query instances by party, template, status | user |
-| `POST` | `/contract/instance/terminate` | Request early termination | user |
-
-### Metadata
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/metadata/get` | Get game metadata | user |
-| `POST` | `/contract/metadata/update` | Update game metadata on instance | developer |
-
-### Milestones
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/milestone/complete` | External system reports milestone completed | developer |
-| `POST` | `/contract/milestone/fail` | External system reports milestone failed | developer |
-| `POST` | `/contract/milestone/get` | Get milestone details and status | user |
-
-### Templates
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/contract/template/create` | Create a contract template | admin |
-| `POST` | `/contract/template/delete` | Soft-delete template | admin |
-| `POST` | `/contract/template/get` | Get template by ID or code | user |
-| `POST` | `/contract/template/list` | List templates with filters | user |
-| `POST` | `/contract/template/update` | Update template (not instances) | admin |
+Binding agreement management between entities with milestone-based progression, consent flows, prebound API execution, breach handling, guardian custody, and clause-type extensibility. Contracts follow a reactive design principle: external systems tell contracts when conditions are met or failed via API calls; contracts store state, emit events, and execute prebound APIs on state transitions. Templates define the structure (party roles, milestones, terms, enforcement mode), and instances are created from templates with merged terms, party consent tracking, and sequential milestone progression. Integrates with lib-escrow for asset-backed contracts through the guardian locking system, template value substitution, and clause execution. Supports four enforcement modes (advisory, event_only, consequence_based, community), configurable consent deadlines with lazy expiration, ISO 8601 duration-based cure periods for breaches, and batched prebound API execution with configurable parallelism and timeouts.
 
 ---
 
@@ -592,79 +163,7 @@ Binding agreements between entities with milestone-based progression.
 
 **Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md)
 
-Multi-currency management service for game economies.
-
-### Analytics
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/stats/global-supply` | Get global supply statistics for a currency | user |
-| `POST` | `/currency/stats/wallet-distribution` | Get wealth distribution statistics | admin |
-
-### Authorization Hold
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/hold/capture` | Capture held funds (debit final amount) | developer |
-| `POST` | `/currency/hold/create` | Create an authorization hold (reserve funds) | developer |
-| `POST` | `/currency/hold/get` | Get hold status and details | developer |
-| `POST` | `/currency/hold/release` | Release held funds (make available again) | developer |
-
-### Balance
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/balance/batch-get` | Get multiple balances in one call | user |
-| `POST` | `/currency/balance/get` | Get balance for a specific currency in a wallet | user |
-| `POST` | `/currency/batch-credit` | Credit multiple wallets in one call | developer |
-| `POST` | `/currency/credit` | Credit currency to a wallet (faucet operation) | developer |
-| `POST` | `/currency/debit` | Debit currency from a wallet (sink operation) | developer |
-| `POST` | `/currency/transfer` | Transfer currency between wallets | developer |
-
-### Conversion
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/convert/calculate` | Calculate conversion without executing | user |
-| `POST` | `/currency/convert/execute` | Execute currency conversion in a wallet | developer |
-| `POST` | `/currency/exchange-rate/get` | Get exchange rate between two currencies | user |
-| `POST` | `/currency/exchange-rate/update` | Update a currency's exchange rate to base | admin |
-
-### Currency Definition
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/definition/create` | Create a new currency definition | admin |
-| `POST` | `/currency/definition/get` | Get currency definition by ID or code | user |
-| `POST` | `/currency/definition/list` | List currency definitions with filters | user |
-| `POST` | `/currency/definition/update` | Update mutable fields of a currency definition | admin |
-
-### Escrow Integration
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/escrow/deposit` | Debit wallet for escrow deposit | developer |
-| `POST` | `/currency/escrow/refund` | Credit depositor on escrow refund | developer |
-| `POST` | `/currency/escrow/release` | Credit recipient on escrow completion | developer |
-
-### Transaction History
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/transaction/by-reference` | Get transactions by reference type and ID | developer |
-| `POST` | `/currency/transaction/get` | Get a transaction by ID | developer |
-| `POST` | `/currency/transaction/history` | Get paginated transaction history for a wallet | user |
-
-### Wallet
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/currency/wallet/close` | Permanently close a wallet | admin |
-| `POST` | `/currency/wallet/create` | Create a new wallet for an owner | developer |
-| `POST` | `/currency/wallet/freeze` | Freeze a wallet to prevent transactions | admin |
-| `POST` | `/currency/wallet/get` | Get wallet by ID or owner | user |
-| `POST` | `/currency/wallet/get-or-create` | Get existing wallet or create if not exists | developer |
-| `POST` | `/currency/wallet/unfreeze` | Unfreeze a frozen wallet | admin |
+Multi-currency management service for game economies. Handles the full lifecycle of currency definitions (CRUD with scope/realm restrictions, precision, caps, autogain, expiration, item linkage, exchange rates), wallet management (create, get-or-create, freeze, unfreeze, close with balance transfer), balance operations (credit with earn/wallet cap enforcement, debit with negative-balance control, transfer with deterministic deadlock-free locking, batch credit), authorization holds (reserve/capture/release pattern for pre-auth scenarios), currency conversion via exchange-rate-to-base pivot, escrow integration (deposit/release/refund as thin wrappers around debit/credit with earn-cap bypass), transaction history with retention enforcement, and analytics stubs (global supply, wealth distribution). Features idempotency-key deduplication on all mutating balance operations, Redis cache layers for balances and holds, and a configurable CurrencyAutogainTaskService background worker that proactively applies passive income to all eligible wallets. The service uses distributed locks throughout for multi-instance safety and ETag-based optimistic concurrency for wallet/hold state transitions.
 
 ---
 
@@ -672,66 +171,7 @@ Multi-currency management service for game economies.
 
 **Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md)
 
-Knowledge base API for AI agents to query documentation.
-Designed for SignalWire SWAIG, OpenAI function calling, and Claude tool use.
-All endpoints return voice-friendly summaries alongside detaile...
-
-### Admin
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/documentation/bulk-delete` | Bulk soft-delete documents to trashcan | admin |
-| `POST` | `/documentation/bulk-update` | Bulk update document metadata | admin |
-| `POST` | `/documentation/create` | Create new documentation entry | admin |
-| `POST` | `/documentation/delete` | Soft-delete documentation entry to trashcan | admin |
-| `POST` | `/documentation/import` | Bulk import documentation from structured source | admin |
-| `POST` | `/documentation/purge` | Permanently delete trashcan items | admin |
-| `POST` | `/documentation/recover` | Recover document from trashcan | admin |
-| `POST` | `/documentation/stats` | Get namespace documentation statistics | admin |
-| `POST` | `/documentation/trashcan` | List documents in the trashcan | admin |
-| `POST` | `/documentation/update` | Update existing documentation entry | admin |
-
-### Archive
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/documentation/repo/archive/create` | Create documentation archive | developer |
-| `POST` | `/documentation/repo/archive/delete` | Delete documentation archive | admin |
-| `POST` | `/documentation/repo/archive/list` | List documentation archives | developer |
-| `POST` | `/documentation/repo/archive/restore` | Restore documentation from archive | admin |
-
-### Browser
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `GET` | `/documentation/raw/{slug}` | Get raw markdown content | authenticated |
-| `GET` | `/documentation/view/{slug}` | View documentation page in browser | authenticated |
-
-### Documents
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/documentation/get` | Get specific document by ID or slug | anonymous |
-| `POST` | `/documentation/list` | List documents by category | anonymous |
-
-### Repository
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/documentation/repo/bind` | Bind a git repository to a documentation namespace | developer |
-| `POST` | `/documentation/repo/list` | List all repository bindings | developer |
-| `POST` | `/documentation/repo/status` | Get repository binding status | developer |
-| `POST` | `/documentation/repo/sync` | Manually trigger repository sync | developer |
-| `POST` | `/documentation/repo/unbind` | Remove repository binding from namespace | admin |
-| `POST` | `/documentation/repo/update` | Update repository binding configuration | developer |
-
-### Search
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/documentation/query` | Natural language documentation search | anonymous |
-| `POST` | `/documentation/search` | Full-text keyword search | anonymous |
-| `POST` | `/documentation/suggest` | Get related topics and follow-up suggestions | anonymous |
+Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD operations and automated git repository synchronization. Features a trashcan (soft-delete with TTL-based expiration), namespace-scoped search indexes (dual implementation: Redis Search FT.* when available, in-memory ConcurrentDictionary fallback), YAML frontmatter parsing for git-synced content, archive creation via Asset Service bundle uploads, and browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle startup index rebuilding and periodic repository sync scheduling. All mutations to repository-bound namespaces are rejected (403 Forbidden) unless the binding is disabled, enforcing git as the single source of truth for bound namespaces.
 
 ---
 
@@ -739,67 +179,7 @@ All endpoints return voice-friendly summaries alongside detaile...
 
 **Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Deep Dive**: [docs/plugins/ESCROW.md](plugins/ESCROW.md)
 
-Full-custody orchestration layer for multi-party asset exchanges.
-
-### Arbiter
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/resolve` | Arbiter resolves disputed escrow | developer |
-
-### Completion
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/cancel` | Cancel escrow before fully funded | developer |
-| `POST` | `/escrow/dispute` | Raise a dispute on funded escrow | user |
-| `POST` | `/escrow/refund` | Trigger refund | developer |
-| `POST` | `/escrow/release` | Trigger release | developer |
-
-### Condition
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/verify-condition` | Verify condition for conditional escrow | developer |
-
-### Consent
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/consent` | Record party consent | user |
-| `POST` | `/escrow/consent/status` | Get consent status for escrow | user |
-
-### Deposits
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/deposit` | Deposit assets into escrow | user |
-| `POST` | `/escrow/deposit/status` | Get deposit status for a party | user |
-| `POST` | `/escrow/deposit/validate` | Validate a deposit without executing | user |
-
-### Handlers
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/handler/deregister` | Remove a custom asset handler registration | admin |
-| `POST` | `/escrow/handler/list` | List registered asset handlers | admin |
-| `POST` | `/escrow/handler/register` | Register a custom asset type handler | admin |
-
-### Lifecycle
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/create` | Create a new escrow agreement | developer |
-| `POST` | `/escrow/get` | Get escrow details | user |
-| `POST` | `/escrow/get-my-token` | Get deposit or release token for a party | authenticated |
-| `POST` | `/escrow/list` | List escrows for a party | user |
-
-### Validation
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/escrow/reaffirm` | Re-affirm after validation failure | user |
-| `POST` | `/escrow/validate` | Manually trigger validation | admin |
+Full-custody orchestration layer for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes (full-consent requiring cryptographic tokens, initiator-trusted, single-party-trusted). Features a 13-state finite state machine, SHA-256-based token generation for deposit and release authorization, idempotent deposit handling, contract-bound conditional releases, per-party pending count tracking, custom asset type handler registration for extensibility, periodic validation with reaffirmation flow, and arbiter-mediated dispute resolution with split allocation support. Handles currency, items, item stacks, contracts, and custom asset types. Does NOT perform actual asset transfers itself - publishes events that downstream services (lib-currency, lib-inventory, lib-contract) consume to execute the physical movements.
 
 ---
 
@@ -807,18 +187,7 @@ Full-custody orchestration layer for multi-party asset exchanges.
 
 **Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml` | **Deep Dive**: [docs/plugins/GAME-SERVICE.md](plugins/GAME-SERVICE.md)
 
-Registry service for game services that users can subscribe to.
-Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
-
-### Game Service Registry
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/game-service/services/create` | Create a new game service entry | admin |
-| `POST` | `/game-service/services/delete` | Delete a game service entry | admin |
-| `POST` | `/game-service/services/get` | Get service by ID or stub name | user |
-| `POST` | `/game-service/services/list` | List all registered game services | user |
-| `POST` | `/game-service/services/update` | Update a game service entry | admin |
+The Game Service is a minimal registry that maintains a catalog of available games/applications (e.g., Arcadia, Fantasia) that users can subscribe to. It provides simple CRUD operations for managing service definitions, with stub-name-based lookup for human-friendly identifiers. Internal-only, never internet-facing.
 
 ---
 
@@ -826,38 +195,7 @@ Provides a minimal registry of available services (games/applications) like Arca
 
 **Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Deep Dive**: [docs/plugins/GAME-SESSION.md](plugins/GAME-SESSION.md)
 
-Minimal game session management for Arcadia and other games.
-
-### Game Actions
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/sessions/actions` | Perform game action (enhanced permissions after joining) | user |
-
-### Game Chat
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/sessions/chat` | Send chat message to game session | user |
-
-### Game Sessions
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/sessions/create` | Create new game session | authenticated |
-| `POST` | `/sessions/get` | Get game session details | user |
-| `POST` | `/sessions/join` | Join a game session | authenticated |
-| `POST` | `/sessions/join-session` | Join a specific game session by ID | authenticated |
-| `POST` | `/sessions/kick` | Kick player from game session (admin only) | admin |
-| `POST` | `/sessions/leave` | Leave a game session | user |
-| `POST` | `/sessions/leave-session` | Leave a specific game session by ID | user |
-| `POST` | `/sessions/list` | List available game sessions | admin |
-
-### Internal
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/sessions/publish-join-shortcut` | Publish join shortcut for matchmade session | authenticated |
+Hybrid lobby/matchmade game session management with subscription-driven shortcut publishing, voice integration, and real-time chat. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission service for `in_game` state tracking, Voice service for room lifecycle, and Subscription service for account eligibility. Features distributed subscriber session tracking via ETag-based optimistic concurrency, and publishes WebSocket shortcuts to connected clients enabling one-click game join.
 
 ---
 
@@ -865,38 +203,7 @@ Minimal game session management for Arcadia and other games.
 
 **Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml` | **Deep Dive**: [docs/plugins/INVENTORY.md](plugins/INVENTORY.md)
 
-Container and inventory management service for games.
-
-### Container
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/inventory/container/create` | Create a new container | developer |
-| `POST` | `/inventory/container/delete` | Delete container | admin |
-| `POST` | `/inventory/container/get` | Get container with contents | user |
-| `POST` | `/inventory/container/get-or-create` | Get container or create if not exists | developer |
-| `POST` | `/inventory/container/list` | List containers for owner | user |
-| `POST` | `/inventory/container/update` | Update container properties | developer |
-
-### Inventory Operations
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/inventory/add` | Add item to container | developer |
-| `POST` | `/inventory/merge` | Merge two stacks | user |
-| `POST` | `/inventory/move` | Move item to different slot or container | user |
-| `POST` | `/inventory/remove` | Remove item from container | developer |
-| `POST` | `/inventory/split` | Split stack into two | user |
-| `POST` | `/inventory/transfer` | Transfer item to different owner | developer |
-
-### Inventory Queries
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/inventory/count` | Count items of a template | user |
-| `POST` | `/inventory/find-space` | Find where item would fit | user |
-| `POST` | `/inventory/has` | Check if entity has required items | user |
-| `POST` | `/inventory/query` | Find items across containers | user |
+Container and item placement management for games. Handles container lifecycle (CRUD), item movement between containers, stacking operations (split/merge), and inventory queries. Does NOT handle item definitions or instances directly - delegates to lib-item for all item-level operations. Features distributed lock-protected modifications, Redis cache with MySQL backing, multiple constraint models (slot-only, weight-only, grid, volumetric, unlimited), category restrictions, nesting depth limits, and graceful degradation when the item service is unavailable. Designed as the placement layer that orchestrates lib-item.
 
 ---
 
@@ -904,35 +211,7 @@ Container and inventory management service for games.
 
 **Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Deep Dive**: [docs/plugins/ITEM.md](plugins/ITEM.md)
 
-Item template and instance management service.
-
-### Item Instance
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/item/instance/bind` | Bind item to character | developer |
-| `POST` | `/item/instance/create` | Create a new item instance | developer |
-| `POST` | `/item/instance/destroy` | Destroy item instance | developer |
-| `POST` | `/item/instance/get` | Get item instance by ID | user |
-| `POST` | `/item/instance/modify` | Modify item instance state | developer |
-
-### Item Query
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/item/instance/batch-get` | Get multiple item instances by ID | user |
-| `POST` | `/item/instance/list-by-container` | List items in a container | user |
-| `POST` | `/item/instance/list-by-template` | List instances of a template | admin |
-
-### Item Template
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/item/template/create` | Create a new item template | developer |
-| `POST` | `/item/template/deprecate` | Deprecate an item template | admin |
-| `POST` | `/item/template/get` | Get item template by ID or code | user |
-| `POST` | `/item/template/list` | List item templates with filters | user |
-| `POST` | `/item/template/update` | Update mutable fields of an item template | developer |
+Dual-model item management with templates (definitions/prototypes) and instances (individual occurrences). Templates define immutable properties (code, game scope, quantity model, soulbound type) and mutable properties (name, description, stats, effects, rarity). Instances represent actual items in the game world with quantity, slot placement, durability, custom stats, and binding state. Features Redis read-through caching with configurable TTLs, optimistic concurrency for distributed list operations, and multiple quantity models (discrete stacks, continuous weights, unique items). Designed to pair with lib-inventory for container management.
 
 ---
 
@@ -940,39 +219,7 @@ Item template and instance management service.
 
 **Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml` | **Deep Dive**: [docs/plugins/LEADERBOARD.md](plugins/LEADERBOARD.md)
 
-Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
-
-### Definitions
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/leaderboard/definition/create` | Create a new leaderboard definition | developer |
-| `POST` | `/leaderboard/definition/delete` | Delete leaderboard definition | developer |
-| `POST` | `/leaderboard/definition/get` | Get leaderboard definition | authenticated |
-| `POST` | `/leaderboard/definition/list` | List leaderboard definitions | authenticated |
-| `POST` | `/leaderboard/definition/update` | Update leaderboard definition | developer |
-
-### Rankings
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/leaderboard/rank/around` | Get entries around entity | user |
-| `POST` | `/leaderboard/rank/get` | Get entity's rank | user |
-| `POST` | `/leaderboard/rank/top` | Get top entries | user |
-
-### Scores
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/leaderboard/score/submit` | Submit or update a score | authenticated |
-| `POST` | `/leaderboard/score/submit-batch` | Submit multiple scores | authenticated |
-
-### Seasons
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/leaderboard/season/create` | Start a new season | admin |
-| `POST` | `/leaderboard/season/get` | Get current season info | user |
+Real-time leaderboard management built on Redis Sorted Sets for O(log N) ranking operations. Supports polymorphic entity types (Account, Character, Guild, Actor, Custom), four score update modes (Replace, Increment, Max, Min), seasonal rotation with archival, and automatic score ingestion from Analytics events. Definitions are scoped per game service with configurable sort order, entity type restrictions, and public/private visibility. Provides percentile calculations, neighbor queries (entries around a given entity), and batch score submission.
 
 ---
 
@@ -980,34 +227,7 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 
 **Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
 
-Location management service for Arcadia game world.
-
-### Location
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/location/exists` | Check if location exists and is active | user |
-| `POST` | `/location/get` | Get location by ID | user |
-| `POST` | `/location/get-ancestors` | Get all ancestors of a location | user |
-| `POST` | `/location/get-by-code` | Get location by code and realm | user |
-| `POST` | `/location/get-descendants` | Get all descendants of a location | user |
-| `POST` | `/location/list` | List locations with filtering | user |
-| `POST` | `/location/list-by-parent` | Get child locations for a parent location | user |
-| `POST` | `/location/list-by-realm` | List all locations in a realm (primary query pattern) | user |
-| `POST` | `/location/list-root` | Get root locations in a realm | user |
-
-### Location Admin
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/location/create` | Create new location | admin |
-| `POST` | `/location/delete` | Delete location | admin |
-| `POST` | `/location/deprecate` | Deprecate a location | admin |
-| `POST` | `/location/remove-parent` | Remove parent from a location (make it a root location) | admin |
-| `POST` | `/location/seed` | Seed locations from configuration | admin |
-| `POST` | `/location/set-parent` | Set or change the parent of a location | admin |
-| `POST` | `/location/undeprecate` | Restore a deprecated location | admin |
-| `POST` | `/location/update` | Update location | admin |
+Hierarchical location management for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation (soft-delete), circular reference prevention during parent reassignment, cascading depth updates, code-based lookups (uppercase-normalized per realm), and bulk seeding with two-pass parent resolution. No caching layer - all reads hit the state store directly.
 
 ---
 
@@ -1015,50 +235,7 @@ Location management service for Arcadia game world.
 
 **Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml` | **Deep Dive**: [docs/plugins/MAPPING.md](plugins/MAPPING.md)
 
-Spatial data management service for Arcadia game worlds.
-
-### Authoring
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mapping/authoring/checkout` | Acquire exclusive edit lock for design-time editing | developer |
-| `POST` | `/mapping/authoring/commit` | Commit design-time changes | developer |
-| `POST` | `/mapping/authoring/release` | Release authoring checkout without committing | developer |
-
-### Authority
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mapping/authority-heartbeat` | Maintain authority over channel | authenticated |
-| `POST` | `/mapping/create-channel` | Create a new map channel and become its authority | authenticated |
-| `POST` | `/mapping/release-authority` | Release authority over a channel | authenticated |
-
-### Definition
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mapping/definition/create` | Create a map definition template | developer |
-| `POST` | `/mapping/definition/delete` | Delete a map definition | admin |
-| `POST` | `/mapping/definition/get` | Get a map definition by ID | user |
-| `POST` | `/mapping/definition/list` | List map definitions with optional filters | user |
-| `POST` | `/mapping/definition/update` | Update a map definition | developer |
-
-### Query
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mapping/query/affordance` | Find locations that afford a specific action or scene type | user |
-| `POST` | `/mapping/query/bounds` | Query map data within bounds | user |
-| `POST` | `/mapping/query/objects-by-type` | Find all objects of a type in region | user |
-| `POST` | `/mapping/query/point` | Query map data at a specific point | user |
-
-### Runtime
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mapping/publish` | Publish map data update (RPC path) | authenticated |
-| `POST` | `/mapping/publish-objects` | Publish metadata object changes (batch) | authenticated |
-| `POST` | `/mapping/request-snapshot` | Request full snapshot for cold start | user |
+Spatial data management service for Arcadia game worlds. Handles authority-based channel ownership for exclusive write access, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with configurable cell sizes, affordance queries with multi-factor scoring, design-time authoring workflows (checkout/commit/release), and map definition templates. Uses a deterministic channel ID scheme (SHA-256 of region+kind) to ensure one authority per region/kind combination. Features per-kind TTL policies (durable for terrain/navigation/ownership, ephemeral for combat/visual effects), large payload offloading to lib-asset, event aggregation buffering to coalesce rapid object changes, configurable non-authority handling modes (reject_silent, reject_and_alert, accept_and_alert), and three takeover policies for authority succession (preserve_and_diff, require_consume, reset). Does NOT perform client-facing rendering or physics -- it is purely a spatial data store that game servers and NPC brains publish to and query from.
 
 ---
 
@@ -1066,38 +243,7 @@ Spatial data management service for Arcadia game worlds.
 
 **Version**: 1.0.0 | **Schema**: `schemas/matchmaking-api.yaml` | **Deep Dive**: [docs/plugins/MATCHMAKING.md](plugins/MATCHMAKING.md)
 
-Matchmaking service for competitive and casual game matching.
-
-### Matchmaking
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/matchmaking/accept` | Accept a formed match | user |
-| `POST` | `/matchmaking/decline` | Decline a formed match | user |
-| `POST` | `/matchmaking/join` | Join matchmaking queue | user |
-| `POST` | `/matchmaking/leave` | Leave matchmaking queue | user |
-| `POST` | `/matchmaking/status` | Get matchmaking status | user |
-
-### Queue Administration
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/matchmaking/queue/create` | Create a new matchmaking queue | admin |
-| `POST` | `/matchmaking/queue/delete` | Delete a matchmaking queue | admin |
-| `POST` | `/matchmaking/queue/update` | Update a matchmaking queue | admin |
-
-### Queues
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/matchmaking/queue/get` | Get queue details | user |
-| `POST` | `/matchmaking/queue/list` | List available matchmaking queues | user |
-
-### Statistics
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/matchmaking/stats` | Get queue statistics | user |
+Ticket-based matchmaking with skill windows, query matching, party support, and configurable accept/decline flow. Players join queues by creating tickets with optional skill ratings, string/numeric properties, and query filters. A background service processes queues at configurable intervals, expanding skill windows over time until matches form or tickets timeout. Formed matches enter an accept/decline phase with configurable deadline. On full acceptance, creates a matchmade game session via `IGameSessionClient` with reservation tokens and publishes join shortcuts. Supports immediate match checks on ticket creation, auto-requeue on decline, and pending match state restoration on reconnection.
 
 ---
 
@@ -1105,37 +251,7 @@ Matchmaking service for competitive and casual game matching.
 
 **Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml` | **Deep Dive**: [docs/plugins/MESH.md](plugins/MESH.md)
 
-Native service mesh plugin providing direct service-to-service invocation
-natively. Replaces mesh invocation with YARP-based
-HTTP routing and Redis-backed service discovery.
-
-### Diagnostics
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mesh/health` | Get mesh health status | authenticated |
-
-### Registration
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mesh/deregister` | Deregister a service endpoint | authenticated |
-| `POST` | `/mesh/heartbeat` | Update endpoint health and load | authenticated |
-| `POST` | `/mesh/register` | Register a service endpoint | authenticated |
-
-### Routing
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mesh/mappings` | Get service-to-app-id mappings | authenticated |
-| `POST` | `/mesh/route` | Get optimal endpoint for routing | authenticated |
-
-### Service Discovery
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/mesh/endpoints/get` | Get endpoints for a service | authenticated |
-| `POST` | `/mesh/endpoints/list` | List all registered endpoints | authenticated |
+Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, four load balancing algorithms (RoundRobin, LeastConnections, Weighted, Random), a per-appId circuit breaker, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
 
 ---
 
@@ -1143,16 +259,7 @@ HTTP routing and Redis-backed service discovery.
 
 **Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md)
 
-Native RabbitMQ pub/sub messaging with native serialization.
-
-### Messaging
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/messaging/list-topics` | List all known topics | authenticated |
-| `POST` | `/messaging/publish` | Publish an event to a topic | authenticated |
-| `POST` | `/messaging/subscribe` | Create a dynamic subscription to a topic | authenticated |
-| `POST` | `/messaging/unsubscribe` | Remove a dynamic subscription | authenticated |
+The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`) used by all services for event publishing and subscription, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
 
 ---
 
@@ -1160,35 +267,7 @@ Native RabbitMQ pub/sub messaging with native serialization.
 
 **Version**: 1.0.0 | **Schema**: `schemas/music-api.yaml` | **Deep Dive**: [docs/plugins/MUSIC.md](plugins/MUSIC.md)
 
-Pure computation music generation using formal music theory rules.
-
-### Generation
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/music/generate` | Generate composition from style and constraints | user |
-
-### Styles
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/music/style/create` | Create new style definition | admin |
-| `POST` | `/music/style/get` | Get style definition | user |
-| `POST` | `/music/style/list` | List available styles | user |
-
-### Theory
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/music/theory/melody` | Generate melody over harmony | user |
-| `POST` | `/music/theory/progression` | Generate chord progression | user |
-| `POST` | `/music/theory/voice-lead` | Apply voice leading to chords | user |
-
-### Validation
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/music/validate` | Validate MIDI-JSON structure | user |
+Pure computation music generation using formal music theory rules and narrative-driven composition. Leverages two internal SDKs: `MusicTheory` (harmony, melody, pitch, time, style, MIDI-JSON output) and `MusicStoryteller` (narrative templates, emotional state planning, contour/density guidance). Generates complete compositions, chord progressions, melodies, and voice-led chord voicings. All generation is deterministic when a seed is provided, enabling Redis-based caching for repeat requests. No external service dependencies - fully self-contained computation.
 
 ---
 
@@ -1196,34 +275,7 @@ Pure computation music generation using formal music theory rules.
 
 **Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml` | **Deep Dive**: [docs/plugins/ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
 
-Central intelligence for Bannou environment management and service orchestration.
-
-### Other
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/orchestrator/backends/list` | Detect available container orchestration backends | admin |
-| `POST` | `/orchestrator/clean` | Clean up unused resources | admin |
-| `POST` | `/orchestrator/config/rollback` | Rollback to previous configuration | admin |
-| `POST` | `/orchestrator/config/version` | Get current configuration version and metadata | admin |
-| `POST` | `/orchestrator/containers/request-restart` | Request container restart (self-service pattern) | admin |
-| `POST` | `/orchestrator/containers/status` | Get container health and restart history | admin |
-| `POST` | `/orchestrator/deploy` | Deploy or update an environment | admin |
-| `POST` | `/orchestrator/health/infrastructure` | Check infrastructure component health | admin |
-| `POST` | `/orchestrator/health/services` | Get health status of all services | admin |
-| `POST` | `/orchestrator/logs` | Get service/container logs | admin |
-| `POST` | `/orchestrator/presets/list` | List available deployment presets | admin |
-| `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | admin |
-| `POST` | `/orchestrator/processing-pool/cleanup` | Cleanup idle processing pool instances | admin |
-| `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | admin |
-| `POST` | `/orchestrator/processing-pool/scale` | Scale a processing pool | admin |
-| `POST` | `/orchestrator/processing-pool/status` | Get processing pool status | admin |
-| `POST` | `/orchestrator/service-routing` | Get current service-to-app-id routing mappings | admin |
-| `POST` | `/orchestrator/services/restart` | Restart service with optional configuration | admin |
-| `POST` | `/orchestrator/services/should-restart` | Check if service needs restart | admin |
-| `POST` | `/orchestrator/status` | Get current environment status | admin |
-| `POST` | `/orchestrator/teardown` | Tear down the current environment | admin |
-| `POST` | `/orchestrator/topology` | Update service topology without full redeploy | admin |
+Central intelligence for Bannou environment management and service orchestration. The Orchestrator manages the full lifecycle of distributed service deployments: deploying preset-based topologies with per-node service enablement, tearing down containers with infrastructure-level control, performing live topology updates (add/remove nodes, move/scale services, update environment), managing processing pools for on-demand worker containers (acquire/release/scale/cleanup), monitoring service health via heartbeat ingestion, maintaining versioned deployment configurations with rollback capability, resolving container orchestration backends (Docker Compose, Docker Swarm, Portainer, Kubernetes), retrieving container logs, cleaning up orphaned resources, listing deployment presets, broadcasting service-to-app-id routing mappings via pub/sub, and invalidating OpenResty routing caches on topology changes. The plugin features a pluggable backend architecture with `IContainerOrchestrator` abstraction, index-based state store patterns (avoiding KEYS/SCAN), ETag-based optimistic concurrency for heartbeat/routing indexes, and a secure mode that makes the orchestrator inaccessible via WebSocket (admin-only service-to-service calls).
 
 ---
 
@@ -1231,35 +283,7 @@ Central intelligence for Bannou environment management and service orchestration
 
 **Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml` | **Deep Dive**: [docs/plugins/PERMISSION.md](plugins/PERMISSION.md)
 
-Redis-backed high-performance permission system for WebSocket services.
-
-### Permission Lookup
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/permission/capabilities` | Get available API methods for session | authenticated |
-
-### Permission Validation
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/permission/validate` | Validate specific API access for session | authenticated |
-
-### Service Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/permission/register-service` | Register or update service permission matrix | authenticated |
-| `POST` | `/permission/services/list` | List all registered services | admin |
-
-### Session Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/permission/clear-session-state` | Clear session state for specific service | authenticated |
-| `POST` | `/permission/get-session-info` | Get complete session information | authenticated |
-| `POST` | `/permission/update-session-role` | Update session role (affects all services) | authenticated |
-| `POST` | `/permission/update-session-state` | Update session state for specific service | admin |
+Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), distributed locks for concurrent registration safety, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
 
 ---
 
@@ -1267,27 +291,7 @@ Redis-backed high-performance permission system for WebSocket services.
 
 **Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
 
-Realm management service for Arcadia game world.
-
-### Realm
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/realm/exists` | Check if realm exists and is active | user |
-| `POST` | `/realm/get` | Get realm by ID | user |
-| `POST` | `/realm/get-by-code` | Get realm by code | user |
-| `POST` | `/realm/list` | List all realms | user |
-
-### Realm Admin
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/realm/create` | Create new realm | admin |
-| `POST` | `/realm/delete` | Delete realm | admin |
-| `POST` | `/realm/deprecate` | Deprecate a realm | admin |
-| `POST` | `/realm/seed` | Seed realms from configuration | admin |
-| `POST` | `/realm/undeprecate` | Restore a deprecated realm | admin |
-| `POST` | `/realm/update` | Update realm | admin |
+The Realm service manages top-level persistent worlds in the Arcadia game system. Realms are peer worlds (e.g., Omega, Arcadia, Fantasia) with no hierarchical relationships between them. Each realm operates as an independent world with distinct species populations and cultural contexts. Provides CRUD with deprecation lifecycle and seed-from-configuration support.
 
 ---
 
@@ -1295,32 +299,7 @@ Realm management service for Arcadia game world.
 
 **Version**: 1.0.0 | **Schema**: `schemas/realm-history-api.yaml` | **Deep Dive**: [docs/plugins/REALM-HISTORY.md](plugins/REALM-HISTORY.md)
 
-Historical event participation and lore management for realms.
-
-### Historical Events
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/realm-history/delete-participation` | Delete a participation record | admin |
-| `POST` | `/realm-history/get-event-participants` | Get all realms that participated in a historical event | user |
-| `POST` | `/realm-history/get-participation` | Get all historical events a realm participated in | user |
-| `POST` | `/realm-history/record-participation` | Record realm participation in a historical event | authenticated |
-
-### History Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/realm-history/delete-all` | Delete all history data for a realm | admin |
-| `POST` | `/realm-history/summarize` | Generate text summaries for realm archival | authenticated |
-
-### Lore
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/realm-history/add-lore-element` | Add a single lore element | admin |
-| `POST` | `/realm-history/delete-lore` | Delete all lore for a realm | admin |
-| `POST` | `/realm-history/get-lore` | Get machine-readable lore elements for behavior system | user |
-| `POST` | `/realm-history/set-lore` | Set lore elements for a realm | admin |
+Historical event participation and lore management for realms. Tracks when realms participate in world events (wars, treaties, cataclysms) with role and impact tracking, and maintains machine-readable lore elements (origin myths, cultural practices, political systems) for behavior system consumption. Provides text summarization for realm archival. Uses a dual-index pattern for efficient queries in both directions (realm's events and event's realms).
 
 ---
 
@@ -1328,19 +307,7 @@ Historical event participation and lore management for realms.
 
 **Version**: 1.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md)
 
-Generic relationship management service for entity-to-entity relationships.
-
-### Relationship Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/relationship/create` | Create a new relationship between two entities | admin |
-| `POST` | `/relationship/end` | End a relationship | admin |
-| `POST` | `/relationship/get` | Get a relationship by ID | user |
-| `POST` | `/relationship/get-between` | Get all relationships between two specific entities | user |
-| `POST` | `/relationship/list-by-entity` | List all relationships for an entity | user |
-| `POST` | `/relationship/list-by-type` | List all relationships of a specific type | user |
-| `POST` | `/relationship/update` | Update relationship metadata | admin |
+A generic relationship management service for entity-to-entity relationships (character friendships, alliances, rivalries, etc.). Supports bidirectional uniqueness enforcement via composite keys, polymorphic entity types, and soft-deletion with the ability to recreate ended relationships. Used by the Character service for managing inter-character bonds.
 
 ---
 
@@ -1348,30 +315,7 @@ Generic relationship management service for entity-to-entity relationships.
 
 **Version**: 2.0.0 | **Schema**: `schemas/relationship-type-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP-TYPE.md](plugins/RELATIONSHIP-TYPE.md)
 
-Relationship type management service for Arcadia game world.
-
-### RelationshipType
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/relationship-type/get` | Get relationship type by ID | user |
-| `POST` | `/relationship-type/get-ancestors` | Get all ancestors of a relationship type | user |
-| `POST` | `/relationship-type/get-by-code` | Get relationship type by code | user |
-| `POST` | `/relationship-type/get-children` | Get child types for a parent type | user |
-| `POST` | `/relationship-type/list` | List all relationship types | user |
-| `POST` | `/relationship-type/matches-hierarchy` | Check if type matches ancestor in hierarchy | user |
-
-### RelationshipType Admin
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/relationship-type/create` | Create new relationship type | admin |
-| `POST` | `/relationship-type/delete` | Delete relationship type | admin |
-| `POST` | `/relationship-type/deprecate` | Deprecate a relationship type | admin |
-| `POST` | `/relationship-type/merge` | Merge a deprecated type into another type | admin |
-| `POST` | `/relationship-type/seed` | Seed relationship types from configuration | admin |
-| `POST` | `/relationship-type/undeprecate` | Restore a deprecated relationship type | admin |
-| `POST` | `/relationship-type/update` | Update relationship type | admin |
+Hierarchical relationship type definitions for entity-to-entity relationships in the Arcadia game world. Defines the taxonomy of possible relationships (e.g., PARENT → FATHER/MOTHER, FRIEND, RIVAL) with parent-child hierarchy, inverse type tracking, and bidirectional flags. Supports deprecation with merge capability via `IRelationshipClient` to migrate existing relationships. Provides hierarchy queries (ancestors, children, `matchesHierarchy` for polymorphic matching), code-based lookups, and bulk seeding with dependency-ordered creation.
 
 ---
 
@@ -1379,74 +323,7 @@ Relationship type management service for Arcadia game world.
 
 **Version**: 1.0.0 | **Schema**: `schemas/save-load-api.yaml` | **Deep Dive**: [docs/plugins/SAVE-LOAD.md](plugins/SAVE-LOAD.md)
 
-Generic save/load system for game state persistence.
-Supports polymorphic ownership, versioned saves, and schema migration.
-
-### Admin
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/admin/cleanup` | Run cleanup for expired/orphaned saves | admin |
-| `POST` | `/save-load/admin/stats` | Get storage statistics | admin |
-
-### Migration
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/migrate` | Migrate save to new schema version | developer |
-| `POST` | `/save-load/schema/list` | List registered schemas | user |
-| `POST` | `/save-load/schema/register` | Register a save data schema | developer |
-
-### Query
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/query` | Query saves with filters | user |
-
-### Saves
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/collapse-deltas` | Collapse delta chain into full snapshot | user |
-| `POST` | `/save-load/load` | Load data from slot | user |
-| `POST` | `/save-load/load-with-deltas` | Load save reconstructing from delta chain | user |
-| `POST` | `/save-load/save` | Save data to slot | user |
-| `POST` | `/save-load/save-delta` | Save incremental changes from base version | user |
-
-### Slots
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/slot/bulk-delete` | Delete multiple slots at once | admin |
-| `POST` | `/save-load/slot/create` | Create or configure a save slot | user |
-| `POST` | `/save-load/slot/delete` | Delete slot and all versions | user |
-| `POST` | `/save-load/slot/get` | Get slot metadata | user |
-| `POST` | `/save-load/slot/list` | List slots for owner | user |
-| `POST` | `/save-load/slot/rename` | Rename a save slot | user |
-
-### Transfer
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/copy` | Copy save to different slot or owner | user |
-| `POST` | `/save-load/export` | Export saves for backup/portability | user |
-| `POST` | `/save-load/import` | Import saves from backup | admin |
-
-### Validation
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/verify` | Verify save data integrity | user |
-
-### Versions
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/save-load/version/delete` | Delete specific version | user |
-| `POST` | `/save-load/version/list` | List versions in slot | user |
-| `POST` | `/save-load/version/pin` | Pin a version as checkpoint | user |
-| `POST` | `/save-load/version/promote` | Promote old version to latest | user |
-| `POST` | `/save-load/version/unpin` | Unpin a version | user |
+Generic save/load system for game state persistence with polymorphic ownership, versioned saves, and schema migration. Handles the full lifecycle of save data: slot creation (namespaced by game+owner), writing save data with automatic compression, loading with hot cache acceleration, delta/incremental saves via JSON Patch (RFC 6902), schema version registration with forward migration paths, version pinning/promotion, rolling cleanup based on category-specific retention limits, export/import via ZIP archives through the Asset service, and content hash integrity verification. Features a two-tier storage architecture where saves are immediately acknowledged in Redis hot cache and asynchronously uploaded to MinIO via the Asset service through a background worker with circuit breaker protection. Supports five save categories (QUICK_SAVE, AUTO_SAVE, MANUAL_SAVE, CHECKPOINT, STATE_SNAPSHOT) each with distinct compression and retention defaults. Designed for multi-device cloud sync with conflict detection windowing. Owners can be accounts, characters, sessions, or realms (polymorphic association pattern).
 
 ---
 
@@ -1454,51 +331,7 @@ Supports polymorphic ownership, versioned saves, and schema migration.
 
 **Version**: 1.0.0 | **Schema**: `schemas/scene-api.yaml` | **Deep Dive**: [docs/plugins/SCENE.md](plugins/SCENE.md)
 
-Hierarchical composition storage for game worlds.
-
-### Instance
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/scene/destroy-instance` | Declare that a scene instance was removed | authenticated |
-| `POST` | `/scene/instantiate` | Declare that a scene was instantiated in the game world | authenticated |
-
-### Query
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/scene/find-asset-usage` | Find scenes using a specific asset | user |
-| `POST` | `/scene/find-references` | Find scenes that reference a given scene | user |
-| `POST` | `/scene/search` | Full-text search across scenes | user |
-
-### Scene
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/scene/create` | Create a new scene document | developer |
-| `POST` | `/scene/delete` | Delete a scene | developer |
-| `POST` | `/scene/duplicate` | Duplicate a scene with a new ID | developer |
-| `POST` | `/scene/get` | Retrieve a scene by ID | user |
-| `POST` | `/scene/list` | List scenes with filtering | user |
-| `POST` | `/scene/update` | Update a scene document | developer |
-| `POST` | `/scene/validate` | Validate a scene structure | user |
-
-### Validation
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/scene/get-validation-rules` | Get validation rules for a gameId+sceneType | user |
-| `POST` | `/scene/register-validation-rules` | Register validation rules for a gameId+sceneType | admin |
-
-### Versioning
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/scene/checkout` | Lock a scene for editing | developer |
-| `POST` | `/scene/commit` | Save changes and release lock | developer |
-| `POST` | `/scene/discard` | Release lock without saving changes | developer |
-| `POST` | `/scene/heartbeat` | Extend checkout lock TTL | developer |
-| `POST` | `/scene/history` | Get version history for a scene | user |
+Hierarchical composition storage for game worlds. Stores and retrieves scene documents as YAML-serialized node trees with support for multiple node types (group, mesh, marker, volume, emitter, reference, custom), scene-to-scene references with recursive resolution, an exclusive checkout/commit/discard workflow with heartbeat-extended TTL locks, game-specific validation rules registered per gameId+sceneType, full-text search across names/descriptions/tags, reverse reference and asset usage tracking via secondary indexes, scene duplication with regenerated node IDs, and version history with configurable retention. Does NOT compute world transforms, determine affordances, push data to other services, or interpret node behavior at runtime -- consumers decide what nodes mean. Scene content is serialized to YAML using YamlDotNet and stored in a single MySQL-backed state store under multiple key prefixes. The Scene Composer SDK extensions (attachment points, affordances, asset slots, marker types, volume shapes) are stored as node properties but not interpreted by the service.
 
 ---
 
@@ -1506,30 +339,7 @@ Hierarchical composition storage for game worlds.
 
 **Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md)
 
-Species management service for Arcadia game world.
-
-### Species
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/species/get` | Get species by ID | user |
-| `POST` | `/species/get-by-code` | Get species by code | user |
-| `POST` | `/species/list` | List all species | user |
-| `POST` | `/species/list-by-realm` | List species available in a realm | user |
-
-### Species Admin
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/species/add-to-realm` | Add species to a realm | admin |
-| `POST` | `/species/create` | Create new species | admin |
-| `POST` | `/species/delete` | Delete species | admin |
-| `POST` | `/species/deprecate` | Deprecate a species | admin |
-| `POST` | `/species/merge` | Merge a deprecated species into another species | admin |
-| `POST` | `/species/remove-from-realm` | Remove species from a realm | admin |
-| `POST` | `/species/seed` | Seed species from configuration | admin |
-| `POST` | `/species/undeprecate` | Restore a deprecated species | admin |
-| `POST` | `/species/update` | Update species | admin |
+Realm-scoped species management for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate → merge → delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration, code-based lookups (uppercase-normalized), and cross-service character reference checking to prevent orphaned data. Integrates with Character and Realm services for validation.
 
 ---
 
@@ -1537,18 +347,7 @@ Species management service for Arcadia game world.
 
 **Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md)
 
-Repository pattern state management with Redis and MySQL backends.
-
-### State
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/state/bulk-get` | Bulk get multiple keys | authenticated |
-| `POST` | `/state/delete` | Delete state value | authenticated |
-| `POST` | `/state/get` | Get state value by key | authenticated |
-| `POST` | `/state/list-stores` | List configured state stores | authenticated |
-| `POST` | `/state/query` | Query state (MySQL JSON queries or Redis with search enabled) | authenticated |
-| `POST` | `/state/save` | Save state value | authenticated |
+The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
 
 ---
 
@@ -1556,20 +355,7 @@ Repository pattern state management with Redis and MySQL backends.
 
 **Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
-Manages user subscriptions to game services.
-Tracks which accounts have access to which services (games/applications) with time-limited subscriptions.
-
-### Subscription Management
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/subscription/account/list` | Get subscriptions for an account | user |
-| `POST` | `/subscription/cancel` | Cancel a subscription | user |
-| `POST` | `/subscription/create` | Create a new subscription | admin |
-| `POST` | `/subscription/get` | Get a specific subscription by ID | user |
-| `POST` | `/subscription/query` | Query current (active, non-expired) subscriptions | authenticated |
-| `POST` | `/subscription/renew` | Renew or extend a subscription | admin |
-| `POST` | `/subscription/update` | Update a subscription | admin |
+The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that Auth and GameSession services consume for real-time authorization updates. Includes a background expiration worker that automatically deactivates expired subscriptions.
 
 ---
 
@@ -1577,24 +363,7 @@ Tracks which accounts have access to which services (games/applications) with ti
 
 **Version**: 1.1.0 | **Schema**: `schemas/voice-api.yaml` | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
 
-Voice communication coordination service for P2P and room-based audio.
-
-### Voice Peers
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/voice/peer/answer` | Send SDP answer to complete WebRTC handshake | user |
-| `POST` | `/voice/peer/heartbeat` | Update peer endpoint TTL | admin |
-
-### Voice Rooms
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/voice/room/create` | Create voice room for a game session | authenticated |
-| `POST` | `/voice/room/delete` | Delete voice room | authenticated |
-| `POST` | `/voice/room/get` | Get voice room details | admin |
-| `POST` | `/voice/room/join` | Join voice room and register SIP endpoint | authenticated |
-| `POST` | `/voice/room/leave` | Leave voice room | authenticated |
+The Voice service provides WebRTC-based voice communication for game sessions, supporting both P2P mesh topology (small groups) and scaled tier via SFU (Selective Forwarding Unit) for large rooms. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Features automatic tier upgrade when P2P rooms exceed capacity, permission-state-gated SDP answer exchange, and session-based participant tracking for privacy.
 
 ---
 
@@ -1602,61 +371,14 @@ Voice communication coordination service for P2P and room-based audio.
 
 **Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml` | **Deep Dive**: [docs/plugins/WEBSITE.md](plugins/WEBSITE.md)
 
-Public-facing website service for registration, information, and account management.
-
-### Account
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `GET` | `/website/account/characters` | Get character list for logged-in user | user |
-| `GET` | `/website/account/profile` | Get account profile for logged-in user | user |
-| `GET` | `/website/account/subscription` | Get subscription status | user |
-
-### CMS
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `GET` | `/website/cms/pages` | List all CMS pages | developer |
-| `POST` | `/website/cms/pages` | Create new CMS page | developer |
-| `PUT` | `/website/cms/pages/{slug}` | Update CMS page | developer |
-| `DELETE` | `/website/cms/pages/{slug}` | Delete CMS page | developer |
-| `GET` | `/website/cms/site-settings` | Get site configuration | developer |
-| `PUT` | `/website/cms/site-settings` | Update site configuration | developer |
-| `GET` | `/website/cms/theme` | Get current theme configuration | developer |
-| `PUT` | `/website/cms/theme` | Update theme configuration | developer |
-
-### Contact
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/website/contact` | Submit contact form | anonymous |
-
-### Content
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `GET` | `/website/content/{slug}` | Get dynamic page content from CMS | anonymous |
-| `GET` | `/website/news` | Get latest news and announcements | anonymous |
-
-### Downloads
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `GET` | `/website/downloads` | Get download links for game clients | anonymous |
-
-### Status
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `GET` | `/website/server-status` | Get game server status for all realms | anonymous |
-| `GET` | `/website/status` | Get website status and version | anonymous |
+Public-facing website service for browser-based access to registration, news, account management, game downloads, CMS page management, and server status. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint returns `StatusCodes.NotImplemented` with a warning log. No business logic, state storage, or cross-service calls are implemented. The schema defines a comprehensive CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account/character/subscription views. When implemented, this service will require integration with account, character, subscription, realm, and potentially auth services via generated clients.
 
 ---
 
 ## Summary
 
 - **Total services**: 40
-- **Total endpoints**: 539
+- **Total endpoints**: 540
 
 ---
 

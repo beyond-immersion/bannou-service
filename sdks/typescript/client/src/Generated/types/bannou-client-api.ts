@@ -17532,6 +17532,11 @@ export interface components {
       code: string;
       /** @description Display name for the realm */
       name: string;
+      /**
+       * Format: uuid
+       * @description ID of the game service this realm belongs to
+       */
+      gameServiceId: string;
       /** @description Detailed description of the realm */
       description?: string | null;
       /** @description Category for grouping realms */
