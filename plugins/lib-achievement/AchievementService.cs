@@ -1291,6 +1291,7 @@ public partial class AchievementService : IAchievementService
         var syncProvider = _platformSyncs.FirstOrDefault(s => s.Platform == platform);
         if (syncProvider == null)
         {
+            var providerMissingMessage = $"No sync provider registered for platform {platform}";
             _logger.LogError(
                 "No sync provider registered for platform {Platform}",
                 platform);
@@ -1298,7 +1299,7 @@ public partial class AchievementService : IAchievementService
                 "achievement",
                 "SyncAchievementToPlatform",
                 "platform_sync_provider_missing",
-                $"No sync provider registered for platform {platform}",
+                providerMissingMessage,
                 dependency: platform.ToString().ToLowerInvariant(),
                 endpoint: "post:/achievement/unlock",
                 details: $"achievementId:{achievementId};entityId:{entityId}",
@@ -1310,7 +1311,7 @@ public partial class AchievementService : IAchievementService
                 entityId,
                 platform,
                 platformAchievementId: null,
-                new PlatformSyncResult { Success = false, ErrorMessage = errorMessage },
+                new PlatformSyncResult { Success = false, ErrorMessage = providerMissingMessage },
                 cancellationToken);
             return SyncStatus.Failed;
         }
@@ -1338,6 +1339,7 @@ public partial class AchievementService : IAchievementService
         var platformAchievementId = definition.PlatformIds?.GetValueOrDefault(platform);
         if (string.IsNullOrEmpty(platformAchievementId))
         {
+            var missingIdMessage = $"Missing platform achievement ID for {platform} achievement {achievementId}";
             _logger.LogError(
                 "Missing platform achievement ID for {Platform} achievement {AchievementId}",
                 platform, achievementId);
@@ -1345,7 +1347,7 @@ public partial class AchievementService : IAchievementService
                 "achievement",
                 "SyncAchievementToPlatform",
                 "platform_sync_missing_platform_id",
-                $"Missing platform achievement ID for {platform} achievement {achievementId}",
+                missingIdMessage,
                 dependency: platform.ToString().ToLowerInvariant(),
                 endpoint: "post:/achievement/unlock",
                 details: $"achievementId:{achievementId};entityId:{entityId}",
@@ -1357,7 +1359,7 @@ public partial class AchievementService : IAchievementService
                 entityId,
                 platform,
                 platformAchievementId: null,
-                new PlatformSyncResult { Success = false, ErrorMessage = errorMessage },
+                new PlatformSyncResult { Success = false, ErrorMessage = missingIdMessage },
                 cancellationToken);
             return SyncStatus.Failed;
         }

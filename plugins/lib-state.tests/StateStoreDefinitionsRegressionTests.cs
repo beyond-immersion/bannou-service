@@ -99,7 +99,6 @@ public class StateStoreDefinitionsRegressionTests
         // Achievements
         Assert.Equal("achievement-definition", StateStoreDefinitions.AchievementDefinition);
         Assert.Equal("achievement-progress", StateStoreDefinitions.AchievementProgress);
-        Assert.Equal("achievement-unlock", StateStoreDefinitions.AchievementUnlock);
 
         // Analytics
         Assert.Equal("analytics-summary", StateStoreDefinitions.AnalyticsSummary);

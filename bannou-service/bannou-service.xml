@@ -75910,9 +75910,6 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AchievementProgress">
             <summary>Player achievement progress</summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.AchievementUnlock">
-            <summary>Unlocked achievements registry</summary>
-        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ActorAssignments">
             <summary>Actor-to-node assignments</summary>
         </member>
