@@ -358,6 +358,8 @@ public partial class ActorService : IActorService
             existing.UpdatedAt = now;
 
             // Save updates with optimistic concurrency
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var newEtag = await templateStore.TrySaveAsync(body.TemplateId.ToString(), existing, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
@@ -586,7 +588,7 @@ public partial class ActorService : IActorService
                     ActorId = actorId,
                     NodeId = poolNode.NodeId,
                     NodeAppId = poolNode.AppId,
-                    TemplateId = body.TemplateId.ToString(),
+                    TemplateId = body.TemplateId,
                     Category = template.Category,
                     Status = ActorStatus.Pending,
                     CharacterId = body.CharacterId
@@ -623,7 +625,7 @@ public partial class ActorService : IActorService
                 TemplateId = body.TemplateId,
                 CharacterId = body.CharacterId ?? Guid.Empty,
                 NodeId = nodeId,
-                Status = _configuration.DeploymentMode == "bannou" ? "running" : "pending",
+                Status = (_configuration.DeploymentMode == "bannou" ? ActorStatus.Running : ActorStatus.Pending).ToString().ToLowerInvariant(),
                 StartedAt = startedAt
             };
             await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
@@ -692,7 +694,7 @@ public partial class ActorService : IActorService
                     return (StatusCodes.OK, new ActorInstanceResponse
                     {
                         ActorId = assignment.ActorId,
-                        TemplateId = Guid.TryParse(assignment.TemplateId, out var tid) ? tid : Guid.Empty,
+                        TemplateId = assignment.TemplateId,
                         Category = assignment.Category ?? "unknown",
                         CharacterId = assignment.CharacterId,
                         NodeId = assignment.NodeId,
@@ -985,8 +987,9 @@ public partial class ActorService : IActorService
 
             // Note: nodeId filtering not applicable in bannou mode
 
-            var total = runners.Count();
-            var actors = runners
+            var filteredRunners = runners.ToList();
+            var total = filteredRunners.Count;
+            var actors = filteredRunners
                 .Skip(body.Offset)
                 .Take(body.Limit)
                 .Select(r => r.GetStateSnapshot().ToResponse(

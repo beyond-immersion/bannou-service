@@ -18,7 +18,7 @@ namespace BeyondImmersion.BannouService.Actor.Runtime;
 /// Core actor runtime that executes behavior loops with bounded channels for perception/message queues.
 /// Each actor instance has one runner that manages its lifecycle.
 /// </summary>
-public class ActorRunner : IActorRunner
+public sealed class ActorRunner : IActorRunner
 {
     private readonly ILogger<ActorRunner> _logger;
     private readonly IMessageBus _messageBus;
@@ -48,7 +48,7 @@ public class ActorRunner : IActorRunner
 
     // NPC Brain integration: subscription to character perception events and source tracking
     private IAsyncDisposable? _perceptionSubscription;
-    private string? _lastSourceAppId;
+    private volatile string? _lastSourceAppId;
 
     // Event Brain encounter state (for actors managing encounters)
     private EncounterStateData? _encounter;
@@ -340,8 +340,8 @@ public class ActorRunner : IActorRunner
         _logger.LogInformation("Actor {ActorId} started encounter {EncounterId} (type: {Type}, participants: {Count})",
             ActorId, encounterId, encounterType, participants.Count);
 
-        // Publish encounter started event (fire-and-forget for monitoring)
-        _ = _messageBus.TryPublishAsync(ENCOUNTER_STARTED_TOPIC, new ActorEncounterStartedEvent
+        // Publish encounter started event
+        await _messageBus.TryPublishAsync(ENCOUNTER_STARTED_TOPIC, new ActorEncounterStartedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -366,8 +366,8 @@ public class ActorRunner : IActorRunner
         _logger.LogDebug("Actor {ActorId} encounter {EncounterId} phase changed: {OldPhase} -> {NewPhase}",
             ActorId, _encounter.EncounterId, oldPhase, phase);
 
-        // Publish phase changed event (fire-and-forget for monitoring)
-        _ = _messageBus.TryPublishAsync(ENCOUNTER_PHASE_CHANGED_TOPIC, new ActorEncounterPhaseChangedEvent
+        // Publish phase changed event
+        await _messageBus.TryPublishAsync(ENCOUNTER_PHASE_CHANGED_TOPIC, new ActorEncounterPhaseChangedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -394,8 +394,8 @@ public class ActorRunner : IActorRunner
         _logger.LogInformation("Actor {ActorId} ended encounter {EncounterId} (duration: {Duration})",
             ActorId, encounterId, duration);
 
-        // Publish encounter ended event (fire-and-forget for monitoring)
-        _ = _messageBus.TryPublishAsync(ENCOUNTER_ENDED_TOPIC, new ActorEncounterEndedEvent
+        // Publish encounter ended event
+        await _messageBus.TryPublishAsync(ENCOUNTER_ENDED_TOPIC, new ActorEncounterEndedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

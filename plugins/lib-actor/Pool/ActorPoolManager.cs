@@ -28,8 +28,8 @@ public sealed class ActorPoolManager : IActorPoolManager
     private readonly ILogger<ActorPoolManager> _logger;
     private readonly ActorServiceConfiguration _configuration;
 
-    private const string POOL_NODES_STORE = "actor-pool-nodes";
-    private const string ACTOR_ASSIGNMENTS_STORE = "actor-assignments";
+    private static readonly string POOL_NODES_STORE = StateStoreDefinitions.ActorPoolNodes;
+    private static readonly string ACTOR_ASSIGNMENTS_STORE = StateStoreDefinitions.ActorAssignments;
     private const string NODE_INDEX_KEY = "_node_index";
     private const string ACTOR_INDEX_KEY = "_actor_index";
 

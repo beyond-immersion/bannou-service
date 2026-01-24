@@ -86,6 +86,7 @@ public partial class EscrowService : IEscrowService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<EscrowService> _logger;
     private readonly EscrowServiceConfiguration _configuration;
+    private readonly IEventConsumer _eventConsumer;
 
     #region State Store Keys
 
@@ -199,13 +200,17 @@ public partial class EscrowService : IEscrowService
         IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
         ILogger<EscrowService> logger,
-        EscrowServiceConfiguration configuration)
+        EscrowServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _eventConsumer = eventConsumer;
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     #region State Store Accessors

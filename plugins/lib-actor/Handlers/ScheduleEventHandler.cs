@@ -137,7 +137,7 @@ public sealed class ScheduleEventHandler : IActionHandler
         // Schedule the event
         var scheduledEvent = new ScheduledEvent
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             TargetCharacterId = targetCharacterId,
             SourceActorId = actorId,
             SourceId = sourceId,
@@ -184,7 +184,7 @@ public sealed class ScheduledEvent
     /// <summary>
     /// Unique ID for this scheduled event.
     /// </summary>
-    public required string Id { get; init; }
+    public required Guid Id { get; init; }
 
     /// <summary>
     /// Target character to receive the event. Null if Event Brain self-event.
@@ -249,7 +249,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ScheduledEventManager> _logger;
-    private readonly ConcurrentDictionary<string, ScheduledEvent> _pendingEvents = new();
+    private readonly ConcurrentDictionary<Guid, ScheduledEvent> _pendingEvents = new();
     private readonly Timer _timer;
     private bool _disposed;
 

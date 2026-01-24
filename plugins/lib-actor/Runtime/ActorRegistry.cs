@@ -4,9 +4,9 @@ namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
 /// Thread-safe registry for tracking active actor instances.
-/// Uses ConcurrentDictionary internally per T9 (Multi-Instance Safety).
+/// Uses ConcurrentDictionary internally per IMPLEMENTATION TENETS (Multi-Instance Safety).
 /// </summary>
-public class ActorRegistry : IActorRegistry
+public sealed class ActorRegistry : IActorRegistry
 {
     private readonly ConcurrentDictionary<string, IActorRunner> _actors = new();
 

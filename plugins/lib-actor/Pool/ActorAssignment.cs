@@ -32,7 +32,7 @@ public class ActorAssignment
     /// <summary>
     /// Template ID this actor was created from.
     /// </summary>
-    public required string TemplateId { get; set; }
+    public required Guid TemplateId { get; set; }
 
     /// <summary>
     /// Actor category (from template).

@@ -28,6 +28,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<ILogger<EscrowService>> _mockLogger;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public EscrowServiceTests()
     {

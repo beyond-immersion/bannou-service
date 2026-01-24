@@ -110,7 +110,7 @@ public partial class ActorService
                     foreach (var actor in actors)
                     {
                         // Inject a notification perception to inform the actor
-                        // Use Dictionary<string, object?> instead of anonymous object per FOUNDATION TENETS (T5)
+                        // Use Dictionary<string, object?> instead of anonymous object per FOUNDATION TENETS
                         actor.InjectPerception(new PerceptionData
                         {
                             PerceptionType = "system",
