@@ -57,7 +57,7 @@ Tracks which ac... |
 
 ## Account {#account}
 
-**Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml`
+**Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml` | **Deep Dive**: [docs/plugins/ACCOUNT.md](plugins/ACCOUNT.md)
 
 Internal account management service (CRUD operations only, never exposed to internet).
 
@@ -101,7 +101,7 @@ Internal account management service (CRUD operations only, never exposed to inte
 
 ## Achievement {#achievement}
 
-**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md)
 
 Achievement and trophy system with progress tracking and platform synchronization.
 
@@ -135,7 +135,7 @@ Achievement and trophy system with progress tracking and platform synchronizatio
 
 ## Actor {#actor}
 
-**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Deep Dive**: [docs/plugins/ACTOR.md](plugins/ACTOR.md)
 
 Distributed actor management and execution for NPC brains, event coordinators,
 and other long-running behavior loops. Actors output behavioral state (feelings,
@@ -165,7 +165,7 @@ goals, memories) to characters - NOT ...
 
 ## Analytics {#analytics}
 
-**Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml` | **Deep Dive**: [docs/plugins/ANALYTICS.md](plugins/ANALYTICS.md)
 
 Event ingestion, entity statistics, skill ratings (Glicko-2), and controller history tracking.
 
@@ -201,7 +201,7 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 
 ## Asset {#asset}
 
-**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md)
 
 Asset management service for storage, versioning, and distribution of large binary assets.
 
@@ -239,7 +239,7 @@ Asset management service for storage, versioning, and distribution of large bina
 
 ## Auth {#auth}
 
-**Version**: 4.0.0 | **Schema**: `schemas/auth-api.yaml`
+**Version**: 4.0.0 | **Schema**: `schemas/auth-api.yaml` | **Deep Dive**: [docs/plugins/AUTH.md](plugins/AUTH.md)
 
 Authentication and session management service (Internet-facing).
 
@@ -290,7 +290,7 @@ Authentication and session management service (Internet-facing).
 
 ## Behavior {#behavior}
 
-**Version**: 3.0.0 | **Schema**: `schemas/behavior-api.yaml`
+**Version**: 3.0.0 | **Schema**: `schemas/behavior-api.yaml` | **Deep Dive**: [docs/plugins/BEHAVIOR.md](plugins/BEHAVIOR.md)
 
 Arcadia Behavior Markup Language (ABML) API for character behavior management.
 
@@ -324,7 +324,7 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 
 ## Character {#character}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md)
 
 Character management service for Arcadia game world.
 
@@ -357,7 +357,7 @@ Character management service for Arcadia game world.
 
 ## Character Encounter {#character-encounter}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
 
 Character encounter tracking service for memorable interactions between characters.
 
@@ -409,7 +409,7 @@ Character encounter tracking service for memorable interactions between characte
 
 ## Character History {#character-history}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-HISTORY.md](plugins/CHARACTER-HISTORY.md)
 
 Historical event participation and backstory management for characters.
 
@@ -442,7 +442,7 @@ Historical event participation and backstory management for characters.
 
 ## Character Personality {#character-personality}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
 
 Machine-readable personality traits for NPC behavior decisions.
 
@@ -474,7 +474,7 @@ Machine-readable personality traits for NPC behavior decisions.
 
 ## Connect {#connect}
 
-**Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml`
+**Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml` | **Deep Dive**: [docs/plugins/CONNECT.md](plugins/CONNECT.md)
 
 Real-time communication and WebSocket connection management for Bannou services.
 
@@ -507,7 +507,7 @@ Real-time communication and WebSocket connection management for Bannou services.
 
 ## Contract {#contract}
 
-**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md)
 
 Binding agreements between entities with milestone-based progression.
 
@@ -590,7 +590,7 @@ Binding agreements between entities with milestone-based progression.
 
 ## Currency {#currency}
 
-**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md)
 
 Multi-currency management service for game economies.
 
@@ -670,7 +670,7 @@ Multi-currency management service for game economies.
 
 ## Documentation {#documentation}
 
-**Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md)
 
 Knowledge base API for AI agents to query documentation.
 Designed for SignalWire SWAIG, OpenAI function calling, and Claude tool use.
@@ -737,7 +737,7 @@ All endpoints return voice-friendly summaries alongside detaile...
 
 ## Escrow {#escrow}
 
-**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Deep Dive**: [docs/plugins/ESCROW.md](plugins/ESCROW.md)
 
 Full-custody orchestration layer for multi-party asset exchanges.
 
@@ -805,7 +805,7 @@ Full-custody orchestration layer for multi-party asset exchanges.
 
 ## Game Service {#game-service}
 
-**Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml` | **Deep Dive**: [docs/plugins/GAME-SERVICE.md](plugins/GAME-SERVICE.md)
 
 Registry service for game services that users can subscribe to.
 Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
@@ -824,7 +824,7 @@ Provides a minimal registry of available services (games/applications) like Arca
 
 ## Game Session {#game-session}
 
-**Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml`
+**Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Deep Dive**: [docs/plugins/GAME-SESSION.md](plugins/GAME-SESSION.md)
 
 Minimal game session management for Arcadia and other games.
 
@@ -863,7 +863,7 @@ Minimal game session management for Arcadia and other games.
 
 ## Inventory {#inventory}
 
-**Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml` | **Deep Dive**: [docs/plugins/INVENTORY.md](plugins/INVENTORY.md)
 
 Container and inventory management service for games.
 
@@ -902,7 +902,7 @@ Container and inventory management service for games.
 
 ## Item {#item}
 
-**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Deep Dive**: [docs/plugins/ITEM.md](plugins/ITEM.md)
 
 Item template and instance management service.
 
@@ -938,7 +938,7 @@ Item template and instance management service.
 
 ## Leaderboard {#leaderboard}
 
-**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml` | **Deep Dive**: [docs/plugins/LEADERBOARD.md](plugins/LEADERBOARD.md)
 
 Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 
@@ -978,7 +978,7 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 
 ## Location {#location}
 
-**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
 
 Location management service for Arcadia game world.
 
@@ -1013,7 +1013,7 @@ Location management service for Arcadia game world.
 
 ## Mapping {#mapping}
 
-**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml` | **Deep Dive**: [docs/plugins/MAPPING.md](plugins/MAPPING.md)
 
 Spatial data management service for Arcadia game worlds.
 
@@ -1064,7 +1064,7 @@ Spatial data management service for Arcadia game worlds.
 
 ## Matchmaking {#matchmaking}
 
-**Version**: 1.0.0 | **Schema**: `schemas/matchmaking-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/matchmaking-api.yaml` | **Deep Dive**: [docs/plugins/MATCHMAKING.md](plugins/MATCHMAKING.md)
 
 Matchmaking service for competitive and casual game matching.
 
@@ -1103,7 +1103,7 @@ Matchmaking service for competitive and casual game matching.
 
 ## Mesh {#mesh}
 
-**Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml` | **Deep Dive**: [docs/plugins/MESH.md](plugins/MESH.md)
 
 Native service mesh plugin providing direct service-to-service invocation
 natively. Replaces mesh invocation with YARP-based
@@ -1141,7 +1141,7 @@ HTTP routing and Redis-backed service discovery.
 
 ## Messaging {#messaging}
 
-**Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md)
 
 Native RabbitMQ pub/sub messaging with native serialization.
 
@@ -1158,7 +1158,7 @@ Native RabbitMQ pub/sub messaging with native serialization.
 
 ## Music {#music}
 
-**Version**: 1.0.0 | **Schema**: `schemas/music-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/music-api.yaml` | **Deep Dive**: [docs/plugins/MUSIC.md](plugins/MUSIC.md)
 
 Pure computation music generation using formal music theory rules.
 
@@ -1194,7 +1194,7 @@ Pure computation music generation using formal music theory rules.
 
 ## Orchestrator {#orchestrator}
 
-**Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml`
+**Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml` | **Deep Dive**: [docs/plugins/ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
 
 Central intelligence for Bannou environment management and service orchestration.
 
@@ -1229,7 +1229,7 @@ Central intelligence for Bannou environment management and service orchestration
 
 ## Permission {#permission}
 
-**Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml`
+**Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml` | **Deep Dive**: [docs/plugins/PERMISSION.md](plugins/PERMISSION.md)
 
 Redis-backed high-performance permission system for WebSocket services.
 
@@ -1265,7 +1265,7 @@ Redis-backed high-performance permission system for WebSocket services.
 
 ## Realm {#realm}
 
-**Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Deep Dive**: [docs/plugins/REALM.md](plugins/REALM.md)
 
 Realm management service for Arcadia game world.
 
@@ -1293,7 +1293,7 @@ Realm management service for Arcadia game world.
 
 ## Realm History {#realm-history}
 
-**Version**: 1.0.0 | **Schema**: `schemas/realm-history-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/realm-history-api.yaml` | **Deep Dive**: [docs/plugins/REALM-HISTORY.md](plugins/REALM-HISTORY.md)
 
 Historical event participation and lore management for realms.
 
@@ -1326,7 +1326,7 @@ Historical event participation and lore management for realms.
 
 ## Relationship {#relationship}
 
-**Version**: 1.0.0 | **Schema**: `schemas/relationship-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](plugins/RELATIONSHIP.md)
 
 Generic relationship management service for entity-to-entity relationships.
 
@@ -1346,7 +1346,7 @@ Generic relationship management service for entity-to-entity relationships.
 
 ## Relationship Type {#relationship-type}
 
-**Version**: 2.0.0 | **Schema**: `schemas/relationship-type-api.yaml`
+**Version**: 2.0.0 | **Schema**: `schemas/relationship-type-api.yaml` | **Deep Dive**: [docs/plugins/RELATIONSHIP-TYPE.md](plugins/RELATIONSHIP-TYPE.md)
 
 Relationship type management service for Arcadia game world.
 
@@ -1377,7 +1377,7 @@ Relationship type management service for Arcadia game world.
 
 ## Save Load {#save-load}
 
-**Version**: 1.0.0 | **Schema**: `schemas/save-load-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/save-load-api.yaml` | **Deep Dive**: [docs/plugins/SAVE-LOAD.md](plugins/SAVE-LOAD.md)
 
 Generic save/load system for game state persistence.
 Supports polymorphic ownership, versioned saves, and schema migration.
@@ -1452,7 +1452,7 @@ Supports polymorphic ownership, versioned saves, and schema migration.
 
 ## Scene {#scene}
 
-**Version**: 1.0.0 | **Schema**: `schemas/scene-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/scene-api.yaml` | **Deep Dive**: [docs/plugins/SCENE.md](plugins/SCENE.md)
 
 Hierarchical composition storage for game worlds.
 
@@ -1504,7 +1504,7 @@ Hierarchical composition storage for game worlds.
 
 ## Species {#species}
 
-**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml`
+**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md)
 
 Species management service for Arcadia game world.
 
@@ -1535,7 +1535,7 @@ Species management service for Arcadia game world.
 
 ## State {#state}
 
-**Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md)
 
 Repository pattern state management with Redis and MySQL backends.
 
@@ -1554,7 +1554,7 @@ Repository pattern state management with Redis and MySQL backends.
 
 ## Subscription {#subscription}
 
-**Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
 Manages user subscriptions to game services.
 Tracks which accounts have access to which services (games/applications) with time-limited subscriptions.
@@ -1575,7 +1575,7 @@ Tracks which accounts have access to which services (games/applications) with ti
 
 ## Voice {#voice}
 
-**Version**: 1.1.0 | **Schema**: `schemas/voice-api.yaml`
+**Version**: 1.1.0 | **Schema**: `schemas/voice-api.yaml` | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
 
 Voice communication coordination service for P2P and room-based audio.
 
@@ -1600,7 +1600,7 @@ Voice communication coordination service for P2P and room-based audio.
 
 ## Website {#website}
 
-**Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml` | **Deep Dive**: [docs/plugins/WEBSITE.md](plugins/WEBSITE.md)
 
 Public-facing website service for registration, information, and account management.
 

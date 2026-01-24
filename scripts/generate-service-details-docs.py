@@ -163,7 +163,8 @@ def generate_markdown(services: dict) -> str:
 
         lines.append(f"## {svc['display_name']} {{#{service_key}}}")
         lines.append("")
-        lines.append(f"**Version**: {svc['version']} | **Schema**: `schemas/{svc['source_file']}`")
+        deep_dive_file = service_key.upper() + '.md'
+        lines.append(f"**Version**: {svc['version']} | **Schema**: `schemas/{svc['source_file']}` | **Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})")
         lines.append("")
 
         if svc['description']:
