@@ -70,6 +70,8 @@ The Analytics plugin is the central event aggregation point for all game-related
 | `realm-history.participation.recorded` | `HandleRealmParticipationRecordedAsync` | Resolves game service via realm lookup, buffers event |
 | `realm-history.lore.created` | `HandleRealmLoreCreatedAsync` | Resolves game service via realm lookup, buffers event |
 | `realm-history.lore.updated` | `HandleRealmLoreUpdatedAsync` | Resolves game service via realm lookup, buffers event |
+| `character.updated` | `HandleCharacterUpdatedForCacheInvalidationAsync` | Invalidates character-to-realm resolution cache |
+| `realm.updated` | `HandleRealmUpdatedForCacheInvalidationAsync` | Invalidates realm-to-gameService resolution cache |
 
 All history event handlers follow the fail-fast pattern: if game service resolution fails (realm/character not found, service unavailable), the event is dropped with error logging and an error event published via `TryPublishErrorAsync`. Events are never buffered with incorrect game service IDs.
 
@@ -201,6 +203,4 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 6. **History event resolution drops events on failure**: If the realm or character lookup fails when handling character-history or realm-history events, the event is silently dropped (not retried). An error event is published via `TryPublishErrorAsync` for monitoring, but the analytics data is permanently lost for that event. This follows the principle that incorrect data (wrong GameServiceId) is worse than missing data.
 
-### Design Considerations (Requires Planning)
-
-1. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `ResolutionCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
+7. **Resolution caches are event-invalidated**: The character-to-realm and realm-to-gameService resolution caches subscribe to `character.updated` and `realm.updated` lifecycle events. When a character's realm or a realm's game service changes, the cached entry is immediately deleted. This ensures cache staleness is bounded to in-flight lookups only, not the full TTL window.

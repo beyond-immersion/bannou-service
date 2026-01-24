@@ -413,6 +413,10 @@ Optimistic Concurrency Pattern (Checkout)
 
 3. **DestroyInstance uses Guid.Empty for missing optional fields**: When `SceneAssetId` or `RegionId` are not provided in `DestroyInstanceRequest`, the event publishes `Guid.Empty` instead of null. Consumers cannot distinguish "not provided" from "explicitly empty GUID".
 
+4. **Game/type indexes become stale when scene metadata changes**: In `UpdateSceneIndexesAsync` (lines 1502-1512), the code adds the scene to the new gameId and sceneType indexes but never removes from the old indexes if gameId or sceneType changed. For example, if a scene's gameId changes from "arcadia" to "fantasia", it remains in `scene:by-game:arcadia` forever. The reference and asset tracking correctly handles diff/removal, but game/type indexes do not.
+
+5. **Reference resolution relies on specific YAML deserialization runtime type**: In `ResolveReferencesRecursiveAsync` (lines 1644-1647), annotations are cast to `IDictionary<string, object>`. This assumes YamlDotNet's deserializer produces this specific runtime type. If YAML contains annotations in a format that produces a different runtime type (e.g., `ExpandoObject` or a concrete class), the cast fails silently and reference resolution doesn't work.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Expired checkout takeover**: If a checkout lock has expired, the next `CheckoutScene` call silently takes over the lock without publishing a `scene.checkout.expired` event. The previous editor loses their token.

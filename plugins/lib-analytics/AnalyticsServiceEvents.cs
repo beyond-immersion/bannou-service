@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading;
@@ -608,6 +609,58 @@ public partial class AnalyticsService
                 details: $"realmId:{evt.RealmId}",
                 stack: ex.StackTrace,
                 cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles character.updated events for cache invalidation.
+    /// Invalidates the character-to-realm resolution cache when a character is updated.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleCharacterUpdatedForCacheInvalidationAsync(CharacterUpdatedEvent evt)
+    {
+        try
+        {
+            var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{evt.CharacterId}";
+            var store = _stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+            await store.DeleteAsync(cacheKey, CancellationToken.None);
+            _logger.LogDebug(
+                "Invalidated character-to-realm cache for character {CharacterId}",
+                evt.CharacterId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to invalidate character-to-realm cache for character {CharacterId}",
+                evt.CharacterId);
+            // Cache invalidation failures are non-critical - stale cache will expire via TTL
+        }
+    }
+
+    /// <summary>
+    /// Handles realm.updated events for cache invalidation.
+    /// Invalidates the realm-to-gameService resolution cache when a realm is updated.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleRealmUpdatedForCacheInvalidationAsync(RealmUpdatedEvent evt)
+    {
+        try
+        {
+            var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{evt.RealmId}";
+            var store = _stateStoreFactory.GetStore<RealmGameServiceCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
+            await store.DeleteAsync(cacheKey, CancellationToken.None);
+            _logger.LogDebug(
+                "Invalidated realm-to-gameService cache for realm {RealmId}",
+                evt.RealmId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to invalidate realm-to-gameService cache for realm {RealmId}",
+                evt.RealmId);
+            // Cache invalidation failures are non-critical - stale cache will expire via TTL
         }
     }
 }

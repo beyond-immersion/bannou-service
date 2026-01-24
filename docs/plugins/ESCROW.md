@@ -393,6 +393,10 @@ Dispute Resolution
 
 4. **Non-atomic read-modify-write on agreement model**: All modifications (deposit, consent, dispute, etc.) read the agreement, modify in-place, and save without ETags. Concurrent operations on the same escrow can lose writes.
 
+5. **Idempotency check doesn't verify request parameters**: In `DepositAsync` (lines 21-31), the idempotency lookup returns the cached response if the key exists, but doesn't verify the request's escrowId, partyId, or other parameters match the original request. A caller could submit the same idempotency key with different parameters and receive a cached response for a different escrow/party combination.
+
+6. **Token record update has no ETag protection**: In `DepositAsync` (lines 90-92), the token record is marked as used and saved without ETag verification. Two concurrent deposits with the same token could both validate successfully, both mark the token as used, and both proceed - though only one would succeed due to agreement-level conflicts.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Consent from Funded state transitions to Pending_consent**: The first release consent on a Funded escrow transitions to `Pending_consent` even if consent threshold is not yet met. This is deliberate state-tracking to distinguish "funded but no consents" from "funded with partial consents".
