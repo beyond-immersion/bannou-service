@@ -523,16 +523,30 @@ public partial class AnalyticsService : IAnalyticsService
             }
 
             var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
-            var updatedRatings = new List<SkillRatingChange>();
             var now = DateTimeOffset.UtcNow;
 
-            // Load all current ratings with ETags for optimistic concurrency
+            // Acquire distributed lock to serialize rating updates for this game+type combination
+            var lockResourceId = $"rating-update:{body.GameServiceId}:{body.RatingType}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.AnalyticsRating,
+                lockResourceId,
+                Guid.NewGuid().ToString(),
+                _configuration.RatingUpdateLockExpirySeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire rating update lock for {ResourceId} during match {MatchId}",
+                    lockResourceId, body.MatchId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Load all current ratings (no ETags needed - lock provides exclusivity)
             var currentRatings = new Dictionary<string, SkillRatingData>();
-            var ratingEtags = new Dictionary<string, string>();
             foreach (var result in body.Results)
             {
                 var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
-                var (rating, etag) = await ratingStore.GetWithETagAsync(key, cancellationToken);
+                var rating = await ratingStore.GetAsync(key, cancellationToken);
                 currentRatings[key] = rating ?? new SkillRatingData
                 {
                     EntityId = result.EntityId,
@@ -544,45 +558,55 @@ public partial class AnalyticsService : IAnalyticsService
                     Volatility = _configuration.Glicko2DefaultVolatility,
                     MatchesPlayed = 0
                 };
-                ratingEtags[key] = etag ?? string.Empty;
             }
 
-            // Calculate new ratings using Glicko-2
+            // Snapshot pre-match ratings for opponent lookups (prevents mutation bug)
+            var originalRatings = currentRatings.ToDictionary(
+                kvp => kvp.Key,
+                kvp => (Rating: kvp.Value.Rating, RD: kvp.Value.RatingDeviation, Volatility: kvp.Value.Volatility));
+
+            // Calculate ALL new ratings using pre-match snapshots for opponent lookups
+            var calculatedResults = new List<(string Key, MatchResult Result, double NewRating, double NewRD, double NewVolatility, double PreviousRating)>();
             foreach (var result in body.Results)
             {
                 var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
                 var playerRating = currentRatings[key];
                 var previousRating = playerRating.Rating;
 
-                // Calculate opponents' combined effect using pairwise outcomes:
-                // player beat opponent (higher outcome) = 1.0, lost = 0.0, tied = 0.5
+                // Calculate opponents' combined effect using pairwise outcomes and ORIGINAL ratings
                 var opponents = body.Results.Where(r => r.EntityId != result.EntityId).ToList();
-                var (newRating, newRD, newVolatility) = CalculateGlicko2Update(
-                    playerRating,
-                    opponents.Select(o =>
+                var opponentData = opponents.Select(o =>
+                {
+                    var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
+                    var oppOriginal = originalRatings[oppKey];
+                    var opponentSnapshot = new SkillRatingData
                     {
-                        var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
-                        var pairwiseOutcome = result.Outcome > o.Outcome ? 1.0
-                            : result.Outcome < o.Outcome ? 0.0
-                            : 0.5;
-                        return (currentRatings[oppKey], pairwiseOutcome);
-                    }).ToList()
-                );
+                        Rating = oppOriginal.Rating,
+                        RatingDeviation = oppOriginal.RD,
+                        Volatility = oppOriginal.Volatility
+                    };
+                    var pairwiseOutcome = result.Outcome > o.Outcome ? 1.0
+                        : result.Outcome < o.Outcome ? 0.0
+                        : 0.5;
+                    return (opponentSnapshot, pairwiseOutcome);
+                }).ToList();
 
-                // Update rating data
+                var (newRating, newRD, newVolatility) = CalculateGlicko2Update(playerRating, opponentData);
+                calculatedResults.Add((key, result, newRating, newRD, newVolatility, previousRating));
+            }
+
+            // Apply all calculated values and save (all-or-nothing under lock)
+            var updatedRatings = new List<SkillRatingChange>();
+            foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
+            {
+                var playerRating = currentRatings[key];
                 playerRating.Rating = newRating;
                 playerRating.RatingDeviation = newRD;
                 playerRating.Volatility = newVolatility;
                 playerRating.MatchesPlayed++;
                 playerRating.LastMatchAt = now;
 
-                // Save with optimistic concurrency check
-                var newEtag = await ratingStore.TrySaveAsync(key, playerRating, ratingEtags[key], cancellationToken);
-                if (newEtag == null)
-                {
-                    _logger.LogWarning("Concurrent modification detected for rating {Key} during match {MatchId}", key, body.MatchId);
-                    return (StatusCodes.Conflict, null);
-                }
+                await ratingStore.SaveAsync(key, playerRating, cancellationToken: cancellationToken);
 
                 var ratingChange = newRating - previousRating;
                 updatedRatings.Add(new SkillRatingChange
@@ -593,8 +617,12 @@ public partial class AnalyticsService : IAnalyticsService
                     NewRating = newRating,
                     RatingChange = ratingChange
                 });
+            }
 
-                // Publish rating updated event
+            // Publish all events after all saves complete
+            foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
+            {
+                var ratingChange = newRating - previousRating;
                 var ratingEvent = new AnalyticsRatingUpdatedEvent
                 {
                     EventId = Guid.NewGuid(),

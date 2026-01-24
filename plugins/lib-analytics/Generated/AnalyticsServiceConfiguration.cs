@@ -102,6 +102,12 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     public int EventBufferLockExpiryBaseSeconds { get; set; } = 10;
 
     /// <summary>
+    /// Lock expiry time in seconds for skill rating update operations
+    /// Environment variable: ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    public int RatingUpdateLockExpirySeconds { get; set; } = 30;
+
+    /// <summary>
     /// Convergence tolerance for Glicko-2 volatility iteration (smaller = more precise but slower)
     /// Environment variable: ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE
     /// </summary>

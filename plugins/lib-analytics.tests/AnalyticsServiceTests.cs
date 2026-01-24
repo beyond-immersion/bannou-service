@@ -132,6 +132,7 @@ public class AnalyticsServiceTests
         Assert.Equal(1000, config.EventBufferSize);
         Assert.Equal(5, config.EventBufferFlushIntervalSeconds);
         Assert.Equal(300, config.SummaryCacheTtlSeconds);
+        Assert.Equal(30, config.RatingUpdateLockExpirySeconds);
     }
 
     [Fact]

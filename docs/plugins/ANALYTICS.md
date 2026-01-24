@@ -14,7 +14,7 @@ The Analytics plugin is the central event aggregation point for all game-related
 | Dependency | Usage |
 |------------|-------|
 | lib-state (IStateStoreFactory) | Event buffer, entity summaries, skill ratings, controller history, session mappings, game service/realm/character caches |
-| lib-state (IDistributedLockProvider) | Distributed lock for buffer flush (prevents duplicate processing across instances) |
+| lib-state (IDistributedLockProvider) | Distributed locks for buffer flush (prevents duplicate processing across instances) and rating updates (serializes per game+type) |
 | lib-messaging (IMessageBus) | Publishing score/rating/milestone events and error events |
 | lib-game-service (IGameServiceClient) | Resolving game type strings to game service IDs for event keying |
 | lib-game-session (IGameSessionClient) | Resolving session IDs to game types (fallback when no cached mapping exists) |
@@ -57,7 +57,7 @@ The Analytics plugin is the central event aggregation point for all game-related
 | Topic | Event Type | Trigger |
 |-------|-----------|---------
 | `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | During buffer flush, for each event with non-zero value |
-| `analytics.rating.updated` | `AnalyticsRatingUpdatedEvent` | After each player's Glicko-2 rating is updated |
+| `analytics.rating.updated` | `AnalyticsRatingUpdatedEvent` | After all players' Glicko-2 ratings are saved (batch publish) |
 | `analytics.milestone.reached` | `AnalyticsMilestoneReachedEvent` | When a score crosses a milestone threshold |
 
 ### Consumed Events
@@ -88,6 +88,7 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 | `Glicko2SystemConstant` | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | 0.5 | Tau - controls how quickly volatility changes |
 | `SummaryCacheTtlSeconds` | `ANALYTICS_SUMMARY_CACHE_TTL_SECONDS` | 300 | TTL for game service, session, realm, and character mapping caches |
 | `EventBufferLockExpiryBaseSeconds` | `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | 10 | Base distributed lock expiry (actual = max(this, 2x flush interval)) |
+| `RatingUpdateLockExpirySeconds` | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | 30 | Distributed lock expiry for skill rating update operations |
 | `Glicko2VolatilityConvergenceTolerance` | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | 1e-06 | Convergence tolerance for volatility iteration |
 
 ## DI Services & Helpers
@@ -97,7 +98,7 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 | `ILogger<AnalyticsService>` | Structured logging |
 | `AnalyticsServiceConfiguration` | Typed config access |
 | `IStateStoreFactory` | Multi-store access (summary, rating, history) |
-| `IDistributedLockProvider` | Flush lock coordination |
+| `IDistributedLockProvider` | Flush lock and rating update lock coordination |
 | `IMessageBus` | Event publishing and error reporting |
 | `IGameServiceClient` | Game type to service ID resolution |
 | `IGameSessionClient` | Session ID to game type resolution (fallback) |
@@ -117,7 +118,7 @@ Get returns a single entity's aggregated statistics by composite key. Query enum
 
 ### Skill Rating (`/analytics/rating/get`, `/analytics/rating/update`)
 
-Get returns the current Glicko-2 rating or default values if no rating exists (not 404). Update takes a match with 2+ results, loads current ratings with ETags, calculates Glicko-2 updates using proper pairwise outcomes for all participants, saves with optimistic concurrency, and publishes `analytics.rating.updated` per player. Returns Conflict if any save has an ETag mismatch (see Design Considerations for partial-save implications).
+Get returns the current Glicko-2 rating or default values if no rating exists (not 404). Update takes a match with 2+ results, acquires a distributed lock on the game+ratingType combination, loads current ratings, snapshots pre-match values, calculates all Glicko-2 updates using original opponent ratings (order-independent), saves all ratings, then publishes `analytics.rating.updated` per player. Returns Conflict if the lock cannot be acquired (another update for the same game+type is in progress).
 
 ### Controller History (`/analytics/controller-history/record`, `/analytics/controller-history/query`)
 
@@ -156,7 +157,10 @@ realm-history.* ────────────────┘    └──
 
 Direct API
                      ┌─────────────────────┐
-/rating/update ────► │  Glicko-2 Calc      │──► analytics.rating.updated
+/rating/update ────► │  Lock (game+type)   │
+                     │  Snapshot ratings    │
+                     │  Glicko-2 Calc All  │
+                     │  Save All           │──► analytics.rating.updated
                      └─────────────────────┘         │
                                               ┌──────┴──────┐
                                               │ Leaderboard │
@@ -213,6 +217,4 @@ Milestones are defined as a hardcoded array of thresholds. There is no API to de
 
 7. **Resolution caches have no invalidation**: Cached game service, realm-to-gameService, and character-to-realm lookups persist for `SummaryCacheTtlSeconds`. If a realm's game service assignment changes or a character moves realms, stale mappings serve incorrect game service IDs until TTL expires. Either subscribe to realm/character change events for cache invalidation, or accept the 5-minute staleness window.
 
-8. **Rating update has partial-save behavior on Conflict**: In `UpdateSkillRatingAsync`, players are processed sequentially. If player 3's save conflicts, players 1-2 already have updated ratings saved AND `analytics.rating.updated` events published. The response is 409 Conflict, but the caller has no way to know which players were actually updated. A transaction or all-or-nothing approach would require either Redis transactions, a two-phase commit, or calculating all updates first and saving in a single atomic batch.
-
-9. **Plugin lifecycle holds service reference past scope disposal**: `AnalyticsServicePlugin.OnStartAsync` creates a DI scope with `using var scope`, resolves `IAnalyticsService`, stores the reference as `_service`, then the scope is disposed at method exit. For scoped services, the stored reference is technically invalid after scope disposal. The reference continues to be used in `OnRunningAsync` and `OnShutdownAsync`. In practice this works because the service has no disposable dependencies that the scope would clean up, but it violates DI lifetime expectations.
+8. **Plugin lifecycle holds service reference past scope disposal**: `AnalyticsServicePlugin.OnStartAsync` creates a DI scope with `using var scope`, resolves `IAnalyticsService`, stores the reference as `_service`, then the scope is disposed at method exit. For scoped services, the stored reference is technically invalid after scope disposal. The reference continues to be used in `OnRunningAsync` and `OnShutdownAsync`. In practice this works because the service has no disposable dependencies that the scope would clean up, but it violates DI lifetime expectations.

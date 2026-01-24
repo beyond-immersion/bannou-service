@@ -59,6 +59,12 @@ x-service-configuration:
       description: Base lock expiry time in seconds for event buffer flush operations (actual expiry is max of this and 2x flush interval)
       default: 10
       env: ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS
+    # Rating Update Lock Configuration
+    RatingUpdateLockExpirySeconds:
+      type: integer
+      description: Lock expiry time in seconds for skill rating update operations
+      default: 30
+      env: ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS
     # Glicko-2 Algorithm Precision
     Glicko2VolatilityConvergenceTolerance:
       type: number
