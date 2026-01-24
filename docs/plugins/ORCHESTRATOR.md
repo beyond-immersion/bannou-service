@@ -438,8 +438,6 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 - **HttpClient created per-call in OpenResty invalidation**: `InvalidateOpenRestryRoutingCacheAsync` creates `new HttpClient()` with `using` on every invocation. This is the classic socket exhaustion anti-pattern in .NET - each disposal closes the socket immediately, but DNS entries remain cached, and under high deployment frequency could exhaust ephemeral ports. Should use `IHttpClientFactory`.
 
-- **Method name typo**: `InvalidateOpenRestryRoutingCacheAsync` uses "Restry" instead of "Resty" (the product is OpenResty). This typo is consistent throughout the codebase (3 call sites) so is functionally harmless but may cause confusion when searching.
-
 ---
 
 *This document describes the orchestrator plugin as implemented. For architectural context, see [TENETS.md](../reference/TENETS.md) and [BANNOU_DESIGN.md](../BANNOU_DESIGN.md).*

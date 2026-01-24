@@ -328,10 +328,6 @@ Index Architecture
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. **Lazy decay has no ETag concurrency control**: The `ApplyLazyDecayAsync` method uses `store.SaveAsync` without ETag protection, unlike `DecayMemoriesAsync` which uses `GetWithETagAsync` + `TrySaveAsync`. Two concurrent reads of the same stale perspective could both calculate and apply decay, resulting in double-decay (perspective strength reduced twice). This is particularly problematic because lazy decay happens during read operations (`QueryByCharacter`, `QueryBetween`, `QueryByLocation`, `GetPerspective`, `GetSentiment`).
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Pair key sorting**: Pair indexes use the lexicographically smaller GUID first (`charA < charB ? A:B : B:A`) to ensure both directions of a relationship map to the same index key.

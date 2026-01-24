@@ -403,10 +403,6 @@ Archive System
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. **Namespace document list type inconsistency**: The same key `ns-docs:{namespaceId}` is accessed as `List<Guid>` in write-path methods (`AddDocumentToNamespaceIndexAsync`, `RemoveDocumentFromNamespaceIndexAsync`) but as `HashSet<Guid>` in read-path methods (`DeleteOrphanDocumentsAsync`, `GetAllNamespaceDocumentsAsync`, `RestoreFromBundleAsync`). While JSON array serialization round-trips both types, if duplicates accumulate in the List (from race conditions), reading as HashSet silently deduplicates them.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Repository-bound namespaces reject manual mutations**: Any `Create`, `Update`, or `Delete` call on a namespace with an active binding (status not Disabled) returns 403 Forbidden. This enforces git as the single source of truth.

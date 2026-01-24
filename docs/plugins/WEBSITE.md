@@ -315,10 +315,6 @@ Generated Model Hierarchy
 
 1. **Unreachable catch blocks**: Every endpoint method has a try-catch where the try block cannot throw (contains only `LogWarning` + return). The catch blocks with `TryPublishErrorAsync` are dead code. When real logic is added, the error handling structure is already in place but the current code is misleading.
 
-2. **Platform enum duplicated**: The schema defines `platform` as a string enum at the endpoint parameter level AND as part of `DownloadInfo`. NSwag generates both `Platform` and `DownloadInfoPlatform` enums with identical values (windows/macos/linux). Should be consolidated using a shared `$ref` definition.
-
-3. **Missing `lastModified` on `PageContent`**: The `lastModified` field is not marked as `required` in the schema despite being non-nullable in the generated model (`DateTimeOffset LastModified`). Creating a page without providing `lastModified` would result in `default(DateTimeOffset)` (0001-01-01).
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **REST exception to POST-only pattern**: This service deliberately uses GET/PUT/DELETE for browser compatibility. This is explicitly documented in the BANNOU_DESIGN.md as an exception: "Website service uses traditional REST patterns for browser compatibility (bookmarkable URLs, SEO, caching)."

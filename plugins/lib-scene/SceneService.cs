@@ -667,13 +667,15 @@ public partial class SceneService : ISceneService
         try
         {
             // Publish destroyed event
+            // After regeneration from updated schema, SceneAssetId/RegionId will be nullable Guid?
+            // and this ?? Guid.Empty workaround can be removed (assign directly from body)
             var eventModel = new SceneDestroyedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = body.InstanceId,
-                SceneAssetId = body.SceneAssetId,
-                RegionId = body.RegionId,
+                SceneAssetId = body.SceneAssetId ?? Guid.Empty,
+                RegionId = body.RegionId ?? Guid.Empty,
                 Metadata = body.Metadata
             };
 

@@ -424,6 +424,8 @@ public partial class LocationService : ILocationService
 
                 if (parentModel == null)
                 {
+                    _logger.LogWarning("Ancestor walk for location {LocationId} found missing parent {ParentId} at depth {Depth}",
+                        body.LocationId, currentParentId.Value, depth);
                     break;
                 }
 
@@ -748,6 +750,12 @@ public partial class LocationService : ILocationService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Skip if parent is already set to the requested value
+            if (model.ParentLocationId == body.ParentLocationId)
+            {
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
             // Get new parent
             var newParentKey = BuildLocationKey(body.ParentLocationId.ToString());
             var newParentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(newParentKey, cancellationToken);
@@ -1045,16 +1053,22 @@ public partial class LocationService : ILocationService
         {
             // Build a map of realm codes to realm IDs
             var realmCodeToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var failedRealmCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var seedLocation in body.Locations)
             {
-                if (!realmCodeToId.ContainsKey(seedLocation.RealmCode))
+                if (!realmCodeToId.ContainsKey(seedLocation.RealmCode) && !failedRealmCodes.Contains(seedLocation.RealmCode))
                 {
                     // Look up realm by code
                     var realmResponse = await _realmClient.GetRealmByCodeAsync(new GetRealmByCodeRequest { Code = seedLocation.RealmCode }, cancellationToken);
                     if (realmResponse != null)
                     {
                         realmCodeToId[seedLocation.RealmCode] = realmResponse.RealmId.ToString();
+                    }
+                    else
+                    {
+                        failedRealmCodes.Add(seedLocation.RealmCode);
+                        _logger.LogWarning("Realm code {RealmCode} not found during seed, skipping all locations in this realm", seedLocation.RealmCode);
                     }
                 }
             }

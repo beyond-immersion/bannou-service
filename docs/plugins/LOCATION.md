@@ -245,19 +245,13 @@ State Store Layout
 
 5. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
 
-7. **Seed update doesn't publish events**: Lines 1084-1101 - when updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
+6. **Seed update doesn't publish events**: Lines 1084-1101 - when updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
 
-8. **SetParent doesn't check if parent unchanged**: Lines 737-810 - `SetLocationParentAsync` doesn't check if the new parent is the same as the current parent. Calling SetParent with the location's existing parent will still update indexes and publish an update event.
+7. **Index updates lack optimistic concurrency**: Index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
 
-9. **Ancestor walk breaks silently on missing parent**: Lines 425-428 - if a parent in the ancestor chain doesn't exist (data corruption), the walk simply stops and returns accumulated ancestors. No warning logged for the orphaned data.
+8. **Empty parent index key not cleaned up**: When the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
 
-10. **Index updates lack optimistic concurrency**: Lines 1210-1219, 1231-1239, 1252-1260 - index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
-
-11. **Empty parent index key not cleaned up**: Lines 1242-1249 - when the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
-
-12. **Seed realm lookup doesn't cache NotFound**: Lines 1054-1059 - if a realm code lookup fails, it's not cached in `realmCodeToId`. Subsequent seed locations with the same invalid realm code will retry the API call (and fail again), logging multiple errors.
-
-13. **Depth cascade updates descendants sequentially**: Lines 1303-1315 - `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
+9. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
 
 14. **ListLocationsByParent returns NotFound for missing parent**: Lines 264-267 - if the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
 

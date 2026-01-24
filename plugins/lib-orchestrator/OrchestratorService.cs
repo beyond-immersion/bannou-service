@@ -558,7 +558,7 @@ public partial class OrchestratorService : IOrchestratorService
                         await _healthMonitor.ResetAllMappingsToDefaultAsync();
 
                         // Invalidate OpenResty routing cache so it reads fresh routes from Redis
-                        await InvalidateOpenRestryRoutingCacheAsync();
+                        await InvalidateOpenRestyRoutingCacheAsync();
 
                         // Now tear down the old containers (routes already point elsewhere)
                         foreach (var appId in previousAppIds)
@@ -2432,7 +2432,7 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 // All services were deployed to "bannou" - nothing to tear down
                 await _healthMonitor.ResetAllMappingsToDefaultAsync();
-                await InvalidateOpenRestryRoutingCacheAsync();
+                await InvalidateOpenRestyRoutingCacheAsync();
                 await _stateManager.ClearCurrentConfigurationAsync();
 
                 return (true, "Already at default topology - all services on 'bannou', configuration cleared", tornDownServices);
@@ -2442,7 +2442,7 @@ public partial class OrchestratorService : IOrchestratorService
             // This ensures routing proxies (OpenResty, lib-mesh) get updated routes
             // before the old containers become unavailable.
             await _healthMonitor.ResetAllMappingsToDefaultAsync();
-            await InvalidateOpenRestryRoutingCacheAsync();
+            await InvalidateOpenRestyRoutingCacheAsync();
 
             // Now tear down each tracked deployment (routes already point to default)
             foreach (var appId in deployedAppIds)
@@ -3167,7 +3167,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// This forces OpenResty to re-read routing data from Redis on the next request.
     /// Non-blocking: failures are logged but don't stop the deployment flow.
     /// </summary>
-    private async Task InvalidateOpenRestryRoutingCacheAsync()
+    private async Task InvalidateOpenRestyRoutingCacheAsync()
     {
         try
         {
