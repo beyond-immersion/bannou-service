@@ -227,7 +227,7 @@ Messaging Architecture
 
 1. **Callback retry logic duplication**: The same retry logic appears in both `CreateSubscriptionAsync` and `RecoverExternalSubscriptionsAsync`. Changes must be applied in two places. Could be extracted to a shared private method.
 
-2. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via `Task.Run()`. Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch).
+2. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch).
 
 3. **No graceful drain on shutdown**: `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process.
 
