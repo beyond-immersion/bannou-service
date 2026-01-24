@@ -478,6 +478,21 @@ public partial class InventoryService : IInventoryService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Acquire distributed lock for container deletion (per IMPLEMENTATION TENETS)
+            var lockOwner = $"delete-container-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.InventoryLock,
+                body.ContainerId.ToString(),
+                lockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for container deletion {ContainerId}", body.ContainerId);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Get items in container - abort if item service is unreachable to prevent orphaning items
             List<ItemInstanceResponse> items;
             try
@@ -1010,6 +1025,21 @@ public partial class InventoryService : IInventoryService
             }
 
             var sourceContainerId = item.ContainerId;
+
+            // Acquire distributed lock on source container for transfer safety
+            var lockOwner = $"transfer-item-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.InventoryLock,
+                sourceContainerId.ToString(),
+                lockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during transfer", sourceContainerId);
+                return (StatusCodes.Conflict, null);
+            }
             var quantityToTransfer = body.Quantity ?? item.Quantity;
 
             // Get source and target containers
@@ -1078,7 +1108,7 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
-            // Get item
+            // Get item first to determine container
             ItemInstanceResponse item;
             try
             {
@@ -1117,6 +1147,21 @@ public partial class InventoryService : IInventoryService
             {
                 _logger.LogWarning("Cannot split unique items");
                 return (StatusCodes.BadRequest, null);
+            }
+
+            // Acquire distributed lock on the container for slot count consistency
+            var lockOwner = $"split-stack-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.InventoryLock,
+                item.ContainerId.ToString(),
+                lockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during split", item.ContainerId);
+                return (StatusCodes.Conflict, null);
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -1173,6 +1218,15 @@ public partial class InventoryService : IInventoryService
                     _logger.LogError(restoreEx, "Failed to restore original quantity after split failure");
                 }
                 return (StatusCodes.InternalServerError, null);
+            }
+
+            // Update container UsedSlots for the new item instance
+            var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
+            if (container != null)
+            {
+                container.UsedSlots = (container.UsedSlots ?? 0) + 1;
+                container.ModifiedAt = now;
+                await SaveContainerWithCacheAsync(container, cancellationToken);
             }
 
             await _messageBus.TryPublishAsync("inventory-item.split", new InventoryItemSplitEvent
@@ -1272,6 +1326,21 @@ public partial class InventoryService : IInventoryService
                 combinedQuantity = template.MaxStackSize;
             }
 
+            // Acquire distributed lock on source container for slot count consistency
+            var lockOwner = $"merge-stack-{Guid.NewGuid():N}";
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.InventoryLock,
+                source.ContainerId.ToString(),
+                lockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during merge", source.ContainerId);
+                return (StatusCodes.Conflict, null);
+            }
+
             var now = DateTimeOffset.UtcNow;
 
             // Update target quantity first (safer: if this fails, source is unaffected)
@@ -1325,19 +1394,13 @@ public partial class InventoryService : IInventoryService
                     _logger.LogWarning(ex, "Failed to destroy source item during merge: {StatusCode}", ex.StatusCode);
                 }
 
-                // Update container slot count since source is gone
-                var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-                var containerKey = $"{CONT_PREFIX}{source.ContainerId}";
-                var (container, containerEtag) = await containerStore.GetWithETagAsync(containerKey, cancellationToken);
+                // Update container slot count since source is gone (lock already held)
+                var container = await GetContainerWithCacheAsync(source.ContainerId, cancellationToken);
                 if (container is not null)
                 {
                     container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
                     container.ModifiedAt = now;
-                    var containerResult = await containerStore.TrySaveAsync(containerKey, container, containerEtag ?? string.Empty, cancellationToken);
-                    if (containerResult == null)
-                    {
-                        _logger.LogWarning("Concurrent modification on container {ContainerId} during merge, slot count may be stale", source.ContainerId);
-                    }
+                    await SaveContainerWithCacheAsync(container, cancellationToken);
                 }
             }
 

@@ -74,9 +74,9 @@ public partial class ItemService : IItemService
             var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
 
-            // Check code uniqueness within game
+            // Check code uniqueness within game using atomic claim
             var codeKey = $"{TPL_CODE_INDEX}{body.GameId}:{body.Code}";
-            var existingId = await stringStore.GetAsync(codeKey, cancellationToken);
+            var (existingId, codeEtag) = await stringStore.GetWithETagAsync(codeKey, cancellationToken);
             if (!string.IsNullOrEmpty(existingId))
             {
                 _logger.LogWarning("Item template code already exists: {Code} for game {GameId}", body.Code, body.GameId);
@@ -125,9 +125,16 @@ public partial class ItemService : IItemService
                 UpdatedAt = now
             };
 
+            // Claim the code index key atomically (prevents TOCTOU race on code uniqueness)
+            var claimResult = await stringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken);
+            if (claimResult == null)
+            {
+                _logger.LogWarning("Item template code claimed concurrently: {Code} for game {GameId}", body.Code, body.GameId);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Save template
             await templateStore.SaveAsync($"{TPL_PREFIX}{templateId}", model, cancellationToken: cancellationToken);
-            await stringStore.SaveAsync(codeKey, templateId.ToString(), cancellationToken: cancellationToken);
             await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, $"{TPL_GAME_INDEX}{body.GameId}", templateId.ToString(), cancellationToken);
             await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
 

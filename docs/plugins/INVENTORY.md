@@ -314,37 +314,21 @@ The `[assembly: InternalsVisibleTo]` attributes are declared in both files redun
 
 **Fix**: Remove the duplicate declarations and the `using System.Runtime.CompilerServices;` import from `InventoryService.cs` (keep them only in `AssemblyInfo.cs`).
 
-### 6. IMPLEMENTATION TENETS (T9): TransferItem Lacks Distributed Lock
+### 6. ~~IMPLEMENTATION TENETS (T9): TransferItem Lacks Distributed Lock~~ **FIXED**
 
-**File**: `plugins/lib-inventory/InventoryService.cs`, lines 965-1071
+TransferItem now acquires a distributed lock on the source container before tradeable/bound validation and the delegated MoveItemAsync call.
 
-The `TransferItemAsync` method reads source and target containers and validates tradeable/bound state without acquiring a distributed lock. A concurrent modification could change the item state between validation and the delegated `MoveItemAsync` call.
+### 7. ~~IMPLEMENTATION TENETS (T9): DeleteContainer Lacks Distributed Lock~~ **FIXED**
 
-**Fix**: Acquire a distributed lock on the source container before performing tradeable/bound validation.
+DeleteContainer now acquires a distributed lock on the container before item fetching, handling, index cleanup, and deletion. Also returns ServiceUnavailable (503) if items can't be fetched instead of orphaning them.
 
-### 7. IMPLEMENTATION TENETS (T9): DeleteContainer Lacks Distributed Lock
+### 8. ~~IMPLEMENTATION TENETS (T9): SplitStack Does Not Update Container UsedSlots~~ **FIXED**
 
-**File**: `plugins/lib-inventory/InventoryService.cs`, lines 467-587
+SplitStack now acquires a distributed lock on the container and increments UsedSlots after successfully creating the new item instance.
 
-The `DeleteContainerAsync` method performs significant state modifications (item destruction/transfer, index cleanup, container deletion, cache invalidation) without acquiring a distributed lock. Concurrent operations could add items to a container being deleted.
+### 9. ~~IMPLEMENTATION TENETS (T9): MergeStacks Container Update Lacks Distributed Lock~~ **FIXED**
 
-**Fix**: Acquire a distributed lock on the container ID before performing deletion operations.
-
-### 8. IMPLEMENTATION TENETS (T9): SplitStack Does Not Update Container UsedSlots
-
-**File**: `plugins/lib-inventory/InventoryService.cs`, lines 1074-1207
-
-After a successful split, a new item instance is created in the same container but the container's `UsedSlots` counter is never incremented. No distributed lock is acquired on the container. This leaves capacity tracking inconsistent.
-
-**Fix**: Acquire a lock on the container, increment `UsedSlots` after creating the new instance, and save the updated container state.
-
-### 9. IMPLEMENTATION TENETS (T9): MergeStacks Container Update Lacks Distributed Lock
-
-**File**: `plugins/lib-inventory/InventoryService.cs`, lines 1327-1340
-
-The `MergeStacksAsync` method modifies container slot counts without acquiring a distributed lock. Uses `TrySaveAsync` with ETags but has no retry on conflict -- ETag failure leaves slot count permanently stale.
-
-**Fix**: Acquire a distributed lock on the affected container before modifying its slot count, or add retry logic on ETag conflict.
+MergeStacks now acquires a distributed lock on the source container before modifying quantities. The container slot decrement uses the cache read-through/write-through pattern under lock instead of raw ETag-without-retry.
 
 ### 10. QUALITY TENETS (T10): Missing Debug-Level Operation Entry Logging
 
