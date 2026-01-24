@@ -14,7 +14,6 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-analytics.tests")]
 
@@ -63,9 +62,6 @@ public partial class AnalyticsService : IAnalyticsService
     // Glicko-2 scale conversion constant
     private const double GlickoScale = 173.7178;
 
-    // Maximum iterations for Glicko-2 volatility convergence
-    private const int MaxVolatilityIterations = 100;
-
     // Cached parsed milestone thresholds from configuration
     private readonly int[] _milestoneThresholds;
 
@@ -113,8 +109,7 @@ public partial class AnalyticsService : IAnalyticsService
         return thresholdsConfig
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(s => int.TryParse(s, out var v) ? v : (int?)null)
-            .Where(v => v.HasValue)
-            .Select(v => v!.Value)
+            .OfType<int>()  // Filters nulls and unwraps to int in one operation
             .OrderBy(v => v)
             .ToArray();
     }
@@ -923,10 +918,10 @@ public partial class AnalyticsService : IAnalyticsService
             var regularStore = _stateStoreFactory.GetStore<ControllerHistoryData>(
                 StateStoreDefinitions.AnalyticsHistoryData);
 
-            // Delete in batches to avoid overwhelming the database
+            // Delete in batches to avoid overwhelming the database (per IMPLEMENTATION TENETS: use configuration)
             while (totalDeleted < batchSize)
             {
-                var batchLimit = Math.Min(100, (int)(batchSize - totalDeleted));
+                var batchLimit = Math.Min(_configuration.ControllerHistoryCleanupSubBatchSize, (int)(batchSize - totalDeleted));
                 var batch = await historyStore.JsonQueryPagedAsync(
                     conditions, 0, batchLimit, null, cancellationToken);
 
@@ -1026,9 +1021,9 @@ public partial class AnalyticsService : IAnalyticsService
         var newRating = newMu * GlickoScale + baseRating;
         var newRD = newPhiValue * GlickoScale;
 
-        // Clamp values to reasonable ranges
-        newRating = Math.Clamp(newRating, 100, 4000);
-        newRD = Math.Clamp(newRD, 30, maxDeviation);
+        // Clamp values to reasonable ranges (per IMPLEMENTATION TENETS: use configuration, not hardcoded tunables)
+        newRating = Math.Clamp(newRating, _configuration.Glicko2MinRating, _configuration.Glicko2MaxRating);
+        newRD = Math.Clamp(newRD, _configuration.Glicko2MinDeviation, maxDeviation);
 
         return (newRating, newRD, newSigma);
     }
@@ -1073,9 +1068,9 @@ public partial class AnalyticsService : IAnalyticsService
         {
             upperBound -= tau;
             iterations++;
-            if (iterations >= MaxVolatilityIterations)
+            if (iterations >= _configuration.Glicko2MaxVolatilityIterations)
             {
-                _logger.LogWarning("Glicko-2 upper bound search did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", MaxVolatilityIterations, sigma);
+                _logger.LogWarning("Glicko-2 upper bound search did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", _configuration.Glicko2MaxVolatilityIterations, sigma);
                 return sigma;
             }
         }
@@ -1106,9 +1101,9 @@ public partial class AnalyticsService : IAnalyticsService
             fB = fC;
 
             iterations++;
-            if (iterations >= MaxVolatilityIterations)
+            if (iterations >= _configuration.Glicko2MaxVolatilityIterations)
             {
-                _logger.LogWarning("Glicko-2 Illinois algorithm did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", MaxVolatilityIterations, sigma);
+                _logger.LogWarning("Glicko-2 Illinois algorithm did not converge after {MaxIterations} iterations, returning current sigma {Sigma}", _configuration.Glicko2MaxVolatilityIterations, sigma);
                 return sigma;
             }
         }
@@ -1244,18 +1239,8 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (response == null)
             {
-                var message = "Game service lookup returned no data";
-                _logger.LogError("{Message} (GameType: {GameType})", message, gameType);
-                await _messageBus.TryPublishErrorAsync(
-                    "analytics",
-                    "ResolveGameServiceId",
-                    "game_service_lookup_empty",
-                    message,
-                    dependency: "game-service",
-                    endpoint: "service:game-service/get",
-                    details: $"gameType:{gameType}",
-                    stack: null,
-                    cancellationToken: cancellationToken);
+                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                _logger.LogWarning("Game service lookup returned no data for game type {GameType}", gameType);
                 return null;
             }
 
@@ -1274,17 +1259,8 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            _logger.LogError(ex, "Failed to resolve game service for game type {GameType}", gameType);
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "ResolveGameServiceId",
-                "game_service_lookup_failed",
-                ex.Message,
-                dependency: "game-service",
-                endpoint: "service:game-service/get",
-                details: $"gameType:{gameType}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for game type {GameType}: {Status}", gameType, ex.StatusCode);
             return null;
         }
         catch (Exception ex)
@@ -1366,17 +1342,8 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            _logger.LogError(ex, "Failed to resolve game session {SessionId} for analytics event", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "ResolveGameServiceIdForSession",
-                "game_session_lookup_failed",
-                ex.Message,
-                dependency: "game-session",
-                endpoint: "service:game-session/get",
-                details: $"sessionId:{sessionId}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game session {SessionId} for analytics event: {Status}", sessionId, ex.StatusCode);
             return null;
         }
         catch (Exception ex)
@@ -1448,17 +1415,8 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (realm == null)
             {
-                _logger.LogError("Realm lookup returned no data for realm {RealmId}", realmId);
-                await _messageBus.TryPublishErrorAsync(
-                    "analytics",
-                    "ResolveGameServiceIdForRealm",
-                    "realm_lookup_empty",
-                    "Realm lookup returned no data",
-                    dependency: "realm",
-                    endpoint: "service:realm/get",
-                    details: $"realmId:{realmId}",
-                    stack: null,
-                    cancellationToken: cancellationToken);
+                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                _logger.LogWarning("Realm lookup returned no data for realm {RealmId}", realmId);
                 return null;
             }
 
@@ -1477,17 +1435,8 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            _logger.LogError(ex, "Failed to resolve game service for realm {RealmId}", realmId);
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "ResolveGameServiceIdForRealm",
-                "realm_lookup_failed",
-                ex.Message,
-                dependency: "realm",
-                endpoint: "service:realm/get",
-                details: $"realmId:{realmId}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for realm {RealmId}: {Status}", realmId, ex.StatusCode);
             return null;
         }
         catch (Exception ex)
@@ -1535,17 +1484,8 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (character == null)
             {
-                _logger.LogError("Character lookup returned no data for character {CharacterId}", characterId);
-                await _messageBus.TryPublishErrorAsync(
-                    "analytics",
-                    "ResolveGameServiceIdForCharacter",
-                    "character_lookup_empty",
-                    "Character lookup returned no data",
-                    dependency: "character",
-                    endpoint: "service:character/get",
-                    details: $"characterId:{characterId}",
-                    stack: null,
-                    cancellationToken: cancellationToken);
+                // Per IMPLEMENTATION TENETS T7: Not found (404) is expected, log at Warning, do NOT emit error events
+                _logger.LogWarning("Character lookup returned no data for character {CharacterId}", characterId);
                 return null;
             }
 
@@ -1564,17 +1504,8 @@ public partial class AnalyticsService : IAnalyticsService
         }
         catch (ApiException ex)
         {
-            _logger.LogError(ex, "Failed to resolve game service for character {CharacterId}", characterId);
-            await _messageBus.TryPublishErrorAsync(
-                "analytics",
-                "ResolveGameServiceIdForCharacter",
-                "character_lookup_failed",
-                ex.Message,
-                dependency: "character",
-                endpoint: "service:character/get",
-                details: $"characterId:{characterId}",
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
+            // Per IMPLEMENTATION TENETS T7: ApiException is expected, log at Warning, do NOT emit error events
+            _logger.LogWarning(ex, "Failed to resolve game service for character {CharacterId}: {Status}", characterId, ex.StatusCode);
             return null;
         }
         catch (Exception ex)

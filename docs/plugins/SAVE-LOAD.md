@@ -518,3 +518,116 @@ Circuit Breaker State Machine
 11. **Storage quota check mixes raw and compressed sizes**: The save quota check compares `slot.TotalSizeBytes + body.Data.Length` against `MaxTotalSizeBytesPerOwner`. The `slot.TotalSizeBytes` tracks compressed sizes, but `body.Data.Length` is the raw uncompressed data. The check happens pre-compression so the compressed size is unknown. Options: check after compression (changes error timing), use a compression ratio estimate, or accept the conservative over-estimate.
 
 12. **Storage quota check is per-slot, not per-owner**: The quota check only examines the current slot's TotalSizeBytes against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. True per-owner enforcement requires querying all slots for the owner before each save.
+
+---
+
+## Tenet Violations (Audit)
+
+### Category: IMPLEMENTATION TENETS
+
+1. **T6 Service Implementation Pattern** - `SaveLoadService.cs:55-79` - Missing constructor null checks
+   - What's wrong: Constructor assigns dependencies directly without null validation. All 11 injected dependencies are used without checking for null.
+   - Fix: Add null checks with `ArgumentNullException.ThrowIfNull()` or `?? throw new ArgumentNullException(nameof(param))` for each parameter.
+
+2. **T6 Service Implementation Pattern** - `Helpers/SaveExportImportManager.cs:31-47` - Missing constructor null checks
+   - What's wrong: Constructor assigns 7 dependencies without null validation.
+   - Fix: Add null checks for `stateStoreFactory`, `configuration`, `assetClient`, `httpClientFactory`, `versionDataLoader`, `messageBus`, and `logger`.
+
+3. **T6 Service Implementation Pattern** - `Helpers/SaveMigrationHandler.cs:29-45` - Missing constructor null checks
+   - What's wrong: Constructor assigns 7 dependencies without null validation.
+   - Fix: Add null checks for all injected dependencies.
+
+4. **T6 Service Implementation Pattern** - `Helpers/VersionDataLoader.cs:25-37` - Missing constructor null checks
+   - What's wrong: Constructor assigns 5 dependencies without null validation.
+   - Fix: Add null checks for `stateStoreFactory`, `configuration`, `assetClient`, `httpClientFactory`, and `logger`.
+
+5. **T6 Service Implementation Pattern** - `Helpers/VersionCleanupManager.cs:24-36` - Missing constructor null checks
+   - What's wrong: Constructor assigns 5 dependencies without null validation.
+   - Fix: Add null checks for all injected dependencies.
+
+6. **T6 Service Implementation Pattern** - `Processing/SaveUploadWorker.cs:34-43` - Missing constructor null checks
+   - What's wrong: Constructor assigns 3 dependencies without null validation.
+   - Fix: Add null checks for `serviceProvider`, `configuration`, and `logger`.
+
+7. **T6 Service Implementation Pattern** - `Processing/CleanupService.cs:29-39` - Missing constructor null checks
+   - What's wrong: Constructor assigns 4 dependencies without null validation.
+   - Fix: Add null checks for `serviceProvider`, `configuration`, `appConfiguration`, and `logger`.
+
+8. **T6 Service Implementation Pattern** - `Processing/StorageCircuitBreaker.cs:55-65` - Missing constructor null checks
+   - What's wrong: Constructor assigns 4 dependencies without null validation.
+   - Fix: Add null checks for `stateStoreFactory`, `messageBus`, `configuration`, and `logger`.
+
+9. **T6 Service Implementation Pattern** - `Delta/DeltaProcessor.cs:22-26` - Missing constructor null checks
+   - What's wrong: Constructor assigns `logger` without null validation.
+   - Fix: Add null check for `logger` parameter.
+
+10. **T6 Service Implementation Pattern** - `Migration/SchemaMigrator.cs:24-32` - Missing constructor null checks
+    - What's wrong: Constructor assigns `logger` and `schemaStore` without null validation.
+    - Fix: Add null checks for both parameters.
+
+11. **T20 JSON Serialization** - `Delta/DeltaProcessor.cs:94` - Direct JsonSerializer usage
+    - What's wrong: Uses `JsonSerializer.Serialize(patch)` instead of `BannouJson.Serialize()`.
+    - Fix: Replace with `BannouJson.Serialize(patch)`.
+
+12. **T20 JSON Serialization** - `Delta/DeltaProcessor.cs:126` - Direct JsonSerializer usage
+    - What's wrong: Uses `JsonSerializer.Deserialize<JsonPatch>(patchJson)` instead of `BannouJson.Deserialize()`.
+    - Fix: Replace with `BannouJson.Deserialize<JsonPatch>(patchJson)`.
+
+13. **T20 JSON Serialization** - `Delta/DeltaProcessor.cs:179` - Direct JsonSerializer usage
+    - What's wrong: Uses `JsonSerializer.Deserialize<JsonPatch>(patchJson)` in ValidateDelta method.
+    - Fix: Replace with `BannouJson.Deserialize<JsonPatch>(patchJson)`.
+
+14. **T20 JSON Serialization** - `Delta/DeltaProcessor.cs:221` - Direct JsonSerializer usage
+    - What's wrong: Uses `JsonSerializer.Deserialize<JsonPatch>(patchJson)` in GetOperationCount method.
+    - Fix: Replace with `BannouJson.Deserialize<JsonPatch>(patchJson)`.
+
+15. **T20 JSON Serialization** - `Migration/SchemaMigrator.cs:193` - Direct JsonSerializer usage
+    - What's wrong: Uses `JsonSerializer.Deserialize<JsonPatch>(patchJson)` instead of `BannouJson.Deserialize()`.
+    - Fix: Replace with `BannouJson.Deserialize<JsonPatch>(patchJson)`.
+
+16. **T25 Internal Model Type Safety** - `Models/SaveSlotMetadata.cs:37` - String field for enum value
+    - What's wrong: `Category` property is `string` but should use the `SaveCategory` enum type. The actual enum is converted to string with `.ToString()` at assignment.
+    - Fix: Change to `public required SaveCategory Category { get; set; }` and update all assignments to use the enum directly.
+
+17. **T25 Internal Model Type Safety** - `Models/SaveSlotMetadata.cs:52` - String field for enum value
+    - What's wrong: `CompressionType` property is `string` but should use the `CompressionType` enum type.
+    - Fix: Change to `public CompressionType CompressionType { get; set; } = CompressionType.GZIP;` and update all `Enum.TryParse` calls to direct enum usage.
+
+18. **T25 Internal Model Type Safety** - `Models/SaveVersionManifest.cs:42` - String field for enum value
+    - What's wrong: `CompressionType` property is `string` but should use the `CompressionType` enum type.
+    - Fix: Change to `public CompressionType CompressionType { get; set; } = CompressionType.NONE;`.
+
+19. **T25 Internal Model Type Safety** - `Models/SaveVersionManifest.cs:92` - String field for enum value
+    - What's wrong: `UploadStatus` property is `string` but should use an enum (e.g., `UploadStatus.PENDING`, `UploadStatus.COMPLETE`, `UploadStatus.FAILED`).
+    - Fix: Define an `UploadStatus` enum and use it instead of the string representation.
+
+20. **T25 Internal Model Type Safety** - `Models/PendingUploadEntry.cs:52` - String field for enum value
+    - What's wrong: `CompressionType` property is `string` but should use the `CompressionType` enum type.
+    - Fix: Change to `public CompressionType CompressionType { get; set; } = CompressionType.GZIP;`.
+
+21. **T25 Internal Model Type Safety** - `Models/HotSaveEntry.cs:37` - String field for enum value
+    - What's wrong: `CompressionType` property is `string?` but should use the `CompressionType` enum type (nullable).
+    - Fix: Change to `public CompressionType? CompressionType { get; set; }`.
+
+22. **T25 Internal Model Type Safety** - `Processing/StorageCircuitBreaker.cs:39` - String field for enum value
+    - What's wrong: `CircuitBreakerState.State` property is `string` but should use the `CircuitState` enum type that is defined in the same file.
+    - Fix: Change to `public CircuitState State { get; set; } = CircuitState.Closed;` and update ParseState calls.
+
+### Category: QUALITY TENETS
+
+23. **T19 XML Documentation** - `Migration/SchemaMigrator.cs:273-283` - Missing XML documentation
+    - What's wrong: `MigrationResult` class has summary tags but properties `Data` and `Warnings` lack `<summary>` tags (empty summaries).
+    - Fix: Add meaningful descriptions: Data = "The transformed save data after migration", Warnings = "Non-fatal issues encountered during migration steps".
+
+---
+
+## Violation Summary
+
+| Tenet | Category | Count | Files Affected |
+|-------|----------|-------|----------------|
+| T6 (Constructor Null Checks) | IMPLEMENTATION | 10 | SaveLoadService.cs, SaveExportImportManager.cs, SaveMigrationHandler.cs, VersionDataLoader.cs, VersionCleanupManager.cs, SaveUploadWorker.cs, CleanupService.cs, StorageCircuitBreaker.cs, DeltaProcessor.cs, SchemaMigrator.cs |
+| T20 (BannouJson) | IMPLEMENTATION | 5 | DeltaProcessor.cs, SchemaMigrator.cs |
+| T25 (Internal Model Types) | IMPLEMENTATION | 7 | SaveSlotMetadata.cs, SaveVersionManifest.cs, PendingUploadEntry.cs, HotSaveEntry.cs, StorageCircuitBreaker.cs |
+| T19 (XML Documentation) | QUALITY | 1 | SchemaMigrator.cs |
+
+**Total Violations**: 23

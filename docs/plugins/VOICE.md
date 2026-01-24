@@ -233,3 +233,148 @@ None identified.
 4. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials.
 
 5. **String-based tier and codec storage**: `VoiceRoomData` stores tier and codec as strings, requiring parsing in service methods. Allows future extensibility but loses type safety at the persistence layer.
+
+---
+
+## Tenet Violations (Audit)
+
+> **Audit Date**: 2026-01-24
+> **Auditor**: Claude Opus 4.5 (Tenet Compliance Audit)
+
+### Category: IMPLEMENTATION
+
+1. **T10 Logging Standards - Wrong Log Level for Operation Entry** - VoiceService.cs:81 - Operation entry logged at Information instead of Debug
+   - What's wrong: `CreateVoiceRoomAsync` logs "Creating voice room for session {SessionId}" at LogInformation. Per T10, operation entry should be Debug level.
+   - Fix: Change `_logger.LogInformation("Creating voice room for session {SessionId}"` to `_logger.LogDebug`.
+
+2. **T10 Logging Standards - Wrong Log Level for Operation Entry** - VoiceService.cs:205 - Operation entry logged at Information instead of Debug
+   - What's wrong: `JoinVoiceRoomAsync` logs "Session {SessionId} joining voice room {RoomId}" at LogInformation. Per T10, operation entry should be Debug level.
+   - Fix: Change `_logger.LogInformation("Session {SessionId} joining voice room"` to `_logger.LogDebug`.
+
+3. **T10 Logging Standards - Wrong Log Level for Operation Entry** - VoiceService.cs:398 - Operation entry logged at Information instead of Debug
+   - What's wrong: `LeaveVoiceRoomAsync` logs "Session {SessionId} leaving voice room {RoomId}" at LogInformation. Per T10, operation entry should be Debug level.
+   - Fix: Change `_logger.LogInformation("Session {SessionId} leaving voice room"` to `_logger.LogDebug`.
+
+4. **T10 Logging Standards - Wrong Log Level for Operation Entry** - VoiceService.cs:443 - Operation entry logged at Information instead of Debug
+   - What's wrong: `DeleteVoiceRoomAsync` logs "Deleting voice room {RoomId}" at LogInformation. Per T10, operation entry should be Debug level.
+   - Fix: Change `_logger.LogInformation("Deleting voice room {RoomId}"` to `_logger.LogDebug`.
+
+5. **T10 Logging Standards - Wrong Log Level for Operation Entry** - VoiceService.cs:936 - Permission registration logged at Information instead of Debug
+   - What's wrong: `RegisterServicePermissionsAsync` logs "Registering Voice service permissions..." at LogInformation. This is an operation entry, should be Debug.
+   - Fix: Change `_logger.LogInformation("Registering Voice service permissions..."` to `_logger.LogDebug`.
+
+6. **T21 Configuration-First - Hardcoded Tunable Fallback** - P2PCoordinator.cs:107 - Hardcoded default of 6 for P2PMaxParticipants
+   - What's wrong: `GetP2PMaxParticipants()` returns `6` as fallback when configuration value is <= 0. The schema already defines a default of `8`, so this should either use the schema default or throw if configuration is invalid.
+   - Fix: Remove the fallback and rely on the schema default, or throw `InvalidOperationException` if `P2PMaxParticipants <= 0` to indicate invalid configuration.
+
+7. **T21 Configuration-First - Hardcoded Tunable Fallback** - ScaledTierCoordinator.cs:68 - Hardcoded default of 100 for ScaledMaxParticipants
+   - What's wrong: `GetScaledMaxParticipants()` returns `100` as fallback when configuration value is <= 0. The schema already defines a default of `100`, so this should either use the schema default or throw if configuration is invalid.
+   - Fix: Remove the fallback and rely on the schema default, or throw `InvalidOperationException` if `ScaledMaxParticipants <= 0` to indicate invalid configuration.
+
+8. **T21 Configuration-First - Hardcoded Tunable** - ScaledTierCoordinator.cs:94 - Hardcoded 24-hour SIP credential expiration
+   - What's wrong: `GenerateSipCredentials` uses `DateTimeOffset.UtcNow.AddHours(24)` for credential expiration. This is a tunable value that should be defined in configuration.
+   - Fix: Add `SipCredentialExpirationHours` to voice-configuration.yaml with default of 24, then use `_configuration.SipCredentialExpirationHours` in the code.
+
+9. **T21 Configuration-First - Hardcoded Tunable Fallback** - ScaledTierCoordinator.cs:149 - Hardcoded fallback port 22222 for RtpEnginePort
+   - What's wrong: `AllocateRtpServerAsync` uses `22222` as fallback when `RtpEnginePort <= 0`. The schema already defines this default.
+   - Fix: Remove the fallback ternary and rely on the schema default, or throw if configuration is invalid.
+
+10. **T23 Async Method Pattern - Non-async Task-returning method** - P2PCoordinator.cs:58 - `ShouldUpgradeToScaledAsync` uses `await Task.CompletedTask` pattern but could be simplified
+    - What's wrong: The method is marked async and does `await Task.CompletedTask` which is technically compliant but the interface requires `Task<bool>`. Since the implementation is synchronous, this is acceptable per T23 but the `await Task.CompletedTask` should come after the synchronous logic.
+    - Note: This is borderline - the current implementation is technically compliant per the "Synchronous Implementation of Async Interface" section of T23.
+
+11. **T23 Async Method Pattern - Non-async Task-returning method** - P2PCoordinator.cs:80 - `CanAcceptNewParticipantAsync` uses `await Task.CompletedTask` pattern
+    - What's wrong: Same as above - technically compliant but implementation is synchronous.
+    - Note: This is borderline compliant per T23.
+
+12. **T23 Async Method Pattern - Non-async Task-returning method** - P2PCoordinator.cs:111 - `BuildP2PConnectionInfoAsync` uses `await Task.CompletedTask` pattern
+    - What's wrong: Same as above - technically compliant but implementation is synchronous.
+    - Note: This is borderline compliant per T23.
+
+13. **T23 Async Method Pattern - Non-async Task-returning method** - ScaledTierCoordinator.cs:44 - `CanAcceptNewParticipantAsync` uses `await Task.CompletedTask` pattern
+    - What's wrong: Same as above - technically compliant but implementation is synchronous.
+    - Note: This is borderline compliant per T23.
+
+14. **T23 Async Method Pattern - Non-async Task-returning method** - ScaledTierCoordinator.cs:111 - `BuildScaledConnectionInfoAsync` uses `await Task.CompletedTask` pattern
+    - What's wrong: Same as above - technically compliant but implementation is synchronous.
+    - Note: This is borderline compliant per T23.
+
+15. **T25 Internal Model Type Safety - String for Enum** - VoiceRoomState.cs:22-27 - `VoiceRoomData.Tier` and `VoiceRoomData.Codec` are strings instead of enums
+    - What's wrong: `Tier` is stored as `string` (values: "p2p", "scaled") instead of using the `VoiceTier` enum. `Codec` is stored as `string` (values: "opus", "g711", "g722") instead of using the `VoiceCodec` enum. This requires parsing throughout the service methods and loses compile-time type safety.
+    - Fix: Change `Tier` to `VoiceTier` type and `Codec` to `VoiceCodec` type in the `VoiceRoomData` class. Update all usages to assign enums directly instead of strings, and remove the `ParseVoiceTier`/`ParseVoiceCodec` helper methods from service code (parsing only needed at external boundaries).
+
+16. **T25 Internal Model Type Safety - Enum.Parse in Business Logic** - VoiceService.cs:104-105 - String to enum conversion when creating room data
+    - What's wrong: In `CreateVoiceRoomAsync`, tier and codec are converted to strings using ternary expressions (`body.PreferredTier == VoiceTier.Scaled ? "scaled" : "p2p"`). This should assign the enum directly to the model.
+    - Fix: After fixing VoiceRoomData to use enum types, change to `Tier = body.PreferredTier == VoiceTier.Scaled ? VoiceTier.Scaled : VoiceTier.P2p` and similar for codec.
+
+17. **T25 Internal Model Type Safety - String Comparison for Enum** - VoiceService.cs:221 - String comparison for tier check
+    - What's wrong: Uses `roomData.Tier?.ToLowerInvariant() == "scaled"` to check tier. Should use enum equality.
+    - Fix: After fixing VoiceRoomData to use enum types, change to `roomData.Tier == VoiceTier.Scaled`.
+
+18. **T25 Internal Model Type Safety - String Comparison for Enum** - VoiceService.cs:465 - String comparison for tier check
+    - What's wrong: Uses `roomData.Tier?.ToLowerInvariant() == "scaled"` to check tier in DeleteVoiceRoomAsync. Should use enum equality.
+    - Fix: After fixing VoiceRoomData to use enum types, change to `roomData.Tier == VoiceTier.Scaled`.
+
+19. **T25 Internal Model Type Safety - String Assignment for Enum** - VoiceService.cs:864-865 - String assignment in TryUpgradeToScaledTierAsync
+    - What's wrong: `Tier = "scaled"` and `Codec = roomData.Codec` assigns strings. Should use enum types directly.
+    - Fix: After fixing VoiceRoomData to use enum types, change to `Tier = VoiceTier.Scaled`.
+
+### Category: FOUNDATION
+
+20. **T6 Service Implementation Pattern - Missing Constructor Null Checks** - SipEndpointRegistry.cs:33-41 - Constructor does not validate parameters
+    - What's wrong: The constructor accepts `IStateStoreFactory`, `ILogger<SipEndpointRegistry>`, and `VoiceServiceConfiguration` but does not validate them. Per T6, NRT-protected parameters don't need explicit null checks, but the assignment from `stateStoreFactory.GetStore<>()` should be validated since it could theoretically return null.
+    - Note: This is borderline - NRT protects the parameters, but the result of `GetStore<>()` is not null-checked.
+
+21. **T6 Service Implementation Pattern - Missing Constructor Null Checks** - P2PCoordinator.cs:21-29 - Constructor does not validate parameters
+    - What's wrong: Same as above - NRT protects parameters but no validation on assignments.
+    - Note: Borderline compliant due to NRT.
+
+22. **T6 Service Implementation Pattern - Missing Constructor Null Checks** - ScaledTierCoordinator.cs:29-41 - Constructor does not validate parameters
+    - What's wrong: Same as above - NRT protects parameters but no validation on assignments.
+    - Note: Borderline compliant due to NRT.
+
+23. **T6 Service Implementation Pattern - Missing Constructor Null Checks** - KamailioClient.cs:39-52 - Constructor does not validate parameters
+    - What's wrong: Constructor accepts `HttpClient`, `string host`, `int port`, `TimeSpan requestTimeout`, `ILogger<KamailioClient>`, and `IMessageBus`. The host/port are used to construct `_rpcEndpoint` but `host` is not validated for null/empty.
+    - Fix: Add validation at the start of the constructor: `ArgumentException.ThrowIfNullOrEmpty(host, nameof(host));`
+
+24. **T6 Service Implementation Pattern - Missing Constructor Null Checks** - RtpEngineClient.cs:33-68 - Constructor validates host but not other parameters
+    - What's wrong: Constructor validates `host` is not null/empty but does not validate `logger` or `messageBus`.
+    - Note: NRT protects these parameters at compile time, so this is borderline compliant.
+
+### Category: QUALITY
+
+25. **T10 Logging Standards - Wrong Log Level** - SipEndpointRegistry.cs:86 - Registration success logged at Information
+    - What's wrong: "Registered session {SessionId} in room {RoomId}" is logged at Information. This is a business decision/state change, so Information is actually correct.
+    - Note: This is actually compliant - business decisions should be at Information level.
+
+26. **T10 Logging Standards - Wrong Log Level** - SipEndpointRegistry.cs:116 - Unregistration success logged at Information
+    - What's wrong: "Unregistered session {SessionId} from room {RoomId}" is logged at Information. This is a business decision/state change, so Information is correct.
+    - Note: This is actually compliant.
+
+27. **T10 Logging Standards - Wrong Log Level** - SipEndpointRegistry.cs:229 - Endpoint update logged at Information
+    - What's wrong: "Updated endpoint for session {SessionId} in room {RoomId}" logged at Information. This is a state change, so Information is correct.
+    - Note: This is actually compliant.
+
+### Summary of Critical Violations
+
+**Must Fix (High Priority):**
+1. T25 violations (5 instances) - `VoiceRoomData` uses strings for enums, causing fragile string comparisons throughout the codebase
+2. T10 violations (5 instances) - Operation entry logs at Information instead of Debug
+3. T21 violations (4 instances) - Hardcoded tunables that should be in configuration
+
+**Should Fix (Medium Priority):**
+1. T6 violations - Constructor parameter validation (though NRT provides compile-time safety)
+
+**Acceptable/Borderline:**
+1. T23 `await Task.CompletedTask` pattern - technically compliant per the documented exception for synchronous implementations of async interfaces
+
+### Notes
+
+- The plugin correctly uses `IClientEventPublisher` for WebSocket client events (T17 compliant)
+- The plugin correctly uses `IMessageBus.TryPublishErrorAsync` for error events (T7 compliant)
+- The plugin correctly uses `IStateStoreFactory` and `StateStoreDefinitions` (T4 compliant)
+- The plugin correctly uses `ConcurrentDictionary` for local caches (T9 compliant)
+- The plugin correctly uses `BannouJson` options are NOT needed for Kamailio (documented intentional exception for external API)
+- No null-forgiving operators (`!`) found in the codebase
+- No `?? string.Empty` violations found (all instances are for external Kamailio API responses with proper comments)
+- No tenet numbers referenced in source code comments (T0 compliant - uses "FOUNDATION TENETS" category name)

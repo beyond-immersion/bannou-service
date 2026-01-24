@@ -235,3 +235,114 @@ None identified.
 4. **Set operation support varies by backend**: Redis supports sets and sorted sets. MySQL throws `NotSupportedException`. InMemory supports sets but not sorted sets. Services must know their backend to use these features.
 
 5. **Connection initialization retry**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry (relies on StackExchange.Redis auto-reconnect).
+
+---
+
+## Tenet Violations (Audit)
+
+*Audit performed: 2026-01-24*
+
+### Category: IMPLEMENTATION
+
+1. **Configuration-First Development (T21)** - `schemas/state-configuration.yaml:42-57` - Three unused configuration properties
+   - What's wrong: `DefaultConsistency`, `EnableMetrics`, and `EnableTracing` are defined in the configuration schema but never referenced in service code. T21 states "Every defined config property MUST be referenced in service code" and "No Dead Configuration".
+   - Fix: Either wire up these configuration properties to actual functionality (implement metrics/tracing, implement consistency mode evaluation) OR remove them from `schemas/state-configuration.yaml`.
+
+2. **Configuration-First Development (T21)** - `Services/StateStoreFactory.cs:119-122` - Hardcoded retry delay calculation
+   - What's wrong: The retry delay is calculated as `Math.Max(1000, (totalTimeoutSeconds * 1000) / Math.Max(1, maxRetries))` using a hardcoded minimum of 1000ms. T21 states "Any tunable value (limits, timeouts, thresholds, capacities) MUST be a configuration property."
+   - Fix: Add `MinRetryDelayMs` configuration property to `state-configuration.yaml` and use it instead of hardcoded `1000`.
+
+3. **Configuration-First Development (T21)** - `Services/StateStoreFactory.cs:40` - Hardcoded ConnectionRetryCount default
+   - What's wrong: `ConnectionRetryCount` has a hardcoded default of `10` in `StateStoreFactoryConfiguration` class but this property is not exposed in the configuration schema. This should be a configurable value.
+   - Fix: Add `ConnectionRetryCount` to `schemas/state-configuration.yaml` with appropriate env var `STATE_CONNECTION_RETRY_COUNT`.
+
+4. **Async Method Pattern (T23)** - `Services/InMemoryStateStore.cs:93-111` - Non-async method body with `await Task.CompletedTask`
+   - What's wrong: The `GetAsync` method uses `await Task.CompletedTask` at line 95 but then has no other await, then returns directly. This is acceptable but could be cleaner.
+   - Fix: This is borderline - the pattern is allowed per T23 for synchronous implementations of async interfaces. No action required.
+
+5. **Async Method Pattern (T23)** - `Services/InMemoryStateStore.cs:136-169` - Redundant `await Task.CompletedTask` placement
+   - What's wrong: In `SaveAsync`, the `await Task.CompletedTask` at line 167 comes after the return statement logic is complete but before the actual return. The await should be at the end of the method body for clarity, which it is here. This is acceptable.
+   - Fix: No action required - pattern is correct.
+
+6. **Error Handling (T7)** - `Services/RedisDistributedLockProvider.cs:98-102` - Generic exception catch without error event publishing
+   - What's wrong: The `LockAsync` method catches `Exception ex` at line 98 but only logs it without calling `TryPublishErrorAsync`. T7 states "Unexpected error - log as error, emit error event".
+   - Fix: Inject `IMessageBus` into `RedisDistributedLockProvider` and call `TryPublishErrorAsync` in the catch block.
+
+7. **Error Handling (T7)** - `Services/StateStoreFactory.cs:467-470` - Warning log for search index creation failure
+   - What's wrong: At line 469, `LogWarning` is used for a failure that indicates an unexpected condition (search index creation failure). T7 states "Warning vs Error Log Levels: LogError for unexpected failures".
+   - Fix: Change to `LogError` since failed index creation is an unexpected infrastructure issue, not an expected transient failure.
+
+8. **Logging Standards (T10)** - `Services/RedisSearchStateStore.cs:451-452` - Operation entry logged at Information level
+   - What's wrong: At line 451, `LogInformation` is used for "FT.SEARCH on '{Index}' with query '{Query}' found {TotalResults} documents" which is operation entry/debugging output. T10 states "Operation Entry (Debug)".
+   - Fix: Change to `LogDebug` for consistency - search results are routine operational data, not significant state changes.
+
+### Category: FOUNDATION
+
+9. **Service Implementation Pattern (T6)** - `StateService.cs:24-34` - Missing IEventConsumer in constructor
+   - What's wrong: The service constructor does not accept or call `RegisterEventConsumers(eventConsumer)`. While the deep-dive document notes this service does not consume events, the standardized pattern in T6 shows `IEventConsumer` as a common dependency for consistency.
+   - Fix: This is acceptable - T6 notes ServiceEvents.cs is OPTIONAL for services that don't subscribe to events. The State service intentionally does not consume events. No action required.
+
+10. **Infrastructure Libs Pattern (T4)** - `Services/RedisDistributedLockProvider.cs:50` - Direct Redis connection
+    - What's wrong: At line 50, `ConnectionMultiplexer.ConnectAsync` is used directly. T4 states "Direct Redis/MySQL connection - Use lib-state".
+    - Fix: This is an **ALLOWED EXCEPTION** - `lib-state` IS the infrastructure lib for Redis access. The lock provider is part of lib-state itself, so it must use direct Redis connections. The tenet applies to service code, not infrastructure lib internals. No action required.
+
+11. **Infrastructure Libs Pattern (T4)** - `Services/StateStoreFactory.cs:109` - Direct Redis connection
+    - What's wrong: At line 109, `ConnectionMultiplexer.ConnectAsync` is used directly.
+    - Fix: This is an **ALLOWED EXCEPTION** - same as above. `StateStoreFactory` is part of lib-state which is the infrastructure lib. No action required.
+
+### Category: QUALITY
+
+12. **Logging Standards (T10)** - `StateServicePlugin.cs:42` - Operation entry logged at Information level
+    - What's wrong: At line 42, `LogInformation("Initializing StateStoreFactory connections...")` is used for operation entry. T10 states "Operation Entry (Debug): Log input parameters".
+    - Fix: Change to `LogDebug` since this is initialization startup logging, not a significant business state change.
+
+13. **Logging Standards (T10)** - `StateServicePlugin.cs:44` - Operation success logged at Information level
+    - What's wrong: At line 44, `LogInformation("StateStoreFactory initialized successfully")` is used. This is acceptable as initialization success is a significant state change (Business Decisions).
+    - Fix: No action required - this is appropriate for Information level.
+
+14. **Logging Standards (T10)** - `Services/RedisDistributedLockProvider.cs:49-50` - Operation entry at Information level
+    - What's wrong: At lines 49-50, `LogInformation("Initializing Redis connection for distributed locks")` and `LogInformation("Redis connection established...")` are used. Line 49 is operation entry (should be Debug), line 50 is significant state change (appropriate for Information).
+    - Fix: Change line 49 to `LogDebug`.
+
+15. **Logging Standards (T10)** - `Services/StateStoreFactory.cs:107-108` - Operation entry at Information level
+    - What's wrong: At line 107, `LogInformation("Connecting to Redis...")` is operation entry which should be Debug per T10.
+    - Fix: Change to `LogDebug`.
+
+16. **Logging Standards (T10)** - `Services/StateStoreFactory.cs:123-125` - Operation entry at Information level
+    - What's wrong: At line 123, `LogInformation("Initializing MySQL connection...")` is operation entry which should be Debug per T10.
+    - Fix: Change to `LogDebug`.
+
+17. **Logging Standards (T10)** - `Services/StateStoreFactory.cs:147` - Business decision at Information level
+    - What's wrong: At line 147, `LogInformation("MySQL connection established successfully")` is appropriate - this is a significant state change (Business Decision).
+    - Fix: No action required.
+
+18. **Logging Standards (T10)** - `Services/StateStoreFactory.cs:170` - Business decision at Information level
+    - What's wrong: At line 170, `LogInformation("State store factory initialized...")` is appropriate - significant state change.
+    - Fix: No action required.
+
+19. **Logging Standards (T10)** - `Services/RedisSearchStateStore.cs:370` - Business decision at Information level
+    - What's wrong: At line 370, `LogInformation("Created search index...")` is appropriate - significant state change (index creation).
+    - Fix: No action required.
+
+20. **XML Documentation (T19)** - `Services/StateStoreFactoryConfiguration.cs:50` - Missing documentation on Stores property
+    - What's wrong: The `Stores` dictionary property at line 50 has XML documentation, but this is a manually-written class (not generated) in a non-Generated location.
+    - Fix: No action required - documentation is present.
+
+### Summary
+
+**Violations requiring fixes:**
+1. T21 - Three unused config properties (DefaultConsistency, EnableMetrics, EnableTracing)
+2. T21 - Hardcoded retry delay minimum (1000ms)
+3. T21 - ConnectionRetryCount not in configuration schema
+4. T7 - Missing TryPublishErrorAsync in RedisDistributedLockProvider.LockAsync
+5. T7 - Wrong log level (Warning -> Error) for search index creation failure
+6. T10 - Wrong log level (Information -> Debug) in RedisSearchStateStore.SearchAsync
+7. T10 - Wrong log level (Information -> Debug) in StateServicePlugin.OnInitializeAsync
+8. T10 - Wrong log level (Information -> Debug) in RedisDistributedLockProvider.EnsureInitializedAsync
+9. T10 - Wrong log level (Information -> Debug) in StateStoreFactory.EnsureInitializedAsync (Redis)
+10. T10 - Wrong log level (Information -> Debug) in StateStoreFactory.EnsureInitializedAsync (MySQL)
+
+**Allowed exceptions (no fix required):**
+- T4 violations in lib-state internals (RedisDistributedLockProvider, StateStoreFactory) - lib-state IS the infrastructure lib
+- T6 missing IEventConsumer - State service does not consume events, ServiceEvents.cs is optional
+- T23 async patterns - implementation is correct per tenet guidelines

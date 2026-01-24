@@ -47,6 +47,29 @@ x-service-configuration:
       description: Glicko-2 system constant (tau) - controls volatility change speed
       default: 0.5
       env: ANALYTICS_GLICKO2_SYSTEM_CONSTANT
+    Glicko2MinRating:
+      type: number
+      format: double
+      description: Minimum allowed Glicko-2 rating (floor for clamping)
+      default: 100.0
+      env: ANALYTICS_GLICKO2_MIN_RATING
+    Glicko2MaxRating:
+      type: number
+      format: double
+      description: Maximum allowed Glicko-2 rating (ceiling for clamping)
+      default: 4000.0
+      env: ANALYTICS_GLICKO2_MAX_RATING
+    Glicko2MinDeviation:
+      type: number
+      format: double
+      description: Minimum rating deviation (prevents overconfidence)
+      default: 30.0
+      env: ANALYTICS_GLICKO2_MIN_DEVIATION
+    Glicko2MaxVolatilityIterations:
+      type: integer
+      description: Maximum iterations for Glicko-2 volatility convergence algorithm
+      default: 100
+      env: ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS
     # Resolution Cache Configuration
     ResolutionCacheTtlSeconds:
       type: integer
@@ -89,6 +112,11 @@ x-service-configuration:
       description: Maximum records to delete per cleanup invocation
       default: 5000
       env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE
+    ControllerHistoryCleanupSubBatchSize:
+      type: integer
+      description: Number of records to delete per iteration within a cleanup batch
+      default: 100
+      env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE
     # Milestone Configuration
     MilestoneThresholds:
       type: string

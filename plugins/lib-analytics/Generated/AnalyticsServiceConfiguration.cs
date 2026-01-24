@@ -90,6 +90,30 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     public double Glicko2SystemConstant { get; set; } = 0.5;
 
     /// <summary>
+    /// Minimum allowed Glicko-2 rating (floor for clamping)
+    /// Environment variable: ANALYTICS_GLICKO2_MIN_RATING
+    /// </summary>
+    public double Glicko2MinRating { get; set; } = 100.0;
+
+    /// <summary>
+    /// Maximum allowed Glicko-2 rating (ceiling for clamping)
+    /// Environment variable: ANALYTICS_GLICKO2_MAX_RATING
+    /// </summary>
+    public double Glicko2MaxRating { get; set; } = 4000.0;
+
+    /// <summary>
+    /// Minimum rating deviation (prevents overconfidence)
+    /// Environment variable: ANALYTICS_GLICKO2_MIN_DEVIATION
+    /// </summary>
+    public double Glicko2MinDeviation { get; set; } = 30.0;
+
+    /// <summary>
+    /// Maximum iterations for Glicko-2 volatility convergence algorithm
+    /// Environment variable: ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS
+    /// </summary>
+    public int Glicko2MaxVolatilityIterations { get; set; } = 100;
+
+    /// <summary>
     /// TTL in seconds for resolution caches (game service, realm, character lookups)
     /// Environment variable: ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS
     /// </summary>
@@ -130,6 +154,12 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE
     /// </summary>
     public int ControllerHistoryCleanupBatchSize { get; set; } = 5000;
+
+    /// <summary>
+    /// Number of records to delete per iteration within a cleanup batch
+    /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE
+    /// </summary>
+    public int ControllerHistoryCleanupSubBatchSize { get; set; } = 100;
 
     /// <summary>
     /// Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
