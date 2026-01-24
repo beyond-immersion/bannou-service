@@ -25,6 +25,18 @@ x-service-configuration:
       env: ACCOUNT_ADMIN_EMAIL_DOMAIN
       example: "@admin.example.com"
 
+    # Pagination Configuration
+    DefaultPageSize:
+      type: integer
+      description: Default page size for list operations when not specified
+      env: ACCOUNT_DEFAULT_PAGE_SIZE
+      default: 20
+    MaxPageSize:
+      type: integer
+      description: Maximum allowed page size for list operations
+      env: ACCOUNT_MAX_PAGE_SIZE
+      default: 100
+
     # Batch Processing Configuration
     ListBatchSize:
       type: integer

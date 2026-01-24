@@ -66,6 +66,18 @@ public class AccountServiceConfiguration : IServiceConfiguration
     public string? AdminEmailDomain { get; set; }
 
     /// <summary>
+    /// Default page size for list operations when not specified
+    /// Environment variable: ACCOUNT_DEFAULT_PAGE_SIZE
+    /// </summary>
+    public int DefaultPageSize { get; set; } = 20;
+
+    /// <summary>
+    /// Maximum allowed page size for list operations
+    /// Environment variable: ACCOUNT_MAX_PAGE_SIZE
+    /// </summary>
+    public int MaxPageSize { get; set; } = 100;
+
+    /// <summary>
     /// Number of accounts to process per batch in list operations
     /// Environment variable: ACCOUNT_LIST_BATCH_SIZE
     /// </summary>

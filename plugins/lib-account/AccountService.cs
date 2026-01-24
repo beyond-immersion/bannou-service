@@ -63,8 +63,8 @@ public partial class AccountService : IAccountService
 
             // Apply default values for pagination parameters
             if (page <= 0) page = 1;
-            if (pageSize <= 0) pageSize = 20;
-            if (pageSize > 100) pageSize = 100; // Cap at 100
+            if (pageSize <= 0) pageSize = _configuration.DefaultPageSize;
+            if (pageSize > _configuration.MaxPageSize) pageSize = _configuration.MaxPageSize;
 
             _logger.LogInformation("Listing accounts - Page: {Page}, PageSize: {PageSize}, ProviderFilter: {ProviderFilter}",
                 page, pageSize, providerFilter.HasValue);
@@ -907,18 +907,42 @@ public partial class AccountService : IAccountService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Track changed fields for event publication
+            var changedFields = new List<string>();
+
             // Update profile fields
-            if (body.DisplayName != null)
+            if (body.DisplayName != null && body.DisplayName != account.DisplayName)
+            {
                 account.DisplayName = body.DisplayName;
+                changedFields.Add("display_name");
+            }
 
             // Handle metadata update if provided
             if (body.Metadata != null)
             {
                 var newMetadata = ConvertToMetadataDictionary(body.Metadata);
-                if (newMetadata != null)
+                if (newMetadata != null && !MetadataEquals(account.Metadata, newMetadata))
                 {
                     account.Metadata = newMetadata;
+                    changedFields.Add("metadata");
                 }
+            }
+
+            // If nothing changed, return early without saving or publishing
+            if (changedFields.Count == 0)
+            {
+                var authMethodsNoChange = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+                return (StatusCodes.OK, new AccountResponse
+                {
+                    AccountId = account.AccountId,
+                    Email = account.Email,
+                    DisplayName = account.DisplayName,
+                    EmailVerified = account.IsVerified,
+                    CreatedAt = account.CreatedAt,
+                    UpdatedAt = account.UpdatedAt,
+                    Roles = account.Roles,
+                    AuthMethods = authMethodsNoChange
+                });
             }
 
             account.UpdatedAt = DateTimeOffset.UtcNow;
@@ -930,6 +954,9 @@ public partial class AccountService : IAccountService
                 _logger.LogWarning("Concurrent modification detected for account profile {AccountId}", accountId);
                 return (StatusCodes.Conflict, null);
             }
+
+            // Publish account updated event (T5: Event-Driven Architecture)
+            await PublishAccountUpdatedEventAsync(account, changedFields);
 
             // Get auth methods for the account
             var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);

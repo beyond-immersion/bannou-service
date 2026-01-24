@@ -57,7 +57,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
     /// Environment variable: ACTOR_DEPLOYMENT_MODE
     /// </summary>
-    public string DeploymentMode { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DeploymentMode { get; set; } = "bannou";
 
     /// <summary>
     /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
