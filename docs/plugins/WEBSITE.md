@@ -348,3 +348,13 @@ Generated Model Hierarchy
 7. **Schema defines `additionalProperties: false` globally**: All response models forbid additional properties. This means future schema evolution (adding fields) requires client updates -- no backwards-compatible field additions are possible without a version bump.
 
 8. **GetSubscription overlaps with Subscription service**: The website's `GetSubscription` endpoint essentially duplicates what the dedicated Subscription service provides (`/subscription/get`). The intent is to aggregate subscription data with a web-friendly response shape, but care must be taken to avoid divergence.
+
+9. **Non-nullable collection fields default to null**: Multiple `ICollection<T>` fields like `Keywords`, `SupportedLanguages`, `SocialLinks`, `Navigation`, `Tags`, `Benefits`, and `Children` are typed as non-nullable but assigned `= default!` in the generated models (lines 222, 354, 378, 467, 599, 1006, 511 of WebsiteModels.cs). Accessing these without initialization throws `NullReferenceException`.
+
+10. **Non-nullable nested objects default to null**: Fields like `Seo` (line 152), `Logo` (line 455), `Analytics` (line 384), and `CustomScripts` (line 390) in WebsiteModels.cs are typed as non-nullable references but assigned `= default!`. Since they're not in the schema's `required` array, they'll be null if not provided in JSON.
+
+11. **`Size` field is `int` limiting downloads to ~2GB**: The `DownloadInfo.Size` property (line 743 of WebsiteModels.cs) is `int`, not `long`. This limits represented file sizes to 2,147,483,647 bytes (~2GB), which may be insufficient for large game clients with bundled assets.
+
+12. **Multiple overlapping status enums with "maintenance"**: Three different enums define "maintenance" with different ordinal values: `StatusResponseStatus.Maintenance = 2` (service health), `ServerStatusResponseGlobalStatus.Maintenance = 3` (global status), `RealmStatusStatus.Maintenance = 2` (realm status). Code comparing these across contexts could have subtle bugs.
+
+13. **Metadata stored as untyped `object`**: Both `PageContent.Metadata` (line 146) and `Analytics.OtherTrackers` (line 261) are typed as `object`, meaning they accept any JSON but provide no type safety. Deserializing these returns `JsonElement` which requires manual parsing.
