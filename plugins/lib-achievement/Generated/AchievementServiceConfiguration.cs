@@ -114,6 +114,18 @@ public class AchievementServiceConfiguration : IServiceConfiguration
     public int SyncRetryDelaySeconds { get; set; } = 60;
 
     /// <summary>
+    /// Expiry time in seconds for distributed locks on achievement progress operations
+    /// Environment variable: ACHIEVEMENT_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    public int LockExpirySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum retry attempts for ETag conflicts when incrementing earned count
+    /// Environment variable: ACHIEVEMENT_EARNED_COUNT_RETRY_ATTEMPTS
+    /// </summary>
+    public int EarnedCountRetryAttempts { get; set; } = 3;
+
+    /// <summary>
     /// TTL in seconds for progress data in Redis (0 = no expiry, progress persists indefinitely)
     /// Environment variable: ACHIEVEMENT_PROGRESS_TTL_SECONDS
     /// </summary>

@@ -142,15 +142,133 @@ None. The service is feature-complete for its scope.
 
 ## Known Quirks & Caveats
 
+### Tenet Violations (Fix Immediately)
+
+#### 1. FOUNDATION TENETS (T6) - Missing Constructor Null Checks
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 34-37
+**Issue**: Constructor assigns dependencies without null-guard checks. Per T6, all injected dependencies must be validated with `?? throw new ArgumentNullException(nameof(...))` or `ArgumentNullException.ThrowIfNull(...)`.
+
+```csharp
+// CURRENT (wrong):
+_stateStoreFactory = stateStoreFactory;
+_messageBus = messageBus;
+_logger = logger;
+_configuration = configuration;
+
+// REQUIRED:
+_stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+_messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+_logger = logger ?? throw new ArgumentNullException(nameof(logger));
+_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+```
+
+Also missing: `ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));` before the `RegisterEventConsumers` call on line 40.
+
+#### 2. IMPLEMENTATION TENETS (T25) - String ServiceId in Internal POCO
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 526
+**Issue**: `GameServiceRegistryModel.ServiceId` is `string` instead of `Guid`. T25 mandates that internal POCOs use the strongest available C# type. This causes `Guid.Parse(model.ServiceId)` scattered throughout the code (lines 386, 451, 476, 501) -- exactly the fragile pattern T25 forbids.
+
+```csharp
+// CURRENT (wrong):
+public string ServiceId { get; set; } = string.Empty;
+
+// REQUIRED:
+public Guid ServiceId { get; set; }
+```
+
+Fix will also eliminate all `Guid.Parse(model.ServiceId)` calls and `serviceId.ToString()` conversions (lines 185, 195, 198, 201, 331).
+
+#### 3. IMPLEMENTATION TENETS (T25) - String StubName/DisplayName with `= string.Empty`
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 527-528
+**Issue**: While `StubName` and `DisplayName` are genuinely strings (not enum/Guid misuse), their initialization with `= string.Empty` masks potential null assignment bugs. However, this is a minor issue -- the primary T25 violation is `ServiceId` above. These are noted as the `string.Empty` default has no CLAUDE.md justification comment (acceptable patterns require a compiler-satisfaction or external-service-defensive comment).
+
+#### 4. IMPLEMENTATION TENETS (T7) - Missing ApiException Catch in Error Handling
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 87-92, 135-140, 210-216, 285-291, 340-345
+**Issue**: All five endpoint methods catch only `Exception` (generic catch). T7 requires catching `ApiException` specifically first (for expected API errors from state store or downstream services), then generic `Exception` for unexpected failures. The pattern should be:
+
+```csharp
+catch (ApiException ex)
+{
+    _logger.LogWarning(ex, "Service call failed with status {Status}", ex.StatusCode);
+    return ((StatusCodes)ex.StatusCode, null);
+}
+catch (Exception ex)
+{
+    _logger.LogError(ex, "...");
+    await PublishErrorEventAsync(...);
+    return (StatusCodes.InternalServerError, null);
+}
+```
+
+#### 5. QUALITY TENETS (T10) - LogInformation Used for Routine Operations (Should Be Debug)
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 50, 100-101, 148-149, 224, 299
+**Issue**: Entry-point logging for routine CRUD operations uses `LogInformation` but T10 specifies "Operation Entry" should be at `Debug` level. `Information` is for "significant state changes" (business decisions), not for every request received. The lines logging "Listing services", "Getting service", etc. should be `LogDebug`. The lines logging successful creation/update/deletion (lines 203, 279, 333) are correctly `LogInformation` since those are meaningful state changes.
+
+#### 6. QUALITY TENETS (T10) - LogWarning Used for Expected Not-Found (Should Be Debug)
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 128-129, 241, 317
+**Issue**: "Service not found" is logged as `Warning`. T10 says "Expected Outcomes" (resource not found, validation failures) should be at `Debug` level. Not-found is an expected outcome, not a security event or anomaly. `Warning` is for "security events" (auth failures, permission denials).
+
+#### 7. QUALITY TENETS (T10) - LogWarning Used for Validation Failures (Should Be Debug)
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 156, 162, 175, 230, 305
+**Issue**: Validation failures ("Stub name is required", "Display name is required", "Service ID is required", "already exists") are logged as `Warning`. Per T10, validation failures are "Expected Outcomes" and should use `Debug` level. These are not security events.
+
+#### 8. IMPLEMENTATION TENETS (T9) - No Concurrency Protection on Shared List
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 353-377
+**Issue**: `AddToServiceListAsync` and `RemoveFromServiceListAsync` perform read-modify-write on `game-service-list` without distributed locking or optimistic concurrency (ETags). Since the service is `Singleton` lifetime and could run on multiple instances, concurrent creates/deletes can cause lost updates to the list. T9 requires either `IDistributedLockProvider` or ETag-based optimistic concurrency for state that requires consistency.
+
+#### 9. FOUNDATION TENETS (T6) - Missing IStateStore Field (Re-created on Every Call)
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 55-59, 106-107, 167-168, 234, 309-310, 355, 370
+**Issue**: Rather than creating the `IStateStore<T>` once in the constructor (as shown in T6 pattern: `_stateStore = stateStoreFactory.GetStore<ServiceModel>(StateStoreDefinitions.ServiceName)`), the service calls `_stateStoreFactory.GetStore<T>(StateStoreName)` inside every method. While functionally correct (the factory likely caches stores), this diverges from the T6 standardized pattern and creates unnecessary overhead. The store should be initialized once as a field.
+
+#### 10. QUALITY TENETS (T19) - Missing Parameter Documentation
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 48, 98, 146, 222, 297
+**Issue**: Public methods have `<summary>` tags but are missing `<param>` and `<returns>` documentation as required by T19.
+
+```csharp
+// CURRENT:
+/// <summary>
+/// List all registered game services, optionally filtered by active status.
+/// </summary>
+public async Task<(StatusCodes, ListServicesResponse?)> ListServicesAsync(...)
+
+// REQUIRED:
+/// <summary>
+/// List all registered game services, optionally filtered by active status.
+/// </summary>
+/// <param name="body">Request containing filter criteria.</param>
+/// <param name="cancellationToken">Cancellation token.</param>
+/// <returns>Tuple of status code and list of services.</returns>
+```
+
+#### 11. QUALITY TENETS (T19) - Missing XML Documentation on Internal Model
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 524-533
+**Issue**: `GameServiceRegistryModel` class has a `<summary>` but individual properties lack documentation. While this is an internal class, T19 says "all public classes, interfaces, methods, and properties" -- this class is internal so this is a minor concern. However, property-level documentation would improve maintainability.
+
+#### 12. IMPLEMENTATION TENETS (T21) - Dead Configuration Injection
+
+**File**: `plugins/lib-game-service/GameServiceService.cs`, lines 20, 37
+**Issue**: `_configuration` is injected and assigned but never referenced anywhere in the service code. T21 states "Every defined config property MUST be referenced in service code" and "If a property is unused, remove it from the configuration schema." The configuration class only has `ForceServiceId` (framework-level), so this may be acceptable as framework boilerplate, but the field itself is unused dead code.
+
 ### Bugs (Fix Immediately)
 
-None identified.
+None identified beyond the tenet violations above.
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **Stub names are always lowercase**: `ToLowerInvariant()` applied on creation. Input case is lost permanently — responses always return the normalized lowercase version.
 
-2. **GUIDs stored as strings**: Internal model uses `string ServiceId` rather than `Guid`. Adds parsing overhead in `MapToServiceInfo()` but avoids serialization edge cases with the state store.
+2. **GUIDs stored as strings**: Internal model uses `string ServiceId` rather than `Guid`. Adds parsing overhead in `MapToServiceInfo()` but avoids serialization edge cases with the state store. **NOTE: This is now a formal T25 violation (see Tenet Violations #2 above) -- `BannouJson` handles Guid serialization natively, so the "edge case" justification is invalid.**
 
 3. **Unix timestamps for dates**: `CreatedAtUnix` and `UpdatedAtUnix` stored as `long` (seconds since epoch), converted to `DateTimeOffset` in API responses.
 

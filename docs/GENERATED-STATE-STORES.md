@@ -12,7 +12,6 @@ This document lists all state store components used in Bannou.
 | `account-statestore` | MySQL | Account | Persistent account data |
 | `achievement-definition` | Redis | Achievement | Achievement definitions |
 | `achievement-progress` | Redis | Achievement | Player achievement progress |
-| `achievement-unlock` | Redis | Achievement | Unlocked achievements registry |
 | `actor-assignments` | Redis | Actor | Actor-to-node assignments |
 | `actor-instances` | Redis | Actor | Active actor instance registry |
 | `actor-pool-nodes` | Redis | Actor | Actor pool node assignments |
@@ -91,7 +90,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 81 stores (49 Redis, 32 MySQL)
+**Total**: 80 stores (48 Redis, 32 MySQL)
 
 ## Naming Conventions
 

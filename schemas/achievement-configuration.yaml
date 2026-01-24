@@ -63,6 +63,17 @@ x-service-configuration:
       description: Delay between sync retry attempts in seconds
       default: 60
       env: ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS
+    # Lock and Retry Configuration
+    LockExpirySeconds:
+      type: integer
+      description: Expiry time in seconds for distributed locks on achievement progress operations
+      default: 30
+      env: ACHIEVEMENT_LOCK_EXPIRY_SECONDS
+    EarnedCountRetryAttempts:
+      type: integer
+      description: Maximum retry attempts for ETag conflicts when incrementing earned count
+      default: 3
+      env: ACHIEVEMENT_EARNED_COUNT_RETRY_ATTEMPTS
     # Progress Tracking Configuration
     ProgressTtlSeconds:
       type: integer

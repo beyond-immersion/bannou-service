@@ -115,7 +115,7 @@ public partial class AchievementService
                     Increment = increment
                 }, CancellationToken.None);
 
-                if (status != StatusCodes.OK)
+                if (status == StatusCodes.InternalServerError)
                 {
                     var message = "Failed to update achievement progress from analytics score update";
                     _logger.LogError(
@@ -134,6 +134,13 @@ public partial class AchievementService
                         details: $"achievementId:{definition.AchievementId};status:{status}",
                         stack: null,
                         cancellationToken: CancellationToken.None);
+                }
+                else if (status != StatusCodes.OK)
+                {
+                    _logger.LogDebug(
+                        "Achievement progress update returned expected status {Status} for {AchievementId}",
+                        status,
+                        definition.AchievementId);
                 }
             }
         }
@@ -220,7 +227,7 @@ public partial class AchievementService
                     EntityType = entityType
                 }, CancellationToken.None);
 
-                if (status != StatusCodes.OK)
+                if (status == StatusCodes.InternalServerError)
                 {
                     var message = "Failed to unlock achievement from analytics milestone event";
                     _logger.LogError(
@@ -239,6 +246,13 @@ public partial class AchievementService
                         details: $"achievementId:{definition.AchievementId};status:{status}",
                         stack: null,
                         cancellationToken: CancellationToken.None);
+                }
+                else if (status != StatusCodes.OK)
+                {
+                    _logger.LogDebug(
+                        "Achievement unlock returned expected status {Status} for {AchievementId}",
+                        status,
+                        definition.AchievementId);
                 }
             }
         }
@@ -339,7 +353,7 @@ public partial class AchievementService
                     EntityType = entityType
                 }, CancellationToken.None);
 
-                if (status != StatusCodes.OK)
+                if (status == StatusCodes.InternalServerError)
                 {
                     var message = "Failed to unlock achievement from leaderboard rank change";
                     _logger.LogError(
@@ -358,6 +372,13 @@ public partial class AchievementService
                         details: $"achievementId:{definition.AchievementId};status:{status}",
                         stack: null,
                         cancellationToken: CancellationToken.None);
+                }
+                else if (status != StatusCodes.OK)
+                {
+                    _logger.LogDebug(
+                        "Achievement unlock returned expected status {Status} for {AchievementId}",
+                        status,
+                        definition.AchievementId);
                 }
             }
         }

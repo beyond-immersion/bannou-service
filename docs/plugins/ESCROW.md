@@ -383,6 +383,241 @@ Dispute Resolution
 
 ## Known Quirks & Caveats
 
+### Tenet Violations (Fix Immediately)
+
+#### 1. FOUNDATION TENETS (T6) - Missing Constructor Null Checks and IEventConsumer Registration
+
+**File**: `plugins/lib-escrow/EscrowService.cs`, lines 197-209
+
+The constructor stores all dependencies directly without `?? throw new ArgumentNullException(nameof(...))` guards. Per T6, all injected dependencies must have explicit null checks. Additionally, the constructor does not accept `IEventConsumer` and does not call `RegisterEventConsumers(eventConsumer)`, even though the `EscrowServiceEvents.cs` partial class defines the method.
+
+**Fix**: Add null-check guards for all constructor parameters. Add `IEventConsumer eventConsumer` parameter, call `ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer))`, and call `RegisterEventConsumers(eventConsumer)`.
+
+---
+
+#### 2. IMPLEMENTATION TENETS (T21) - All 12 Configuration Properties Are Dead (Never Referenced)
+
+**Files**: All service files in `plugins/lib-escrow/`
+
+The `_configuration` field is assigned in the constructor but **never referenced anywhere** in the entire service implementation. All 12 configuration properties (`DefaultTimeout`, `MaxTimeout`, `ExpirationGracePeriod`, `TokenAlgorithm`, `TokenLength`, `TokenSecret`, `ExpirationCheckInterval`, `ExpirationBatchSize`, `ValidationCheckInterval`, `MaxParties`, `MaxAssetsPerDeposit`, `MaxPendingPerParty`) are dead configuration. Per T21, every defined config property MUST be referenced in service code.
+
+**Fix**: Wire up all configuration properties OR remove them from `schemas/escrow-configuration.yaml`:
+- Use `_configuration.MaxParties` in `CreateEscrowAsync` party count validation (currently hardcoded `< 2` only)
+- Use `_configuration.MaxAssetsPerDeposit` in `DepositAsync` asset count validation
+- Use `_configuration.MaxPendingPerParty` in `CreateEscrowAsync` pending count check
+- Use `_configuration.DefaultTimeout` for the expiration calculation (currently hardcoded `now.AddDays(7)`)
+- Use `_configuration.MaxTimeout` to cap requested expirations
+- Use `_configuration.TokenLength` in `GenerateToken` (currently hardcoded `new byte[32]`)
+- Use `_configuration.TokenSecret` for HMAC token generation
+- Use `_configuration.TokenAlgorithm` to determine token generation strategy
+
+---
+
+#### 3. IMPLEMENTATION TENETS (T21) - Hardcoded Tunables
+
+**File**: `plugins/lib-escrow/EscrowServiceLifecycle.cs`, line 39
+```csharp
+var expiresAt = body.ExpiresAt ?? now.AddDays(7);
+```
+Hardcoded 7-day default expiration. Should use `_configuration.DefaultTimeout` (which is defined as `"P7D"`).
+
+**File**: `plugins/lib-escrow/EscrowServiceDeposits.cs`, line 235
+```csharp
+ExpiresAt = now.AddHours(24),
+```
+Hardcoded 24-hour idempotency TTL. Should be a configuration property.
+
+**File**: `plugins/lib-escrow/EscrowService.cs`, line 277
+```csharp
+var randomBytes = new byte[32];
+```
+Hardcoded 32-byte token length. Should use `_configuration.TokenLength`.
+
+**File**: `plugins/lib-escrow/EscrowServiceDeposits.cs`, line 44; `EscrowServiceConsent.cs`, line 24; `EscrowServiceCompletion.cs`, lines 24, 163, 295, 415, 527; `EscrowServiceValidation.cs`, lines 23, 190, 327
+```csharp
+for (var attempt = 0; attempt < 3; attempt++)
+```
+Hardcoded retry count of 3 across all ETag retry loops. Should be a configuration property.
+
+**Fix**: Define additional configuration properties (`IdempotencyTtlHours`, `MaxConcurrencyRetries`) in the schema, or use the existing properties for values that already have them.
+
+---
+
+#### 4. IMPLEMENTATION TENETS (T9) - Static Dictionary for State Machine (Not ConcurrentDictionary)
+
+**File**: `plugins/lib-escrow/EscrowService.cs`, line 108
+```csharp
+private static readonly Dictionary<EscrowStatus, HashSet<EscrowStatus>> ValidTransitions = new()
+```
+
+Per T9, use `ConcurrentDictionary` for local caches, never plain `Dictionary`. While this is a read-only static, it is initialized without `FrozenDictionary` or `ImmutableDictionary` and technically could be modified. The tenet is explicit: "Use ConcurrentDictionary for local caches, never plain Dictionary."
+
+**Fix**: Change to a `static readonly IReadOnlyDictionary<EscrowStatus, HashSet<EscrowStatus>>` or `FrozenDictionary` to make immutability explicit, or use `ConcurrentDictionary`.
+
+---
+
+#### 5. IMPLEMENTATION TENETS (T9) - PartyPendingStore Non-Atomic Read-Modify-Write (No Distributed Lock)
+
+**File**: `plugins/lib-escrow/EscrowServiceLifecycle.cs`, lines 183-195
+```csharp
+var existingCount = await PartyPendingStore.GetAsync(partyKey, cancellationToken);
+var newCount = new PartyPendingCount { PendingCount = (existingCount?.PendingCount ?? 0) + 1 ... };
+await PartyPendingStore.SaveAsync(partyKey, newCount, ...);
+```
+
+Also in `EscrowServiceCompletion.cs` lines 99-106, 229-238, 358-367, 644-653.
+
+This is a non-atomic read-modify-write without ETag concurrency or distributed lock protection. Multiple instances can read the same count, increment, and write back, causing counter drift. Per T9, use `IDistributedLockProvider` for cross-instance coordination or ETag-based optimistic concurrency for state that requires consistency.
+
+**Fix**: Either use `GetWithETagAsync`/`TrySaveAsync` for the party pending store, or acquire a distributed lock around these operations.
+
+---
+
+#### 6. IMPLEMENTATION TENETS (T7) - Missing ApiException Catch Blocks
+
+**Files**: All endpoint methods across all service files
+
+No endpoint method distinguishes between `ApiException` (expected API error from downstream) and `Exception` (unexpected failure). T7 requires:
+```csharp
+catch (ApiException ex) { _logger.LogWarning(...); return ((StatusCodes)ex.StatusCode, null); }
+catch (Exception ex) { _logger.LogError(...); await EmitErrorAsync(...); return (StatusCodes.InternalServerError, null); }
+```
+
+Currently all methods only catch `Exception`. While the service does not currently make downstream service calls, state store operations can throw `ApiException` and should be handled distinctly.
+
+**Fix**: Add `catch (ApiException ex)` blocks before the generic `catch (Exception ex)` in every endpoint method.
+
+---
+
+#### 7. QUALITY TENETS (T10) - Hardcoded Service ID in EmitErrorAsync
+
+**File**: `plugins/lib-escrow/EscrowService.cs`, line 580
+```csharp
+await _messageBus.TryPublishErrorAsync("escrow", ...);
+```
+
+Hardcoded `"escrow"` service ID string. Per T21, configuration-first pattern should use `_configuration.ServiceId ?? "escrow"` or a similar pattern from the configuration class (`ForceServiceId`).
+
+**Fix**: Use `_configuration.ForceServiceId ?? "escrow"` to respect the configuration override pattern.
+
+---
+
+#### 8. IMPLEMENTATION TENETS (T25) - ToString() on Enums When Populating Event Models
+
+**File**: `plugins/lib-escrow/EscrowServiceLifecycle.cs`, lines 202-203, 208
+```csharp
+EscrowType = agreementModel.EscrowType.ToString(),
+TrustMode = agreementModel.TrustMode.ToString(),
+Role = p.Role.ToString()
+```
+
+**File**: `plugins/lib-escrow/EscrowServiceConsent.cs`, line 216
+```csharp
+ConsentType = body.ConsentType.ToString(),
+```
+
+**File**: `plugins/lib-escrow/EscrowServiceCompletion.cs`, line 664
+```csharp
+Resolution = body.Resolution.ToString(),
+```
+
+**File**: `plugins/lib-escrow/EscrowServiceValidation.cs`, line 284
+```csharp
+FailureType = f.FailureType.ToString(),
+```
+
+Per T25, `.ToString()` should only be used when populating event models that have `string` fields for cross-language compatibility. This is the acceptable boundary conversion pattern documented in T25 under "Event Model Conversions". **These are borderline acceptable** if the event schema genuinely requires string types for these fields, but should be verified against the event schemas. If the event models could use enum types instead, they should.
+
+**Note**: This is the weakest violation -- T25 explicitly allows `.ToString()` at event boundaries. Verify that the event schema intentionally uses string types for these fields rather than enum references.
+
+---
+
+#### 9. IMPLEMENTATION TENETS (T25) - Enum.TryParse in Business Logic
+
+**File**: `plugins/lib-escrow/EscrowServiceValidation.cs`, line 220
+```csharp
+AssetType = Enum.TryParse<AssetType>(f.AssetType, out var at) ? at : AssetType.Custom,
+```
+
+This parses a string `f.AssetType` (from a `ValidationFailure` API model) into an enum within business logic. Per T25, enum parsing belongs only at system boundaries. The `ValidationFailure` model's `AssetType` field should already be an enum type if it is an internal model, or this conversion should happen at the deserialization boundary.
+
+**Fix**: If `ValidationFailure.AssetType` is a generated API model with string type, this is acceptable as a boundary conversion. If it could be changed to use the enum type in the schema, prefer that. Verify the schema definition.
+
+---
+
+#### 10. CLAUDE.md - Multiple `?? string.Empty` Without Justifying Comments
+
+**File**: `plugins/lib-escrow/EscrowServiceCompletion.cs`, lines 119, 251
+```csharp
+.FirstOrDefault(a => a.RecipientPartyId == r.RecipientPartyId)?.RecipientPartyType ?? string.Empty,
+.FirstOrDefault(d => d.PartyId == r.DepositorPartyId)?.PartyType ?? string.Empty,
+```
+
+These use `?? string.Empty` without the required explanatory comment. Per CLAUDE.md, this pattern is only acceptable in two documented scenarios (compiler satisfaction where null can never execute, or external service defensive coding with error logging). Here the `FirstOrDefault` can genuinely return null (making the coalesce reachable), so this silently converts a potentially-missing party type to empty string, hiding a potential data integrity issue.
+
+**Fix**: Either throw an exception if the party is expected to always exist (programming error if not found), or add error logging when null is encountered, or restructure to avoid the coalesce.
+
+---
+
+#### 11. CLAUDE.md - `= string.Empty` on String Properties in Internal POCOs
+
+**File**: `plugins/lib-escrow/EscrowService.cs`, lines 648, 666, 688, 703, 707, 744, 753, 764, 781, 784, 793, 838
+
+Multiple internal POCO properties use `= string.Empty` as default:
+```csharp
+public string CreatedByType { get; set; } = string.Empty;
+public string PartyType { get; set; } = string.Empty;
+public string SourceOwnerType { get; set; } = string.Empty;
+// etc.
+```
+
+Per CLAUDE.md general rule: "Avoid `?? string.Empty` as it hides bugs by silently coercing null to empty string." The same principle applies to `= string.Empty` defaults on properties that represent meaningful values. If these types can legitimately be empty, they should be nullable (`string?`). If they should always have a value, they should throw on access or be validated at population time.
+
+**Note**: This is a judgment call -- `= string.Empty` on POCO properties is a common C# pattern to satisfy NRT, but per the project's strict null-safety philosophy, these fields likely represent required data (e.g., `PartyType` should always be set). Consider making them `string?` or validating at assignment.
+
+---
+
+#### 12. IMPLEMENTATION TENETS (T3) - Event Consumer Registration Not Called From Constructor
+
+**File**: `plugins/lib-escrow/EscrowService.cs`, constructor (lines 197-209)
+
+The constructor does not inject `IEventConsumer` or call `RegisterEventConsumers()`. While the current `RegisterEventConsumers()` body is empty, the schema defines subscriptions to `contract.fulfilled` and `contract.terminated` events. Per T3/T6, the constructor MUST accept `IEventConsumer`, null-check it, and call `RegisterEventConsumers(eventConsumer)` -- even if the method body is currently empty -- to maintain the pattern for when handlers are implemented.
+
+**Fix**: Add `IEventConsumer eventConsumer` to constructor, add null check, call `RegisterEventConsumers(eventConsumer)`.
+
+---
+
+#### 13. IMPLEMENTATION TENETS (T21) - Hardcoded ListEscrows Default Limit
+
+**File**: `plugins/lib-escrow/EscrowServiceLifecycle.cs`, line 277
+```csharp
+var limit = body.Limit ?? 50;
+```
+
+Hardcoded default limit of 50 for pagination. Per T21, tunables must be configuration properties.
+
+**Fix**: Add a configuration property like `DefaultListLimit` and use `_configuration.DefaultListLimit` here.
+
+---
+
+#### 14. FOUNDATION TENETS (T6) - Missing IDistributedLockProvider Dependency
+
+**File**: `plugins/lib-escrow/EscrowService.cs`, constructor
+
+The service does not inject `IDistributedLockProvider` despite having multiple operations that perform non-atomic read-modify-write on the `PartyPendingStore`. Per T9, services with cross-instance coordination requirements should use `IDistributedLockProvider`.
+
+**Fix**: Add `IDistributedLockProvider` to the constructor and use it to protect party pending count modifications.
+
+---
+
+#### 15. IMPLEMENTATION TENETS (T5) - EscrowExpiredEvent Never Published
+
+The `EscrowTopics.EscrowExpired` constant is defined and the event type exists in the schema, but no code ever publishes this event. While this is noted in "Stubs & Unimplemented Features", T5 requires that all meaningful state changes publish events. The `Expired` state exists in the state machine but no code path transitions to it or publishes the corresponding event.
+
+**Fix**: Implement the expiration background processor that transitions expired escrows and publishes `EscrowExpiredEvent`, or remove the expired state/event from the schema if not yet needed.
+
+---
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Consent from Funded state transitions to Pending_consent**: The first release consent on a Funded escrow transitions to `Pending_consent` even if consent threshold is not yet met. This is deliberate state-tracking to distinguish "funded but no consents" from "funded with partial consents".

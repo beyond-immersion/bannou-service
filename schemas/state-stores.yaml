@@ -242,12 +242,6 @@ x-state-stores:
     service: Achievement
     purpose: Player achievement progress
 
-  achievement-unlock:
-    backend: redis
-    prefix: "ach:unlock"
-    service: Achievement
-    purpose: Unlocked achievements registry
-
   # ============================================================================
   # Save-Load Stores
   # ============================================================================

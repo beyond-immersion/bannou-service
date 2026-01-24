@@ -121,7 +121,7 @@ public class RarityCalculationService : BackgroundService
                 foreach (var achievementId in achievementIds)
                 {
                     var defKey = $"{gameServiceId}:{achievementId}";
-                    var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+                    var (definition, etag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
                     if (definition == null)
                     {
                         continue;
@@ -133,8 +133,19 @@ public class RarityCalculationService : BackgroundService
                         definition.RarityPercent = rarityPercent;
                         definition.RarityCalculatedAt = DateTimeOffset.UtcNow;
 
-                        await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
-                        updatedCount++;
+                        // GetWithETagAsync always returns a non-null etag for existing records;
+                        // coalesce satisfies compiler's nullable analysis (will never execute)
+                        var savedEtag = await definitionStore.TrySaveAsync(defKey, definition, etag ?? string.Empty, cancellationToken);
+                        if (savedEtag != null)
+                        {
+                            updatedCount++;
+                        }
+                        else
+                        {
+                            _logger.LogDebug(
+                                "Rarity update skipped for {DefKey} due to concurrent modification",
+                                defKey);
+                        }
                     }
                 }
             }
