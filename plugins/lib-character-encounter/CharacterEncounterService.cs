@@ -1428,10 +1428,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 if (decayed)
                 {
                     perspectivesProcessed++;
+                    var decayAmount = GetDecayAmount(perspective);
+                    var previousStrength = perspective.MemoryStrength;
 
                     if (!dryRun)
                     {
-                        perspective.MemoryStrength = Math.Max(0, perspective.MemoryStrength - GetDecayAmount(perspective));
+                        perspective.MemoryStrength = Math.Max(0, previousStrength - decayAmount);
                         perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                         var decayResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, pEtag ?? string.Empty, cancellationToken);
                         if (decayResult == null)
@@ -1454,7 +1456,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                                 EncounterId = perspective.EncounterId,
                                 CharacterId = perspective.CharacterId,
                                 PerspectiveId = perspective.PerspectiveId,
-                                PreviousStrength = perspective.MemoryStrength + GetDecayAmount(perspective),
+                                PreviousStrength = previousStrength,
                                 NewStrength = perspective.MemoryStrength,
                                 FadeThreshold = (float)_configuration.MemoryFadeThreshold
                             }, cancellationToken: cancellationToken);

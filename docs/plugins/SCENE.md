@@ -407,13 +407,13 @@ Optimistic Concurrency Pattern (Checkout)
 
 ### Bugs (Fix Immediately)
 
-1. **Content not deleted on scene deletion**: `DeleteSceneAsync` removes the index entry, secondary indexes, global index, and version history, but does NOT delete the `scene:content:{sceneId}` entry. Orphaned YAML content accumulates in the state store indefinitely.
+1. **~~Content not deleted on scene deletion~~** *(FIXED)*: Added `contentStore.DeleteAsync` for `scene:content:{sceneId}` in `DeleteSceneAsync`.
 
 2. **Reference resolution reads from annotations, not referenceSceneId**: The schema provides `referenceSceneId` as a proper typed field on SceneNode, but the resolution logic reads from `annotations.reference.sceneAssetId` via dictionary casting. This mismatch means reference nodes using the schema-defined field will not be resolved.
 
 3. **DestroyInstance uses Guid.Empty for missing optional fields**: When `SceneAssetId` or `RegionId` are not provided in `DestroyInstanceRequest`, the event publishes `Guid.Empty` instead of null. Consumers cannot distinguish "not provided" from "explicitly empty GUID".
 
-4. **Game/type indexes become stale when scene metadata changes**: In `UpdateSceneIndexesAsync` (lines 1502-1512), the code adds the scene to the new gameId and sceneType indexes but never removes from the old indexes if gameId or sceneType changed. For example, if a scene's gameId changes from "arcadia" to "fantasia", it remains in `scene:by-game:arcadia` forever. The reference and asset tracking correctly handles diff/removal, but game/type indexes do not.
+4. **~~Game/type indexes become stale when scene metadata changes~~** *(FIXED)*: Added removal from old game and type indexes in `UpdateSceneIndexesAsync` when `gameId` or `sceneType` changes, matching the diff/removal pattern already used for reference and asset tracking.
 
 5. **Reference resolution relies on specific YAML deserialization runtime type**: In `ResolveReferencesRecursiveAsync` (lines 1644-1647), annotations are cast to `IDictionary<string, object>`. This assumes YamlDotNet's deserializer produces this specific runtime type. If YAML contains annotations in a format that produces a different runtime type (e.g., `ExpandoObject` or a concrete class), the cast fails silently and reference resolution doesn't work.
 

@@ -515,6 +515,10 @@ public partial class SceneService : ISceneService
             // Remove from global scene index
             await RemoveFromGlobalSceneIndexAsync(sceneIdStr, cancellationToken);
 
+            // Delete scene content
+            var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(StateStoreDefinitions.Scene);
+            await contentStore.DeleteAsync($"{SCENE_CONTENT_PREFIX}{sceneIdStr}", cancellationToken);
+
             // Delete version history
             await DeleteVersionHistoryAsync(sceneIdStr, cancellationToken);
 
@@ -1498,6 +1502,29 @@ public partial class SceneService : ISceneService
     {
         var sceneIdStr = newScene.SceneId.ToString();
         var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+
+        // Remove from old game/type indexes if changed
+        if (oldScene != null && oldScene.GameId != newScene.GameId)
+        {
+            var oldGameKey = $"{SCENE_BY_GAME_PREFIX}{oldScene.GameId}";
+            var oldGameIndex = await stringSetStore.GetAsync(oldGameKey, cancellationToken);
+            if (oldGameIndex != null)
+            {
+                oldGameIndex.Remove(sceneIdStr);
+                await stringSetStore.SaveAsync(oldGameKey, oldGameIndex, cancellationToken: cancellationToken);
+            }
+        }
+
+        if (oldScene != null && (oldScene.GameId != newScene.GameId || oldScene.SceneType != newScene.SceneType))
+        {
+            var oldTypeKey = $"{SCENE_BY_TYPE_PREFIX}{oldScene.GameId}:{oldScene.SceneType}";
+            var oldTypeIndex = await stringSetStore.GetAsync(oldTypeKey, cancellationToken);
+            if (oldTypeIndex != null)
+            {
+                oldTypeIndex.Remove(sceneIdStr);
+                await stringSetStore.SaveAsync(oldTypeKey, oldTypeIndex, cancellationToken: cancellationToken);
+            }
+        }
 
         // Update game index
         var gameKey = $"{SCENE_BY_GAME_PREFIX}{newScene.GameId}";
