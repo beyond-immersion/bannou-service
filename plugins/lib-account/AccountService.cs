@@ -216,25 +216,32 @@ public partial class AccountService : IAccountService
 
         for (var i = 0; i < allResults.Count; i += batchSize)
         {
-            var batch = allResults.Skip(i).Take(batchSize);
+            var batch = allResults.Skip(i).Take(batchSize).ToList();
 
-            foreach (var item in batch)
+            // Load auth methods in parallel within each batch
+            var batchTasks = batch.Select(async item =>
             {
                 var authMethods = await GetAuthMethodsForAccountAsync(
                     item.Value.AccountId.ToString(), cancellationToken);
+                return (item.Value, authMethods);
+            });
 
+            var batchResults = await Task.WhenAll(batchTasks);
+
+            foreach (var (account, authMethods) in batchResults)
+            {
                 // Check if any auth method matches the provider filter
                 if (authMethods.Any(m => m.Provider.ToString() == providerFilter.ToString()))
                 {
                     filteredAccounts.Add(new AccountResponse
                     {
-                        AccountId = item.Value.AccountId,
-                        Email = item.Value.Email,
-                        DisplayName = item.Value.DisplayName,
-                        EmailVerified = item.Value.IsVerified,
-                        CreatedAt = item.Value.CreatedAt,
-                        UpdatedAt = item.Value.UpdatedAt,
-                        Roles = item.Value.Roles,
+                        AccountId = account.AccountId,
+                        Email = account.Email,
+                        DisplayName = account.DisplayName,
+                        EmailVerified = account.IsVerified,
+                        CreatedAt = account.CreatedAt,
+                        UpdatedAt = account.UpdatedAt,
+                        Roles = account.Roles,
                         AuthMethods = authMethods
                     });
                 }
@@ -472,7 +479,7 @@ public partial class AccountService : IAccountService
             var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
             var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
-            if (account == null)
+            if (account == null || account.DeletedAt.HasValue)
             {
                 _logger.LogWarning("Account not found for update: {AccountId}", accountId);
                 return (StatusCodes.NotFound, null);
@@ -492,7 +499,7 @@ public partial class AccountService : IAccountService
             if (body.Roles != null)
             {
                 var newRoles = body.Roles.ToList();
-                if (!account.Roles.SequenceEqual(newRoles))
+                if (!new HashSet<string>(account.Roles).SetEquals(newRoles))
                 {
                     changedFields.Add("roles");
                     account.Roles = newRoles;
@@ -705,7 +712,7 @@ public partial class AccountService : IAccountService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Check if this provider is already linked
+            // Check if this provider is already linked on this account
             var existingMethod = authMethods.FirstOrDefault(m =>
                 m.Provider.ToString() == body.Provider.ToString() && m.ExternalId == body.ExternalId);
 
@@ -714,14 +721,26 @@ public partial class AccountService : IAccountService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Check if another account already owns this provider:externalId combination
+            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            var existingOwner = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
+            if (!string.IsNullOrEmpty(existingOwner) && existingOwner != accountId.ToString())
+            {
+                _logger.LogWarning("Provider {Provider}:{ExternalId} already linked to different account {ExistingOwner}",
+                    body.Provider, body.ExternalId, existingOwner);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Create new auth method
             var methodId = Guid.NewGuid();
+            var linkedAt = DateTimeOffset.UtcNow;
             var newMethod = new AuthMethodInfo
             {
                 MethodId = methodId,
                 Provider = MapOAuthProviderToAuthProvider(body.Provider),
                 ExternalId = body.ExternalId,
-                LinkedAt = DateTimeOffset.UtcNow
+                LinkedAt = linkedAt
             };
 
             authMethods.Add(newMethod);
@@ -729,9 +748,7 @@ public partial class AccountService : IAccountService
             // Save updated auth methods
             await authMethodsStore.SaveAsync(authMethodsKey, authMethods);
 
-            // Create provider index for lookup
-            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            // Create/update provider index for lookup
             await providerIndexStore.SaveAsync(providerIndexKey, accountId.ToString());
 
             _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
@@ -745,7 +762,7 @@ public partial class AccountService : IAccountService
                 MethodId = methodId,
                 Provider = body.Provider,
                 ExternalId = body.ExternalId, // Already validated non-empty above
-                LinkedAt = DateTimeOffset.UtcNow
+                LinkedAt = linkedAt
             };
 
             return (StatusCodes.OK, response);
@@ -884,7 +901,7 @@ public partial class AccountService : IAccountService
             var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
             var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
-            if (account == null)
+            if (account == null || account.DeletedAt.HasValue)
             {
                 _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
                 return (StatusCodes.NotFound, null);
@@ -1097,7 +1114,7 @@ public partial class AccountService : IAccountService
             var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
             var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
-            if (account == null)
+            if (account == null || account.DeletedAt.HasValue)
             {
                 _logger.LogWarning("Account not found for password update: {AccountId}", accountId);
                 return StatusCodes.NotFound;
@@ -1148,7 +1165,7 @@ public partial class AccountService : IAccountService
             var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
             var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
 
-            if (account == null)
+            if (account == null || account.DeletedAt.HasValue)
             {
                 _logger.LogWarning("Account not found for verification update: {AccountId}", accountId);
                 return StatusCodes.NotFound;
@@ -1444,7 +1461,6 @@ public partial class AccountService : IAccountService
 
                     // Compute new roles
                     var currentRoles = new HashSet<string>(account.Roles);
-                    var originalCount = currentRoles.Count;
                     var originalRoles = new HashSet<string>(currentRoles);
 
                     if (hasAddRoles)

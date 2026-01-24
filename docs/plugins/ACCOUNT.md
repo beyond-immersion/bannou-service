@@ -98,6 +98,12 @@ The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cl
 
 Add/remove OAuth provider links. Adding a method creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method cleans up both. The remove operation uses ETag-based optimistic concurrency on the auth methods list.
 
+### Bulk Operations
+
+- `batch-get`: Retrieves multiple accounts by ID in parallel using `Task.WhenAll` over direct key lookups (not JSON queries). Returns a `BatchGetAccountsResponse` with separate `accounts` (found) and `notFound` (missing or soft-deleted) lists. Auth methods are loaded in a second parallel pass for found accounts. Max 100 IDs per call.
+- `count`: Uses `IJsonQueryableStateStore.JsonCountAsync()` for a pure SQL `SELECT COUNT(*)` with the same filter conditions as `list` (email, displayName, verified), plus a `role` filter that uses `JSON_CONTAINS` on the `$.Roles` array. The `BuildAccountQueryConditions` helper automatically includes the type discriminator and soft-delete exclusion conditions.
+- `roles/bulk-update`: Adds and/or removes roles from up to 100 accounts. Processes sequentially with per-account ETag-based optimistic concurrency. Returns partial success: `succeeded` and `failed` lists with error reasons. Publishes `account.updated` events individually for each changed account. No-op (roles already match) counts as success without publishing an event.
+
 ### Profile & Password
 
 - `profile/update`: User-facing endpoint (not admin-only) for updating display name and metadata.
@@ -141,7 +147,7 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 - **Account merge**: No mechanism exists to merge two accounts (e.g., when a user registers with email then later tries to register with the same OAuth provider under a different email). The data model supports multiple auth methods per account, but there's no merge workflow.
 - **Audit trail**: Account mutations publish events but don't maintain a per-account change history. An extension could store a changelog for compliance/debugging.
 - **Email change**: There is no endpoint for changing an account's email address. The email index would need to be atomically swapped (delete old index, create new index, update account record) with proper concurrency handling.
-- **Bulk operations**: No batch create/update/delete endpoints exist. The only batch-adjacent operation is the `list` endpoint.
+- **Bulk batch-create/delete**: Batch-get and bulk role update are implemented, but there are no batch create or batch delete endpoints.
 
 ## Known Quirks & Caveats
 
@@ -151,4 +157,14 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 
 3. **Soft-delete with immediate index removal (correct behavior)**: Deleting an account sets `DeletedAt` but immediately removes the email index and provider index entries. This is the intended behavior: deleted accounts disappear from lookup paths (can't log in, can't be listed) but remain loadable by ID for audit/recovery. The `DeletedAt` check returns 404 for direct loads, and the `$.DeletedAtUnix notExists` query condition excludes them from listings.
 
-4. **Admin auto-assignment is creation-time only**: The `ShouldAssignAdminRole` check runs only during `CreateAccountAsync`. Changing `AdminEmails` or `AdminEmailDomain` configuration does not retroactively promote or demote existing accounts. This is acceptable - operational role changes for existing accounts should use the explicit `update` endpoint rather than implicit config-driven mutation.
+4. **Admin auto-assignment is creation-time only**: The `ShouldAssignAdminRole` check runs only during `CreateAccountAsync`. Changing `AdminEmails` or `AdminEmailDomain` configuration does not retroactively promote or demote existing accounts. This is acceptable - operational role changes for existing accounts should use the explicit `update` or `roles/bulk-update` endpoint rather than implicit config-driven mutation.
+
+5. **`BulkUpdateRolesAsync` allows removing all roles**: There is no validation that at least one role remains after removal. Removing the last role (e.g., removing "user" when it's the only role) leaves the account with an empty roles list, potentially locking the user out of all permission-gated APIs. Whether this is a bug or feature depends on operational intent - it may be desirable for disabling accounts without soft-deleting them.
+
+6. **`BatchGetAccountsAsync` return order is non-deterministic**: `Task.WhenAll` does not guarantee completion order. The returned `accounts` list may not match the input `accountIds` order. Callers should match by `AccountId` field, not by position.
+
+7. **`BatchGetAccountsAsync` is all-or-nothing on state store errors**: Unlike `BulkUpdateRolesAsync` which has per-item error handling, if any single `GetAsync` call throws an exception during the parallel fetch, the entire `Task.WhenAll` propagates the exception and the whole batch returns 500. Individual account fetch failures cannot be reported as partial failures.
+
+8. **`AddAuthMethodAsync` rejects cross-account provider conflicts**: If a provider+externalId combination is already linked to a different account, the endpoint returns Conflict. This prevents orphaned auth method entries. The Auth service's normal flow also guards against this via `by-provider` lookup before calling `add`.
+
+9. **`ListAccountsWithProviderFilterAsync` uses parallel batching**: Auth method lookups are parallelized within each `ListBatchSize` batch via `Task.WhenAll`. The batch size controls concurrency to avoid overwhelming the state store with too many simultaneous requests.

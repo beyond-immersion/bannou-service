@@ -18,6 +18,10 @@ public class PlayStationAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public Platform Platform => Platform.Playstation;
 
+    /// <inheritdoc />
+    /// <remarks>PlayStation sync is a stub and is never configured.</remarks>
+    public bool IsConfigured => false;
+
     /// <summary>
     /// Initializes a new instance of the PlayStationAchievementSync.
     /// </summary>

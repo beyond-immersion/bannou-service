@@ -17,6 +17,10 @@ public class XboxAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public Platform Platform => Platform.Xbox;
 
+    /// <inheritdoc />
+    /// <remarks>Xbox sync is a stub and is never configured.</remarks>
+    public bool IsConfigured => false;
+
     /// <summary>
     /// Initializes a new instance of the XboxAchievementSync.
     /// </summary>

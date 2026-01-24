@@ -34,12 +34,10 @@ public class SteamAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public Platform Platform => Platform.Steam;
 
-    /// <summary>
-    /// Gets a value indicating whether Steam sync is properly configured.
-    /// </summary>
+    /// <inheritdoc />
     /// <remarks>
     /// Returns true only if both SteamApiKey and SteamAppId are configured.
-    /// When false, sync operations will succeed as no-ops (feature disabled).
+    /// When false, the service layer skips this platform during sync operations.
     /// </remarks>
     public bool IsConfigured =>
         !string.IsNullOrEmpty(_configuration.SteamApiKey) &&
@@ -167,25 +165,11 @@ public class SteamAchievementSync : IPlatformAchievementSync
             platformAchievementId,
             externalUserId);
 
-        // Validate configuration
+        // Validate configuration (defense-in-depth; service layer checks IsConfigured first)
         var configValidation = ValidateConfiguration(out var apiKey, out var appId);
         if (configValidation is not null)
         {
             return configValidation;
-        }
-
-        // Check for mock mode
-        if (_configuration.MockPlatformSync)
-        {
-            _logger.LogInformation(
-                "Mock mode enabled - returning success without Steam API call for achievement {AchievementId}",
-                platformAchievementId);
-
-            return new PlatformSyncResult
-            {
-                Success = true,
-                SyncId = $"mock-{Guid.NewGuid():N}"
-            };
         }
 
         try
@@ -253,25 +237,11 @@ public class SteamAchievementSync : IPlatformAchievementSync
             platformAchievementId,
             externalUserId);
 
-        // Validate configuration
+        // Validate configuration (defense-in-depth; service layer checks IsConfigured first)
         var configValidation = ValidateConfiguration(out var apiKey, out var appId);
         if (configValidation is not null)
         {
             return configValidation;
-        }
-
-        // Check for mock mode
-        if (_configuration.MockPlatformSync)
-        {
-            _logger.LogInformation(
-                "Mock mode enabled - returning success without Steam API call for stat {StatId}",
-                platformAchievementId);
-
-            return new PlatformSyncResult
-            {
-                Success = true,
-                SyncId = $"mock-{Guid.NewGuid():N}"
-            };
         }
 
         try
@@ -332,8 +302,8 @@ public class SteamAchievementSync : IPlatformAchievementSync
     /// <param name="apiKey">The validated API key when configuration is valid.</param>
     /// <param name="appId">The validated App ID when configuration is valid.</param>
     /// <returns>
-    /// A success result with "disabled" SyncId if Steam sync is not configured (feature gracefully disabled),
-    /// or null if configuration is valid and sync should proceed.
+    /// A failure result if Steam sync is not configured, or null if configuration is valid and sync should proceed.
+    /// The service layer checks IsConfigured before calling sync operations, so this is defense-in-depth.
     /// </returns>
     private PlatformSyncResult? ValidateConfiguration(out string apiKey, out string appId)
     {
@@ -342,15 +312,13 @@ public class SteamAchievementSync : IPlatformAchievementSync
 
         if (string.IsNullOrEmpty(configApiKey) || string.IsNullOrEmpty(configAppId))
         {
-            // Steam sync is not configured - this is a valid deployment state
-            // Return success to indicate no error, but no sync occurred
-            _logger.LogDebug("Steam sync disabled - API credentials not configured");
+            _logger.LogError("Steam sync called but API credentials are not configured");
             apiKey = string.Empty;
             appId = string.Empty;
             return new PlatformSyncResult
             {
-                Success = true,
-                SyncId = "disabled"
+                Success = false,
+                ErrorMessage = "Steam API credentials not configured (SteamApiKey and SteamAppId required)"
             };
         }
 

@@ -125,7 +125,7 @@ public class AchievementServiceTests
         Assert.True(config.AutoSyncOnUnlock);
         Assert.Equal(3, config.SyncRetryAttempts);
         Assert.Equal(60, config.SyncRetryDelaySeconds);
-        Assert.Equal(300, config.ProgressCacheTtlSeconds);
+        Assert.Equal(0, config.ProgressTtlSeconds);
         Assert.Equal(60, config.RarityCalculationIntervalMinutes);
         Assert.Equal(5.0, config.RareThresholdPercent);
     }
@@ -138,7 +138,7 @@ public class AchievementServiceTests
             AutoSyncOnUnlock = false,
             SyncRetryAttempts = 5,
             SyncRetryDelaySeconds = 120,
-            ProgressCacheTtlSeconds = 600,
+            ProgressTtlSeconds = 600,
             RarityCalculationIntervalMinutes = 30,
             RareThresholdPercent = 10.0
         };
@@ -146,7 +146,7 @@ public class AchievementServiceTests
         Assert.False(config.AutoSyncOnUnlock);
         Assert.Equal(5, config.SyncRetryAttempts);
         Assert.Equal(120, config.SyncRetryDelaySeconds);
-        Assert.Equal(600, config.ProgressCacheTtlSeconds);
+        Assert.Equal(600, config.ProgressTtlSeconds);
         Assert.Equal(30, config.RarityCalculationIntervalMinutes);
         Assert.Equal(10.0, config.RareThresholdPercent);
     }

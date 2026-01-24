@@ -17,7 +17,7 @@
 
 | Property | Status | Notes |
 |----------|--------|-------|
-| ProgressCacheTtlSeconds | ✅ | Wired to cache SaveAsync TTL |
+| ProgressTtlSeconds | ✅ | Wired to SaveAsync TTL (0 = no expiry, permanent storage) |
 | RarityThresholdEarnedCount | ✅ | Wired to IsRare calculation |
 | RareThresholdPercent | ⚠️ | Placeholder for unimplemented rarity percentage system |
 | RarityCalculationIntervalMinutes | ⚠️ | Placeholder for unimplemented rarity calculation background task |

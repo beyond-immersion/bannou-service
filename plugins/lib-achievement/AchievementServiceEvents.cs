@@ -96,8 +96,7 @@ public partial class AchievementService
                 }
 
                 var metadata = MetadataHelper.ConvertToReadOnlyDictionary(definition.Metadata);
-                if (!MetadataHelper.TryGetString(metadata, "scoreType", out var scoreType) &&
-                    !MetadataHelper.TryGetString(metadata, "eventType", out scoreType))
+                if (!MetadataHelper.TryGetString(metadata, "scoreType", out var scoreType))
                 {
                     continue;
                 }

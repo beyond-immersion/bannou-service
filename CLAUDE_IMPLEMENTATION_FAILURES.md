@@ -59,7 +59,7 @@ All services except lib-documentation now use either optimistic concurrency (Get
 The following services now reference `_configuration` in their implementations:
 - lib-currency (TransactionRetentionDays, HoldMaxDurationDays, IdempotencyTtlSeconds, DefaultAllowNegative)
 - lib-analytics (Glicko2DefaultRating, Glicko2DefaultDeviation, Glicko2DefaultVolatility)
-- lib-achievement (ProgressCacheTtlSeconds, AutoSyncOnUnlock, RareThresholdPercent)
+- lib-achievement (ProgressTtlSeconds, AutoSyncOnUnlock, RareThresholdPercent)
 - lib-leaderboard (ScoreUpdateBatchSize, MaxEntriesPerQuery)
 - lib-matchmaking (ServerSalt, ProcessingIntervalSeconds, DefaultMaxIntervals, DefaultMatchAcceptTimeoutSeconds, and 6 more)
 - lib-music (CompositionCacheTtlSeconds)
