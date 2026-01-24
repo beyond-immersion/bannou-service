@@ -53,7 +53,7 @@ public class RarityCalculationService : BackgroundService
         // Wait before first calculation to allow services to start
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.RarityCalculationStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

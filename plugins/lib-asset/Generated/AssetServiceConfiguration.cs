@@ -485,4 +485,16 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int DefaultBundleCacheTtlHours { get; set; } = 24;
 
+    /// <summary>
+    /// Maximum retry attempts for optimistic concurrency index updates
+    /// Environment variable: ASSET_INDEX_OPTIMISTIC_RETRY_MAX_ATTEMPTS
+    /// </summary>
+    public int IndexOptimisticRetryMaxAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Base delay in milliseconds between optimistic retry attempts (multiplied by attempt number)
+    /// Environment variable: ASSET_INDEX_OPTIMISTIC_RETRY_BASE_DELAY_MS
+    /// </summary>
+    public int IndexOptimisticRetryBaseDelayMs { get; set; } = 10;
+
 }

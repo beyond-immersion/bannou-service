@@ -185,4 +185,10 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxServiceMappingsDisplayed { get; set; } = 10;
 
+    /// <summary>
+    /// Delay in seconds before health check service starts probing endpoints
+    /// Environment variable: MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int HealthCheckStartupDelaySeconds { get; set; } = 10;
+
 }

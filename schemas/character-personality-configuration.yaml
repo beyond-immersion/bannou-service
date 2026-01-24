@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Character Personality Service Configuration
+  description: |
+    Configuration schema for Character Personality service.
+    Properties are bound to environment variables with CHARACTER_PERSONALITY_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Evolution Configuration
+    BaseEvolutionProbability:
+      type: number
+      description: Base chance for trait shift per evolution event (0.0-1.0)
+      default: 0.15
+      env: CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY
+    MaxTraitShift:
+      type: number
+      description: Maximum magnitude of trait change per evolution event
+      default: 0.1
+      env: CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT
+    MinTraitShift:
+      type: number
+      description: Minimum magnitude of trait change per evolution event
+      default: 0.02
+      env: CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT

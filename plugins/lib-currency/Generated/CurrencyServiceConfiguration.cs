@@ -72,6 +72,12 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
     public string AutogainProcessingMode { get; set; } = "lazy";
 
     /// <summary>
+    /// Delay in seconds before first autogain task cycle (allows services to start)
+    /// Environment variable: CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int AutogainTaskStartupDelaySeconds { get; set; } = 15;
+
+    /// <summary>
     /// For task mode - how often to process autogain in milliseconds
     /// Environment variable: CURRENCY_AUTOGAIN_TASK_INTERVAL_MS
     /// </summary>

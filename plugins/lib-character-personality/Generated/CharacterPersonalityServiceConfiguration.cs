@@ -53,4 +53,22 @@ public class CharacterPersonalityServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public string? ForceServiceId { get; set; }
 
+    /// <summary>
+    /// Base chance for trait shift per evolution event (0.0-1.0)
+    /// Environment variable: CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY
+    /// </summary>
+    public double BaseEvolutionProbability { get; set; } = 0.15;
+
+    /// <summary>
+    /// Maximum magnitude of trait change per evolution event
+    /// Environment variable: CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT
+    /// </summary>
+    public double MaxTraitShift { get; set; } = 0.1;
+
+    /// <summary>
+    /// Minimum magnitude of trait change per evolution event
+    /// Environment variable: CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT
+    /// </summary>
+    public double MinTraitShift { get; set; } = 0.02;
+
 }

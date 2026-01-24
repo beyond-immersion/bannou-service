@@ -60,7 +60,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         // Wait before first cycle to allow services to start
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.AutogainTaskStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

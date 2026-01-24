@@ -66,7 +66,7 @@ public class MeshHealthCheckService : BackgroundService
         // Wait before first check to allow services to register
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.HealthCheckStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

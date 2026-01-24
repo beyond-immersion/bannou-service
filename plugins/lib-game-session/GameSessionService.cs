@@ -1727,7 +1727,7 @@ public partial class GameSessionService : IGameSessionService
             var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.SubscriberSessionRetryMaxAttempts; attempt++)
             {
                 var (existing, etag) = await store.GetWithETagAsync(key);
                 var model = existing ?? new SubscriberSessionsModel { AccountId = accountId };
@@ -1764,7 +1764,7 @@ public partial class GameSessionService : IGameSessionService
             var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.SubscriberSessionRetryMaxAttempts; attempt++)
             {
                 var (existing, etag) = await store.GetWithETagAsync(key);
                 if (existing == null)

@@ -166,6 +166,15 @@ x-service-configuration:
       default: 5
 
     # =========================================================================
+    # Startup Configuration
+    # =========================================================================
+    HealthCheckStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before health check service starts probing endpoints
+      env: MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS
+      default: 10
+
+    # =========================================================================
     # Display and Output Limits
     # =========================================================================
     MaxTopEndpointsReturned:

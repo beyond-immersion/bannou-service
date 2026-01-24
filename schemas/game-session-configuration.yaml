@@ -51,6 +51,11 @@ x-service-configuration:
       description: Delay before startup service initializes subscription caches
       default: 2
       env: GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS
+    SubscriberSessionRetryMaxAttempts:
+      type: integer
+      description: Maximum retry attempts for optimistic concurrency on subscriber session state
+      default: 3
+      env: GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS
     SupportedGameServices:
       type: string
       description: Comma-separated list of supported game service stub names

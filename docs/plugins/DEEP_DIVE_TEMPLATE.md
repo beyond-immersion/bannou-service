@@ -127,16 +127,16 @@ Brief implementation-level notes on endpoint groups. Not a repeat of the generat
 
 ---
 
-### 10. Interconnection Diagram
+### 10. Visual Aid
 
-One Mermaid diagram showing how this plugin connects to its dependencies and dependents. Limit to **one diagram per document** unless an exceptional case warrants a second (e.g., a plugin with two completely independent subsystems that would be unreadable in a single diagram).
+One ASCII or Mermaid diagram per document that illustrates something **not already obvious from the tables above**. The Dependencies/Dependents tables already show what connects to what, so don't repeat that.
 
-```markdown
-```mermaid
-graph LR
-    ...
-`` `
-```
+Good candidates for the visual:
+- **State store key relationships**: How keys reference each other, what gets cleaned up on delete vs. what's orphaned
+- **Multi-step operation flow**: How a complex operation (e.g., registration) flows through multiple internal steps
+- **Internal data model structure**: How model fields relate across different key patterns in the same store
+
+Do **not** create a diagram that just draws arrows between this plugin, its dependents, and its dependencies - that's what sections 3 and 4 already say in table form.
 
 ---
 
@@ -160,7 +160,7 @@ Non-obvious behaviors, workarounds, or implementation decisions that a developer
 
 ## Rules
 
-1. **One diagram maximum** per document unless the plugin genuinely has two independent subsystems that cannot be combined into one readable diagram.
+1. **One visual aid maximum** per document unless the plugin genuinely has two independent subsystems that cannot be combined into one readable diagram. The visual must add information not already present in the tables.
 2. **No speculative information** - every statement must be verified against the source code.
 3. **No generated docs repetition** - the API endpoint section adds implementation context, not a copy of the schema descriptions.
 4. **Keep it scannable** - tables over prose where possible, prose only where context requires narrative explanation.

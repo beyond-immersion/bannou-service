@@ -120,6 +120,12 @@ public class AchievementServiceConfiguration : IServiceConfiguration
     public int ProgressCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
+    /// Delay in seconds before first rarity calculation (allows services to start)
+    /// Environment variable: ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int RarityCalculationStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
     /// How often to recalculate achievement rarity percentages
     /// Environment variable: ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES
     /// </summary>

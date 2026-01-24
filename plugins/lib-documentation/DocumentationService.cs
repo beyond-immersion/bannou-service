@@ -1575,9 +1575,10 @@ public partial class DocumentationService : IDocumentationService
             var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
             var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
-            // Get trashcan list
+            // Get trashcan list with ETag for optimistic concurrency
             var trashListKey = $"ns-trash:{namespaceId}";
-            var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
+            var (trashedDocIds, trashEtag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
+            trashedDocIds ??= [];
 
             // Determine which documents to purge
             IEnumerable<Guid> docsToPurge;
@@ -1601,12 +1602,17 @@ public partial class DocumentationService : IDocumentationService
                 purgedCount++;
             }
 
-            // Update trashcan list
+            // Update trashcan list with optimistic concurrency
             if (purgedCount > 0)
             {
                 if (trashedDocIds.Count > 0)
                 {
-                    await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                    var saveResult = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken);
+                    if (saveResult == null)
+                    {
+                        _logger.LogWarning("PurgeTrashcan: Concurrent modification on trashcan index for namespace {Namespace}", namespaceId);
+                        return (StatusCodes.Conflict, null);
+                    }
                 }
                 else
                 {
@@ -1705,20 +1711,48 @@ public partial class DocumentationService : IDocumentationService
     {
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await guidListStore.GetAsync(indexKey, cancellationToken) ?? [];
 
-        if (!docIds.Contains(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            docIds.Add(documentId);
-            await guidListStore.SaveAsync(indexKey, docIds, cancellationToken: cancellationToken);
+            var (docIds, etag) = await guidListStore.GetWithETagAsync(indexKey, cancellationToken);
+            docIds ??= [];
+
+            if (!docIds.Contains(documentId))
+            {
+                docIds.Add(documentId);
+                var result = await guidListStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    break;
+                }
+
+                _logger.LogDebug("Concurrent modification on namespace index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                continue;
+            }
+
+            break;
         }
 
         // Track namespace in global registry for search index rebuild on startup
         var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
-        var allNamespaces = await stringSetStore.GetAsync(ALL_NAMESPACES_KEY, cancellationToken) ?? [];
-        if (allNamespaces.Add(namespaceId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            await stringSetStore.SaveAsync(ALL_NAMESPACES_KEY, allNamespaces, cancellationToken: cancellationToken);
+            var (allNamespaces, nsEtag) = await stringSetStore.GetWithETagAsync(ALL_NAMESPACES_KEY, cancellationToken);
+            allNamespaces ??= [];
+
+            if (allNamespaces.Add(namespaceId))
+            {
+                var result = await stringSetStore.TrySaveAsync(ALL_NAMESPACES_KEY, allNamespaces, nsEtag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    break;
+                }
+
+                _logger.LogDebug("Concurrent modification on namespace registry, retrying (attempt {Attempt})", attempt + 1);
+                continue;
+            }
+
+            break;
         }
     }
 
@@ -1729,12 +1763,27 @@ public partial class DocumentationService : IDocumentationService
     {
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await guidListStore.GetAsync(indexKey, cancellationToken);
 
-        if (docIds != null && docIds.Remove(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            await guidListStore.SaveAsync(indexKey, docIds, cancellationToken: cancellationToken);
+            var (docIds, etag) = await guidListStore.GetWithETagAsync(indexKey, cancellationToken);
+
+            if (docIds != null && docIds.Remove(documentId))
+            {
+                var result = await guidListStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    return;
+                }
+
+                _logger.LogDebug("Concurrent modification on namespace index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                continue;
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove document {DocumentId} from namespace index {Namespace} after retries", documentId, namespaceId);
     }
 
     /// <summary>
@@ -1744,13 +1793,29 @@ public partial class DocumentationService : IDocumentationService
     {
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
-        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
-        if (!trashedDocIds.Contains(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            trashedDocIds.Add(documentId);
-            await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+            var (trashedDocIds, etag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
+            trashedDocIds ??= [];
+
+            if (!trashedDocIds.Contains(documentId))
+            {
+                trashedDocIds.Add(documentId);
+                var result = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
+                if (result != null)
+                {
+                    return;
+                }
+
+                _logger.LogDebug("Concurrent modification on trashcan index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                continue;
+            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to add document {DocumentId} to trashcan index {Namespace} after retries", documentId, namespaceId);
     }
 
     /// <summary>
@@ -1760,19 +1825,35 @@ public partial class DocumentationService : IDocumentationService
     {
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
-        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken);
 
-        if (trashedDocIds != null && trashedDocIds.Remove(documentId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            if (trashedDocIds.Count > 0)
+            var (trashedDocIds, etag) = await guidListStore.GetWithETagAsync(trashListKey, cancellationToken);
+
+            if (trashedDocIds != null && trashedDocIds.Remove(documentId))
             {
-                await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                if (trashedDocIds.Count > 0)
+                {
+                    var result = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
+                    if (result != null)
+                    {
+                        return;
+                    }
+
+                    _logger.LogDebug("Concurrent modification on trashcan index {Namespace}, retrying (attempt {Attempt})", namespaceId, attempt + 1);
+                    continue;
+                }
+                else
+                {
+                    await guidListStore.DeleteAsync(trashListKey, cancellationToken);
+                    return;
+                }
             }
-            else
-            {
-                await guidListStore.DeleteAsync(trashListKey, cancellationToken);
-            }
+
+            return;
         }
+
+        _logger.LogWarning("Failed to remove document {DocumentId} from trashcan index {Namespace} after retries", documentId, namespaceId);
     }
 
     /// <summary>

@@ -360,6 +360,18 @@ x-service-configuration:
       description: Comma-separated list of additional forbidden content types
       env: ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES
 
+    # === Index Optimistic Retry Configuration ===
+    IndexOptimisticRetryMaxAttempts:
+      type: integer
+      description: Maximum retry attempts for optimistic concurrency index updates
+      default: 5
+      env: ASSET_INDEX_OPTIMISTIC_RETRY_MAX_ATTEMPTS
+    IndexOptimisticRetryBaseDelayMs:
+      type: integer
+      description: Base delay in milliseconds between optimistic retry attempts (multiplied by attempt number)
+      default: 10
+      env: ASSET_INDEX_OPTIMISTIC_RETRY_BASE_DELAY_MS
+
     # === Async Metabundle Job Configuration (Tier 2) ===
     MetabundleAsyncSourceBundleThreshold:
       type: integer

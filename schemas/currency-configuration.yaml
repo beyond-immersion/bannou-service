@@ -28,6 +28,11 @@ x-service-configuration:
       env: CURRENCY_AUTOGAIN_PROCESSING_MODE
       default: lazy
       description: How autogain is calculated (lazy = on-demand at query time, task = background processing)
+    autogainTaskStartupDelaySeconds:
+      type: integer
+      env: CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS
+      default: 15
+      description: Delay in seconds before first autogain task cycle (allows services to start)
     autogainTaskIntervalMs:
       type: integer
       env: CURRENCY_AUTOGAIN_TASK_INTERVAL_MS

@@ -54,6 +54,12 @@ public class DocumentationServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
+    /// Delay in seconds before search index rebuild starts (allows services to initialize)
+    /// Environment variable: DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int SearchIndexRebuildStartupDelaySeconds { get; set; } = 5;
+
+    /// <summary>
     /// Whether to rebuild search index on service startup
     /// Environment variable: DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP
     /// </summary>

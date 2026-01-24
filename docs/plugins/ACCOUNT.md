@@ -107,16 +107,30 @@ Add/remove OAuth provider links. Adding a method creates both the auth method en
 - `password/update`: Stores a pre-hashed password received from the Auth service. Account service never handles raw passwords.
 - `verification/update`: Sets the `IsVerified` flag.
 
-## Interconnection Diagram
+## State Store Key Relationships
 
-```mermaid
-graph LR
-    Auth[lib-auth] -->|IAccountClient| Account[lib-account]
-    Achievement[lib-achievement] -->|IAccountClient| Account
-    Account -->|IStateStoreFactory| State[(account-statestore<br/>MySQL)]
-    Account -->|IMessageBus| Events{RabbitMQ}
-    Events -->|account.deleted| Auth
-    Events -->|account.updated| Auth
+```
+accounts-list: [ "guid-1", "guid-2", "guid-3", ... ]
+       │
+       ▼ (each entry is an account ID)
+account-{id} ──────────────────────────────────────────┐
+  ├─ AccountId (Guid)                                   │
+  ├─ Email ──► email-index-{email} ──► account ID      │
+  ├─ PasswordHash                                       │ Same store,
+  ├─ DisplayName                                        │ different
+  ├─ IsVerified                                         │ key prefixes
+  ├─ Roles[]                                            │
+  ├─ Metadata{}                                         │
+  └─ CreatedAtUnix / UpdatedAtUnix / DeletedAtUnix      │
+                                                        │
+auth-methods-{id}: [ AuthMethodInfo, ... ] ─────────────┤
+  ├─ MethodId (Guid)                                    │
+  ├─ Provider ──► provider-index-{provider}:{extId}     │
+  ├─ ExternalId    ──► account ID                       │
+  └─ LinkedAt                                           │
+                                                        │
+On Delete: email-index removed, accounts-list cleaned   │
+           provider-index entries LEFT ORPHANED ◄───────┘
 ```
 
 ## Stubs & Unimplemented Features

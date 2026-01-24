@@ -46,7 +46,7 @@ public class SearchIndexRebuildService : BackgroundService
         // Wait briefly to allow state store infrastructure to initialize
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.SearchIndexRebuildStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

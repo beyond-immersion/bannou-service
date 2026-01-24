@@ -680,10 +680,11 @@ public partial class AuthService : IAuthService
             // Publish session invalidation event for Connect service to disconnect clients
             if (invalidatedSessions.Count > 0)
             {
-                await PublishSessionInvalidatedEventAsync(
+                await _sessionService.PublishSessionInvalidatedEventAsync(
                     validateResponse.AccountId,
                     invalidatedSessions,
-                    SessionInvalidatedEventReason.Logout);
+                    SessionInvalidatedEventReason.Logout,
+                    cancellationToken);
             }
 
             return StatusCodes.OK;
@@ -733,13 +734,14 @@ public partial class AuthService : IAuthService
             // Remove reverse index entry
             await _sessionService.RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
 
-            // Publish SessionInvalidatedEvent to disconnect WebSocket clients (like LogoutAsync does)
+            // Publish SessionInvalidatedEvent to disconnect WebSocket clients
             if (sessionData != null)
             {
-                await PublishSessionInvalidatedEventAsync(
+                await _sessionService.PublishSessionInvalidatedEventAsync(
                     sessionData.AccountId,
                     new List<string> { sessionKey },
-                    SessionInvalidatedEventReason.Admin_action);
+                    SessionInvalidatedEventReason.Admin_action,
+                    cancellationToken);
             }
 
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
@@ -1162,53 +1164,8 @@ public partial class AuthService : IAuthService
 
     #region Private Helper Methods
 
-    /// <summary>
-    /// Internal model for session data stored in Redis
-    /// </summary>
-    private class SessionDataModel
-    {
-        public Guid AccountId { get; set; }
-        public string Email { get; set; } = string.Empty;
-        public string? DisplayName { get; set; }
-        public List<string> Roles { get; set; } = new List<string>();
-        public List<string> Authorizations { get; set; } = new List<string>();
-        public Guid SessionId { get; set; }
-
-        // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
-        public long CreatedAtUnix { get; set; }
-        public long ExpiresAtUnix { get; set; }
-
-        // Expose as DateTimeOffset for code convenience (not serialized)
-        [System.Text.Json.Serialization.JsonIgnore]
-        public DateTimeOffset CreatedAt
-        {
-            get => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
-            set => CreatedAtUnix = value.ToUnixTimeSeconds();
-        }
-
-        [System.Text.Json.Serialization.JsonIgnore]
-        public DateTimeOffset ExpiresAt
-        {
-            get => DateTimeOffset.FromUnixTimeSeconds(ExpiresAtUnix);
-            set => ExpiresAtUnix = value.ToUnixTimeSeconds();
-        }
-    }
-
-    private string HashPassword(string password)
-    {
-        // Simplified password hashing - use BCrypt in production
-        // Use core app configuration for JWT secret (validated at startup in Program.cs)
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + Program.Configuration.JwtSecret));
-    }
-
-    private bool VerifyPassword(string password, string? hash)
-    {
-        if (string.IsNullOrEmpty(hash)) return false;
-        return HashPassword(password) == hash;
-    }
-
-    // Token generation and session management methods have been extracted to ITokenService and ISessionService
-    // for improved testability and separation of concerns.
+    // Token generation and session management methods use ITokenService and ISessionService.
+    // SessionDataModel is defined in ISessionService.cs (BeyondImmersion.BannouService.Auth.Services namespace).
 
     #endregion
 
@@ -1281,149 +1238,14 @@ public partial class AuthService : IAuthService
     #region Event Handlers
 
     /// <summary>
-    /// Called when a pub/sub event is received. Routes to appropriate event handlers.
-    /// </summary>
-    public async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
-    {
-        _logger.LogDebug("Received event on topic {Topic}, DataType: {DataType}", topic, typeof(T).Name);
-
-        switch (topic)
-        {
-            case "account.deleted":
-                if (eventData is AccountDeletedEvent deletedEvent)
-                {
-                    await HandleAccountDeletedEventAsync(deletedEvent);
-                }
-                else
-                {
-                    _logger.LogError("Failed to cast event data to AccountDeletedEvent, ActualType: {ActualType}", eventData?.GetType().FullName ?? "null");
-                }
-                break;
-            default:
-                _logger.LogWarning("Received unknown event topic: {Topic}", topic);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Handles account deleted events to invalidate all sessions for the deleted account.
-    /// This ensures security by preventing continued access after account deletion.
-    /// </summary>
-    private async Task HandleAccountDeletedEventAsync(AccountDeletedEvent eventData)
-    {
-        try
-        {
-            _logger.LogInformation("Received account deleted event {EventId} for account: {AccountId}",
-                eventData.EventId, eventData.AccountId);
-
-            // Invalidate all sessions for the deleted account
-            await InvalidateAllSessionsForAccountAsync(eventData.AccountId);
-
-            _logger.LogInformation("Successfully invalidated all sessions for deleted account: {AccountId}",
-                eventData.AccountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process account deleted event {EventId} for account: {AccountId}",
-                eventData.EventId, eventData.AccountId);
-
-            // Don't re-throw - log the error and continue
-            // The generated controller will handle HTTP response for the event endpoint
-        }
-    }
-
-    /// <summary>
     /// Public wrapper for invalidating all sessions for a specific account.
-    /// Called by AuthEventsController when account.deleted event is received.
+    /// Called by AuthServiceEvents.HandleAccountDeletedAsync when account.deleted event is received.
     /// </summary>
     public async Task InvalidateAccountSessionsAsync(Guid accountId)
     {
-        await InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted);
+        await _sessionService.InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted);
     }
 
-    /// <summary>
-    /// Invalidate all sessions for a specific account.
-    /// Used when account is deleted to ensure security.
-    /// Publishes SessionInvalidatedEvent to notify Connect service to disconnect clients.
-    /// </summary>
-    private async Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.Account_deleted)
-    {
-        try
-        {
-            // Get session keys directly from the account index
-            var indexKey = $"account-sessions:{accountId}";
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
-
-            var sessionKeys = await sessionIndexStore.GetAsync(indexKey, CancellationToken.None);
-
-            if (sessionKeys == null || !sessionKeys.Any())
-            {
-                _logger.LogDebug("No sessions found for account {AccountId}", accountId);
-                return;
-            }
-
-            _logger.LogDebug("Invalidating {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
-
-            // Remove each session from Redis
-            foreach (var sessionKey in sessionKeys)
-            {
-                try
-                {
-                    // Delete the session data
-                    await sessionStore.DeleteAsync($"session:{sessionKey}", CancellationToken.None);
-                    _logger.LogDebug("Deleted session {SessionKey} for account {AccountId}", sessionKey, accountId);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete session {SessionKey} for account {AccountId}", sessionKey, accountId);
-                    // Continue with other sessions even if one fails
-                }
-            }
-
-            // Remove the account-to-sessions index
-            await sessionIndexStore.DeleteAsync(indexKey, CancellationToken.None);
-
-            _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}",
-                sessionKeys.Count, accountId);
-
-            // Publish session invalidation event for Connect service to disconnect clients
-            await PublishSessionInvalidatedEventAsync(accountId, sessionKeys, reason);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to invalidate sessions for account {AccountId}", accountId);
-            throw; // Re-throw to let the event handler know about the failure
-        }
-    }
-
-    /// <summary>
-    /// Publish SessionInvalidatedEvent to notify Connect service to disconnect affected WebSocket clients.
-    /// </summary>
-    private async Task PublishSessionInvalidatedEventAsync(Guid accountId, List<string> sessionIds, SessionInvalidatedEventReason reason)
-    {
-        try
-        {
-            var eventModel = new SessionInvalidatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                AccountId = accountId,
-                SessionIds = sessionIds,
-                Reason = reason,
-                DisconnectClients = true
-            };
-
-            await _messageBus.TryPublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
-            _logger.LogInformation("Published SessionInvalidatedEvent for account {AccountId}: {SessionCount} sessions, reason: {Reason}",
-                accountId, sessionIds.Count, reason);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish SessionInvalidatedEvent for account {AccountId}", accountId);
-            // Don't throw - session invalidation succeeded, event publishing failure shouldn't fail the operation
-        }
-    }
 
     /// <summary>
     /// Propagate role changes to all active sessions for an account.
@@ -1460,9 +1282,9 @@ public partial class AuthService : IAuthService
                         await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
                         // Publish session.updated event for Permission service
-                        await PublishSessionUpdatedEventAsync(
+                        await _sessionService.PublishSessionUpdatedEventAsync(
                             accountId,
-                            session.SessionId.ToString(),
+                            session.SessionId,
                             newRoles,
                             session.Authorizations,
                             SessionUpdatedEventReason.Role_changed,
@@ -1532,9 +1354,9 @@ public partial class AuthService : IAuthService
                         await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
                         // Publish session.updated event for Permission service
-                        await PublishSessionUpdatedEventAsync(
+                        await _sessionService.PublishSessionUpdatedEventAsync(
                             accountId,
-                            session.SessionId.ToString(),
+                            session.SessionId,
                             session.Roles,
                             authorizations,
                             SessionUpdatedEventReason.Authorization_changed,

@@ -2466,10 +2466,10 @@ public partial class AssetService : IAssetService
     private async Task AddToIndexWithOptimisticConcurrencyAsync(
         string indexKey,
         string assetId,
-        CancellationToken cancellationToken,
-        int maxRetries = 5)
+        CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Asset);
+        var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
@@ -2506,7 +2506,7 @@ public partial class AssetService : IAssetService
                 "Index update conflict for {IndexKey}, retrying (attempt {Attempt}/{MaxRetries})",
                 indexKey, attempt + 1, maxRetries);
 
-            await Task.Delay(TimeSpan.FromMilliseconds(10 * (attempt + 1)), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
         _logger.LogWarning(
@@ -2539,9 +2539,10 @@ public partial class AssetService : IAssetService
         IStateStore<AssetBundleIndex> indexStore,
         string indexKey,
         string bundleId,
-        CancellationToken cancellationToken,
-        int maxRetries = 5)
+        CancellationToken cancellationToken)
     {
+        var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
+
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
             var (index, etag) = await indexStore.GetWithETagAsync(indexKey, cancellationToken).ConfigureAwait(false);
@@ -2570,7 +2571,7 @@ public partial class AssetService : IAssetService
             }
 
             // ETag mismatch - retry
-            await Task.Delay(TimeSpan.FromMilliseconds(10 * (attempt + 1)), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
         _logger.LogWarning(

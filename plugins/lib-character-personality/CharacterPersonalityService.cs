@@ -35,10 +35,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private const string COMBAT_PREFERENCES_EVOLVED_TOPIC = "combat-preferences.evolved";
     private const string COMBAT_PREFERENCES_DELETED_TOPIC = "combat-preferences.deleted";
 
-    // Evolution probability constants
-    private const float BASE_EVOLUTION_PROBABILITY = 0.15f; // 15% base chance
-    private const float MAX_TRAIT_SHIFT = 0.1f; // Maximum shift per evolution
-    private const float MIN_TRAIT_SHIFT = 0.02f; // Minimum shift per evolution
 
     /// <summary>
     /// Initializes the CharacterPersonality service with required dependencies.
@@ -192,7 +188,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             }
 
             // Evaluate whether evolution occurs
-            var evolutionProbability = BASE_EVOLUTION_PROBABILITY * body.Intensity;
+            var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
             var roll = Random.Shared.NextDouble();
             var evolved = roll < evolutionProbability;
 
@@ -213,7 +209,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 {
                     if (data.Traits.TryGetValue(trait, out var currentValue))
                     {
-                        var shift = (MIN_TRAIT_SHIFT + (MAX_TRAIT_SHIFT - MIN_TRAIT_SHIFT) * body.Intensity) * direction;
+                        var shift = (float)((_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * body.Intensity) * direction);
                         var newValue = Math.Clamp(currentValue + shift, -1.0f, 1.0f);
                         data.Traits[trait] = newValue;
 
@@ -563,7 +559,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             }
 
             // Evaluate whether evolution occurs
-            var evolutionProbability = BASE_EVOLUTION_PROBABILITY * body.Intensity;
+            var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
             var roll = Random.Shared.NextDouble();
             var evolved = roll < evolutionProbability;
 
@@ -695,9 +691,9 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     /// <summary>
     /// Applies combat experience effects to preferences.
     /// </summary>
-    private static void ApplyCombatEvolution(CombatPreferencesData data, CombatExperienceType experienceType, float intensity)
+    private void ApplyCombatEvolution(CombatPreferencesData data, CombatExperienceType experienceType, float intensity)
     {
-        var shift = MIN_TRAIT_SHIFT + (MAX_TRAIT_SHIFT - MIN_TRAIT_SHIFT) * intensity;
+        var shift = (float)(_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * intensity);
 
         switch (experienceType)
         {

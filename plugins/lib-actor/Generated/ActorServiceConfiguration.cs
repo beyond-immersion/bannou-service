@@ -210,6 +210,12 @@ public class ActorServiceConfiguration : IServiceConfiguration
     public int DefaultMemoryExpirationMinutes { get; set; } = 60;
 
     /// <summary>
+    /// Delay in seconds before pool health monitor starts checking (allows initial registrations)
+    /// Environment variable: ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int PoolHealthMonitorStartupDelaySeconds { get; set; } = 5;
+
+    /// <summary>
     /// Interval in seconds between pool health check operations
     /// Environment variable: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
     /// </summary>

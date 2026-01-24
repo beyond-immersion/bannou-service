@@ -12,6 +12,11 @@ paths: {}
 x-service-configuration:
   properties:
     # Search Index Configuration
+    SearchIndexRebuildStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before search index rebuild starts (allows services to initialize)
+      env: DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS
+      default: 5
     SearchIndexRebuildOnStartup:
       type: boolean
       description: Whether to rebuild search index on service startup

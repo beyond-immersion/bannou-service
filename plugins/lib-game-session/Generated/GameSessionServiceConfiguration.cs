@@ -102,6 +102,12 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     public int StartupServiceDelaySeconds { get; set; } = 2;
 
     /// <summary>
+    /// Maximum retry attempts for optimistic concurrency on subscriber session state
+    /// Environment variable: GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS
+    /// </summary>
+    public int SubscriberSessionRetryMaxAttempts { get; set; } = 3;
+
+    /// <summary>
     /// Comma-separated list of supported game service stub names
     /// Environment variable: GAME_SESSION_SUPPORTED_GAME_SERVICES
     /// </summary>

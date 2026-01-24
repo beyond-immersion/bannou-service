@@ -182,6 +182,11 @@ x-service-configuration:
       description: Default expiration time in minutes for actor memories
 
     # === Pool Health Monitoring (Tier 2) ===
+    PoolHealthMonitorStartupDelaySeconds:
+      type: integer
+      env: ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS
+      default: 5
+      description: Delay in seconds before pool health monitor starts checking (allows initial registrations)
     PoolHealthCheckIntervalSeconds:
       type: integer
       env: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
