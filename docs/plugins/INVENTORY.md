@@ -368,7 +368,7 @@ None identified.
 
 2. **Same-container move is no-op**: Moving an item within the same container (different slot) returns OK immediately without modifying weight/volume counters. Only slot position changes.
 
-3. **Item service graceful degradation**: Container operations continue even if lib-item is unavailable. `GetContainer` returns empty contents. `DeleteContainer` with "destroy" strategy will fail per-item but continue. Logged as warnings.
+3. **Item service graceful degradation**: Container read operations continue if lib-item is unavailable (`GetContainer` returns empty contents, logged as warning). **FIXED**: `DeleteContainer` now returns `ServiceUnavailable` (503) when items can't be fetched, preventing orphaned items. Previously it would proceed with deletion assuming the container was empty.
 
 4. **Stack merge overflow handling**: Merging stacks respects MaxStackSize. If combined exceeds max, target gets capped and source retains the remainder. Source is only destroyed if fully consumed.
 

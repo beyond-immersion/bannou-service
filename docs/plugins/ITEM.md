@@ -236,6 +236,117 @@ Soulbound Types
 
 ---
 
+## Tenet Violations (Fix Immediately)
+
+### 1. IMPLEMENTATION TENETS (T25): String-for-Guid Fields in Internal Models
+
+**File**: `plugins/lib-item/ItemService.cs`, lines 1131-1191
+
+Both `ItemTemplateModel` and `ItemInstanceModel` store all GUID fields as `string` types:
+- `ItemTemplateModel.TemplateId` (line 1131) - should be `Guid`
+- `ItemTemplateModel.AvailableRealms` (line 1156) - `List<string>?` should be `List<Guid>?`
+- `ItemTemplateModel.MigrationTargetId` (line 1165) - `string?` should be `Guid?`
+- `ItemInstanceModel.InstanceId` (line 1175) - should be `Guid`
+- `ItemInstanceModel.TemplateId` (line 1176) - should be `Guid`
+- `ItemInstanceModel.ContainerId` (line 1177) - should be `Guid`
+- `ItemInstanceModel.RealmId` (line 1178) - should be `Guid`
+- `ItemInstanceModel.BoundToId` (line 1185) - `string?` should be `Guid?`
+- `ItemInstanceModel.OriginId` (line 1191) - `string?` should be `Guid?`
+
+**Fix**: Change all string GUID fields to proper `Guid`/`Guid?` types.
+
+### 2. IMPLEMENTATION TENETS (T25): `.ToString()` Populating Internal Models
+
+**File**: `plugins/lib-item/ItemService.cs`, lines 91, 116, 130, 289, 352, 442-445, 456, 617
+
+Enum and Guid values are converted to strings when creating/updating models. Per T25, enums and Guids should be assigned directly.
+
+**Fix**: Remove `.ToString()` calls; assign typed values directly once models use proper types.
+
+### 3. IMPLEMENTATION TENETS (T25): `Guid.Parse()` in Business Logic
+
+**File**: `plugins/lib-item/ItemService.cs`, lines 567-569, 642-644, 703-705, 717, 1055, 1080, 1089, 1099-1101, 1109, 1115
+
+Fragile `Guid.Parse()` calls scattered through mapping and event publishing. Direct consequence of string-typed model fields.
+
+**Fix**: Remove all `Guid.Parse` calls once models use `Guid` types.
+
+### 4. FOUNDATION TENETS (T6): Constructor Missing Null Checks
+
+**File**: `plugins/lib-item/ItemService.cs`, lines 49-61
+
+Constructor assigns all five dependencies directly without null checks. Per T6, must use `?? throw new ArgumentNullException(nameof(...))`.
+
+**Fix**: Add null-check pattern to all constructor parameter assignments.
+
+### 5. IMPLEMENTATION TENETS (T7): Missing ApiException Catch Distinction
+
+**File**: `plugins/lib-item/ItemService.cs`, all 13 try-catch blocks
+
+Every method catches only `Exception` generically. Per T7, must catch `ApiException` specifically first (log as Warning, propagate status code).
+
+**Fix**: Add `catch (ApiException ex)` before each `catch (Exception ex)`.
+
+### 6. IMPLEMENTATION TENETS (T25): Enum.Parse in Business Logic
+
+**File**: `plugins/lib-item/ItemService.cs`, lines 99, 103, 112
+
+- Line 99: `Enum.Parse<ItemRarity>(_configuration.DefaultRarity, ignoreCase: true)`
+- Line 103: `Enum.Parse<WeightPrecision>(_configuration.DefaultWeightPrecision, ignoreCase: true)`
+- Line 112: `Enum.Parse<SoulboundType>(_configuration.DefaultSoulboundType, ignoreCase: true)`
+
+Per T25, parse only at boundaries. These are in core business logic.
+
+**Fix**: Parse config values once in constructor into typed fields, or change schema to use enum types.
+
+### 7. IMPLEMENTATION TENETS (T21): Configuration String Types Force Runtime Parsing
+
+**File**: `schemas/item-configuration.yaml`, lines 19, 44, 49
+
+Properties `defaultRarity`, `defaultWeightPrecision`, and `defaultSoulboundType` are typed as `string` instead of enum types, forcing runtime `Enum.Parse` in business logic.
+
+**Fix**: Change schema types to reference enum definitions, or parse once at startup.
+
+### 8. QUALITY TENETS (T22): Pragma Warning Suppression for Unused Field
+
+**File**: `plugins/lib-item/ItemService.cs`, lines 30-33
+
+```csharp
+#pragma warning disable IDE0052
+private readonly IServiceNavigator _navigator;
+#pragma warning restore IDE0052
+```
+
+Per T22, "retained for future use" is not an allowed suppression exception.
+
+**Fix**: Remove the field, import, and constructor parameter. Add back when needed.
+
+### 9. IMPLEMENTATION TENETS (T9): TOCTOU Race in Template Code Uniqueness
+
+**File**: `plugins/lib-item/ItemService.cs`, lines 78-130
+
+`CreateItemTemplateAsync` checks code uniqueness via `GetAsync` then writes. In multi-instance deployment, two instances could simultaneously pass the check and both create templates with the same code.
+
+**Fix**: Use `IDistributedLockProvider` to lock on `item-code:{gameId}:{code}`, or use `TrySaveAsync` with null etag on the code index key.
+
+### 10. QUALITY TENETS (T10): Missing/Wrong-Level Operation Entry Logging
+
+**File**: `plugins/lib-item/ItemService.cs`
+
+Only 2 of 13 endpoint methods have entry logs, and those are at `Information` level instead of `Debug`. The remaining 11 methods lack entry logs entirely.
+
+**Fix**: Add `_logger.LogDebug(...)` entry logging to all endpoint methods.
+
+### 11. QUALITY TENETS (T16): Duplicate Assembly Attributes
+
+**File**: `plugins/lib-item/ItemService.cs` lines 13-14; `plugins/lib-item/AssemblyInfo.cs` lines 5-6
+
+Duplicate `[assembly: InternalsVisibleTo]` declarations.
+
+**Fix**: Remove duplicates from `ItemService.cs`.
+
+---
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)

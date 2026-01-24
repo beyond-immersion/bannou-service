@@ -450,7 +450,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 2. **Single Redis store for all behavior data**: Behavior metadata, bundle membership, GOAP metadata, and actor memories all share `behavior-statestore`. High-volume memory writes from many concurrent actors could contend with behavior compilation metadata operations.
 
-3. **No TTL on memory entries**: Memory entries in state have no expiration. The only eviction mechanism is the per-entity memory limit. Long-running actors will accumulate memories up to the limit (100), then presumably older entries must be manually evicted (not implemented in the store interface).
+3. **No TTL on memory entries**: Memory entries in state have no expiration. Eviction is handled by the per-entity memory limit (default 100): when a new memory is stored and the index exceeds capacity, the oldest entries are automatically trimmed and their state store records deleted.
 
 4. **GOAP action cost cannot be negative**: `GoapAction` constructor throws `ArgumentOutOfRangeException` for negative costs. This prevents modeling "rewarding" actions (negative cost = preferred) which some GOAP implementations allow for bonus objectives.
 
@@ -470,7 +470,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 12. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
 
-13. **Memory store unbounded index growth**: `StoreExperienceAsync` appends to the memory index without enforcing `DefaultMemoryLimit`. The limit only affects queries (TakeLast in GetAllAsync). Over time, the index list grows unbounded. Eviction of old memories must be done manually via `RemoveAsync` or `ClearAsync`.
+13. ~~**Memory store unbounded index growth**~~: **FIXED**: `AddToMemoryIndexAsync` now enforces `DefaultMemoryLimit` on write. When the index exceeds capacity, oldest entries are trimmed from the front and their corresponding memory records are deleted (best-effort cleanup). The index is bounded to `DefaultMemoryLimit` (default 100) entries per entity.
 
 14. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update falls back to unconditional save (lines 289-299 of ActorLocalMemoryStore.cs), potentially losing concurrent updates.
 

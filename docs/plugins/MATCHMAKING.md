@@ -250,6 +250,76 @@ Reconnection Support
 
 ---
 
+## Tenet Violations (Fix Immediately)
+
+### FOUNDATION TENETS
+
+#### T6: Missing Constructor Null Checks
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, lines 81-88
+**Issue**: Constructor parameters are assigned directly without `ArgumentNullException.ThrowIfNull` or `?? throw new ArgumentNullException(...)` guards. All injected dependencies (`messageBus`, `stateStoreFactory`, `logger`, `configuration`, `clientEventPublisher`, `gameSessionClient`, `permissionClient`, `lockProvider`) lack null validation.
+**Fix**: Add `?? throw new ArgumentNullException(nameof(param))` for each dependency, or use `ArgumentNullException.ThrowIfNull(param, nameof(param))` per the T6 service class pattern.
+
+### IMPLEMENTATION TENETS
+
+#### T7: Missing ApiException Catch Blocks
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, ALL public endpoint methods (lines 153, 183, 270, 348, 407, 558, 611, 654, 700, 802, 844, 900)
+**Issue**: Every endpoint method catches only `Exception` generically. None distinguish between `ApiException` (expected API errors from downstream service calls to `IGameSessionClient`, `IPermissionClient`) and unexpected `Exception`. Per T7, `ApiException` should be caught separately, logged as Warning, and return the propagated status code.
+**Fix**: Add `catch (ApiException ex)` before the generic `catch (Exception ex)` in each method that calls external service clients. Log at Warning level and propagate the status code.
+
+#### T7: Empty Catch Blocks Swallowing Exceptions
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, lines 1254 and 1307
+**Issue**: `catch { /* Ignore */ }` swallows all exceptions silently when calling `_permissionClient.ClearSessionStateAsync` and `_permissionClient.UpdateSessionStateAsync`. While the intent (don't block main flow) is acceptable, the catch should at minimum log at Debug level so failures are traceable. A completely silent catch hides infrastructure failures.
+**Fix**: Change to `catch (Exception ex) { _logger.LogDebug(ex, "Failed to update/clear permission state for ..."); }` to maintain traceability.
+
+#### T7: Bare Catch Without Exception Type in Algorithm
+**File**: `plugins/lib-matchmaking/Helpers/MatchmakingAlgorithm.cs`, line 125
+**Issue**: `catch { return true; }` uses a bare catch without specifying the exception type. This swallows all exceptions including `OutOfMemoryException`, `StackOverflowException`, etc. Even for a "best effort" parse, this should catch only expected exceptions.
+**Fix**: Change to `catch (Exception) { return true; }` at minimum, or preferably `catch (FormatException) { return true; }` to only catch parse-related exceptions.
+
+#### T9: Plain Dictionary in Internal POCO
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, lines 2007-2008
+**Issue**: `TicketModel` uses `Dictionary<string, string>` and `Dictionary<string, double>` for `StringProperties` and `NumericProperties`. Per T9, local mutable state should use `ConcurrentDictionary`. While these are serialized POCOs, during the matching algorithm multiple tickets may be accessed concurrently from the background service and from API requests simultaneously.
+**Fix**: Consider if these POCOs are truly accessed concurrently. If state store serialization handles them (they are deserialized fresh each time), this may be acceptable. However, if any code path mutates these dictionaries after initial creation, they should be `ConcurrentDictionary`. Document the thread-safety assumption if keeping plain Dictionary.
+
+#### T10: Excessive LogInformation for Operation Entry
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, lines 116, 173, 203, 290, 368, 435, 634, 724, 825
+**Issue**: Per T10, "Operation Entry" should be logged at Debug level. Many endpoint entry points log at `LogInformation` (e.g., "Listing matchmaking queues", "Getting queue {QueueId}", "Updating queue {QueueId}", "Player {AccountId} joining queue {QueueId}"). T10 specifies: "Operation Entry (Debug): Log input parameters". Information level is for "Business Decisions (Information): Significant state changes".
+**Fix**: Change operation entry logs to `LogDebug`. Keep `LogInformation` only for significant state change confirmations (e.g., "Queue {QueueId} created successfully" at line 267 is correct).
+
+#### T23: Non-Async Task-Returning Method
+**File**: `plugins/lib-matchmaking/MatchmakingServiceEvents.cs`, lines 41-48
+**Issue**: `HandleSessionConnectedAsync` returns `Task.CompletedTask` without using the `async` keyword. Per T23, all Task-returning methods must be `async` with at least one `await`. The correct pattern for synchronous implementations of async interfaces is `async Task` with `await Task.CompletedTask`.
+**Fix**: Change to:
+```csharp
+public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
+{
+    _logger.LogDebug("Session {SessionId} connected, account {AccountId}",
+        evt.SessionId, evt.AccountId);
+    await Task.CompletedTask;
+}
+```
+
+### QUALITY TENETS
+
+#### T19: Missing XML Documentation on Internal Models
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, lines 1990-1993, 2018-2023, 2054-2062
+**Issue**: Several internal classes lack `<summary>` XML documentation: `SkillExpansionStepModel` (line 1990), `PartyMemberModel` (line 2018), `MatchedTicketModel` (line 2054). While internal, T19 requires documentation on all public AND internal types for maintainability.
+**Fix**: Add `/// <summary>` tags to `SkillExpansionStepModel`, `PartyMemberModel`, and `MatchedTicketModel`.
+
+#### T19: Missing Parameter Documentation on Constructor
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, lines 67-79
+**Issue**: The constructor has `/// <summary>` but no `<param>` tags for any of its 9 parameters. Per T19, all method parameters should have `<param>` documentation.
+**Fix**: Add `<param name="...">` for each constructor parameter.
+
+### CLAUDE.md RULES
+
+#### Unjustified `?? string.Empty` Usage
+**File**: `plugins/lib-matchmaking/MatchmakingService.cs`, line 324
+**Issue**: `etag ?? string.Empty` is used when passing the etag to `TrySaveAsync`. The etag was just retrieved from `GetWithETagAsync` which returns `string?`. If etag is null, it means the record was just created or there's a data issue - silently coercing to empty string hides this. Per CLAUDE.md, `?? string.Empty` requires either compiler satisfaction (documented that null is impossible) or external service defensive coding (with error logging).
+**Fix**: Either add a comment explaining why the null-coalesce is safe (the record was just loaded successfully so etag should be non-null), or throw if etag is null since it indicates a programming error (record exists but has no etag).
+
+---
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)

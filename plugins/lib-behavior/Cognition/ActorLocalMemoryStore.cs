@@ -255,11 +255,13 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
 
     /// <summary>
     /// Adds a memory ID to the entity's memory index with optimistic concurrency.
+    /// Evicts oldest memories when index exceeds DefaultMemoryLimit.
     /// </summary>
     private async Task AddToMemoryIndexAsync(string entityId, string memoryId, CancellationToken ct)
     {
         var indexKey = BuildMemoryIndexKey(entityId);
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
+        List<string> evictedIds = [];
 
         for (int retry = 0; retry < _configuration.MemoryStoreMaxRetries; retry++)
         {
@@ -269,12 +271,21 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             // Add the new memory ID (appending maintains chronological order)
             index.Add(memoryId);
 
+            // Evict oldest entries if over capacity
+            evictedIds = [];
+            if (index.Count > _configuration.DefaultMemoryLimit)
+            {
+                var excessCount = index.Count - _configuration.DefaultMemoryLimit;
+                evictedIds = index.GetRange(0, excessCount);
+                index.RemoveRange(0, excessCount);
+            }
+
             // Try to save with ETag for concurrency safety
             if (etag != null)
             {
                 if (await store.TrySaveAsync(indexKey, index, etag, ct) != null)
                 {
-                    return; // Success
+                    break; // Success - proceed to cleanup
                 }
                 // ETag mismatch - retry
             }
@@ -282,20 +293,50 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             {
                 // First entry - no ETag needed
                 await store.SaveAsync(indexKey, index, cancellationToken: ct);
-                return;
+                break;
+            }
+
+            if (retry == _configuration.MemoryStoreMaxRetries - 1)
+            {
+                // Final attempt without concurrency check
+                _logger.LogWarning(
+                    "Memory index update for entity {EntityId} retries exhausted, forcing save",
+                    entityId);
+
+                var finalIndex = await store.GetAsync(indexKey, ct) ?? [];
+                if (!finalIndex.Contains(memoryId))
+                {
+                    finalIndex.Add(memoryId);
+                }
+                evictedIds = [];
+                if (finalIndex.Count > _configuration.DefaultMemoryLimit)
+                {
+                    var excessCount = finalIndex.Count - _configuration.DefaultMemoryLimit;
+                    evictedIds = finalIndex.GetRange(0, excessCount);
+                    finalIndex.RemoveRange(0, excessCount);
+                }
+                await store.SaveAsync(indexKey, finalIndex, cancellationToken: ct);
             }
         }
 
-        // Final attempt without concurrency check
-        _logger.LogWarning(
-            "Memory index update for entity {EntityId} retries exhausted, forcing save",
-            entityId);
-
-        var finalIndex = await store.GetAsync(indexKey, ct) ?? [];
-        if (!finalIndex.Contains(memoryId))
+        // Clean up evicted memory records (best-effort)
+        if (evictedIds.Count > 0)
         {
-            finalIndex.Add(memoryId);
-            await store.SaveAsync(indexKey, finalIndex, cancellationToken: ct);
+            var memoryStore = _stateStoreFactory.GetStore<Memory>(StateStoreDefinitions.AgentMemories);
+            foreach (var evictedId in evictedIds)
+            {
+                try
+                {
+                    await memoryStore.DeleteAsync(BuildMemoryKey(entityId, evictedId), ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to clean up evicted memory {MemoryId} for entity {EntityId}",
+                        evictedId, entityId);
+                }
+            }
+
+            _logger.LogDebug("Evicted {Count} oldest memories for entity {EntityId}", evictedIds.Count, entityId);
         }
     }
 
