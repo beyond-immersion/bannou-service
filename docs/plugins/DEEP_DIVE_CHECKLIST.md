@@ -33,18 +33,18 @@
 
 | # | Plugin | Endpoints | File | Status |
 |---|--------|-----------|------|--------|
-| 12 | lib-mesh | 8 | `MESH.md` | [ ] |
-| 13 | lib-permission | 8 | `PERMISSION.md` | [ ] |
-| 14 | lib-music | 8 | `MUSIC.md` | [ ] |
-| 15 | lib-game-session | 11 | `GAME-SESSION.md` | [ ] |
-| 16 | lib-matchmaking | 11 | `MATCHMAKING.md` | [ ] |
-| 17 | lib-leaderboard | 12 | `LEADERBOARD.md` | [ ] |
-| 18 | lib-species | 13 | `SPECIES.md` | [ ] |
-| 19 | lib-relationship-type | 13 | `RELATIONSHIP-TYPE.md` | [ ] |
-| 20 | lib-item | 13 | `ITEM.md` | [ ] |
-| 21 | lib-actor | 15 | `ACTOR.md` | [ ] |
-| 22 | lib-inventory | 16 | `INVENTORY.md` | [ ] |
-| 23 | lib-location | 17 | `LOCATION.md` | [ ] |
+| 12 | lib-mesh | 8 | `MESH.md` | [x] |
+| 13 | lib-permission | 8 | `PERMISSION.md` | [x] |
+| 14 | lib-music | 8 | `MUSIC.md` | [x] |
+| 15 | lib-game-session | 11 | `GAME-SESSION.md` | [x] |
+| 16 | lib-matchmaking | 11 | `MATCHMAKING.md` | [x] |
+| 17 | lib-leaderboard | 12 | `LEADERBOARD.md` | [x] |
+| 18 | lib-species | 13 | `SPECIES.md` | [x] |
+| 19 | lib-relationship-type | 13 | `RELATIONSHIP-TYPE.md` | [x] |
+| 20 | lib-item | 13 | `ITEM.md` | [x] |
+| 21 | lib-actor | 15 | `ACTOR.md` | [x] |
+| 22 | lib-inventory | 16 | `INVENTORY.md` | [x] |
+| 23 | lib-location | 17 | `LOCATION.md` | [x] |
 
 ## Tier 3: Complex (many endpoints or significant internal subsystems)
 
