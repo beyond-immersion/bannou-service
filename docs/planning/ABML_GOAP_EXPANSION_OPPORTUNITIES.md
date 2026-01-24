@@ -1821,7 +1821,7 @@ This suggests **lib-quest is a thin orchestration layer** that generates and man
 
 ## Part 9: lib-escrow - The Missing Custody Layer (2026-01-23)
 
-> **Context**: The spec for lib-escrow (`docs/specs/LIB_ESCROW_SPEC.md`) reveals a critical architectural layer between application logic (trades, quests, markets) and the foundational services (contracts, currency, inventory). This section captures that architecture.
+> **Context**: lib-escrow provides a critical architectural layer between application logic (trades, quests, markets) and the foundational services (contracts, currency, inventory). See `docs/planning/ECONOMY_CURRENCY_ARCHITECTURE.md` for the full escrow integration plan and foundation completion prerequisites.
 
 ### 9.1 The Key Insight: "Contract is Brain, Escrow is Vault"
 

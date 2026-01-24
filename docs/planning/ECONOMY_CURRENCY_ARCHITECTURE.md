@@ -1,7 +1,7 @@
 # Economy Architecture Design: Market, Trade, and NPC Economic Systems
 
 > **Created**: 2026-01-19
-> **Last Updated**: 2026-01-24
+> **Last Updated**: 2026-01-24 (corrected lib-escrow status from COMPLETE to PARTIAL; added Foundation Completion prerequisites)
 > **Purpose**: Architecture for Bannou's higher-level economic systems (market, trade, NPC economy)
 > **Scope**: Markets, NPC Economic Participation, Quest Integration, Trade Routes, Taxation
 > **Dependencies**: lib-currency, lib-item, lib-inventory, lib-contract, lib-escrow, lib-actor, lib-analytics, lib-behavior
@@ -12,17 +12,96 @@
 
 Economy is not a single plugin but an **architectural layer** spanning multiple services.
 
-### Foundation Layer (COMPLETE)
+### Foundation Layer
 
-These services are fully implemented and production-ready:
+These services provide the primitives that planned services build upon:
 
-| Service | Endpoints | Key Features |
-|---------|-----------|--------------|
-| **lib-currency** | 32 | Multi-currency wallets, credit/debit/transfer, authorization holds, escrow integration, exchange rates, conversion, batch operations, transaction history, global supply stats, wallet distribution analytics |
-| **lib-item** | 13 | Item templates (category, rarity, quantity models, grid dims, weight, soulbinding, durability), item instances (binding, custom stats, origin tracking), batch operations |
-| **lib-inventory** | 16 | Multi-constraint containers (slot/weight/grid/volumetric/unlimited), nested containers with weight propagation, equipment slots, split/merge/transfer, distributed locking |
-| **lib-contract** | 30 | Template-based agreements, milestone progression, clause execution, breach/cure, guardian custody, consent flows |
-| **lib-escrow** | 20 | Multi-party asset exchange, deposit/release/refund, conditions, consent tracking, arbiter resolution, custom asset handlers |
+| Service | Endpoints | Status | Key Features |
+|---------|-----------|--------|--------------|
+| **lib-currency** | 32 | COMPLETE | Multi-currency wallets, credit/debit/transfer, authorization holds, escrow integration, exchange rates, conversion, batch operations, transaction history |
+| **lib-item** | 13 | COMPLETE | Item templates (category, rarity, quantity models, grid dims, weight, soulbinding, durability), item instances (binding, custom stats, origin tracking), batch operations |
+| **lib-inventory** | 16 | COMPLETE | Multi-constraint containers (slot/weight/grid/volumetric/unlimited), nested containers with weight propagation, equipment slots, split/merge/transfer, distributed locking |
+| **lib-contract** | 30 | COMPLETE | Template-based agreements, milestone progression, clause execution via prebound APIs, breach/cure, guardian custody, consent flows |
+| **lib-escrow** | 20 | PARTIAL | State machine, token-based consent, trust modes, handler registration, deposit tracking. **Missing**: actual asset movement, contract integration, periodic validation (see Foundation Completion section below) |
+
+### Foundation Completion: lib-escrow Integration
+
+lib-escrow currently has all 20 endpoints and a working state machine (14 states with enforced transitions), token-based consent (SHA256 hashed, single-use), 3 trust modes, and event publishing. However, it operates as a **state tracking shell** — deposit/release/refund record state transitions and publish events but don't actually move assets via lib-currency/lib-inventory/lib-contract.
+
+The planned services (lib-market, lib-trade) depend on escrow actually performing asset custody. The following must be completed:
+
+#### 1. Per-Party Escrow Infrastructure (on create)
+
+When an escrow is created, lib-escrow should create dedicated infrastructure per party:
+- Call `/currency/wallet/create` to create an escrow wallet for each depositing party (owner = escrow agreement ID, ownerType = escrow)
+- Call `/inventory/container/create` to create an escrow container for each party depositing items
+- Store wallet/container IDs on the party record
+
+#### 2. Asset Movement (on deposit/release/refund)
+
+**Deposit**: When a party deposits:
+- Currency: Call `/currency/debit` from party's wallet, then `/currency/credit` to their escrow wallet
+- Items: Call `/inventory/transfer` from party's container to their escrow container
+- Contracts: Call `/contract/lock` with guardianId=escrowId, guardianType=escrow
+
+**Release** (without bound contract): Transfer assets per ReleaseAllocation:
+- Currency: `/currency/transfer` from escrow wallet to recipient wallet
+- Items: `/inventory/transfer` from escrow container to recipient container
+- Contracts: `/contract/transfer-party` to reassign the contractPartyRole to recipient
+
+**Refund**: Return assets to depositors:
+- Currency: `/currency/transfer` from each party's escrow wallet back to their own wallet
+- Items: `/inventory/transfer` from each party's escrow container back to their own container
+- Contracts: `/contract/unlock` to restore the contract
+
+#### 3. Contract Integration ("Contract as Brain, Escrow as Vault")
+
+When `boundContractId` is set:
+
+**Setup** — after escrow infrastructure creation, call `/contract/instance/set-template-values`:
+```
+EscrowId, PartyA_EscrowWalletId, PartyA_EscrowContainerId,
+PartyB_EscrowWalletId, PartyB_EscrowContainerId,
+PartyA_WalletId, PartyA_ContainerId,
+PartyB_WalletId, PartyB_ContainerId
+```
+
+**Deposit validation** — after each deposit, call `/contract/instance/check-asset-requirements` to verify deposited assets satisfy the contract's asset requirement clauses.
+
+**Finalization** — when conditions are met (contract fulfilled event, or consent reached):
+1. Transition to FINALIZING
+2. Call `/contract/instance/execute` — the contract handles ALL distribution (fee clauses deduct from escrow wallets to fee recipients, distribution clauses move remaining to recipients)
+3. If execution fails → REFUNDING → return all assets to depositors
+4. Handle deposited contracts (transfer-party to recipients)
+5. Verify all escrow wallets/containers are empty
+6. Transition to RELEASED, close escrow wallets, delete escrow containers
+
+**Event listeners** — subscribe to `contract.fulfilled`, `contract.breached` (permanent), and `contract.terminated` for the bound contract.
+
+#### 4. Periodic Validation
+
+Background job (configurable interval) that validates held assets remain intact:
+- Currency: Query each party's escrow wallet balance, verify matches expected deposits
+- Items: Query each party's escrow container, verify expected instances still exist with correct quantities
+- Contracts: Verify still locked and valid (not externally voided)
+- On failure: Transition to VALIDATION_FAILED, publish event, await party re-affirmation or refund
+
+#### 5. Expiration Handling
+
+Background job that checks for expired escrows (past `expiresAt`):
+- Auto-refund all deposited assets to their depositors
+- Transition to EXPIRED
+- If partially funded, refund partial deposits
+
+#### 6. Handler Invocation
+
+Registered asset handlers (via `/escrow/handler/register`) should be called during deposit/release/refund for custom asset types. Currently handlers are registered but never invoked.
+
+#### 7. Configuration Enforcement
+
+Enforce `maxParties` and `maxAssetsPerDeposit` limits from escrow configuration during create and deposit operations.
+
+---
 
 ### Planned Layer (THIS DOCUMENT)
 
@@ -1876,12 +1955,13 @@ ExchangeRate:
 | **lib-item** | COMPLETE | 13 |
 | **lib-inventory** | COMPLETE | 16 |
 | **lib-contract** | COMPLETE | 30 |
-| **lib-escrow** | COMPLETE | 20 |
+| **lib-escrow** | PARTIAL (state machine + tracking only, no asset movement) | 20 |
 
 ### What's Planned (This Document)
 
 | Component | Purpose | Status |
 |-----------|---------|--------|
+| **lib-escrow completion** | Asset movement, contract integration, periodic validation | Prerequisite for market/trade |
 | **lib-market** | Auctions, vendors, price discovery | Design complete |
 | **lib-economy** | Monitoring, NPC AI, analytics | Design complete |
 | **Economic Deities** | God Actors that maintain velocity via narrative events | Design complete |
