@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Microsoft.Extensions.Logging;
@@ -41,11 +42,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     public ServiceHealthMonitor(
         ILogger<ServiceHealthMonitor> logger,
         OrchestratorServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager)
     {
         _logger = logger;
         _configuration = configuration;
+        _appConfiguration = appConfiguration;
         _stateManager = stateManager;
         _eventManager = eventManager;
 
@@ -246,7 +249,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task RestoreServiceRoutingToDefaultAsync(string serviceName)
     {
-        var defaultAppId = Program.Configuration.EffectiveAppId;
+        var defaultAppId = _appConfiguration.EffectiveAppId;
 
         // Set the routing to the default app-id instead of removing it
         // This ensures routing proxies (like OpenResty) have an explicit route
@@ -280,7 +283,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         try
         {
             // Use the orchestrator's effective app-id (from configuration, not hardcoded constant)
-            var defaultAppId = Program.Configuration.EffectiveAppId;
+            var defaultAppId = _appConfiguration.EffectiveAppId;
 
             // Set all service routings to the default app-id (NOT delete them)
             // This ensures OpenResty has explicit routes rather than
@@ -383,7 +386,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Mappings = mappings,
-                DefaultAppId = Program.Configuration.EffectiveAppId,
+                DefaultAppId = _appConfiguration.EffectiveAppId,
                 Version = version,
                 SourceInstanceId = _instanceId,
                 TotalServices = mappings.Count

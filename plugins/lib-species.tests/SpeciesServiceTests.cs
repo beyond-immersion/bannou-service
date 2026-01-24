@@ -865,7 +865,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
     {
         // Act
         var instanceId = Guid.NewGuid();
-        var registrationEvent = SpeciesPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = SpeciesPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);

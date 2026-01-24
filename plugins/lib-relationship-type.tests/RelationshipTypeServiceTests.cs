@@ -1610,7 +1610,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         // Act
         var instanceId = Guid.NewGuid();
-        var registrationEvent = RelationshipTypePermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = RelationshipTypePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);

@@ -203,7 +203,7 @@ public class SceneServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);
@@ -220,7 +220,7 @@ public class SceneServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
         var directEndpoints = ScenePermissionRegistration.GetEndpoints();
 
         // Assert

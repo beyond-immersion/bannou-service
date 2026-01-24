@@ -1075,7 +1075,7 @@ public class CharacterPersonalityServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var evt = CharacterPersonalityPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var evt = CharacterPersonalityPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(evt);

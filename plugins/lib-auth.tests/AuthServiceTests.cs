@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -23,6 +24,7 @@ public class AuthServiceTests
 {
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly Mock<IAccountClient> _mockAccountClient;
     private readonly Mock<ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
@@ -214,7 +216,7 @@ public class AuthServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);

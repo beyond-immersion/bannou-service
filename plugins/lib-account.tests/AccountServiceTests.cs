@@ -106,7 +106,7 @@ public class AccountServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = AccountPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = AccountPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);

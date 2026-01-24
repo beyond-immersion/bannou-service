@@ -637,7 +637,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     {
         // Act
         var instanceId = Guid.NewGuid();
-        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);

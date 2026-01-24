@@ -1324,7 +1324,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     {
         // Act
         var instanceId = Guid.NewGuid();
-        var registrationEvent = CharacterEncounterPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = CharacterEncounterPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);

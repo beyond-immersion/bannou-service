@@ -229,7 +229,7 @@ public class MappingServiceTests
         var instanceId = Guid.NewGuid();
 
         // Act
-        var registrationEvent = MappingPermissionRegistration.CreateRegistrationEvent(instanceId);
+        var registrationEvent = MappingPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
 
         // Assert
         Assert.NotNull(registrationEvent);
