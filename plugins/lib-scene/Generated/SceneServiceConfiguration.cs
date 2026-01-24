@@ -72,12 +72,6 @@ public class SceneServiceConfiguration : IServiceConfiguration
     public int DefaultCheckoutTtlMinutes { get; set; } = 60;
 
     /// <summary>
-    /// Expected heartbeat interval for checkout locks
-    /// Environment variable: SCENE_CHECKOUT_HEARTBEAT_INTERVAL_SECONDS
-    /// </summary>
-    public int CheckoutHeartbeatIntervalSeconds { get; set; } = 30;
-
-    /// <summary>
     /// Maximum number of times a checkout can be extended
     /// Environment variable: SCENE_MAX_CHECKOUT_EXTENSIONS
     /// </summary>
@@ -96,12 +90,6 @@ public class SceneServiceConfiguration : IServiceConfiguration
     public int MaxReferenceDepthLimit { get; set; } = 10;
 
     /// <summary>
-    /// Default number of versions to retain per scene
-    /// Environment variable: SCENE_DEFAULT_VERSION_RETENTION_COUNT
-    /// </summary>
-    public int DefaultVersionRetentionCount { get; set; } = 3;
-
-    /// <summary>
     /// Maximum versions that can be retained (configurable per game)
     /// Environment variable: SCENE_MAX_VERSION_RETENTION_COUNT
     /// </summary>
@@ -112,12 +100,6 @@ public class SceneServiceConfiguration : IServiceConfiguration
     /// Environment variable: SCENE_MAX_NODE_COUNT
     /// </summary>
     public int MaxNodeCount { get; set; } = 10000;
-
-    /// <summary>
-    /// Maximum scene document size in bytes (default 10MB)
-    /// Environment variable: SCENE_MAX_SCENE_SIZE_BYTES
-    /// </summary>
-    public int MaxSceneSizeBytes { get; set; } = 10485760;
 
     /// <summary>
     /// Maximum tags allowed per scene
@@ -142,11 +124,5 @@ public class SceneServiceConfiguration : IServiceConfiguration
     /// Environment variable: SCENE_MAX_SEARCH_RESULTS
     /// </summary>
     public int MaxSearchResults { get; set; } = 100;
-
-    /// <summary>
-    /// Interval for background checkout expiration detection
-    /// Environment variable: SCENE_CHECKOUT_EXPIRATION_CHECK_INTERVAL_SECONDS
-    /// </summary>
-    public int CheckoutExpirationCheckIntervalSeconds { get; set; } = 60;
 
 }

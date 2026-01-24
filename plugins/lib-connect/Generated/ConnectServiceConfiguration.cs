@@ -60,12 +60,6 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int MaxConcurrentConnections { get; set; } = 10000;
 
     /// <summary>
-    /// WebSocket connection timeout in seconds
-    /// Environment variable: CONNECT_CONNECTION_TIMEOUT_SECONDS
-    /// </summary>
-    public int ConnectionTimeoutSeconds { get; set; } = 300;
-
-    /// <summary>
     /// Interval between heartbeat messages
     /// Environment variable: CONNECT_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
@@ -178,12 +172,6 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Environment variable: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
     /// </summary>
     public int HttpClientTimeoutSeconds { get; set; } = 120;
-
-    /// <summary>
-    /// Interval in seconds for WebSocket keep-alive ping/pong
-    /// Environment variable: CONNECT_WEBSOCKET_KEEP_ALIVE_INTERVAL_SECONDS
-    /// </summary>
-    public int WebSocketKeepAliveIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout in seconds when waiting for connection closure during shutdown

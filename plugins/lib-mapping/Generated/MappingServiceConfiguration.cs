@@ -66,12 +66,6 @@ public class MappingServiceConfiguration : IServiceConfiguration
     public int AuthorityGracePeriodSeconds { get; set; } = 30;
 
     /// <summary>
-    /// Recommended heartbeat interval for authorities (for client guidance)
-    /// Environment variable: MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS
-    /// </summary>
-    public int AuthorityHeartbeatIntervalSeconds { get; set; } = 30;
-
-    /// <summary>
     /// Size of spatial index cells in world units (default 64)
     /// Environment variable: MAPPING_SPATIAL_CELL_SIZE
     /// </summary>

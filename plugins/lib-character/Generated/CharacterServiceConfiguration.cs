@@ -78,12 +78,6 @@ public class CharacterServiceConfiguration : IServiceConfiguration
     public int RealmIndexUpdateMaxRetries { get; set; } = 3;
 
     /// <summary>
-    /// Maximum retry attempts when updating character list state (optimistic concurrency)
-    /// Environment variable: CHARACTER_LIST_UPDATE_MAX_RETRIES
-    /// </summary>
-    public int CharacterListUpdateMaxRetries { get; set; } = 3;
-
-    /// <summary>
     /// Grace period in days before cleanup of dead character references (default 30 days)
     /// Environment variable: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
     /// </summary>

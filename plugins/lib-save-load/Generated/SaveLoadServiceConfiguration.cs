@@ -199,12 +199,6 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     public string ThumbnailAllowedFormats { get; set; } = "image/jpeg,image/webp,image/png";
 
     /// <summary>
-    /// TTL for thumbnail pre-signed URLs
-    /// Environment variable: SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES
-    /// </summary>
-    public int ThumbnailUrlTtlMinutes { get; set; } = 60;
-
-    /// <summary>
     /// Enable delta/incremental save support
     /// Environment variable: SAVE_LOAD_DELTA_SAVES_ENABLED
     /// </summary>

@@ -78,12 +78,6 @@ public class StateServiceConfiguration : IServiceConfiguration
     public int ConnectionTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
-    /// Maximum number of connection retry attempts
-    /// Environment variable: STATE_CONNECT_RETRY_COUNT
-    /// </summary>
-    public int ConnectRetryCount { get; set; } = 5;
-
-    /// <summary>
     /// Default consistency level for state operations
     /// Environment variable: STATE_DEFAULT_CONSISTENCY
     /// </summary>

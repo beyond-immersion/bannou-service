@@ -132,6 +132,30 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     public double MemoryRefreshBoost { get; set; } = 0.2;
 
     /// <summary>
+    /// Default sentiment shift for positive encounter outcomes
+    /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_POSITIVE
+    /// </summary>
+    public double SentimentShiftPositive { get; set; } = 0.2;
+
+    /// <summary>
+    /// Default sentiment shift for negative encounter outcomes (should be negative)
+    /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_NEGATIVE
+    /// </summary>
+    public double SentimentShiftNegative { get; set; } = -0.2;
+
+    /// <summary>
+    /// Default sentiment shift for memorable encounter outcomes
+    /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE
+    /// </summary>
+    public double SentimentShiftMemorable { get; set; } = 0.1;
+
+    /// <summary>
+    /// Default sentiment shift for transformative encounter outcomes
+    /// Environment variable: CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE
+    /// </summary>
+    public double SentimentShiftTransformative { get; set; } = 0.3;
+
+    /// <summary>
     /// Automatically seed built-in encounter types on service startup
     /// Environment variable: CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP
     /// </summary>

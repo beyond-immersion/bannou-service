@@ -84,12 +84,6 @@ public class ActorServiceConfiguration : IServiceConfiguration
     public int PoolNodeCapacity { get; set; } = 100;
 
     /// <summary>
-    /// App-id of control plane for pool node registration. Pool nodes only.
-    /// Environment variable: ACTOR_CONTROL_PLANE_APP_ID
-    /// </summary>
-    public string ControlPlaneAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
-
-    /// <summary>
     /// Docker image for pool nodes (pool-per-type, shared-pool, auto-scale modes)
     /// Environment variable: ACTOR_POOL_NODE_IMAGE
     /// </summary>
@@ -142,18 +136,6 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Environment variable: ACTOR_PERCEPTION_QUEUE_SIZE
     /// </summary>
     public int PerceptionQueueSize { get; set; } = 100;
-
-    /// <summary>
-    /// Max messages queued per actor before dropping oldest
-    /// Environment variable: ACTOR_MESSAGE_QUEUE_SIZE
-    /// </summary>
-    public int MessageQueueSize { get; set; } = 50;
-
-    /// <summary>
-    /// State update transport: messaging (default, works in bannou mode) or internal-connect (production)
-    /// Environment variable: ACTOR_STATE_UPDATE_TRANSPORT
-    /// </summary>
-    public string StateUpdateTransport { get; set; } = "messaging";
 
     /// <summary>
     /// Threshold for triggering GOAP replanning when goal relevance drops below this value

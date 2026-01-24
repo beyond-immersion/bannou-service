@@ -102,12 +102,6 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public bool EnablePublisherConfirms { get; set; } = true;
 
     /// <summary>
-    /// Timeout in seconds for establishing RabbitMQ connection
-    /// Environment variable: MESSAGING_CONNECTION_TIMEOUT_SECONDS
-    /// </summary>
-    public int ConnectionTimeoutSeconds { get; set; } = 60;
-
-    /// <summary>
     /// Number of connection retry attempts
     /// Environment variable: MESSAGING_CONNECTION_RETRY_COUNT
     /// </summary>
@@ -118,12 +112,6 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Environment variable: MESSAGING_CONNECTION_RETRY_DELAY_MS
     /// </summary>
     public int ConnectionRetryDelayMs { get; set; } = 1000;
-
-    /// <summary>
-    /// Timeout in seconds for individual message operations
-    /// Environment variable: MESSAGING_REQUEST_TIMEOUT_SECONDS
-    /// </summary>
-    public int RequestTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Default prefetch count for subscriptions

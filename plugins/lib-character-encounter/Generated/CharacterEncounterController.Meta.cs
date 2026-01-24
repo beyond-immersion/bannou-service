@@ -3408,8 +3408,8 @@ public partial class CharacterEncounterController
                     "format": "float",
                     "minimum": 0.0,
                     "maximum": 1.0,
-                    "default": 0.2,
-                    "description": "Amount to boost memory strength (capped at 1.0)"
+                    "nullable": true,
+                    "description": "Amount to boost memory strength (capped at 1.0). Falls back to configured MemoryRefreshBoost if not provided."
                 }
             }
         }

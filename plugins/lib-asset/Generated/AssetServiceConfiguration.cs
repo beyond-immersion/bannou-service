@@ -462,12 +462,6 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public int ProcessingJobMaxWaitSeconds { get; set; } = 60;
 
     /// <summary>
-    /// Interval in seconds to poll for job completion during synchronous wait
-    /// Environment variable: ASSET_PROCESSING_JOB_POLL_INTERVAL_SECONDS
-    /// </summary>
-    public int ProcessingJobPollIntervalSeconds { get; set; } = 2;
-
-    /// <summary>
     /// Interval in seconds to check processing queue when no jobs are available
     /// Environment variable: ASSET_PROCESSING_QUEUE_CHECK_INTERVAL_SECONDS
     /// </summary>
