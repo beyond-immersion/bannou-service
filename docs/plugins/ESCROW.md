@@ -383,14 +383,6 @@ Dispute Resolution
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-*All bugs in this section have been fixed.*
-
-1. ~~**TotalCount is filtered result count, not true total**: `ListEscrowsAsync` sets `TotalCount` to the post-pagination `results.Count`, which is capped by `limit`. This means the client cannot determine the true total number of matching escrows for pagination UI.~~ **FIXED**: TotalCount now captures the count before pagination is applied.
-
-2. ~~**Idempotency check doesn't verify request parameters**: The idempotency lookup returned the cached response if the key exists, without verifying the request's escrowId or partyId match the original request.~~ **FIXED**: Idempotency check now stores and verifies both EscrowId and PartyId, returning BadRequest on mismatch.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Consent from Funded state transitions to Pending_consent**: The first release consent on a Funded escrow transitions to `Pending_consent` even if consent threshold is not yet met. This is deliberate state-tracking to distinguish "funded but no consents" from "funded with partial consents".

@@ -209,10 +209,6 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. **~~`DeleteAfterMerge` parameter ignored~~** *(FIXED)*: The `MergeSpeciesRequest.DeleteAfterMerge` parameter was defined in the schema but the implementation hardcoded `SourceDeleted = false` without checking the parameter. Now calls `DeleteSpeciesAsync` when requested and all migrations succeeded.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Code normalization to uppercase**: All species codes are stored and indexed as uppercase via `ToUpperInvariant()`. Lookups are case-insensitive by normalizing input.

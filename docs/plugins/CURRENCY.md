@@ -419,26 +419,6 @@ Escrow Integration Flow
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-_All bugs have been fixed or reclassified._
-
-1. ~~**Event topic naming inconsistency**~~: **FIXED** - Wallet state-change events (`frozen`, `unfrozen`, `closed`) now use the schema-correct hyphenated prefix (`currency-wallet.*`) matching the entity lifecycle pattern used by creation events.
-
-2. ~~**CloseWallet does not check for active holds**~~: **FIXED** - CloseWallet now iterates all balances and checks `GetTotalHeldAmountAsync` for each. Returns 400 if any balance has active holds, preventing transfer of logically reserved funds.
-
-3. ~~**Hold index never cleaned up**~~: Reclassified as Design Consideration #11 (correctness maintained via Active status filter; performance concern only).
-
-4. ~~**Debit and Transfer ignore active holds in sufficiency check**~~: **FIXED** - `DebitCurrencyAsync` and `TransferCurrencyAsync` now call `GetTotalHeldAmountAsync` within their distributed lock and check `balance.Amount - heldAmount < body.Amount` instead of raw balance. Effective balance is now consistently enforced across read and write paths.
-
-5. ~~**CaptureHold debits before hold status save**~~: Reclassified as Design Consideration #12 (requires distributed lock on hold or saga/compensation pattern).
-
-6. ~~**Lazy autogain has no distributed lock**~~: Reclassified as Design Consideration #13 (requires lazy path to participate in `currency-autogain` locking protocol).
-
-7. ~~**CloseWallet has no ETag or distributed lock**~~: Reclassified as Design Consideration #14 (requires ETag-based optimistic concurrency or distributed lock for atomicity with balance transfers).
-
-8. ~~**CreateHold has no lock on effective balance check**~~: Reclassified as Design Consideration #15 (requires distributed lock on wallet+currency to prevent concurrent holds exceeding balance).
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Frozen wallet returns 422**: All balance-modifying operations on frozen wallets return HTTP 422 (Unprocessable Entity), not 403 or 409. This distinguishes it from auth failures and concurrency conflicts.

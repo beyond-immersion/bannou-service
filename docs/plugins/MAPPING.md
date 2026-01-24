@@ -389,9 +389,7 @@ Authoring Workflow
 
 2. **Orphaned spatial/type indexes on channel reset**: When `ClearChannelDataAsync` runs (reset takeover mode), it deletes objects and the region index but leaves spatial and type indexes pointing to deleted objects. Subsequent queries will attempt to load deleted objects (returning null, filtered out) but the index entries persist indefinitely.
 
-3. **~~Grace period warning never triggers~~** *(FIXED)*: Moved the remaining-time check to BEFORE extending the expiry. Now detects late heartbeats by comparing pre-extension remaining time against `AuthorityGracePeriodSeconds`.
-
-4. **Index operations are not atomic**: The spatial, type, and region index operations (lines 1862-1979) perform read-modify-write on Redis lists without atomicity. Two concurrent requests adding objects to the same index cell could both read the same list, both add their object, and save—the second save overwrites the first, losing an object. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode.
+3. **Index operations are not atomic**: The spatial, type, and region index operations perform read-modify-write on Redis lists without atomicity. Two concurrent requests adding objects to the same index cell could both read the same list, both add their object, and save—the second save overwrites the first, losing an object. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode.
 
 ### Intentional Quirks (Documented Behavior)
 

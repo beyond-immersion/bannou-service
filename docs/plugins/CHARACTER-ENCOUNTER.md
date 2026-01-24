@@ -332,13 +332,9 @@ Index Architecture
 
 1. **DeleteByCharacter double-counts perspectives**: The method first deletes the target character's perspectives (incrementing `perspectivesDeleted`), then calls `DeleteEncounterPerspectivesAsync` for each encounter which attempts to delete ALL perspectives including the already-deleted ones. The already-deleted perspectives return null from the store so they are skipped, but the reported `perspectivesDeleted` count may be inaccurate because it sums both passes.
 
-2. **~~DecayMemories double-decay and incorrect PreviousStrength~~** *(FIXED)*: In `DecayMemoriesAsync`, `GetDecayAmount` was called multiple times with mutations in between. The event's `PreviousStrength` was reconstructed after `LastDecayedAtUnix` was already updated (making `GetDecayAmount` return 0). Fixed by computing `decayAmount` and `previousStrength` once before any mutation.
+2. **Lazy decay has no ETag concurrency control**: The `ApplyLazyDecayAsync` method uses `store.SaveAsync` without ETag protection, unlike `DecayMemoriesAsync` which uses `GetWithETagAsync` + `TrySaveAsync`. Two concurrent reads of the same stale perspective could both calculate and apply decay, resulting in double-decay (perspective strength reduced twice). This is particularly problematic because lazy decay happens during read operations (`QueryByCharacter`, `QueryBetween`, `QueryByLocation`, `GetPerspective`, `GetSentiment`).
 
-3. **Lazy decay has no ETag concurrency control**: The `ApplyLazyDecayAsync` method (lines 1998-2030) uses `store.SaveAsync` without ETag protection, unlike `DecayMemoriesAsync` which uses `GetWithETagAsync` + `TrySaveAsync`. Two concurrent reads of the same stale perspective could both calculate and apply decay, resulting in double-decay (perspective strength reduced twice). This is particularly problematic because lazy decay happens during read operations (`QueryByCharacter`, `QueryBetween`, `QueryByLocation`, `GetPerspective`, `GetSentiment`).
-
-4. **~~ApplyLazyDecayAsync calculates decay twice~~** *(NOT A BUG)*: While `CalculateDecay` internally calls `GetDecayAmount` and then `GetDecayAmount` is called again directly, the code correctly captures `decayAmount` and `previousStrength` before mutating. The redundant call is a minor inefficiency but not a correctness issue. Reclassified as intentional (acceptable overhead for code clarity).
-
-5. **EncounterDeletedEvent assumes one perspective per participant**: At line 1350, `PerspectivesDeleted = encounter.ParticipantIds.Count` assumes every participant has exactly one perspective. If data inconsistency exists (orphaned perspectives, missing perspectives), the event reports the wrong count.
+3. **EncounterDeletedEvent assumes one perspective per participant**: `PerspectivesDeleted = encounter.ParticipantIds.Count` assumes every participant has exactly one perspective. If data inconsistency exists (orphaned perspectives, missing perspectives), the event reports the wrong count.
 
 ### Intentional Quirks (Documented Behavior)
 

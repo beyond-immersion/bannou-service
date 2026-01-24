@@ -216,10 +216,6 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. **~~`DeleteAfterMerge` parameter ignored~~** *(FIXED)*: The `MergeRelationshipTypeRequest.DeleteAfterMerge` parameter was defined in the schema but the implementation hardcoded `SourceDeleted = false` without checking the parameter. Now calls `DeleteRelationshipTypeAsync` when requested and all migrations succeeded.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Code immutability**: Once a relationship type is created, its code cannot be changed. The code index key is never updated or deleted on type update.

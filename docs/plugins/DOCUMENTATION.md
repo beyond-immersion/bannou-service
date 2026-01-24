@@ -405,11 +405,7 @@ Archive System
 
 ### Bugs (Fix Immediately)
 
-1. ~~**DeleteOrphanDocumentsAsync saves namespace index without ETag**~~ **FIXED**: Now uses `GetWithETagAsync` and `TrySaveAsync` with a 3-attempt retry loop, consistent with `AddDocumentToNamespaceIndexAsync`.
-
-2. ~~**SaveArchiveAsync has race condition on archive list**~~ **FIXED**: Now uses `GetWithETagAsync` and `TrySaveAsync` with a 3-attempt retry loop for the namespace archive list update.
-
-3. **Namespace document list type inconsistency**: The same key `ns-docs:{namespaceId}` is accessed as `List<Guid>` in write-path methods (`AddDocumentToNamespaceIndexAsync`, `RemoveDocumentFromNamespaceIndexAsync`) but as `HashSet<Guid>` in read-path methods (`DeleteOrphanDocumentsAsync`, `GetAllNamespaceDocumentsAsync`, `RestoreFromBundleAsync`). While JSON array serialization round-trips both types, if duplicates accumulate in the List (from race conditions), reading as HashSet silently deduplicates them.
+1. **Namespace document list type inconsistency**: The same key `ns-docs:{namespaceId}` is accessed as `List<Guid>` in write-path methods (`AddDocumentToNamespaceIndexAsync`, `RemoveDocumentFromNamespaceIndexAsync`) but as `HashSet<Guid>` in read-path methods (`DeleteOrphanDocumentsAsync`, `GetAllNamespaceDocumentsAsync`, `RestoreFromBundleAsync`). While JSON array serialization round-trips both types, if duplicates accumulate in the List (from race conditions), reading as HashSet silently deduplicates them.
 
 ### Intentional Quirks (Documented Behavior)
 

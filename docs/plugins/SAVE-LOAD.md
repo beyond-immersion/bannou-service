@@ -471,14 +471,6 @@ Circuit Breaker State Machine
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. ~~**TotalSizeBytes accumulates compressed size inconsistently**~~ **FIXED**: AdminCleanup now uses `CompressedSizeBytes ?? SizeBytes` consistently with how TotalSizeBytes is accumulated.
-
-2. ~~**AdminCleanup bytesFreed double-counting**~~ **FIXED**: Per-slot `slotBytesFreed` is now tracked separately and only the current slot's freed bytes are subtracted from its TotalSizeBytes.
-
-3. ~~**PerformRollingCleanupAsync does not delete assets**~~ **FIXED**: Rolling cleanup now calls `_assetClient.DeleteAssetAsync` for versions that have an AssetId, preventing orphaned assets between cleanup cycles.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Slot lock on save prevents concurrent writes**: The save operation acquires a distributed lock on the slot to allocate version numbers atomically. Two concurrent saves to the same slot will serialize; the second waiter gets 409 Conflict if lock acquisition times out.

@@ -412,10 +412,6 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Bugs
 
-- ~~**CleanupPool does not teardown containers**~~ **FIXED**: `CleanupPoolAsync` now calls `TeardownServiceAsync` for each removed instance before updating state lists, matching the ScalePool scale-down pattern.
-- ~~**Log timestamps are always UtcNow**~~ **FIXED**: `GetLogsAsync` now parses the ISO 8601 timestamp prefix from Docker log lines (format: `2024-01-01T12:00:00.123456789Z message`), falling back to `UtcNow` only when parsing fails.
-- ~~**Log stream always reported as Stdout**~~ **FIXED**: Log parser now detects the `[STDERR]` marker from `ReadDockerLogStreamAsync` and assigns correct stream type to each entry.
-- ~~**Routing index update silently fails under concurrency**~~ **FIXED**: `UpdateRoutingIndexAsync` now has a retry loop (3 attempts) matching the `UpdateHeartbeatIndexAsync` pattern, with appropriate logging on exhaustion.
 - **Pool metrics never reset**: `JobsCompleted1h` and `JobsFailed1h` increment indefinitely. Despite the "1h" suffix, there is no hourly reset mechanism.
 - **Lease expiry not enforced**: When a processor lease expires (`ExpiresAt` passes), nothing reclaims the processor. The lease remains in the hash indefinitely until explicitly released. The processor is effectively lost from the pool.
 - **Processing pool operations have no concurrency control**: `AcquireProcessorAsync`, `ReleaseProcessorAsync`, and `UpdatePoolMetricsAsync` all use non-atomic read-modify-write patterns. They call `GetListAsync` -> mutate -> `SetListAsync` (and similarly for hashes) without ETags or retries. Two concurrent `AcquireProcessor` requests can both read the same available list, both pop the same processor, and each create a separate lease for it - effectively double-allocating the processor.

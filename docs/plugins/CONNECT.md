@@ -433,14 +433,6 @@ Connection Mode Behavior Matrix
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. **~~_pendingRPCs memory leak~~** *(FIXED)*: Added periodic cleanup timer (every 30s) that removes expired pending RPCs based on their `TimeoutAt` field.
-
-2. **~~Double-parse in error handler~~** *(FIXED)*: Hoisted `BinaryMessage? message` to method scope so the catch block reuses the already-parsed message instead of re-parsing the buffer.
-
-3. **~~LogWarning used for routing visibility~~** *(FIXED)*: Changed to `LogDebug` since this is normal routing traffic, not a warning condition.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Singleton lifetime**: Unlike all other Bannou services (which are Scoped), Connect is Singleton because it maintains in-memory WebSocket connection state. This means injected Scoped services (like `IServiceNavigator`) must be resolved via `IServiceScopeFactory.CreateAsyncScope()` per request.

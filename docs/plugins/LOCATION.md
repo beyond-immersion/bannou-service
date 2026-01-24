@@ -219,10 +219,6 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. **~~GetAncestors depth limit inconsistency~~** *(FIXED)*: `GetAncestorsAsync` used max depth 10 while `IsDescendantOfAsync` and `UpdateDescendantDepthsAsync` used max depth 20. A tree created 15 levels deep would return truncated ancestors. Fixed to use 20 consistently.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Code uniqueness is per-realm**: The same code (e.g., "TAVERN") can exist in multiple realms. The code index key includes realm ID: `code-index:{realmId}:{CODE}`.
@@ -241,15 +237,13 @@ State Store Layout
 
 1. **N+1 query pattern**: `LoadLocationsByIdsAsync` issues one state store call per location ID. List operations for realms with hundreds of locations generate hundreds of individual calls. No bulk-get optimization exists.
 
-2. **~~Hardcoded depth limits inconsistency~~** *(FIXED - moved to Bugs)*: Resolved by setting GetAncestors to use max depth 20, consistent with other operations.
+2. **LocationType stored as string**: The internal `LocationModel` stores `LocationType` as a string, not the generated enum. Response mapping uses `Enum.Parse<LocationType>()` which could throw on invalid stored values.
 
-3. **LocationType stored as string**: The internal `LocationModel` stores `LocationType` as a string, not the generated enum. Response mapping uses `Enum.Parse<LocationType>()` which could throw on invalid stored values.
+3. **No caching layer**: Unlike other services (item, inventory), location has no Redis cache. Every read hits the state store directly. For frequently-accessed locations (realm capitals, major cities), this could be a performance concern.
 
-4. **No caching layer**: Unlike other services (item, inventory), location has no Redis cache. Every read hits the state store directly. For frequently-accessed locations (realm capitals, major cities), this could be a performance concern.
+4. **Root-locations index maintenance**: The `root-locations:{realmId}` index must be updated whenever a location gains or loses a parent. Missing updates could cause roots to be missed in `ListRootLocations`.
 
-5. **Root-locations index maintenance**: The `root-locations:{realmId}` index must be updated whenever a location gains or loses a parent. Missing updates could cause roots to be missed in `ListRootLocations`.
-
-6. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
+5. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
 
 7. **Seed update doesn't publish events**: Lines 1084-1101 - when updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
 

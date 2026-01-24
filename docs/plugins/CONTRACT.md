@@ -430,14 +430,6 @@ Prebound API Batched Execution
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
-
-1. ~~**Lazy expiration in consent flow does not check TrySaveAsync result**~~ **FIXED**: Expiration now checks the TrySaveAsync result and only performs index operations if the save succeeded.
-
-2. ~~**Status index corruption on ETag conflict in ConsentToContract**~~ **FIXED**: Consent flow restructured to perform all index operations and event publications AFTER the successful TrySaveAsync, preventing index corruption on concurrent modification. (Note: ProposeContractInstance, TerminateContractInstance, and CompleteMilestone still have this pattern - see Design Considerations.)
-
-3. ~~**Guardian operations lack ETag concurrency protection**~~ **FIXED**: LockContract, UnlockContract, and TransferContractParty now use `GetWithETagAsync` and `TrySaveAsync` with conflict detection. TransferContractParty also moves index operations to after successful save.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Consent expiration is lazy**: Contracts do not automatically expire when DefaultConsentTimeoutDays passes. The check only triggers on the next ConsentToContract call. A proposed contract with no further consent attempts will remain in Proposed status indefinitely.
@@ -490,7 +482,7 @@ Prebound API Batched Execution
 
 13. **Events published before persistence in some flows**: ProposeContractInstance, CompleteMilestone, FailMilestone still publish events before the final TrySaveAsync. On conflict, phantom events reach downstream consumers.
 
-10. **ParseClauseAmount percentage mode silently returns 0 on missing base_amount**: At `ContractServiceEscrowIntegration.cs:1386-1393`, when a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method silently returns 0 with no warning log. A percentage-typed fee clause could execute as a zero-amount transfer without any indication of failure.
+14. **ParseClauseAmount percentage mode silently returns 0 on missing base_amount**: At `ContractServiceEscrowIntegration.cs:1386-1393`, when a clause uses `amount_type: "percentage"`, the calculation requires a numeric `base_amount` in the contract's template values. If `base_amount` is not set or not parseable as a double, the method silently returns 0 with no warning log. A percentage-typed fee clause could execute as a zero-amount transfer without any indication of failure.
 
 11. **QueryAssetBalanceAsync returns 0 on all failure paths**: At `ContractServiceEscrowIntegration.cs:791-882`, all error conditions in balance queries (non-200 status, missing response body, no recognized balance fields, parse failures, exceptions) return 0. For the "remainder" case (`amount="remainder"`), a query failure silently results in transferring 0 instead of failing the clause execution. Combined with Design #4 (non-transactional execution), this means a failed balance query can cause a clause to execute a zero-amount transfer while subsequent clauses proceed normally.
 
