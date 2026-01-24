@@ -180,6 +180,20 @@ None identified.
 
 6. **Code index inconsistency handling**: If the code index points to a realm ID that no longer exists in the data store (corruption), the service logs a warning about data inconsistency and returns NotFound rather than crashing.
 
+7. **IsActive in Exists response is computed**: Line 235 returns `IsActive = model.IsActive && !model.IsDeprecated`. A realm with `IsActive=true` and `IsDeprecated=true` will return `IsActive=false` in the Exists response. The two properties are conflated.
+
+8. **Metadata update has no equality check**: Unlike Name/Description/Category which check `body.X != model.X`, Metadata at line 377 only checks `body.Metadata != null`. Sending identical metadata still triggers an update event with "metadata" in changedFields.
+
+9. **Seed updates are silent (no events)**: When `UpdateExisting=true`, seed operations (lines 607-616) directly update the model without calling `PublishRealmUpdatedEventAsync`. Regular updates publish events; seed updates don't.
+
+10. **Seed updates are forceful overwrites**: Seed update (lines 607-612) sets `existingModel.Name = seedRealm.Name` directly without checking if values differ. This differs from `UpdateRealmAsync` which uses `if (body.X != model.X)` guards.
+
+11. **LoadRealmsByIdsAsync silently drops missing realms**: Lines 696-703 filter out null models without logging. If the all-realms list contains an ID that doesn't exist in data store, it's silently excluded from results.
+
+12. **Deprecate is not idempotent**: Lines 488-491 return `StatusCodes.Conflict` if realm is already deprecated. Calling deprecate twice fails the second time rather than being a no-op.
+
+13. **Event publishing failures are swallowed**: Lines 754-757, 790-793, 825-828 catch event publishing exceptions and log warnings, but don't fail the operation. State changes succeed even if events fail to publish.
+
 ### Design Considerations (Requires Planning)
 
 1. **GameServiceId mutability**: `UpdateRealmRequest` allows changing `GameServiceId`. This could break the game-service → realm relationship if not handled carefully by dependent systems that assume realm ownership is immutable.

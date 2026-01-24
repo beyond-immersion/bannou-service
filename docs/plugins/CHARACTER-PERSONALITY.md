@@ -234,6 +234,20 @@ None identified.
 
 7. **ALLY_LOST 50/50 random outcome**: When an ally is lost in combat, `ProtectAllies` is set to true OR false with equal probability. Models conflicting emotional responses (determination vs. self-preservation). Not influenced by current trait values or intensity.
 
+8. **Evolution silently skips missing traits**: If a character's personality doesn't include a trait axis (e.g., no NEUROTICISM key), evolution operations that would modify it are silently skipped (line 210: `TryGetValue` returns false). Traits are NOT created by evolution—only pre-existing traits evolve.
+
+9. **AMBUSH_SUCCESS DEFENSIVE→TACTICAL is guaranteed (100%)**: Unlike other style transitions that use probability checks (0.2-0.5), line 771 shows `data.Style = data.Style == "DEFENSIVE" ? "TACTICAL" : data.Style;` — a deterministic, unconditional transition.
+
+10. **FAILED_RETREAT can downgrade BERSERKER to AGGRESSIVE**: The 50% "fight instead of flee" branch (line 760) directly sets `Style = "AGGRESSIVE"` regardless of current style. A BERSERKER becomes AGGRESSIVE, which is technically a de-escalation.
+
+11. **BERSERKER only exits via DEFEAT**: The only code path leaving BERSERKER style is lines 720-721: `if (data.Style == "BERSERKER" && Random.Shared.NextDouble() < 0.4) data.Style = "AGGRESSIVE";`. No other experience type offers an exit.
+
+12. **Combat preferences clamp to [0, 1], personality traits to [-1, +1]**: RiskTolerance/RetreatThreshold use `Math.Clamp(..., 0, 1)` (lines 701, 711, etc.) while personality traits use `Math.Clamp(..., -1.0f, 1.0f)` (line 213). Different semantic ranges for different data types.
+
+13. **Combat shift multipliers are hardcoded per experience type**: NEAR_DEATH uses `shift * 1.5f` (maximum impact), NARROW_VICTORY uses `shift * 0.5f`, SUCCESSFUL_RETREAT uses `shift * 0.3f`. These multipliers can't be configured.
+
+14. **Default combat preferences in internal model**: `CombatPreferencesData` (lines 881-886) has hardcoded field defaults: Style="BALANCED", PreferredRange="MEDIUM", GroupRole="FRONTLINE", RiskTolerance=0.5f, RetreatThreshold=0.3f, ProtectAllies=true. Used during JSON deserialization when fields are missing.
+
 ### Design Considerations (Requires Planning)
 
 1. **Hardcoded combat RNG probabilities**: Style/role transition probabilities (0.2, 0.3, 0.4, 0.5) are hardcoded in switch cases. Not configurable. Would require schema extension to make tunable.

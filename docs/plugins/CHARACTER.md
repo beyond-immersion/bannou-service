@@ -255,3 +255,19 @@ Character Key Architecture (Realm-Partitioned)
 4. **No optimistic concurrency on character update**: Two simultaneous updates to the same character will both succeed. Last-writer-wins with no version checking or conflict detection.
 
 5. **Compression personality summary threshold**: The threshold logic for personality summaries (>0.3 = positive label, <-0.3 = negative label) is hardcoded. Values between -0.3 and +0.3 produce no summary text for that trait.
+
+6. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` (lines 893-910) looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
+
+7. **Family tree silently skips unknown relationship types**: Line 926-929 - if a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
+
+8. **INCARNATION tracking is directional**: Line 1013 only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
+
+9. **Multiple spouses = last one wins**: Line 1001 uses simple assignment `familyTree.Spouse =`. If a character has multiple spouse relationships, only the last one processed appears in the response.
+
+10. **"orphaned" label ignores parent death status**: Line 1082-1083 adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died. A character whose parents died is not labeled orphaned.
+
+11. **"single parent household" is literal**: Line 1084-1085 adds this label when exactly one parent exists. Doesn't consider whether two parents were expected. A character intentionally created with one parent still gets this label.
+
+12. **Family tree character lookups are sequential**: Line 932 calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
+
+13. **"balanced personality" fallback**: Lines 1059-1060 - if ALL traits are in neutral zone (-0.3 to +0.3), returns literal string "balanced personality" rather than null or empty.
