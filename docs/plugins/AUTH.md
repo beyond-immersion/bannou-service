@@ -43,7 +43,8 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `account-sessions:{accountId}` | `List<string>` | JwtExpirationMinutes * 60 + 300 | Index of session keys for an account (lazy-cleaned on read) |
 | `session-id-index:{sessionId}` | `string` (sessionKey) | JwtExpirationMinutes * 60 | Reverse lookup: human-facing session ID to internal session key |
 | `refresh_token:{token}` | `string` (accountId) | SessionTokenTtlDays in seconds | Maps refresh token to account ID |
-| `oauth-link:{provider}:{providerId}` | `string` (accountId) | **None** | Maps OAuth provider identity to account (persists indefinitely) |
+| `oauth-link:{provider}:{providerId}` | `string` (accountId) | **None** | Maps OAuth provider identity to account (cleaned up on account deletion) |
+| `account-oauth-links:{accountId}` | `List<string>` | **None** | Reverse index of OAuth link keys for account (for cleanup on deletion) |
 | `password-reset:{token}` | `PasswordResetData` | PasswordResetTokenTtlMinutes * 60 | Pending password reset (accountId, email, expiry) |
 
 ## Events
@@ -65,7 +66,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions for the deleted account and publishes `session.invalidated` |
+| `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, and publishes `session.invalidated` |
 | `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session |
 | `subscription.updated` | `HandleSubscriptionUpdatedAsync` | Re-fetches subscriptions from Subscription service, updates all sessions with new authorizations, publishes `session.updated` per session |
 
@@ -192,12 +193,10 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Known Quirks & Caveats
 
-1. **JWT config split across two sources**: OAuth config, TTLs, and mock settings come from the DI-injected `AuthServiceConfiguration`. JWT secret/issuer/audience come from the static `Program.Configuration`. This split means JWT settings can't be overridden per-service and aren't visible in the auth configuration schema.
+1. **JWT config accessed via static `Program.Configuration`, not DI**: TokenService reads JWT secret/issuer/audience from the static `Program.Configuration` rather than from DI-injected `AuthServiceConfiguration`. This is intentional — the webhost configures JWT Bearer middleware at startup before DI is available, and nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints. JWT settings are cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config. The trade-off is that TokenService uses a static reference instead of constructor injection, making it slightly harder to test in isolation.
 
 2. **ValidateTokenResponse.SessionId contains the session key, not the session ID**: `ValidateTokenResponse.SessionId` is set to `Guid.Parse(sessionKey)` - the internal Redis lookup key - not `sessionData.SessionId` (the human-facing identifier). This is intentional so Connect service tracks WebSocket connections by the same key used in `account-sessions` index and `SessionInvalidatedEvent`, but the field name is misleading.
 
-3. **OAuth links have no TTL**: The `oauth-link:{provider}:{providerId}` key persists indefinitely in Redis. If an account is deleted, the link remains orphaned until the next login attempt for that OAuth identity (which detects the stale link and cleans it up). Meanwhile, orphaned links accumulate in Redis.
+3. **Account-sessions index lazy cleanup only**: Expired sessions are only removed from the `account-sessions:{accountId}` list when someone calls `GetAccountSessionsAsync`. If nobody lists sessions, expired entries accumulate in the list until the list's own TTL expires. The TTL is JwtExpiration + 5 minutes, but gets reset with each new login (since `AddSessionToAccountIndexAsync` re-saves the whole list), so active accounts accumulate stale entries.
 
-4. **Account-sessions index lazy cleanup only**: Expired sessions are only removed from the `account-sessions:{accountId}` list when someone calls `GetAccountSessionsAsync`. If nobody lists sessions, expired entries accumulate in the list until the list's own TTL expires. The TTL is JwtExpiration + 5 minutes, but gets reset with each new login (since `AddSessionToAccountIndexAsync` re-saves the whole list), so active accounts accumulate stale entries.
-
-5. **Password reset always returns 200**: By design (email enumeration prevention), but this means there's no way for a legitimate user to know if the reset email was sent. The mock implementation logs to console, so in production without email integration, password resets silently succeed without doing anything useful.
+4. **Password reset always returns 200**: By design (email enumeration prevention), but this means there's no way for a legitimate user to know if the reset email was sent. The mock implementation logs to console, so in production without email integration, password resets silently succeed without doing anything useful.

@@ -28,6 +28,7 @@ public class OAuthProviderServiceTests : IDisposable
     private readonly HttpClient _httpClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IAccountClient> _mockAccountClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<HttpMessageHandler> _mockHttpHandler;
@@ -45,6 +46,7 @@ public class OAuthProviderServiceTests : IDisposable
 
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockAccountClient = new Mock<IAccountClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockHttpHandler = new Mock<HttpMessageHandler>();
@@ -75,6 +77,8 @@ public class OAuthProviderServiceTests : IDisposable
         // Setup state store factory
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
 
         // Setup default HttpClient
         _httpClient = new HttpClient();
