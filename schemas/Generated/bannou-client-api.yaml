@@ -24748,8 +24748,8 @@ components:
 
     Provider:
       type: string
-      enum: [google, discord, twitch]
-      description: OAuth provider type
+      enum: [google, discord, twitch, steam]
+      description: Authentication provider type
 
     ProviderInfo:
       type: object

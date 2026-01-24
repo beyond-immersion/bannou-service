@@ -36,9 +36,10 @@ export class CharacterHistoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ParticipationListResponse']>> {
-    return this.client.invokeAsync<Schemas['GetParticipationRequest'], Schemas['ParticipationListResponse']>(
-      'POST', '/character-history/get-participation', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetParticipationRequest'],
+      Schemas['ParticipationListResponse']
+    >('POST', '/character-history/get-participation', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class CharacterHistoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ParticipationListResponse']>> {
-    return this.client.invokeAsync<Schemas['GetEventParticipantsRequest'], Schemas['ParticipationListResponse']>(
-      'POST', '/character-history/get-event-participants', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetEventParticipantsRequest'],
+      Schemas['ParticipationListResponse']
+    >('POST', '/character-history/get-event-participants', request, channel, timeout);
   }
 
   /**
@@ -71,7 +73,11 @@ export class CharacterHistoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BackstoryResponse']>> {
     return this.client.invokeAsync<Schemas['GetBackstoryRequest'], Schemas['BackstoryResponse']>(
-      'POST', '/character-history/get-backstory', request, channel, timeout
+      'POST',
+      '/character-history/get-backstory',
+      request,
+      channel,
+      timeout
     );
   }
 }

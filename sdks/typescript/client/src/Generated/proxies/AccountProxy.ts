@@ -37,7 +37,11 @@ export class AccountProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AccountResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateProfileRequest'], Schemas['AccountResponse']>(
-      'POST', '/account/profile/update', request, channel, timeout
+      'POST',
+      '/account/profile/update',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -52,7 +56,10 @@ export class AccountProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['UpdatePasswordRequest']>(
-      'POST', '/account/password/update', request, channel
+      'POST',
+      '/account/password/update',
+      request,
+      channel
     );
   }
 
@@ -67,7 +74,10 @@ export class AccountProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['UpdateVerificationRequest']>(
-      'POST', '/account/verification/update', request, channel
+      'POST',
+      '/account/verification/update',
+      request,
+      channel
     );
   }
 }

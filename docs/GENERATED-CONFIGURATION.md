@@ -172,6 +172,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `AUTH_BCRYPT_WORK_FACTOR` | int | `12` | BCrypt work factor for password hashing. Higher values are m... |
 | `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to Connect service for WebSocket connections. Defaults t... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
@@ -699,9 +700,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 525
+- **Total properties**: 526
 - **Required (no default)**: 40
-- **Optional (has default)**: 485
+- **Optional (has default)**: 486
 
 ## Environment Variable Naming Convention
 

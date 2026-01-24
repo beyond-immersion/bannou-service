@@ -36,9 +36,10 @@ export class SubscriptionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SubscriptionListResponse']>> {
-    return this.client.invokeAsync<Schemas['GetAccountSubscriptionsRequest'], Schemas['SubscriptionListResponse']>(
-      'POST', '/subscription/account/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetAccountSubscriptionsRequest'],
+      Schemas['SubscriptionListResponse']
+    >('POST', '/subscription/account/list', request, channel, timeout);
   }
 
   /**
@@ -54,7 +55,11 @@ export class SubscriptionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SubscriptionInfo']>> {
     return this.client.invokeAsync<Schemas['GetSubscriptionRequest'], Schemas['SubscriptionInfo']>(
-      'POST', '/subscription/get', request, channel, timeout
+      'POST',
+      '/subscription/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -70,8 +75,9 @@ export class SubscriptionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SubscriptionInfo']>> {
-    return this.client.invokeAsync<Schemas['CancelSubscriptionRequest'], Schemas['SubscriptionInfo']>(
-      'POST', '/subscription/cancel', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CancelSubscriptionRequest'],
+      Schemas['SubscriptionInfo']
+    >('POST', '/subscription/cancel', request, channel, timeout);
   }
 }

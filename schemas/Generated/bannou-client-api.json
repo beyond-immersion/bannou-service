@@ -31978,9 +31978,10 @@
         "enum": [
           "google",
           "discord",
-          "twitch"
+          "twitch",
+          "steam"
         ],
-        "description": "OAuth provider type"
+        "description": "Authentication provider type"
       },
       "ProviderInfo": {
         "type": "object",

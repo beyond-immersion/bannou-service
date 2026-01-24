@@ -37,7 +37,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerResponse']>> {
     return this.client.invokeAsync<Schemas['CreateContainerRequest'], Schemas['ContainerResponse']>(
-      'POST', '/inventory/container/create', request, channel, timeout
+      'POST',
+      '/inventory/container/create',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -53,9 +57,10 @@ export class InventoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerWithContentsResponse']>> {
-    return this.client.invokeAsync<Schemas['GetContainerRequest'], Schemas['ContainerWithContentsResponse']>(
-      'POST', '/inventory/container/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetContainerRequest'],
+      Schemas['ContainerWithContentsResponse']
+    >('POST', '/inventory/container/get', request, channel, timeout);
   }
 
   /**
@@ -70,9 +75,10 @@ export class InventoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerResponse']>> {
-    return this.client.invokeAsync<Schemas['GetOrCreateContainerRequest'], Schemas['ContainerResponse']>(
-      'POST', '/inventory/container/get-or-create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetOrCreateContainerRequest'],
+      Schemas['ContainerResponse']
+    >('POST', '/inventory/container/get-or-create', request, channel, timeout);
   }
 
   /**
@@ -87,9 +93,10 @@ export class InventoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListContainersResponse']>> {
-    return this.client.invokeAsync<Schemas['ListContainersRequest'], Schemas['ListContainersResponse']>(
-      'POST', '/inventory/container/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListContainersRequest'],
+      Schemas['ListContainersResponse']
+    >('POST', '/inventory/container/list', request, channel, timeout);
   }
 
   /**
@@ -105,7 +112,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContainerResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateContainerRequest'], Schemas['ContainerResponse']>(
-      'POST', '/inventory/container/update', request, channel, timeout
+      'POST',
+      '/inventory/container/update',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -122,7 +133,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AddItemResponse']>> {
     return this.client.invokeAsync<Schemas['AddItemRequest'], Schemas['AddItemResponse']>(
-      'POST', '/inventory/add', request, channel, timeout
+      'POST',
+      '/inventory/add',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -139,7 +154,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RemoveItemResponse']>> {
     return this.client.invokeAsync<Schemas['RemoveItemRequest'], Schemas['RemoveItemResponse']>(
-      'POST', '/inventory/remove', request, channel, timeout
+      'POST',
+      '/inventory/remove',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -156,7 +175,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MoveItemResponse']>> {
     return this.client.invokeAsync<Schemas['MoveItemRequest'], Schemas['MoveItemResponse']>(
-      'POST', '/inventory/move', request, channel, timeout
+      'POST',
+      '/inventory/move',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -173,7 +196,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['TransferItemResponse']>> {
     return this.client.invokeAsync<Schemas['TransferItemRequest'], Schemas['TransferItemResponse']>(
-      'POST', '/inventory/transfer', request, channel, timeout
+      'POST',
+      '/inventory/transfer',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -190,7 +217,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SplitStackResponse']>> {
     return this.client.invokeAsync<Schemas['SplitStackRequest'], Schemas['SplitStackResponse']>(
-      'POST', '/inventory/split', request, channel, timeout
+      'POST',
+      '/inventory/split',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -207,7 +238,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MergeStacksResponse']>> {
     return this.client.invokeAsync<Schemas['MergeStacksRequest'], Schemas['MergeStacksResponse']>(
-      'POST', '/inventory/merge', request, channel, timeout
+      'POST',
+      '/inventory/merge',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -224,7 +259,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryItemsResponse']>> {
     return this.client.invokeAsync<Schemas['QueryItemsRequest'], Schemas['QueryItemsResponse']>(
-      'POST', '/inventory/query', request, channel, timeout
+      'POST',
+      '/inventory/query',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -241,7 +280,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CountItemsResponse']>> {
     return this.client.invokeAsync<Schemas['CountItemsRequest'], Schemas['CountItemsResponse']>(
-      'POST', '/inventory/count', request, channel, timeout
+      'POST',
+      '/inventory/count',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -258,7 +301,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HasItemsResponse']>> {
     return this.client.invokeAsync<Schemas['HasItemsRequest'], Schemas['HasItemsResponse']>(
-      'POST', '/inventory/has', request, channel, timeout
+      'POST',
+      '/inventory/has',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -275,7 +322,11 @@ export class InventoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FindSpaceResponse']>> {
     return this.client.invokeAsync<Schemas['FindSpaceRequest'], Schemas['FindSpaceResponse']>(
-      'POST', '/inventory/find-space', request, channel, timeout
+      'POST',
+      '/inventory/find-space',
+      request,
+      channel,
+      timeout
     );
   }
 }

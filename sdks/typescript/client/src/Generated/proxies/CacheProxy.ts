@@ -36,9 +36,10 @@ export class CacheProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CachedBehaviorResponse']>> {
-    return this.client.invokeAsync<Schemas['GetCachedBehaviorRequest'], Schemas['CachedBehaviorResponse']>(
-      'POST', '/cache/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetCachedBehaviorRequest'],
+      Schemas['CachedBehaviorResponse']
+    >('POST', '/cache/get', request, channel, timeout);
   }
 
   /**
@@ -52,7 +53,10 @@ export class CacheProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['InvalidateCacheRequest']>(
-      'POST', '/cache/invalidate', request, channel
+      'POST',
+      '/cache/invalidate',
+      request,
+      channel
     );
   }
 }
