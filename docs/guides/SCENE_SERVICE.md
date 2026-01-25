@@ -77,7 +77,7 @@ A tavern scene defines "bar counter is child of bar area, rotated 45°". Mapping
 ```yaml
 Scene:
   sceneId: UUID           # Unique identifier
-  gameId: string          # Partition key (e.g., "arcadia-online")
+  gameId: string          # Partition key (e.g., "my-game")
   sceneType: SceneType    # Classification (region, building, prefab, etc.)
   name: string            # Human-readable name
   description: string?    # Optional description
@@ -150,7 +150,7 @@ annotations:
   physics:
     collisionShape: "convex"
     mass: 0
-  arcadia:  # Game-specific namespace
+  game:  # Game-specific namespace
     interactionType: "sit"
     npcBehavior: "guard_patrol"
 ```
@@ -345,7 +345,7 @@ Register custom rules per gameId + sceneType:
 
 ```json
 {
-  "gameId": "arcadia-online",
+  "gameId": "my-game",
   "sceneType": "building",
   "rules": [
     {

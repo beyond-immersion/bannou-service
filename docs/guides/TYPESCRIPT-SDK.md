@@ -86,13 +86,13 @@ if (loginResult.isSuccess) {
 
 // Character operations
 const characters = await client.character.listAsync({
-  realmId: 'arcadia-prime',
+  realmId: 'my-realm',
   limit: 10
 });
 
 // Game sessions
 const session = await client.sessions.createAsync({
-  gameType: 'arcadia',
+  gameType: 'my-game',
   maxPlayers: 4,
   isPrivate: false
 });
@@ -325,7 +325,7 @@ onMounted(async () => {
   connected.value = true;
 
   // Load characters
-  const response = await bannouClient.character.listAsync({ realmId: 'arcadia' });
+  const response = await bannouClient.character.listAsync({ realmId: 'my-realm' });
   if (response.isSuccess) {
     characters.value = response.data.characters;
   }
