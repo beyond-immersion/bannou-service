@@ -212,13 +212,12 @@ components:
           format: uuid
           description: Voice room ID
         previousTier:
-          type: string
-          default: p2p
+          allOf:
+            - $ref: '../voice-api.yaml#/components/schemas/VoiceTier'
           nullable: true  # NRT: Optional property MUST be nullable
           description: Previous tier (always p2p for upgrade events)
         newTier:
-          type: string
-          default: scaled
+          $ref: '../voice-api.yaml#/components/schemas/VoiceTier'
           description: New tier after upgrade (always scaled for upgrade events)
         rtpServerUri:
           type: string

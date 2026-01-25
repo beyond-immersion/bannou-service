@@ -10,9 +10,9 @@ info:
         slotId: { type: string, format: uuid, primary: true, required: true }
         gameId: { type: string, required: true }
         ownerId: { type: string, format: uuid, required: true }
-        ownerType: { type: string, required: true }
+        ownerType: { $ref: '../save-load-api.yaml#/components/schemas/OwnerType', required: true }
         slotName: { type: string, required: true }
-        category: { type: string, required: true }
+        category: { $ref: '../save-load-api.yaml#/components/schemas/SaveCategory', required: true }
       sensitive: []
       # Generates: SaveSlotCreatedEvent, SaveSlotUpdatedEvent, SaveSlotDeletedEvent
 

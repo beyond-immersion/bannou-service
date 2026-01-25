@@ -75,7 +75,7 @@ x-lifecycle:
       authorityAppId: { type: string, nullable: true, description: "App ID of current authority (null if unassigned)" }
       authorityToken: { type: string, nullable: true, description: "Current authority token (null if unassigned)" }
       authorityExpiresAt: { type: string, format: date-time, nullable: true, description: "When current authority expires" }
-      nonAuthorityHandling: { type: string, required: true, description: "How to handle non-authority publishes" }
+      nonAuthorityHandling: { $ref: '../mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode', required: true, description: "How to handle non-authority publishes" }
       version: { type: integer, format: int64, required: true, description: "Current version number" }
       createdAt: { type: string, format: date-time, required: true, description: "When the channel was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "When the channel was last updated" }

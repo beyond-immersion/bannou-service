@@ -101,7 +101,7 @@ components:
           format: uuid
           description: ID of the entity whose score changed
         entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         scoreType:
           type: string
@@ -157,7 +157,7 @@ components:
           format: uuid
           description: ID of the entity whose rating changed
         entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         ratingType:
           type: string
@@ -213,7 +213,7 @@ components:
           format: uuid
           description: ID of the entity that reached the milestone
         entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         milestoneType:
           type: string

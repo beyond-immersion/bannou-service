@@ -94,7 +94,7 @@ components:
           format: uuid
           description: ID of the entity that unlocked it
         entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         points:
           type: integer
@@ -154,7 +154,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         previousProgress:
           type: integer
@@ -204,7 +204,7 @@ components:
           format: uuid
           description: ID of the entity (account for platform sync)
         entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         platform:
           $ref: '../achievement-api.yaml#/components/schemas/Platform'

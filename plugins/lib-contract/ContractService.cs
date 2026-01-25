@@ -1031,7 +1031,7 @@ public partial class ContractService : IContractService
 
             // Then publish events
             await PublishContractTerminatedEventAsync(model, body.RequestingEntityId,
-                body.RequestingEntityType.ToString(), body.Reason, false, cancellationToken);
+                body.RequestingEntityType, body.Reason, false, cancellationToken);
 
             _logger.LogInformation("Terminated contract: {ContractId}", body.ContractId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
@@ -2569,7 +2569,7 @@ public partial class ContractService : IContractService
     }
 
     private async Task PublishContractTerminatedEventAsync(
-        ContractInstanceModel model, Guid terminatedById, string terminatedByType,
+        ContractInstanceModel model, Guid terminatedById, EntityType terminatedByType,
         string? reason, bool wasBreachRelated, CancellationToken ct)
     {
         await _messageBus.TryPublishAsync("contract.terminated", new ContractTerminatedEvent

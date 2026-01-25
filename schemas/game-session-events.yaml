@@ -55,9 +55,9 @@ x-lifecycle:
   GameSession:
     model:
       sessionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the game session" }
-      gameType: { type: string, required: true, description: "Type of game being played in this session" }
+      gameType: { $ref: '../game-session-api.yaml#/components/schemas/GameType', required: true, description: "Type of game being played in this session" }
       sessionName: { type: string, nullable: true, description: "Human-readable name for the session" }
-      status: { type: string, required: true, description: "Current status of the game session (e.g., waiting, active, completed)" }
+      status: { $ref: '../game-session-api.yaml#/components/schemas/SessionStatus', required: true, description: "Current status of the game session" }
       maxPlayers: { type: integer, nullable: true, description: "Maximum number of players allowed in the session" }  # NRT: Optional property MUST be nullable
       currentPlayers: { type: integer, nullable: true, description: "Current number of players in the session" }  # NRT: Optional property MUST be nullable
       isPrivate: { type: boolean, nullable: true, description: "Whether the session is private (invite-only)" }  # NRT: Optional property MUST be nullable

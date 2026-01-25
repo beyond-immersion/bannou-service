@@ -201,7 +201,7 @@ public partial class GameSessionService : IGameSessionService
                 // So we just skip filtering if the request body doesn't have explicit filter values
 
                 // Apply status filter - skip finished sessions by default
-                if (session.Status == GameSessionResponseStatus.Finished)
+                if (session.Status == SessionStatus.Finished)
                     continue;
 
                 sessions.Add(session);
@@ -260,12 +260,12 @@ public partial class GameSessionService : IGameSessionService
             var session = new GameSessionModel
             {
                 SessionId = sessionId.ToString(),
-                GameType = MapRequestGameTypeToResponse(body.GameType),
+                GameType = body.GameType,
                 SessionName = body.SessionName,
                 MaxPlayers = maxPlayers,
                 IsPrivate = body.IsPrivate,
                 Owner = body.OwnerId,
-                Status = GameSessionResponseStatus.Waiting,
+                Status = SessionStatus.Waiting,
                 CurrentPlayers = 0,
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -481,7 +481,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Check session status
-            if (model.Status == GameSessionResponseStatus.Finished)
+            if (model.Status == SessionStatus.Finished)
             {
                 _logger.LogWarning("Game lobby {LobbyId} is finished", lobbyId);
                 return (StatusCodes.Conflict, null);
@@ -511,11 +511,11 @@ public partial class GameSessionService : IGameSessionService
             // Update status if full
             if (model.CurrentPlayers >= model.MaxPlayers)
             {
-                model.Status = GameSessionResponseStatus.Full;
+                model.Status = SessionStatus.Full;
             }
-            else if (model.Status == GameSessionResponseStatus.Waiting && model.CurrentPlayers > 0)
+            else if (model.Status == SessionStatus.Waiting && model.CurrentPlayers > 0)
             {
-                model.Status = GameSessionResponseStatus.Active;
+                model.Status = SessionStatus.Active;
             }
 
             // Set game-session:in_game state via Permission service (required for API access)
@@ -629,7 +629,7 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (model.Status == GameSessionResponseStatus.Finished)
+            if (model.Status == SessionStatus.Finished)
             {
                 _logger.LogWarning("Cannot perform action on finished lobby {LobbyId}", lobbyId);
                 return (StatusCodes.BadRequest, null);
@@ -823,7 +823,7 @@ public partial class GameSessionService : IGameSessionService
             // Update status
             if (model.CurrentPlayers == 0)
             {
-                model.Status = GameSessionResponseStatus.Finished;
+                model.Status = SessionStatus.Finished;
 
                 // Delete voice room when session ends
                 if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
@@ -854,9 +854,9 @@ public partial class GameSessionService : IGameSessionService
                     }
                 }
             }
-            else if (model.Status == GameSessionResponseStatus.Full)
+            else if (model.Status == SessionStatus.Full)
             {
-                model.Status = GameSessionResponseStatus.Active;
+                model.Status = SessionStatus.Active;
             }
 
             // Save updated session
@@ -983,7 +983,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Check session status
-            if (model.Status == GameSessionResponseStatus.Finished)
+            if (model.Status == SessionStatus.Finished)
             {
                 _logger.LogWarning("Game session {GameSessionId} is finished", gameSessionId);
                 return (StatusCodes.Conflict, null);
@@ -1013,11 +1013,11 @@ public partial class GameSessionService : IGameSessionService
             // Update status
             if (model.CurrentPlayers >= model.MaxPlayers)
             {
-                model.Status = GameSessionResponseStatus.Full;
+                model.Status = SessionStatus.Full;
             }
-            else if (model.Status == GameSessionResponseStatus.Waiting && model.CurrentPlayers > 0)
+            else if (model.Status == SessionStatus.Waiting && model.CurrentPlayers > 0)
             {
-                model.Status = GameSessionResponseStatus.Active;
+                model.Status = SessionStatus.Active;
             }
 
             // Set game-session:in_game state via Permission service
@@ -1225,7 +1225,7 @@ public partial class GameSessionService : IGameSessionService
             // Update status
             if (model.CurrentPlayers == 0)
             {
-                model.Status = GameSessionResponseStatus.Finished;
+                model.Status = SessionStatus.Finished;
 
                 // Delete voice room when session ends
                 if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
@@ -1250,9 +1250,9 @@ public partial class GameSessionService : IGameSessionService
                     }
                 }
             }
-            else if (model.Status == GameSessionResponseStatus.Full)
+            else if (model.Status == SessionStatus.Full)
             {
-                model.Status = GameSessionResponseStatus.Active;
+                model.Status = SessionStatus.Active;
             }
 
             // Save updated session
@@ -1451,9 +1451,9 @@ public partial class GameSessionService : IGameSessionService
             model.CurrentPlayers = model.Players.Count;
 
             // Update status
-            if (model.Status == GameSessionResponseStatus.Full)
+            if (model.Status == SessionStatus.Full)
             {
-                model.Status = GameSessionResponseStatus.Active;
+                model.Status = SessionStatus.Active;
             }
 
             // Save updated session
@@ -1539,7 +1539,7 @@ public partial class GameSessionService : IGameSessionService
                 SenderId = senderId,
                 SenderName = senderPlayer?.DisplayName,
                 Message = body.Message,
-                MessageType = MapChatMessageType(body.MessageType),
+                MessageType = body.MessageType,
                 IsWhisperToMe = false // Will be set per-recipient for whispers
             };
 
@@ -1557,7 +1557,7 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Handle whisper messages - only send to sender and target
-            if (body.MessageType == ChatMessageRequestMessageType.Whisper && body.TargetPlayerId != Guid.Empty)
+            if (body.MessageType == ChatMessageType.Whisper && body.TargetPlayerId != Guid.Empty)
             {
                 // Find sender and target player sessions
                 var targetPlayer = model.Players.FirstOrDefault(p => p.AccountId == body.TargetPlayerId);
@@ -2090,7 +2090,7 @@ public partial class GameSessionService : IGameSessionService
             // Check for existing lobby
             var existingLobby = await sessionStore.GetAsync(lobbyKey);
 
-            if (existingLobby != null && existingLobby.Status != GameSessionResponseStatus.Finished)
+            if (existingLobby != null && existingLobby.Status != SessionStatus.Finished)
             {
                 _logger.LogDebug("Found existing lobby {LobbyId} for {StubName}", existingLobby.SessionId, stubName);
                 return Guid.Parse(existingLobby.SessionId);
@@ -2107,7 +2107,7 @@ public partial class GameSessionService : IGameSessionService
                 GameType = gameType,
                 MaxPlayers = _configuration.DefaultLobbyMaxPlayers,
                 IsPrivate = false,
-                Status = GameSessionResponseStatus.Active,
+                Status = SessionStatus.Active,
                 CurrentPlayers = 0,
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -2176,12 +2176,12 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Maps a stub name to a game type enum.
     /// </summary>
-    private static GameSessionResponseGameType MapStubNameToGameType(string stubName)
+    private static GameType MapStubNameToGameType(string stubName)
     {
         return stubName.ToLowerInvariant() switch
         {
-            "arcadia" => GameSessionResponseGameType.Arcadia,
-            _ => GameSessionResponseGameType.Generic
+            "arcadia" => GameType.Arcadia,
+            _ => GameType.Generic
         };
     }
 
@@ -2225,16 +2225,6 @@ public partial class GameSessionService : IGameSessionService
         };
     }
 
-    private static GameSessionResponseGameType MapRequestGameTypeToResponse(CreateGameSessionRequestGameType gameType)
-    {
-        return gameType switch
-        {
-            CreateGameSessionRequestGameType.Arcadia => GameSessionResponseGameType.Arcadia,
-            CreateGameSessionRequestGameType.Generic => GameSessionResponseGameType.Generic,
-            _ => GameSessionResponseGameType.Generic
-        };
-    }
-
     /// <summary>
     /// Generates a secure random token for session reservations.
     /// Uses cryptographically secure random bytes encoded as base64.
@@ -2245,38 +2235,6 @@ public partial class GameSessionService : IGameSessionService
         using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
         rng.GetBytes(bytes);
         return Convert.ToBase64String(bytes);
-    }
-
-    private static ChatMessageReceivedEventMessageType MapChatMessageType(ChatMessageRequestMessageType messageType)
-    {
-        return messageType switch
-        {
-            ChatMessageRequestMessageType.Public => ChatMessageReceivedEventMessageType.Public,
-            ChatMessageRequestMessageType.Whisper => ChatMessageReceivedEventMessageType.Whisper,
-            ChatMessageRequestMessageType.System => ChatMessageReceivedEventMessageType.System,
-            _ => ChatMessageReceivedEventMessageType.Public
-        };
-    }
-
-    private static VoiceConnectionInfoTier MapVoiceTierToConnectionInfoTier(VoiceTier tier)
-    {
-        return tier switch
-        {
-            VoiceTier.P2p => VoiceConnectionInfoTier.P2p,
-            VoiceTier.Scaled => VoiceConnectionInfoTier.Scaled,
-            _ => VoiceConnectionInfoTier.P2p
-        };
-    }
-
-    private static VoiceConnectionInfoCodec MapVoiceCodecToConnectionInfoCodec(VoiceCodec codec)
-    {
-        return codec switch
-        {
-            VoiceCodec.Opus => VoiceConnectionInfoCodec.Opus,
-            VoiceCodec.G711 => VoiceConnectionInfoCodec.G711,
-            VoiceCodec.G722 => VoiceConnectionInfoCodec.G722,
-            _ => VoiceConnectionInfoCodec.Opus
-        };
     }
 
     #endregion
@@ -2303,9 +2261,9 @@ public partial class GameSessionService : IGameSessionService
 internal class GameSessionModel
 {
     public string SessionId { get; set; } = string.Empty;
-    public GameSessionResponseGameType GameType { get; set; }
+    public GameType GameType { get; set; }
     public string? SessionName { get; set; }
-    public GameSessionResponseStatus Status { get; set; }
+    public SessionStatus Status { get; set; }
     public int MaxPlayers { get; set; }
     public int CurrentPlayers { get; set; }
     public bool IsPrivate { get; set; }

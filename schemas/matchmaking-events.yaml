@@ -148,10 +148,10 @@ components:
           format: uuid
           description: ID of the matchmaking ticket
         previousStatus:
-          type: string
+          $ref: '../matchmaking-api.yaml#/components/schemas/TicketStatus'
           description: Status before the change
         newStatus:
-          type: string
+          $ref: '../matchmaking-api.yaml#/components/schemas/TicketStatus'
           description: Status after the change
         intervalsElapsed:
           type: integer

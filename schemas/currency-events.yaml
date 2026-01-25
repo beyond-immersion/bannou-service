@@ -95,8 +95,8 @@ x-lifecycle:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the currency definition" }
       code: { type: string, required: true, description: "Unique currency code" }
       name: { type: string, required: true, description: "Human-readable currency name" }
-      scope: { type: string, required: true, description: "Currency scope (global, realm_specific, multi_realm)" }
-      precision: { type: string, required: true, description: "Currency precision type" }
+      scope: { $ref: '../currency-api.yaml#/components/schemas/CurrencyScope', required: true, description: "Currency scope" }
+      precision: { $ref: '../currency-api.yaml#/components/schemas/CurrencyPrecision', required: true, description: "Currency precision type" }
       isActive: { type: boolean, required: true, description: "Whether the definition is active" }
       createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the definition was last modified" }
@@ -105,9 +105,9 @@ x-lifecycle:
     model:
       walletId: { type: string, format: uuid, primary: true, required: true, description: "Unique wallet identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
-      ownerType: { type: string, required: true, description: "Owner entity type" }
+      ownerType: { $ref: '../currency-api.yaml#/components/schemas/WalletOwnerType', required: true, description: "Owner entity type" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID for realm-scoped wallets" }
-      status: { type: string, required: true, description: "Wallet status (active, frozen, closed)" }
+      status: { $ref: '../currency-api.yaml#/components/schemas/WalletStatus', required: true, description: "Wallet status" }
       createdAt: { type: string, format: date-time, required: true, description: "When the wallet was created" }
 
 paths: {}
