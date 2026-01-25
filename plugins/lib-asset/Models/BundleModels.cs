@@ -10,7 +10,7 @@ public sealed class BundleMetadata
     /// <summary>
     /// Unique bundle identifier.
     /// </summary>
-    public required string BundleId { get; init; }
+    public required Guid BundleId { get; init; }
 
     /// <summary>
     /// Bundle content version string.
@@ -128,7 +128,7 @@ public sealed class BundleMetadata
     {
         return new BundleSummary
         {
-            BundleId = BundleId,
+            BundleId = BundleId.ToString(),
             BundleType = BundleType,
             Version = Version,
             AssetCount = AssetIds.Count,
@@ -145,7 +145,7 @@ public sealed class BundleMetadata
     {
         return new Asset.BundleInfo
         {
-            BundleId = BundleId,
+            BundleId = BundleId.ToString(),
             BundleType = BundleType,
             Version = Version,
             MetadataVersion = MetadataVersion,
@@ -240,7 +240,7 @@ public sealed class StoredSourceBundleReference
     /// <summary>
     /// Source bundle identifier.
     /// </summary>
-    public required string BundleId { get; init; }
+    public required Guid BundleId { get; init; }
 
     /// <summary>
     /// Version of source bundle at composition time.
@@ -264,7 +264,7 @@ public sealed class StoredSourceBundleReference
     {
         return new SourceBundleReference
         {
-            BundleId = BundleId,
+            BundleId = BundleId.ToString(),
             Version = Version,
             AssetIds = AssetIds,
             ContentHash = ContentHash
@@ -306,12 +306,12 @@ public sealed class BundleCreationJob
     /// <summary>
     /// Unique job identifier.
     /// </summary>
-    public required string JobId { get; init; }
+    public required Guid JobId { get; init; }
 
     /// <summary>
     /// Target bundle identifier.
     /// </summary>
-    public required string BundleId { get; init; }
+    public required Guid BundleId { get; init; }
 
     /// <summary>
     /// Bundle version.
@@ -393,12 +393,12 @@ public sealed class BundleUploadSession
     /// <summary>
     /// Upload session identifier.
     /// </summary>
-    public required string UploadId { get; init; }
+    public required Guid UploadId { get; init; }
 
     /// <summary>
     /// Expected bundle ID.
     /// </summary>
-    public required string BundleId { get; init; }
+    public required Guid BundleId { get; init; }
 
     /// <summary>
     /// Filename being uploaded.
@@ -451,7 +451,7 @@ public sealed class StoredBundleVersionRecord
     /// <summary>
     /// Bundle identifier.
     /// </summary>
-    public required string BundleId { get; init; }
+    public required Guid BundleId { get; init; }
 
     /// <summary>
     /// Metadata version number.

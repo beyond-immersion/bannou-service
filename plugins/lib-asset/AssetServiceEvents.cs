@@ -181,7 +181,7 @@ public partial class AssetService
                 {
                     entries.Add((asset, sourceBundle));
                 }
-                assetsBySourceBundle[sourceBundle.BundleId] = entries;
+                assetsBySourceBundle[sourceBundle.BundleId.ToString()] = entries;
             }
         }
 
@@ -215,7 +215,7 @@ public partial class AssetService
             // Process assets from source bundles - stream one bundle at a time
             foreach (var (sourceBundleId, assets) in assetsBySourceBundle)
             {
-                var sourceBundle = sourceBundles.First(b => b.BundleId == sourceBundleId);
+                var sourceBundle = sourceBundles.First(b => b.BundleId.ToString() == sourceBundleId);
 
                 // Use streaming download to get bundle data
                 // Note: BannouBundleReader requires seekable stream for random access,
@@ -327,12 +327,12 @@ public partial class AssetService
 
         // Build provenance references
         var sourceBundleRefs = sourceBundles
-            .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId))
+            .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId.ToString()))
             .Select(sb => new StoredSourceBundleReference
             {
                 BundleId = sb.BundleId,
                 Version = sb.Version,
-                AssetIds = provenanceByBundle[sb.BundleId],
+                AssetIds = provenanceByBundle[sb.BundleId.ToString()],
                 ContentHash = sb.StorageKey
             })
             .ToList();
@@ -343,7 +343,7 @@ public partial class AssetService
         var metabundleKey = $"{_configuration.BundleKeyPrefix}{request.MetabundleId}";
         var metabundleMetadata = new BundleMetadata
         {
-            BundleId = request.MetabundleId,
+            BundleId = Guid.Parse(request.MetabundleId),
             Version = request.Version ?? "1.0.0",
             BundleType = BundleType.Metabundle,
             Realm = request.Realm,
@@ -379,7 +379,7 @@ public partial class AssetService
                 Version = request.Version ?? "1.0.0",
                 Realm = request.Realm,
                 SourceBundleCount = sourceBundles.Count,
-                SourceBundleIds = sourceBundles.Select(sb => sb.BundleId).ToList(),
+                SourceBundleIds = sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
                 AssetCount = metabundleAssets.Count,
                 StandaloneAssetCount = standaloneAssetIds.Count,
                 Bucket = bucket,
@@ -396,7 +396,7 @@ public partial class AssetService
             StorageKey = metabundlePath,
             SourceBundles = sourceBundleRefs.Select(sb => new SourceBundleReferenceInternal
             {
-                BundleId = Guid.Parse(sb.BundleId),
+                BundleId = sb.BundleId,
                 Version = sb.Version,
                 AssetIds = sb.AssetIds.Select(Guid.Parse).ToList(),
                 ContentHash = sb.ContentHash

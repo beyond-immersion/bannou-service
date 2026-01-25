@@ -925,11 +925,11 @@ public partial class AssetService : IAssetService
             if (delegateToPool)
             {
                 // Queue bundle creation job to processing pool
-                var jobId = Guid.NewGuid().ToString();
+                var jobId = Guid.NewGuid();
                 var job = new BundleCreationJob
                 {
                     JobId = jobId,
-                    BundleId = body.BundleId,
+                    BundleId = Guid.Parse(body.BundleId),
                     Version = body.Version ?? "1.0.0",
                     AssetIds = body.AssetIds.ToList(),
                     Compression = body.Compression,
@@ -1014,7 +1014,7 @@ public partial class AssetService : IAssetService
             // Store bundle metadata
             var bundleMetadata = new BundleMetadata
             {
-                BundleId = body.BundleId,
+                BundleId = Guid.Parse(body.BundleId),
                 Version = body.Version ?? "1.0.0",
                 BundleType = BundleType.Source,
                 Realm = body.Realm ?? "shared",
@@ -1318,8 +1318,8 @@ public partial class AssetService : IAssetService
             // Store upload session for validation on completion
             var uploadSession = new BundleUploadSession
             {
-                UploadId = uploadId,
-                BundleId = body.ManifestPreview.BundleId,
+                UploadId = uploadIdGuid,
+                BundleId = Guid.Parse(body.ManifestPreview.BundleId),
                 Filename = sanitizedFilename,
                 ContentType = contentType,
                 SizeBytes = body.Size,
@@ -1503,12 +1503,12 @@ public partial class AssetService : IAssetService
                         versions = new List<(string BundleId, string ContentHash)>();
                         assetsByPlatformId[asset.AssetId] = versions;
                     }
-                    versions.Add((sourceBundle.BundleId, asset.ContentHash));
+                    versions.Add((sourceBundle.BundleId.ToString(), asset.ContentHash));
 
                     // Deduplicate by content hash
                     if (!assetsByHash.ContainsKey(asset.ContentHash))
                     {
-                        assetsByHash[asset.ContentHash] = (asset, sourceBundle.BundleId);
+                        assetsByHash[asset.ContentHash] = (asset, sourceBundle.BundleId.ToString());
                     }
                 }
             }
@@ -1626,7 +1626,7 @@ public partial class AssetService : IAssetService
             foreach (var (entry, sourceBundleId) in assetsToInclude)
             {
                 // Get source bundle info
-                var sourceBundle = sourceBundles.First(b => b.BundleId == sourceBundleId);
+                var sourceBundle = sourceBundles.First(b => b.BundleId.ToString() == sourceBundleId);
 
                 // Download source bundle and extract asset data
                 using var sourceBundleStream = await _storageProvider.GetObjectAsync(
@@ -1699,12 +1699,12 @@ public partial class AssetService : IAssetService
 
             // Build provenance references
             var sourceBundleRefs = sourceBundles
-                .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId))
+                .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId.ToString()))
                 .Select(sb => new StoredSourceBundleReference
                 {
                     BundleId = sb.BundleId,
                     Version = sb.Version,
-                    AssetIds = provenanceByBundle[sb.BundleId],
+                    AssetIds = provenanceByBundle[sb.BundleId.ToString()],
                     ContentHash = sb.StorageKey // Use storage key as proxy for content hash
                 })
                 .ToList();
@@ -1729,7 +1729,7 @@ public partial class AssetService : IAssetService
             // Store metabundle metadata
             var metabundleMetadata = new BundleMetadata
             {
-                BundleId = body.MetabundleId,
+                BundleId = Guid.Parse(body.MetabundleId),
                 Version = body.Version ?? "1.0.0",
                 BundleType = BundleType.Metabundle,
                 Realm = body.Realm,
@@ -1769,7 +1769,7 @@ public partial class AssetService : IAssetService
                     Version = body.Version ?? "1.0.0",
                     Realm = body.Realm,
                     SourceBundleCount = sourceBundles.Count,
-                    SourceBundleIds = sourceBundles.Select(sb => sb.BundleId).ToList(),
+                    SourceBundleIds = sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
                     AssetCount = metabundleAssets.Count,
                     StandaloneAssetCount = standalonesToInclude.Count,
                     Bucket = bucket,
@@ -2537,7 +2537,7 @@ public partial class AssetService : IAssetService
     private async Task AddBundleToAssetIndexAsync(
         IStateStore<AssetBundleIndex> indexStore,
         string indexKey,
-        string bundleId,
+        Guid bundleId,
         CancellationToken cancellationToken)
     {
         var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
@@ -2549,13 +2549,12 @@ public partial class AssetService : IAssetService
             index ??= new AssetBundleIndex();
 
             // Already indexed
-            var bundleGuid = Guid.Parse(bundleId);
-            if (index.BundleIds.Contains(bundleGuid))
+            if (index.BundleIds.Contains(bundleId))
             {
                 return;
             }
 
-            index.BundleIds.Add(bundleGuid);
+            index.BundleIds.Add(bundleId);
 
             if (etag == null)
             {
@@ -2936,7 +2935,7 @@ public partial class AssetService : IAssetService
             // Save version history record
             var versionRecord = new Models.StoredBundleVersionRecord
             {
-                BundleId = body.BundleId,
+                BundleId = Guid.Parse(body.BundleId),
                 Version = bundle.MetadataVersion,
                 CreatedAt = bundle.UpdatedAt.Value,
                 CreatedBy = bundle.Owner ?? "system",
@@ -3073,7 +3072,7 @@ public partial class AssetService : IAssetService
                 // Save version history
                 var versionRecord = new Models.StoredBundleVersionRecord
                 {
-                    BundleId = body.BundleId,
+                    BundleId = Guid.Parse(body.BundleId),
                     Version = bundle.MetadataVersion,
                     CreatedAt = deletedAt,
                     CreatedBy = bundle.Owner ?? "system",
@@ -3185,7 +3184,7 @@ public partial class AssetService : IAssetService
             // Save version history
             var versionRecord = new Models.StoredBundleVersionRecord
             {
-                BundleId = body.BundleId,
+                BundleId = Guid.Parse(body.BundleId),
                 Version = bundle.MetadataVersion,
                 CreatedAt = restoredAt,
                 CreatedBy = bundle.Owner ?? "system",
@@ -3510,7 +3509,7 @@ public partial class AssetService : IAssetService
     /// <summary>
     /// Helper to remove bundle from asset-bundle reverse index.
     /// </summary>
-    private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, CancellationToken cancellationToken)
+    private async Task RemoveFromBundleIndexAsync(Guid bundleId, List<string> assetIds, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
 
@@ -3519,10 +3518,9 @@ public partial class AssetService : IAssetService
             var indexKey = $"asset-bundle:{assetId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken);
 
-            var bundleGuid = Guid.Parse(bundleId);
-            if (index != null && index.BundleIds.Contains(bundleGuid))
+            if (index != null && index.BundleIds.Contains(bundleId))
             {
-                index.BundleIds.Remove(bundleGuid);
+                index.BundleIds.Remove(bundleId);
 
                 if (index.BundleIds.Count == 0)
                 {
@@ -3634,10 +3632,10 @@ public partial class AssetService : IAssetService
         // Build provenance data for response
         var sourceBundleRefs = sourceBundles.Select(sb => new SourceBundleReference
         {
-            BundleId = sb.BundleId,
+            BundleId = sb.BundleId.ToString(),
             Version = sb.Version,
             AssetIds = assetsToInclude
-                .Where(a => a.SourceBundleId == sb.BundleId)
+                .Where(a => a.SourceBundleId == sb.BundleId.ToString())
                 .Select(a => a.Entry.AssetId)
                 .ToList(),
             ContentHash = sb.StorageKey // Use storage key as proxy for content hash
