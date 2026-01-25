@@ -13,13 +13,17 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
 | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
+| `ACCOUNT_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for list operations when not specified |
 | `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
+| `ACCOUNT_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for list operations |
 
 ### Achievement
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | bool | `true` | Automatically sync achievements to platforms when unlocked |
+| `ACHIEVEMENT_EARNED_COUNT_RETRY_ATTEMPTS` | int | `3` | Maximum retry attempts for ETag conflicts when incrementing ... |
+| `ACHIEVEMENT_LOCK_EXPIRY_SECONDS` | int | `30` | Expiry time in seconds for distributed locks on achievement ... |
 | `ACHIEVEMENT_MOCK_PLATFORM_SYNC` | bool | `false` | Enable mock mode for platform sync (returns success without ... |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (optional - not implemented) |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (optional - not implemente... |
@@ -76,6 +80,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | int | `5000` | Maximum records to delete per cleanup invocation |
+| `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE` | int | `100` | Number of records to delete per iteration within a cleanup b... |
 | `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | int | `90` | Days to retain controller history records (0 = indefinite re... |
 | `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds to flush event buffer |
 | `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | int | `10` | Base lock expiry time in seconds for event buffer flush oper... |
@@ -83,6 +88,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ANALYTICS_GLICKO2_DEFAULT_DEVIATION` | double | `350.0` | Default rating deviation for new entities (higher = less cer... |
 | `ANALYTICS_GLICKO2_DEFAULT_RATING` | double | `1500.0` | Default Glicko-2 rating for new entities |
 | `ANALYTICS_GLICKO2_DEFAULT_VOLATILITY` | double | `0.06` | Default volatility for new entities (0.06 is standard) |
+| `ANALYTICS_GLICKO2_MAX_RATING` | double | `4000.0` | Maximum allowed Glicko-2 rating (ceiling for clamping) |
+| `ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS` | int | `100` | Maximum iterations for Glicko-2 volatility convergence algor... |
+| `ANALYTICS_GLICKO2_MIN_DEVIATION` | double | `30.0` | Minimum rating deviation (prevents overconfidence) |
+| `ANALYTICS_GLICKO2_MIN_RATING` | double | `100.0` | Minimum allowed Glicko-2 rating (floor for clamping) |
 | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | double | `0.5` | Glicko-2 system constant (tau) - controls volatility change ... |
 | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | double | `1e-06` | Convergence tolerance for Glicko-2 volatility iteration (sma... |
 | `ANALYTICS_MILESTONE_THRESHOLDS` | string | `10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000` | Comma-separated list of score thresholds that trigger milest... |
@@ -239,8 +248,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | int | `30` | Grace period in days before cleanup of dead character refere... |
+| `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | int | `5` | Maximum number of backstory points to include in character c... |
+| `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | int | `10` | Maximum number of major life events to include in character ... |
 | `CHARACTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size when not specified |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
+| `CHARACTER_PERSONALITY_TRAIT_THRESHOLD` | double | `0.3` | Threshold for personality trait classification (values above... |
 | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating realm character index (... |
 | `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
 
@@ -272,6 +284,16 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY` | double | `0.15` | Base chance for trait shift per evolution event (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_DEFEAT_STYLE_TRANSITION_PROBABILITY` | double | `0.4` | Probability for combat style transitions after defeat (0.0-1... |
+| `CHARACTER_PERSONALITY_COMBAT_DEFENSIVE_SHIFT_PROBABILITY` | double | `0.5` | Probability for defensive shift after injury (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_INTENSE_SHIFT_MULTIPLIER` | double | `1.5` | Multiplier for intense stat shifts (near-death, heavy defeat... |
+| `CHARACTER_PERSONALITY_COMBAT_MILDEST_SHIFT_MULTIPLIER` | double | `0.3` | Multiplier for mildest stat shifts (minor injuries) |
+| `CHARACTER_PERSONALITY_COMBAT_MILD_SHIFT_MULTIPLIER` | double | `0.5` | Multiplier for mild stat shifts (standard victories/defeats) |
+| `CHARACTER_PERSONALITY_COMBAT_ROLE_TRANSITION_PROBABILITY` | double | `0.4` | Base probability for combat role transitions (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_STYLE_TRANSITION_PROBABILITY` | double | `0.3` | Base probability for combat style transitions (0.0-1.0) |
+| `CHARACTER_PERSONALITY_COMBAT_VICTORY_BALANCED_TRANSITION_PROBABILITY` | double | `0.2` | Probability for balanced style to become aggressive after vi... |
+| `CHARACTER_PERSONALITY_MAX_BATCH_SIZE` | int | `100` | Maximum number of characters allowed in batch operations |
+| `CHARACTER_PERSONALITY_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
 | `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | double | `0.1` | Maximum magnitude of trait change per evolution event |
 | `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | double | `0.02` | Minimum magnitude of trait change per evolution event |
 
@@ -279,28 +301,28 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `CONNECT_AUTHENTICATED_SERVICES` | string[] | `['account', 'behavior', 'permission', 'gamesession']` | Additional services available to authenticated connections |
-| `CONNECT_BINARY_PROTOCOL_VERSION` | string | `2.0` | Binary protocol version identifier |
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
+| `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between connection cleanup runs |
 | `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
 | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
-| `CONNECT_DEFAULT_SERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
+| `CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS` | int | `30` | Default timeout in seconds for RPC calls when not specified |
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
 | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
 | `CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS` | int | `120` | Timeout in seconds for HTTP client requests to backend servi... |
+| `CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES` | int | `30` | Timeout in minutes after which inactive connections are clea... |
 | `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | `amqp://guest:guest@rabbitmq:5672` (insecure) | RabbitMQ connection string for client event subscriptions |
+| `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for pending messages awaiting acknowledgm... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | int | `1` | Additional minutes added to reconnection window on each exte... |
 | `CONNECT_RECONNECTION_WINDOW_SECONDS` | int | `300` | Window for client reconnection after disconnect in seconds (... |
+| `CONNECT_RPC_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between pending RPC cleanup runs |
 | `CONNECT_SERVER_SALT` | string | `bannou-dev-connect-salt-change-in-production` | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
-| `CONNECT_URL` | string | **REQUIRED** | WebSocket URL for client reconnection. Defaults to wss://{BA... |
 
 ### Contract
 
@@ -309,6 +331,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | int | `15` | Staleness threshold in seconds for cached clause validation ... |
 | `CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS` | int | `7` | Default number of days for parties to consent before proposa... |
 | `CONTRACT_DEFAULT_ENFORCEMENT_MODE` | string | `event_only` | Default enforcement mode for contracts (advisory, event_only... |
+| `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for idempotency key storage (default 24 hours... |
+| `CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Lock timeout in seconds for index update distributed locks |
+| `CONTRACT_LOCK_TIMEOUT_SECONDS` | int | `60` | Lock timeout in seconds for contract-level distributed locks |
 | `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | int | `100` | Maximum active contracts per entity (0 for unlimited) |
 | `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | int | `50` | Maximum number of milestones allowed in a template |
 | `CONTRACT_MAX_PARTIES_PER_CONTRACT` | int | `20` | Maximum number of parties allowed in a single contract |
@@ -321,16 +346,23 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CURRENCY_AUTOGAIN_BATCH_SIZE` | int | `1000` | For task mode - batch size per processing cycle |
+| `CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for autogain distributed locks |
 | `CURRENCY_AUTOGAIN_PROCESSING_MODE` | string | `lazy` | How autogain is calculated (lazy = on-demand at query time, ... |
 | `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | int | `60000` | For task mode - how often to process autogain in millisecond... |
 | `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before first autogain task cycle (allows se... |
 | `CURRENCY_BALANCE_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for balance cache entries |
+| `CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for balance-level distributed locks |
+| `CURRENCY_CONVERSION_ROUNDING_PRECISION` | int | `8` | Number of decimal places for currency conversion rounding |
 | `CURRENCY_DEFAULT_ALLOW_NEGATIVE` | bool | `false` | Default for currencies that do not specify allowNegative |
 | `CURRENCY_DEFAULT_PRECISION` | string | `decimal_2` | Default precision for currencies that do not specify |
+| `CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts for exchange rate update with optimis... |
 | `CURRENCY_HOLD_CACHE_TTL_SECONDS` | int | `120` | TTL in seconds for hold cache entries |
+| `CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for hold-level distributed locks |
 | `CURRENCY_HOLD_MAX_DURATION_DAYS` | int | `7` | Maximum duration for authorization holds in days |
 | `CURRENCY_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | How long to cache idempotency keys in seconds |
+| `CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for index update distributed locks |
 | `CURRENCY_TRANSACTION_RETENTION_DAYS` | int | `365` | How many days to retain detailed transaction history |
+| `CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for wallet-level distributed locks |
 
 ### Documentation
 
@@ -345,13 +377,19 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | int | `3` | Maximum concurrent sync operations |
 | `DOCUMENTATION_MAX_CONTENT_SIZE_BYTES` | int | `524288` | Maximum document content size in bytes (500KB default) |
 | `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | int | `1000` | Maximum documents per sync operation |
+| `DOCUMENTATION_MAX_FETCH_LIMIT` | int | `1000` | Maximum documents to fetch when filtering/sorting in memory |
 | `DOCUMENTATION_MAX_IMPORT_DOCUMENTS` | int | `0` | Maximum documents per import (0 = unlimited) |
+| `DOCUMENTATION_MAX_RELATED_DOCUMENTS` | int | `5` | Maximum related documents to return for standard depth |
+| `DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED` | int | `10` | Maximum related documents to return for extended depth |
 | `DOCUMENTATION_MAX_SEARCH_RESULTS` | int | `20` | Maximum search results to return |
 | `DOCUMENTATION_MIN_RELEVANCE_SCORE` | double | `0.3` | Default minimum relevance score for search results |
 | `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | int | `30` | Interval in seconds between repository sync opportunity chec... |
 | `DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS` | int | `300` | TTL for search result caching |
 | `DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP` | bool | `true` | Whether to rebuild search index on service startup |
 | `DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before search index rebuild starts (allows ... |
+| `DOCUMENTATION_SEARCH_SNIPPET_LENGTH` | int | `200` | Length in characters for search result snippets |
+| `DOCUMENTATION_STATS_SAMPLE_SIZE` | int | `10` | Number of documents to sample for namespace statistics |
+| `DOCUMENTATION_SYNC_LOCK_TTL_SECONDS` | int | `1800` | TTL in seconds for repository sync distributed lock |
 | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | int | `5` | How often to check for repos needing sync |
 | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | bool | `true` | Enable background sync scheduler |
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
@@ -361,11 +399,14 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ESCROW_DEFAULT_LIST_LIMIT` | int | `50` | Default limit for listing escrows when not specified |
 | `ESCROW_DEFAULT_TIMEOUT` | string | `P7D` | Default escrow expiration if not specified (ISO 8601 duratio... |
 | `ESCROW_EXPIRATION_BATCH_SIZE` | int | `100` | Batch size for expiration processing |
 | `ESCROW_EXPIRATION_CHECK_INTERVAL` | string | `PT1M` | How often to check for expired escrows (ISO 8601 duration) |
 | `ESCROW_EXPIRATION_GRACE_PERIOD` | string | `PT1H` | Grace period after expiration before auto-refund (ISO 8601 d... |
+| `ESCROW_IDEMPOTENCY_TTL_HOURS` | int | `24` | TTL in hours for idempotency key storage |
 | `ESCROW_MAX_ASSETS_PER_DEPOSIT` | int | `50` | Maximum asset lines per deposit |
+| `ESCROW_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency operations |
 | `ESCROW_MAX_PARTIES` | int | `10` | Maximum parties per escrow |
 | `ESCROW_MAX_PENDING_PER_PARTY` | int | `100` | Maximum concurrent pending escrows per party |
 | `ESCROW_MAX_TIMEOUT` | string | `P30D` | Maximum allowed escrow duration (ISO 8601 duration) |
@@ -693,9 +734,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 519
-- **Required (no default)**: 40
-- **Optional (has default)**: 479
+- **Total properties**: 560
+- **Required (no default)**: 39
+- **Optional (has default)**: 521
 
 ## Environment Variable Naming Convention
 

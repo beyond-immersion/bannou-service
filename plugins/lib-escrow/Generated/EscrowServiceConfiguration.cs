@@ -125,4 +125,22 @@ public class EscrowServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MaxPendingPerParty { get; set; } = 100;
 
+    /// <summary>
+    /// TTL in hours for idempotency key storage
+    /// Environment variable: ESCROW_IDEMPOTENCY_TTL_HOURS
+    /// </summary>
+    public int IdempotencyTtlHours { get; set; } = 24;
+
+    /// <summary>
+    /// Maximum retry attempts for optimistic concurrency operations
+    /// Environment variable: ESCROW_MAX_CONCURRENCY_RETRIES
+    /// </summary>
+    public int MaxConcurrencyRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Default limit for listing escrows when not specified
+    /// Environment variable: ESCROW_DEFAULT_LIST_LIMIT
+    /// </summary>
+    public int DefaultListLimit { get; set; } = 50;
+
 }

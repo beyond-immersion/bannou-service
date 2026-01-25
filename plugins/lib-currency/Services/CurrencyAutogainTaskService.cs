@@ -206,7 +206,7 @@ public class CurrencyAutogainTaskService : BackgroundService
             // Acquire lock to prevent concurrent modification with lazy autogain path
             await using var lockResponse = await lockProvider.LockAsync(
                 "currency-autogain", $"{walletId}:{definition.DefinitionId}",
-                Guid.NewGuid().ToString(), 10, cancellationToken);
+                Guid.NewGuid().ToString(), _configuration.AutogainLockTimeoutSeconds, cancellationToken);
 
             if (!lockResponse.Success)
                 return false; // Skip this balance, will be processed next cycle

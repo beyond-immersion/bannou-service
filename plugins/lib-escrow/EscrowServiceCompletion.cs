@@ -21,7 +21,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -105,6 +105,8 @@ public partial class EscrowService
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     EscrowId = body.EscrowId,
+                    // releases are built from ReleaseAllocations on same model; FirstOrDefault
+                    // always finds the match. The null-coalesce satisfies the compiler but will never execute.
                     Recipients = releases.Select(r => new RecipientInfo
                     {
                         PartyId = r.RecipientPartyId,
@@ -130,7 +132,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to release escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to release escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
@@ -153,7 +156,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -225,6 +228,8 @@ public partial class EscrowService
                 }
 
                 // Publish refund event
+                // refunds are built from Deposits on same model; FirstOrDefault always finds the match.
+                // The null-coalesce satisfies the compiler but will never execute.
                 var refundEvent = new EscrowRefundedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -255,7 +260,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to refund escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to refund escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
@@ -278,7 +284,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -368,7 +374,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to cancel escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to cancel escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
@@ -391,7 +398,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -480,7 +487,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to dispute escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to dispute escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
@@ -503,7 +511,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -649,7 +657,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to resolve escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to resolve escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)

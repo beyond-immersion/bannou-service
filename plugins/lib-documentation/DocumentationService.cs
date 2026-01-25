@@ -443,7 +443,7 @@ public partial class DocumentationService : IDocumentationService
                         Summary = doc.Summary,
                         VoiceSummary = doc.VoiceSummary,
                         RelevanceScore = (float)result.RelevanceScore,
-                        MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm) }
+                        MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm, _configuration.SearchSnippetLength) }
                     }, doc.CreatedAt));
                 }
             }
@@ -522,8 +522,8 @@ public partial class DocumentationService : IDocumentationService
             var categoryFilter = body.Category == default ? null : body.Category.ToString();
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
-            // Fetch more documents if we need to filter/sort (max 1000 to prevent memory issues)
-            var fetchLimit = hasTags || body.SortBy != default ? 1000 : pageSize;
+            // Fetch more documents if we need to filter/sort (configurable max to prevent memory issues)
+            var fetchLimit = hasTags || body.SortBy != default ? _configuration.MaxFetchLimit : pageSize;
             var docIds = await _searchIndexService.ListDocumentIdsAsync(
                 namespaceId,
                 categoryFilter,
@@ -1607,6 +1607,8 @@ public partial class DocumentationService : IDocumentationService
             {
                 if (trashedDocIds.Count > 0)
                 {
+                    // GetWithETagAsync returns non-null etag when key exists (loaded above);
+                    // coalesce satisfies compiler's nullable analysis (will never execute)
                     var saveResult = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, trashEtag ?? string.Empty, cancellationToken);
                     if (saveResult == null)
                     {
@@ -1663,8 +1665,8 @@ public partial class DocumentationService : IDocumentationService
 
             if (docIds.Count > 0)
             {
-                // Sample a few recent documents to find last updated
-                foreach (var docId in docIds.Take(10))
+                // Sample recent documents to find last updated (configurable sample size)
+                foreach (var docId in docIds.Take(_configuration.StatsSampleSize))
                 {
                     var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
                     var doc = await docStore.GetAsync(docKey, cancellationToken);
@@ -1719,6 +1721,7 @@ public partial class DocumentationService : IDocumentationService
 
             if (docIds.Add(documentId))
             {
+                // etag is null when key doesn't exist yet; passing empty string signals "create new" semantics
                 var result = await guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
                 if (result != null)
                 {
@@ -1741,6 +1744,7 @@ public partial class DocumentationService : IDocumentationService
 
             if (allNamespaces.Add(namespaceId))
             {
+                // nsEtag is null when registry doesn't exist yet; passing empty string signals "create new" semantics
                 var result = await stringSetStore.TrySaveAsync(ALL_NAMESPACES_KEY, allNamespaces, nsEtag ?? string.Empty, cancellationToken);
                 if (result != null)
                 {
@@ -1769,6 +1773,8 @@ public partial class DocumentationService : IDocumentationService
 
             if (docIds != null && docIds.Remove(documentId))
             {
+                // GetWithETagAsync returns non-null etag when key exists (checked above);
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 var result = await guidSetStore.TrySaveAsync(indexKey, docIds, etag ?? string.Empty, cancellationToken);
                 if (result != null)
                 {
@@ -1801,6 +1807,7 @@ public partial class DocumentationService : IDocumentationService
             if (!trashedDocIds.Contains(documentId))
             {
                 trashedDocIds.Add(documentId);
+                // etag is null when trashcan doesn't exist yet; passing empty string signals "create new" semantics
                 var result = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
                 if (result != null)
                 {
@@ -1833,6 +1840,8 @@ public partial class DocumentationService : IDocumentationService
             {
                 if (trashedDocIds.Count > 0)
                 {
+                    // GetWithETagAsync returns non-null etag when key exists (checked above);
+                    // coalesce satisfies compiler's nullable analysis (will never execute)
                     var result = await guidListStore.TrySaveAsync(trashListKey, trashedDocIds, etag ?? string.Empty, cancellationToken);
                     if (result != null)
                     {
@@ -1958,7 +1967,9 @@ public partial class DocumentationService : IDocumentationService
         CancellationToken cancellationToken)
     {
         var summaries = new List<DocumentSummary>();
-        var maxRelated = depth == RelatedDepth.Extended ? 10 : 5;
+        var maxRelated = depth == RelatedDepth.Extended
+            ? _configuration.MaxRelatedDocumentsExtended
+            : _configuration.MaxRelatedDocuments;
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         foreach (var relatedId in relatedIds.Take(maxRelated))
@@ -2832,7 +2843,7 @@ public partial class DocumentationService : IDocumentationService
             StateStoreDefinitions.Documentation,
             lockResourceId,
             lockOwner,
-            1800, // 30 minutes max sync time
+            _configuration.SyncLockTtlSeconds,
             cancellationToken);
 
         if (!lockResponse.Success)

@@ -20,7 +20,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -164,7 +164,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to verify condition for escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to verify condition for escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
@@ -187,7 +188,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -301,7 +302,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to validate escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to validate escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)
@@ -324,7 +326,7 @@ public partial class EscrowService
         {
             var agreementKey = GetAgreementKey(body.EscrowId);
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
                 var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey, cancellationToken);
 
@@ -442,7 +444,8 @@ public partial class EscrowService
                 });
             }
 
-            _logger.LogWarning("Failed to reaffirm escrow {EscrowId} after 3 attempts due to concurrent modifications", body.EscrowId);
+            _logger.LogWarning("Failed to reaffirm escrow {EscrowId} after {MaxRetries} attempts due to concurrent modifications",
+                body.EscrowId, _configuration.MaxConcurrencyRetries);
             return (StatusCodes.Conflict, null);
         }
         catch (Exception ex)

@@ -94,7 +94,7 @@ public partial class EscrowService
     {
         var agreementKey = GetAgreementKey(escrowId);
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey);
 
@@ -175,8 +175,8 @@ public partial class EscrowService
             return;
         }
 
-        _logger.LogWarning("Failed to transition escrow {EscrowId} to Finalizing after 3 attempts for contract {ContractId}",
-            escrowId, contractId);
+        _logger.LogWarning("Failed to transition escrow {EscrowId} to Finalizing after {MaxRetries} attempts for contract {ContractId}",
+            escrowId, _configuration.MaxConcurrencyRetries, contractId);
     }
 
     /// <summary>
@@ -188,7 +188,7 @@ public partial class EscrowService
     {
         var agreementKey = GetAgreementKey(escrowId);
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (agreementModel, etag) = await AgreementStore.GetWithETagAsync(agreementKey);
 
@@ -282,7 +282,7 @@ public partial class EscrowService
             return;
         }
 
-        _logger.LogWarning("Failed to refund escrow {EscrowId} after 3 attempts for contract {ContractId}",
-            escrowId, contractId);
+        _logger.LogWarning("Failed to refund escrow {EscrowId} after {MaxRetries} attempts for contract {ContractId}",
+            escrowId, _configuration.MaxConcurrencyRetries, contractId);
     }
 }

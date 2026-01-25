@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +24,6 @@ namespace BeyondImmersion.BannouService.Currency;
 public partial class CurrencyService : ICurrencyService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IServiceNavigator _navigator;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CurrencyService> _logger;
     private readonly CurrencyServiceConfiguration _configuration;
@@ -51,14 +49,12 @@ public partial class CurrencyService : ICurrencyService
     /// </summary>
     public CurrencyService(
         IMessageBus messageBus,
-        IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
         ILogger<CurrencyService> logger,
         CurrencyServiceConfiguration configuration,
         IDistributedLockProvider lockProvider)
     {
         _messageBus = messageBus;
-        _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
@@ -530,6 +526,8 @@ public partial class CurrencyService : ICurrencyService
             wallet.FrozenReason = body.Reason;
             wallet.FrozenAt = DateTimeOffset.UtcNow;
 
+            // GetWithETagAsync returns non-null etag when entity exists (checked above);
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var newEtag = await store.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
@@ -582,6 +580,8 @@ public partial class CurrencyService : ICurrencyService
             wallet.FrozenReason = null;
             wallet.FrozenAt = null;
 
+            // GetWithETagAsync returns non-null etag when entity exists (checked above);
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var newEtag = await store.TrySaveAsync(key, wallet, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
@@ -635,7 +635,7 @@ public partial class CurrencyService : ICurrencyService
 
             // Acquire wallet lock to prevent concurrent close/transfer operations
             await using var walletLock = await _lockProvider.LockAsync(
-                "currency-wallet", body.WalletId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+                "currency-wallet", body.WalletId.ToString(), Guid.NewGuid().ToString(), _configuration.WalletLockTimeoutSeconds, cancellationToken);
             if (!walletLock.Success)
             {
                 _logger.LogWarning("Could not acquire wallet lock for close on wallet {WalletId}", body.WalletId);
@@ -674,6 +674,8 @@ public partial class CurrencyService : ICurrencyService
             }
 
             wallet.Status = WalletStatus.Closed;
+            // GetWithETagAsync returns non-null etag when entity exists (checked above);
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var newWalletEtag = await store.TrySaveAsync(walletKey, wallet, walletEtag ?? string.Empty, cancellationToken);
             if (newWalletEtag == null)
             {
@@ -738,7 +740,7 @@ public partial class CurrencyService : ICurrencyService
             }
 
             // Reset earn caps if needed
-            ResetEarnCapsIfNeeded(balance, definition);
+            ResetEarnCapsIfNeeded(balance);
 
             var lockedAmount = await GetTotalHeldAmountAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
 
@@ -845,7 +847,7 @@ public partial class CurrencyService : ICurrencyService
             // Acquire distributed lock for atomic balance modification
             var balanceLockKey = $"{body.WalletId}:{body.CurrencyDefinitionId}";
             await using var lockResponse = await _lockProvider.LockAsync(
-                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), _configuration.BalanceLockTimeoutSeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 _logger.LogWarning("Could not acquire balance lock for wallet {WalletId}, currency {CurrencyId}", body.WalletId, body.CurrencyDefinitionId);
@@ -853,7 +855,7 @@ public partial class CurrencyService : ICurrencyService
             }
 
             var balance = await GetOrCreateBalanceAsync(body.WalletId.ToString(), body.CurrencyDefinitionId.ToString(), cancellationToken);
-            ResetEarnCapsIfNeeded(balance, definition);
+            ResetEarnCapsIfNeeded(balance);
 
             var creditAmount = body.Amount;
             var earnCapApplied = false;
@@ -1006,7 +1008,7 @@ public partial class CurrencyService : ICurrencyService
             // Acquire distributed lock for atomic balance modification
             var balanceLockKey = $"{body.WalletId}:{body.CurrencyDefinitionId}";
             await using var lockResponse = await _lockProvider.LockAsync(
-                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), _configuration.BalanceLockTimeoutSeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 _logger.LogWarning("Could not acquire balance lock for wallet {WalletId}, currency {CurrencyId}", body.WalletId, body.CurrencyDefinitionId);
@@ -1109,7 +1111,7 @@ public partial class CurrencyService : ICurrencyService
             var secondLockKey = string.CompareOrdinal(sourceLockKey, targetLockKey) <= 0 ? targetLockKey : sourceLockKey;
 
             await using var firstLock = await _lockProvider.LockAsync(
-                "currency-balance", firstLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+                "currency-balance", firstLockKey, Guid.NewGuid().ToString(), _configuration.BalanceLockTimeoutSeconds, cancellationToken);
             if (!firstLock.Success)
             {
                 _logger.LogWarning("Could not acquire first balance lock for transfer {FirstKey}", firstLockKey);
@@ -1117,7 +1119,7 @@ public partial class CurrencyService : ICurrencyService
             }
 
             await using var secondLock = await _lockProvider.LockAsync(
-                "currency-balance", secondLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+                "currency-balance", secondLockKey, Guid.NewGuid().ToString(), _configuration.BalanceLockTimeoutSeconds, cancellationToken);
             if (!secondLock.Success)
             {
                 _logger.LogWarning("Could not acquire second balance lock for transfer {SecondKey}", secondLockKey);
@@ -1297,7 +1299,7 @@ public partial class CurrencyService : ICurrencyService
 
             return (StatusCodes.OK, new CalculateConversionResponse
             {
-                ToAmount = Math.Round(toAmount, 8, MidpointRounding.ToEven),
+                ToAmount = Math.Round(toAmount, _configuration.ConversionRoundingPrecision, MidpointRounding.ToEven),
                 EffectiveRate = rate,
                 BaseCurrency = baseCurrency,
                 ConversionPath = new List<ConversionStep>
@@ -1346,7 +1348,7 @@ public partial class CurrencyService : ICurrencyService
             var (rate, baseCurrency, error) = CalculateEffectiveRate(fromDef, toDef);
             if (error is not null) return ((StatusCodes)422, null);
 
-            var toAmount = Math.Round(body.FromAmount * rate, 8, MidpointRounding.ToEven);
+            var toAmount = Math.Round(body.FromAmount * rate, _configuration.ConversionRoundingPrecision, MidpointRounding.ToEven);
 
             // Pre-validate wallet cap on target currency before debiting source
             if (toDef.PerWalletCap is not null &&
@@ -1487,7 +1489,7 @@ public partial class CurrencyService : ICurrencyService
             var store = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
             var key = $"{DEF_PREFIX}{body.CurrencyDefinitionId}";
 
-            for (var attempt = 0; attempt < 3; attempt++)
+            for (var attempt = 0; attempt < _configuration.ExchangeRateUpdateMaxRetries; attempt++)
             {
                 var (definition, etag) = await store.GetWithETagAsync(key, cancellationToken);
 
@@ -1499,6 +1501,8 @@ public partial class CurrencyService : ICurrencyService
                 definition.ExchangeRateUpdatedAt = DateTimeOffset.UtcNow;
                 definition.ModifiedAt = DateTimeOffset.UtcNow;
 
+                // GetWithETagAsync returns non-null etag when entity exists (checked above);
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 var saveResult = await store.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
                 if (saveResult != null)
                 {
@@ -1931,7 +1935,7 @@ public partial class CurrencyService : ICurrencyService
             // Acquire balance lock to serialize holds against balance changes
             var balanceLockKey = $"{body.WalletId}:{body.CurrencyDefinitionId}";
             await using var lockResponse = await _lockProvider.LockAsync(
-                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), 30, cancellationToken);
+                "currency-balance", balanceLockKey, Guid.NewGuid().ToString(), _configuration.BalanceLockTimeoutSeconds, cancellationToken);
             if (!lockResponse.Success)
             {
                 _logger.LogWarning("Could not acquire balance lock for hold creation on wallet {WalletId}, currency {CurrencyId}",
@@ -2039,7 +2043,7 @@ public partial class CurrencyService : ICurrencyService
 
             // Acquire hold lock to prevent concurrent captures on the same hold
             await using var holdLock = await _lockProvider.LockAsync(
-                "currency-hold", body.HoldId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+                "currency-hold", body.HoldId.ToString(), Guid.NewGuid().ToString(), _configuration.HoldLockTimeoutSeconds, cancellationToken);
             if (!holdLock.Success)
             {
                 _logger.LogWarning("Could not acquire hold lock for capture on hold {HoldId}", body.HoldId);
@@ -2066,6 +2070,8 @@ public partial class CurrencyService : ICurrencyService
             hold.CapturedAmount = body.CaptureAmount;
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
+            // GetWithETagAsync returns non-null etag when entity exists (checked above);
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var newHoldEtag = await holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
             if (newHoldEtag == null)
             {
@@ -2157,6 +2163,8 @@ public partial class CurrencyService : ICurrencyService
             hold.Status = HoldStatus.Released;
             hold.CompletedAt = DateTimeOffset.UtcNow;
 
+            // GetWithETagAsync returns non-null etag when entity exists (checked above);
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var newHoldEtag = await holdStore.TrySaveAsync(holdKey, hold, holdEtag ?? string.Empty, cancellationToken);
             if (newHoldEtag == null)
             {
@@ -2445,7 +2453,7 @@ public partial class CurrencyService : ICurrencyService
         // Acquire autogain lock to prevent concurrent autogain application
         await using var autogainLock = await _lockProvider.LockAsync(
             "currency-autogain", $"{balance.WalletId}:{balance.CurrencyDefinitionId}",
-            Guid.NewGuid().ToString(), 10, ct);
+            Guid.NewGuid().ToString(), _configuration.AutogainLockTimeoutSeconds, ct);
         if (!autogainLock.Success)
             return balance; // Skip, will be applied on next access
 
@@ -2631,7 +2639,7 @@ public partial class CurrencyService : ICurrencyService
         return (effectiveRate, baseCurrencyCode, null);
     }
 
-    private static void ResetEarnCapsIfNeeded(BalanceModel balance, CurrencyDefinitionModel definition)
+    private static void ResetEarnCapsIfNeeded(BalanceModel balance)
     {
         var now = DateTimeOffset.UtcNow;
         if (balance.DailyResetAt <= now)
@@ -2735,7 +2743,7 @@ public partial class CurrencyService : ICurrencyService
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "currency-index", key, Guid.NewGuid().ToString(), 15, ct);
+            "currency-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire index lock for key {Key} in store {Store}", key, storeName);
@@ -2755,7 +2763,7 @@ public partial class CurrencyService : ICurrencyService
     private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "currency-index", key, Guid.NewGuid().ToString(), 15, ct);
+            "currency-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             _logger.LogDebug("Could not acquire index lock for removal on key {Key} in store {Store}", key, storeName);

@@ -119,4 +119,46 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int HoldCacheTtlSeconds { get; set; } = 120;
 
+    /// <summary>
+    /// Timeout in seconds for balance-level distributed locks
+    /// Environment variable: CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int BalanceLockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Timeout in seconds for hold-level distributed locks
+    /// Environment variable: CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int HoldLockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Timeout in seconds for wallet-level distributed locks
+    /// Environment variable: CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int WalletLockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Timeout in seconds for autogain distributed locks
+    /// Environment variable: CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int AutogainLockTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Timeout in seconds for index update distributed locks
+    /// Environment variable: CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int IndexLockTimeoutSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum retry attempts for exchange rate update with optimistic concurrency
+    /// Environment variable: CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES
+    /// </summary>
+    public int ExchangeRateUpdateMaxRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Number of decimal places for currency conversion rounding
+    /// Environment variable: CURRENCY_CONVERSION_ROUNDING_PRECISION
+    /// </summary>
+    public int ConversionRoundingPrecision { get; set; } = 8;
+
 }

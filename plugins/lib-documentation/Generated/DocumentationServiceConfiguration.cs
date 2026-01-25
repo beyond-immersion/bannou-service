@@ -173,4 +173,40 @@ public class DocumentationServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int BulkOperationBatchSize { get; set; } = 10;
 
+    /// <summary>
+    /// Maximum related documents to return for standard depth
+    /// Environment variable: DOCUMENTATION_MAX_RELATED_DOCUMENTS
+    /// </summary>
+    public int MaxRelatedDocuments { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum related documents to return for extended depth
+    /// Environment variable: DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED
+    /// </summary>
+    public int MaxRelatedDocumentsExtended { get; set; } = 10;
+
+    /// <summary>
+    /// TTL in seconds for repository sync distributed lock
+    /// Environment variable: DOCUMENTATION_SYNC_LOCK_TTL_SECONDS
+    /// </summary>
+    public int SyncLockTtlSeconds { get; set; } = 1800;
+
+    /// <summary>
+    /// Maximum documents to fetch when filtering/sorting in memory
+    /// Environment variable: DOCUMENTATION_MAX_FETCH_LIMIT
+    /// </summary>
+    public int MaxFetchLimit { get; set; } = 1000;
+
+    /// <summary>
+    /// Number of documents to sample for namespace statistics
+    /// Environment variable: DOCUMENTATION_STATS_SAMPLE_SIZE
+    /// </summary>
+    public int StatsSampleSize { get; set; } = 10;
+
+    /// <summary>
+    /// Length in characters for search result snippets
+    /// Environment variable: DOCUMENTATION_SEARCH_SNIPPET_LENGTH
+    /// </summary>
+    public int SearchSnippetLength { get; set; } = 200;
+
 }

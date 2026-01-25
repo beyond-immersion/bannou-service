@@ -129,3 +129,39 @@ x-service-configuration:
       description: Maximum documents processed per bulk operation
       env: DOCUMENTATION_BULK_OPERATION_BATCH_SIZE
       default: 10
+
+    # Related Documents Configuration
+    MaxRelatedDocuments:
+      type: integer
+      description: Maximum related documents to return for standard depth
+      env: DOCUMENTATION_MAX_RELATED_DOCUMENTS
+      default: 5
+    MaxRelatedDocumentsExtended:
+      type: integer
+      description: Maximum related documents to return for extended depth
+      env: DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED
+      default: 10
+
+    # Sync Configuration
+    SyncLockTtlSeconds:
+      type: integer
+      description: TTL in seconds for repository sync distributed lock
+      env: DOCUMENTATION_SYNC_LOCK_TTL_SECONDS
+      default: 1800
+
+    # Query Limits
+    MaxFetchLimit:
+      type: integer
+      description: Maximum documents to fetch when filtering/sorting in memory
+      env: DOCUMENTATION_MAX_FETCH_LIMIT
+      default: 1000
+    StatsSampleSize:
+      type: integer
+      description: Number of documents to sample for namespace statistics
+      env: DOCUMENTATION_STATS_SAMPLE_SIZE
+      default: 10
+    SearchSnippetLength:
+      type: integer
+      description: Length in characters for search result snippets
+      env: DOCUMENTATION_SEARCH_SNIPPET_LENGTH
+      default: 200

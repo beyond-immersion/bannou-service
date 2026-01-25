@@ -278,8 +278,8 @@ public partial class EscrowService : IEscrowService
     /// <returns>Generated token string.</returns>
     internal string GenerateToken(Guid escrowId, Guid partyId, TokenType tokenType)
     {
-        // Use cryptographically random bytes for token generation
-        var randomBytes = new byte[32];
+        // Use cryptographically random bytes for token generation (configurable length)
+        var randomBytes = new byte[_configuration.TokenLength];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
 
@@ -386,7 +386,7 @@ public partial class EscrowService : IEscrowService
         var partyKey = GetPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (existing, etag) = await PartyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
             var newCount = new PartyPendingCount
@@ -407,8 +407,8 @@ public partial class EscrowService : IEscrowService
                 partyKey, attempt + 1);
         }
 
-        _logger.LogWarning("Failed to increment party pending count for {PartyType}:{PartyId} after 3 attempts",
-            partyType, partyId);
+        _logger.LogWarning("Failed to increment party pending count for {PartyType}:{PartyId} after {MaxRetries} attempts",
+            partyType, partyId, _configuration.MaxConcurrencyRetries);
     }
 
     /// <summary>
@@ -423,7 +423,7 @@ public partial class EscrowService : IEscrowService
         var partyKey = GetPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
             var (existing, etag) = await PartyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
             if (existing == null || existing.PendingCount <= 0)
@@ -444,8 +444,8 @@ public partial class EscrowService : IEscrowService
                 partyKey, attempt + 1);
         }
 
-        _logger.LogWarning("Failed to decrement party pending count for {PartyType}:{PartyId} after 3 attempts",
-            partyType, partyId);
+        _logger.LogWarning("Failed to decrement party pending count for {PartyType}:{PartyId} after {MaxRetries} attempts",
+            partyType, partyId, _configuration.MaxConcurrencyRetries);
     }
 
     /// <summary>

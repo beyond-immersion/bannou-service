@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
+using System.Xml;
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -18,7 +19,7 @@ public partial class EscrowService
     {
         try
         {
-            if (body.Parties == null || body.Parties.Count < 2)
+            if (body.Parties == null || body.Parties.Count < 2 || body.Parties.Count > _configuration.MaxParties)
             {
                 return (StatusCodes.BadRequest, null);
             }
@@ -36,7 +37,9 @@ public partial class EscrowService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var expiresAt = body.ExpiresAt ?? now.AddDays(7);
+            // Parse ISO 8601 duration from configuration for default timeout
+            var defaultTimeout = XmlConvert.ToTimeSpan(_configuration.DefaultTimeout);
+            var expiresAt = body.ExpiresAt ?? now.Add(defaultTimeout);
 
             var partyModels = new List<EscrowPartyModel>();
             var tokenRecordsToSave = new List<TokenHashModel>();
@@ -265,7 +268,7 @@ public partial class EscrowService
         try
         {
             var results = new List<EscrowAgreement>();
-            var limit = body.Limit ?? 50;
+            var limit = body.Limit ?? _configuration.DefaultListLimit;
             var offset = body.Offset ?? 0;
 
             int totalCount;

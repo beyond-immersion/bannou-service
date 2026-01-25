@@ -299,7 +299,6 @@ public class CurrencyServiceTests
 public class CurrencyConversionConcurrencyTests
 {
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<ILogger<CurrencyService>> _mockLogger;
     private readonly CurrencyServiceConfiguration _configuration;
@@ -328,7 +327,6 @@ public class CurrencyConversionConcurrencyTests
     public CurrencyConversionConcurrencyTests()
     {
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockNavigator = new Mock<IServiceNavigator>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockLogger = new Mock<ILogger<CurrencyService>>();
         _configuration = new CurrencyServiceConfiguration();
@@ -407,7 +405,6 @@ public class CurrencyConversionConcurrencyTests
     {
         return new CurrencyService(
             _mockMessageBus.Object,
-            _mockNavigator.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             _configuration,

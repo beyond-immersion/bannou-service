@@ -47,12 +47,12 @@ public partial class GameServiceService : IGameServiceService
     /// </summary>
     public async Task<(StatusCodes, ListServicesResponse?)> ListServicesAsync(ListServicesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Listing services (activeOnly={ActiveOnly})", body.ActiveOnly);
+        _logger.LogDebug("Listing services (activeOnly={ActiveOnly})", body.ActiveOnly);
 
         try
         {
             // Get all service IDs from the index
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
 
             var services = new List<ServiceInfo>();
@@ -97,7 +97,7 @@ public partial class GameServiceService : IGameServiceService
     /// </summary>
     public async Task<(StatusCodes, ServiceInfo?)> GetServiceAsync(GetServiceRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting service (serviceId={ServiceId}, stubName={StubName})",
+        _logger.LogDebug("Getting service (serviceId={ServiceId}, stubName={StubName})",
             body.ServiceId, body.StubName);
 
         try
@@ -125,7 +125,7 @@ public partial class GameServiceService : IGameServiceService
 
             if (serviceModel == null)
             {
-                _logger.LogWarning("Service not found (serviceId={ServiceId}, stubName={StubName})",
+                _logger.LogDebug("Service not found (serviceId={ServiceId}, stubName={StubName})",
                     body.ServiceId, body.StubName);
                 return (StatusCodes.NotFound, null);
             }
@@ -145,7 +145,7 @@ public partial class GameServiceService : IGameServiceService
     /// </summary>
     public async Task<(StatusCodes, ServiceInfo?)> CreateServiceAsync(CreateServiceRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating service (stubName={StubName}, displayName={DisplayName})",
+        _logger.LogDebug("Creating service (stubName={StubName}, displayName={DisplayName})",
             body.StubName, body.DisplayName);
 
         try
@@ -153,13 +153,13 @@ public partial class GameServiceService : IGameServiceService
             // Validate required fields
             if (string.IsNullOrWhiteSpace(body.StubName))
             {
-                _logger.LogWarning("Stub name is required");
+                _logger.LogDebug("Stub name is required");
                 return (StatusCodes.BadRequest, null);
             }
 
             if (string.IsNullOrWhiteSpace(body.DisplayName))
             {
-                _logger.LogWarning("Display name is required");
+                _logger.LogDebug("Display name is required");
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -172,7 +172,7 @@ public partial class GameServiceService : IGameServiceService
 
             if (!string.IsNullOrEmpty(existingServiceId))
             {
-                _logger.LogWarning("Service with stub name {StubName} already exists", body.StubName);
+                _logger.LogDebug("Service with stub name {StubName} already exists", body.StubName);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -182,7 +182,7 @@ public partial class GameServiceService : IGameServiceService
 
             var serviceModel = new GameServiceRegistryModel
             {
-                ServiceId = serviceId.ToString(),
+                ServiceId = serviceId,
                 StubName = normalizedStubName,
                 DisplayName = body.DisplayName,
                 Description = body.Description,
@@ -194,11 +194,11 @@ public partial class GameServiceService : IGameServiceService
             // Save service data
             await modelStore.SaveAsync($"{SERVICE_KEY_PREFIX}{serviceId}", serviceModel, cancellationToken: cancellationToken);
 
-            // Create stub name index
+            // Create stub name index (stored as string for lookup)
             await stringStore.SaveAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", serviceId.ToString(), cancellationToken: cancellationToken);
 
             // Add to service list
-            await AddToServiceListAsync(serviceId.ToString(), cancellationToken);
+            await AddToServiceListAsync(serviceId, cancellationToken);
 
             _logger.LogInformation("Created service {ServiceId} with stub name {StubName}",
                 serviceId, normalizedStubName);
@@ -221,13 +221,13 @@ public partial class GameServiceService : IGameServiceService
     /// </summary>
     public async Task<(StatusCodes, ServiceInfo?)> UpdateServiceAsync(UpdateServiceRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Updating service {ServiceId}", body.ServiceId);
+        _logger.LogDebug("Updating service {ServiceId}", body.ServiceId);
 
         try
         {
             if (body.ServiceId == Guid.Empty)
             {
-                _logger.LogWarning("Service ID is required");
+                _logger.LogDebug("Service ID is required");
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -238,7 +238,7 @@ public partial class GameServiceService : IGameServiceService
 
             if (serviceModel == null)
             {
-                _logger.LogWarning("Service {ServiceId} not found", body.ServiceId);
+                _logger.LogDebug("Service {ServiceId} not found", body.ServiceId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -296,13 +296,13 @@ public partial class GameServiceService : IGameServiceService
     /// </summary>
     public async Task<StatusCodes> DeleteServiceAsync(DeleteServiceRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting service {ServiceId}", body.ServiceId);
+        _logger.LogDebug("Deleting service {ServiceId}", body.ServiceId);
 
         try
         {
             if (body.ServiceId == Guid.Empty)
             {
-                _logger.LogWarning("Service ID is required");
+                _logger.LogDebug("Service ID is required");
                 return StatusCodes.BadRequest;
             }
 
@@ -314,7 +314,7 @@ public partial class GameServiceService : IGameServiceService
 
             if (serviceModel == null)
             {
-                _logger.LogWarning("Service {ServiceId} not found", body.ServiceId);
+                _logger.LogDebug("Service {ServiceId} not found", body.ServiceId);
                 return StatusCodes.NotFound;
             }
 
@@ -328,7 +328,7 @@ public partial class GameServiceService : IGameServiceService
             }
 
             // Remove from service list
-            await RemoveFromServiceListAsync(body.ServiceId.ToString(), cancellationToken);
+            await RemoveFromServiceListAsync(body.ServiceId, cancellationToken);
 
             _logger.LogInformation("Deleted service {ServiceId}", body.ServiceId);
 
@@ -349,31 +349,61 @@ public partial class GameServiceService : IGameServiceService
 
     /// <summary>
     /// Add a service ID to the service list index.
+    /// Uses ETag-based optimistic concurrency per IMPLEMENTATION TENETS (Multi-Instance Safety).
     /// </summary>
-    private async Task AddToServiceListAsync(string serviceId, CancellationToken cancellationToken)
+    private async Task AddToServiceListAsync(Guid serviceId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-        var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
 
-        if (!serviceIds.Contains(serviceId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
+            var (serviceIds, etag) = await listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
+            serviceIds ??= new List<Guid>();
+
+            if (serviceIds.Contains(serviceId))
+            {
+                return; // Already in list
+            }
+
             serviceIds.Add(serviceId);
-            await listStore.SaveAsync(SERVICE_LIST_KEY, serviceIds, cancellationToken: cancellationToken);
+            var result = await listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on service list, retrying add (attempt {Attempt})", attempt + 1);
         }
+
+        _logger.LogWarning("Failed to add service {ServiceId} to list after 3 attempts", serviceId);
     }
 
     /// <summary>
     /// Remove a service ID from the service list index.
+    /// Uses ETag-based optimistic concurrency per IMPLEMENTATION TENETS (Multi-Instance Safety).
     /// </summary>
-    private async Task RemoveFromServiceListAsync(string serviceId, CancellationToken cancellationToken)
+    private async Task RemoveFromServiceListAsync(Guid serviceId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-        var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
 
-        if (serviceIds != null && serviceIds.Remove(serviceId))
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            await listStore.SaveAsync(SERVICE_LIST_KEY, serviceIds, cancellationToken: cancellationToken);
+            var (serviceIds, etag) = await listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
+            if (serviceIds == null || !serviceIds.Remove(serviceId))
+            {
+                return; // Not in list or already removed
+            }
+
+            var result = await listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on service list, retrying remove (attempt {Attempt})", attempt + 1);
         }
+
+        _logger.LogWarning("Failed to remove service {ServiceId} from list after 3 attempts", serviceId);
     }
 
     /// <summary>
@@ -383,7 +413,7 @@ public partial class GameServiceService : IGameServiceService
     {
         return new ServiceInfo
         {
-            ServiceId = Guid.Parse(model.ServiceId),
+            ServiceId = model.ServiceId,
             StubName = model.StubName,
             DisplayName = model.DisplayName,
             Description = model.Description,
@@ -448,7 +478,7 @@ public partial class GameServiceService : IGameServiceService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = Guid.Parse(model.ServiceId),
+                GameServiceId = model.ServiceId,
                 StubName = model.StubName,
                 DisplayName = model.DisplayName,
                 Description = model.Description,
@@ -473,7 +503,7 @@ public partial class GameServiceService : IGameServiceService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = Guid.Parse(model.ServiceId),
+                GameServiceId = model.ServiceId,
                 StubName = model.StubName,
                 DisplayName = model.DisplayName,
                 Description = model.Description,
@@ -499,7 +529,7 @@ public partial class GameServiceService : IGameServiceService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = Guid.Parse(model.ServiceId),
+                GameServiceId = model.ServiceId,
                 StubName = model.StubName,
                 DisplayName = model.DisplayName,
                 Description = model.Description,
@@ -520,10 +550,11 @@ public partial class GameServiceService : IGameServiceService
 /// <summary>
 /// Internal storage model using Unix timestamps to avoid serialization issues.
 /// Accessible to test project via InternalsVisibleTo attribute.
+/// Uses Guid for ServiceId per IMPLEMENTATION TENETS (Type Safety).
 /// </summary>
 internal class GameServiceRegistryModel
 {
-    public string ServiceId { get; set; } = string.Empty;
+    public Guid ServiceId { get; set; }
     public string StubName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string? Description { get; set; }
