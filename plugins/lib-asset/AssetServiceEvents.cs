@@ -147,7 +147,7 @@ public partial class AssetService
 
         // Load source bundles and validate
         var sourceBundles = new List<BundleMetadata>();
-        foreach (var sourceBundleId in request.SourceBundleIds ?? Enumerable.Empty<string>())
+        foreach (var sourceBundleId in request.SourceBundleIds ?? Enumerable.Empty<Guid>())
         {
             var bundleKey = $"{_configuration.BundleKeyPrefix}{sourceBundleId}";
             var sourceBundle = await bundleStore.GetAsync(bundleKey, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -312,7 +312,7 @@ public partial class AssetService
             // Finalize the streaming bundle
             bundleSize = await writer.FinalizeAsync(
                 request.MetabundleId,
-                request.MetabundleId,
+                request.MetabundleId.ToString(),
                 request.Version ?? "1.0.0",
                 request.Owner,
                 request.Description,
@@ -343,7 +343,7 @@ public partial class AssetService
         var metabundleKey = $"{_configuration.BundleKeyPrefix}{request.MetabundleId}";
         var metabundleMetadata = new BundleMetadata
         {
-            BundleId = Guid.Parse(request.MetabundleId),
+            BundleId = request.MetabundleId,
             Version = request.Version ?? "1.0.0",
             BundleType = BundleType.Metabundle,
             Realm = request.Realm,

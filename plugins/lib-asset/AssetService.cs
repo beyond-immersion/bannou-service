@@ -986,10 +986,10 @@ public partial class AssetService : IAssetService
 
             writer.Finalize(
                 body.BundleId,
-                body.Name ?? body.BundleId.ToString(),
+                body.BundleId.ToString(),
                 body.Version ?? "1.0.0",
-                "system",
-                body.Description,
+                body.Owner,
+                description: null,
                 MetadataHelper.ConvertToStringDictionary(body.Metadata));
 
             // Upload bundle
@@ -1515,7 +1515,7 @@ public partial class AssetService : IAssetService
             }
 
             // Process standalone assets (track conflicts with bundle assets)
-            const string standaloneMarker = "__standalone__";
+            // Use Guid.Empty as marker for standalone assets (not from any bundle)
             foreach (var standalone in standaloneAssets)
             {
                 var contentHash = standalone.ContentHash ?? standalone.AssetId; // Use asset ID if no hash
@@ -1523,10 +1523,10 @@ public partial class AssetService : IAssetService
                 // Track by platform ID to detect conflicts
                 if (!assetsByPlatformId.TryGetValue(standalone.AssetId, out var versions))
                 {
-                    versions = new List<(string BundleId, string ContentHash)>();
+                    versions = new List<(Guid BundleId, string ContentHash)>();
                     assetsByPlatformId[standalone.AssetId] = versions;
                 }
-                versions.Add((standaloneMarker, contentHash));
+                versions.Add((Guid.Empty, contentHash));
 
                 // Track standalone assets by hash for deduplication
                 if (!standaloneByHash.ContainsKey(contentHash) && !assetsByHash.ContainsKey(contentHash))
@@ -1683,7 +1683,7 @@ public partial class AssetService : IAssetService
             // Finalize the bundle
             writer.Finalize(
                 body.MetabundleId,
-                body.MetabundleId,
+                body.MetabundleId.ToString(),
                 body.Version ?? "1.0.0",
                 body.Owner,
                 body.Description,
@@ -1933,7 +1933,7 @@ public partial class AssetService : IAssetService
 
                 selectedBundles.Add(new ResolvedBundle
                 {
-                    BundleId = bestBundleId.Value.ToString(),
+                    BundleId = bestBundleId.Value,
                     BundleType = selectedMeta.BundleType,
                     Version = selectedMeta.Version,
                     DownloadUrl = new Uri(downloadUrl.DownloadUrl),

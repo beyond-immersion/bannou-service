@@ -152,5 +152,5 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### bannou-service (Program.cs)
 
-- [ ] **T25**: `Program.ServiceGUID` is declared as `string` constant, causing all generated `*PermissionRegistration.cs` files to use `Guid.Parse(Program.ServiceGUID)`. This affects ALL services. **Decision**: Change `Program.ServiceGUID` to `Guid` type and update code generator.
+- [x] **T25**: `Program.ServiceGUID` is now declared as `Guid` type. All generated `*PermissionRegistration.cs` files and service implementations now use `Program.ServiceGUID` directly without `Guid.Parse()`. Generator scripts updated.
 
