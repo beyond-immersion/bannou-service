@@ -96,9 +96,9 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Getting realm by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code);
-            var realmId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+            var realmIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
 
-            if (string.IsNullOrEmpty(realmId))
+            if (string.IsNullOrEmpty(realmIdStr) || !Guid.TryParse(realmIdStr, out var realmId))
             {
                 _logger.LogDebug("Realm not found by code: {Code}", body.Code);
                 return (StatusCodes.NotFound, null);
@@ -266,9 +266,9 @@ public partial class RealmService : IRealmService
 
             // Check if code already exists
             var codeIndexKey = BuildCodeIndexKey(code);
-            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+            var existingIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
 
-            if (!string.IsNullOrEmpty(existingId))
+            if (!string.IsNullOrEmpty(existingIdStr))
             {
                 _logger.LogDebug("Realm with code already exists: {Code}", code);
                 return (StatusCodes.Conflict, null);
@@ -298,8 +298,8 @@ public partial class RealmService : IRealmService
             var realmKey = BuildRealmKey(realmId);
             await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
-            // Update code index
-            await _stateStoreFactory.GetStore<Guid>(StateStoreDefinitions.Realm).SaveAsync(codeIndexKey, realmId, cancellationToken: cancellationToken);
+            // Update code index (stored as string for state store compatibility)
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).SaveAsync(codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
 
             // Update all-realms list
             var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
@@ -435,7 +435,7 @@ public partial class RealmService : IRealmService
 
             // Delete code index
             var codeIndexKey = BuildCodeIndexKey(model.Code);
-            await _stateStoreFactory.GetStore<Guid>(StateStoreDefinitions.Realm).DeleteAsync(codeIndexKey, cancellationToken);
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from all-realms list
             var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
@@ -592,9 +592,9 @@ public partial class RealmService : IRealmService
                 {
                     var code = seedRealm.Code.ToUpperInvariant();
                     var codeIndexKey = BuildCodeIndexKey(code);
-                    var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+                    var existingIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
 
-                    if (!string.IsNullOrEmpty(existingId))
+                    if (!string.IsNullOrEmpty(existingIdStr) && Guid.TryParse(existingIdStr, out var existingId))
                     {
                         if (body.UpdateExisting == true)
                         {

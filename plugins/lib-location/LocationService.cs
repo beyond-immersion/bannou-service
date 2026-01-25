@@ -49,11 +49,11 @@ public partial class LocationService : ILocationService
 
     #region Key Building Helpers
 
-    private static string BuildLocationKey(string locationId) => $"{LOCATION_KEY_PREFIX}{locationId}";
-    private static string BuildCodeIndexKey(string realmId, string code) => $"{CODE_INDEX_PREFIX}{realmId}:{code.ToUpperInvariant()}";
-    private static string BuildRealmIndexKey(string realmId) => $"{REALM_INDEX_PREFIX}{realmId}";
-    private static string BuildParentIndexKey(string realmId, string parentId) => $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}";
-    private static string BuildRootLocationsKey(string realmId) => $"{ROOT_LOCATIONS_PREFIX}{realmId}";
+    private static string BuildLocationKey(Guid locationId) => $"{LOCATION_KEY_PREFIX}{locationId}";
+    private static string BuildCodeIndexKey(Guid realmId, string code) => $"{CODE_INDEX_PREFIX}{realmId}:{code.ToUpperInvariant()}";
+    private static string BuildRealmIndexKey(Guid realmId) => $"{REALM_INDEX_PREFIX}{realmId}";
+    private static string BuildParentIndexKey(Guid realmId, Guid parentId) => $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}";
+    private static string BuildRootLocationsKey(Guid realmId) => $"{ROOT_LOCATIONS_PREFIX}{realmId}";
 
     #endregion
 
@@ -66,7 +66,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Getting location by ID: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -95,7 +95,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Getting location by code: {Code} in realm {RealmId}", body.Code, body.RealmId);
 
             var code = body.Code.ToUpperInvariant();
-            var codeIndexKey = BuildCodeIndexKey(body.RealmId.ToString(), code);
+            var codeIndexKey = BuildCodeIndexKey(body.RealmId, code);
             var locationId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).GetAsync(codeIndexKey, cancellationToken);
 
             if (string.IsNullOrEmpty(locationId))
@@ -259,7 +259,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Listing locations by parent: {ParentLocationId}", body.ParentLocationId);
 
             // First get the parent location to determine the realm
-            var parentKey = BuildLocationKey(body.ParentLocationId.ToString());
+            var parentKey = BuildLocationKey(body.ParentLocationId.Value);
             var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
 
             if (parentModel == null)
@@ -405,7 +405,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Getting ancestors for location: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -461,7 +461,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Getting descendants for location: {LocationId}, maxDepth: {MaxDepth}", body.LocationId, body.MaxDepth);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -526,7 +526,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Checking if location exists: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -580,7 +580,7 @@ public partial class LocationService : ILocationService
 
             // Check for duplicate code in realm
             var code = body.Code.ToUpperInvariant();
-            var codeIndexKey = BuildCodeIndexKey(body.RealmId.ToString(), code);
+            var codeIndexKey = BuildCodeIndexKey(body.RealmId, code);
             var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).GetAsync(codeIndexKey, cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
@@ -685,7 +685,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Updating location: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -752,7 +752,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Setting parent for location: {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -767,7 +767,7 @@ public partial class LocationService : ILocationService
             }
 
             // Get new parent
-            var newParentKey = BuildLocationKey(body.ParentLocationId.ToString());
+            var newParentKey = BuildLocationKey(body.ParentLocationId.Value);
             var newParentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(newParentKey, cancellationToken);
 
             if (newParentModel == null)
@@ -844,7 +844,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Removing parent from location: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -903,7 +903,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Deleting location: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -965,7 +965,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Deprecating location: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -1010,7 +1010,7 @@ public partial class LocationService : ILocationService
         {
             _logger.LogDebug("Undeprecating location: {LocationId}", body.LocationId);
 
-            var locationKey = BuildLocationKey(body.LocationId.ToString());
+            var locationKey = BuildLocationKey(body.LocationId);
             var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
@@ -1062,7 +1062,7 @@ public partial class LocationService : ILocationService
         try
         {
             // Build a map of realm codes to realm IDs
-            var realmCodeToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var realmCodeToId = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
             var failedRealmCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var seedLocation in body.Locations)
@@ -1073,7 +1073,7 @@ public partial class LocationService : ILocationService
                     var realmResponse = await _realmClient.GetRealmByCodeAsync(new GetRealmByCodeRequest { Code = seedLocation.RealmCode }, cancellationToken);
                     if (realmResponse != null)
                     {
-                        realmCodeToId[seedLocation.RealmCode] = realmResponse.RealmId.ToString();
+                        realmCodeToId[seedLocation.RealmCode] = realmResponse.RealmId;
                     }
                     else
                     {
@@ -1084,7 +1084,7 @@ public partial class LocationService : ILocationService
             }
 
             // First pass: Create all locations without parent relationships
-            var codeToLocationId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var codeToLocationId = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var seedLocation in body.Locations)
             {
@@ -1137,7 +1137,7 @@ public partial class LocationService : ILocationService
                         Code = code,
                         Name = seedLocation.Name,
                         Description = seedLocation.Description,
-                        RealmId = Guid.Parse(realmId),
+                        RealmId = realmId,
                         LocationType = seedLocation.LocationType,
                         ParentLocationId = null, // Set later in second pass
                         Metadata = seedLocation.Metadata
@@ -1241,70 +1241,70 @@ public partial class LocationService : ILocationService
         return results;
     }
 
-    private async Task AddToRealmIndexAsync(string realmId, string locationId, CancellationToken cancellationToken)
+    private async Task AddToRealmIndexAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var locationIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
+        var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
         if (!locationIds.Contains(locationId))
         {
             locationIds.Add(locationId);
-            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).SaveAsync(realmIndexKey, locationIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(realmIndexKey, locationIds, cancellationToken: cancellationToken);
         }
     }
 
-    private async Task RemoveFromRealmIndexAsync(string realmId, string locationId, CancellationToken cancellationToken)
+    private async Task RemoveFromRealmIndexAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var locationIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
+        var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
         if (locationIds.Remove(locationId))
         {
-            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).SaveAsync(realmIndexKey, locationIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(realmIndexKey, locationIds, cancellationToken: cancellationToken);
         }
     }
 
-    private async Task AddToParentIndexAsync(string realmId, string parentId, string locationId, CancellationToken cancellationToken)
+    private async Task AddToParentIndexAsync(Guid realmId, Guid parentId, Guid locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
-        var childIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
+        var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
         if (!childIds.Contains(locationId))
         {
             childIds.Add(locationId);
-            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
         }
     }
 
-    private async Task RemoveFromParentIndexAsync(string realmId, string parentId, string locationId, CancellationToken cancellationToken)
+    private async Task RemoveFromParentIndexAsync(Guid realmId, Guid parentId, Guid locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
-        var childIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
+        var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
         if (childIds.Remove(locationId))
         {
-            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
         }
     }
 
-    private async Task AddToRootLocationsAsync(string realmId, string locationId, CancellationToken cancellationToken)
+    private async Task AddToRootLocationsAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
-        var rootIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<string>();
+        var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
         if (!rootIds.Contains(locationId))
         {
             rootIds.Add(locationId);
-            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).SaveAsync(rootKey, rootIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(rootKey, rootIds, cancellationToken: cancellationToken);
         }
     }
 
-    private async Task RemoveFromRootLocationsAsync(string realmId, string locationId, CancellationToken cancellationToken)
+    private async Task RemoveFromRootLocationsAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
-        var rootIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<string>();
+        var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
         if (rootIds.Remove(locationId))
         {
-            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Location).SaveAsync(rootKey, rootIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(rootKey, rootIds, cancellationToken: cancellationToken);
         }
     }
 
-    private async Task CollectDescendantsAsync(string parentId, string realmId, List<LocationModel> descendants, int currentDepth, int maxDepth, CancellationToken cancellationToken)
+    private async Task CollectDescendantsAsync(Guid parentId, Guid realmId, List<LocationModel> descendants, int currentDepth, int maxDepth, CancellationToken cancellationToken)
     {
         if (currentDepth >= maxDepth)
         {
