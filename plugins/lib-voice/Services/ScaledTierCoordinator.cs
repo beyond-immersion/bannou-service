@@ -90,8 +90,8 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         // Conference URI based on room ID (SipDomain has default in configuration)
         var conferenceUri = $"sip:room-{roomId}@{_configuration.SipDomain}";
 
-        // Credentials expire with session (default 24h)
-        var expiresAt = DateTimeOffset.UtcNow.AddHours(24);
+        // Credentials expire based on configured expiration
+        var expiresAt = DateTimeOffset.UtcNow.AddHours(_configuration.SipCredentialExpirationHours);
 
         _logger.LogDebug(
             "Generated SIP credentials for session {SessionId} in room {RoomId}",

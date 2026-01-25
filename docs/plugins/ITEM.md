@@ -237,7 +237,12 @@ Soulbound Types
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T21/T25 (String config should be enum)**: Three configuration properties in `item-configuration.yaml` are `type: string` but represent enums:
+   - `defaultWeightPrecision` → `WeightPrecision` enum
+   - `defaultRarity` → `ItemRarity` enum
+   - `defaultSoulboundType` → `SoulboundType` enum
+
+   Service parses at startup with `Enum.TryParse`. Schema should define as enums with `$ref` to ensure type safety and eliminate runtime parsing.
 
 ### Intentional Quirks (Documented Behavior)
 

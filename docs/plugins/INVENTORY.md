@@ -277,7 +277,7 @@ Container Deletion Strategies
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T21/T25 (String config should be enum)**: `DefaultWeightContribution` in `inventory-configuration.yaml` is `type: string` but represents `WeightContribution` enum. Service parses at startup with `Enum.TryParse`. Schema should define as enum with `$ref` to ensure type safety and eliminate runtime parsing.
 
 ### Intentional Quirks (Documented Behavior)
 

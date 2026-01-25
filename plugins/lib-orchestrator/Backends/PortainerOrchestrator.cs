@@ -362,7 +362,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
 
         try
         {
-            var imageName = "bannou:latest";
+            var imageName = _configuration.DockerImageName ?? "bannou:latest";
 
             // Prepare environment variables
             var envList = new List<string>

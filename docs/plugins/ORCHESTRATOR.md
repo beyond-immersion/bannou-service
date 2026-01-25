@@ -445,15 +445,9 @@ None identified.
 
 ### Additional Design Considerations
 
-10. **Hardcoded Docker image name**: `DockerComposeOrchestrator` and `DockerSwarmOrchestrator` use hardcoded `"bannou:latest"` image name. Should be configurable for multi-version deployments.
+10. **`_lastKnownDeployment` in-memory state**: Orchestrator is typically single-instance, but this field could diverge across instances if multiple were ever deployed. Should read from Redis state manager.
 
-11. **Hardcoded restart manager tunables**: `SmartRestartManager` has `DEFAULT_RESTART_TIMEOUT_SECONDS = 120`, `HEALTH_CHECK_INTERVAL_MS = 2000`, `WaitBeforeKillSeconds = 30`. Could be configuration properties.
-
-12. **`_lastKnownDeployment` in-memory state**: Orchestrator is typically single-instance, but this field could diverge across instances if multiple were ever deployed. Should read from Redis state manager.
-
-13. **PortainerOrchestrator uses direct JsonSerializerOptions**: Portainer API requires camelCase. This is an acceptable boundary exception for external API communication (similar to defensive coding for external services).
-
-14. **T19 (Dispose XML docs)**: `DockerComposeOrchestrator.Dispose()` lacks XML documentation. Low priority.
+11. **PortainerOrchestrator uses direct JsonSerializerOptions**: Portainer API requires camelCase. This is an acceptable boundary exception for external API communication (similar to defensive coding for external services).
 
 ---
 

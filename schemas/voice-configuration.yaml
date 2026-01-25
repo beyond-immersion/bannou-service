@@ -95,3 +95,10 @@ x-service-configuration:
       description: Timeout in seconds for Kamailio service requests
       env: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
       default: 5
+
+    # SIP Credential Configuration
+    SipCredentialExpirationHours:
+      type: integer
+      description: Hours until SIP credentials expire (clients should re-authenticate before expiration)
+      env: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
+      default: 24

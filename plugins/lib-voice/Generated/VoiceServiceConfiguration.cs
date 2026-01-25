@@ -137,4 +137,10 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int KamailioRequestTimeoutSeconds { get; set; } = 5;
 
+    /// <summary>
+    /// Hours until SIP credentials expire (clients should re-authenticate before expiration)
+    /// Environment variable: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
+    /// </summary>
+    public int SipCredentialExpirationHours { get; set; } = 24;
+
 }

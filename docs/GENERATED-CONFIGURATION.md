@@ -13,6 +13,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
 | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
+| `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | bool | `true` | When true, automatically manages the anonymous role. If remo... |
 | `ACCOUNT_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for list operations when not specified |
 | `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
 | `ACCOUNT_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for list operations |
@@ -49,6 +50,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
 | `ACTOR_DEPLOYMENT_MODE` | string | `bannou` | Actor deployment mode: bannou (local dev), pool-per-type, sh... |
 | `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached encounter data |
+| `ACTOR_ERROR_RETRY_DELAY_MS` | int | `1000` | Delay in milliseconds before retrying after behavior loop er... |
+| `ACTOR_EVENT_BRAIN_DEFAULT_URGENCY` | double | `0.8` | Default urgency for Event Brain instruction perceptions (0.0... |
 | `ACTOR_GOAP_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search |
 | `ACTOR_GOAP_PLAN_TIMEOUT_MS` | int | `50` | Maximum time allowed for GOAP planning in milliseconds |
 | `ACTOR_GOAP_REPLAN_THRESHOLD` | double | `0.3` | Threshold for triggering GOAP replanning when goal relevance... |
@@ -72,8 +75,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_POOL_NODE_ID` | string | **REQUIRED** | If set, this instance runs as a pool node (not control plane... |
 | `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
 | `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
+| `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | int | `5000` | Default max age in milliseconds for cached query options |
 | `ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS` | int | `100` | Interval in milliseconds for checking scheduled events |
+| `ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY` | double | `0.7` | Default urgency value for scheduled event perceptions (0.0-1... |
 | `ACTOR_SHORT_TERM_MEMORY_MINUTES` | int | `5` | Expiration time in minutes for short-term memories from high... |
+| `ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS` | int | `50` | Base delay in milliseconds between state persistence retry a... |
+| `ACTOR_STOP_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for graceful actor stop operations |
 
 ### Analytics
 
@@ -194,6 +201,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
 | `AUTH_MOCK_STEAM_ID` | string | `76561198000000000` | Mock Steam user ID for testing |
+| `AUTH_MOCK_TWITCH_ID` | string | `mock-twitch-123456` | Mock Twitch user ID for testing |
 | `AUTH_PASSWORD_RESET_BASE_URL` | string | **REQUIRED** | Base URL for password reset page |
 | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | int | `30` | Password reset token expiration time in minutes |
 | `AUTH_SESSION_TOKEN_TTL_DAYS` | int | `7` | Session token TTL in days for persistent sessions |
@@ -424,6 +432,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
 | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `0` | Default session timeout in seconds (0 = no timeout) |
+| `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for distributed session locks |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
 | `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
@@ -440,6 +449,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `INVENTORY_DEFAULT_MAX_WEIGHT` | double | `100.0` | Default max weight for new weight-based containers |
 | `INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION` | string | `self_plus_contents` | Default weight contribution mode for containers |
 | `INVENTORY_ENABLE_LAZY_CONTAINER_CREATION` | bool | `true` | Whether to enable lazy container creation for characters |
+| `INVENTORY_LIST_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout for owner/type index list modification locks (shorte... |
 | `INVENTORY_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout for container modification locks |
 | `INVENTORY_MAX_COUNT_QUERY_LIMIT` | int | `10000` | Maximum items to scan when counting items across containers |
 | `INVENTORY_QUERY_PAGE_SIZE` | int | `200` | Number of items to fetch per query page for inventory operat... |
@@ -466,11 +476,20 @@ This document lists all configuration options defined in Bannou's configuration 
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
 
+### Location
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | int | `10` | Default max depth when listing descendants if not specified ... |
+| `LOCATION_MAX_ANCESTOR_DEPTH` | int | `20` | Maximum depth to traverse when walking ancestor chain (preve... |
+| `LOCATION_MAX_DESCENDANT_DEPTH` | int | `20` | Safety limit for descendant traversal and circular reference... |
+
 ### Mapping
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS` | int | `60` | Default TTL for cached affordance query results |
+| `MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS` | double | `1.0` | Distance tolerance in world units for position exclusion mat... |
 | `MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds after missed heartbeat before author... |
 | `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
 | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
@@ -521,6 +540,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before opening circuit |
 | `MESH_CONNECT_TIMEOUT_SECONDS` | int | `10` | TCP connection timeout in seconds |
 | `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm |
+| `MESH_DEFAULT_MAX_CONNECTIONS` | int | `1000` | Default max connections for auto-registered endpoints when h... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
 | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | int | `5` | TTL in seconds for cached service endpoints |
@@ -588,9 +608,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS` | int | `30` | TTL in days for configuration history entries in state store |
 | `ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS` | int | `2` | Interval in seconds for polling container status during depl... |
 | `ORCHESTRATOR_DEFAULT_BACKEND` | string | `compose` | Default container orchestration backend when not specified i... |
+| `ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS` | int | `30` | Default seconds to wait before killing a container during st... |
 | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | int | `5` | Time in minutes before a service is marked as degraded |
 | `ORCHESTRATOR_DOCKER_HOST` | string | `unix:///var/run/docker.sock` | Docker host for direct Docker API access |
+| `ORCHESTRATOR_DOCKER_IMAGE_NAME` | string | `bannou:latest` | Docker image name for deployed Bannou containers |
 | `ORCHESTRATOR_DOCKER_NETWORK` | string | `bannou_default` | Docker network name for deployed containers |
+| `ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS` | int | `2000` | Interval in milliseconds between health checks during restar... |
 | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Service heartbeat timeout in seconds |
 | `ORCHESTRATOR_HEARTBEAT_TTL_SECONDS` | int | `90` | TTL in seconds for service heartbeat entries in state store |
 | `ORCHESTRATOR_KUBECONFIG_PATH` | string | **REQUIRED** | Path to kubeconfig file (null uses default ~/.kube/config) |
@@ -604,6 +627,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
 | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
+| `ORCHESTRATOR_RESTART_TIMEOUT_SECONDS` | int | `120` | Default timeout in seconds for container restart operations |
 | `ORCHESTRATOR_ROUTING_TTL_SECONDS` | int | `300` | TTL in seconds for service routing entries in state store |
 | `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
@@ -619,6 +643,8 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | int | `20` | Maximum depth for hierarchy traversal to prevent infinite lo... |
+| `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | int | `100` | Maximum number of individual migration error details to trac... |
 | `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
 
 ### Save Load
@@ -675,6 +701,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `SCENE_ASSET_BUCKET` | string | `scenes` | lib-asset bucket for storing scene documents |
 | `SCENE_ASSET_CONTENT_TYPE` | string | `application/x-bannou-scene+yaml` | Content type for scene assets (YAML format) |
+| `SCENE_CHECKOUT_TTL_BUFFER_MINUTES` | int | `5` | Buffer time added to checkout TTL for state store expiry (gr... |
 | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
 | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
 | `SCENE_MAX_CHECKOUT_EXTENSIONS` | int | `10` | Maximum number of times a checkout can be extended |
@@ -726,6 +753,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_RTPENGINE_PORT` | int | `22222` | RTPEngine control port |
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
+| `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | int | `24` | Hours until SIP credentials expire (clients should re-authen... |
 | `VOICE_SIP_DOMAIN` | string | `voice.bannou.local` | SIP domain for voice communication |
 | `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation. Required only when ScaledT... |
 | `VOICE_STUN_SERVERS` | string | `stun:stun.l.google.com:19302` | Comma-separated list of STUN server URLs for WebRTC |
@@ -734,9 +762,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 560
+- **Total properties**: 583
 - **Required (no default)**: 39
-- **Optional (has default)**: 521
+- **Optional (has default)**: 544
 
 ## Environment Variable Naming Convention
 

@@ -178,7 +178,7 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            _logger.LogInformation("Listing game sessions - GameType: {GameType}, Status: {Status}",
+            _logger.LogDebug("Listing game sessions - GameType: {GameType}, Status: {Status}",
                 body.GameType, body.Status);
 
             // Get all session IDs
@@ -243,7 +243,7 @@ public partial class GameSessionService : IGameSessionService
         {
             var sessionId = Guid.NewGuid();
 
-            _logger.LogInformation("Creating game session {SessionId} - GameType: {GameType}, MaxPlayers: {MaxPlayers}",
+            _logger.LogDebug("Creating game session {SessionId} - GameType: {GameType}, MaxPlayers: {MaxPlayers}",
                 sessionId, body.GameType, body.MaxPlayers);
 
             // Determine session type (default to lobby if not specified)
@@ -314,9 +314,16 @@ public partial class GameSessionService : IGameSessionService
                     _logger.LogInformation("Voice room {VoiceRoomId} created for session {SessionId}",
                         voiceResponse.RoomId, sessionId);
                 }
+                catch (ApiException ex)
+                {
+                    // Voice service returned an error - non-fatal, session can still work without voice
+                    _logger.LogWarning(ex, "Voice service error creating room for session {SessionId}: {StatusCode}, continuing without voice",
+                        sessionId, ex.StatusCode);
+                    session.VoiceEnabled = false;
+                }
                 catch (Exception ex)
                 {
-                    // Voice room creation failure is non-fatal - session can still work without voice
+                    // Unexpected error - non-fatal, session can still work without voice
                     _logger.LogWarning(ex, "Failed to create voice room for session {SessionId}, continuing without voice", sessionId);
                     session.VoiceEnabled = false;
                 }
@@ -382,7 +389,7 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            _logger.LogInformation("Getting game session {SessionId}", body.SessionId);
+            _logger.LogDebug("Getting game session {SessionId}", body.SessionId);
 
             var session = await LoadSessionAsync(body.SessionId.ToString(), cancellationToken);
 
@@ -521,6 +528,14 @@ public partial class GameSessionService : IGameSessionService
                     NewState = "in_game"
                 }, cancellationToken);
             }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Permission service error updating session state for {SessionId}: {StatusCode}",
+                    body.SessionId, ex.StatusCode);
+                // Remove the player we just added since they won't have permissions
+                model.Players.Remove(player);
+                return (StatusCodes.InternalServerError, null);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to update session state for {SessionId}", body.SessionId);
@@ -594,7 +609,7 @@ public partial class GameSessionService : IGameSessionService
             var accountId = body.AccountId;
             var gameType = body.GameType;
 
-            _logger.LogInformation("Performing game action {ActionType} in game {GameType} by {AccountId}",
+            _logger.LogDebug("Performing game action {ActionType} in game {GameType} by {AccountId}",
                 body.ActionType, gameType, accountId);
 
             // Get the lobby for this game type (don't auto-create for action)
@@ -738,9 +753,25 @@ public partial class GameSessionService : IGameSessionService
                     ServiceId = "game-session"
                 }, cancellationToken);
             }
+            catch (ApiException ex)
+            {
+                // Permission service returned an error
+                // Continue anyway - player wants to leave, don't trap them; state cleaned up on session expiry
+                _logger.LogWarning(ex, "Permission service error clearing session state for {SessionId}: {StatusCode}",
+                    body.SessionId, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    "api_exception",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = body.SessionId, StatusCode = ex.StatusCode },
+                    stack: ex.StackTrace);
+            }
             catch (Exception ex)
             {
-                // Log error and publish error event - this is an internal failure, not user error
+                // Unexpected error - this is an internal failure, not user error
                 // Continue anyway - player wants to leave, don't trap them; state cleaned up on session expiry
                 _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.SessionId);
                 await _messageBus.TryPublishErrorAsync(
@@ -775,9 +806,15 @@ public partial class GameSessionService : IGameSessionService
                     _logger.LogInformation("Player {AccountId} left voice room {VoiceRoomId}",
                         leavingPlayer.AccountId, model.VoiceRoomId);
                 }
+                catch (ApiException ex)
+                {
+                    // Voice service error - non-fatal
+                    _logger.LogWarning(ex, "Voice service error leaving room for player {AccountId}: {StatusCode}",
+                        leavingPlayer.AccountId, ex.StatusCode);
+                }
                 catch (Exception ex)
                 {
-                    // Voice leave failure is non-fatal
+                    // Unexpected error - non-fatal
                     _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}",
                         leavingPlayer.AccountId);
                 }
@@ -804,6 +841,11 @@ public partial class GameSessionService : IGameSessionService
 
                         _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended lobby {LobbyId}",
                             model.VoiceRoomId, lobbyId);
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Voice service error deleting room {VoiceRoomId} for lobby {LobbyId}: {StatusCode}",
+                            model.VoiceRoomId, lobbyId, ex.StatusCode);
                     }
                     catch (Exception ex)
                     {
@@ -988,6 +1030,23 @@ public partial class GameSessionService : IGameSessionService
                     NewState = "in_game"
                 }, cancellationToken);
             }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Permission service error updating session state for {SessionId}: {StatusCode}",
+                    body.WebSocketSessionId, ex.StatusCode);
+                model.Players.Remove(player);
+                // If matchmade, unmark reservation as claimed
+                if (model.SessionType == SessionType.Matchmade)
+                {
+                    var reservation = model.Reservations.FirstOrDefault(r => r.AccountId == accountId);
+                    if (reservation != null)
+                    {
+                        reservation.Claimed = false;
+                        reservation.ClaimedAt = null;
+                    }
+                }
+                return (StatusCodes.InternalServerError, null);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to update session state for {SessionId}", body.WebSocketSessionId);
@@ -1105,8 +1164,24 @@ public partial class GameSessionService : IGameSessionService
                     ServiceId = "game-session"
                 }, cancellationToken);
             }
+            catch (ApiException ex)
+            {
+                // Permission service returned an error - continue anyway, state cleaned up on session expiry
+                _logger.LogWarning(ex, "Permission service error clearing session state for {SessionId}: {StatusCode}",
+                    body.WebSocketSessionId, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    "api_exception",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = body.WebSocketSessionId, StatusCode = ex.StatusCode },
+                    stack: ex.StackTrace);
+            }
             catch (Exception ex)
             {
+                // Unexpected error - continue anyway, state cleaned up on session expiry
                 _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.WebSocketSessionId);
                 await _messageBus.TryPublishErrorAsync(
                     "game-session",
@@ -1134,8 +1209,15 @@ public partial class GameSessionService : IGameSessionService
                         SessionId = leavingPlayer.VoiceSessionId.Value
                     }, cancellationToken);
                 }
+                catch (ApiException ex)
+                {
+                    // Voice service error - non-fatal
+                    _logger.LogWarning(ex, "Voice service error leaving room for player {AccountId}: {StatusCode}",
+                        leavingPlayer.AccountId, ex.StatusCode);
+                }
                 catch (Exception ex)
                 {
+                    // Unexpected error - non-fatal
                     _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}", leavingPlayer.AccountId);
                 }
             }
@@ -1155,6 +1237,11 @@ public partial class GameSessionService : IGameSessionService
                             RoomId = model.VoiceRoomId.Value,
                             Reason = "session_ended"
                         }, cancellationToken);
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Voice service error deleting room {VoiceRoomId} for session {SessionId}: {StatusCode}",
+                            model.VoiceRoomId, gameSessionId, ex.StatusCode);
                     }
                     catch (Exception ex)
                     {
@@ -1329,7 +1416,7 @@ public partial class GameSessionService : IGameSessionService
             var sessionId = body.SessionId.ToString();
             var targetAccountId = body.TargetAccountId;
 
-            _logger.LogInformation("Kicking player {TargetAccountId} from session {SessionId}. Reason: {Reason}",
+            _logger.LogDebug("Kicking player {TargetAccountId} from session {SessionId}. Reason: {Reason}",
                 targetAccountId, sessionId, body.Reason);
 
             // Acquire lock on session (concurrent modification protection)
@@ -1727,10 +1814,16 @@ public partial class GameSessionService : IGameSessionService
                 _logger.LogDebug("No subscriptions found for account {AccountId}, not caching", accountId);
             }
         }
+        catch (ApiException ex)
+        {
+            // Subscription service returned an error - don't cache, allow retry
+            _logger.LogWarning(ex, "Subscription service error fetching subscriptions for account {AccountId}: {StatusCode}",
+                accountId, ex.StatusCode);
+        }
         catch (Exception ex)
         {
+            // Unexpected error - don't cache, allow retry
             _logger.LogWarning(ex, "Failed to fetch subscriptions for account {AccountId}", accountId);
-            // Don't cache empty set on error - allow retry on next request
         }
     }
 

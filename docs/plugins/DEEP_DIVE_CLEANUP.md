@@ -171,17 +171,17 @@ For each plugin deep dive document:
 | Documentation | DONE | Fixed T23 (GitSyncService → fire-and-forget, RedisSearchIndexService → Error logging + discard). Removed false positives (T23 interface contract, T5 diagnostics, T19 internal, T10 controller). Moved T16 return type to Design Considerations. | PHASE2: No actionable bugs, remaining: N+1 queries, git multi-instance, authentication |
 | Escrow | DONE | All violations were false positives or already fixed. Removed T6/T9/T7/T10/T25 false positives. Moved POCO string defaults and EscrowExpiredEvent to Design Considerations. | PHASE2: No actionable bugs, remaining: expiration processor, index cleanup, query scaling |
 | Game-Service | DONE | All violations previously fixed (T25 ServiceId→Guid, T10 logging, T9 ETag concurrency). Removed false positives (T6 NRT, T7 no mesh calls, T19 internal, T21 framework boilerplate). | PHASE2: No actionable bugs, remaining: list bottleneck, concurrency control (acceptable per doc) |
-| Game-Session | DONE | Fixed T21 (added LockTimeoutSeconds config). Removed false positives (T6 NRT, T19 private/internal, T25 event boundaries). Moved T25 POCO types, T7, T5, T10 to Design Considerations. | PHASE2: No actionable bugs, remaining: T25 types, T7 catches, T10 logging (~30 lines), T5 events |
+| Game-Session | DONE | Fixed T21 (added LockTimeoutSeconds config). Removed false positives (T6 NRT, T19 private/internal, T25 event boundaries). Moved T25 POCO types, T5 to Design Considerations. | PHASE2: Fixed 2 (T10 logging 5 lines, T7 ApiException 10 catch blocks), remaining: T25 types, T5 events, T21 fallback |
 | Inventory | DONE | Already compliant. Added Bugs section (empty). All tunables from config, proper T7 ApiException handling for mesh calls. | PHASE2: No actionable bugs, compliant |
 | Item | DONE | Already compliant (leaf node, no mesh calls). Added Bugs section (empty). T25 POCO type issues documented in Design Considerations. | PHASE2: No actionable bugs, remaining: T25 POCO types |
 | Leaderboard | DONE | Already compliant (leaf node, no mesh calls). Added Bugs section (empty). Analytics event matching and season lifecycle properly documented. | PHASE2: No actionable bugs, compliant |
 | Location | DONE | Fixed T21 (added 3 depth limit config props), T7 (ApiException handling for IRealmClient). Updated config and stubs sections. | PHASE2: No actionable bugs, compliant |
-| Mapping | DONE | Already compliant. T7 ApiException handled for IAssetClient. T21 hardcoded affordance scoring values kept in Design Considerations (many values, complex change). | PHASE2: No actionable bugs, remaining: T21 affordance scoring values |
+| Mapping | DONE | Already compliant. T7 ApiException handled for IAssetClient. T21 hardcoded affordance scoring values kept in Design Considerations (many values, complex change). | PHASE2: Fixed 2 (cached affordance metadata preservation, AffordanceExclusionToleranceUnits→config), remaining: T21 affordance scoring values |
 | Matchmaking | DONE | Already compliant. T7 ApiException handled for IGameSessionClient, IPermissionClient. Well-structured document. | PHASE2: No actionable bugs, compliant |
-| Mesh | DONE | Already compliant (leaf node, no mesh calls). Well-structured document. | PHASE2: No actionable bugs, compliant |
-| Messaging | DONE | Already compliant (infrastructure, no mesh calls). Well-structured document. Dead config properties noted in Design Considerations. | PHASE2: No actionable bugs, remaining: dead config properties |
+| Mesh | DONE | Already compliant (leaf node, no mesh calls). Well-structured document. | PHASE2: Fixed 2 (DefaultMaxConnections→config, _initialized→Interlocked thread safety), remaining: none |
+| Messaging | DONE | Already compliant (infrastructure, no mesh calls). Well-structured document. Dead config properties noted in Design Considerations. | PHASE2: Fixed 1 (HashSet+lock→ConcurrentDictionary for exchange caching in 3 files), remaining: dead config properties |
 | Music | DONE | Removed false positive (T19 private methods). Restructured violations into Design Considerations (unused state store, hardcoded tunables, plugin lifecycle). | PHASE2: No actionable bugs, remaining: unused state store, tunables |
-| Orchestrator | DONE | Restructured violations into Design Considerations (hardcoded image/tunables, in-memory state, external API JSON). T20 external API is acceptable boundary exception. | PHASE2: No actionable bugs, remaining: hardcoded tunables, in-memory state |
+| Orchestrator | DONE | Restructured violations into Design Considerations (hardcoded image/tunables, in-memory state, external API JSON). T20 external API is acceptable boundary exception. | PHASE2: Fixed 4 (DockerImageName→config, RestartTimeoutSeconds/HealthCheckIntervalMs/DefaultWaitBeforeKillSeconds→config, T19 Dispose XML docs), remaining: in-memory state |
 | Permission | DONE | Removed false positives (T6, T7, T19, T21 role hierarchy, T16 naming). Moved T9 multi-instance set ops and T25 anonymous type to Design Considerations. | PHASE2: No actionable bugs, remaining: T9 multi-instance, T25 anonymous type |
 | Realm | DONE | Removed false positives (T6, T7, T19, T21, T16). Moved T9 multi-instance and T25 RealmId type to Design Considerations. Leaf node - no mesh calls. | PHASE2: No actionable bugs, remaining: T9 multi-instance, T25 RealmId |
 | Realm-History | DONE | Removed false positives (T6, T7). Moved T25 POCO types and T9 multi-instance to Design Considerations. Leaf node - no mesh calls. | PHASE2: No actionable bugs, remaining: T25 types, T9 multi-instance |
@@ -189,10 +189,10 @@ For each plugin deep dive document:
 | Relationship-Type | DONE | Fixed T21 (moved MaxHierarchyDepth and MaxMigrationErrorsToTrack to config). Fixed outdated docs (delete-after-merge IS implemented). Removed false positives (T6, T7, T9 local dict). Moved T9 multi-instance and T25 POCO types to Design Considerations. | PHASE2: No actionable bugs, remaining: T9 multi-instance, T25 types |
 | Save-Load | DONE | Fixed T20 (BannouJson), T10 logging levels. Removed T6, T19 false positives. Restructured violations section. T25 → Design Considerations. | PHASE2: No actionable bugs, remaining: T25 types |
 | Scene | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Fixed T21 (CheckoutTtlBufferMinutes moved to config). Moved T9/T25 to Design Considerations. | PHASE2: Fixed 1 (T21 checkout buffer), remaining: T9, T25 |
-| Species | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Added Bugs section (none). Moved T25/T9/T7/T21/T5 to Design Considerations. | PHASE2: No actionable bugs, remaining: T25, T9, T7, T21, T5 |
+| Species | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Added Bugs section (none). Moved T25/T9/T21/T5 to Design Considerations. | PHASE2: Fixed 1 (T7 ApiException 4 catch blocks), remaining: T25, T9, T21, T5 |
 | State | DONE | Fixed T10 logging (operation entry → Debug) and T7 (Warning → Error for index failure). Moved T21 config issues to Design Considerations. | PHASE2: No actionable bugs, remaining: T21 config issues |
 | Subscription | DONE | Fixed T10 logging (operation entry → Debug) and T23 (empty catch → Debug log). Removed T6 false positives. Moved T25/T9/T21/T7 to Design Considerations. | PHASE2: No actionable bugs, remaining: T25, T9, T21, T7 |
-| Voice | DONE | Fixed T10 logging (operation entry → Debug). Removed T6 false positives, T23 borderline compliant patterns. Moved T25/T21 to Design Considerations. | PHASE2: No actionable bugs, remaining: T25, T21 |
+| Voice | DONE | Fixed T10 logging (operation entry → Debug). Removed T6 false positives, T23 borderline compliant patterns. Moved T25/T21 to Design Considerations. | PHASE2: Fixed 1 (T21 SipCredentialExpirationHours), remaining: T25, tunable fallbacks |
 | Website | DONE | Fixed T10 logging (Warning → Debug for stub calls). Removed T6 false positive. Moved T21/T19 (stub-acceptable) to Design Considerations. | PHASE2: No actionable bugs (stub service), remaining: T21, T19 |
 
 ---
@@ -219,6 +219,8 @@ For each plugin, categorize remaining Design Considerations and Bugs:
 - Decision can be presented to user and answered immediately
 - Can be fixed in current session once decision is made
 - Does NOT mean "simple" or "one-line" - can be substantial work
+- **Schema changes are NOT automatically Category A** - adding a config property or event schema is often a single decision ("should this be configurable?" → yes → do it)
+- The barrier is decision complexity, not implementation effort
 
 The key question: "Can I fix this with at most one question to the user, or does it need a whole planning conversation?"
 

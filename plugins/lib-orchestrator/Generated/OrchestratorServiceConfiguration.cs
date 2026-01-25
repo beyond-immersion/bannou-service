@@ -116,6 +116,12 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public int PortainerEndpointId { get; set; } = 1;
 
     /// <summary>
+    /// Docker image name for deployed Bannou containers
+    /// Environment variable: ORCHESTRATOR_DOCKER_IMAGE_NAME
+    /// </summary>
+    public string DockerImageName { get; set; } = "bannou:latest";
+
+    /// <summary>
     /// Docker host for direct Docker API access
     /// Environment variable: ORCHESTRATOR_DOCKER_HOST
     /// </summary>
@@ -192,6 +198,24 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Environment variable: ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS
     /// </summary>
     public int ConfigHistoryTtlDays { get; set; } = 30;
+
+    /// <summary>
+    /// Default timeout in seconds for container restart operations
+    /// Environment variable: ORCHESTRATOR_RESTART_TIMEOUT_SECONDS
+    /// </summary>
+    public int RestartTimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Interval in milliseconds between health checks during restart
+    /// Environment variable: ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS
+    /// </summary>
+    public int HealthCheckIntervalMs { get; set; } = 2000;
+
+    /// <summary>
+    /// Default seconds to wait before killing a container during stop
+    /// Environment variable: ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS
+    /// </summary>
+    public int DefaultWaitBeforeKillSeconds { get; set; } = 30;
 
     /// <summary>
     /// Interval in seconds for polling container status during deploy

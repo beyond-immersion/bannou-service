@@ -322,6 +322,7 @@ public class BackendDetector : IBackendDetector
     private IContainerOrchestrator CreateSwarmOrchestrator()
     {
         return new DockerSwarmOrchestrator(
+            _configuration,
             _logger.GetType().Assembly.CreateLogger<DockerSwarmOrchestrator>());
     }
 

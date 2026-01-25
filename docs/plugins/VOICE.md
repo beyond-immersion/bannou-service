@@ -206,6 +206,12 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 
 None identified.
 
+### Previously Fixed
+
+1. **T21 (Hardcoded SIP credential expiration)**: Added `SipCredentialExpirationHours` to configuration schema (default: 24). `ScaledTierCoordinator.GenerateSipCredentials` now uses `_configuration.SipCredentialExpirationHours`.
+
+2. **T10 (Logging levels)**: Operation entry logs changed from `LogInformation` to `LogDebug`.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **SDP answer in SdpOffer field**: The `VoicePeerUpdatedEvent` reuses the `SdpOffer` field to carry the SDP answer from `/voice/peer/answer`. Not a bug - intentional field reuse for the asymmetric WebRTC handshake (offer from joiner, answer from existing peer).
@@ -235,5 +241,3 @@ None identified.
 5. **String-based tier and codec storage**: `VoiceRoomData` stores tier and codec as strings, requiring parsing in service methods. Allows future extensibility but loses type safety at the persistence layer. Changing to enum types would require model migration.
 
 6. **Hardcoded tunable fallbacks**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants` and 22222 for `RtpEnginePort` when configuration values are invalid. Should rely on schema defaults or throw for invalid configuration.
-
-7. **Hardcoded SIP credential expiration**: `GenerateSipCredentials` uses 24-hour expiration. Should be a configuration property (`SipCredentialExpirationHours`).

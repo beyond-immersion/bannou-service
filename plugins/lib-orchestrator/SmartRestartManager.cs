@@ -17,9 +17,6 @@ public class SmartRestartManager : ISmartRestartManager
     private readonly IOrchestratorEventManager _eventManager;
     private DockerClient? _dockerClient;
 
-    private const int DEFAULT_RESTART_TIMEOUT_SECONDS = 120;
-    private const int HEALTH_CHECK_INTERVAL_MS = 2000;
-
     public SmartRestartManager(
         ILogger<SmartRestartManager> logger,
         OrchestratorServiceConfiguration configuration,
@@ -115,11 +112,11 @@ public class SmartRestartManager : ISmartRestartManager
                 container.ID,
                 new ContainerRestartParameters
                 {
-                    WaitBeforeKillSeconds = 30
+                    WaitBeforeKillSeconds = (uint)_configuration.DefaultWaitBeforeKillSeconds
                 });
 
             // Wait for service to become healthy
-            var timeoutSeconds = request.Timeout > 0 ? request.Timeout : DEFAULT_RESTART_TIMEOUT_SECONDS;
+            var timeoutSeconds = request.Timeout > 0 ? request.Timeout : _configuration.RestartTimeoutSeconds;
             var timeout = TimeSpan.FromSeconds(timeoutSeconds);
             var isHealthy = await WaitForServiceHealthAsync(request.ServiceName, timeout);
 
@@ -219,7 +216,7 @@ public class SmartRestartManager : ISmartRestartManager
                 "Service {ServiceName} status: {Status} - waiting...",
                 serviceName, recommendation.CurrentStatus);
 
-            await Task.Delay(HEALTH_CHECK_INTERVAL_MS);
+            await Task.Delay(_configuration.HealthCheckIntervalMs);
         }
 
         _logger.LogWarning(

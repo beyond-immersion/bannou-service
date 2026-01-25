@@ -404,7 +404,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
         try
         {
-            var imageName = "bannou:latest";
+            var imageName = _configuration.DockerImageName ?? "bannou:latest";
 
             // Prepare environment variables
             var envVars = new List<V1EnvVar>

@@ -53,6 +53,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     public const string BANNOU_ORCHESTRATOR_MANAGED_LABEL = "bannou.orchestrator-managed";
 
     // Configuration from environment variables
+    private readonly OrchestratorServiceConfiguration _configuration;
     private readonly string _configuredDockerNetwork;
     private readonly string _certificatesHostPath;
     private readonly string _presetsHostPath;
@@ -70,6 +71,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, AppConfiguration appConfiguration, ILogger<DockerComposeOrchestrator> logger)
     {
         _logger = logger;
+        _configuration = config;
         _appConfiguration = appConfiguration;
 
         // Create Docker client using default configuration
@@ -674,7 +676,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             // 2. Connecting to the correct Docker network
             // 3. Starting the container
 
-            var imageName = "bannou:latest";
+            var imageName = _configuration.DockerImageName ?? "bannou:latest";
             var containerName = $"bannou-{appId}";
 
             // Validate that the bannou image is present locally
@@ -1061,6 +1063,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _client.Dispose();

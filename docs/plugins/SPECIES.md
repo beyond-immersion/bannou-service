@@ -213,6 +213,10 @@ State Store Layout
 
 None identified.
 
+### Previously Fixed
+
+1. **T7 (ApiException catch for mesh calls)**: Added `ApiException` catches before `Exception` catches for all `ICharacterClient` calls (delete verification, realm removal verification, merge pagination, character update). ApiException logged at Warning with status code; generic Exception logged at Error/Warning depending on operation criticality.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Code normalization to uppercase**: All species codes are stored and indexed as uppercase via `ToUpperInvariant()`. Lookups are case-insensitive by normalizing input.
@@ -251,9 +255,7 @@ None identified.
 
 11. **Internal model type safety**: `SpeciesModel` uses `string` for `SpeciesId` and `List<string>` for `RealmIds` instead of `Guid` and `List<Guid>`. This requires `Guid.Parse()`/`ToString()` conversions throughout the code. Refactoring to use proper types would improve type safety.
 
-12. **Missing ApiException catch for mesh client calls**: Calls to `ICharacterClient` and `IRealmClient` use generic `Exception` catch instead of distinguishing `ApiException` (expected API errors) from unexpected exceptions. Should add `ApiException` catch blocks per error handling tenets.
+12. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
 
-13. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
-
-14. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
+13. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
 

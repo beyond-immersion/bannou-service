@@ -65,6 +65,11 @@ x-service-configuration:
       default: 1
 
     # Docker Configuration (Docker Compose backend)
+    DockerImageName:
+      type: string
+      description: Docker image name for deployed Bannou containers
+      env: ORCHESTRATOR_DOCKER_IMAGE_NAME
+      default: "bannou:latest"
     DockerHost:
       type: string
       description: Docker host for direct Docker API access
@@ -136,6 +141,23 @@ x-service-configuration:
       type: integer
       description: TTL in days for configuration history entries in state store
       env: ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS
+      default: 30
+
+    # Smart Restart Configuration
+    RestartTimeoutSeconds:
+      type: integer
+      description: Default timeout in seconds for container restart operations
+      env: ORCHESTRATOR_RESTART_TIMEOUT_SECONDS
+      default: 120
+    HealthCheckIntervalMs:
+      type: integer
+      description: Interval in milliseconds between health checks during restart
+      env: ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS
+      default: 2000
+    DefaultWaitBeforeKillSeconds:
+      type: integer
+      description: Default seconds to wait before killing a container during stop
+      env: ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS
       default: 30
 
     # Polling Configuration

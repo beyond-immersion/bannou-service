@@ -274,6 +274,10 @@ The following items were identified as violations but do not apply:
 
 1. **T21 (Hardcoded lock timeout)**: Added `LockTimeoutSeconds` to configuration schema (default: 60). All `_lockProvider.LockAsync()` calls now use `_configuration.LockTimeoutSeconds`.
 
+2. **T10 (Logging levels)**: Changed operation entry logs from `LogInformation` to `LogDebug` for: Listing, Creating, Getting, Performing, and Kicking operations.
+
+3. **T7 (ApiException catch)**: Added `ApiException` catches before `Exception` catches for all mesh client calls (voice, permission, subscription). ApiException logged at Warning level with status code; generic Exception logged at Error or Warning level depending on operation criticality.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Static `_accountSubscriptions` cache with eviction**: A `static ConcurrentDictionary` shared across all scoped instances. Only holds accounts with active subscriptions - entries are evicted when the last subscription is removed. Unsubscribed accounts are NOT cached (triggers a fresh Subscription service query on each connect event). This is a local filter cache only - authoritative state is in lib-state's subscriber sessions.
@@ -300,13 +304,9 @@ The following items were identified as violations but do not apply:
 
 2. **T25 (String comparison for enum)**: `HandleSubscriptionUpdatedInternalAsync` compares string literals for subscription actions. Should accept typed enum parameter and use enum equality.
 
-3. **T7 (ApiException catch)**: Service makes inter-service calls via `_voiceClient`, `_permissionClient`, `_subscriptionClient` but doesn't catch `ApiException` separately. Requires adding catch blocks to all endpoint methods.
+3. **T5 (Inline event models)**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline. Should be defined in schema files and generated.
 
-4. **T5 (Inline event models)**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline. Should be defined in schema files and generated.
-
-5. **T10 (Logging levels)**: Operation entry logs use `LogInformation` instead of `LogDebug`. Multiple endpoints need logging level fixes.
-
-6. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
+4. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
 
 7. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
 

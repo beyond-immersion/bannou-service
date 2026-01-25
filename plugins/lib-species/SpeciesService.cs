@@ -548,6 +548,13 @@ public partial class SpeciesService : ISpeciesService
                     return StatusCodes.Conflict;
                 }
             }
+            catch (ApiException ex)
+            {
+                // CharacterService returned an error - fail closed, could cause data integrity issues
+                _logger.LogWarning(ex, "Character service error verifying usage for species {Code}: {StatusCode} - failing deletion (fail closed)",
+                    model.Code, ex.StatusCode);
+                throw new InvalidOperationException($"Cannot verify character usage for species {model.Code}: CharacterService returned {ex.StatusCode}", ex);
+            }
             catch (Exception ex)
             {
                 // If CharacterService is unavailable, fail the operation - could cause data integrity issues
@@ -699,6 +706,13 @@ public partial class SpeciesService : ISpeciesService
                         model.Code, body.RealmId, charactersResponse.TotalCount);
                     return (StatusCodes.Conflict, null);
                 }
+            }
+            catch (ApiException ex)
+            {
+                // CharacterService returned an error - fail closed, could cause data integrity issues
+                _logger.LogWarning(ex, "Character service error verifying usage for species {Code} in realm {RealmId}: {StatusCode} - failing removal (fail closed)",
+                    model.Code, body.RealmId, ex.StatusCode);
+                throw new InvalidOperationException($"Cannot verify character usage for species {model.Code} in realm {body.RealmId}: CharacterService returned {ex.StatusCode}", ex);
             }
             catch (Exception ex)
             {
@@ -1059,6 +1073,12 @@ public partial class SpeciesService : ISpeciesService
                                 cancellationToken);
                             migratedCount++;
                         }
+                        catch (ApiException charEx)
+                        {
+                            _logger.LogWarning(charEx, "Character service error migrating character {CharacterId}: {StatusCode}",
+                                character.CharacterId, charEx.StatusCode);
+                            failedCount++;
+                        }
                         catch (Exception charEx)
                         {
                             _logger.LogWarning(charEx, "Failed to migrate character {CharacterId} from species {SourceId} to {TargetId}",
@@ -1069,6 +1089,12 @@ public partial class SpeciesService : ISpeciesService
 
                     hasMorePages = charactersResponse.HasNextPage;
                     page++;
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Character service error fetching characters for species migration at page {Page}: {StatusCode}",
+                        page, ex.StatusCode);
+                    hasMorePages = false;
                 }
                 catch (Exception ex)
                 {

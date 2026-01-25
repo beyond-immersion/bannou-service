@@ -521,7 +521,19 @@ Circuit Breaker State Machine
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **T21/T25 (String config should be enum)**: Two configuration properties in `save-load-configuration.yaml` are `type: string` but represent enums:
+   - `DefaultCompressionType` → `CompressionType` enum
+   - `DefaultDeltaAlgorithm` → algorithm enum (if defined)
+
+   Service parses at runtime with `Enum.TryParse`. Schema should define as enums.
+
+2. **T25 (Internal POCO uses string for enum)**: Multiple internal models store enums as strings requiring `Enum.Parse`/`Enum.TryParse`:
+   - `PendingUploadEntry.CompressionType`: string → `CompressionType`
+   - `SaveVersionManifest.CompressionType`: string → `CompressionType`
+   - `SaveSlotMetadata.CompressionType`: string → `CompressionType`
+   - `SaveSlotMetadata.OwnerType`: string → `OwnerType`
+   - `SaveSlotMetadata.Category`: string → `SaveCategory`
+   - `ExportManifest.OwnerType`: string → `OwnerType`
 
 ### Previously Fixed
 
