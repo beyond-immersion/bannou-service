@@ -237,8 +237,7 @@ components:
           type: string
           description: Chat message content
         messageType:
-          type: string
-          enum: [public, whisper, system]
+          $ref: 'game-session-api.yaml#/components/schemas/ChatMessageType'
           description: Type of chat message
         isWhisperToMe:
           type: boolean
@@ -322,8 +321,7 @@ components:
           format: uuid
           description: ID of the action that produced this result
         actionType:
-          type: string
-          enum: [move, interact, attack, cast_spell, use_item]
+          $ref: 'game-session-api.yaml#/components/schemas/GameActionType'
           description: Type of action performed
         actorId:
           type: string
@@ -366,8 +364,7 @@ components:
           nullable: true
           description: Player's display name
         role:
-          type: string
-          enum: [player, spectator, moderator]
+          $ref: 'game-session-api.yaml#/components/schemas/PlayerRole'
           description: Player's role in the session
         characterData:
           type: object

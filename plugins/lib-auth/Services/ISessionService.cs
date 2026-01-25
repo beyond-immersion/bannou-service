@@ -158,7 +158,7 @@ public class SessionDataModel
     /// <summary>
     /// The unique session ID (displayed to users).
     /// </summary>
-    public string SessionId { get; set; } = string.Empty;
+    public Guid SessionId { get; set; }
 
     /// <summary>
     /// Session creation time as Unix timestamp.

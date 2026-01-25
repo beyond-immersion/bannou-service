@@ -1274,7 +1274,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthLoginSuccessfulEvent for security audit trail.
     /// </summary>
-    private async Task PublishLoginSuccessfulEventAsync(Guid accountId, string username, string sessionId)
+    private async Task PublishLoginSuccessfulEventAsync(Guid accountId, string username, Guid sessionId)
     {
         try
         {
@@ -1284,7 +1284,7 @@ public partial class AuthService : IAuthService
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 Username = username,
-                SessionId = Guid.Parse(sessionId)
+                SessionId = sessionId
             };
 
             await _messageBus.TryPublishAsync(AUTH_LOGIN_SUCCESSFUL_TOPIC, eventModel);
@@ -1324,7 +1324,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthRegistrationSuccessfulEvent for user onboarding analytics.
     /// </summary>
-    private async Task PublishRegistrationSuccessfulEventAsync(Guid accountId, string username, string email, string sessionId)
+    private async Task PublishRegistrationSuccessfulEventAsync(Guid accountId, string username, string email, Guid sessionId)
     {
         try
         {
@@ -1335,7 +1335,7 @@ public partial class AuthService : IAuthService
                 AccountId = accountId,
                 Username = username,
                 Email = email,
-                SessionId = Guid.Parse(sessionId)
+                SessionId = sessionId
             };
 
             await _messageBus.TryPublishAsync(AUTH_REGISTRATION_SUCCESSFUL_TOPIC, eventModel);

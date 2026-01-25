@@ -49,13 +49,13 @@ public class TokenService : ITokenService
     }
 
     /// <inheritdoc/>
-    public async Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
+    public async Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Generating access token for account {AccountId}", account.AccountId);
 
         // Generate opaque session key for JWT Redis key security
         var sessionKey = Guid.NewGuid().ToString("N");
-        var sessionId = Guid.NewGuid().ToString();
+        var sessionId = Guid.NewGuid();
 
         // Fetch current subscriptions/authorizations for the account
         var authorizations = new List<string>();
@@ -110,7 +110,8 @@ public class TokenService : ITokenService
 
         // Maintain indexes
         await _sessionService.AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
-        await _sessionService.AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
+        // sessionId.ToString() at boundary for Redis key
+        await _sessionService.AddSessionIdReverseIndexAsync(sessionId.ToString(), sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(_appConfiguration.JwtSecret))
         {

@@ -82,7 +82,7 @@ public class SessionService : ISessionService
 
                         sessions.Add(new SessionInfo
                         {
-                            SessionId = Guid.Parse(result.SessionData.SessionId),
+                            SessionId = result.SessionData.SessionId,
                             CreatedAt = result.SessionData.CreatedAt,
                             LastActive = lastActive,
                             DeviceInfo = new DeviceInfo

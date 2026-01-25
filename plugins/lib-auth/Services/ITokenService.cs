@@ -15,7 +15,7 @@ public interface ITokenService
     /// <param name="account">The account to generate the token for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Tuple of (accessToken, sessionId) for event publishing.</returns>
-    Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default);
+    Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Generates a new refresh token.

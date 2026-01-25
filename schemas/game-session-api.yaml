@@ -662,8 +662,8 @@ components:
           maxLength: 500
           description: Content of the chat message
         messageType:
-          type: string
-          enum: [public, whisper, system]
+          allOf:
+          - $ref: '#/components/schemas/ChatMessageType'
           default: public
           description: Type of message (public to all, whisper to one player, or system announcement)
         targetPlayerId:
@@ -696,8 +696,7 @@ components:
           description: Game type for the action. Determines which lobby to apply the action. Provided by shortcut 
             system.
         actionType:
-          type: string
-          enum: [move, interact, attack, cast_spell, use_item]
+          $ref: '#/components/schemas/GameActionType'
           description: Type of game action to perform
         actionData:
           type: object
