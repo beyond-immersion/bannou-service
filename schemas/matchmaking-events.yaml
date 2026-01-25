@@ -199,14 +199,7 @@ components:
           nullable: true
           description: Party ID if this was a party ticket
         reason:
-          type: string
-          enum:
-            - cancelled_by_user
-            - timeout
-            - session_disconnected
-            - party_disbanded
-            - match_declined
-            - queue_disabled
+          $ref: 'matchmaking-api.yaml#/components/schemas/CancelReason'
           description: Reason for cancellation
         waitTimeSeconds:
           type: number

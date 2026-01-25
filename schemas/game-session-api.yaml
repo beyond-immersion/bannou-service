@@ -328,13 +328,15 @@ components:
       additionalProperties: false
       properties:
         gameType:
-          type: string
-          enum: [arcadia, generic]
+          allOf:
+          - $ref: '#/components/schemas/GameType'
+          nullable: true
           description: Filter by game type
         status:
-          type: string
-          enum: [waiting, active, full]
-          description: Filter by session status
+          allOf:
+          - $ref: '#/components/schemas/SessionStatus'
+          nullable: true
+          description: Filter by session status (finished not included for active filters)
 
     GetGameSessionRequest:
       type: object
@@ -378,8 +380,7 @@ components:
       - maxPlayers
       properties:
         gameType:
-          type: string
-          enum: [arcadia, generic]
+          $ref: '#/components/schemas/GameType'
           description: Type of game for this session (arcadia or generic)
         maxPlayers:
           type: integer
@@ -438,8 +439,7 @@ components:
           format: uuid
           description: Unique identifier for the game session
         gameType:
-          type: string
-          enum: [arcadia, generic]
+          $ref: '#/components/schemas/GameType'
           description: Type of game for this session
         sessionType:
           $ref: '#/components/schemas/SessionType'
@@ -449,8 +449,7 @@ components:
           nullable: true
           description: Display name for the session
         status:
-          type: string
-          enum: [waiting, active, full, finished]
+          $ref: '#/components/schemas/SessionStatus'
           description: Current status of the game session
         maxPlayers:
           type: integer
@@ -556,8 +555,7 @@ components:
           format: uuid
           description: ID of the joined game session
         playerRole:
-          type: string
-          enum: [player, spectator, moderator]
+          $ref: '#/components/schemas/PlayerRole'
           description: Role assigned to the player in this session
         gameData:
           type: object
@@ -597,8 +595,7 @@ components:
           nullable: true
           description: Display name shown to other players
         role:
-          type: string
-          enum: [player, spectator, moderator]
+          $ref: '#/components/schemas/PlayerRole'
           description: Role of the player in the game session
         joinedAt:
           type: string
@@ -808,6 +805,31 @@ components:
       type: string
       description: Type of game session - determines join behavior
       enum: [lobby, matchmade]
+
+    GameType:
+      type: string
+      description: Type of game for this session
+      enum: [arcadia, generic]
+
+    SessionStatus:
+      type: string
+      description: Current status of the game session
+      enum: [waiting, active, full, finished]
+
+    PlayerRole:
+      type: string
+      description: Role of the player in the game session
+      enum: [player, spectator, moderator]
+
+    ChatMessageType:
+      type: string
+      description: Type of chat message
+      enum: [public, whisper, system]
+
+    GameActionType:
+      type: string
+      description: Type of game action
+      enum: [move, interact, attack, cast_spell, use_item]
 
     # NOTE: PlayerReservation removed - reservations use ReservationInfo for matchmaking integration
 

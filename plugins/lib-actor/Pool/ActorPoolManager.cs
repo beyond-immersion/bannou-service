@@ -370,7 +370,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     }
 
     /// <inheritdoc/>
-    public async Task UpdateActorStatusAsync(string actorId, string newStatus, CancellationToken ct = default)
+    public async Task UpdateActorStatusAsync(string actorId, ActorStatus newStatus, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
@@ -379,14 +379,10 @@ public sealed class ActorPoolManager : IActorPoolManager
 
         if (assignment != null)
         {
-            // Parse string status to enum (event models use strings for serialization)
-            if (Enum.TryParse<ActorStatus>(newStatus, ignoreCase: true, out var status))
-            {
-                assignment.Status = status;
-            }
+            assignment.Status = newStatus;
 
             // Set StartedAt when status transitions to running
-            if (assignment.Status == ActorStatus.Running && assignment.StartedAt == null)
+            if (newStatus == ActorStatus.Running && assignment.StartedAt == null)
             {
                 assignment.StartedAt = DateTimeOffset.UtcNow;
             }
