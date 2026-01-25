@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -26,7 +25,6 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
     private readonly Mock<IStateStore<StatusIndexEntry>> _mockStatusIndexStore;
     private readonly Mock<IStateStore<ValidationTrackingEntry>> _mockValidationStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<ILogger<EscrowService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -41,7 +39,6 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         _mockStatusIndexStore = new Mock<IStateStore<StatusIndexEntry>>();
         _mockValidationStore = new Mock<IStateStore<ValidationTrackingEntry>>();
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockNavigator = new Mock<IServiceNavigator>();
         _mockLogger = new Mock<ILogger<EscrowService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -102,7 +99,6 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
     {
         return new EscrowService(
             _mockMessageBus.Object,
-            _mockNavigator.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             Configuration,

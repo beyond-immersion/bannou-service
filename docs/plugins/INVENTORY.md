@@ -20,9 +20,7 @@ Container and item placement management for games. Handles container lifecycle (
 | lib-state (`IStateStoreFactory`) | MySQL+Redis persistence for containers, cache, and indexes |
 | lib-state (`IDistributedLockProvider`) | Container-level locks for concurrent modification safety |
 | lib-messaging (`IMessageBus`) | Publishing inventory lifecycle events; error event publishing |
-| lib-item (`IItemClient` via `IServiceNavigator`) | Item template lookups, instance CRUD, container contents listing |
-
-> **Refactoring Consideration**: This plugin uses `IServiceNavigator` but only accesses `IItemClient` (1 service). Consider refactoring to inject `IItemClient` directly to make the dependency explicit in the constructor signature.
+| lib-item (`IItemClient`) | Item template lookups, instance CRUD, container contents listing |
 
 ---
 
@@ -101,7 +99,7 @@ This plugin does not consume external events.
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access |
 | `IDistributedLockProvider` | Singleton | Container-level distributed locks |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IServiceNavigator` | Scoped | Item service client access |
+| `IItemClient` | Scoped | Item service client for template/instance operations |
 
 Service lifetime is **Scoped** (per-request). No background services.
 

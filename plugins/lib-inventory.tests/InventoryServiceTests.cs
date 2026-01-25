@@ -4,7 +4,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -25,7 +24,6 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     private readonly Mock<IStateStore<ContainerModel>> _mockContainerStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<IItemClient> _mockItemClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<InventoryService>> _mockLogger;
@@ -36,7 +34,6 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         _mockContainerStore = new Mock<IStateStore<ContainerModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockNavigator = new Mock<IServiceNavigator>();
         _mockItemClient = new Mock<IItemClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<InventoryService>>();
@@ -52,10 +49,6 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         _mockStateStoreFactory
             .Setup(f => f.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache))
             .Returns(_mockContainerStore.Object);
-
-        _mockNavigator
-            .Setup(n => n.Item)
-            .Returns(_mockItemClient.Object);
 
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -84,7 +77,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     {
         return new InventoryService(
             _mockMessageBus.Object,
-            _mockNavigator.Object,
+            _mockItemClient.Object,
             _mockStateStoreFactory.Object,
             _mockLockProvider.Object,
             _mockLogger.Object,

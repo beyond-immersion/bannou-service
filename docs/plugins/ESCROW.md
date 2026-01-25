@@ -19,9 +19,6 @@ Full-custody orchestration layer for multi-party asset exchanges. Manages the co
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for agreements and handler registry; Redis for tokens, idempotency, status indexes, party pending counts, and validation tracking |
 | lib-messaging (`IMessageBus`) | Publishing 13 escrow lifecycle events; error event publishing via `TryPublishErrorAsync` |
-| lib-mesh (`IServiceNavigator`) | Cross-service client access (injected but not currently invoked for asset transfers) |
-
-> **Refactoring Consideration**: This plugin has `IServiceNavigator` injected but **never uses it** - this is dead code. The dependency should be removed entirely from the constructor.
 
 ---
 
@@ -122,7 +119,6 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | `EscrowServiceConfiguration` | Singleton | All 12 config properties |
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access (7 stores) |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IServiceNavigator` | Scoped | Cross-service client access (for future asset handler invocation) |
 
 Service lifetime is **Scoped** (per-request). No background services (expiration checking and periodic validation are defined in config but not yet implemented as background loops).
 
