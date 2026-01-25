@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Mapping;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -370,7 +371,7 @@ public partial class MapUpdatedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deltaType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MapUpdatedEventDeltaType? DeltaType { get; set; } = default!;
+    public DeltaType? DeltaType { get; set; } = default!;
 
     /// <summary>
     /// App-id of publisher
@@ -702,7 +703,7 @@ public partial class MapUnauthorizedPublishWarning
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MapUnauthorizedPublishWarningHandlingMode HandlingMode { get; set; } = default!;
+    public NonAuthorityHandlingMode HandlingMode { get; set; } = default!;
 
     /// <summary>
     /// Whether the publish was actually accepted
@@ -1039,20 +1040,6 @@ public enum IngestPayloadAction
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MapUpdatedEventDeltaType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"delta")]
-    Delta = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"snapshot")]
-    Snapshot = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ObjectChangeEventAction
 {
 
@@ -1064,23 +1051,6 @@ public enum ObjectChangeEventAction
 
     [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
     Deleted = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MapUnauthorizedPublishWarningHandlingMode
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"reject_and_alert")]
-    Reject_and_alert = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"accept_and_alert")]
-    Accept_and_alert = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"reject_silent")]
-    Reject_silent = 2,
 
 }
 #pragma warning restore CS1591

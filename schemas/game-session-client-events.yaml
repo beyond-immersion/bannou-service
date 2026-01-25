@@ -51,12 +51,10 @@ components:
           format: uuid
           description: ID of the game session
         previousState:
-          type: string
-          enum: [waiting, active, paused, finished]
+          $ref: 'game-session-api.yaml#/components/schemas/SessionStatus'
           description: State before the change
         newState:
-          type: string
-          enum: [waiting, active, paused, finished]
+          $ref: 'game-session-api.yaml#/components/schemas/SessionStatus'
           description: State after the change
         reason:
           type: string

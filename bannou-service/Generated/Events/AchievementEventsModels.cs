@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Achievement;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -110,7 +111,7 @@ public partial class AchievementUnlockedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AchievementUnlockedEventEntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Points earned from this achievement
@@ -204,7 +205,7 @@ public partial class AchievementProgressUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AchievementProgressUpdatedEventEntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Progress before update
@@ -286,7 +287,7 @@ public partial class AchievementPlatformSyncedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AchievementPlatformSyncedEventEntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Platform that was synced to
@@ -295,7 +296,7 @@ public partial class AchievementPlatformSyncedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AchievementPlatformSyncedEventPlatform Platform { get; set; } = default!;
+    public Platform Platform { get; set; } = default!;
 
     /// <summary>
     /// Platform-specific achievement ID
@@ -377,7 +378,7 @@ public partial class AchievementDefinitionCreatedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AchievementDefinitionCreatedEventAchievementType AchievementType { get; set; } = default!;
+    public AchievementType AchievementType { get; set; } = default!;
 
     /// <summary>
     /// Points awarded for unlocking this achievement
@@ -396,7 +397,7 @@ public partial class AchievementDefinitionCreatedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platforms")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<Platforms> Platforms { get; set; } = default!;
+    public System.Collections.Generic.ICollection<Platform> Platforms { get; set; } = default!;
 
 }
 
@@ -511,135 +512,6 @@ public partial class AchievementDefinitionDeletedEvent
     public string? DisplayName { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AchievementUnlockedEventEntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AchievementProgressUpdatedEventEntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AchievementPlatformSyncedEventEntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
-    Actor = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AchievementPlatformSyncedEventPlatform
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"xbox")]
-    Xbox = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"playstation")]
-    Playstation = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"internal")]
-    Internal = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AchievementDefinitionCreatedEventAchievementType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"standard")]
-    Standard = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"progressive")]
-    Progressive = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"hidden")]
-    Hidden = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"secret")]
-    Secret = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Platforms
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"xbox")]
-    Xbox = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"playstation")]
-    Playstation = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"internal")]
-    Internal = 3,
-
-}
-#pragma warning restore CS1591
 
 
 

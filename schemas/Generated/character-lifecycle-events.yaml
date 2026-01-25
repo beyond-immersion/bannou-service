@@ -48,7 +48,8 @@ components:
           nullable: true
           description: In-game birth date of the character
         status: &id006
-          type: string
+          allOf:
+          - $ref: '../character-api.yaml#/components/schemas/CharacterStatus'
           nullable: true
           description: Current status of the character (e.g., active, inactive, deceased)
         createdAt: &id007

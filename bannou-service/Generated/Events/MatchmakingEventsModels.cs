@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Matchmaking;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -232,7 +233,7 @@ public partial class MatchmakingTicketCancelledEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MatchmakingTicketCancelledEventReason Reason { get; set; } = default!;
+    public CancelReason Reason { get; set; } = default!;
 
     /// <summary>
     /// How long the ticket was active before cancellation
@@ -559,32 +560,6 @@ public partial class MatchedTicketInfo
     public double? WaitTimeSeconds { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MatchmakingTicketCancelledEventReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled_by_user")]
-    Cancelled_by_user = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
-    Timeout = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session_disconnected")]
-    Session_disconnected = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"party_disbanded")]
-    Party_disbanded = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"match_declined")]
-    Match_declined = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"queue_disabled")]
-    Queue_disabled = 5,
-
-}
-#pragma warning restore CS1591
 
 
 

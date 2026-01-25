@@ -55,7 +55,8 @@ x-lifecycle:
         nullable: true  # NRT: Optional property MUST be nullable
         description: In-game birth date of the character
       status:
-        type: string
+        allOf:
+          - $ref: '../character-api.yaml#/components/schemas/CharacterStatus'
         nullable: true  # NRT: Optional property MUST be nullable
         description: Current status of the character (e.g., active, inactive, deceased)
       createdAt:
