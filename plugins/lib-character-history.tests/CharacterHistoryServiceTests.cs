@@ -367,12 +367,12 @@ public class CharacterHistoryServiceTests
 
         var existingBackstory = new BackstoryData
         {
-            CharacterId = characterId.ToString(),
+            CharacterId = characterId,
             Elements = new List<BackstoryElementData>
             {
                 new BackstoryElementData
                 {
-                    ElementType = "ORIGIN",
+                    ElementType = BackstoryElementType.ORIGIN,
                     Key = "homeland",
                     Value = "Old value",
                     Strength = 0.5f
@@ -446,7 +446,7 @@ public class CharacterHistoryServiceTests
 
         var existingBackstory = new BackstoryData
         {
-            CharacterId = characterId.ToString(),
+            CharacterId = characterId,
             Elements = new List<BackstoryElementData>(),
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()

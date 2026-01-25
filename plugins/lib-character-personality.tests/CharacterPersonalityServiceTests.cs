@@ -111,17 +111,17 @@ public class CharacterPersonalityServiceTests
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         return new PersonalityData
         {
-            CharacterId = characterId.ToString(),
-            Traits = new Dictionary<string, float>
+            CharacterId = characterId,
+            Traits = new Dictionary<TraitAxis, float>
             {
-                { "OPENNESS", 0.5f },
-                { "CONSCIENTIOUSNESS", 0.3f },
-                { "EXTRAVERSION", -0.2f },
-                { "AGREEABLENESS", 0.7f },
-                { "NEUROTICISM", -0.4f },
-                { "HONESTY", 0.6f },
-                { "AGGRESSION", -0.5f },
-                { "LOYALTY", 0.8f }
+                { TraitAxis.OPENNESS, 0.5f },
+                { TraitAxis.CONSCIENTIOUSNESS, 0.3f },
+                { TraitAxis.EXTRAVERSION, -0.2f },
+                { TraitAxis.AGREEABLENESS, 0.7f },
+                { TraitAxis.NEUROTICISM, -0.4f },
+                { TraitAxis.HONESTY, 0.6f },
+                { TraitAxis.AGGRESSION, -0.5f },
+                { TraitAxis.LOYALTY, 0.8f }
             },
             Version = version,
             CreatedAtUnix = now - 3600, // 1 hour ago
@@ -137,10 +137,10 @@ public class CharacterPersonalityServiceTests
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         return new CombatPreferencesData
         {
-            CharacterId = characterId.ToString(),
-            Style = "BALANCED",
-            PreferredRange = "MEDIUM",
-            GroupRole = "FRONTLINE",
+            CharacterId = characterId,
+            Style = CombatStyle.BALANCED,
+            PreferredRange = PreferredRange.MEDIUM,
+            GroupRole = GroupRole.FRONTLINE,
             RiskTolerance = 0.5f,
             RetreatThreshold = 0.3f,
             ProtectAllies = true,
@@ -1099,11 +1099,11 @@ public class CharacterPersonalityServiceTests
 
         var testData = new PersonalityData
         {
-            CharacterId = characterId.ToString(),
-            Traits = new Dictionary<string, float>
+            CharacterId = characterId,
+            Traits = new Dictionary<TraitAxis, float>
             {
-                { "OPENNESS", 0.75f },
-                { "NEUROTICISM", -0.5f }
+                { TraitAxis.OPENNESS, 0.75f },
+                { TraitAxis.NEUROTICISM, -0.5f }
             },
             Version = 3,
             CreatedAtUnix = createdAt,
@@ -1142,10 +1142,10 @@ public class CharacterPersonalityServiceTests
         var characterId = Guid.NewGuid();
         var testData = new CombatPreferencesData
         {
-            CharacterId = characterId.ToString(),
-            Style = "TACTICAL",
-            PreferredRange = "RANGED",
-            GroupRole = "LEADER",
+            CharacterId = characterId,
+            Style = CombatStyle.TACTICAL,
+            PreferredRange = PreferredRange.RANGED,
+            GroupRole = GroupRole.LEADER,
             RiskTolerance = 0.3f,
             RetreatThreshold = 0.6f,
             ProtectAllies = true,

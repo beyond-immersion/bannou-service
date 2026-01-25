@@ -93,7 +93,7 @@ public partial class CurrencyService : ICurrencyService
                     foreach (var id in allIds)
                     {
                         var existing = await store.GetAsync($"{DEF_PREFIX}{id}", cancellationToken);
-                        if (existing is not null && existing.IsBaseCurrency && existing.Scope == body.Scope.ToString())
+                        if (existing is not null && existing.IsBaseCurrency && existing.Scope == body.Scope)
                         {
                             _logger.LogWarning("Base currency already exists for scope: {Scope}", body.Scope);
                             return (StatusCodes.Conflict, null);
@@ -107,38 +107,38 @@ public partial class CurrencyService : ICurrencyService
 
             var model = new CurrencyDefinitionModel
             {
-                DefinitionId = definitionId.ToString(),
+                DefinitionId = definitionId,
                 Code = body.Code,
                 Name = body.Name,
                 Description = body.Description,
-                Scope = body.Scope.ToString(),
-                RealmsAvailable = body.RealmsAvailable?.Select(r => r.ToString()).ToList(),
-                Precision = body.Precision.ToString(),
+                Scope = body.Scope,
+                RealmsAvailable = body.RealmsAvailable?.ToList(),
+                Precision = body.Precision,
                 Transferable = body.Transferable,
                 Tradeable = body.Tradeable,
                 AllowNegative = body.AllowNegative,
                 PerWalletCap = body.PerWalletCap,
-                CapOverflowBehavior = body.CapOverflowBehavior.ToString(),
+                CapOverflowBehavior = body.CapOverflowBehavior,
                 GlobalSupplyCap = body.GlobalSupplyCap,
                 DailyEarnCap = body.DailyEarnCap,
                 WeeklyEarnCap = body.WeeklyEarnCap,
                 EarnCapResetTime = body.EarnCapResetTime,
                 AutogainEnabled = body.AutogainEnabled,
-                AutogainMode = body.AutogainMode.ToString(),
+                AutogainMode = body.AutogainMode,
                 AutogainAmount = body.AutogainAmount,
                 AutogainInterval = body.AutogainInterval,
                 AutogainCap = body.AutogainCap,
                 Expires = body.Expires,
-                ExpirationPolicy = body.ExpirationPolicy?.ToString(),
+                ExpirationPolicy = body.ExpirationPolicy,
                 ExpirationDate = body.ExpirationDate,
                 ExpirationDuration = body.ExpirationDuration,
                 SeasonId = body.SeasonId?.ToString(),
                 LinkedToItem = body.LinkedToItem,
-                LinkedItemTemplateId = body.LinkedItemTemplateId?.ToString(),
-                LinkageMode = body.LinkageMode.ToString(),
+                LinkedItemTemplateId = body.LinkedItemTemplateId,
+                LinkageMode = body.LinkageMode,
                 IsBaseCurrency = body.IsBaseCurrency,
                 ExchangeRateToBase = body.ExchangeRateToBase,
-                IconAssetId = body.IconAssetId?.ToString(),
+                IconAssetId = body.IconAssetId,
                 DisplayFormat = body.DisplayFormat,
                 IsActive = true,
                 CreatedAt = now,
@@ -156,8 +156,8 @@ public partial class CurrencyService : ICurrencyService
                 DefinitionId = definitionId,
                 Code = model.Code,
                 Name = model.Name,
-                Scope = model.Scope,
-                Precision = model.Precision,
+                Scope = model.Scope.ToString(),
+                Precision = model.Precision.ToString(),
                 IsActive = model.IsActive,
                 CreatedAt = now
             }, cancellationToken);
@@ -2995,39 +2995,39 @@ public partial class CurrencyService : ICurrencyService
 /// </summary>
 internal class CurrencyDefinitionModel
 {
-    public string DefinitionId { get; set; } = "";
+    public Guid DefinitionId { get; set; }
     public string Code { get; set; } = "";
     public string Name { get; set; } = "";
     public string? Description { get; set; }
-    public string Scope { get; set; } = "";
-    public List<string>? RealmsAvailable { get; set; }
-    public string Precision { get; set; } = "";
+    public CurrencyScope Scope { get; set; } = CurrencyScope.Global;
+    public List<Guid>? RealmsAvailable { get; set; }
+    public CurrencyPrecision Precision { get; set; } = CurrencyPrecision.Integer;
     public bool Transferable { get; set; } = true;
     public bool Tradeable { get; set; } = true;
     public bool? AllowNegative { get; set; }
     public double? PerWalletCap { get; set; }
-    public string? CapOverflowBehavior { get; set; }
+    public CapOverflowBehavior? CapOverflowBehavior { get; set; }
     public double? GlobalSupplyCap { get; set; }
     public double? DailyEarnCap { get; set; }
     public double? WeeklyEarnCap { get; set; }
     public string? EarnCapResetTime { get; set; }
     public bool AutogainEnabled { get; set; }
-    public string? AutogainMode { get; set; }
+    public AutogainMode? AutogainMode { get; set; }
     public double? AutogainAmount { get; set; }
     public string? AutogainInterval { get; set; }
     public double? AutogainCap { get; set; }
     public bool Expires { get; set; }
-    public string? ExpirationPolicy { get; set; }
+    public ExpirationPolicy? ExpirationPolicy { get; set; }
     public DateTimeOffset? ExpirationDate { get; set; }
     public string? ExpirationDuration { get; set; }
     public string? SeasonId { get; set; }
     public bool LinkedToItem { get; set; }
-    public string? LinkedItemTemplateId { get; set; }
-    public string? LinkageMode { get; set; }
+    public Guid? LinkedItemTemplateId { get; set; }
+    public ItemLinkageMode? LinkageMode { get; set; }
     public bool IsBaseCurrency { get; set; }
     public double? ExchangeRateToBase { get; set; }
     public DateTimeOffset? ExchangeRateUpdatedAt { get; set; }
-    public string? IconAssetId { get; set; }
+    public Guid? IconAssetId { get; set; }
     public string? DisplayFormat { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; }
@@ -3040,14 +3040,14 @@ internal class CurrencyDefinitionModel
 /// </summary>
 internal class WalletModel
 {
-    public string WalletId { get; set; } = "";
-    public string OwnerId { get; set; } = "";
-    public string OwnerType { get; set; } = "";
-    public string? RealmId { get; set; }
+    public Guid WalletId { get; set; }
+    public Guid OwnerId { get; set; }
+    public WalletOwnerType OwnerType { get; set; } = WalletOwnerType.Account;
+    public Guid? RealmId { get; set; }
     public WalletStatus Status { get; set; } = WalletStatus.Active;
     public string? FrozenReason { get; set; }
     public DateTimeOffset? FrozenAt { get; set; }
-    public string? FrozenBy { get; set; }
+    public Guid? FrozenBy { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastActivityAt { get; set; }
 }
@@ -3058,8 +3058,8 @@ internal class WalletModel
 /// </summary>
 internal class BalanceModel
 {
-    public string WalletId { get; set; } = "";
-    public string CurrencyDefinitionId { get; set; } = "";
+    public Guid WalletId { get; set; }
+    public Guid CurrencyDefinitionId { get; set; }
     public double Amount { get; set; }
     public DateTimeOffset? LastAutogainAt { get; set; }
     public double DailyEarned { get; set; }
@@ -3075,15 +3075,15 @@ internal class BalanceModel
 /// </summary>
 internal class TransactionModel
 {
-    public string TransactionId { get; set; } = "";
-    public string? SourceWalletId { get; set; }
-    public string? TargetWalletId { get; set; }
-    public string CurrencyDefinitionId { get; set; } = "";
+    public Guid TransactionId { get; set; }
+    public Guid? SourceWalletId { get; set; }
+    public Guid? TargetWalletId { get; set; }
+    public Guid CurrencyDefinitionId { get; set; }
     public double Amount { get; set; }
-    public string TransactionType { get; set; } = "";
+    public TransactionType TransactionType { get; set; } = TransactionType.Mint;
     public string? ReferenceType { get; set; }
-    public string? ReferenceId { get; set; }
-    public string? EscrowId { get; set; }
+    public Guid? ReferenceId { get; set; }
+    public Guid? EscrowId { get; set; }
     public string IdempotencyKey { get; set; } = "";
     public DateTimeOffset Timestamp { get; set; }
     public double? SourceBalanceBefore { get; set; }
@@ -3097,15 +3097,15 @@ internal class TransactionModel
 /// </summary>
 internal class HoldModel
 {
-    public string HoldId { get; set; } = "";
-    public string WalletId { get; set; } = "";
-    public string CurrencyDefinitionId { get; set; } = "";
+    public Guid HoldId { get; set; }
+    public Guid WalletId { get; set; }
+    public Guid CurrencyDefinitionId { get; set; }
     public double Amount { get; set; }
     public HoldStatus Status { get; set; } = HoldStatus.Active;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public string? ReferenceType { get; set; }
-    public string? ReferenceId { get; set; }
+    public Guid? ReferenceId { get; set; }
     public double? CapturedAmount { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
 }

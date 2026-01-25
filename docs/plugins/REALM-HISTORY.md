@@ -203,25 +203,23 @@ None. The service is feature-complete for its scope.
 
 6. **Event index `RealmId` field is misleading**: At line 124, when creating an event index, the code sets `RealmId = body.EventId.ToString()`. The field name is `RealmId` but stores an EventId. The `RealmParticipationIndexData` class is reused for both realm and event indices with confusing field naming.
 
-7. **Sequential fetches for participations (no bulk get)**: Lines 192-208 and 277-291 iterate through each participation ID and fetch sequentially with `GetAsync`. Unlike character-history which uses `GetBulkAsync` via DualIndexHelper, realm-history makes N individual state store calls.
+7. **GetLore always returns both timestamps**: Lines 449-450 always return both `CreatedAt` and `UpdatedAt`. Unlike character-history which returns `UpdatedAt=null` if backstory was never modified after creation, realm-history always populates both.
 
-8. **GetLore always returns both timestamps**: Lines 449-450 always return both `CreatedAt` and `UpdatedAt`. Unlike character-history which returns `UpdatedAt=null` if backstory was never modified after creation, realm-history always populates both.
+8. **DeleteParticipation doesn't delete empty indices**: Lines 356-369 update realm and event indices by removing the participation ID but don't delete the index documents when they become empty. Only DeleteAll deletes the realm index.
 
-9. **DeleteParticipation doesn't delete empty indices**: Lines 356-369 update realm and event indices by removing the participation ID but don't delete the index documents when they become empty. Only DeleteAll deletes the realm index.
+9. **Summarize doesn't publish any event**: Like character-history, `SummarizeRealmHistoryAsync` (lines 841-926) generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
-10. **Summarize doesn't publish any event**: Like character-history, `SummarizeRealmHistoryAsync` (lines 841-926) generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
+10. **ORIGIN and INSTIGATOR roles both map to "instigated"**: Lines 1005 and 1011 in `GenerateEventSummary` both produce "instigated" - semantically different roles with identical summary text.
 
-11. **ORIGIN and INSTIGATOR roles both map to "instigated"**: Lines 1005 and 1011 in `GenerateEventSummary` both produce "instigated" - semantically different roles with identical summary text.
+11. **Unknown lore element types display raw enum string**: Line 995 uses `_ => element.ElementType` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
 
-12. **Unknown lore element types display raw enum string**: Line 995 uses `_ => element.ElementType` for unrecognized element types, so the raw string like "NEW_TYPE" appears verbatim in summaries.
+12. **Unknown participation roles default to "participated in"**: Line 1013 uses `_ => "participated in"` for unrecognized roles.
 
-13. **Unknown participation roles default to "participated in"**: Line 1013 uses `_ => "participated in"` for unrecognized roles.
+13. **Role enum parsing fallback to AFFECTED**: Lines 943-945 in `MapToRealmHistoricalParticipation` fall back to `RealmEventRole.AFFECTED` if the stored role string can't be parsed. Data with unknown role values silently degrades.
 
-14. **Role enum parsing fallback to AFFECTED**: Lines 943-945 in `MapToRealmHistoricalParticipation` fall back to `RealmEventRole.AFFECTED` if the stored role string can't be parsed. Data with unknown role values silently degrades.
+14. **ElementType enum parsing fallback to ORIGIN_MYTH**: Lines 957-959 fall back to `RealmLoreElementType.ORIGIN_MYTH` if parsing fails. Unknown element types silently become origin myths.
 
-15. **ElementType enum parsing fallback to ORIGIN_MYTH**: Lines 957-959 fall back to `RealmLoreElementType.ORIGIN_MYTH` if parsing fails. Unknown element types silently become origin myths.
-
-16. **Doesn't use shared helper classes**: Unlike character-history which uses `DualIndexHelper` and `BackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
+15. **Doesn't use shared helper classes**: Unlike character-history which uses `DualIndexHelper` and `BackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
 
 ---
 

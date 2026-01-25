@@ -610,7 +610,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         var perspA = savedPerspectives.FirstOrDefault(p => p.CharacterId == charA);
         Assert.NotNull(perspA);
-        Assert.Equal("GRATITUDE", perspA.EmotionalImpact);
+        Assert.Equal(EmotionalImpact.GRATITUDE, perspA.EmotionalImpact);
         Assert.Equal(0.3f, perspA.SentimentShift);
         Assert.Equal("A great deal", perspA.RememberedAs);
     }
@@ -803,7 +803,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             PerspectiveId = perspectiveId,
             EncounterId = encounterId,
             CharacterId = characterId,
-            EmotionalImpact = "GRATITUDE",
+            EmotionalImpact = EmotionalImpact.GRATITUDE,
             SentimentShift = 0.5f,
             MemoryStrength = 1.0f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1353,7 +1353,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             Name = name,
             Description = $"Test encounter type: {name}",
             IsBuiltIn = isBuiltIn,
-            DefaultEmotionalImpact = "INDIFFERENCE",
+            DefaultEmotionalImpact = EmotionalImpact.INDIFFERENCE,
             SortOrder = 0,
             IsActive = true,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1368,7 +1368,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             EncounterTypeCode = "DIALOGUE",
             RealmId = Guid.NewGuid(),
             ParticipantIds = participantIds,
-            Outcome = "NEUTRAL",
+            Outcome = EncounterOutcome.NEUTRAL,
             Context = "Test encounter",
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1382,7 +1382,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             PerspectiveId = perspectiveId,
             EncounterId = encounterId,
             CharacterId = characterId,
-            EmotionalImpact = "INDIFFERENCE",
+            EmotionalImpact = EmotionalImpact.INDIFFERENCE,
             SentimentShift = 0.0f,
             MemoryStrength = 1.0f,
             RememberedAs = null,
