@@ -117,7 +117,8 @@ public partial class ConnectService : IConnectService
         _connectionManager = new WebSocketConnectionManager(
             configuration.ConnectionShutdownTimeoutSeconds,
             configuration.ConnectionCleanupIntervalSeconds,
-            configuration.InactiveConnectionTimeoutMinutes);
+            configuration.InactiveConnectionTimeoutMinutes,
+            _logger);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly

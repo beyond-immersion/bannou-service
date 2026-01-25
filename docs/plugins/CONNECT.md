@@ -461,9 +461,7 @@ Connection Mode Behavior Matrix
 
 ## Bugs (Fix Immediately)
 
-1. **Empty catch blocks suppress errors silently (T10/T7)** - Two empty catch blocks in `WebSocketConnectionManager` swallow exceptions without logging.
-   - **File**: `plugins/lib-connect/WebSocketConnectionManager.cs`
-   - **Fix**: Add at minimum a debug-level log message.
+None identified.
 
 ## Additional Design Considerations
 
@@ -488,6 +486,7 @@ The following items from the original audit were determined to be false positive
 - Removed dead configuration properties
 - Added configuration properties (RpcCleanupIntervalSeconds, etc.) and wired to code
 - Added warning log when ServiceName is null in RPC event handling
+- Fixed empty catch blocks in WebSocketConnectionManager - added optional logger parameter and debug-level logging for cleanup/send failures
 
 ---
 

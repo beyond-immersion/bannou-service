@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;

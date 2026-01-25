@@ -2044,8 +2044,27 @@ public partial class ContractService : IContractService
                 StatusCode = result.Result?.StatusCode ?? 0
             });
         }
+        catch (ApiException ex)
+        {
+            // Expected API error from downstream service - log at Warning level
+            _logger.LogWarning(ex, "Prebound API returned error: {Service}{Endpoint} - {StatusCode}",
+                api.ServiceName, api.Endpoint, ex.StatusCode);
+
+            await _messageBus.TryPublishAsync("contract.prebound-api.failed", new ContractPreboundApiFailedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ContractId = contract.ContractId,
+                Trigger = trigger,
+                ServiceName = api.ServiceName,
+                Endpoint = api.Endpoint,
+                ErrorMessage = ex.Message,
+                StatusCode = ex.StatusCode
+            });
+        }
         catch (Exception ex)
         {
+            // Unexpected error - log at Error level
             _logger.LogError(ex, "Failed to execute prebound API: {Service}{Endpoint}",
                 api.ServiceName, api.Endpoint);
 
