@@ -22,6 +22,8 @@ Container and item placement management for games. Handles container lifecycle (
 | lib-messaging (`IMessageBus`) | Publishing inventory lifecycle events; error event publishing |
 | lib-item (`IItemClient` via `IServiceNavigator`) | Item template lookups, instance CRUD, container contents listing |
 
+> **Refactoring Consideration**: This plugin uses `IServiceNavigator` but only accesses `IItemClient` (1 service). Consider refactoring to inject `IItemClient` directly to make the dependency explicit in the constructor signature.
+
 ---
 
 ## Dependents (What Relies On This Plugin)

@@ -74952,6 +74952,340 @@
             Call this during application startup to enable native messaging.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator">
+            <summary>
+            Generated partial interface adding service client properties to IServiceNavigator.
+            </summary>
+             <summary>
+             Aggregates all service clients into a single navigation interface with
+             session context awareness for pushing client events.
+             </summary>
+             <remarks>
+             <para>
+             This interface consolidates service client access (e.g., navigator.Account, navigator.Asset)
+             and provides session context methods for:
+             1. Determining if the current request originated from a WebSocket client
+             2. Getting the originating session ID for client event delivery
+             3. Publishing events directly back to the requester
+             </para>
+            
+             <para>
+             Usage example:
+             <code>
+             public class AssetService : IAssetService
+             {
+                 private readonly IServiceNavigator _nav;
+            
+                 public AssetService(IServiceNavigator nav) => _nav = nav;
+            
+                 public async Task&lt;(StatusCodes, CreateMetabundleResponse?)&gt; CreateMetabundleAsync(...)
+                 {
+                     // For long-running jobs, capture the session for later notification
+                     var sessionId = _nav.GetRequesterSessionId();
+            
+                     // Start async job...
+                     var job = new MetabundleJob { OriginatingSessionId = sessionId };
+            
+                     // When job completes, notify the client:
+                     if (_nav.HasClientContext)
+                     {
+                         await _nav.PublishToRequesterAsync(new MetabundleCompleteEvent { JobId = job.JobId });
+                     }
+                 }
+             }
+             </code>
+             </para>
+            
+             <para>
+             WARNING: Session ID is for correlation, tracing, and client event delivery only.
+             DO NOT use for authentication, authorization, or ownership decisions.
+             </para>
+             </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Account">
+            <summary>
+            Gets the Account service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Achievement">
+            <summary>
+            Gets the Achievement service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Actor">
+            <summary>
+            Gets the Actor service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Analytics">
+            <summary>
+            Gets the Analytics service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Asset">
+            <summary>
+            Gets the Asset service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Auth">
+            <summary>
+            Gets the Auth service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Behavior">
+            <summary>
+            Gets the Behavior service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Character">
+            <summary>
+            Gets the Character service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterEncounter">
+            <summary>
+            Gets the CharacterEncounter service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterHistory">
+            <summary>
+            Gets the CharacterHistory service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterPersonality">
+            <summary>
+            Gets the CharacterPersonality service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Connect">
+            <summary>
+            Gets the Connect service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Contract">
+            <summary>
+            Gets the Contract service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Currency">
+            <summary>
+            Gets the Currency service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Documentation">
+            <summary>
+            Gets the Documentation service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Escrow">
+            <summary>
+            Gets the Escrow service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GameService">
+            <summary>
+            Gets the GameService service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GameSession">
+            <summary>
+            Gets the GameSession service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Inventory">
+            <summary>
+            Gets the Inventory service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Item">
+            <summary>
+            Gets the Item service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Leaderboard">
+            <summary>
+            Gets the Leaderboard service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Location">
+            <summary>
+            Gets the Location service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Mapping">
+            <summary>
+            Gets the Mapping service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Matchmaking">
+            <summary>
+            Gets the Matchmaking service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Mesh">
+            <summary>
+            Gets the Mesh service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Messaging">
+            <summary>
+            Gets the Messaging service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Music">
+            <summary>
+            Gets the Music service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Orchestrator">
+            <summary>
+            Gets the Orchestrator service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Permission">
+            <summary>
+            Gets the Permission service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Realm">
+            <summary>
+            Gets the Realm service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.RealmHistory">
+            <summary>
+            Gets the RealmHistory service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Relationship">
+            <summary>
+            Gets the Relationship service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.RelationshipType">
+            <summary>
+            Gets the RelationshipType service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.SaveLoad">
+            <summary>
+            Gets the SaveLoad service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Scene">
+            <summary>
+            Gets the Scene service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Species">
+            <summary>
+            Gets the Species service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.State">
+            <summary>
+            Gets the State service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Subscription">
+            <summary>
+            Gets the Subscription service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Voice">
+            <summary>
+            Gets the Voice service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Website">
+            <summary>
+            Gets the Website service client.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetRequesterSessionId">
+            <summary>
+            Gets the session ID of the WebSocket client that initiated this request.
+            Returns null if the request did not originate from a WebSocket client.
+            </summary>
+            <returns>Session ID string, or null if not a client-initiated request.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetCorrelationId">
+            <summary>
+            Gets the correlation ID for distributed tracing.
+            Returns null if no correlation ID was provided.
+            </summary>
+            <returns>Correlation ID string, or null.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.HasClientContext">
+            <summary>
+            Returns true if this request originated from a WebSocket client,
+            meaning GetRequesterSessionId() will return a valid session ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToRequesterAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to the WebSocket session that initiated this request.
+            Returns false if there is no client context (request was not from WebSocket).
+            </summary>
+            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the event was published, false if no client context exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to a specific session by ID.
+            Use this when you have stored a session ID for later notification.
+            </summary>
+            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
+            <param name="sessionId">The target session ID.</param>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the event was published successfully.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.String,System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
+            <summary>
+            Executes a raw JSON payload against a service endpoint.
+            This is the low-level method used by both Connect shortcuts and Contract prebound APIs.
+            </summary>
+            <param name="serviceName">Target service name (e.g., "currency", "inventory").</param>
+            <param name="endpoint">Endpoint path (e.g., "/currency/transfer").</param>
+            <param name="jsonPayload">Raw JSON payload string to send.</param>
+            <param name="method">HTTP method (default: POST).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Raw API result with status, response body, and headers.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.ReadOnlyMemory{System.Byte},System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
+            <summary>
+            Executes a raw byte payload against a service endpoint.
+            Used by Connect for zero-copy shortcut forwarding.
+            </summary>
+            <param name="serviceName">Target service name.</param>
+            <param name="endpoint">Endpoint path.</param>
+            <param name="payload">Raw byte payload to send.</param>
+            <param name="method">HTTP method (default: POST).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Raw API result with status, response body, and headers.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecutePreboundApiAsync(BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executes a prebound API with variable substitution.
+            </summary>
+            <param name="api">Prebound API definition with template.</param>
+            <param name="context">Variables to substitute into the template.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Prebound API execution result including substituted payload.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecutePreboundApiBatchAsync(System.Collections.Generic.IEnumerable{BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode,System.Threading.CancellationToken)">
+            <summary>
+            Executes multiple prebound APIs in batch.
+            </summary>
+            <param name="apis">Collection of prebound API definitions to execute.</param>
+            <param name="context">Variables to substitute into templates.</param>
+            <param name="mode">How to execute the batch (parallel, sequential, stop on failure).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>List of results for each API in order.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator">
             <summary>
             Concrete implementation of IServiceNavigator that aggregates all service clients
@@ -75180,137 +75514,6 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator">
-             <summary>
-             Aggregates all service clients into a single navigation interface with
-             session context awareness for pushing client events.
-             </summary>
-             <remarks>
-             <para>
-             This interface consolidates service client access (e.g., navigator.Account, navigator.Asset)
-             and provides session context methods for:
-             1. Determining if the current request originated from a WebSocket client
-             2. Getting the originating session ID for client event delivery
-             3. Publishing events directly back to the requester
-             </para>
-            
-             <para>
-             Usage example:
-             <code>
-             public class AssetService : IAssetService
-             {
-                 private readonly IServiceNavigator _nav;
-            
-                 public AssetService(IServiceNavigator nav) => _nav = nav;
-            
-                 public async Task&lt;(StatusCodes, CreateMetabundleResponse?)&gt; CreateMetabundleAsync(...)
-                 {
-                     // For long-running jobs, capture the session for later notification
-                     var sessionId = _nav.GetRequesterSessionId();
-            
-                     // Start async job...
-                     var job = new MetabundleJob { OriginatingSessionId = sessionId };
-            
-                     // When job completes, notify the client:
-                     if (_nav.HasClientContext)
-                     {
-                         await _nav.PublishToRequesterAsync(new MetabundleCompleteEvent { JobId = job.JobId });
-                     }
-                 }
-             }
-             </code>
-             </para>
-            
-             <para>
-             WARNING: Session ID is for correlation, tracing, and client event delivery only.
-             DO NOT use for authentication, authorization, or ownership decisions.
-             </para>
-             </remarks>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetRequesterSessionId">
-            <summary>
-            Gets the session ID of the WebSocket client that initiated this request.
-            Returns null if the request did not originate from a WebSocket client.
-            </summary>
-            <returns>Session ID string, or null if not a client-initiated request.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetCorrelationId">
-            <summary>
-            Gets the correlation ID for distributed tracing.
-            Returns null if no correlation ID was provided.
-            </summary>
-            <returns>Correlation ID string, or null.</returns>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.HasClientContext">
-            <summary>
-            Returns true if this request originated from a WebSocket client,
-            meaning GetRequesterSessionId() will return a valid session ID.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToRequesterAsync``1(``0,System.Threading.CancellationToken)">
-            <summary>
-            Publishes an event to the WebSocket session that initiated this request.
-            Returns false if there is no client context (request was not from WebSocket).
-            </summary>
-            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
-            <param name="eventData">The event data to publish.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-            <returns>True if the event was published, false if no client context exists.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
-            <summary>
-            Publishes an event to a specific session by ID.
-            Use this when you have stored a session ID for later notification.
-            </summary>
-            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
-            <param name="sessionId">The target session ID.</param>
-            <param name="eventData">The event data to publish.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-            <returns>True if the event was published successfully.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.String,System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
-            <summary>
-            Executes a raw JSON payload against a service endpoint.
-            This is the low-level method used by both Connect shortcuts and Contract prebound APIs.
-            </summary>
-            <param name="serviceName">Target service name (e.g., "currency", "inventory").</param>
-            <param name="endpoint">Endpoint path (e.g., "/currency/transfer").</param>
-            <param name="jsonPayload">Raw JSON payload string to send.</param>
-            <param name="method">HTTP method (default: POST).</param>
-            <param name="ct">Cancellation token.</param>
-            <returns>Raw API result with status, response body, and headers.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecuteRawApiAsync(System.String,System.String,System.ReadOnlyMemory{System.Byte},System.Net.Http.HttpMethod,System.Threading.CancellationToken)">
-            <summary>
-            Executes a raw byte payload against a service endpoint.
-            Used by Connect for zero-copy shortcut forwarding.
-            </summary>
-            <param name="serviceName">Target service name.</param>
-            <param name="endpoint">Endpoint path.</param>
-            <param name="payload">Raw byte payload to send.</param>
-            <param name="method">HTTP method (default: POST).</param>
-            <param name="ct">Cancellation token.</param>
-            <returns>Raw API result with status, response body, and headers.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecutePreboundApiAsync(BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
-            <summary>
-            Executes a prebound API with variable substitution.
-            </summary>
-            <param name="api">Prebound API definition with template.</param>
-            <param name="context">Variables to substitute into the template.</param>
-            <param name="ct">Cancellation token.</param>
-            <returns>Prebound API execution result including substituted payload.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.ExecutePreboundApiBatchAsync(System.Collections.Generic.IEnumerable{BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},BeyondImmersion.BannouService.ServiceClients.BatchExecutionMode,System.Threading.CancellationToken)">
-            <summary>
-            Executes multiple prebound APIs in batch.
-            </summary>
-            <param name="apis">Collection of prebound API definitions to execute.</param>
-            <param name="context">Variables to substitute into templates.</param>
-            <param name="mode">How to execute the batch (parallel, sequential, stop on failure).</param>
-            <param name="ct">Cancellation token.</param>
-            <returns>List of results for each API in order.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.PreboundApiDefinition">
             <summary>

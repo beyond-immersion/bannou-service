@@ -27,6 +27,8 @@ The Character service manages game world characters for Arcadia. Characters are 
 | lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting |
 | lib-relationship-type (`IRelationshipTypeClient`) | Maps relationship type IDs to codes for family tree categorization |
 
+> **Refactoring Consideration**: This plugin injects 6 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+
 ---
 
 ## Dependents (What Relies On This Plugin)

@@ -26,6 +26,8 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | lib-permission (`IPermissionClient`) | Set/clear `game-session:in_game` state on join/leave |
 | lib-subscription (`ISubscriptionClient`) | Query account subscriptions for shortcut eligibility |
 
+> **Refactoring Consideration**: This plugin injects 3 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+
 ---
 
 ## Dependents (What Relies On This Plugin)

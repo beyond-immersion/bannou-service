@@ -20,6 +20,8 @@ The Analytics plugin is the central event aggregation point for all game-related
 | lib-game-session (IGameSessionClient) | Resolving session IDs to game types (fallback when no cached mapping exists) |
 | lib-realm (IRealmClient) | Resolving realm IDs to game service IDs for character/realm history events |
 | lib-character (ICharacterClient) | Resolving character IDs to realm IDs for character history events |
+
+> **Refactoring Consideration**: This plugin injects 4 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 | AppConfiguration (DI singleton) | Not directly used (no cross-cutting config needed) |
 
 ## Dependents (What Relies On This Plugin)

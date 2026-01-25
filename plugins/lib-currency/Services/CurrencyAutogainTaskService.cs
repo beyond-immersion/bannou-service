@@ -241,7 +241,7 @@ public class CurrencyAutogainTaskService : BackgroundService
             var previousBalance = balance.Amount;
             double gain;
 
-            if (definition.AutogainMode == AutogainMode.Compound.ToString())
+            if (definition.AutogainMode == AutogainMode.Compound)
             {
                 var rate = definition.AutogainAmount ?? 0;
                 var multiplier = Math.Pow(1 + rate, periodsElapsed);
@@ -278,16 +278,16 @@ public class CurrencyAutogainTaskService : BackgroundService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
-                WalletId = Guid.Parse(balance.WalletId),
-                OwnerId = wallet is not null ? Guid.Parse(wallet.OwnerId) : Guid.Empty,
-                OwnerType = wallet?.OwnerType ?? "unknown",
-                CurrencyDefinitionId = Guid.Parse(balance.CurrencyDefinitionId),
+                WalletId = balance.WalletId,
+                OwnerId = wallet?.OwnerId ?? Guid.Empty,
+                OwnerType = wallet?.OwnerType ?? WalletOwnerType.Account,
+                CurrencyDefinitionId = balance.CurrencyDefinitionId,
                 CurrencyCode = definition.Code,
                 PreviousBalance = previousBalance,
                 PeriodsApplied = periodsElapsed,
                 AmountGained = gain,
                 NewBalance = balance.Amount,
-                AutogainMode = definition.AutogainMode ?? AutogainMode.Simple.ToString(),
+                AutogainMode = (definition.AutogainMode ?? AutogainMode.Simple).ToString(),
                 CalculatedAt = now,
                 PeriodsFrom = periodsFrom,
                 PeriodsTo = balance.LastAutogainAt.Value

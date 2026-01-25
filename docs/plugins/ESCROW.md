@@ -21,6 +21,8 @@ Full-custody orchestration layer for multi-party asset exchanges. Manages the co
 | lib-messaging (`IMessageBus`) | Publishing 13 escrow lifecycle events; error event publishing via `TryPublishErrorAsync` |
 | lib-mesh (`IServiceNavigator`) | Cross-service client access (injected but not currently invoked for asset transfers) |
 
+> **Refactoring Consideration**: This plugin has `IServiceNavigator` injected but **never uses it** - this is dead code. The dependency should be removed entirely from the constructor.
+
 ---
 
 ## Dependents (What Relies On This Plugin)

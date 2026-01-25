@@ -2708,7 +2708,7 @@ public partial class CurrencyService : ICurrencyService
         var nextGainAt = lastCalc + interval;
 
         double nextGainAmount;
-        if (definition.AutogainMode == AutogainMode.Compound.ToString())
+        if (definition.AutogainMode == AutogainMode.Compound)
         {
             nextGainAmount = balance.Amount * (definition.AutogainAmount ?? 0);
         }
@@ -2722,7 +2722,7 @@ public partial class CurrencyService : ICurrencyService
             LastCalculatedAt = lastCalc,
             NextGainAt = nextGainAt,
             NextGainAmount = nextGainAmount,
-            Mode = Enum.TryParse<AutogainMode>(definition.AutogainMode, out var mode) ? mode : AutogainMode.Simple
+            Mode = definition.AutogainMode ?? AutogainMode.Simple
         };
     }
 
