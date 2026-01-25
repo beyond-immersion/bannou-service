@@ -12429,24 +12429,9 @@
             Game realm of the bundle
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.AssetTypeEnum">
-            <summary>
-            Category of asset in the system
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.RealmEnum">
-            <summary>
-            Game realm the asset is associated with
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ProcessingTypeEnum">
             <summary>
             Type of processing being performed
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.CompressionTypeEnum">
-            <summary>
-            Compression algorithm used for bundle packaging
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ProcessingOutput">
@@ -18248,7 +18233,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.BindType">
             <summary>
-            Type of binding (on_pickup, on_equip, on_use)
+            Type of binding
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent">
@@ -21841,7 +21826,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.OwnerType">
             <summary>
-            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            Type of entity that owns this save
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SizeBytes">
@@ -21948,7 +21933,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.OwnerType">
             <summary>
-            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            Type of entity that owns this save
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.ErrorMessage">
@@ -28404,7 +28389,7 @@
             Type classification for assets
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.Realm">
+        <member name="T:BeyondImmersion.BannouService.Asset.GameRealm">
             <summary>
             Game realm the asset belongs to
             </summary>
