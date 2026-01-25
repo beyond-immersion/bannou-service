@@ -303,7 +303,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             }
 
             // Load the save data
-            var saveData = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId, version, cancellationToken);
+            var saveData = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId.ToString(), version, cancellationToken);
             if (saveData == null)
             {
                 _logger.LogError("Failed to load save data for migration");
@@ -341,7 +341,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             var newVersionNumber = (slot.LatestVersion ?? 0) + 1;
 
             // Compress data
-            var compressionType = Enum.TryParse<CompressionType>(slot.CompressionType, out var ct) ? ct : CompressionType.GZIP;
+            var compressionType = slot.CompressionType;
             var migrationCompressionLevel = compressionType == CompressionType.BROTLI
                 ? _configuration.BrotliCompressionLevel
                 : compressionType == CompressionType.GZIP
@@ -421,8 +421,8 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
                 SlotName = slot.SlotName,
                 OriginalVersionNumber = versionNumber,
                 NewVersionNumber = newVersionNumber,
-                OwnerId = Guid.Parse(slot.OwnerId),
-                OwnerType = Enum.Parse<OwnerType>(slot.OwnerType, ignoreCase: true),
+                OwnerId = slot.OwnerId,
+                OwnerType = slot.OwnerType,
                 FromSchemaVersion = currentSchemaVersion,
                 ToSchemaVersion = body.TargetSchemaVersion
             }, cancellationToken: cancellationToken);

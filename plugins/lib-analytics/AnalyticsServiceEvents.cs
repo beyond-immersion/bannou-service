@@ -98,7 +98,7 @@ public partial class AnalyticsService
                 GameServiceId = gameServiceId.Value,
                 EntityId = evt.SessionId,
                 EntityType = EntityType.Custom,
-                EventType = evt.ActionType,
+                EventType = evt.ActionType.ToString(),
                 Timestamp = evt.Timestamp,
                 Value = 1,
                 SessionId = evt.SessionId,

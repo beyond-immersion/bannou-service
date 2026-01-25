@@ -213,7 +213,7 @@ public partial class EscrowService
                     EscrowId = body.EscrowId,
                     PartyId = body.PartyId,
                     PartyType = body.PartyType,
-                    ConsentType = body.ConsentType.ToString(),
+                    ConsentType = body.ConsentType,
                     ConsentsReceived = agreementModel.Consents?.Count(c => c.ConsentType == EscrowConsentType.Release) ?? 0,
                     ConsentsRequired = agreementModel.RequiredConsentsForRelease,
                     ConsentedAt = now

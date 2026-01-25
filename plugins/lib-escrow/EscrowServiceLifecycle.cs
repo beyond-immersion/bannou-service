@@ -193,8 +193,8 @@ public partial class EscrowService
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 EscrowId = escrowId,
-                EscrowType = agreementModel.EscrowType.ToString(),
-                TrustMode = agreementModel.TrustMode.ToString(),
+                EscrowType = agreementModel.EscrowType,
+                TrustMode = agreementModel.TrustMode,
                 Parties = partyModels.Select(p => new EscrowPartyInfo
                 {
                     PartyId = p.PartyId,

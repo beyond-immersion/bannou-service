@@ -249,7 +249,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                             EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,
                             CharacterId = body.CharacterId,
-                            ExperienceType = body.ExperienceType.ToString(),
+                            ExperienceType = body.ExperienceType,
                             Intensity = body.Intensity,
                             Version = data.Version,
                             AffectedTraits = affectedTraits.Keys.Select(k => k.ToString()).ToList()
@@ -624,7 +624,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                             EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,
                             CharacterId = body.CharacterId,
-                            ExperienceType = body.ExperienceType.ToString(),
+                            ExperienceType = body.ExperienceType,
                             Intensity = body.Intensity,
                             Version = data.Version
                         }, cancellationToken: cancellationToken);

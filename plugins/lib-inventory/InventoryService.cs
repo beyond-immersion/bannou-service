@@ -180,7 +180,7 @@ public partial class InventoryService : IInventoryService
                 Timestamp = now,
                 ContainerId = containerId,
                 OwnerId = body.OwnerId,
-                OwnerType = body.OwnerType.ToString(),
+                OwnerType = body.OwnerType,
                 ContainerType = body.ContainerType,
                 ConstraintModel = body.ConstraintModel.ToString(),
                 IsEquipmentSlot = body.IsEquipmentSlot
@@ -441,7 +441,7 @@ public partial class InventoryService : IInventoryService
                 Timestamp = now,
                 ContainerId = body.ContainerId,
                 OwnerId = model.OwnerId,
-                OwnerType = model.OwnerType.ToString(),
+                OwnerType = model.OwnerType,
                 ContainerType = model.ContainerType,
                 ConstraintModel = model.ConstraintModel.ToString(),
                 IsEquipmentSlot = model.IsEquipmentSlot
@@ -575,7 +575,7 @@ public partial class InventoryService : IInventoryService
                 Timestamp = now,
                 ContainerId = body.ContainerId,
                 OwnerId = model.OwnerId,
-                OwnerType = model.OwnerType.ToString(),
+                OwnerType = model.OwnerType,
                 ContainerType = model.ContainerType,
                 ConstraintModel = model.ConstraintModel.ToString(),
                 IsEquipmentSlot = model.IsEquipmentSlot
@@ -721,7 +721,7 @@ public partial class InventoryService : IInventoryService
                 TemplateId = item.TemplateId,
                 ContainerId = body.ContainerId,
                 OwnerId = container.OwnerId,
-                OwnerType = container.OwnerType.ToString(),
+                OwnerType = container.OwnerType,
                 Quantity = item.Quantity,
                 SlotIndex = body.SlotIndex,
                 SlotX = body.SlotX,
@@ -833,7 +833,7 @@ public partial class InventoryService : IInventoryService
                 TemplateId = item.TemplateId,
                 ContainerId = item.ContainerId,
                 OwnerId = container.OwnerId,
-                OwnerType = container.OwnerType.ToString()
+                OwnerType = container.OwnerType
             }, cancellationToken);
 
             return (StatusCodes.OK, new RemoveItemResponse
@@ -1072,10 +1072,10 @@ public partial class InventoryService : IInventoryService
                 TemplateId = item.TemplateId,
                 SourceContainerId = sourceContainerId,
                 SourceOwnerId = sourceContainer.OwnerId,
-                SourceOwnerType = sourceContainer.OwnerType.ToString(),
+                SourceOwnerType = sourceContainer.OwnerType,
                 TargetContainerId = body.TargetContainerId,
                 TargetOwnerId = targetContainer.OwnerId,
-                TargetOwnerType = targetContainer.OwnerType.ToString(),
+                TargetOwnerType = targetContainer.OwnerType,
                 QuantityTransferred = quantityToTransfer
             }, cancellationToken);
 
@@ -1958,7 +1958,7 @@ public partial class InventoryService : IInventoryService
                 Timestamp = timestamp,
                 ContainerId = container.ContainerId,
                 OwnerId = container.OwnerId,
-                OwnerType = container.OwnerType.ToString(),
+                OwnerType = container.OwnerType,
                 ContainerType = container.ContainerType,
                 ConstraintType = constraintType
             }, cancellationToken);

@@ -1085,11 +1085,10 @@ public partial class MatchmakingService : IMatchmakingService
 
         try
         {
-            // Map queue SessionGameType to game-session CreateGameSessionRequestGameType
             var gameType = queue?.SessionGameType switch
             {
-                SessionGameType.Arcadia => CreateGameSessionRequestGameType.Arcadia,
-                _ => CreateGameSessionRequestGameType.Generic
+                SessionGameType.Arcadia => GameType.Arcadia,
+                _ => GameType.Generic
             };
 
             var sessionResponse = await _gameSessionClient.CreateGameSessionAsync(new CreateGameSessionRequest

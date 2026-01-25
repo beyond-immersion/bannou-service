@@ -357,8 +357,7 @@ components:
             $ref: '#/components/schemas/RecipientInfo'
           description: Recipients and what they received
         resolution:
-          type: string
-          description: Resolution type (released)
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
         completedAt:
           type: string
           format: date-time
@@ -398,8 +397,7 @@ components:
           nullable: true
           description: Reason for refund
         resolution:
-          type: string
-          description: Resolution type (refunded, expired_refunded, etc.)
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
         completedAt:
           type: string
           format: date-time
@@ -482,8 +480,7 @@ components:
           type: string
           description: Arbiter type
         resolution:
-          type: string
-          description: Resolution type (released, refunded, split)
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
         notes:
           type: string
           nullable: true
@@ -674,8 +671,7 @@ components:
           type: string
           description: Party type
         role:
-          type: string
-          description: Role in escrow (depositor, recipient, etc.)
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowPartyRole'
 
     RecipientInfo:
       type: object
@@ -727,11 +723,9 @@ components:
       - affectedPartyId
       properties:
         assetType:
-          type: string
-          description: Type of asset affected
+          $ref: '../escrow-api.yaml#/components/schemas/AssetType'
         failureType:
-          type: string
-          description: Type of failure (asset_missing, asset_mutated, etc.)
+          $ref: '../escrow-api.yaml#/components/schemas/ValidationFailureType'
         affectedPartyId:
           type: string
           format: uuid

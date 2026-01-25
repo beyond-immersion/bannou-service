@@ -2416,7 +2416,7 @@ public partial class ContractService : IContractService
         var parties = model.Parties?.Select(p => new PartyInfo
         {
             EntityId = p.EntityId,
-            EntityType = p.EntityType.ToString(),
+            EntityType = p.EntityType,
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
@@ -2440,7 +2440,7 @@ public partial class ContractService : IContractService
             Timestamp = DateTimeOffset.UtcNow,
             ContractId = model.ContractId,
             ConsentingEntityId = party.EntityId,
-            ConsentingEntityType = party.EntityType.ToString(),
+            ConsentingEntityType = party.EntityType,
             Role = party.Role,
             RemainingConsentsNeeded = remaining
         });
@@ -2451,7 +2451,7 @@ public partial class ContractService : IContractService
         var parties = model.Parties?.Select(p => new PartyInfo
         {
             EntityId = p.EntityId,
-            EntityType = p.EntityType.ToString(),
+            EntityType = p.EntityType,
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
@@ -2471,7 +2471,7 @@ public partial class ContractService : IContractService
         var parties = model.Parties?.Select(p => new PartyInfo
         {
             EntityId = p.EntityId,
-            EntityType = p.EntityType.ToString(),
+            EntityType = p.EntityType,
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
@@ -2529,8 +2529,8 @@ public partial class ContractService : IContractService
             ContractId = contract.ContractId,
             BreachId = breach.BreachId,
             BreachingEntityId = breach.BreachingEntityId,
-            BreachingEntityType = breach.BreachingEntityType.ToString(),
-            BreachType = breach.BreachType.ToString(),
+            BreachingEntityType = breach.BreachingEntityType,
+            BreachType = breach.BreachType,
             BreachedTermOrMilestone = breach.BreachedTermOrMilestone,
             CureDeadline = breach.CureDeadline
         });
@@ -2553,7 +2553,7 @@ public partial class ContractService : IContractService
         var parties = model.Parties?.Select(p => new PartyInfo
         {
             EntityId = p.EntityId,
-            EntityType = p.EntityType.ToString(),
+            EntityType = p.EntityType,
             Role = p.Role
         }).ToList() ?? new List<PartyInfo>();
 
