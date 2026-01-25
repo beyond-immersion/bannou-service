@@ -447,61 +447,7 @@ None identified.
 
 9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes.
 
----
+10. **Internal model type safety**: `SceneIndexEntry.SceneType` is stored as `string` instead of the typed `SceneType` enum, requiring `Enum.TryParse` conversions throughout business logic. Refactoring to use the enum type directly would improve type safety and eliminate parsing overhead.
 
-## Tenet Violations (Audit)
+11. **Hardcoded checkout TTL buffer**: The checkout state TTL calculation uses a hardcoded `+ 5` minute buffer (`ttlMinutes + 5`). This tunable value should be a configuration property (`CheckoutTtlBufferMinutes`).
 
-*Audit performed: 2026-01-24*
-
-### Category: IMPLEMENTATION
-
-1. **Multi-Instance Safety (T9)** - SceneService.cs:1630-1635, 1641-1649, 1503-1590 - Read-modify-write without distributed locks on global and secondary indexes
-   - What's wrong: The `AddToGlobalSceneIndexAsync`, `RemoveFromGlobalSceneIndexAsync`, and `UpdateSceneIndexesAsync` methods perform read-modify-write operations on shared index sets (`scene:global-index`, `scene:by-game:*`, `scene:by-type:*`, `scene:references:*`, `scene:assets:*`) without distributed locks or ETag-based optimistic concurrency. Multiple instances could lose index updates due to race conditions.
-   - Fix: Use `IDistributedLockProvider` (already injected but unused) to wrap index modifications, OR use `GetWithETagAsync` + `TrySaveAsync` pattern with retry logic for optimistic concurrency on these operations.
-
-2. **Internal Model Type Safety (T25)** - SceneService.cs:2091 - `SceneIndexEntry.SceneType` stored as string instead of enum
-   - What's wrong: The internal model `SceneIndexEntry` stores `SceneType` as `string` (`public string SceneType { get; set; } = string.Empty;`), requiring `Enum.TryParse` at lines 1162 and 1955 to convert back to the typed enum. This violates the rule that internal POCOs must use the strongest available C# type.
-   - Fix: Change `SceneIndexEntry.SceneType` to `public SceneType SceneType { get; set; }` and remove the `Enum.TryParse` calls, assigning the enum directly.
-
-3. **Configuration-First (T21)** - SceneService.cs:759, 1001 - Hardcoded 5-minute buffer for checkout TTL
-   - What's wrong: The checkout state TTL calculation uses a hardcoded `+ 5` minute buffer (`ttlMinutes + 5`). This tunable value should be a configuration property.
-   - Fix: Add `CheckoutTtlBufferMinutes` property to `schemas/scene-configuration.yaml` and use `_configuration.CheckoutTtlBufferMinutes` instead of the hardcoded `5`.
-
-4. **Configuration-First (T21)** - SceneServiceConfiguration.cs:60, 66 - Dead configuration properties `AssetBucket` and `AssetContentType`
-   - What's wrong: The configuration properties `AssetBucket` and `AssetContentType` are defined but never referenced anywhere in the service implementation. The deep-dive document notes that lib-asset integration is stubbed out - content is stored directly in the state store.
-   - Fix: Either implement the lib-asset integration that uses these properties, or remove them from `schemas/scene-configuration.yaml` to eliminate dead configuration.
-
-5. **Null-Coalescing Pattern** - SceneService.cs:769, 857, 927 - `indexEtag ?? string.Empty` usage
-   - What's wrong: The code uses `indexEtag ?? string.Empty` when passing ETags to `TrySaveAsync`. While `GetWithETagAsync` can legitimately return `null` for the ETag when the entity doesn't exist, the code already checks `if (indexEntry == null)` before reaching these lines. The null-coalesce is a safety net that will never execute at runtime.
-   - Fix: Add explanatory comment per CLAUDE.md guidelines: `// ETag is guaranteed non-null here (index entry existence checked above); coalesce satisfies compiler nullable analysis`
-
-### Category: QUALITY
-
-6. **Logging Standards (T10)** - SceneService.cs:120, 380, 483, 589, 665, 708, 811, 901, 1069, 1339 - Operation entry logs at Information level instead of Debug
-   - What's wrong: Operation entry points log at `LogInformation` level (e.g., `_logger.LogInformation("CreateScene: sceneId={SceneId}, name={Name}")`). Per T10, operation entry should be logged at Debug level, with Information reserved for significant business decisions/state changes.
-   - Fix: Change operation entry logs from `LogInformation` to `LogDebug`. Keep the success logs at Information level (e.g., "CreateScene succeeded") as they represent significant state changes.
-
-7. **Logging Standards (T10)** - SceneServicePlugin.cs:50, 57, 65, 87, 128, 139 - Plugin lifecycle logs at Information level
-   - What's wrong: Plugin lifecycle events like "Configuring Scene service application pipeline" and "Starting Scene service" are logged at Information level. Plugin startup/shutdown are routine operations, not significant business events.
-   - Fix: Change routine startup/shutdown logs to Debug level. Keep only final success/failure logs at Information level.
-
-### Category: FOUNDATION
-
-No violations found in Foundation category tenets (T1, T2, T4, T5, T6, T13, T15, T18):
-- Service correctly uses partial class (T6)
-- Uses lib-state, lib-messaging infrastructure patterns (T4)
-- Uses typed event models (T5)
-- Uses StateStoreDefinitions constants (T1, T4)
-- No direct Redis/MySQL/RabbitMQ access (T4)
-- No generated file edits (T1, T2)
-
-### Summary
-
-| Category | Violations |
-|----------|-----------|
-| FOUNDATION | 0 |
-| IMPLEMENTATION | 5 |
-| QUALITY | 2 |
-| **Total** | **7** |
-
-**Critical Issues**: The T9 multi-instance safety violation on index operations is the most severe issue - concurrent scene operations across multiple instances can lead to lost index updates, causing scenes to be orphaned or missing from query results.

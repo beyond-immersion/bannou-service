@@ -2,7 +2,7 @@
 
 > **Purpose**: Track and guide the cleanup of plugin deep dive documents
 > **Status**: In Progress
-> **Last Updated**: 2025-01-25
+> **Last Updated**: 2026-01-25
 
 ---
 
@@ -154,9 +154,9 @@ For each plugin deep dive document:
 
 | Plugin | Status | Notes |
 |--------|--------|-------|
-| Account | DONE | Added `<inheritdoc/>`, XML docs to AccountModel, cleaned violations |
-| Achievement | DONE | All violations were false positives, restructured quirks |
-| Actor | DONE | Removed false positives (T20 JsonElement, T24 class dispose, T19 internal classes), moved architectural items to Design Considerations, kept 5 real bugs |
+| Account | DONE | Added `<inheritdoc/>`, XML docs to AccountModel, cleaned violations. Design Considerations are legitimate architectural choices. |
+| Achievement | DONE | All violations were false positives, restructured quirks. Design Consideration (caching) requires architectural planning. |
+| Actor | DONE | Fixed all 5 bugs: (1) anonymous memory value → PerceptionData, (2) hardcoded tunables → config properties + wired, (3) ApiException handling → added, (4) error event publishing → added, (5) regex caching → added with timeout. DeploymentMode now enum. Bugs section cleared. |
 | Analytics | PENDING | |
 | Asset | PENDING | |
 | Auth | PENDING | |
@@ -187,8 +187,8 @@ For each plugin deep dive document:
 | Realm-History | PENDING | |
 | Relationship | PENDING | |
 | Relationship-Type | PENDING | |
-| Save-Load | PENDING | |
-| Scene | PENDING | |
+| Save-Load | DONE | Fixed T20 (BannouJson), T10 logging levels. Removed T6 false positives. T25 → Design Considerations. |
+| Scene | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Moved T9/T25/T21 to Design Considerations. |
 | Species | PENDING | |
 | State | PENDING | |
 | Subscription | PENDING | |

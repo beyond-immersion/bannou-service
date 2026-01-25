@@ -47,14 +47,14 @@ public class SceneServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        Logger?.LogInformation("Configuring Scene service application pipeline");
+        Logger?.LogDebug("Configuring Scene service application pipeline");
 
         // The generated SceneController should already be discovered via standard ASP.NET Core controller discovery
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("Scene service application pipeline configured");
+        Logger?.LogDebug("Scene service application pipeline configured");
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ public class SceneServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("Starting Scene service");
+        Logger?.LogDebug("Starting Scene service");
 
         try
         {
@@ -84,7 +84,7 @@ public class SceneServicePlugin : BaseBannouPlugin
                 await bannouService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("Scene service started successfully");
+            Logger?.LogDebug("Scene service started successfully");
             return true;
         }
         catch (Exception ex)
@@ -125,7 +125,7 @@ public class SceneServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("Shutting down Scene service");
+        Logger?.LogDebug("Shutting down Scene service");
 
         try
         {
@@ -136,7 +136,7 @@ public class SceneServicePlugin : BaseBannouPlugin
                 await bannouService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("Scene service shutdown complete");
+            Logger?.LogDebug("Scene service shutdown complete");
         }
         catch (Exception ex)
         {

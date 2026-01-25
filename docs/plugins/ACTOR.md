@@ -404,22 +404,11 @@ Actor State Model
 
 ### Bugs (Fix Immediately)
 
-1. **Anonymous memory value**: `Runtime/ActorRunner.cs` line 563 stores an anonymous object as a memory value. Should use a typed `PerceptionMemory` model for proper serialization.
-
-2. **Hardcoded tunables (T21)**: Multiple values should be configuration properties:
-   - Error retry delay (1s), state persistence retry (50ms base), stop timeout (5s)
-   - Default urgencies (0.7f for scheduled events, 0.8f for Event Brain)
-   - Query options max age (5000ms)
-
-3. **Missing ApiException handling (T7)**: `ActorService.cs` uses `IMeshInvocationClient` but catch blocks don't distinguish `ApiException` from generic `Exception`. Mesh calls should catch `ApiException` specifically.
-
-4. **Missing error event publishing**: `Pool/PoolHealthMonitor.cs` line 91 logs errors but doesn't call `TryPublishErrorAsync` for unexpected exceptions.
-
-5. **Regex without caching/timeout**: `ActorService.cs` line 794 compiles regex fresh on every auto-spawn check. Vulnerable to ReDoS if malicious pattern stored in template.
+No bugs identified.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Deployment mode branching**: All spawn/stop/perception operations check `DeploymentMode` to determine local vs remote execution. Pool-related event handlers early-return if mode is "bannou" (not control plane).
+1. **Deployment mode branching**: All spawn/stop/perception operations check `DeploymentMode` enum to determine local vs remote execution. Pool-related event handlers early-return if mode is `DeploymentMode.Bannou` (not control plane).
 
 2. **Auto-spawn with regex pattern**: Templates with `AutoSpawn.Enabled=true` define a regex pattern. When `GetActor` is called for a non-existent actor, all auto-spawn templates are checked. If the actor ID matches a pattern, the actor is automatically spawned. Capture groups extract CharacterId.
 
@@ -443,28 +432,26 @@ Actor State Model
 
 2. **ActorRegistry is instance-local for bannou mode**: Pool mode uses Redis-backed `ActorPoolManager`, but bannou mode uses in-memory `ConcurrentDictionary`. Bannou mode is designed for single-instance operation.
 
-3. **DeploymentMode is string, not enum**: Configuration uses string comparisons against "bannou", "pool-per-type", etc. Schema-first change required to use enum type.
+3. **ScheduledEventManager Timer uses fire-and-forget**: `CheckEvents` callback discards Tasks via `_ = FireEventAsync()`. Exceptions silently lost. Requires scheduler architecture redesign.
 
-4. **ScheduledEventManager Timer uses fire-and-forget**: `CheckEvents` callback discards Tasks via `_ = FireEventAsync()`. Exceptions silently lost. Requires scheduler architecture redesign.
+4. **ActorRunner._encounter field lacks synchronization**: Field accessed from behavior loop thread and external callers without lock protection. `_statusLock` only protects `_status`.
 
-5. **ActorRunner._encounter field lacks synchronization**: Field accessed from behavior loop thread and external callers without lock protection. `_statusLock` only protects `_status`.
+5. **Single-threaded behavior loop**: Each ActorRunner runs on single task. CPU-intensive behaviors delay tick processing. `GoapPlanTimeoutMs` (50ms) provides budget.
 
-6. **Single-threaded behavior loop**: Each ActorRunner runs on single task. CPU-intensive behaviors delay tick processing. `GoapPlanTimeoutMs` (50ms) provides budget.
+6. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
 
-7. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
+7. **Pool node capacity is self-reported**: No external validation of claimed capacity.
 
-8. **Pool node capacity is self-reported**: No external validation of claimed capacity.
+8. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
 
-9. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
+9. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
 
-10. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
+10. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
 
-11. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
+11. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
 
-12. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
+12. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
 
-13. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
+13. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
 
-14. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
-
-15. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.
+14. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.

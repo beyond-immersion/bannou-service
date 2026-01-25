@@ -971,20 +971,20 @@ public partial class SceneService : ISceneService
             var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
             if (checkout == null || checkout.Token != body.CheckoutToken)
             {
-                _logger.LogWarning("HeartbeatCheckout: Invalid checkout token for scene {SceneId}", body.SceneId);
+                _logger.LogDebug("HeartbeatCheckout: Invalid checkout token for scene {SceneId}", body.SceneId);
                 return (StatusCodes.Forbidden, null);
             }
 
             if (checkout.ExpiresAt < DateTimeOffset.UtcNow)
             {
-                _logger.LogWarning("HeartbeatCheckout: Checkout expired for scene {SceneId}", body.SceneId);
+                _logger.LogDebug("HeartbeatCheckout: Checkout expired for scene {SceneId}", body.SceneId);
                 return (StatusCodes.Conflict, null);
             }
 
             // Check extension limit
             if (checkout.ExtensionCount >= _configuration.MaxCheckoutExtensions)
             {
-                _logger.LogWarning("HeartbeatCheckout: Extension limit reached for scene {SceneId}", body.SceneId);
+                _logger.LogDebug("HeartbeatCheckout: Extension limit reached for scene {SceneId}", body.SceneId);
                 return (StatusCodes.OK, new HeartbeatResponse
                 {
                     Extended = false,
@@ -1066,7 +1066,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, RegisterValidationRulesResponse?)> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("RegisterValidationRules: gameId={GameId}, sceneType={SceneType}, ruleCount={RuleCount}",
+        _logger.LogDebug("RegisterValidationRules: gameId={GameId}, sceneType={SceneType}, ruleCount={RuleCount}",
             body.GameId, body.SceneType, body.Rules.Count);
 
         try
@@ -1336,7 +1336,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, SceneResponse?)> DuplicateSceneAsync(DuplicateSceneRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("DuplicateScene: sourceSceneId={SourceSceneId}, newName={NewName}", body.SourceSceneId, body.NewName);
+        _logger.LogDebug("DuplicateScene: sourceSceneId={SourceSceneId}, newName={NewName}", body.SourceSceneId, body.NewName);
 
         try
         {
@@ -1347,7 +1347,7 @@ public partial class SceneService : ISceneService
             var sourceIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sourceSceneIdStr}", cancellationToken);
             if (sourceIndex == null)
             {
-                _logger.LogWarning("DuplicateScene: Source scene {SourceSceneId} not found", body.SourceSceneId);
+                _logger.LogDebug("DuplicateScene: Source scene {SourceSceneId} not found", body.SourceSceneId);
                 return (StatusCodes.NotFound, null);
             }
 
