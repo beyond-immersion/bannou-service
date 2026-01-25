@@ -986,10 +986,10 @@ public partial class AssetService : IAssetService
 
             writer.Finalize(
                 body.BundleId,
-                body.BundleId,
+                body.Name ?? body.BundleId.ToString(),
                 body.Version ?? "1.0.0",
                 "system",
-                null,
+                body.Description,
                 MetadataHelper.ConvertToStringDictionary(body.Metadata));
 
             // Upload bundle
