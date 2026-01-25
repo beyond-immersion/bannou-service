@@ -154,12 +154,12 @@ For each plugin deep dive document:
 
 | Plugin | Status | Notes |
 |--------|--------|-------|
-| Account | DONE | Added `<inheritdoc/>`, XML docs to AccountModel, cleaned violations. Design Considerations are legitimate architectural choices. |
-| Achievement | DONE | All violations were false positives, restructured quirks. Design Consideration (caching) requires architectural planning. |
-| Actor | DONE | Fixed all 5 bugs: (1) anonymous memory value → PerceptionData, (2) hardcoded tunables → config properties + wired, (3) ApiException handling → added, (4) error event publishing → added, (5) regex caching → added with timeout. DeploymentMode now enum. Bugs section cleared. |
-| Analytics | DONE | Fixed T10 logging (ingestion → Debug, validation → Debug). Added comment for `?? string.Empty` compiler satisfaction. Removed false positives (T9 local dict protected by lock, T19 private methods). |
-| Asset | DONE | Fixed T21 hardcoded constant → config. Added compiler satisfaction comments to `?? string.Empty`. Removed T19 false positives (internal classes, private methods). Moved T25 type improvements to Design Considerations. |
-| Auth | DONE | Fixed T21 (removed DEFAULT_CONNECT_URL, hardcoded 60min fallback, added MockTwitchId to schema, removed dead "000000" fallback, extracted Unknown constants), T7 (ApiException catch), T10 (LogInfo → Debug for routine ops, mock email log). Removed T19 false positives (internal class, Generated/, base class overrides). Moved SessionDataModel type issues to Design Considerations. |
+| Account | DONE | Added `<inheritdoc/>`, XML docs to AccountModel, cleaned violations. | PHASE2: Fixed 2 (anonymous role auto-mgmt, BatchGet per-item errors), remaining: none |
+| Achievement | DONE | All violations were false positives, restructured quirks. Design Consideration (caching) requires architectural planning. | PHASE2: No actionable bugs, remaining: event handler definition caching (requires cache invalidation design) |
+| Actor | DONE | Fixed all 5 bugs: (1) anonymous memory value → PerceptionData, (2) hardcoded tunables → config properties + wired, (3) ApiException handling → added, (4) error event publishing → added, (5) regex caching → added with timeout. DeploymentMode now enum. Bugs section cleared. | PHASE2: No actionable bugs, remaining: 14 design considerations (multi-instance arch, thread safety, scheduler redesign, etc.) |
+| Analytics | DONE | Fixed T10 logging (ingestion → Debug, validation → Debug). Added comment for `?? string.Empty` compiler satisfaction. Removed false positives (T9 local dict protected by lock, T19 private methods). | PHASE2: No actionable bugs, remaining: POCO string.Empty defaults (data modeling convention) |
+| Asset | DONE | Fixed T21 hardcoded constant → config. Added compiler satisfaction comments to `?? string.Empty`. Removed T19 false positives (internal classes, private methods). Moved T25 type improvements to Design Considerations. | PHASE2: No actionable bugs, remaining: T25 types, async patterns, index/queue architecture |
+| Auth | DONE | Fixed T21 (removed DEFAULT_CONNECT_URL, hardcoded 60min fallback, added MockTwitchId to schema, removed dead "000000" fallback, extracted Unknown constants), T7 (ApiException catch), T10 (LogInfo → Debug for routine ops, mock email log). Removed T19 false positives (internal class, Generated/, base class overrides). Moved SessionDataModel type issues to Design Considerations. | PHASE2: No actionable bugs, remaining: T25 SessionDataModel types, email null handling in OAuth flows |
 | Behavior | DONE | Already clean - all violations addressed previously. Design considerations properly documented (ValueTask, IHttpClientFactory, static CognitionConstants, in-memory runtime state). |
 | Character | DONE | Removed false positives (T21 stub config, T19 interface methods, T19 private helpers). Moved T9 concurrency issues to Design Considerations (require architectural planning for distributed locking). |
 | Character-Encounter | DONE | Removed false positives (T7 - leaf node, T9 method-local dict, T19 internal/interface, T5 diagnostic metadata, T21 stub config). Moved T25 POCO type issues to Design Considerations. |
@@ -177,14 +177,14 @@ For each plugin deep dive document:
 | Leaderboard | DONE | Already compliant (leaf node, no mesh calls). Added Bugs section (empty). Analytics event matching and season lifecycle properly documented. |
 | Location | DONE | Fixed T21 (added 3 depth limit config props), T7 (ApiException handling for IRealmClient). Updated config and stubs sections. |
 | Mapping | DONE | Already compliant. T7 ApiException handled for IAssetClient. T21 hardcoded affordance scoring values kept in Design Considerations (many values, complex change). |
-| Matchmaking | PENDING | |
-| Mesh | PENDING | |
-| Messaging | PENDING | |
-| Music | PENDING | |
-| Orchestrator | PENDING | |
-| Permission | PENDING | |
-| Realm | PENDING | |
-| Realm-History | PENDING | |
+| Matchmaking | DONE | Already compliant. T7 ApiException handled for IGameSessionClient, IPermissionClient. Well-structured document. |
+| Mesh | DONE | Already compliant (leaf node, no mesh calls). Well-structured document. |
+| Messaging | DONE | Already compliant (infrastructure, no mesh calls). Well-structured document. Dead config properties noted in Design Considerations. |
+| Music | DONE | Removed false positive (T19 private methods). Restructured violations into Design Considerations (unused state store, hardcoded tunables, plugin lifecycle). |
+| Orchestrator | DONE | Restructured violations into Design Considerations (hardcoded image/tunables, in-memory state, external API JSON). T20 external API is acceptable boundary exception. |
+| Permission | DONE | Removed false positives (T6, T7, T19, T21 role hierarchy, T16 naming). Moved T9 multi-instance set ops and T25 anonymous type to Design Considerations. |
+| Realm | DONE | Removed false positives (T6, T7, T19, T21, T16). Moved T9 multi-instance and T25 RealmId type to Design Considerations. Leaf node - no mesh calls. |
+| Realm-History | DONE | Removed false positives (T6, T7). Moved T25 POCO types and T9 multi-instance to Design Considerations. Leaf node - no mesh calls. |
 | Relationship | PENDING | |
 | Relationship-Type | PENDING | |
 | Save-Load | DONE | Fixed T20 (BannouJson), T10 logging levels. Removed T6 false positives. T25 → Design Considerations. |

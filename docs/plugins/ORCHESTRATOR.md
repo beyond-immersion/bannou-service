@@ -443,61 +443,17 @@ None identified.
 
 ---
 
-## Tenet Violations (Require Schema Changes or Planning)
+### Additional Design Considerations
 
-### QUALITY TENETS: XML Documentation
+10. **Hardcoded Docker image name**: `DockerComposeOrchestrator` and `DockerSwarmOrchestrator` use hardcoded `"bannou:latest"` image name. Should be configurable for multi-version deployments.
 
-| File | Description |
-|------|-------------|
-| `DockerComposeOrchestrator.cs` | `public void Dispose()` - Missing XML documentation on public method |
+11. **Hardcoded restart manager tunables**: `SmartRestartManager` has `DEFAULT_RESTART_TIMEOUT_SECONDS = 120`, `HEALTH_CHECK_INTERVAL_MS = 2000`, `WaitBeforeKillSeconds = 30`. Could be configuration properties.
 
-**Fix**: Add `<summary>` tags to the `Dispose()` method. Low priority.
+12. **`_lastKnownDeployment` in-memory state**: Orchestrator is typically single-instance, but this field could diverge across instances if multiple were ever deployed. Should read from Redis state manager.
 
----
+13. **PortainerOrchestrator uses direct JsonSerializerOptions**: Portainer API requires camelCase. This is an acceptable boundary exception for external API communication (similar to defensive coding for external services).
 
-### IMPLEMENTATION TENETS: JSON Serialization for External API
-
-| File | Description |
-|------|-------------|
-| `PortainerOrchestrator.cs` | Direct `System.Text.Json.JsonSerializerOptions` usage for Portainer API |
-
-**Context**: Portainer API uses camelCase which differs from `BannouJson.Options`. This is external API communication requiring non-standard serialization.
-
-**Fix**: Either extend `BannouJson` to support alternate serialization profiles (e.g., `BannouJson.ExternalApiOptions`) or document this as a formal exception for external API communication (similar to the null-coalesce external service pattern).
-
----
-
-### IMPLEMENTATION TENETS: Multi-Instance Safety
-
-| File | Description |
-|------|-------------|
-| `OrchestratorService.cs` | `_lastKnownDeployment` - In-memory authoritative state that can diverge across instances |
-| `DockerComposeOrchestrator.cs` | `_discoveredNetwork`, `_discoveredInfrastructureHosts` - In-memory caches |
-
-**Context**: The orchestrator is typically single-instance (admin service), but `_lastKnownDeployment` is mutated and read as authoritative deployment ID source. DockerComposeOrchestrator caches are acceptable for single-instance backends.
-
-**Fix**: For `_lastKnownDeployment`, always read from `_stateManager.GetCurrentConfigurationAsync()`. For DockerComposeOrchestrator, add comments documenting single-node assumption.
-
----
-
-### IMPLEMENTATION TENETS: Configuration-First (Hardcoded Tunables)
-
-| File | Description |
-|------|-------------|
-| `DockerComposeOrchestrator.cs` | `var imageName = "bannou:latest"` - Hardcoded Docker image name |
-| `DockerSwarmOrchestrator.cs` | `var imageName = "bannou:latest"` - Same hardcoded Docker image name |
-| `SmartRestartManager.cs` | `DEFAULT_RESTART_TIMEOUT_SECONDS = 120`, `HEALTH_CHECK_INTERVAL_MS = 2000`, `WaitBeforeKillSeconds = 30` |
-
-**Fix**: Add schema configuration properties for `DockerImageName`, `RestartTimeoutSeconds`, `HealthCheckIntervalMs`, `WaitBeforeKillSeconds`.
-
----
-
-### Summary of Remaining Violations
-
-| Category | Count | Severity |
-|----------|-------|----------|
-| QUALITY TENETS | 1 | Low (XML docs on Dispose) |
-| IMPLEMENTATION TENETS | 3 | Medium (JSON options, multi-instance, hardcoded tunables) |
+14. **T19 (Dispose XML docs)**: `DockerComposeOrchestrator.Dispose()` lacks XML documentation. Low priority.
 
 ---
 

@@ -68,6 +68,7 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 | `DefaultPageSize` | `ACCOUNT_DEFAULT_PAGE_SIZE` | 20 | Default page size for list operations when not specified in request |
 | `MaxPageSize` | `ACCOUNT_MAX_PAGE_SIZE` | 100 | Maximum allowed page size for list operations (requests capped to this value) |
 | `ListBatchSize` | `ACCOUNT_LIST_BATCH_SIZE` | 100 | Number of accounts loaded per batch when applying provider filter in the list endpoint |
+| `AutoManageAnonymousRole` | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | true | When true, automatically manages "anonymous" role: adds it if roles would be empty, removes it when adding non-anonymous roles |
 
 ## DI Services & Helpers
 
@@ -173,8 +174,10 @@ No bugs identified.
 
 7. **`ListAccountsWithProviderFilterAsync` uses parallel batching**: Auth method lookups parallelized within `ListBatchSize` batches.
 
+8. **`BulkUpdateRolesAsync` auto-manages anonymous role**: When `AutoManageAnonymousRole` is true (default), removing roles that would leave zero roles automatically adds "anonymous". Adding a non-anonymous role automatically removes "anonymous" if present. This ensures accounts always have at least one role for permission resolution.
+
+9. **`BatchGetAccountsAsync` has per-item error handling**: Individual account fetch failures are captured in the `failed` list with error reasons, rather than failing the entire batch. Matches the error handling pattern of `BulkUpdateRolesAsync`.
+
 ### Design Considerations (Requires Planning)
 
-1. **`BulkUpdateRolesAsync` allows removing all roles**: No validation that at least one role remains. May lock users out of permission-gated APIs - could be intentional for disabling accounts.
-
-2. **`BatchGetAccountsAsync` is all-or-nothing on errors**: If any `GetAsync` throws, entire batch returns 500. Unlike `BulkUpdateRolesAsync` which has per-item error handling.
+None identified.

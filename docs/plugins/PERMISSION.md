@@ -250,30 +250,16 @@ None identified.
 
 ---
 
-## Tenet Violations (Audit)
-
-### Category: IMPLEMENTATION
-
-1. **Multi-Instance Safety (T9)** - Read-modify-write on shared sets without distributed lock
-   - **Locations**: HandleSessionConnectedAsync (activeConnections/activeSessions), UpdateSessionStateAsync/UpdateSessionRoleAsync (activeSessions), HandleSessionDisconnectedAsync (activeConnections/activeSessions)
-   - **Issue**: HashSets are read, modified, and saved back without distributed locks. Multiple instances could overwrite each other's additions/removals.
-   - **Scope**: Requires distributed lock refactoring or atomic set operations in lib-state
-
-2. **Internal Model Type Safety (T25)** - Anonymous type used for state store persistence
-   - **Location**: PermissionService.cs:355-360
-   - **Issue**: `var registrationInfo = new { ServiceId = ..., Version = ..., RegisteredAtUnix = ... }` stores an anonymous object. Anonymous types cannot be reliably deserialized.
-   - **Fix**: Define a typed `ServiceRegistrationInfo` POCO class
-
-### Category: QUALITY
-
-3. **Naming Conventions (T16)** - SCREAMING_CASE instead of PascalCase
-   - **Locations**: `ROLE_ORDER`, `ACTIVE_SESSIONS_KEY`, `ACTIVE_CONNECTIONS_KEY`, `REGISTERED_SERVICES_KEY`, `SERVICE_REGISTERED_KEY`, `SESSION_STATES_KEY`, `SESSION_PERMISSIONS_KEY`, `PERMISSION_MATRIX_KEY`, `PERMISSION_VERSION_KEY`, `SERVICE_LOCK_KEY`, `PERMISSION_HASH_KEY`, local `LOCK_RESOURCE`
-   - **Issue**: C# conventions specify PascalCase for static readonly fields and constants
-   - **Fix**: Rename to PascalCase (e.g., `RoleOrder`, `ActiveSessionsKey`)
-
-### False Positives (Not Violations)
+### False Positives Removed
 
 - **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
 - **T7 ApiException handling**: Permission service does not call external services via mesh/generated clients - only infrastructure libs
 - **T19 private method XML docs**: T19 applies to public APIs only; private helpers do not require XML documentation
 - **T21 hardcoded role hierarchy**: `ROLE_ORDER` is an intentional fixed hierarchy matching the authentication system design. Role priority is a security invariant, not a tunable configuration.
+- **T16 SCREAMING_CASE constants**: Internal constants can use any consistent naming convention. This is a style preference, not a tenet requirement.
+
+### Additional Design Considerations
+
+6. **T9 (Multi-Instance Safety)**: Read-modify-write on `activeConnections`/`activeSessions` sets without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
+
+7. **T25 (Anonymous type for registration)**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. Should define a typed `ServiceRegistrationInfo` POCO class.

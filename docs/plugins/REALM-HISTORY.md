@@ -222,21 +222,13 @@ None identified.
 
 ---
 
-## Tenet Violations (Audit)
-
-### Category: IMPLEMENTATION
-
-1. **T25: Internal Model Type Safety** - Internal POCOs use string fields for Guid and enum types
-   - **Locations**: `RealmParticipationData`, `RealmParticipationIndexData`, `RealmLoreData`, `RealmLoreElementData`
-   - **Issue**: Fields like `ParticipationId`, `RealmId`, `EventId`, `EventCategory`, `Role`, `ElementType` are strings instead of proper `Guid`/enum types
-   - **Scope**: Requires model refactoring to use proper types, eliminating `Enum.TryParse` and `.ToString()` calls
-
-2. **T9: Multi-Instance Safety** - Read-modify-write operations without distributed locks
-   - **Locations**: Record/delete participation (dual-index updates), set/add lore elements (merge operations)
-   - **Issue**: Concurrent modifications could lose updates due to race conditions
-   - **Scope**: Requires `IDistributedLockProvider` integration
-
-### False Positives (Not Violations)
+### False Positives Removed
 
 - **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
 - **T7 ApiException handling**: RealmHistory service only calls state store (infrastructure lib), not external services via mesh
+
+### Additional Design Considerations
+
+17. **T25 (POCO Type Safety)**: Internal POCOs use string fields for Guid and enum types (`ParticipationId`, `RealmId`, `EventId`, `EventCategory`, `Role`, `ElementType`). Forces Enum.TryParse and .ToString() conversions.
+
+18. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks on dual-index updates and lore merge operations.

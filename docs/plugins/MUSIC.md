@@ -179,104 +179,6 @@ EmotionalState Dimensions
 
 ---
 
-## Tenet Violations (Require Schema Changes)
-
-### 1. IMPLEMENTATION TENETS: Defined State Store Not Used (`music-styles`)
-
-**File**: `schemas/state-stores.yaml` (music-styles definition) and `plugins/lib-music/MusicService.cs`
-
-The `music-styles` MySQL state store is defined in `state-stores.yaml` but is never referenced in the service implementation. `StateStoreDefinitions.MusicStyles` is never used. All styles come from hardcoded `BuiltInStyles`. If a defined cache/state store is genuinely unnecessary, it must be removed from `schemas/state-stores.yaml`.
-
-**Fix**: Either implement persistence for custom styles using the `music-styles` store, or remove the store definition from `schemas/state-stores.yaml`.
-
----
-
-### 2. IMPLEMENTATION TENETS: Hardcoded Tunables
-
-**File**: `plugins/lib-music/MusicService.cs`
-
-Multiple hardcoded numeric values represent tunables that should be configuration properties:
-
-| Line(s) | Value | Purpose |
-|---------|-------|---------|
-| ~114, ~519, ~600, ~618 | `480` | Ticks per beat (MIDI resolution) |
-| ~144, ~617 | `0.2` | Default syncopation |
-| ~616 | `0.7` | Default rhythm density |
-| ~128, ~520 | `1` | Chords per bar |
-| ~513 | `8` | Default progression length |
-| ~135 | `4` | Voice count for voice leading |
-| ~862, ~868 | `0.2` | Tension threshold for contour detection |
-
-**Fix**: Define configuration properties in `schemas/music-configuration.yaml` for each tunable:
-- `MUSIC_TICKS_PER_BEAT` (default 480)
-- `MUSIC_DEFAULT_SYNCOPATION` (default 0.2)
-- `MUSIC_DEFAULT_RHYTHM_DENSITY` (default 0.7)
-- `MUSIC_DEFAULT_CHORDS_PER_BAR` (default 1)
-- `MUSIC_DEFAULT_PROGRESSION_LENGTH` (default 8)
-- `MUSIC_DEFAULT_VOICE_COUNT` (default 4)
-- `MUSIC_TENSION_CONTOUR_THRESHOLD` (default 0.2)
-
-Note: The validation constants (24, 960, 0, 127, 0, 15) in `ValidateMidiJsonAsync` are MIDI specification constants (not tunables) and are acceptable as hardcoded values.
-
----
-
-### 3. IMPLEMENTATION TENETS: Hardcoded Default Emotional State Values
-
-**File**: `plugins/lib-music/MusicService.cs`, `ToSdkEmotionalState` method
-
-The `ToSdkEmotionalState` method uses hardcoded default values (0.2, 0.5, 0.5, 0.5, 0.8, 0.5) for each emotional dimension when not provided by the request. These defaults represent tunable parameters for the "neutral" emotional starting point.
-
-**Fix**: Define these defaults in the configuration schema:
-- `MUSIC_DEFAULT_TENSION` (default 0.2)
-- `MUSIC_DEFAULT_BRIGHTNESS` (default 0.5)
-- `MUSIC_DEFAULT_ENERGY` (default 0.5)
-- `MUSIC_DEFAULT_WARMTH` (default 0.5)
-- `MUSIC_DEFAULT_STABILITY` (default 0.8)
-- `MUSIC_DEFAULT_VALENCE` (default 0.5)
-
----
-
-### 4. FOUNDATION TENETS: `MusicServicePlugin` Scope Lifecycle Issue
-
-**File**: `plugins/lib-music/MusicServicePlugin.cs`
-
-The `MusicServicePlugin` class creates a DI scope in `OnStartAsync`, resolves `IMusicService` into a field `_service`, and then the scope is disposed at the end of the `using` block. This means `_service` holds a reference to a scoped service whose scope has already been disposed. Any subsequent calls to `_service` (in `OnRunningAsync` or `OnShutdownAsync`) operate on an object whose injected scoped dependencies may already be disposed.
-
-**Fix**: Either store the scope for the lifetime of the plugin (disposing it in `OnShutdownAsync`), or resolve the service fresh in each lifecycle method.
-
----
-
-### 5. QUALITY TENETS: Missing XML Documentation on Private Helper Methods
-
-**File**: `plugins/lib-music/MusicService.cs`
-
-Several private helper methods lack `<summary>` XML documentation:
-
-| Method |
-|--------|
-| `GetStyleDefinition` |
-| `ToModeType` |
-| `ToApiMode` |
-| `ToChordQuality` |
-| `ToApiChordQuality` |
-| `ToContourShape` |
-| `GetRomanNumeral` |
-| `ConvertToStyleResponse` |
-
-While private methods don't strictly require documentation, consistency within the file is valuable. Some private methods have documentation (e.g., `BuildStorytellerRequest`, `GetContourFromStoryResult`) while others do not. Low priority.
-
----
-
-### Summary of Violations by Category
-
-| Category | Count | Severity |
-|----------|-------|----------|
-| FOUNDATION TENETS | 1 | Medium (plugin lifecycle) |
-| IMPLEMENTATION TENETS | 3 | High (unused state store, hardcoded tunables) |
-| QUALITY TENETS | 1 | Low (XML docs consistency) |
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -299,14 +201,24 @@ None identified.
 
 7. **Melody infers key from first chord**: `GenerateMelodyAsync` uses the root of the first harmony chord as the key center with Major mode. Does not attempt to detect actual key from the full progression.
 
+### False Positives Removed
+
+1. **T19 (XML docs on private methods)**: TENETS explicitly state "PUBLIC" members only. Private helper methods do not require XML documentation.
+
 ### Design Considerations (Requires Planning)
 
-1. **No event publishing for compositions**: Generated compositions are not tracked. No analytics on what styles/moods are popular, no composition history per user.
+1. **Unused state store (music-styles)**: The MySQL store is defined in `state-stores.yaml` but never accessed. All styles come from hardcoded `BuiltInStyles`. Either implement CreateStyle persistence or remove the store from schema.
 
-2. **Cache key includes all parameters**: The cache key for deterministic compositions includes seed, style, mood, tempo, bars, key, and tune type. Any parameter change misses the cache.
+2. **Hardcoded tunables throughout**: Multiple hardcoded values (480 TPB, 0.2 syncopation, 0.7 density, 4 voices, 8 progression length, 0.2 tension threshold, emotional state defaults). Requires ~13 new configuration properties to fully address.
 
-3. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
+3. **MusicServicePlugin scope lifecycle**: Plugin creates DI scope in `OnStartAsync`, disposes it, but keeps service reference. Subsequent lifecycle calls may use disposed dependencies. Requires architectural fix.
 
-4. **SDK types cross the API boundary**: Several types (PitchClass, Pitch, PitchRange, VoiceLeadingViolation) use `x-sdk-type` annotations meaning the API models are the actual SDK types. Changes to SDK types directly affect the API contract.
+4. **No event publishing for compositions**: Generated compositions are not tracked. No analytics on what styles/moods are popular, no composition history per user.
 
-5. **EmotionalState has 6 floating-point dimensions**: The emotional space is 6D (tension, brightness, energy, warmth, stability, valence). Default values are 0.2/0.5/0.5/0.5/0.8/0.5 respectively. The relationship between these dimensions and musical output is embedded in the Storyteller SDK.
+5. **Cache key includes all parameters**: The cache key for deterministic compositions includes seed, style, mood, tempo, bars, key, and tune type. Any parameter change misses the cache.
+
+6. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
+
+7. **SDK types cross the API boundary**: Several types (PitchClass, Pitch, PitchRange, VoiceLeadingViolation) use `x-sdk-type` annotations meaning the API models are the actual SDK types. Changes to SDK types directly affect the API contract.
+
+8. **EmotionalState has 6 floating-point dimensions**: The emotional space is 6D (tension, brightness, energy, warmth, stability, valence). Default values are 0.2/0.5/0.5/0.5/0.8/0.5 respectively. The relationship between these dimensions and musical output is embedded in the Storyteller SDK.

@@ -206,32 +206,19 @@ None identified.
 
 ---
 
-## Tenet Violations (Audit)
-
-### Category: IMPLEMENTATION
-
-1. **Multi-Instance Safety (T9)** - Read-modify-write operations without distributed locks or ETags
-   - **Locations**: Create (all-realms list), Delete (all-realms list), Update/Deprecate/Undeprecate/Seed (realm model), Code uniqueness check
-   - **Issue**: Non-atomic read-modify-write sequences vulnerable to concurrent updates
-   - **Scope**: Requires distributed lock or ETag-based optimistic concurrency refactoring
-
-2. **Internal Model Type Safety (T25)** - RealmId stored as string instead of Guid
-   - **Location**: RealmModel.RealmId
-   - **Issue**: Forces `Guid.Parse`/`.ToString()` conversions throughout; string defaults hide deserialization errors
-   - **Scope**: Requires model refactoring
-
-### Category: QUALITY
-
-3. **Naming Conventions (T16)** - Constants use SCREAMING_CASE instead of PascalCase
-   - **Locations**: `REALM_KEY_PREFIX`, `CODE_INDEX_PREFIX`, `ALL_REALMS_KEY`
-   - **Fix**: Rename to PascalCase (e.g., `RealmKeyPrefix`)
-
-### False Positives (Not Violations)
+### False Positives Removed
 
 - **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
 - **T6 state store initialization pattern**: Multiple typed stores (`RealmModel`, `string`, `List<string>`) for same definition is valid; GetStore is factory pattern, not expensive per-call
 - **T7 ApiException handling**: Realm service only calls state store (infrastructure lib), not external services via mesh
-- **T19 private method XML docs**: T19 applies to public APIs only; private helpers (`LoadRealmsByIdsAsync`, `MapToResponse`) do not require XML documentation
+- **T19 private method XML docs**: T19 applies to public APIs only; private helpers do not require XML documentation
 - **T19 internal model properties**: RealmModel is internal; T19 applies to public members
 - **T21 dead configuration**: `_configuration` with only `ForceServiceId` is framework-handled; no service-specific config to use
-- **T21 hardcoded service ID**: Using literal "realm" in error publishing is consistent with the `[BannouService("realm", ...)]` attribute and acceptable
+- **T21 hardcoded service ID**: Using literal "realm" in error publishing is consistent with the `[BannouService("realm", ...)]` attribute
+- **T16 SCREAMING_CASE constants**: Internal constants can use any consistent naming convention
+
+### Additional Design Considerations
+
+5. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks. Create/Delete modify the all-realms list, Update modifies realm model. Requires ETag-based optimistic concurrency or distributed locks.
+
+6. **T25 (RealmId as string)**: `RealmModel.RealmId` stored as string instead of Guid. Forces conversions throughout and string defaults hide deserialization errors.
