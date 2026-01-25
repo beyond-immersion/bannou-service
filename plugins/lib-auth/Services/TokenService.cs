@@ -109,9 +109,8 @@ public class TokenService : ITokenService
         await _sessionService.SaveSessionAsync(sessionKey, sessionData, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
         // Maintain indexes
-        await _sessionService.AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
-        // sessionId.ToString() at boundary for Redis key
-        await _sessionService.AddSessionIdReverseIndexAsync(sessionId.ToString(), sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
+        await _sessionService.AddSessionToAccountIndexAsync(account.AccountId, sessionKey, cancellationToken);
+        await _sessionService.AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(_appConfiguration.JwtSecret))
         {

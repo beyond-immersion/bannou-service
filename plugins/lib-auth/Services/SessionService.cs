@@ -38,7 +38,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task<List<SessionInfo>> GetAccountSessionsAsync(string accountId, CancellationToken cancellationToken = default)
+    public async Task<List<SessionInfo>> GetAccountSessionsAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -132,7 +132,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task AddSessionToAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken = default)
+    public async Task AddSessionToAccountIndexAsync(Guid accountId, string sessionKey, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -169,7 +169,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task RemoveSessionFromAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken = default)
+    public async Task RemoveSessionFromAccountIndexAsync(Guid accountId, string sessionKey, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -213,7 +213,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task AddSessionIdReverseIndexAsync(string sessionId, string sessionKey, int ttlSeconds, CancellationToken cancellationToken = default)
+    public async Task AddSessionIdReverseIndexAsync(Guid sessionId, string sessionKey, int ttlSeconds, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -241,7 +241,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task RemoveSessionIdReverseIndexAsync(string sessionId, CancellationToken cancellationToken = default)
+    public async Task RemoveSessionIdReverseIndexAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -256,7 +256,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task<string?> FindSessionKeyBySessionIdAsync(string sessionId, CancellationToken cancellationToken = default)
+    public async Task<string?> FindSessionKeyBySessionIdAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -320,7 +320,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task<List<string>> GetSessionKeysForAccountAsync(string accountId, CancellationToken cancellationToken = default)
+    public async Task<List<string>> GetSessionKeysForAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         var indexKey = $"account-sessions:{accountId}";
         var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
@@ -330,7 +330,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task DeleteAccountSessionsIndexAsync(string accountId, CancellationToken cancellationToken = default)
+    public async Task DeleteAccountSessionsIndexAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         var indexKey = $"account-sessions:{accountId}";
         var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
@@ -343,7 +343,7 @@ public class SessionService : ISessionService
     {
         try
         {
-            var sessionKeys = await GetSessionKeysForAccountAsync(accountId.ToString(), cancellationToken);
+            var sessionKeys = await GetSessionKeysForAccountAsync(accountId, cancellationToken);
 
             if (sessionKeys.Count == 0)
             {
@@ -365,7 +365,7 @@ public class SessionService : ISessionService
                 }
             }
 
-            await DeleteAccountSessionsIndexAsync(accountId.ToString(), cancellationToken);
+            await DeleteAccountSessionsIndexAsync(accountId, cancellationToken);
 
             _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 

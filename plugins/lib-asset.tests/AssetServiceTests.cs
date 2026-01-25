@@ -1035,7 +1035,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = "test-bundle",
+            BundleId = Guid.NewGuid(),
             AssetIds = new List<string>()
         };
 
@@ -1054,13 +1054,13 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = "existing-bundle",
+            BundleId = Guid.NewGuid(),
             AssetIds = new List<string> { "asset-1" }
         };
 
         var existingBundle = new BundleMetadata
         {
-            BundleId = "existing-bundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared",
@@ -1090,7 +1090,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = "new-bundle",
+            BundleId = Guid.NewGuid(),
             AssetIds = new List<string> { "nonexistent-asset" }
         };
 
@@ -1234,7 +1234,7 @@ public class AssetServiceTests
 
         var pendingBundle = new BundleMetadata
         {
-            BundleId = "pending-bundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared",
@@ -1536,7 +1536,7 @@ public class AssetServiceTests
 
         var existingBundle = new BundleMetadata
         {
-            BundleId = "existing-bundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared",
@@ -1751,7 +1751,7 @@ public class AssetServiceTests
 
         var pendingBundle = new BundleMetadata
         {
-            BundleId = "pending-bundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "arcadia",

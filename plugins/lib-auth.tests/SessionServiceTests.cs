@@ -192,7 +192,7 @@ public class SessionServiceTests
     public async Task AddSessionToAccountIndexAsync_WithNewSession_ShouldAddToIndex()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var sessionKey = "new-session-key";
         var indexKey = $"account-sessions:{accountId}";
 
@@ -221,7 +221,7 @@ public class SessionServiceTests
     public async Task AddSessionToAccountIndexAsync_WithExistingSession_ShouldNotDuplicate()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var sessionKey = "existing-session-key";
         var indexKey = $"account-sessions:{accountId}";
 
@@ -247,7 +247,7 @@ public class SessionServiceTests
     public async Task RemoveSessionFromAccountIndexAsync_WithMultipleSessions_ShouldRemoveOne()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var sessionKeyToRemove = "session-to-remove";
         var indexKey = $"account-sessions:{accountId}";
         var existingSessions = new List<string> { sessionKeyToRemove, "other-session" };
@@ -277,7 +277,7 @@ public class SessionServiceTests
     public async Task RemoveSessionFromAccountIndexAsync_WithLastSession_ShouldDeleteIndex()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var sessionKeyToRemove = "last-session";
         var indexKey = $"account-sessions:{accountId}";
 
@@ -302,7 +302,7 @@ public class SessionServiceTests
     public async Task AddSessionIdReverseIndexAsync_ShouldSaveWithCorrectTtl()
     {
         // Arrange
-        var sessionId = "test-session-id";
+        var sessionId = Guid.NewGuid();
         var sessionKey = "test-session-key";
         var ttlSeconds = 3600;
         var indexKey = $"session-id-index:{sessionId}";
@@ -333,7 +333,7 @@ public class SessionServiceTests
     public async Task RemoveSessionIdReverseIndexAsync_ShouldDeleteWithCorrectKey()
     {
         // Arrange
-        var sessionId = "test-session-id";
+        var sessionId = Guid.NewGuid();
         var indexKey = $"session-id-index:{sessionId}";
 
         _mockStringStore.Setup(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()))
@@ -354,7 +354,7 @@ public class SessionServiceTests
     public async Task FindSessionKeyBySessionIdAsync_WithExistingIndex_ShouldReturnSessionKey()
     {
         // Arrange
-        var sessionId = "test-session-id";
+        var sessionId = Guid.NewGuid();
         var expectedSessionKey = "test-session-key";
         var indexKey = $"session-id-index:{sessionId}";
 
@@ -393,7 +393,7 @@ public class SessionServiceTests
     public async Task GetSessionKeysForAccountAsync_WithExistingIndex_ShouldReturnList()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var indexKey = $"account-sessions:{accountId}";
         var expectedKeys = new List<string> { "session1", "session2" };
 
@@ -413,7 +413,7 @@ public class SessionServiceTests
     public async Task GetSessionKeysForAccountAsync_WithNoIndex_ShouldReturnEmptyList()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var indexKey = $"account-sessions:{accountId}";
 
         _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
@@ -434,7 +434,7 @@ public class SessionServiceTests
     public async Task DeleteAccountSessionsIndexAsync_ShouldDeleteWithCorrectKey()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var indexKey = $"account-sessions:{accountId}";
 
         _mockListStore.Setup(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()))
@@ -592,7 +592,7 @@ public class SessionServiceTests
     public async Task GetAccountSessionsAsync_WithNoSessions_ShouldReturnEmptyList()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
 
         _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
@@ -608,7 +608,7 @@ public class SessionServiceTests
     public async Task GetAccountSessionsAsync_WithActiveSessions_ShouldReturnSessionInfoList()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var sessionKeys = new List<string> { "session1" };
         var sessionData = CreateTestSessionData();
         sessionData.ExpiresAt = DateTimeOffset.UtcNow.AddHours(1); // Active session
@@ -631,7 +631,7 @@ public class SessionServiceTests
     public async Task GetAccountSessionsAsync_WithExpiredSessions_ShouldFilterThemOut()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var sessionKeys = new List<string> { "expired-session" };
         var expiredSession = CreateTestSessionData();
         expiredSession.ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1); // Expired

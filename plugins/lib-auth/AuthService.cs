@@ -572,7 +572,7 @@ public partial class AuthService : IAuthService
                 _logger.LogInformation("AllSessions logout requested for account: {AccountId}", validateResponse.AccountId);
 
                 // Get session keys directly from the index (no need to load full session data first)
-                var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(validateResponse.AccountId.ToString(), cancellationToken);
+                var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(validateResponse.AccountId, cancellationToken);
 
                 if (sessionKeys.Count > 0)
                 {
@@ -587,13 +587,12 @@ public partial class AuthService : IAuthService
                         // Clean up reverse index if session data was still available
                         if (sessionData != null && sessionData.SessionId != Guid.Empty)
                         {
-                            // sessionId.ToString() at boundary for Redis key
-                            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionData.SessionId.ToString(), cancellationToken);
+                            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionData.SessionId, cancellationToken);
                         }
                     }
 
                     // Remove the account sessions index
-                    await _sessionService.DeleteAccountSessionsIndexAsync(validateResponse.AccountId.ToString(), cancellationToken);
+                    await _sessionService.DeleteAccountSessionsIndexAsync(validateResponse.AccountId, cancellationToken);
 
                     invalidatedSessions.AddRange(sessionKeys);
 
@@ -612,7 +611,7 @@ public partial class AuthService : IAuthService
                 await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
                 // Remove session from account index
-                await _sessionService.RemoveSessionFromAccountIndexAsync(validateResponse.AccountId.ToString(), sessionKey, cancellationToken);
+                await _sessionService.RemoveSessionFromAccountIndexAsync(validateResponse.AccountId, sessionKey, cancellationToken);
 
                 invalidatedSessions.Add(sessionKey);
 
@@ -652,7 +651,7 @@ public partial class AuthService : IAuthService
 
             // Find and remove the session from Redis
             // Since we store sessions with session_key, we need to find sessions by session_id
-            var sessionKey = await _sessionService.FindSessionKeyBySessionIdAsync(sessionId.ToString(), cancellationToken);
+            var sessionKey = await _sessionService.FindSessionKeyBySessionIdAsync(sessionId, cancellationToken);
 
             if (sessionKey == null)
             {
@@ -670,11 +669,11 @@ public partial class AuthService : IAuthService
             // Remove session from account index if we found the session data
             if (sessionData != null)
             {
-                await _sessionService.RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
+                await _sessionService.RemoveSessionFromAccountIndexAsync(sessionData.AccountId, sessionKey, cancellationToken);
             }
 
             // Remove reverse index entry
-            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
+            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionId, cancellationToken);
 
             // Publish SessionInvalidatedEvent to disconnect WebSocket clients
             if (sessionData != null)
@@ -892,7 +891,7 @@ public partial class AuthService : IAuthService
             _logger.LogDebug("Getting sessions for account: {AccountId}", validateResponse.AccountId);
 
             // Use efficient account-to-sessions index with bulk state operations
-            var sessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
+            var sessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId, cancellationToken);
 
             _logger.LogDebug("Returning {SessionCount} session(s) for account: {AccountId}",
                 sessions.Count, validateResponse.AccountId);

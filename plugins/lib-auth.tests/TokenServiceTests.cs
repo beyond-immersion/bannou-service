@@ -385,13 +385,13 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()))
@@ -426,13 +426,13 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()))
@@ -494,13 +494,13 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionToAccountIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockSessionService.Setup(s => s.AddSessionIdReverseIndexAsync(
-            It.IsAny<string>(),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()))

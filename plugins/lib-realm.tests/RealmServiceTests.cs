@@ -81,7 +81,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var id = realmId ?? Guid.NewGuid();
         return new RealmModel
         {
-            RealmId = id.ToString(),
+            RealmId = id,
             Code = code,
             Name = name,
             Description = "Test Description",

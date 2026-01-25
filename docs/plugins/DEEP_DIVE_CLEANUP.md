@@ -48,7 +48,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-auth
 
-- [ ] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type.
+- [x] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type. **FIXED** - `SessionDataModel.SessionId` was already `Guid`. Changed `ISessionService` method signatures from `string sessionId/accountId` to `Guid`. Removed all `.ToString()` calls at call sites.
 
 ### lib-character-encounter
 
@@ -104,7 +104,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-location
 
-- [ ] **T25**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()`. **Decision**: Change POCO to use `LocationType` enum directly.
+- [x] **T25**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()`. **Decision**: Change POCO to use `LocationType` enum directly. **FIXED** - LocationModel already used enum type; fixed helper methods to use `Guid` instead of strings throughout, changed `List<string>` index stores to `List<Guid>`.
 
 ### lib-permission
 
@@ -112,7 +112,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-realm
 
-- [ ] **T25**: `RealmModel.RealmId` stored as string instead of Guid. **Decision**: Change POCO to use `Guid` type.
+- [x] **T25**: `RealmModel.RealmId` stored as string instead of Guid. **Decision**: Change POCO to use `Guid` type. **FIXED** - Changed `RealmModel.RealmId` to `Guid`, changed all helper method signatures, changed `List<string>` index to `List<Guid>`.
 
 ### lib-realm-history
 

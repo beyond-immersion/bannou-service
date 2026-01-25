@@ -14,7 +14,7 @@ public interface ISessionService
     /// <param name="accountId">The account ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of active session information.</returns>
-    Task<List<SessionInfo>> GetAccountSessionsAsync(string accountId, CancellationToken cancellationToken = default);
+    Task<List<SessionInfo>> GetAccountSessionsAsync(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a session key to the account's session index.
@@ -22,7 +22,7 @@ public interface ISessionService
     /// <param name="accountId">The account ID.</param>
     /// <param name="sessionKey">The session key to add.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task AddSessionToAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken = default);
+    Task AddSessionToAccountIndexAsync(Guid accountId, string sessionKey, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a session key from the account's session index.
@@ -30,7 +30,7 @@ public interface ISessionService
     /// <param name="accountId">The account ID.</param>
     /// <param name="sessionKey">The session key to remove.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RemoveSessionFromAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken = default);
+    Task RemoveSessionFromAccountIndexAsync(Guid accountId, string sessionKey, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a reverse index mapping session ID to session key.
@@ -39,14 +39,14 @@ public interface ISessionService
     /// <param name="sessionKey">The session key.</param>
     /// <param name="ttlSeconds">TTL for the index entry.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task AddSessionIdReverseIndexAsync(string sessionId, string sessionKey, int ttlSeconds, CancellationToken cancellationToken = default);
+    Task AddSessionIdReverseIndexAsync(Guid sessionId, string sessionKey, int ttlSeconds, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes the reverse index entry for a session ID.
     /// </summary>
     /// <param name="sessionId">The session ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RemoveSessionIdReverseIndexAsync(string sessionId, CancellationToken cancellationToken = default);
+    Task RemoveSessionIdReverseIndexAsync(Guid sessionId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Finds a session key by session ID using the reverse index.
@@ -54,7 +54,7 @@ public interface ISessionService
     /// <param name="sessionId">The session ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The session key if found, null otherwise.</returns>
-    Task<string?> FindSessionKeyBySessionIdAsync(string sessionId, CancellationToken cancellationToken = default);
+    Task<string?> FindSessionKeyBySessionIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a session by its key.
@@ -86,14 +86,14 @@ public interface ISessionService
     /// <param name="accountId">The account ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of session keys, or empty list if none found.</returns>
-    Task<List<string>> GetSessionKeysForAccountAsync(string accountId, CancellationToken cancellationToken = default);
+    Task<List<string>> GetSessionKeysForAccountAsync(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes the account sessions index.
     /// </summary>
     /// <param name="accountId">The account ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task DeleteAccountSessionsIndexAsync(string accountId, CancellationToken cancellationToken = default);
+    Task DeleteAccountSessionsIndexAsync(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Invalidates all sessions for an account.
