@@ -132,7 +132,7 @@ public partial class CurrencyService : ICurrencyService
                 ExpirationPolicy = body.ExpirationPolicy,
                 ExpirationDate = body.ExpirationDate,
                 ExpirationDuration = body.ExpirationDuration,
-                SeasonId = body.SeasonId?.ToString(),
+                SeasonId = body.SeasonId,
                 LinkedToItem = body.LinkedToItem,
                 LinkedItemTemplateId = body.LinkedItemTemplateId,
                 LinkageMode = body.LinkageMode,
@@ -420,7 +420,7 @@ public partial class CurrencyService : ICurrencyService
                 return (StatusCodes.NotFound, null);
             }
 
-            var balances = await GetWalletBalanceSummariesAsync(wallet.WalletId, cancellationToken);
+            var balances = await GetWalletBalanceSummariesAsync(wallet.WalletId.ToString(), cancellationToken);
 
             return (StatusCodes.OK, new WalletWithBalancesResponse
             {
@@ -461,7 +461,7 @@ public partial class CurrencyService : ICurrencyService
                 var existing = await store.GetAsync($"{WALLET_PREFIX}{existingId}", cancellationToken);
                 if (existing is not null)
                 {
-                    var balances = await GetWalletBalanceSummariesAsync(existing.WalletId, cancellationToken);
+                    var balances = await GetWalletBalanceSummariesAsync(existing.WalletId.ToString(), cancellationToken);
                     return (StatusCodes.OK, new GetOrCreateWalletResponse
                     {
                         Wallet = MapWalletToResponse(existing),
@@ -539,7 +539,7 @@ public partial class CurrencyService : ICurrencyService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 WalletId = body.WalletId,
-                OwnerId = Guid.Parse(wallet.OwnerId),
+                OwnerId = wallet.OwnerId,
                 Reason = body.Reason
             }, cancellationToken);
 
@@ -593,7 +593,7 @@ public partial class CurrencyService : ICurrencyService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 WalletId = body.WalletId,
-                OwnerId = Guid.Parse(wallet.OwnerId)
+                OwnerId = wallet.OwnerId
             }, cancellationToken);
 
             return (StatusCodes.OK, MapWalletToResponse(wallet));
@@ -642,10 +642,10 @@ public partial class CurrencyService : ICurrencyService
             }
 
             // Verify no active holds exist before closing
-            var balances = await GetAllBalancesForWalletAsync(wallet.WalletId, cancellationToken);
+            var balances = await GetAllBalancesForWalletAsync(wallet.WalletId.ToString(), cancellationToken);
             foreach (var balance in balances)
             {
-                var heldAmount = await GetTotalHeldAmountAsync(wallet.WalletId, balance.CurrencyDefinitionId, cancellationToken);
+                var heldAmount = await GetTotalHeldAmountAsync(wallet.WalletId.ToString(), balance.CurrencyDefinitionId.ToString(), cancellationToken);
                 if (heldAmount > 0)
                 {
                     _logger.LogWarning("Cannot close wallet {WalletId}: active holds exist for currency {CurrencyId} (held: {HeldAmount})",
@@ -660,13 +660,13 @@ public partial class CurrencyService : ICurrencyService
             {
                 if (balance.Amount > 0)
                 {
-                    await InternalCreditAsync(body.TransferRemainingTo.ToString(), balance.CurrencyDefinitionId,
+                    await InternalCreditAsync(body.TransferRemainingTo.ToString(), balance.CurrencyDefinitionId.ToString(),
                         balance.Amount, TransactionType.Transfer, "wallet_close", body.WalletId,
                         $"close-{body.WalletId}-{balance.CurrencyDefinitionId}", cancellationToken);
 
                     transferredBalances.Add(new TransferredBalance
                     {
-                        CurrencyDefinitionId = Guid.Parse(balance.CurrencyDefinitionId),
+                        CurrencyDefinitionId = balance.CurrencyDefinitionId,
                         Amount = balance.Amount
                     });
                 }
@@ -687,7 +687,7 @@ public partial class CurrencyService : ICurrencyService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 WalletId = body.WalletId,
-                OwnerId = Guid.Parse(wallet.OwnerId),
+                OwnerId = wallet.OwnerId,
                 BalancesTransferredTo = body.TransferRemainingTo
             }, cancellationToken);
 
@@ -877,7 +877,7 @@ public partial class CurrencyService : ICurrencyService
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         WalletId = body.WalletId,
-                        OwnerId = Guid.Parse(wallet.OwnerId),
+                        OwnerId = wallet.OwnerId,
                         CurrencyDefinitionId = body.CurrencyDefinitionId,
                         CurrencyCode = definition.Code,
                         CapType = definition.DailyEarnCap is not null ? "daily" : "weekly",
@@ -899,8 +899,8 @@ public partial class CurrencyService : ICurrencyService
                 var newBalance = balance.Amount + creditAmount;
                 if (newBalance > definition.PerWalletCap.Value)
                 {
-                    var behavior = definition.CapOverflowBehavior ?? CapOverflowBehavior.Reject.ToString();
-                    if (behavior == CapOverflowBehavior.Reject.ToString())
+                    var behavior = definition.CapOverflowBehavior ?? CapOverflowBehavior.Reject;
+                    if (behavior == CapOverflowBehavior.Reject)
                     {
                         return ((StatusCodes)422, null);
                     }
@@ -915,11 +915,11 @@ public partial class CurrencyService : ICurrencyService
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         WalletId = body.WalletId,
-                        OwnerId = Guid.Parse(wallet.OwnerId),
+                        OwnerId = wallet.OwnerId,
                         CurrencyDefinitionId = body.CurrencyDefinitionId,
                         CurrencyCode = definition.Code,
                         CapAmount = definition.PerWalletCap.Value,
-                        OverflowBehavior = behavior,
+                        OverflowBehavior = behavior.ToString(),
                         AmountLost = overflow
                     }, cancellationToken);
                 }
@@ -938,20 +938,20 @@ public partial class CurrencyService : ICurrencyService
                 body.ReferenceType, body.ReferenceId?.ToString(), null, body.IdempotencyKey,
                 null, balanceBefore, null, balance.Amount, body.Metadata, cancellationToken);
 
-            await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId, cancellationToken);
+            await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId.ToString(), cancellationToken);
 
             await _messageBus.TryPublishAsync("currency.credited", new CurrencyCreditedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                TransactionId = Guid.Parse(transaction.TransactionId),
+                TransactionId = transaction.TransactionId,
                 WalletId = body.WalletId,
-                OwnerId = Guid.Parse(wallet.OwnerId),
+                OwnerId = wallet.OwnerId,
                 OwnerType = wallet.OwnerType,
                 CurrencyDefinitionId = body.CurrencyDefinitionId,
                 CurrencyCode = definition.Code,
                 Amount = creditAmount,
-                TransactionType = body.TransactionType.ToString(),
+                TransactionType = body.TransactionType,
                 NewBalance = balance.Amount,
                 ReferenceType = body.ReferenceType,
                 ReferenceId = body.ReferenceId,
@@ -1038,20 +1038,20 @@ public partial class CurrencyService : ICurrencyService
                 body.ReferenceType, body.ReferenceId?.ToString(), null, body.IdempotencyKey,
                 balanceBefore, balance.Amount, null, null, body.Metadata, cancellationToken);
 
-            await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId, cancellationToken);
+            await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId.ToString(), cancellationToken);
 
             await _messageBus.TryPublishAsync("currency.debited", new CurrencyDebitedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                TransactionId = Guid.Parse(transaction.TransactionId),
+                TransactionId = transaction.TransactionId,
                 WalletId = body.WalletId,
-                OwnerId = Guid.Parse(wallet.OwnerId),
+                OwnerId = wallet.OwnerId,
                 OwnerType = wallet.OwnerType,
                 CurrencyDefinitionId = body.CurrencyDefinitionId,
                 CurrencyCode = definition.Code,
                 Amount = body.Amount,
-                TransactionType = body.TransactionType.ToString(),
+                TransactionType = body.TransactionType,
                 NewBalance = balance.Amount,
                 ReferenceType = body.ReferenceType,
                 ReferenceId = body.ReferenceId
@@ -1150,8 +1150,8 @@ public partial class CurrencyService : ICurrencyService
                 var newTargetBalance = targetBalance.Amount + creditAmount;
                 if (newTargetBalance > definition.PerWalletCap.Value)
                 {
-                    var behavior = definition.CapOverflowBehavior ?? CapOverflowBehavior.Reject.ToString();
-                    if (behavior == CapOverflowBehavior.Reject.ToString())
+                    var behavior = definition.CapOverflowBehavior ?? CapOverflowBehavior.Reject;
+                    if (behavior == CapOverflowBehavior.Reject)
                     {
                         return ((StatusCodes)422, null);
                     }
@@ -1174,23 +1174,23 @@ public partial class CurrencyService : ICurrencyService
                 sourceBalanceBefore, sourceBalance.Amount, targetBalanceBefore, targetBalance.Amount,
                 body.Metadata, cancellationToken);
 
-            await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId, cancellationToken);
+            await RecordIdempotencyAsync(body.IdempotencyKey, transaction.TransactionId.ToString(), cancellationToken);
 
             await _messageBus.TryPublishAsync("currency.transferred", new CurrencyTransferredEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                TransactionId = Guid.Parse(transaction.TransactionId),
+                TransactionId = transaction.TransactionId,
                 SourceWalletId = body.SourceWalletId,
-                SourceOwnerId = Guid.Parse(sourceWallet.OwnerId),
+                SourceOwnerId = sourceWallet.OwnerId,
                 SourceOwnerType = sourceWallet.OwnerType,
                 TargetWalletId = body.TargetWalletId,
-                TargetOwnerId = Guid.Parse(targetWallet.OwnerId),
+                TargetOwnerId = targetWallet.OwnerId,
                 TargetOwnerType = targetWallet.OwnerType,
                 CurrencyDefinitionId = body.CurrencyDefinitionId,
                 CurrencyCode = definition.Code,
                 Amount = body.Amount,
-                TransactionType = body.TransactionType.ToString()
+                TransactionType = body.TransactionType
             }, cancellationToken);
 
             return (StatusCodes.OK, new TransferCurrencyResponse
@@ -1351,7 +1351,7 @@ public partial class CurrencyService : ICurrencyService
 
             // Pre-validate wallet cap on target currency before debiting source
             if (toDef.PerWalletCap is not null &&
-                toDef.CapOverflowBehavior == CapOverflowBehavior.Reject.ToString())
+                (toDef.CapOverflowBehavior ?? CapOverflowBehavior.Reject) == CapOverflowBehavior.Reject)
             {
                 var targetBalance = await GetOrCreateBalanceAsync(
                     body.WalletId.ToString(), body.ToCurrencyId.ToString(), cancellationToken);
@@ -1610,9 +1610,9 @@ public partial class CurrencyService : ICurrencyService
                 if (tx is null) continue;
 
                 // Apply filters
-                if (body.CurrencyDefinitionId is not null && tx.CurrencyDefinitionId != body.CurrencyDefinitionId.ToString()) continue;
+                if (body.CurrencyDefinitionId is not null && tx.CurrencyDefinitionId != body.CurrencyDefinitionId.Value) continue;
                 if (body.TransactionTypes is not null && body.TransactionTypes.Count > 0 &&
-                    !body.TransactionTypes.Any(t => t.ToString() == tx.TransactionType)) continue;
+                    !body.TransactionTypes.Contains(tx.TransactionType)) continue;
                 if (tx.Timestamp < effectiveFromDate) continue;
                 if (body.ToDate is not null && tx.Timestamp > body.ToDate) continue;
 
@@ -1965,15 +1965,15 @@ public partial class CurrencyService : ICurrencyService
 
             var hold = new HoldModel
             {
-                HoldId = holdId.ToString(),
-                WalletId = body.WalletId.ToString(),
-                CurrencyDefinitionId = body.CurrencyDefinitionId.ToString(),
+                HoldId = holdId,
+                WalletId = body.WalletId,
+                CurrencyDefinitionId = body.CurrencyDefinitionId,
                 Amount = body.Amount,
                 Status = HoldStatus.Active,
                 CreatedAt = now,
                 ExpiresAt = clampedExpiry,
                 ReferenceType = body.ReferenceType,
-                ReferenceId = body.ReferenceId?.ToString()
+                ReferenceId = body.ReferenceId
             };
 
             var holdStore = _stateStoreFactory.GetStore<HoldModel>(StateStoreDefinitions.CurrencyHolds);
@@ -1994,7 +1994,7 @@ public partial class CurrencyService : ICurrencyService
                 Timestamp = now,
                 HoldId = holdId,
                 WalletId = body.WalletId,
-                OwnerId = Guid.Parse(wallet.OwnerId),
+                OwnerId = wallet.OwnerId,
                 CurrencyDefinitionId = body.CurrencyDefinitionId,
                 Amount = body.Amount,
                 ExpiresAt = body.ExpiresAt,
@@ -2053,12 +2053,12 @@ public partial class CurrencyService : ICurrencyService
             var debitKey = $"{body.IdempotencyKey}:hold-capture";
             var (debitStatus, debitResp) = await DebitCurrencyAsync(new DebitCurrencyRequest
             {
-                WalletId = Guid.Parse(hold.WalletId),
-                CurrencyDefinitionId = Guid.Parse(hold.CurrencyDefinitionId),
+                WalletId = hold.WalletId,
+                CurrencyDefinitionId = hold.CurrencyDefinitionId,
                 Amount = body.CaptureAmount,
                 TransactionType = TransactionType.Fee,
                 ReferenceType = hold.ReferenceType ?? "hold",
-                ReferenceId = hold.ReferenceId is not null ? Guid.Parse(hold.ReferenceId) : null,
+                ReferenceId = hold.ReferenceId,
                 IdempotencyKey = debitKey
             }, cancellationToken);
 
@@ -2083,13 +2083,13 @@ public partial class CurrencyService : ICurrencyService
 
             // Remove completed hold from wallet index to prevent unbounded index growth
             await RemoveFromListAsync(StateStoreDefinitions.CurrencyHolds,
-                $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId, cancellationToken);
+                $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId.ToString(), cancellationToken);
 
-            await RecordIdempotencyAsync(body.IdempotencyKey, hold.HoldId, cancellationToken);
+            await RecordIdempotencyAsync(body.IdempotencyKey, hold.HoldId.ToString(), cancellationToken);
 
             // Fetch wallet for event - data integrity issue if missing
-            var captureWallet = await GetWalletByIdAsync(hold.WalletId, cancellationToken);
-            if (captureWallet is null || string.IsNullOrEmpty(captureWallet.OwnerId))
+            var captureWallet = await GetWalletByIdAsync(hold.WalletId.ToString(), cancellationToken);
+            if (captureWallet is null)
             {
                 _logger.LogError("Data integrity issue: Wallet {WalletId} not found or missing OwnerId for hold {HoldId}",
                     hold.WalletId, body.HoldId);
@@ -2110,9 +2110,9 @@ public partial class CurrencyService : ICurrencyService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 HoldId = body.HoldId,
-                WalletId = Guid.Parse(hold.WalletId),
-                OwnerId = Guid.Parse(captureWallet.OwnerId),
-                CurrencyDefinitionId = Guid.Parse(hold.CurrencyDefinitionId),
+                WalletId = hold.WalletId,
+                OwnerId = captureWallet.OwnerId,
+                CurrencyDefinitionId = hold.CurrencyDefinitionId,
                 HoldAmount = hold.Amount,
                 CapturedAmount = body.CaptureAmount,
                 AmountReleased = amountReleased,
@@ -2176,11 +2176,11 @@ public partial class CurrencyService : ICurrencyService
 
             // Remove completed hold from wallet index to prevent unbounded index growth
             await RemoveFromListAsync(StateStoreDefinitions.CurrencyHolds,
-                $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId, cancellationToken);
+                $"{HOLD_WALLET_INDEX}{hold.WalletId}:{hold.CurrencyDefinitionId}", hold.HoldId.ToString(), cancellationToken);
 
             // Fetch wallet for event - data integrity issue if missing
-            var wallet = await GetWalletByIdAsync(hold.WalletId, cancellationToken);
-            if (wallet is null || string.IsNullOrEmpty(wallet.OwnerId))
+            var wallet = await GetWalletByIdAsync(hold.WalletId.ToString(), cancellationToken);
+            if (wallet is null)
             {
                 _logger.LogError("Data integrity issue: Wallet {WalletId} not found or missing OwnerId for hold {HoldId}",
                     hold.WalletId, body.HoldId);
@@ -2201,9 +2201,9 @@ public partial class CurrencyService : ICurrencyService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 HoldId = body.HoldId,
-                WalletId = Guid.Parse(hold.WalletId),
-                OwnerId = Guid.Parse(wallet.OwnerId),
-                CurrencyDefinitionId = Guid.Parse(hold.CurrencyDefinitionId),
+                WalletId = hold.WalletId,
+                OwnerId = wallet.OwnerId,
+                CurrencyDefinitionId = hold.CurrencyDefinitionId,
                 Amount = hold.Amount
             }, cancellationToken);
 
@@ -2348,8 +2348,8 @@ public partial class CurrencyService : ICurrencyService
         // Create new balance (don't cache until saved)
         return new BalanceModel
         {
-            WalletId = walletId,
-            CurrencyDefinitionId = currencyDefId,
+            WalletId = Guid.Parse(walletId),
+            CurrencyDefinitionId = Guid.Parse(currencyDefId),
             Amount = 0,
             DailyEarned = 0,
             WeeklyEarned = 0,
@@ -2370,10 +2370,10 @@ public partial class CurrencyService : ICurrencyService
         await UpdateBalanceCacheAsync(key, balance, ct);
 
         // Maintain wallet-balance index for efficient wallet queries
-        await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_WALLET_INDEX}{balance.WalletId}", balance.CurrencyDefinitionId, ct);
+        await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_WALLET_INDEX}{balance.WalletId}", balance.CurrencyDefinitionId.ToString(), ct);
 
         // Maintain currency-balance reverse index for autogain task processing
-        await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_CURRENCY_INDEX}{balance.CurrencyDefinitionId}", balance.WalletId, ct);
+        await AddToListAsync(StateStoreDefinitions.CurrencyBalances, $"{BALANCE_CURRENCY_INDEX}{balance.CurrencyDefinitionId}", balance.WalletId.ToString(), ct);
     }
 
     private async Task<List<BalanceModel>> GetAllBalancesForWalletAsync(string walletId, CancellationToken ct)
@@ -2409,10 +2409,10 @@ public partial class CurrencyService : ICurrencyService
             var definition = await defStore.GetAsync($"{DEF_PREFIX}{balance.CurrencyDefinitionId}", ct);
             if (definition is null) continue;
 
-            var lockedAmount = await GetTotalHeldAmountAsync(balance.WalletId, balance.CurrencyDefinitionId, ct);
+            var lockedAmount = await GetTotalHeldAmountAsync(balance.WalletId.ToString(), balance.CurrencyDefinitionId.ToString(), ct);
             summaries.Add(new BalanceSummary
             {
-                CurrencyDefinitionId = Guid.Parse(balance.CurrencyDefinitionId),
+                CurrencyDefinitionId = balance.CurrencyDefinitionId,
                 CurrencyCode = definition.Code,
                 Amount = balance.Amount,
                 LockedAmount = lockedAmount,
@@ -2459,7 +2459,7 @@ public partial class CurrencyService : ICurrencyService
         var previousBalance = balance.Amount;
         double gain;
 
-        if (definition.AutogainMode == AutogainMode.Compound.ToString())
+        if (definition.AutogainMode == AutogainMode.Compound)
         {
             var rate = definition.AutogainAmount ?? 0;
             var multiplier = Math.Pow(1 + rate, periodsElapsed);
@@ -2493,16 +2493,16 @@ public partial class CurrencyService : ICurrencyService
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
-            WalletId = Guid.Parse(balance.WalletId),
-            OwnerId = Guid.Parse(wallet.OwnerId),
+            WalletId = balance.WalletId,
+            OwnerId = wallet.OwnerId,
             OwnerType = wallet.OwnerType,
-            CurrencyDefinitionId = Guid.Parse(balance.CurrencyDefinitionId),
+            CurrencyDefinitionId = balance.CurrencyDefinitionId,
             CurrencyCode = definition.Code,
             PreviousBalance = previousBalance,
             PeriodsApplied = periodsElapsed,
             AmountGained = gain,
             NewBalance = balance.Amount,
-            AutogainMode = definition.AutogainMode ?? AutogainMode.Simple.ToString(),
+            AutogainMode = (definition.AutogainMode ?? AutogainMode.Simple).ToString(),
             CalculatedAt = now,
             PeriodsFrom = periodsFrom,
             PeriodsTo = balance.LastAutogainAt.Value
@@ -2524,15 +2524,15 @@ public partial class CurrencyService : ICurrencyService
 
         var tx = new TransactionModel
         {
-            TransactionId = txId.ToString(),
-            SourceWalletId = sourceWalletId,
-            TargetWalletId = targetWalletId,
-            CurrencyDefinitionId = currencyDefId,
+            TransactionId = txId,
+            SourceWalletId = sourceWalletId is not null ? Guid.Parse(sourceWalletId) : null,
+            TargetWalletId = targetWalletId is not null ? Guid.Parse(targetWalletId) : null,
+            CurrencyDefinitionId = Guid.Parse(currencyDefId),
             Amount = amount,
-            TransactionType = type.ToString(),
+            TransactionType = type,
             ReferenceType = refType,
-            ReferenceId = refId,
-            EscrowId = escrowId,
+            ReferenceId = refId is not null ? Guid.Parse(refId) : null,
+            EscrowId = escrowId is not null ? Guid.Parse(escrowId) : null,
             IdempotencyKey = idempotencyKey,
             Timestamp = now,
             SourceBalanceBefore = sourceBalBefore,

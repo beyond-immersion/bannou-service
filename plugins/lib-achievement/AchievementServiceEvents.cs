@@ -76,7 +76,8 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = evt.EntityType;
+            // Cast Analytics.EntityType to Achievement.EntityType (same enum values, different namespaces)
+            var entityType = (EntityType)evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -177,7 +178,8 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = evt.EntityType;
+            // Cast Analytics.EntityType to Achievement.EntityType (same enum values, different namespaces)
+            var entityType = (EntityType)evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -289,7 +291,8 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = evt.EntityType;
+            // Cast Leaderboard.EntityType to Achievement.EntityType (same enum values, different namespaces)
+            var entityType = (EntityType)evt.EntityType;
 
             foreach (var definition in definitions)
             {

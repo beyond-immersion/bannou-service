@@ -1055,7 +1055,7 @@ public partial class AssetService : IAssetService
                     Key = bundlePath,
                     Size = bundleStream.Length,
                     AssetCount = body.AssetIds.Count,
-                    Compression = BeyondImmersion.BannouService.Events.CompressionTypeEnum.Lz4,
+                    Compression = CompressionType.Lz4,
                     Owner = body.Owner
                 }).ConfigureAwait(false);
 

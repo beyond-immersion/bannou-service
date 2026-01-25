@@ -50,7 +50,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -95,7 +94,6 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 {
     private readonly IMessageBus _messageBus;
-    private readonly IServiceNavigator _navigator;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
     private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;
@@ -104,13 +102,11 @@ public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 
     public ${SERVICE_PASCAL}Service(
         IMessageBus messageBus,
-        IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
         ILogger<${SERVICE_PASCAL}Service> logger,
         ${SERVICE_PASCAL}ServiceConfiguration configuration)
     {
         _messageBus = messageBus;
-        _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
@@ -277,13 +273,14 @@ try:
             // For event publishing (lib-messaging):
             // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
             //
-            // For calling other services (lib-mesh via IServiceNavigator):
-            // var (status, result) = await _navigator.Account.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
+            // For calling other services (lib-mesh):
+            // Inject the specific client you need, e.g.: IAccountClient _accountClient
+            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
             // if (status != StatusCodes.OK) return (status, default);
             //
             // For client event delivery (if request from WebSocket):
-            // if (_navigator.HasClientContext)
-            //     await _navigator.PublishToRequesterAsync(new YourClientEvent {{ ... }}, cancellationToken);
+            // Inject IClientEventPublisher _clientEventPublisher
+            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent {{ ... }}, cancellationToken);
         }}
         catch (Exception ex)
         {{

@@ -440,7 +440,7 @@ public partial class BehaviorService : IBehaviorService
                 Metadata = new AssetMetadataInput
                 {
                     Tags = new List<string> { "behavior", "abml", "compiled" },
-                    Realm = Asset.Realm.Shared
+                    Realm = Asset.GameRealm.Shared
                 }
             };
 

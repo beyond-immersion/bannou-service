@@ -72,7 +72,7 @@ if [ ! -f "$PROJECT_FILE" ]; then
 
   <ItemGroup>
     <!-- Infrastructure libs (lib-state, lib-messaging, lib-mesh) are accessed via DI interfaces -->
-    <!-- from bannou-service (IStateStoreFactory, IMessageBus, IServiceNavigator, etc.) -->
+    <!-- from bannou-service (IStateStoreFactory, IMessageBus, I*Client, etc.) -->
     <!-- DO NOT add ProjectReferences to infrastructure libs - use injected interfaces instead -->
     <!-- Add plugin-to-plugin references here ONLY for non-infrastructure cross-plugin types -->
   </ItemGroup>
