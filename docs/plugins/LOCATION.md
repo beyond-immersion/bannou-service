@@ -222,7 +222,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T25 (Internal POCO uses string for enum)**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()` at line 1360. Model should use `LocationType` enum directly.
 
 ### Previously Fixed
 

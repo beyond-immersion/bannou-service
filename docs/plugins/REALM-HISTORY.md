@@ -168,7 +168,10 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **T25 (Internal POCO uses string for enum)**: Internal models store enums as strings requiring `Enum.TryParse`:
+   - `RealmEventDataModel.EventCategory`: string → `RealmEventCategory`
+   - `RealmEventDataModel.Role`: string → `RealmEventRole`
+   - `RealmLoreDataModel.ElementType`: string → `RealmLoreElementType`
 
 ### Intentional Quirks (Documented Behavior)
 

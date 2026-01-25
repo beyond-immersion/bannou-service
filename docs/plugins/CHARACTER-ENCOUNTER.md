@@ -308,13 +308,16 @@ Index Architecture
 
 ## Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T25 (Internal POCO uses string for enum)**: Multiple internal models store enums as strings requiring `Enum.Parse`:
+   - `EncounterData.Outcome`: string → `EncounterOutcome`
+   - `PerspectiveData.EmotionalImpact`: string → `EmotionalImpact`
+   - `EncounterTypeData.DefaultEmotionalImpact`: string → `EmotionalImpact`
+
+2. **T21/T25 (String config should be enum)**: `MemoryDecayMode` configuration property is string representing discrete values ("lazy", "scheduled"). Should be an enum.
 
 ## Design Considerations (Requires Planning)
 
-1. **T25 - Internal POCOs use string instead of enum types**: `EncounterData.Outcome`, `PerspectiveData.EmotionalImpact`, and `EncounterTypeData.DefaultEmotionalImpact` use string fields with `.ToString()` on write and `Enum.Parse` on read. Changing to enum types requires updating all mapping methods, storage/retrieval patterns, and potentially state store serialization.
-
-2. **T25 - MemoryDecayMode as string**: Configuration property is string but represents discrete values ("lazy", "scheduled"). Should be an enum. Requires schema change, regeneration, and updating comparison at line 1997.
+(None remaining after bug identification above.)
 
 ## False Positives Removed
 

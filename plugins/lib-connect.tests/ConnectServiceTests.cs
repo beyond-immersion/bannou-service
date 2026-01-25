@@ -596,7 +596,7 @@ public class ConnectServiceTests
         };
 
         // Assert
-        Assert.Equal("external", config.ConnectionMode);
+        Assert.Equal(ConnectionMode.External, config.ConnectionMode);
     }
 
     /// <summary>
@@ -612,7 +612,7 @@ public class ConnectServiceTests
         };
 
         // Assert
-        Assert.Equal("service-token", config.InternalAuthMode);
+        Assert.Equal(InternalAuthMode.ServiceToken, config.InternalAuthMode);
     }
 
     /// <summary>
@@ -641,8 +641,8 @@ public class ConnectServiceTests
         var config = new ConnectServiceConfiguration
         {
             ServerSalt = _testServerSalt,
-            ConnectionMode = "internal",
-            InternalAuthMode = "service-token",
+            ConnectionMode = ConnectionMode.Internal,
+            InternalAuthMode = InternalAuthMode.ServiceToken,
             InternalServiceToken = null
         };
 
@@ -675,8 +675,8 @@ public class ConnectServiceTests
         var config = new ConnectServiceConfiguration
         {
             ServerSalt = _testServerSalt,
-            ConnectionMode = "internal",
-            InternalAuthMode = "service-token",
+            ConnectionMode = ConnectionMode.Internal,
+            InternalAuthMode = InternalAuthMode.ServiceToken,
             InternalServiceToken = "test-secret-token"
         };
 
@@ -709,8 +709,8 @@ public class ConnectServiceTests
         var config = new ConnectServiceConfiguration
         {
             ServerSalt = _testServerSalt,
-            ConnectionMode = "internal",
-            InternalAuthMode = "network-trust",
+            ConnectionMode = ConnectionMode.Internal,
+            InternalAuthMode = InternalAuthMode.NetworkTrust,
             InternalServiceToken = null
         };
 
@@ -743,7 +743,7 @@ public class ConnectServiceTests
         var config = new ConnectServiceConfiguration
         {
             ServerSalt = _testServerSalt,
-            ConnectionMode = "external",
+            ConnectionMode = ConnectionMode.External,
             InternalServiceToken = null
         };
 
@@ -776,7 +776,7 @@ public class ConnectServiceTests
         var config = new ConnectServiceConfiguration
         {
             ServerSalt = _testServerSalt,
-            ConnectionMode = "relayed",
+            ConnectionMode = ConnectionMode.Relayed,
             InternalServiceToken = null
         };
 

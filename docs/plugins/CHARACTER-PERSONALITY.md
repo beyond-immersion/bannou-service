@@ -253,7 +253,12 @@ The following T25 (Internal Model Type Safety) violations require coordinated ch
 
 ### Bugs (Fix Immediately)
 
-None identified beyond the tenet violations listed above.
+1. **T25 (Internal POCO uses string for enum)**: `CombatPreferencesModel` stores enums as strings requiring `Enum.Parse`:
+   - `Style`: string → `CombatStyle`
+   - `PreferredRange`: string → `PreferredRange`
+   - `GroupRole`: string → `GroupRole`
+
+2. **T25 (Trait key parsing)**: Personality trait data uses string dictionary keys parsed to `TraitAxis` enum via `Enum.Parse<TraitAxis>(trait)`. Should use `Dictionary<TraitAxis, double>` directly.
 
 ### Intentional Quirks (Documented Behavior)
 

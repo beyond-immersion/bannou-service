@@ -57,7 +57,7 @@ public class MessagingServiceTests : IDisposable
 
         // Configure state store factory to return the mock subscription store
         _mockStateStoreFactory
-            .Setup(x => x.GetStore<ExternalSubscriptionData>(MessagingService.ExternalSubscriptionStoreName))
+            .Setup(x => x.GetStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs))
             .Returns(_mockSubscriptionStore.Object);
 
         // Configure default mock behaviors for state store set operations

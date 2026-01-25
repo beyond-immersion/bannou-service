@@ -432,15 +432,18 @@ Prebound API Batched Execution
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **T21/T25 (String config should be enum)**: `DefaultEnforcementMode` in configuration uses string requiring runtime parsing. Schema should define as enum.
+
+2. **T25 (Internal POCO uses string for enum)**: Multiple internal models store Role/AssetType as strings:
+   - `PartyModel.Role`: string → appropriate Role enum
+   - `MilestoneModel.Role`: string → appropriate Role enum
+   - `AssetReferenceModel.AssetType` (in ContractServiceEscrowIntegration): string → `AssetType`
 
 ### Tenet Violations Requiring Planning
 
 1. **T21 - Dead ClauseValidationCacheStalenessSeconds** - Config is referenced but cache is on Scoped service (per-request), providing no cross-request benefit. Either remove config or make cache distributed.
 
-2. **T21 - DefaultEnforcementMode as string** - Configuration uses string requiring runtime parsing. Should change schema to use enum type.
-
-3. **T5 - Manually defined event classes** - Six event classes in ContractServiceEscrowIntegration.cs should be schema-generated.
+2. **T5 - Manually defined event classes** - Six event classes in ContractServiceEscrowIntegration.cs should be schema-generated.
 
 ### False Positives Removed
 

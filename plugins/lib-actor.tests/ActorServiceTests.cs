@@ -41,7 +41,7 @@ public class ActorServiceTests
             DefaultTickIntervalMs = 100,
             DefaultAutoSaveIntervalSeconds = 60,
             DefaultActorsPerNode = 100,
-            DeploymentMode = "bannou"
+            DeploymentMode = DeploymentMode.Bannou
         };
         _mockActorRegistry = new Mock<IActorRegistry>();
         _mockActorRunnerFactory = new Mock<IActorRunnerFactory>();
@@ -1587,7 +1587,7 @@ public class ActorConfigurationTests
             DefaultAutoSaveIntervalSeconds = 60,
             DefaultActorsPerNode = 100,
             PerceptionQueueSize = 100,
-            DeploymentMode = "bannou"
+            DeploymentMode = DeploymentMode.Bannou
         };
 
         // Assert
@@ -1595,6 +1595,6 @@ public class ActorConfigurationTests
         Assert.Equal(60, config.DefaultAutoSaveIntervalSeconds);
         Assert.Equal(100, config.DefaultActorsPerNode);
         Assert.Equal(100, config.PerceptionQueueSize);
-        Assert.Equal("bannou", config.DeploymentMode);
+        Assert.Equal(DeploymentMode.Bannou, config.DeploymentMode);
     }
 }

@@ -388,7 +388,7 @@ Dispute Resolution
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T25 (Internal POCO uses string for enum)**: `AssetFailureData.AssetType` is stored as string requiring `Enum.TryParse<AssetType>()`. Model should use `AssetType` enum directly.
 
 ### False Positives Removed
 

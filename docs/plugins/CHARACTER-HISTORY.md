@@ -181,19 +181,20 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **T25 (Internal POCO uses string for enum)**: Multiple internal models store enums as strings requiring `Enum.Parse`:
+   - `EventParticipationData.EventCategory`: string → `EventCategory`
+   - `EventParticipationData.Role`: string → `ParticipationRole`
+   - `BackstoryElementData.ElementType`: string → `BackstoryElementType`
 
-## Design Considerations (Requires Planning - T25 Type Safety)
+## Design Considerations (Requires Planning - T25 Guid Fields)
 
-The following T25 (Internal Model Type Safety) violations require coordinated changes to POCOs, mappers, and storage serialization:
+The following T25 violations involve Guid fields and require coordinated storage changes:
 
-1. **ParticipationData POCO types**: `ParticipationId`, `CharacterId`, `EventId` should be `Guid`; `EventCategory` should be `EventCategory` enum; `Role` should be `ParticipationRole` enum. Currently stored as strings with `Guid.Parse`/`Enum.Parse` on read and `.ToString()` on write.
+1. **ParticipationData Guid fields**: `ParticipationId`, `CharacterId`, `EventId` should be `Guid` instead of string with `Guid.Parse`/`.ToString()`.
 
-2. **BackstoryElementData.ElementType**: Uses `string` instead of `BackstoryElementType` enum. Requires updating switch statements and storage patterns.
+2. **BackstoryData.CharacterId**: Uses `string` instead of `Guid`.
 
-3. **BackstoryData.CharacterId**: Uses `string` instead of `Guid`.
-
-4. **GenerateParticipationSummary string comparisons**: Uses string comparison for enum values. Will be resolved by fixing POCO types above.
+3. **GenerateParticipationSummary string comparisons**: Uses string comparison for enum values. Will be resolved by fixing POCO enum types above.
 
 ## False Positives Removed
 

@@ -408,7 +408,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **T25 (Internal POCO uses string for enum)**: `SceneIndexEntry.SceneType` is stored as string requiring `Enum.TryParse<SceneType>()`. Model should use `SceneType` enum directly.
 
 ### Intentional Quirks (Documented Behavior)
 

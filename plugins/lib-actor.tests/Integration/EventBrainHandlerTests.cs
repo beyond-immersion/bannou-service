@@ -33,7 +33,8 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var messageBus = new Mock<IMessageBus>();
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object);
+        var config = new ActorServiceConfiguration();
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
 
         var targetCharacterId = Guid.NewGuid();
         var action = new DomainAction("emit_perception", new Dictionary<string, object?>
@@ -56,7 +57,8 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var messageBus = new Mock<IMessageBus>();
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object);
+        var config = new ActorServiceConfiguration();
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
 
         var action = new DomainAction("other_action", new Dictionary<string, object?>());
 
@@ -79,7 +81,8 @@ public sealed class EventBrainHandlerTests
             .ReturnsAsync(true);
 
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object);
+        var config = new ActorServiceConfiguration();
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
 
         var targetCharacterId = Guid.Parse("00000000-0000-0000-0000-000000000123");
         var (context, scope) = CreateExecutionContext();
@@ -114,7 +117,8 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var messageBus = new Mock<IMessageBus>();
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object);
+        var config = new ActorServiceConfiguration();
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
 
         var (context, _) = CreateExecutionContext();
         var action = new DomainAction("emit_perception", new Dictionary<string, object?>
@@ -416,7 +420,8 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorClient = new Mock<IActorClient>();
         var logger = new Mock<ILogger<QueryOptionsHandler>>();
-        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object);
+        var config = new ActorServiceConfiguration();
+        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config);
 
         var action = new DomainAction("query_options", new Dictionary<string, object?>
         {
@@ -454,7 +459,8 @@ public sealed class EventBrainHandlerTests
             .ReturnsAsync(expectedResponse);
 
         var logger = new Mock<ILogger<QueryOptionsHandler>>();
-        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object);
+        var config = new ActorServiceConfiguration();
+        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config);
 
         var (context, scope) = CreateExecutionContext();
         var action = new DomainAction("query_options", new Dictionary<string, object?>
@@ -479,7 +485,8 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorClient = new Mock<IActorClient>();
         var logger = new Mock<ILogger<QueryOptionsHandler>>();
-        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object);
+        var config = new ActorServiceConfiguration();
+        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config);
 
         var (context, _) = CreateExecutionContext();
         var action = new DomainAction("query_options", new Dictionary<string, object?>

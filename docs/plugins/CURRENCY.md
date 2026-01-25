@@ -423,11 +423,19 @@ Escrow Integration Flow
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T25 (Internal POCO uses string for enum)**: Internal models store enums as strings requiring `Enum.TryParse`:
+   - `CurrencyDefinitionModel.Scope`: string → `CurrencyScope`
+   - `CurrencyDefinitionModel.Precision`: string → `CurrencyPrecision`
+   - `CurrencyDefinitionModel.CapOverflowBehavior`: string → `CapOverflowBehavior`
+   - `CurrencyDefinitionModel.AutogainMode`: string → `AutogainMode`
+   - `CurrencyDefinitionModel.ExpirationPolicy`: string → `ExpirationPolicy`
+   - `CurrencyDefinitionModel.LinkageMode`: string → `ItemLinkageMode`
+   - `WalletModel.OwnerType`: string → `WalletOwnerType`
+   - `TransactionRecordModel.TransactionType`: string → `TransactionType`
 
 ### Design Considerations (Requires Planning)
 
-1. **T25 - Internal Model Type Safety (MAJOR)**: All internal models use `string` for Guid fields (DefinitionId, WalletId, etc.) and enum fields (Scope, Precision, etc.). Changing to proper types requires updating all mapping methods and storage patterns. See detailed list below.
+1. **T25 - Internal Model Guid Fields**: All internal models use `string` for Guid fields (DefinitionId, WalletId, etc.). Changing to `Guid` requires updating all mapping methods and storage patterns.
 
 2. **T16 - Event Topic Naming**: Topics use inconsistent patterns (some 2-segment, some 3-segment with underscores). Standardizing requires schema changes and downstream consumer updates.
 

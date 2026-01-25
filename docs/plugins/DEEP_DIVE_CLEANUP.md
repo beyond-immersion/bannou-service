@@ -107,6 +107,22 @@ These are real issues that need code fixes.
 
 **Fix**: Add configuration property to schema, regenerate, use `_configuration.PropertyName`.
 
+### T21/T25 (String Config/POCO for Enums) - Enum Parsing at Runtime
+
+**Pattern**: Configuration properties or internal POCO fields defined as `string` but representing enum values, requiring `Enum.Parse`/`Enum.TryParse` at runtime.
+
+**Why it's a violation**:
+- For configs: Schema should use enum types with `$ref` to provide type safety and eliminate runtime parsing
+- For POCOs: Internal models should use C# enum types directly, not strings
+
+**Audit (2026-01-25)**: Found in 12 plugins:
+- **Configuration**: Inventory (1), Item (3), Save-Load (2), Character-Encounter (1), Contract (1)
+- **POCO models**: Currency (8), Location (1), Character-Encounter (3), Character-Personality (4), Scene (1), Contract (3), Realm-History (3), Escrow (1), Relationship (2), Character-History (3), Save-Load (6)
+
+**Fix**:
+- For config: Change schema property type to use enum `$ref`
+- For POCO: Change model field type from `string` to the appropriate enum type
+
 ### T23 (Async Method Pattern) - Fire-and-Forget Tasks
 
 **Pattern**: `_ = SomeMethodAsync()` discarding Task without proper handling

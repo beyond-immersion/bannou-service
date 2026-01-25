@@ -156,7 +156,9 @@ End relationship:
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **T25 (Internal POCO uses string for enum)**: `RelationshipModel` stores entity types as strings requiring `Enum.Parse`:
+   - `Entity1Type`: string → `EntityType`
+   - `Entity2Type`: string → `EntityType`
 
 ### Intentional Quirks (Documented Behavior)
 
