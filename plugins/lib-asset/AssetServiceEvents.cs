@@ -379,7 +379,7 @@ public partial class AssetService
                 Version = request.Version ?? "1.0.0",
                 Realm = request.Realm,
                 SourceBundleCount = sourceBundles.Count,
-                SourceBundleIds = sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
+                SourceBundleIds = (ICollection<Guid>)sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
                 AssetCount = metabundleAssets.Count,
                 StandaloneAssetCount = standaloneAssetIds.Count,
                 Bucket = bucket,

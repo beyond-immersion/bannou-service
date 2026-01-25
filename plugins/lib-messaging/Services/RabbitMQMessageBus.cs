@@ -286,7 +286,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ServiceId = Guid.Parse(Program.ServiceGUID),
+                ServiceId = Program.ServiceGUID,
                 ServiceName = serviceName,
                 AppId = _appConfiguration.EffectiveAppId,
                 Operation = operation,

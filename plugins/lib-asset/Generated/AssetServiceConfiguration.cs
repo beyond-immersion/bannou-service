@@ -105,7 +105,7 @@ public enum BundleCompressionDefault
 public class AssetServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Storage backend type

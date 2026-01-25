@@ -1456,6 +1456,14 @@ components:
       - grid
       - volumetric
       - unlimited
+    ConstraintLimitType:
+      type: string
+      description: Which specific capacity constraint was reached
+      enum:
+      - slots
+      - weight
+      - volume
+      - grid
     WeightContribution:
       type: string
       description: How container weight propagates to parent

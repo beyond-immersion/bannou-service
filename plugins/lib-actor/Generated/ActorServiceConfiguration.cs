@@ -65,7 +65,7 @@ public enum DeploymentMode
 public class ActorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale

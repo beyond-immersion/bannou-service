@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Account;
 public class AccountServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Comma-separated list of admin email addresses

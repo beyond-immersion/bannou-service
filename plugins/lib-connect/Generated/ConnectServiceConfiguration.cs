@@ -76,7 +76,7 @@ public enum InternalAuthMode
 public class ConnectServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of concurrent WebSocket connections

@@ -198,7 +198,7 @@ public static class GameServicePermissionRegistration
     /// <param name="logger">Optional logger for diagnostics</param>
     public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
     {
-        var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID), appId);
+        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
 
         var success = await messageBus.TryPublishAsync(
             "permission.service-registered",

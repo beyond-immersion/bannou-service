@@ -33,7 +33,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Unique instance identifier for this bannou application instance.
     /// Uses the shared Program.ServiceGUID for consistent identification across mesh and heartbeat.
     /// </summary>
-    public Guid InstanceId => Guid.Parse(Program.ServiceGUID);
+    public Guid InstanceId => Program.ServiceGUID;
 
     /// <summary>
     /// The app-id for this instance. Resolved from configuration.

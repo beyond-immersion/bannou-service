@@ -530,6 +530,29 @@ public enum ActorStatus
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of source generating a perception event
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PerceptionSourceType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"character")]
+    Character = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"npc")]
+    Npc = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"object")]
+    Object = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"environment")]
+    Environment = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to stop a running actor
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

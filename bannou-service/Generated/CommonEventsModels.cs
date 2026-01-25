@@ -397,7 +397,7 @@ public partial class ServiceErrorEvent : BaseServiceEvent
     /// Correlation ID / request ID, if available
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("correlationId")]
-    public string? CorrelationId { get; set; } = default!;
+    public System.Guid? CorrelationId { get; set; } = default!;
 
     /// <summary>
     /// Severity for triage/routing

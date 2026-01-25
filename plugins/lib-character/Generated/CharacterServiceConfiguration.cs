@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Character;
 public class CharacterServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum page size for list queries

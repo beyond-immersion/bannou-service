@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Leaderboard;
 public class LeaderboardServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum entries returned per rank query

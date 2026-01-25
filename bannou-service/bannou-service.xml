@@ -12628,7 +12628,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.Provider">
             <summary>
-            OAuth provider name (e.g., discord, google)
+            OAuth provider name
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.ProviderUserId">
@@ -25892,6 +25892,11 @@
         <member name="T:BeyondImmersion.BannouService.Actor.ActorStatus">
             <summary>
             Current actor lifecycle state
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.PerceptionSourceType">
+            <summary>
+            Type of source generating a perception event
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Actor.StopActorRequest">
@@ -39633,6 +39638,11 @@
             Current status of an authorization hold
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Currency.EarnCapType">
+            <summary>
+            Type of earn cap that was applied
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Currency.CreateCurrencyDefinitionRequest">
             <summary>
             Request to create a new currency definition
@@ -49167,6 +49177,11 @@
         <member name="T:BeyondImmersion.BannouService.Inventory.ContainerConstraintModel">
             <summary>
             Container capacity constraint type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ConstraintLimitType">
+            <summary>
+            Which specific capacity constraint was reached
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Inventory.WeightContribution">

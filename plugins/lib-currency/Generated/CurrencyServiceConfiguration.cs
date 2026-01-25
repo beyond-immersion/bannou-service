@@ -67,7 +67,7 @@ public enum DefaultPrecision
 public class CurrencyServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default for currencies that do not specify allowNegative

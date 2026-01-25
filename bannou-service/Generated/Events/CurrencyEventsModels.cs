@@ -465,7 +465,8 @@ public partial class CurrencyAutogainCalculatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("autogainMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string AutogainMode { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AutogainMode AutogainMode { get; set; } = default!;
 
     /// <summary>
     /// When calculation was performed
@@ -554,7 +555,8 @@ public partial class CurrencyEarnCapReachedEvent
     [System.Text.Json.Serialization.JsonPropertyName("capType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string CapType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EarnCapType CapType { get; set; } = default!;
 
     /// <summary>
     /// The cap limit
@@ -643,7 +645,8 @@ public partial class CurrencyWalletCapReachedEvent
     [System.Text.Json.Serialization.JsonPropertyName("overflowBehavior")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OverflowBehavior { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CapOverflowBehavior OverflowBehavior { get; set; } = default!;
 
     /// <summary>
     /// Amount lost due to cap (0 if rejected)
@@ -728,7 +731,8 @@ public partial class CurrencyExpiredEvent
     [System.Text.Json.Serialization.JsonPropertyName("expirationPolicy")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ExpirationPolicy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ExpirationPolicy ExpirationPolicy { get; set; } = default!;
 
 }
 

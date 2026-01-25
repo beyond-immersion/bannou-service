@@ -396,7 +396,7 @@ public class SessionService : ISessionService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                SessionIds = sessionIds,
+                SessionIds = (ICollection<Guid>)sessionIds,
                 Reason = reason,
                 DisconnectClients = true
             };

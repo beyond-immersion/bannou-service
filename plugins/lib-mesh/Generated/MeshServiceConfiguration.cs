@@ -65,7 +65,7 @@ public enum DefaultLoadBalancer
 public class MeshServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Use local-only routing instead of lib-state. All calls route to local instance. ONLY for testing/minimal infrastructure.

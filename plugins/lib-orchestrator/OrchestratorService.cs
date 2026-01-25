@@ -2296,7 +2296,7 @@ public partial class OrchestratorService : IOrchestratorService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    ServiceId = Guid.Parse(Program.ServiceGUID),
+                    ServiceId = Program.ServiceGUID,
                     ServiceName = OrchestratorPermissionRegistration.ServiceId,
                     Version = OrchestratorPermissionRegistration.ServiceVersion,
                     AppId = appId,

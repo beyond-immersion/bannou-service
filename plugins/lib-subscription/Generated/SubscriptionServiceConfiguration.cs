@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Subscription;
 public class SubscriptionServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Suffix for authorization keys in state store

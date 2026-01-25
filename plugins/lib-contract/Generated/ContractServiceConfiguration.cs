@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Contract;
 public class ContractServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default enforcement mode for contracts (advisory, event_only, consequence_based, community)

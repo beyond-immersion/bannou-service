@@ -255,7 +255,7 @@ public enum {enum_type['name']}
 public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 {{
     /// <inheritdoc />
-    public string? ForceServiceId {{ get; set; }}
+    public Guid? ForceServiceId {{ get; set; }}
 ''')
 
     for prop in config_properties:

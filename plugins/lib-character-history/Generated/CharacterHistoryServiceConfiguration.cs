@@ -51,6 +51,6 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 public class CharacterHistoryServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
 }

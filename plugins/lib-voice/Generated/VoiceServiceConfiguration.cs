@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Voice;
 public class VoiceServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable scaled tier voice communication (SIP-based)

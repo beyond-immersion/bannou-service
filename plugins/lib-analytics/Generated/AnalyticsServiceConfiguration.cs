@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Analytics;
 public class AnalyticsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum events to buffer before flushing to storage

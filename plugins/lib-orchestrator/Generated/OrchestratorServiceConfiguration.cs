@@ -65,7 +65,7 @@ public enum DefaultBackend
 public class OrchestratorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// When true, publishes blank permission registration making orchestrator inaccessible via WebSocket. Set false for testing.

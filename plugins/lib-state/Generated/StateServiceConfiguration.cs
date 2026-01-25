@@ -63,7 +63,7 @@ public enum DefaultConsistency
 public class StateServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure.

@@ -51,6 +51,6 @@ namespace BeyondImmersion.BannouService.Realm;
 public class RealmServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
 }

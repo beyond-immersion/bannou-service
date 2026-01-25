@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Auth;
 public class AuthServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// JWT token expiration time in minutes

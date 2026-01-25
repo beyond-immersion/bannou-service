@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 public class BehaviorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Threshold below which urgency is considered low (0.0-1.0)

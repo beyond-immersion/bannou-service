@@ -15,8 +15,10 @@ public class TestingServiceConfiguration : IServiceConfiguration
     public string TestEnvironment { get; set; } = "development";
 
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <inheritdoc />
     public bool? ServiceDisabled { get; set; }
+
+    Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
 }

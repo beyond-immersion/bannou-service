@@ -51,6 +51,6 @@ namespace BeyondImmersion.BannouService.Relationship;
 public class RelationshipServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
 }

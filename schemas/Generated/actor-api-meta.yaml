@@ -1374,6 +1374,14 @@ components:
       - stopped
       - error
       description: Current actor lifecycle state
+    PerceptionSourceType:
+      type: string
+      description: Type of source generating a perception event
+      enum:
+      - character
+      - npc
+      - object
+      - environment
     StopActorRequest:
       type: object
       additionalProperties: false

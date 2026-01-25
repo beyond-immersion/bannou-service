@@ -317,6 +317,23 @@ public enum HoldStatus
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of earn cap that was applied
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum EarnCapType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"daily")]
+    Daily = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"weekly")]
+    Weekly = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to create a new currency definition
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

@@ -1751,6 +1751,8 @@ public class ConnectServiceConfiguration : IServiceConfiguration
 {
     public string InstanceId { get; set; } = "test-instance";
     public string? ForceServiceId { get; } = null;
+
+    Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
 }
 
 /// <summary>
@@ -1785,6 +1787,8 @@ public class TestServiceWithAttrConfiguration : IServiceConfiguration
 {
     public string TestSetting { get; set; } = "test";
     public string? ForceServiceId { get; } = null;
+
+    Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
 }
 
 /// <summary>
@@ -1794,6 +1798,8 @@ public class TestServiceConfiguration2 : IServiceConfiguration
 {
     public string TestSetting { get; set; } = "test2";
     public string? ForceServiceId { get; } = null;
+
+    Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
 }
 
 /// <summary>
@@ -1844,6 +1850,8 @@ public class TestConnectServiceConfiguration : IServiceConfiguration
     public string InstanceId { get; set; } = "test-connect-instance";
     public int MaxConnections { get; set; } = 1000;
     public string? ForceServiceId { get; } = null;
+
+    Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
 }
 
 /// <summary>
@@ -1853,6 +1861,8 @@ public class UnmatchedConfiguration : IServiceConfiguration
 {
     public string UnusedSetting { get; set; } = "unused";
     public string? ForceServiceId { get; } = null;
+
+    Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
 }
 
 /// <summary>
@@ -1862,6 +1872,8 @@ public class ComplexNamingTestServiceConfiguration : IServiceConfiguration
 {
     public string ComplexSetting { get; set; } = "complex";
     public string? ForceServiceId { get; } = null;
+
+    Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
 }
 
 /// <summary>

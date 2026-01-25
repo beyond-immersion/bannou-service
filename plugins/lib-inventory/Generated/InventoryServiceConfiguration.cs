@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Inventory;
 public class InventoryServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default maximum nesting depth for containers

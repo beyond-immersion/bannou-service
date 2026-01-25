@@ -807,7 +807,8 @@ public partial class PerceptionData
     /// Type of source (character, npc, object, environment)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
-    public string? SourceType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PerceptionSourceType? SourceType { get; set; } = default!;
 
     /// <summary>
     /// Perception-specific data. For perceptionType="spatial", this can contain

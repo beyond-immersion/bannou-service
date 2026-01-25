@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Location;
 public class LocationServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum depth to traverse when walking ancestor chain (prevents infinite loops from corrupted data)

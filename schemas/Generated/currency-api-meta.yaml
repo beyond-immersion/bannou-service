@@ -3437,6 +3437,12 @@ components:
       - captured
       - released
       - expired
+    EarnCapType:
+      type: string
+      description: Type of earn cap that was applied
+      enum:
+      - daily
+      - weekly
     CreateCurrencyDefinitionRequest:
       type: object
       description: Request to create a new currency definition

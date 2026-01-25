@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Matchmaking;
 public class MatchmakingServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Server salt for GUID generation. Must be shared across all instances for matchmaking GUIDs to work correctly. Change in production.

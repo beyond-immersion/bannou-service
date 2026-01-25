@@ -29,7 +29,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 
     // Instance ID for this orchestrator (for source tracking in events)
     // Uses the shared Program.ServiceGUID for consistent identification
-    private Guid _instanceId => Guid.Parse(Program.ServiceGUID);
+    private Guid _instanceId => Program.ServiceGUID;
 
     // Periodic publication timer
     private Timer? _fullMappingsTimer;

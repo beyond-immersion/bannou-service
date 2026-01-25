@@ -363,7 +363,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version string
@@ -432,7 +432,7 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string MetabundleId { get; set; } = default!;
+    public System.Guid MetabundleId { get; set; } = default!;
 
     /// <summary>
     /// Metabundle version string
@@ -460,7 +460,7 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
     /// List of source bundle IDs that were composed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
-    public System.Collections.Generic.ICollection<string>? SourceBundleIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? SourceBundleIds { get; set; } = default!;
 
     /// <summary>
     /// Number of unique assets in the metabundle
@@ -520,7 +520,7 @@ public partial class BundleUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// New metadata version number after update
@@ -577,7 +577,7 @@ public partial class BundleDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// True if permanently deleted, false for soft-delete
@@ -626,7 +626,7 @@ public partial class BundleRestoredEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Metadata version the bundle was restored from

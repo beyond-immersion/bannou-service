@@ -60,6 +60,29 @@ public enum ContainerConstraintModel
 #pragma warning restore CS1591
 
 /// <summary>
+/// Which specific capacity constraint was reached
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ConstraintLimitType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"slots")]
+    Slots = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"weight")]
+    Weight = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"volume")]
+    Volume = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"grid")]
+    Grid = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// How container weight propagates to parent
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation

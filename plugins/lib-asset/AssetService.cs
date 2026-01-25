@@ -1770,7 +1770,7 @@ public partial class AssetService : IAssetService
                     Version = body.Version ?? "1.0.0",
                     Realm = body.Realm,
                     SourceBundleCount = sourceBundles.Count,
-                    SourceBundleIds = sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
+                    SourceBundleIds = (ICollection<Guid>)sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
                     AssetCount = metabundleAssets.Count,
                     StandaloneAssetCount = standalonesToInclude.Count,
                     Bucket = bucket,
@@ -2099,7 +2099,7 @@ public partial class AssetService : IAssetService
                         {
                             BundleId = sb.BundleId,
                             Version = sb.Version,
-                            AssetIds = sb.AssetIds,
+                            AssetIds = (ICollection<string>)sb.AssetIds,
                             ContentHash = sb.ContentHash
                         })
                         .ToList();

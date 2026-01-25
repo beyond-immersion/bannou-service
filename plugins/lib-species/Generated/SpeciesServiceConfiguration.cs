@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Species;
 public class SpeciesServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Number of records to process per page during seed operations

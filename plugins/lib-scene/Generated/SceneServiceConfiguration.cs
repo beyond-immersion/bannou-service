@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Scene;
 public class SceneServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// lib-asset bucket for storing scene documents

@@ -239,7 +239,7 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     /// Assigned bundle ID on success
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string? BundleId { get; set; } = default!;
+    public System.Guid? BundleId { get; set; } = default!;
 
     /// <summary>
     /// Number of assets extracted and registered
@@ -317,7 +317,7 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Whether creation completed successfully
@@ -389,7 +389,7 @@ public partial class MetabundleCreationCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string MetabundleId { get; set; } = default!;
+    public System.Guid MetabundleId { get; set; } = default!;
 
     /// <summary>
     /// Whether creation completed successfully

@@ -51,6 +51,6 @@ namespace BeyondImmersion.BannouService.RealmHistory;
 public class RealmHistoryServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
 }

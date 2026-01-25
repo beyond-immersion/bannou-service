@@ -9,6 +9,6 @@ public class BaseServiceConfiguration : IServiceConfiguration
     /// Set to override GUID for administrative service endpoints.
     /// If not set, will generate a new GUID automatically on service startup.
     /// </summary>
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
 }

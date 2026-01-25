@@ -673,7 +673,8 @@ public partial class InventoryContainerFullEvent
     [System.Text.Json.Serialization.JsonPropertyName("constraintType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ConstraintType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ConstraintLimitType ConstraintType { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

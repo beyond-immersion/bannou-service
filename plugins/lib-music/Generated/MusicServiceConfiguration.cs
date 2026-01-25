@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Music;
 public class MusicServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// TTL in seconds for cached deterministic compositions

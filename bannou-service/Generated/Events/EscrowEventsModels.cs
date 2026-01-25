@@ -175,7 +175,8 @@ public partial class EscrowDepositReceivedEvent
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PartyType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType PartyType { get; set; } = default!;
 
     /// <summary>
     /// Deposit record ID
@@ -313,7 +314,8 @@ public partial class EscrowConsentReceivedEvent
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PartyType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType PartyType { get; set; } = default!;
 
     /// <summary>
     /// Type of consent
@@ -566,7 +568,8 @@ public partial class EscrowDisputedEvent
     [System.Text.Json.Serialization.JsonPropertyName("disputedByType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DisputedByType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType DisputedByType { get; set; } = default!;
 
     /// <summary>
     /// Reason for dispute
@@ -631,7 +634,8 @@ public partial class EscrowResolvedEvent
     [System.Text.Json.Serialization.JsonPropertyName("arbiterType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ArbiterType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType ArbiterType { get; set; } = default!;
 
     /// <summary>
     /// Resolution decision by arbiter
@@ -695,7 +699,8 @@ public partial class EscrowExpiredEvent
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EscrowStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Whether deposits were automatically refunded
@@ -754,7 +759,8 @@ public partial class EscrowCancelledEvent
     /// Type of cancelling entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cancelledByType")]
-    public string? CancelledByType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? CancelledByType { get; set; } = default!;
 
     /// <summary>
     /// Reason for cancellation
@@ -872,7 +878,8 @@ public partial class EscrowValidationReaffirmedEvent
     [System.Text.Json.Serialization.JsonPropertyName("reaffirmedByType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ReaffirmedByType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType ReaffirmedByType { get; set; } = default!;
 
     /// <summary>
     /// Whether all parties have reaffirmed
@@ -911,7 +918,8 @@ public partial class EscrowPartyInfo
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PartyType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType PartyType { get; set; } = default!;
 
     /// <summary>
     /// Role of the party in the escrow
@@ -945,7 +953,8 @@ public partial class RecipientInfo
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PartyType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType PartyType { get; set; } = default!;
 
     /// <summary>
     /// Summary of assets received
@@ -978,7 +987,8 @@ public partial class DepositorInfo
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string PartyType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType PartyType { get; set; } = default!;
 
     /// <summary>
     /// Summary of assets refunded

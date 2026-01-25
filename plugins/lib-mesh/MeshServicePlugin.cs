@@ -108,7 +108,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Use the shared Program.ServiceGUID for consistent instance identification
         // This ensures mesh endpoint and heartbeat use the same instance ID
-        var instanceId = Guid.Parse(Program.ServiceGUID);
+        var instanceId = Program.ServiceGUID;
 
         var endpoint = new MeshEndpoint
         {

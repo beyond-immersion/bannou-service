@@ -51,7 +51,7 @@ namespace BeyondImmersion.BannouService.Permission;
 public class PermissionServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? ForceServiceId { get; set; }
+    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum retries for acquiring distributed lock
