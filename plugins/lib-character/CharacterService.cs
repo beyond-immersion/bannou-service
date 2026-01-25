@@ -1514,7 +1514,7 @@ public partial class CharacterService : ICharacterService
             RealmId = character.RealmId,
             SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
-            Status = character.Status.ToString(),
+            Status = character.Status,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,
             ChangedFields = changedFields.ToList()
@@ -1538,7 +1538,7 @@ public partial class CharacterService : ICharacterService
             RealmId = character.RealmId,
             SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
-            Status = character.Status.ToString(),
+            Status = character.Status,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,
             DeletedReason = deletedReason

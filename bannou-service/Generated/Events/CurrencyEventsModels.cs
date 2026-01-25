@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Currency;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -97,7 +98,8 @@ public partial class CurrencyCreditedEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Currency definition ID
@@ -127,7 +129,8 @@ public partial class CurrencyCreditedEvent
     [System.Text.Json.Serialization.JsonPropertyName("transactionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TransactionType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionType TransactionType { get; set; } = default!;
 
     /// <summary>
     /// Balance after credit
@@ -214,7 +217,8 @@ public partial class CurrencyDebitedEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Currency definition ID
@@ -244,7 +248,8 @@ public partial class CurrencyDebitedEvent
     [System.Text.Json.Serialization.JsonPropertyName("transactionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TransactionType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionType TransactionType { get; set; } = default!;
 
     /// <summary>
     /// Balance after debit
@@ -319,7 +324,8 @@ public partial class CurrencyTransferredEvent
     [System.Text.Json.Serialization.JsonPropertyName("sourceOwnerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SourceOwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType SourceOwnerType { get; set; } = default!;
 
     /// <summary>
     /// Target wallet ID
@@ -343,7 +349,8 @@ public partial class CurrencyTransferredEvent
     [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TargetOwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType TargetOwnerType { get; set; } = default!;
 
     /// <summary>
     /// Currency definition ID
@@ -373,7 +380,8 @@ public partial class CurrencyTransferredEvent
     [System.Text.Json.Serialization.JsonPropertyName("transactionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TransactionType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionType TransactionType { get; set; } = default!;
 
 }
 
@@ -422,7 +430,8 @@ public partial class CurrencyAutogainCalculatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Currency definition ID

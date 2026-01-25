@@ -116,7 +116,7 @@ components:
           $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of asset being uploaded
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/Realm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         isMultipart:
           type: boolean
@@ -287,7 +287,7 @@ components:
           $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of the asset
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/Realm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
 
     # ==========================================================================
@@ -360,7 +360,7 @@ components:
           type: string
           description: Metabundle version string
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/Realm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm for this metabundle
         sourceBundleCount:
           type: integer
@@ -432,7 +432,7 @@ components:
           type: string
           description: Account ID or service name that performed the update
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/Realm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleDeletedEvent:
@@ -465,7 +465,7 @@ components:
           type: string
           description: Account ID or service name that performed the deletion
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/Realm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleRestoredEvent:
@@ -493,7 +493,7 @@ components:
           type: string
           description: Account ID or service name that performed the restoration
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/Realm'
+          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     # ==========================================================================

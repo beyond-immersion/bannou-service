@@ -707,7 +707,7 @@ components:
       - other
       description: Type classification for assets
 
-    Realm:
+    GameRealm:
       type: string
       enum:
       - omega
@@ -908,7 +908,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         tags:
           type: array
@@ -955,7 +955,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         tags:
           type: array
@@ -1175,7 +1175,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Filter by asset type
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Filter by game realm
         contentType:
           type: string
@@ -1244,7 +1244,7 @@ components:
           description: Bundle version string
         realm:
           allOf:
-          - $ref: '#/components/schemas/Realm'
+          - $ref: '#/components/schemas/GameRealm'
           nullable: true
           description: |
             Game realm this bundle belongs to.
@@ -1498,7 +1498,7 @@ components:
             For user-initiated: the accountId (UUID format).
             For service-initiated: the service name.
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm for this metabundle
         description:
           type: string
@@ -1747,7 +1747,7 @@ components:
             type: string
           description: Platform asset IDs to resolve
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm to search within
         preferMetabundles:
           type: boolean
@@ -1905,7 +1905,7 @@ components:
           type: string
           description: Platform asset ID to search for
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm to search within
         bundleType:
           allOf:
@@ -1979,7 +1979,7 @@ components:
           nullable: true
           description: Bundle file size
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm
         createdAt:
           type: string
@@ -2096,7 +2096,7 @@ components:
           nullable: true
           description: Owner account ID or service name (null for system-owned bundles)
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm this bundle belongs to
         tags:
           type: object
@@ -2334,7 +2334,7 @@ components:
           description: Filter by bundle owner account ID
         realm:
           allOf:
-          - $ref: '#/components/schemas/Realm'
+          - $ref: '#/components/schemas/GameRealm'
           nullable: true
           description: Filter by realm
         bundleType:

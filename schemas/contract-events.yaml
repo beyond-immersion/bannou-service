@@ -187,7 +187,7 @@ components:
           format: uuid
           description: Entity that consented
         consentingEntityType:
-          type: string
+          $ref: 'contract-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -382,10 +382,10 @@ components:
           format: uuid
           description: Entity that breached
         breachingEntityType:
-          type: string
+          $ref: 'contract-api.yaml#/components/schemas/EntityType'
           description: Entity type
         breachType:
-          type: string
+          $ref: 'contract-api.yaml#/components/schemas/BreachType'
           description: Type of breach
         breachedTermOrMilestone:
           type: string
@@ -491,7 +491,7 @@ components:
           format: uuid
           description: Entity that requested termination
         terminatedByEntityType:
-          type: string
+          $ref: 'contract-api.yaml#/components/schemas/EntityType'
           description: Entity type
         reason:
           type: string
@@ -675,7 +675,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          type: string
+          $ref: 'contract-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string

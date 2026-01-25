@@ -111,7 +111,7 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public GameRealm Realm { get; set; } = default!;
 
     /// <summary>
     /// Whether this is a multipart upload
@@ -362,7 +362,7 @@ public partial class AssetReadyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public GameRealm Realm { get; set; } = default!;
 
 }
 
@@ -465,7 +465,7 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public GameRealm Realm { get; set; } = default!;
 
     /// <summary>
     /// Number of source bundles composed
@@ -578,7 +578,7 @@ public partial class BundleUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public GameRealm Realm { get; set; } = default!;
 
 }
 
@@ -628,7 +628,7 @@ public partial class BundleDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public GameRealm Realm { get; set; } = default!;
 
 }
 
@@ -672,7 +672,7 @@ public partial class BundleRestoredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public Realm Realm { get; set; } = default!;
+    public GameRealm Realm { get; set; } = default!;
 
 }
 

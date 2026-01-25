@@ -158,7 +158,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string
@@ -172,7 +172,7 @@ components:
           format: double
           description: Amount credited
         transactionType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/TransactionType'
           description: Transaction type (faucet classification)
         newBalance:
           type: number
@@ -232,7 +232,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string
@@ -246,7 +246,7 @@ components:
           format: double
           description: Amount debited
         transactionType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/TransactionType'
           description: Transaction type (sink classification)
         newBalance:
           type: number
@@ -302,7 +302,7 @@ components:
           format: uuid
           description: Source wallet owner ID
         sourceOwnerType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Source wallet owner type
         targetWalletId:
           type: string
@@ -313,7 +313,7 @@ components:
           format: uuid
           description: Target wallet owner ID
         targetOwnerType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Target wallet owner type
         currencyDefinitionId:
           type: string
@@ -327,7 +327,7 @@ components:
           format: double
           description: Amount transferred
         transactionType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/TransactionType'
           description: Transaction type (transfer, trade, gift)
 
     # =========================================================================
@@ -372,7 +372,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          type: string
+          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string

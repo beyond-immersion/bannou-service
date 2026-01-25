@@ -48,10 +48,10 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
         category:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/SaveCategory'
           description: Save category
         sizeBytes:
           type: integer
@@ -97,7 +97,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     SaveMigratedEvent:
@@ -137,7 +137,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionPinnedEvent:
@@ -172,7 +172,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionUnpinnedEvent:
@@ -207,7 +207,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionDeletedEvent:
@@ -242,7 +242,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     CleanupCompletedEvent:
@@ -306,8 +306,8 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
-          description: Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
+          description: Type of entity that owns this save
         sizeBytes:
           type: integer
           format: int64
@@ -380,8 +380,8 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
-          description: Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+          $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
+          description: Type of entity that owns this save
         errorMessage:
           type: string
           description: Last error message

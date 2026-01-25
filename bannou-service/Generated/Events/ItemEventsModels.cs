@@ -23,6 +23,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Item;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -226,7 +227,8 @@ public partial class ItemInstanceModifiedEvent
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OriginType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemOriginType OriginType { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created
@@ -311,7 +313,8 @@ public partial class ItemInstanceDestroyedEvent
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OriginType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemOriginType OriginType { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created
@@ -393,12 +396,13 @@ public partial class ItemInstanceBoundEvent
     public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
-    /// Type of binding (on_pickup, on_equip, on_use)
+    /// Type of binding
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BindType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SoulboundType BindType { get; set; } = default!;
 
 }
 
