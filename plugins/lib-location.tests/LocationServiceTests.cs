@@ -146,7 +146,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var locationId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
         var request = new GetLocationRequest { LocationId = locationId };
-        var testModel = CreateTestLocationModel(locationId, realmId, "OMEGA_CITY", "Omega City");
+        var testModel = CreateTestLocationModel(locationId, realmId, "TEST_CITY", "Test City");
 
         _mockLocationStore
             .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
@@ -159,8 +159,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(locationId, response.LocationId);
-        Assert.Equal("OMEGA_CITY", response.Code);
-        Assert.Equal("Omega City", response.Name);
+        Assert.Equal("TEST_CITY", response.Code);
+        Assert.Equal("Test City", response.Name);
     }
 
     [Fact]
@@ -218,12 +218,12 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var service = CreateService();
         var locationId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
-        var request = new GetLocationByCodeRequest { RealmId = realmId, Code = "omega_city" };
-        var testModel = CreateTestLocationModel(locationId, realmId, "OMEGA_CITY", "Omega City");
+        var request = new GetLocationByCodeRequest { RealmId = realmId, Code = "test_city" };
+        var testModel = CreateTestLocationModel(locationId, realmId, "TEST_CITY", "Test City");
 
         // Setup code index lookup
         _mockStringStore
-            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}{realmId}:OMEGA_CITY", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}{realmId}:TEST_CITY", It.IsAny<CancellationToken>()))
             .ReturnsAsync(locationId.ToString());
 
         // Setup location retrieval
@@ -237,7 +237,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("OMEGA_CITY", response.Code);
+        Assert.Equal("TEST_CITY", response.Code);
     }
 
     [Fact]

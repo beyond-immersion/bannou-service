@@ -45,7 +45,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"TestSession_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };
@@ -70,7 +70,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"GetTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };
@@ -105,7 +105,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 var createRequest = new CreateGameSessionRequest
                 {
                     SessionName = $"ListTest_{DateTime.Now.Ticks}_{i}",
-                    GameType = CreateGameSessionRequestGameType.Arcadia,
+                    GameType = "test-game",
                     MaxPlayers = 4,
                     IsPrivate = false
                 };
@@ -115,7 +115,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             // Now list sessions - use filter parameters
             var listRequest = new ListGameSessionsRequest
             {
-                GameType = ListGameSessionsRequestGameType.Arcadia,
+                GameType = "test-game",
                 Status = ListGameSessionsRequestStatus.Waiting
             };
 
@@ -136,7 +136,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"JoinTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };
@@ -184,7 +184,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"LeaveTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };
@@ -229,7 +229,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"KickTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };
@@ -284,7 +284,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"ChatTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };
@@ -329,7 +329,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"ActionTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };
@@ -395,7 +395,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createRequest = new CreateGameSessionRequest
             {
                 SessionName = $"LifecycleTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
+                GameType = "test-game",
                 MaxPlayers = 4,
                 IsPrivate = false
             };

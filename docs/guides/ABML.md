@@ -5,7 +5,7 @@
 > **Location**: `bannou-service/Abml/`
 > **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR_SYSTEM.md)
 
-ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Arcadia.
+ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Bannou-powered games.
 
 ---
 

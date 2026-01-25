@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.Species;
 
 /// <summary>
 /// Implementation of the Species service.
-/// Manages species definitions for characters in the Arcadia game world.
+/// Manages species definitions for characters in game worlds.
 /// Species are realm-specific, allowing different realms to have distinct populations.
 /// </summary>
 [BannouService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]

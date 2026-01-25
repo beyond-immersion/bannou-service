@@ -1,4 +1,4 @@
-# Mapping System - Spatial Intelligence for Arcadia
+# Mapping System - Spatial Intelligence for Game Worlds
 
 > **Version**: 1.0
 > **Status**: Implemented
@@ -32,7 +32,7 @@ The Mapping System (`lib-mapping`) manages spatial data for game worlds. It enab
 
 ### 1.1 What is the Mapping System?
 
-The Mapping System is the spatial intelligence backbone of Arcadia. It answers the fundamental questions that make worlds feel alive:
+The Mapping System is the spatial intelligence backbone of Bannou-powered games. It answers the fundamental questions that make worlds feel alive:
 
 - **Where can things happen?** - Not just "where is the boulder" but "where can an ambush occur"
 - **What does this location afford?** - Cover, shelter, dramatic vistas, chokepoints

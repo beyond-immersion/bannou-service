@@ -12,7 +12,7 @@ public sealed class BannouMeshAssetSource : IAssetSource
 {
     private readonly IAssetClient _assetClient;
     private readonly ILogger<BannouMeshAssetSource>? _logger;
-    private readonly Realm _defaultRealm;
+    private readonly string _defaultRealm;
 
     /// <inheritdoc />
     public bool RequiresAuthentication => false; // Mesh handles auth via service identity
@@ -28,7 +28,7 @@ public sealed class BannouMeshAssetSource : IAssetSource
     /// <param name="logger">Optional logger.</param>
     public BannouMeshAssetSource(
         IAssetClient assetClient,
-        Realm defaultRealm = Realm.Arcadia,
+        string defaultRealm = "shared",
         ILogger<BannouMeshAssetSource>? logger = null)
     {
         _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));

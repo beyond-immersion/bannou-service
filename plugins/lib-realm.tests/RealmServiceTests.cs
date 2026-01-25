@@ -194,7 +194,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var realmId = Guid.NewGuid();
         var code = "TEST_REALM_2";
         var request = new GetRealmByCodeRequest { Code = code };
-        var testModel = CreateTestRealmModel(realmId, code, "Arcadia Realm");
+        var testModel = CreateTestRealmModel(realmId, code, "Test Realm 2");
 
         // Setup code index lookup
         _mockStringStore

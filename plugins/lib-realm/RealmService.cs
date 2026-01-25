@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.Realm;
 
 /// <summary>
 /// Implementation of the Realm service.
-/// Manages realm definitions - top-level persistent worlds in Arcadia (e.g., Omega, Arcadia, Fantasia).
+/// Manages realm definitions - top-level persistent worlds (e.g., REALM_1, REALM_2).
 /// Each realm operates as an independent peer with distinct characteristics.
 /// </summary>
 [BannouService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]

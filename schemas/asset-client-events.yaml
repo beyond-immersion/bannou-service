@@ -316,6 +316,7 @@ components:
           description: Job ID from the original async creation request
         metabundleId:
           type: string
+          format: uuid
           description: ID of the metabundle
         success:
           type: boolean

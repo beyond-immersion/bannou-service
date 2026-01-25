@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Character;
 
 /// <summary>
-/// Implementation of the Character service for Arcadia game world.
+/// Implementation of the Character service for game worlds.
 /// Characters are independent world assets (not owned by accounts).
 /// Uses realm-based partitioning for scalability.
 /// Note: Character relationships are managed by the separate Relationship service.

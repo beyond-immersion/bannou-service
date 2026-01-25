@@ -48,7 +48,7 @@ public sealed class BundleConverter : IBundleConverter
     public async Task ConvertZipToBundleAsync(
         Stream zipStream,
         Stream outputStream,
-        string bundleId,
+        Guid bundleId,
         string name,
         string version,
         string createdBy,
@@ -116,7 +116,7 @@ public sealed class BundleConverter : IBundleConverter
     public async Task<bool> ConvertBundleToZipAsync(
         Stream bundleStream,
         Stream outputStream,
-        string bundleId,
+        Guid bundleId,
         CancellationToken cancellationToken = default)
     {
         // Check cache first
@@ -200,7 +200,7 @@ public sealed class BundleConverter : IBundleConverter
     /// <summary>
     /// Checks if a cached ZIP exists for the given bundle.
     /// </summary>
-    public bool HasCachedZip(string bundleId)
+    public bool HasCachedZip(Guid bundleId)
     {
         var cacheFile = GetCacheFilePath(bundleId);
         if (!File.Exists(cacheFile))
@@ -215,7 +215,7 @@ public sealed class BundleConverter : IBundleConverter
     /// <summary>
     /// Gets a cached ZIP stream if available.
     /// </summary>
-    public Stream? GetCachedZipStream(string bundleId)
+    public Stream? GetCachedZipStream(Guid bundleId)
     {
         var cacheFile = GetCacheFilePath(bundleId);
         if (!File.Exists(cacheFile))
@@ -275,7 +275,7 @@ public sealed class BundleConverter : IBundleConverter
     /// <summary>
     /// Invalidates a specific bundle's cached ZIP.
     /// </summary>
-    public void InvalidateCache(string bundleId)
+    public void InvalidateCache(Guid bundleId)
     {
         var cacheFile = GetCacheFilePath(bundleId);
         try
@@ -292,11 +292,11 @@ public sealed class BundleConverter : IBundleConverter
         }
     }
 
-    private string GetCacheFilePath(string bundleId)
+    private string GetCacheFilePath(Guid bundleId)
     {
-        // Sanitize bundle ID for use as filename
-        var safeName = string.Join("_", bundleId.Split(Path.GetInvalidFileNameChars()));
-        return Path.Combine(_cacheDirectory, $"{safeName}.zip");
+        // File system boundary: GUID to string for filename
+        // Standard Guid.ToString() format is safe for all file systems
+        return Path.Combine(_cacheDirectory, $"{bundleId}.zip");
     }
 
     private static string GenerateAssetId(string fullPath, int index)

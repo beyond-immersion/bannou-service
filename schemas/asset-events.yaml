@@ -293,6 +293,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         version:
           type: string
@@ -339,6 +340,7 @@ components:
       properties:
         metabundleId:
           type: string
+          format: uuid
           description: Metabundle identifier
         version:
           type: string
@@ -354,6 +356,7 @@ components:
           nullable: true
           items:
             type: string
+            format: uuid
           description: List of source bundle IDs that were composed
         assetCount:
           type: integer
@@ -396,6 +399,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         version:
           type: integer
@@ -432,6 +436,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         permanent:
           type: boolean
@@ -465,6 +470,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         restoredFromVersion:
           type: integer

@@ -165,7 +165,7 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
         var createRequest = new CreateGameSessionRequest
         {
             SessionName = sessionName,
-            GameType = CreateGameSessionRequestGameType.Arcadia,
+            GameType = "test-game",
             MaxPlayers = 4,
             IsPrivate = false
             // Note: Voice is enabled when joining with a voice endpoint

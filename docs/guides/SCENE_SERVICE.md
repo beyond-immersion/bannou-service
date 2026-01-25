@@ -398,7 +398,7 @@ Environment variables (prefix: `SCENE_`):
 ```yaml
 $schema: "bannou://schemas/scene/v1"
 sceneId: "550e8400-e29b-41d4-a716-446655440001"
-gameId: "arcadia-online"
+gameId: "my-game"
 sceneType: building
 name: "Cozy Tavern Interior"
 version: "1.2.0"
@@ -456,7 +456,7 @@ root:
             scale: { x: 1, y: 1, z: 1 }
           tags: ["position", "npc"]
           annotations:
-            arcadia:
+            game:
               suggestedRole: "bartender"
 ```
 

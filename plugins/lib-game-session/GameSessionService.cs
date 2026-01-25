@@ -24,7 +24,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 
 /// <summary>
 /// GameSession service implementation.
-/// Manages game sessions for Arcadia and other multiplayer games.
+/// Manages game sessions for multiplayer games.
 /// Handles session shortcuts for subscribed accounts via mesh pubsub events.
 /// </summary>
 [BannouService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]

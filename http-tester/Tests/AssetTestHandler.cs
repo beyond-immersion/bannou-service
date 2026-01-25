@@ -109,7 +109,7 @@ public class AssetTestHandler : BaseHttpTestHandler
     /// Helper to upload a test asset and return its metadata.
     /// Uses application/json content type to avoid processor pipeline.
     /// </summary>
-    private static async Task<AssetMetadata?> UploadTestAsset(IAssetClient client, string testName, AssetType assetType = AssetType.Behavior, Asset.Realm realm = Asset.Realm.Arcadia)
+    private static async Task<AssetMetadata?> UploadTestAsset(IAssetClient client, string testName, AssetType assetType = AssetType.Behavior, string realm = "test-realm")
     {
         var testContent = $"{{\"test\": \"{testName}\", \"timestamp\": \"{DateTime.UtcNow:O}\"}}";
         var testBytes = Encoding.UTF8.GetBytes(testContent);
@@ -164,7 +164,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Behavior,
-                    Realm = Asset.Realm.Arcadia,
+                    Realm = "test-realm",
                     Tags = new List<string> { "test", "request-upload" }
                 }
             };
@@ -276,12 +276,12 @@ public class AssetTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Failed to upload test asset");
 
             // Search by tags - must match the asset type and realm used in upload
-            // UploadTestAsset defaults to AssetType.Behavior and Realm.Arcadia
+            // UploadTestAsset defaults to AssetType.Behavior and test-realm
             var searchRequest = new AssetSearchRequest
             {
                 Tags = new List<string> { "search-test" },
                 AssetType = AssetType.Behavior,
-                Realm = Asset.Realm.Arcadia,
+                Realm = "test-realm",
                 Limit = 50,
                 Offset = 0
             };
@@ -436,7 +436,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Audio,
-                    Realm = Asset.Realm.Arcadia,
+                    Realm = "test-realm",
                     Tags = new List<string> { "test", "audio", "http-integration" }
                 }
             };
@@ -599,9 +599,9 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             // Step 1: Upload multiple assets
             Console.WriteLine("  Step 1: Uploading test assets...");
-            var asset1 = await UploadTestAsset(assetClient, "lifecycle-1", AssetType.Behavior, Asset.Realm.Arcadia);
-            var asset2 = await UploadTestAsset(assetClient, "lifecycle-2", AssetType.Other, Asset.Realm.Omega);
-            var asset3 = await UploadTestAsset(assetClient, "lifecycle-3", AssetType.Behavior, Asset.Realm.Arcadia);
+            var asset1 = await UploadTestAsset(assetClient, "lifecycle-1", AssetType.Behavior, "test-realm");
+            var asset2 = await UploadTestAsset(assetClient, "lifecycle-2", AssetType.Other, "other-realm");
+            var asset3 = await UploadTestAsset(assetClient, "lifecycle-3", AssetType.Behavior, "test-realm");
 
             if (asset1 == null || asset2 == null || asset3 == null)
                 return TestResult.Failed("Failed to upload one or more test assets");
@@ -616,12 +616,12 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             // Step 3: Search for assets by realm
             Console.WriteLine("  Step 3: Searching assets by realm...");
-            // asset1 was uploaded with AssetType.Behavior and Realm.Arcadia
+            // asset1 was uploaded with AssetType.Behavior and test-realm
             var searchResult = await assetClient.SearchAssetsAsync(new AssetSearchRequest
             {
                 Tags = new List<string> { "lifecycle-1" },
                 AssetType = AssetType.Behavior,
-                Realm = Asset.Realm.Arcadia,
+                Realm = "test-realm",
                 Limit = 10
             });
             if (!searchResult.Assets.Any(a => a.AssetId == asset1.AssetId))
@@ -712,7 +712,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 SourceBundleIds = new List<string> { bundle1Id, bundle2Id },
                 Owner = "http-tester",
                 Version = "1.0.0",
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
 
             if (metabundle.MetabundleId != metabundleId)
@@ -767,7 +767,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 StandaloneAssetIds = new List<string> { standaloneAsset1.AssetId, standaloneAsset2.AssetId },
                 Owner = "http-tester",
                 Version = "1.0.0",
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
 
             if (metabundle.MetabundleId != metabundleId)
@@ -835,7 +835,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 StandaloneAssetIds = new List<string> { behaviorAsset.AssetId },
                 Owner = "http-tester",
                 Version = "1.0.0",
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
 
             if (metabundle.MetabundleId != metabundleId)
@@ -870,7 +870,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                     SourceBundleIds = new List<string> { $"nonexistent-bundle-{Guid.NewGuid()}" },
                     Owner = "http-tester",
                     Version = "1.0.0",
-                    Realm = Asset.Realm.Arcadia
+                    Realm = "test-realm"
                 });
             },
             404,
@@ -910,7 +910,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.None,
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
             if (bundleA.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle A");
@@ -923,7 +923,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset2.AssetId, asset3.AssetId },
                 Compression = CompressionType.None,
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
             if (bundleB.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle B");
@@ -935,7 +935,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var resolveRequest = new ResolveBundlesRequest
             {
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId, asset3.AssetId },
-                Realm = Asset.Realm.Arcadia,
+                Realm = "test-realm",
                 PreferMetabundles = false
             };
 
@@ -998,7 +998,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 SourceBundleIds = new List<string> { regularBundleId },
                 Owner = "http-tester",
                 Version = "1.0.0",
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
             if (metabundle.Status == CreateMetabundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create metabundle");
@@ -1010,7 +1010,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var resolveRequest = new ResolveBundlesRequest
             {
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
-                Realm = Asset.Realm.Arcadia,
+                Realm = "test-realm",
                 PreferMetabundles = true
             };
 
@@ -1060,7 +1060,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset.AssetId },
                 Compression = CompressionType.None,
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
             if (bundle1.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle 1");
@@ -1073,7 +1073,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset.AssetId },
                 Compression = CompressionType.None,
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
             if (bundle2.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle 2");
@@ -1085,7 +1085,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var queryRequest = new QueryBundlesByAssetRequest
             {
                 AssetId = asset.AssetId,
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             };
 
             var response = await assetClient.QueryBundlesByAssetAsync(queryRequest);
@@ -1254,7 +1254,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 SourceBundleIds = new List<string> { bundleId },
                 Owner = "http-tester",
                 Version = "1.0.0",
-                Realm = Asset.Realm.Arcadia
+                Realm = "test-realm"
             });
 
             // Check if we got a job ID for async processing

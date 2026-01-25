@@ -122,7 +122,7 @@ public sealed class MetabundleRequest
     public string? Owner { get; init; }
 
     /// <summary>
-    /// Target realm for the metabundle (omega, arcadia, fantasia, shared).
+    /// Target realm for the metabundle (e.g., shared, my-realm).
     /// </summary>
     public string? Realm { get; init; }
 
