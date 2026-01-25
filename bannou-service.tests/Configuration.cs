@@ -29,9 +29,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         // ForceServiceId implements IServiceConfiguration.ForceServiceId
         // Env var FORCE_SERVICE_ID normalizes to ForceServiceId via NormalizeEnvVarKey
-        public string? ForceServiceId { get; set; }
-
-        Guid? IServiceConfiguration.ForceServiceId => throw new NotImplementedException();
+        public Guid? ForceServiceId { get; set; }
     }
 
     private class Configuration_Invalid
