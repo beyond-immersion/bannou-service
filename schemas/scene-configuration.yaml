@@ -33,6 +33,11 @@ x-service-configuration:
       description: Default lock TTL for checkout operations in minutes
       default: 60
       env: SCENE_DEFAULT_CHECKOUT_TTL_MINUTES
+    CheckoutTtlBufferMinutes:
+      type: integer
+      description: Buffer time added to checkout TTL for state store expiry (grace period for heartbeat)
+      default: 5
+      env: SCENE_CHECKOUT_TTL_BUFFER_MINUTES
     MaxCheckoutExtensions:
       type: integer
       description: Maximum number of times a checkout can be extended

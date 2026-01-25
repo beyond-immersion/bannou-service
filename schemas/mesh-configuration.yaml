@@ -43,6 +43,12 @@ x-service-configuration:
       env: MESH_ENDPOINT_PORT
       default: 80
 
+    DefaultMaxConnections:
+      type: integer
+      description: Default max connections for auto-registered endpoints when heartbeat does not provide capacity info.
+      env: MESH_DEFAULT_MAX_CONNECTIONS
+      default: 1000
+
     # =========================================================================
     # Heartbeat and TTL Configuration
     # =========================================================================

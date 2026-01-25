@@ -72,6 +72,12 @@ public class SceneServiceConfiguration : IServiceConfiguration
     public int DefaultCheckoutTtlMinutes { get; set; } = 60;
 
     /// <summary>
+    /// Buffer time added to checkout TTL for state store expiry (grace period for heartbeat)
+    /// Environment variable: SCENE_CHECKOUT_TTL_BUFFER_MINUTES
+    /// </summary>
+    public int CheckoutTtlBufferMinutes { get; set; } = 5;
+
+    /// <summary>
     /// Maximum number of times a checkout can be extended
     /// Environment variable: SCENE_MAX_CHECKOUT_EXTENSIONS
     /// </summary>

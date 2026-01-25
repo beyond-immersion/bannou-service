@@ -88,6 +88,7 @@ This plugin does not currently consume external events. The `IEventConsumer` is 
 | `AssetBucket` | `SCENE_ASSET_BUCKET` | `"scenes"` | lib-asset bucket name (not currently used; content stored in state store) |
 | `AssetContentType` | `SCENE_ASSET_CONTENT_TYPE` | `"application/x-bannou-scene+yaml"` | Content type identifier (not currently used; content stored in state store) |
 | `DefaultCheckoutTtlMinutes` | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | `60` | Default checkout lock TTL in minutes |
+| `CheckoutTtlBufferMinutes` | `SCENE_CHECKOUT_TTL_BUFFER_MINUTES` | `5` | Buffer time added to TTL for state store expiry |
 | `MaxCheckoutExtensions` | `SCENE_MAX_CHECKOUT_EXTENSIONS` | `10` | Maximum heartbeat extensions per checkout |
 | `DefaultMaxReferenceDepth` | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | `3` | Default depth for reference resolution |
 | `MaxReferenceDepthLimit` | `SCENE_MAX_REFERENCE_DEPTH_LIMIT` | `10` | Hard ceiling on reference resolution depth |
@@ -449,5 +450,5 @@ None identified.
 
 10. **Internal model type safety**: `SceneIndexEntry.SceneType` is stored as `string` instead of the typed `SceneType` enum, requiring `Enum.TryParse` conversions throughout business logic. Refactoring to use the enum type directly would improve type safety and eliminate parsing overhead.
 
-11. **Hardcoded checkout TTL buffer**: The checkout state TTL calculation uses a hardcoded `+ 5` minute buffer (`ttlMinutes + 5`). This tunable value should be a configuration property (`CheckoutTtlBufferMinutes`).
+11. ~~**Hardcoded checkout TTL buffer**~~: **FIXED** - Moved to `CheckoutTtlBufferMinutes` configuration property (default 5 minutes).
 

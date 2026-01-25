@@ -756,7 +756,7 @@ public partial class SceneService : ISceneService
                 ExtensionCount = 0
             };
 
-            var ttlSeconds = (int)TimeSpan.FromMinutes(ttlMinutes + 5).TotalSeconds;
+            var ttlSeconds = (int)TimeSpan.FromMinutes(ttlMinutes + _configuration.CheckoutTtlBufferMinutes).TotalSeconds;
             await checkoutStore.SaveAsync(
                 $"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}",
                 checkoutState,
@@ -998,7 +998,7 @@ public partial class SceneService : ISceneService
             checkout.ExpiresAt = newExpiresAt;
             checkout.ExtensionCount++;
 
-            var ttlSeconds = (int)TimeSpan.FromMinutes(_configuration.DefaultCheckoutTtlMinutes + 5).TotalSeconds;
+            var ttlSeconds = (int)TimeSpan.FromMinutes(_configuration.DefaultCheckoutTtlMinutes + _configuration.CheckoutTtlBufferMinutes).TotalSeconds;
             await checkoutStore.SaveAsync(
                 $"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}",
                 checkout,

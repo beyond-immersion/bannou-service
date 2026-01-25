@@ -209,6 +209,10 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+None identified.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Code normalization to uppercase**: All species codes are stored and indexed as uppercase via `ToUpperInvariant()`. Lookups are case-insensitive by normalizing input.

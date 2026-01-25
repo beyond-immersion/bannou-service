@@ -56,6 +56,11 @@ x-service-configuration:
       description: Maximum candidate points to evaluate in affordance queries
       default: 1000
       env: MAPPING_MAX_AFFORDANCE_CANDIDATES
+    AffordanceExclusionToleranceUnits:
+      type: number
+      description: Distance tolerance in world units for position exclusion matching in affordance queries
+      default: 1.0
+      env: MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS
 
     # Large Payload Handling
     InlinePayloadMaxBytes:

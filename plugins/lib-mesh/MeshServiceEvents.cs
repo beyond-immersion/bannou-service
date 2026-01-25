@@ -75,7 +75,7 @@ public partial class MeshService
                     Port = _configuration.EndpointPort,
                     Status = MapHeartbeatStatus(evt.Status),
                     Services = evt.Services?.Select(s => s.ServiceName).ToList() ?? new List<string>(),
-                    MaxConnections = evt.Capacity?.MaxConnections ?? 1000,
+                    MaxConnections = evt.Capacity?.MaxConnections ?? _configuration.DefaultMaxConnections,
                     CurrentConnections = evt.Capacity?.CurrentConnections ?? 0,
                     LoadPercent = evt.Capacity?.CpuUsage ?? 0,
                     RegisteredAt = DateTimeOffset.UtcNow,

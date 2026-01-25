@@ -1033,14 +1033,23 @@ public partial class MappingService : IMappingService
                 if (cachedResult != null)
                 {
                     stopwatch.Stop();
-                    cachedResult.QueryMetadata = new AffordanceQueryMetadata
+                    // Preserve original query stats from cached result, update cache-specific fields
+                    if (cachedResult.QueryMetadata != null)
                     {
-                        KindsSearched = new List<string>(),
-                        ObjectsEvaluated = 0,
-                        CandidatesGenerated = 0,
-                        SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
-                        CacheHit = true
-                    };
+                        cachedResult.QueryMetadata.SearchDurationMs = (int)stopwatch.ElapsedMilliseconds;
+                        cachedResult.QueryMetadata.CacheHit = true;
+                    }
+                    else
+                    {
+                        cachedResult.QueryMetadata = new AffordanceQueryMetadata
+                        {
+                            KindsSearched = new List<string>(),
+                            ObjectsEvaluated = 0,
+                            CandidatesGenerated = 0,
+                            SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
+                            CacheHit = true
+                        };
+                    }
                     return (StatusCodes.OK, cachedResult);
                 }
             }
@@ -1070,10 +1079,11 @@ public partial class MappingService : IMappingService
                 // Skip excluded positions
                 if (body.ExcludePositions != null && candidate.Position != null)
                 {
+                    var tolerance = _configuration.AffordanceExclusionToleranceUnits;
                     var excluded = body.ExcludePositions.Any(p =>
-                        Math.Abs(p.X - candidate.Position.X) < 1.0 &&
-                        Math.Abs(p.Y - candidate.Position.Y) < 1.0 &&
-                        Math.Abs(p.Z - candidate.Position.Z) < 1.0);
+                        Math.Abs(p.X - candidate.Position.X) < tolerance &&
+                        Math.Abs(p.Y - candidate.Position.Y) < tolerance &&
+                        Math.Abs(p.Z - candidate.Position.Z) < tolerance);
                     if (excluded)
                     {
                         continue;
