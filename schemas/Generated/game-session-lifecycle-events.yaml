@@ -31,15 +31,15 @@ components:
           format: uuid
           description: "Unique identifier for the game session"
         gameType: &id002
-          type: string
+          $ref: '../game-session-api.yaml#/components/schemas/GameType'
           description: "Type of game being played in this session"
         sessionName: &id003
           type: string
           nullable: true
           description: "Human-readable name for the session"
         status: &id004
-          type: string
-          description: "Current status of the game session (e.g., waiting, active, completed)"
+          $ref: '../game-session-api.yaml#/components/schemas/SessionStatus'
+          description: "Current status of the game session"
         maxPlayers: &id005
           type: integer
           nullable: true

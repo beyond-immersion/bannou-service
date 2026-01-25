@@ -50,8 +50,8 @@ components:
           nullable: true
           description: "Detailed description of the location"
         locationType: &id006
-          type: string
-          description: "Type classification of the location (e.g., room, area, zone)"
+          $ref: '../location-api.yaml#/components/schemas/LocationType'
+          description: "Type classification of the location"
         parentLocationId: &id007
           type: string
           format: uuid

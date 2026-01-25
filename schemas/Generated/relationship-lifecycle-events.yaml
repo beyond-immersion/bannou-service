@@ -39,15 +39,15 @@ components:
           format: uuid
           description: "Unique identifier of the first entity in the relationship"
         entity1Type: &id003
-          type: string
-          description: "Type classification of the first entity (e.g., character, account, npc)"
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: "Type classification of the first entity"
         entity2Id: &id004
           type: string
           format: uuid
           description: "Unique identifier of the second entity in the relationship"
         entity2Type: &id005
-          type: string
-          description: "Type classification of the second entity (e.g., character, account, npc)"
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: "Type classification of the second entity"
         relationshipTypeId: &id006
           type: string
           format: uuid

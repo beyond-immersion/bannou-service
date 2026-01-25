@@ -6,7 +6,6 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Account;
-using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Asset;
@@ -57,11 +56,6 @@ public partial interface IServiceNavigator
     /// Gets the Account service client.
     /// </summary>
     IAccountClient Account { get; }
-
-    /// <summary>
-    /// Gets the Achievement service client.
-    /// </summary>
-    IAchievementClient Achievement { get; }
 
     /// <summary>
     /// Gets the Actor service client.

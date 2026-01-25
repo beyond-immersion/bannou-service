@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Contract;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -99,7 +100,8 @@ public partial class ContractTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("defaultEnforcementMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultEnforcementMode { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EnforcementMode DefaultEnforcementMode { get; set; } = default!;
 
     /// <summary>
     /// Whether contracts can be transferred
@@ -198,7 +200,8 @@ public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("defaultEnforcementMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultEnforcementMode { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EnforcementMode DefaultEnforcementMode { get; set; } = default!;
 
     /// <summary>
     /// Whether contracts can be transferred
@@ -305,7 +308,8 @@ public partial class ContractTemplateDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("defaultEnforcementMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultEnforcementMode { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EnforcementMode DefaultEnforcementMode { get; set; } = default!;
 
     /// <summary>
     /// Whether contracts can be transferred
@@ -386,7 +390,8 @@ public partial class ContractInstanceCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContractStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When contract was proposed to parties
@@ -479,7 +484,8 @@ public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContractStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When contract was proposed to parties
@@ -580,7 +586,8 @@ public partial class ContractInstanceDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContractStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When contract was proposed to parties

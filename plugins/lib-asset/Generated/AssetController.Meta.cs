@@ -93,13 +93,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -412,13 +406,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -666,13 +654,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -1084,13 +1066,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -1224,13 +1200,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -1360,13 +1330,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1935,13 +1899,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -2541,13 +2499,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -2831,13 +2783,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -2845,7 +2791,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         }
     }
 }
@@ -2949,13 +2895,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -3568,13 +3508,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -3582,7 +3516,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\ n- metabundle: Composed from other bundles server-side\n"
         }
     }
 }
@@ -3726,13 +3660,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -4021,13 +3949,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -4302,13 +4224,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "enum": [
-                "omega",
-                "arcadia",
-                "fantasia",
-                "shared"
-            ],
-            "description": "Game realm the asset belongs to"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",

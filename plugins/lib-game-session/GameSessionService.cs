@@ -305,8 +305,8 @@ public partial class GameSessionService : IGameSessionService
                     var voiceResponse = await _voiceClient.CreateVoiceRoomAsync(new CreateVoiceRoomRequest
                     {
                         SessionId = sessionId,
-                        PreferredTier = VoiceTier.P2p,
-                        Codec = VoiceCodec.Opus,
+                        PreferredTier = Voice.VoiceTier.P2p,
+                        Codec = Voice.VoiceCodec.Opus,
                         MaxParticipants = body.MaxPlayers
                     }, cancellationToken);
 
@@ -500,7 +500,7 @@ public partial class GameSessionService : IGameSessionService
                 AccountId = accountId,
                 SessionId = clientSessionId,  // WebSocket session for event delivery
                 DisplayName = "Player " + (model.CurrentPlayers + 1),
-                Role = GamePlayerRole.Player,
+                Role = PlayerRole.Player,
                 JoinedAt = DateTimeOffset.UtcNow,
                 CharacterData = body.CharacterData
             };
@@ -562,7 +562,7 @@ public partial class GameSessionService : IGameSessionService
             var response = new JoinGameSessionResponse
             {
                 SessionId = lobbyId,
-                PlayerRole = JoinGameSessionResponsePlayerRole.Player,
+                PlayerRole = PlayerRole.Player,
                 GameData = model.GameSettings ?? new object(),
                 NewPermissions = new List<string>
                 {
@@ -637,7 +637,7 @@ public partial class GameSessionService : IGameSessionService
 
             // Validate action data is present for mutation actions
             var actionType = body.ActionType;
-            if (body.ActionData == null && actionType != GameActionRequestActionType.Move)
+            if (body.ActionData == null && actionType != GameActionType.Move)
             {
                 // Move can have empty data for "continue moving" semantics; other actions need data
                 _logger.LogDebug("No action data provided for action type {ActionType} - proceeding with empty data", actionType);
@@ -1002,7 +1002,7 @@ public partial class GameSessionService : IGameSessionService
                 AccountId = accountId,
                 SessionId = clientSessionId,
                 DisplayName = "Player " + (model.CurrentPlayers + 1),
-                Role = GamePlayerRole.Player,
+                Role = PlayerRole.Player,
                 JoinedAt = DateTimeOffset.UtcNow,
                 CharacterData = body.CharacterData
             };
@@ -1082,7 +1082,7 @@ public partial class GameSessionService : IGameSessionService
             var response = new JoinGameSessionResponse
             {
                 SessionId = body.GameSessionId,
-                PlayerRole = JoinGameSessionResponsePlayerRole.Player,
+                PlayerRole = PlayerRole.Player,
                 GameData = model.GameSettings ?? new object(),
                 NewPermissions = new List<string>
                 {

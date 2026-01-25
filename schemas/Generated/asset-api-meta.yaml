@@ -82,9 +82,9 @@ paths:
         enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
         behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
         \            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n   \
-        \             \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm
-        the asset belongs to\"\n        }\n    }\n}"
+        \   \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this
+        asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\
+        nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UploadResponse\"\
         ,\n    \"$defs\": {\n        \"UploadResponse\": {\n            \"description\": \"Response containing pre-signed
         URL and configuration for uploading an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -202,12 +202,12 @@ paths:
         \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
         audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
         \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
-        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n    \
-        \            \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n           \
-        \ \"description\": \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n    \
-        \            \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
-        pipeline status\"\n        }\n    }\n}"
+        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase
+        string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\
+        \") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        },\n\
+        \        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
+        ,\n                \"processing\",\n                \"complete\",\n                \"failed\"\n            ],\n  \
+        \          \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark upload as complete, trigger processing\",\n    \"description\": \"\
         Called after the client has uploaded the file to the pre-signed URL.\\nTriggers the asset processing pipeline (texture
         conversion, model validation, etc.)\\nand emits completion events via WebSocket.\\n\",\n    \"tags\": [\n        \"\
@@ -297,11 +297,12 @@ paths:
         \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
         \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
         description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n            \"type\": \"\
-        string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
-        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
-        \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
-        \n            ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
+        string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\
+        nUse the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\
+        \" for assets that are available across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n          \
+        \  \"type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n\
+        \                \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
+        pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get asset metadata and download URL\",\n    \"description\": \"Retrieve
         asset metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for
         latest.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAsset\"\
@@ -465,9 +466,9 @@ paths:
         enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
         behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
         \            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n   \
-        \             \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm
-        the asset belongs to\"\n        }\n    }\n}"
+        \   \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this
+        asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\
+        nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetSearchResult\"\
         ,\n    \"$defs\": {\n        \"AssetSearchResult\": {\n            \"description\": \"Paginated results from an asset
         search query\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -510,11 +511,12 @@ paths:
         \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
         \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
         description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n            \"type\": \"\
-        string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
-        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
-        \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
-        \n            ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
+        string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\
+        nUse the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\
+        \" for assets that are available across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n          \
+        \  \"type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n\
+        \                \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
+        pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Search assets by tags, type, or realm\",\n    \"description\": \"Search
         assets using various filters with pagination.\\nAll filters are optional and combine with AND logic.\\n\",\n    \"\
         tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"searchAssets\"\n}"
@@ -573,11 +575,12 @@ paths:
         \            \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata for the bundle
         (null if none)\"\n                }\n            }\n        },\n        \"GameRealm\": {\n            \"type\": \"\
-        string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
-        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
-        \        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
-        \        \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n            \"description\"\
-        : \"Compression algorithm for bundles\"\n        }\n    }\n}"
+        string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\
+        nUse the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\
+        \" for assets that are available across all realms.\\n\"\n        },\n        \"CompressionType\": {\n           \
+        \ \"type\": \"string\",\n            \"enum\": [\n                \"lz4\",\n                \"lzma\",\n          \
+        \      \"none\"\n            ],\n            \"description\": \"Compression algorithm for bundles\"\n        }\n \
+        \   }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateBundleResponse\": {\n            \"description\": \"Response with bundle creation
         status and estimated size\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -812,9 +815,10 @@ paths:
         included regardless of this filter.\\n\"\n                },\n                \"metadata\": {\n                  \
         \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
         \                    \"description\": \"Custom metadata for the metabundle\"\n                }\n            }\n \
-        \       },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n          \
-        \  ],\n            \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n}"
+        \       },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub
+        name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"omega\\\
+        \", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\\
+        n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateMetabundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response from metabundle creation.\\nFor synchronous creation (small jobs):
@@ -1076,9 +1080,9 @@ paths:
         \                \"maxBundles\": {\n                    \"type\": \"integer\",\n                    \"nullable\":
         true,\n                    \"description\": \"Maximum number of bundles to return (optimization limit)\"\n       \
         \         }\n            }\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n             \
-        \   \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n\
-        }"
+        description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name
+        property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available
+        across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResolveBundlesResponse\"\
         ,\n    \"$defs\": {\n        \"ResolveBundlesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Optimal bundle set for requested assets\",\n            \"required\": [\n\
@@ -1187,12 +1191,13 @@ paths:
         ,\n                    \"default\": 50,\n                    \"description\": \"Maximum results to return\"\n    \
         \            },\n                \"offset\": {\n                    \"type\": \"integer\",\n                    \"\
         default\": 0,\n                    \"description\": \"Pagination offset\"\n                }\n            }\n    \
-        \    },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
-        omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n\
-        \            \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleType\": {\n       \
-        \     \"type\": \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n\
-        \            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created
-        from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        }\n    }\n}"
+        \    },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name
+        (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"omega\\\"\
+        , \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\\
+        n\"\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
+        \       \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
+        n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
+        n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesByAssetResponse\"\
         ,\n    \"$defs\": {\n        \"QueryBundlesByAssetResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Bundles containing the requested asset\",\n       \
@@ -1225,9 +1230,9 @@ paths:
         \        \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"\
         description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle:
         Composed from other bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
-        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
-        \        }\n    }\n}"
+        ,\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse
+        the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\"\
+        \ for assets that are available across all realms.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find all bundles containing a specific asset\",\n    \"description\": \"\
         Query the reverse index to find all bundles (source and metabundle)\\nthat contain a specific asset ID. Useful for
         understanding asset\\ndistribution and debugging resolution issues.\\n\",\n    \"tags\": [\n        \"Bundles\"\n\
@@ -1508,12 +1513,12 @@ paths:
         ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
         Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
         is being processed (metabundle creation)\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
-        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
-        \        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
-        \   \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
-        n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
-        n\"\n        }\n    }\n}"
+        ,\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse
+        the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\"\
+        \ for assets that are available across all realms.\\n\"\n        },\n        \"BundleType\": {\n            \"type\"\
+        : \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n\
+        \            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\
+        n- metabundle: Composed from other bundles server-side\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesResponse\"\
         ,\n    \"$defs\": {\n        \"QueryBundlesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Bundle query results\",\n            \"required\": [\n                \"\
@@ -1562,12 +1567,13 @@ paths:
         \                \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle
         category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other
         bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n             \
-        \   \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n        },\n   \
-        \     \"BundleLifecycle\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\"\
-        ,\n                \"deleted\",\n                \"processing\"\n            ],\n            \"description\": \"Bundle
-        lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention
-        period)\\n- processing: Bundle is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
+        description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name
+        property (e.g., \\\"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available
+        across all realms.\\n\"\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n         \
+        \   \"enum\": [\n                \"active\",\n                \"deleted\",\n                \"processing\"\n     \
+        \       ],\n            \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted:
+        Bundle has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\\
+        n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query bundles with advanced filters\",\n    \"description\": \"Query bundles
         with flexible filtering options including:\\n- Tag matching (exact, exists, not exists)\\n- Status filtering (active,
         deleted)\\n- Date range filtering\\n- Name search (contains)\\n- Owner filtering\\n- Realm and bundle type filtering\\
@@ -1680,13 +1686,14 @@ paths:
         \        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
         \   \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
         n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
-        n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n     \
-        \       ],\n            \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleLifecycle\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
-        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
-        Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
-        is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
+        n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm
+        stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\
+        \"omega\\\", \\\"arcadia\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all
+        realms.\\n\"\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"active\",\n                \"deleted\",\n                \"processing\"\n            ],\n \
+        \           \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle
+        has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\\
+        n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List version history for a bundle\",\n    \"description\": \"Get the version
         history for a bundle, showing all metadata changes\\nover time. Each version record includes:\\n- Version number\\
         n- When the change was made\\n- Who made the change\\n- What changed\\n- Optional reason for the change\\n\\nThe current
@@ -1786,12 +1793,12 @@ paths:
         \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
         audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
         \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
-        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n    \
-        \            \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n           \
-        \ \"description\": \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n    \
-        \            \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
-        pipeline status\"\n        }\n    }\n}"
+        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase
+        string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"omega\\\", \\\"arcadia\\\
+        \") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        },\n\
+        \        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
+        ,\n                \"processing\",\n                \"complete\",\n                \"failed\"\n            ],\n  \
+        \          \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Batch asset metadata lookup\",\n    \"description\": \"Retrieve metadata
         for multiple assets in a single request.\\nOptionally includes pre-signed download URLs.\\nMaximum 100 asset IDs per
         request.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkGetAssets\"\
@@ -1811,12 +1818,10 @@ components:
       description: Type classification for assets
     GameRealm:
       type: string
-      enum:
-      - omega
-      - arcadia
-      - fantasia
-      - shared
-      description: Game realm the asset belongs to
+      description: |
+        Realm stub name (lowercase string identifier) that this asset belongs to.
+        Use the realm's stub_name property (e.g., "omega", "arcadia") from the Realm service.
+        Use "shared" for assets that are available across all realms.
     ProcessingStatus:
       type: string
       enum:

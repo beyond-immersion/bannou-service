@@ -57,7 +57,7 @@ components:
           type: integer
           description: "Maximum number of parties allowed"
         defaultEnforcementMode: &id008
-          type: string
+          $ref: '../contract-api.yaml#/components/schemas/EnforcementMode'
           description: "Default enforcement mode for instances"
         transferable: &id009
           type: boolean
@@ -188,7 +188,7 @@ components:
           type: string
           description: "Template code for reference"
         status: &id016
-          type: string
+          $ref: '../contract-api.yaml#/components/schemas/ContractStatus'
           description: "Current contract status"
         proposedAt: &id017
           type: string

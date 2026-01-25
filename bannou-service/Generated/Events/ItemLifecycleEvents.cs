@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Item;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -83,7 +84,8 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemCategory Category { get; set; } = default!;
 
     /// <summary>
     /// Item rarity tier
@@ -91,15 +93,17 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Rarity { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemRarity Rarity { get; set; } = default!;
 
     /// <summary>
-    /// How quantities are tracked (discrete, continuous, unique)
+    /// How quantities are tracked
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string QuantityModel { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QuantityModel QuantityModel { get; set; } = default!;
 
     /// <summary>
     /// Realm availability scope
@@ -107,7 +111,8 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Scope { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemScope Scope { get; set; } = default!;
 
     /// <summary>
     /// Whether template is currently active
@@ -184,7 +189,8 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemCategory Category { get; set; } = default!;
 
     /// <summary>
     /// Item rarity tier
@@ -192,15 +198,17 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Rarity { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemRarity Rarity { get; set; } = default!;
 
     /// <summary>
-    /// How quantities are tracked (discrete, continuous, unique)
+    /// How quantities are tracked
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string QuantityModel { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QuantityModel QuantityModel { get; set; } = default!;
 
     /// <summary>
     /// Realm availability scope
@@ -208,7 +216,8 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Scope { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemScope Scope { get; set; } = default!;
 
     /// <summary>
     /// Whether template is currently active
@@ -293,7 +302,8 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemCategory Category { get; set; } = default!;
 
     /// <summary>
     /// Item rarity tier
@@ -301,15 +311,17 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Rarity { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemRarity Rarity { get; set; } = default!;
 
     /// <summary>
-    /// How quantities are tracked (discrete, continuous, unique)
+    /// How quantities are tracked
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string QuantityModel { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QuantityModel QuantityModel { get; set; } = default!;
 
     /// <summary>
     /// Realm availability scope
@@ -317,7 +329,8 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Scope { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemScope Scope { get; set; } = default!;
 
     /// <summary>
     /// Whether template is currently active
@@ -406,7 +419,8 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OriginType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemOriginType OriginType { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created
@@ -483,7 +497,8 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OriginType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemOriginType OriginType { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created
@@ -568,7 +583,8 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OriginType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemOriginType OriginType { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created

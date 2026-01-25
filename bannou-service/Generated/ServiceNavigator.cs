@@ -10,7 +10,6 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Account;
-using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Asset;
@@ -74,7 +73,6 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly AppConfiguration _configuration;
 
     private readonly IAccountClient _account;
-    private readonly IAchievementClient _achievement;
     private readonly IActorClient _actor;
     private readonly IAnalyticsClient _analytics;
     private readonly IAssetClient _asset;
@@ -123,7 +121,6 @@ public partial class ServiceNavigator : IServiceNavigator
         IServiceAppMappingResolver appMappingResolver,
         AppConfiguration configuration,
         IAccountClient account,
-        IAchievementClient achievement,
         IActorClient actor,
         IAnalyticsClient analytics,
         IAssetClient asset,
@@ -168,7 +165,6 @@ public partial class ServiceNavigator : IServiceNavigator
         _appMappingResolver = appMappingResolver;
         _configuration = configuration;
         _account = account;
-        _achievement = achievement;
         _actor = actor;
         _analytics = analytics;
         _asset = asset;
@@ -255,9 +251,6 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IAccountClient Account => _account;
-
-    /// <inheritdoc />
-    public IAchievementClient Achievement => _achievement;
 
     /// <inheritdoc />
     public IActorClient Actor => _actor;

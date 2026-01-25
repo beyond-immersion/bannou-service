@@ -62,12 +62,13 @@ public partial class RelationshipCreatedEvent : BaseServiceEvent
     public System.Guid Entity1Id { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the first entity (e.g., character, account, npc)
+    /// Type classification of the first entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Entity1Type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity1Type { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier of the second entity in the relationship
@@ -78,12 +79,13 @@ public partial class RelationshipCreatedEvent : BaseServiceEvent
     public System.Guid Entity2Id { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the second entity (e.g., character, account, npc)
+    /// Type classification of the second entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Entity2Type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity2Type { get; set; } = default!;
 
     /// <summary>
     /// Reference to the relationship type definition
@@ -161,12 +163,13 @@ public partial class RelationshipUpdatedEvent : BaseServiceEvent
     public System.Guid Entity1Id { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the first entity (e.g., character, account, npc)
+    /// Type classification of the first entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Entity1Type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity1Type { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier of the second entity in the relationship
@@ -177,12 +180,13 @@ public partial class RelationshipUpdatedEvent : BaseServiceEvent
     public System.Guid Entity2Id { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the second entity (e.g., character, account, npc)
+    /// Type classification of the second entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Entity2Type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity2Type { get; set; } = default!;
 
     /// <summary>
     /// Reference to the relationship type definition
@@ -268,12 +272,13 @@ public partial class RelationshipDeletedEvent : BaseServiceEvent
     public System.Guid Entity1Id { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the first entity (e.g., character, account, npc)
+    /// Type classification of the first entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Entity1Type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity1Type { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier of the second entity in the relationship
@@ -284,12 +289,13 @@ public partial class RelationshipDeletedEvent : BaseServiceEvent
     public System.Guid Entity2Id { get; set; } = default!;
 
     /// <summary>
-    /// Type classification of the second entity (e.g., character, account, npc)
+    /// Type classification of the second entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Entity2Type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity2Type { get; set; } = default!;
 
     /// <summary>
     /// Reference to the relationship type definition

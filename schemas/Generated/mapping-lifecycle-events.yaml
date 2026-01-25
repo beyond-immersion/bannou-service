@@ -54,7 +54,7 @@ components:
           nullable: true
           description: "When current authority expires"
         nonAuthorityHandling: &id007
-          type: string
+          $ref: '../mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode'
           description: "How to handle non-authority publishes"
         version: &id008
           type: integer

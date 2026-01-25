@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Currency;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -70,12 +71,13 @@ public partial class CurrencyDefinitionCreatedEvent : BaseServiceEvent
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Currency scope (global, realm_specific, multi_realm)
+    /// Currency scope
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Scope { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CurrencyScope Scope { get; set; } = default!;
 
     /// <summary>
     /// Currency precision type
@@ -83,7 +85,8 @@ public partial class CurrencyDefinitionCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("precision")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Precision { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CurrencyPrecision Precision { get; set; } = default!;
 
     /// <summary>
     /// Whether the definition is active
@@ -147,12 +150,13 @@ public partial class CurrencyDefinitionUpdatedEvent : BaseServiceEvent
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Currency scope (global, realm_specific, multi_realm)
+    /// Currency scope
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Scope { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CurrencyScope Scope { get; set; } = default!;
 
     /// <summary>
     /// Currency precision type
@@ -160,7 +164,8 @@ public partial class CurrencyDefinitionUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("precision")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Precision { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CurrencyPrecision Precision { get; set; } = default!;
 
     /// <summary>
     /// Whether the definition is active
@@ -232,12 +237,13 @@ public partial class CurrencyDefinitionDeletedEvent : BaseServiceEvent
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Currency scope (global, realm_specific, multi_realm)
+    /// Currency scope
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Scope { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CurrencyScope Scope { get; set; } = default!;
 
     /// <summary>
     /// Currency precision type
@@ -245,7 +251,8 @@ public partial class CurrencyDefinitionDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("precision")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Precision { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CurrencyPrecision Precision { get; set; } = default!;
 
     /// <summary>
     /// Whether the definition is active
@@ -312,7 +319,8 @@ public partial class CurrencyWalletCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets
@@ -321,12 +329,13 @@ public partial class CurrencyWalletCreatedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Wallet status (active, frozen, closed)
+    /// Wallet status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When the wallet was created
@@ -375,7 +384,8 @@ public partial class CurrencyWalletUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets
@@ -384,12 +394,13 @@ public partial class CurrencyWalletUpdatedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Wallet status (active, frozen, closed)
+    /// Wallet status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When the wallet was created
@@ -446,7 +457,8 @@ public partial class CurrencyWalletDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletOwnerType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets
@@ -455,12 +467,13 @@ public partial class CurrencyWalletDeletedEvent : BaseServiceEvent
     public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Wallet status (active, frozen, closed)
+    /// Wallet status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WalletStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When the wallet was created

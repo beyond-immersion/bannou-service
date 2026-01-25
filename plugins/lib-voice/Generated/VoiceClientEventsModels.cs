@@ -251,7 +251,8 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// Previous tier (always p2p for upgrade events)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousTier")]
-    public string? PreviousTier { get; set; } = "p2p";
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceTier? PreviousTier { get; set; } = default!;
 
     /// <summary>
     /// New tier after upgrade (always scaled for upgrade events)
@@ -259,7 +260,8 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("newTier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string NewTier { get; set; } = "scaled";
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceTier NewTier { get; set; } = default!;
 
     /// <summary>
     /// RTP server URI to connect to

@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.GameSession;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -59,7 +60,8 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string GameType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public GameType GameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for the session
@@ -68,12 +70,13 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     public string? SessionName { get; set; } = default!;
 
     /// <summary>
-    /// Current status of the game session (e.g., waiting, active, completed)
+    /// Current status of the game session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of players allowed in the session
@@ -138,7 +141,8 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string GameType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public GameType GameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for the session
@@ -147,12 +151,13 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     public string? SessionName { get; set; } = default!;
 
     /// <summary>
-    /// Current status of the game session (e.g., waiting, active, completed)
+    /// Current status of the game session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of players allowed in the session
@@ -225,7 +230,8 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string GameType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public GameType GameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for the session
@@ -234,12 +240,13 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     public string? SessionName { get; set; } = default!;
 
     /// <summary>
-    /// Current status of the game session (e.g., waiting, active, completed)
+    /// Current status of the game session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of players allowed in the session
