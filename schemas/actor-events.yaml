@@ -85,15 +85,7 @@ x-lifecycle:
         nullable: true  # NRT: Optional property MUST be nullable
         description: Pool node running this actor
       status:
-        type: string
-        enum:
-          - pending
-          - starting
-          - running
-          - paused
-          - stopping
-          - stopped
-          - error
+        $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
         required: true
         description: Current actor lifecycle state
       startedAt:
@@ -264,26 +256,10 @@ components:
           type: string
           description: Pool node where the actor is running
         previousStatus:
-          type: string
-          enum:
-            - pending
-            - starting
-            - running
-            - paused
-            - stopping
-            - stopped
-            - error
+          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
           description: Actor status before the change
         newStatus:
-          type: string
-          enum:
-            - pending
-            - starting
-            - running
-            - paused
-            - stopping
-            - stopped
-            - error
+          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
           description: Actor status after the change
         reason:
           type: string
