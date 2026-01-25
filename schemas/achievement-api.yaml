@@ -305,15 +305,6 @@ components:
     # ============================================
     # Shared Enums
     # ============================================
-    EntityType:
-      type: string
-      description: Type of entity that can earn achievements
-      enum:
-      - account
-      - character
-      - guild
-      - actor
-      - custom
 
     AchievementType:
       type: string
@@ -384,7 +375,7 @@ components:
         entityTypes:
           type: array
           items:
-            $ref: '#/components/schemas/EntityType'
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Which entity types can earn this achievement
         progressTarget:
           type: integer
@@ -572,7 +563,7 @@ components:
         entityTypes:
           type: array
           items:
-            $ref: '#/components/schemas/EntityType'
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Allowed entity types
         progressTarget:
           type: integer
@@ -641,7 +632,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type whose progress is requested
         achievementId:
           type: string
@@ -662,7 +653,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type that owns this progress summary
         progress:
           type: array
@@ -735,7 +726,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type receiving the progress increment
         increment:
           type: integer
@@ -796,7 +787,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type to unlock the achievement for
         skipPlatformSync:
           type: boolean
@@ -847,7 +838,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type whose unlocked achievements are listed
         platform:
           $ref: '#/components/schemas/Platform'
@@ -869,7 +860,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for the returned unlocked achievements
         achievements:
           type: array
@@ -934,7 +925,7 @@ components:
           format: uuid
           description: ID of the entity (must be account for platform sync)
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type to sync (must be account for platform links)
         platform:
           $ref: '#/components/schemas/Platform'
@@ -990,7 +981,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type whose platform sync status is requested
         platform:
           $ref: '#/components/schemas/Platform'
@@ -1011,7 +1002,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for the reported platform status
         platforms:
           type: array

@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Contract;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -146,7 +148,8 @@ public partial class ContractConsentReceivedEvent
     [System.Text.Json.Serialization.JsonPropertyName("consentingEntityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ConsentingEntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType ConsentingEntityType { get; set; } = default!;
 
     /// <summary>
     /// Party's role in the contract
@@ -457,7 +460,8 @@ public partial class ContractBreachDetectedEvent
     [System.Text.Json.Serialization.JsonPropertyName("breachingEntityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BreachingEntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType BreachingEntityType { get; set; } = default!;
 
     /// <summary>
     /// Type of breach
@@ -465,7 +469,8 @@ public partial class ContractBreachDetectedEvent
     [System.Text.Json.Serialization.JsonPropertyName("breachType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BreachType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BreachType BreachType { get; set; } = default!;
 
     /// <summary>
     /// What was breached
@@ -628,7 +633,8 @@ public partial class ContractTerminatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("terminatedByEntityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TerminatedByEntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType TerminatedByEntityType { get; set; } = default!;
 
     /// <summary>
     /// Reason for termination
@@ -917,7 +923,8 @@ public partial class PartyInfo
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Role in contract

@@ -340,15 +340,6 @@ components:
     # ============================================
     # Shared Enums
     # ============================================
-    EntityType:
-      type: string
-      description: Type of entity on the leaderboard
-      enum:
-      - account
-      - character
-      - guild
-      - actor
-      - custom
 
     SortOrder:
       type: string
@@ -399,7 +390,7 @@ components:
         entityTypes:
           type: array
           items:
-            $ref: '#/components/schemas/EntityType'
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Which entity types can appear on this leaderboard
         sortOrder:
           $ref: '#/components/schemas/SortOrder'
@@ -545,7 +536,7 @@ components:
         entityTypes:
           type: array
           items:
-            $ref: '#/components/schemas/EntityType'
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Allowed entity types
         sortOrder:
           $ref: '#/components/schemas/SortOrder'
@@ -603,7 +594,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type submitting the score
         score:
           type: number
@@ -687,7 +678,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for this score entry
         score:
           type: number
@@ -734,7 +725,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type whose rank is requested
 
     EntityRankResponse:
@@ -753,7 +744,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for the ranked entity
         score:
           type: number
@@ -819,7 +810,7 @@ components:
           format: uuid
           description: ID of the entity to center on
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type of the anchor entry
         countBefore:
           type: integer
@@ -869,7 +860,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for this leaderboard entry
         score:
           type: number

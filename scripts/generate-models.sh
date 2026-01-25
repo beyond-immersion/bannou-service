@@ -45,6 +45,15 @@ ensure_dotnet_root
 EXCLUDED_TYPES="ApiException,ApiException\<TResult\>"
 ADDITIONAL_NAMESPACES="BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
 
+# Extract $refs to common-api.yaml types (shared types like EntityType)
+# These are generated once in CommonApiModels.cs, so we exclude them
+COMMON_API_REFS=$(extract_common_api_refs "$SCHEMA_FILE")
+if [ -n "$COMMON_API_REFS" ]; then
+    echo -e "${BLUE}ℹ️  Found common-api.yaml refs - excluding shared types${NC}"
+    echo -e "  📦 Common types: $COMMON_API_REFS"
+    EXCLUDED_TYPES="$EXCLUDED_TYPES,$COMMON_API_REFS"
+fi
+
 # Extract SDK type mappings from schema (x-sdk-type extensions)
 # This allows schemas to reference types from external SDKs without generating duplicates
 SCRIPT_DIR="$(dirname "$0")"
@@ -124,15 +133,23 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
     LIFECYCLE_API_REFS=$(extract_api_refs "$LIFECYCLE_EVENTS_FILE" "$SERVICE_NAME")
 
-    # Build exclusion list: base exclusions + any API-referenced types
+    # Extract $refs to common-api.yaml types (shared types like EntityType)
+    LIFECYCLE_COMMON_REFS=$(extract_common_api_refs "$LIFECYCLE_EVENTS_FILE")
+
+    # Build exclusion list: base exclusions + any API-referenced types + common types
     LIFECYCLE_EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseServiceEvent"
     if [ -n "$LIFECYCLE_API_REFS" ]; then
         LIFECYCLE_EXCLUSIONS="${LIFECYCLE_EXCLUSIONS},${LIFECYCLE_API_REFS}"
         echo -e "  ${BLUE}Excluding API types: ${LIFECYCLE_API_REFS}${NC}"
     fi
+    if [ -n "$LIFECYCLE_COMMON_REFS" ]; then
+        LIFECYCLE_EXCLUSIONS="${LIFECYCLE_EXCLUSIONS},${LIFECYCLE_COMMON_REFS}"
+        echo -e "  ${BLUE}Excluding common types: ${LIFECYCLE_COMMON_REFS}${NC}"
+    fi
 
     # Build namespace usages: base + service namespace if we have API refs
-    LIFECYCLE_NAMESPACE_USAGES="BeyondImmersion.Bannou.Core"
+    # BeyondImmersion.BannouService is always included for common types
+    LIFECYCLE_NAMESPACE_USAGES="BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService"
     if [ -n "$LIFECYCLE_API_REFS" ]; then
         LIFECYCLE_NAMESPACE_USAGES="${LIFECYCLE_NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
     fi

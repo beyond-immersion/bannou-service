@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Escrow;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -76,20 +78,22 @@ public partial class EscrowCreatedEvent
     public System.Guid EscrowId { get; set; } = default!;
 
     /// <summary>
-    /// Type of escrow (two_party, multi_party, conditional, auction)
+    /// Type of escrow
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("escrowType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EscrowType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EscrowType EscrowType { get; set; } = default!;
 
     /// <summary>
-    /// Trust mode (full_consent, initiator_trusted, single_party_trusted)
+    /// Trust mode
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("trustMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string TrustMode { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EscrowTrustMode TrustMode { get; set; } = default!;
 
     /// <summary>
     /// Parties in the escrow
@@ -327,12 +331,13 @@ public partial class EscrowConsentReceivedEvent
     public string PartyType { get; set; } = default!;
 
     /// <summary>
-    /// Type of consent (release, refund, dispute, reaffirm)
+    /// Type of consent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consentType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ConsentType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EscrowConsentType ConsentType { get; set; } = default!;
 
     /// <summary>
     /// Number of consents received

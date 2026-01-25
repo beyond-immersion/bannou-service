@@ -56,15 +56,23 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
     # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
     API_REFS=$(extract_api_refs "$EVENTS_SCHEMA" "$SERVICE_NAME" "$SERVICE_PASCAL")
 
-    # Build exclusion list: base exclusions + any API-referenced types
+    # Extract $refs to common-api.yaml types (shared types like EntityType)
+    COMMON_REFS=$(extract_common_api_refs "$EVENTS_SCHEMA")
+
+    # Build exclusion list: base exclusions + any API-referenced types + common types
     EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseServiceEvent"
     if [ -n "$API_REFS" ]; then
         EXCLUSIONS="${EXCLUSIONS},${API_REFS}"
         echo -e "  ${BLUE}Excluding API types: ${API_REFS}${NC}"
     fi
+    if [ -n "$COMMON_REFS" ]; then
+        EXCLUSIONS="${EXCLUSIONS},${COMMON_REFS}"
+        echo -e "  ${BLUE}Excluding common types: ${COMMON_REFS}${NC}"
+    fi
 
     # Build namespace usages: base + service namespace if we have API refs
-    NAMESPACE_USAGES="BeyondImmersion.Bannou.Core"
+    # BeyondImmersion.BannouService is always included for common types
+    NAMESPACE_USAGES="BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService"
     if [ -n "$API_REFS" ]; then
         NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
     fi

@@ -23,6 +23,8 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.CharacterPersonality;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -154,12 +156,13 @@ public partial class PersonalityEvolvedEvent
     public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
-    /// Type of experience that caused the evolution (e.g., TRAUMA, BETRAYAL, VICTORY)
+    /// Type of experience that caused the evolution
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ExperienceType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ExperienceType ExperienceType { get; set; } = default!;
 
     /// <summary>
     /// Intensity of the experience (0.0-1.0)
@@ -326,12 +329,13 @@ public partial class CombatPreferencesEvolvedEvent
     public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
-    /// Type of combat experience that caused the evolution (e.g., DECISIVE_VICTORY, NEAR_DEATH)
+    /// Type of combat experience that caused the evolution
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ExperienceType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CombatExperienceType ExperienceType { get; set; } = default!;
 
     /// <summary>
     /// Intensity of the combat experience (0.0-1.0)

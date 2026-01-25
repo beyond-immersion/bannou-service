@@ -105,13 +105,13 @@ public partial class SaveLoadService : ISaveLoadService
             // Check max slots per owner limit
             var queryableSlotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var ownerSlots = await queryableSlotStore.QueryAsync(
-                s => s.OwnerId == ownerId && s.OwnerType == ownerType,
+                s => s.OwnerId == body.OwnerId && s.OwnerType == body.OwnerType,
                 cancellationToken);
             if (ownerSlots.Count() >= _configuration.MaxSlotsPerOwner)
             {
                 _logger.LogDebug(
                     "Owner {OwnerId} has reached maximum slot limit of {MaxSlots}",
-                    ownerId, _configuration.MaxSlotsPerOwner);
+                    body.OwnerId, _configuration.MaxSlotsPerOwner);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -125,15 +125,15 @@ public partial class SaveLoadService : ISaveLoadService
             var slotId = Guid.NewGuid();
             var slot = new SaveSlotMetadata
             {
-                SlotId = slotId.ToString(),
+                SlotId = slotId,
                 GameId = body.GameId,
-                OwnerId = ownerId,
-                OwnerType = ownerType,
+                OwnerId = body.OwnerId,
+                OwnerType = body.OwnerType,
                 SlotName = body.SlotName,
-                Category = category.ToString(),
+                Category = category,
                 MaxVersions = (int)maxVersions,
                 RetentionDays = body.RetentionDays > 0 ? body.RetentionDays : null,
-                CompressionType = compressionType.ToString(),
+                CompressionType = compressionType,
                 VersionCount = 0,
                 LatestVersion = null,
                 TotalSizeBytes = 0,

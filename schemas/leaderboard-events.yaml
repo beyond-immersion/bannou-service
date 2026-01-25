@@ -75,7 +75,7 @@ components:
           format: uuid
           description: ID of the entity whose rank changed
         entityType:
-          $ref: '../leaderboard-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         previousRank:
           type: integer
@@ -132,7 +132,7 @@ components:
           format: uuid
           description: ID of the new entity
         entityType:
-          $ref: '../leaderboard-api.yaml#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         score:
           type: number

@@ -253,16 +253,6 @@ components:
     # ============================================
     # Shared Enums
     # ============================================
-    EntityType:
-      type: string
-      description: Type of entity being tracked
-      enum:
-      - account
-      - character
-      - guild
-      - actor
-      - realm
-      - custom
 
     ControllerAction:
       type: string
@@ -297,7 +287,7 @@ components:
           format: uuid
           description: ID of the entity this event relates to
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type the event is attributed to
         timestamp:
           type: string
@@ -385,7 +375,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type to summarize
 
     EntitySummaryResponse:
@@ -404,7 +394,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for this summary
         totalEvents:
           type: integer
@@ -443,7 +433,7 @@ components:
           format: uuid
           description: ID of the game service
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Optional filter by entity type
         eventType:
@@ -511,7 +501,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type whose rating is requested
         ratingType:
           type: string
@@ -535,7 +525,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for this rating record
         ratingType:
           type: string
@@ -603,7 +593,7 @@ components:
           format: uuid
           description: ID of the participating entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for this match participant
         outcome:
           type: number
@@ -651,7 +641,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type for this rating change
         previousRating:
           type: number
@@ -694,7 +684,7 @@ components:
           format: uuid
           description: ID of the entity being controlled
         targetEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type being controlled
         action:
           $ref: '#/components/schemas/ControllerAction'
@@ -731,7 +721,7 @@ components:
           nullable: true
           description: Filter by controlled entity
         targetEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Filter by entity type
         startTime:
@@ -788,7 +778,7 @@ components:
           format: uuid
           description: ID of the controlled entity
         targetEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type that was controlled
         action:
           $ref: '#/components/schemas/ControllerAction'

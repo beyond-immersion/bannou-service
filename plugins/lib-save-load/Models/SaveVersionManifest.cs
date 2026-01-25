@@ -3,13 +3,14 @@ namespace BeyondImmersion.BannouService.SaveLoad.Models;
 /// <summary>
 /// Internal model for save version manifest stored in state store.
 /// Tracks metadata and asset references for each version.
+/// IMPLEMENTATION TENETS compliant: Uses proper C# types for enums and GUIDs.
 /// </summary>
 public sealed class SaveVersionManifest
 {
     /// <summary>
     /// Parent slot ID
     /// </summary>
-    public required string SlotId { get; set; }
+    public required Guid SlotId { get; set; }
 
     /// <summary>
     /// Version number (sequential within slot)
@@ -19,7 +20,7 @@ public sealed class SaveVersionManifest
     /// <summary>
     /// Asset ID for the save data blob (from Asset service)
     /// </summary>
-    public string? AssetId { get; set; }
+    public Guid? AssetId { get; set; }
 
     /// <summary>
     /// SHA-256 hash of the save data (uncompressed)
@@ -39,7 +40,7 @@ public sealed class SaveVersionManifest
     /// <summary>
     /// Compression type applied to this version
     /// </summary>
-    public string CompressionType { get; set; } = "NONE";
+    public CompressionType CompressionType { get; set; } = CompressionType.NONE;
 
     /// <summary>
     /// Whether this version is pinned (excluded from rolling cleanup)
@@ -64,12 +65,12 @@ public sealed class SaveVersionManifest
     /// <summary>
     /// Delta algorithm used (JSON_PATCH, BSDIFF, XDELTA)
     /// </summary>
-    public string? DeltaAlgorithm { get; set; }
+    public DeltaAlgorithm? DeltaAlgorithm { get; set; }
 
     /// <summary>
     /// Thumbnail asset ID (if thumbnail was provided)
     /// </summary>
-    public string? ThumbnailAssetId { get; set; }
+    public Guid? ThumbnailAssetId { get; set; }
 
     /// <summary>
     /// Device ID that created this version (for conflict detection)
@@ -89,7 +90,7 @@ public sealed class SaveVersionManifest
     /// <summary>
     /// Upload status (PENDING, COMPLETE, FAILED)
     /// </summary>
-    public string UploadStatus { get; set; } = "PENDING";
+    public UploadStatus UploadStatus { get; set; } = UploadStatus.PENDING;
 
     /// <summary>
     /// Version creation timestamp
@@ -102,7 +103,8 @@ public sealed class SaveVersionManifest
     public string? ETag { get; set; }
 
     /// <summary>
-    /// Generates the state store key for this version
+    /// Generates the state store key for this version.
+    /// Note: Uses ToString() for SlotId as state store keys are strings.
     /// </summary>
     public string GetStateKey() => $"version:{SlotId}:{VersionNumber}";
 

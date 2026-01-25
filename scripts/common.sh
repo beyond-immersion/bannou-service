@@ -211,6 +211,28 @@ extract_api_refs() {
     echo "$api_refs"
 }
 
+# Extract $refs pointing to common-api.yaml types
+# Types in common-api.yaml (like EntityType) are generated in CommonApiModels.cs
+# and must be excluded from service-specific generation
+# Usage: COMMON_REFS=$(extract_common_api_refs "$schema_file")
+# Returns: Comma-separated list of type names, or empty string if none found
+extract_common_api_refs() {
+    local schema_file="$1"
+
+    # Find all $refs pointing to common-api.yaml and extract type names
+    # Matches patterns like:
+    #   $ref: 'common-api.yaml#/components/schemas/EntityType'
+    #   $ref: '../common-api.yaml#/components/schemas/EntityType'
+    #   $ref: "common-api.yaml#/components/schemas/EntityType"
+    local common_refs=$(grep -oE "\\\$ref: ['\"]\.{0,3}/?common-api\.yaml#/components/schemas/[^'\"]+['\"]" "$schema_file" 2>/dev/null | \
+        sed -E "s/.*\/schemas\/([^'\"]+)['\"].*/\1/" | \
+        sort -u | \
+        tr '\n' ',' | \
+        sed 's/,$//')
+
+    echo "$common_refs"
+}
+
 # -----------------------------------------------------------------------------
 # Post-Processing Functions
 # -----------------------------------------------------------------------------

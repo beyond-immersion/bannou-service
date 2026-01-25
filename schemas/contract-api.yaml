@@ -942,19 +942,6 @@ components:
     # Enums
     # =========================================================================
 
-    EntityType:
-      type: string
-      description: Type of entity that can be a contract party
-      enum:
-      - character
-      - npc
-      - guild
-      - company
-      - government
-      - faction
-      - location
-      - system
-
     ContractStatus:
       type: string
       description: Current status of a contract instance
@@ -1398,7 +1385,7 @@ components:
           format: uuid
           description: Entity ID of consenting party
         partyEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type of consenting party
 
     GetContractInstanceRequest:
@@ -1424,7 +1411,7 @@ components:
           nullable: true
           description: Filter by party entity ID
         partyEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Filter by party entity type
         templateId:
@@ -1468,7 +1455,7 @@ components:
           format: uuid
           description: Entity requesting termination
         requestingEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of requesting entity
         reason:
           type: string
@@ -1673,7 +1660,7 @@ components:
         allowedEntityTypes:
           type: array
           items:
-            $ref: '#/components/schemas/EntityType'
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Which entity types can fill this role (null for any)
 
@@ -1691,7 +1678,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -1712,7 +1699,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -1740,7 +1727,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -1995,7 +1982,7 @@ components:
           format: uuid
           description: Entity that breached
         breachingEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of breaching entity
         breachType:
           $ref: '#/components/schemas/BreachType'
@@ -2065,7 +2052,7 @@ components:
           format: uuid
           description: Entity that breached
         breachingEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of breaching entity
         breachType:
           $ref: '#/components/schemas/BreachType'
@@ -2198,7 +2185,7 @@ components:
           format: uuid
           description: Entity to check
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         constraintType:
           $ref: '#/components/schemas/ConstraintType'
@@ -2243,7 +2230,7 @@ components:
           format: uuid
           description: Entity to query
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         templateCodes:
           type: array
@@ -2542,14 +2529,14 @@ components:
           format: uuid
           description: Current party entity ID
         fromEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Current party entity type
         toEntityId:
           type: string
           format: uuid
           description: New entity ID to receive the role
         toEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: New entity type
         guardianId:
           type: string
