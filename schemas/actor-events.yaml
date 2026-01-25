@@ -86,6 +86,14 @@ x-lifecycle:
         description: Pool node running this actor
       status:
         type: string
+        enum:
+          - pending
+          - starting
+          - running
+          - paused
+          - stopping
+          - stopped
+          - error
         required: true
         description: Current actor lifecycle state
       startedAt:
@@ -257,9 +265,25 @@ components:
           description: Pool node where the actor is running
         previousStatus:
           type: string
+          enum:
+            - pending
+            - starting
+            - running
+            - paused
+            - stopping
+            - stopped
+            - error
           description: Actor status before the change
         newStatus:
           type: string
+          enum:
+            - pending
+            - starting
+            - running
+            - paused
+            - stopping
+            - stopped
+            - error
           description: Actor status after the change
         reason:
           type: string

@@ -133,6 +133,14 @@ components:
           description: Pool node running this actor
         status: &id009
           type: string
+          enum:
+          - pending
+          - starting
+          - running
+          - paused
+          - stopping
+          - stopped
+          - error
           description: Current actor lifecycle state
         startedAt: &id010
           type: string
