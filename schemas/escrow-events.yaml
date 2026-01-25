@@ -728,8 +728,10 @@ components:
       properties:
         assetType:
           $ref: '../escrow-api.yaml#/components/schemas/AssetType'
+          description: Type of asset that failed validation
         failureType:
           $ref: '../escrow-api.yaml#/components/schemas/ValidationFailureType'
+          description: Type of validation failure
         affectedPartyId:
           type: string
           format: uuid

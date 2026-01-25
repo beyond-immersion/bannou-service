@@ -2345,7 +2345,7 @@ public partial class ContractService : IContractService
             RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
-            DefaultEnforcementMode = model.DefaultEnforcementMode.ToString(),
+            DefaultEnforcementMode = model.DefaultEnforcementMode,
             Transferable = model.Transferable,
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt
@@ -2366,7 +2366,7 @@ public partial class ContractService : IContractService
             RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
-            DefaultEnforcementMode = model.DefaultEnforcementMode.ToString(),
+            DefaultEnforcementMode = model.DefaultEnforcementMode,
             Transferable = model.Transferable,
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt,
@@ -2388,7 +2388,7 @@ public partial class ContractService : IContractService
             RealmId = model.RealmId,
             MinParties = model.MinParties,
             MaxParties = model.MaxParties,
-            DefaultEnforcementMode = model.DefaultEnforcementMode.ToString(),
+            DefaultEnforcementMode = model.DefaultEnforcementMode,
             Transferable = model.Transferable,
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt,
@@ -2406,7 +2406,7 @@ public partial class ContractService : IContractService
             ContractId = model.ContractId,
             TemplateId = model.TemplateId,
             TemplateCode = model.TemplateCode,
-            Status = model.Status.ToString(),
+            Status = model.Status,
             CreatedAt = model.CreatedAt
         });
     }

@@ -157,10 +157,10 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
-                Category = model.Category.ToString(),
-                Rarity = model.Rarity.ToString(),
-                QuantityModel = model.QuantityModel.ToString(),
-                Scope = model.Scope.ToString(),
+                Category = model.Category,
+                Rarity = model.Rarity,
+                QuantityModel = model.QuantityModel,
+                Scope = model.Scope,
                 IsActive = model.IsActive,
                 CreatedAt = now
             }, cancellationToken);
@@ -322,10 +322,10 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
-                Category = model.Category.ToString(),
-                Rarity = model.Rarity.ToString(),
-                QuantityModel = model.QuantityModel.ToString(),
-                Scope = model.Scope.ToString(),
+                Category = model.Category,
+                Rarity = model.Rarity,
+                QuantityModel = model.QuantityModel,
+                Scope = model.Scope,
                 IsActive = model.IsActive,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = now
@@ -379,10 +379,10 @@ public partial class ItemService : IItemService
                 Code = model.Code,
                 GameId = model.GameId,
                 Name = model.Name,
-                Category = model.Category.ToString(),
-                Rarity = model.Rarity.ToString(),
-                QuantityModel = model.QuantityModel.ToString(),
-                Scope = model.Scope.ToString(),
+                Category = model.Category,
+                Rarity = model.Rarity,
+                QuantityModel = model.QuantityModel,
+                Scope = model.Scope,
                 IsActive = model.IsActive,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = now
@@ -487,7 +487,7 @@ public partial class ItemService : IItemService
                 ContainerId = body.ContainerId,
                 RealmId = body.RealmId,
                 Quantity = quantity,
-                OriginType = body.OriginType.ToString(),
+                OriginType = body.OriginType,
                 CreatedAt = now
             }, cancellationToken);
 

@@ -2272,7 +2272,7 @@ public partial class MappingService : IMappingService
             ChannelId = channel.ChannelId,
             RegionId = channel.RegionId,
             Kind = channel.Kind.ToString(),
-            NonAuthorityHandling = channel.NonAuthorityHandling.ToString(),
+            NonAuthorityHandling = channel.NonAuthorityHandling,
             Version = channel.Version,
             CreatedAt = channel.CreatedAt,
             UpdatedAt = channel.UpdatedAt

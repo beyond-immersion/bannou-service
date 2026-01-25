@@ -104,7 +104,6 @@ components:
           description: Entity's new total achievement points
         iconUrl:
           type: string
-          format: uri
           nullable: true
           description: Achievement icon URL
         isRare:

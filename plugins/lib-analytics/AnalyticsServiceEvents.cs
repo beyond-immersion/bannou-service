@@ -129,7 +129,7 @@ public partial class AnalyticsService
     {
         try
         {
-            var gameServiceId = await ResolveGameServiceIdAsync(evt.GameType, CancellationToken.None);
+            var gameServiceId = await ResolveGameServiceIdAsync(evt.GameType.ToString(), CancellationToken.None);
             if (!gameServiceId.HasValue)
             {
                 return;
@@ -137,7 +137,7 @@ public partial class AnalyticsService
 
             await SaveGameSessionMappingAsync(
                 evt.SessionId,
-                evt.GameType,
+                evt.GameType.ToString(),
                 gameServiceId.Value,
                 CancellationToken.None);
 
@@ -213,7 +213,7 @@ public partial class AnalyticsService
         {
             await RemoveGameSessionMappingAsync(evt.SessionId, CancellationToken.None);
 
-            var gameServiceId = await ResolveGameServiceIdAsync(evt.GameType, CancellationToken.None);
+            var gameServiceId = await ResolveGameServiceIdAsync(evt.GameType.ToString(), CancellationToken.None);
             if (!gameServiceId.HasValue)
             {
                 return;
@@ -221,8 +221,8 @@ public partial class AnalyticsService
 
             var metadata = new Dictionary<string, object>
             {
-                ["gameType"] = evt.GameType,
-                ["status"] = evt.Status
+                ["gameType"] = evt.GameType.ToString(),
+                ["status"] = evt.Status.ToString()
             };
 
             if (evt.SessionName != null)

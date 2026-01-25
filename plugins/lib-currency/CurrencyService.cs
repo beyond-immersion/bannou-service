@@ -156,8 +156,8 @@ public partial class CurrencyService : ICurrencyService
                 DefinitionId = definitionId,
                 Code = model.Code,
                 Name = model.Name,
-                Scope = model.Scope.ToString(),
-                Precision = model.Precision.ToString(),
+                Scope = model.Scope,
+                Precision = model.Precision,
                 IsActive = model.IsActive,
                 CreatedAt = now
             }, cancellationToken);
@@ -312,8 +312,8 @@ public partial class CurrencyService : ICurrencyService
                 DefinitionId = model.DefinitionId,
                 Code = model.Code,
                 Name = model.Name,
-                Scope = model.Scope.ToString(),
-                Precision = model.Precision.ToString(),
+                Scope = model.Scope,
+                Precision = model.Precision,
                 IsActive = model.IsActive,
                 CreatedAt = model.CreatedAt,
                 ModifiedAt = model.ModifiedAt
@@ -381,9 +381,9 @@ public partial class CurrencyService : ICurrencyService
                 Timestamp = now,
                 WalletId = walletId,
                 OwnerId = body.OwnerId,
-                OwnerType = body.OwnerType.ToString(),
+                OwnerType = body.OwnerType,
                 RealmId = body.RealmId,
-                Status = WalletStatus.Active.ToString(),
+                Status = WalletStatus.Active,
                 CreatedAt = now
             }, cancellationToken);
 

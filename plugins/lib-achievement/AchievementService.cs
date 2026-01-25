@@ -1671,7 +1671,7 @@ internal class AchievementDefinitionData
     public List<EntityType>? EntityTypes { get; set; }
     public int? ProgressTarget { get; set; }
     public int Points { get; set; }
-    public Uri? IconUrl { get; set; }
+    public string? IconUrl { get; set; }
     public List<Platform>? Platforms { get; set; }
     public Dictionary<Platform, string>? PlatformIds { get; set; }
     public List<string>? Prerequisites { get; set; }

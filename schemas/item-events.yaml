@@ -124,16 +124,16 @@ components:
           type: string
           description: Template display name
         category:
-          type: string
+          $ref: '../item-api.yaml#/components/schemas/ItemCategory'
           description: Item category
         rarity:
-          type: string
+          $ref: '../item-api.yaml#/components/schemas/ItemRarity'
           description: Item rarity tier
         quantityModel:
-          type: string
+          $ref: '../item-api.yaml#/components/schemas/QuantityModel'
           description: Quantity tracking model
         scope:
-          type: string
+          $ref: '../item-api.yaml#/components/schemas/ItemScope'
           description: Realm availability scope
         isActive:
           type: boolean

@@ -16711,6 +16711,11 @@
             Recipients and what they received
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.Resolution">
+            <summary>
+            How the escrow was resolved
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.CompletedAt">
             <summary>
             When release completed
@@ -16744,6 +16749,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.Reason">
             <summary>
             Reason for refund
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.Resolution">
+            <summary>
+            How the escrow was resolved
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.CompletedAt">
@@ -16819,6 +16829,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.ArbiterType">
             <summary>
             Arbiter type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.Resolution">
+            <summary>
+            Resolution decision by arbiter
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.Notes">
@@ -16996,6 +17011,11 @@
             Party type
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EscrowPartyInfo.Role">
+            <summary>
+            Role of the party in the escrow
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.RecipientInfo">
             <summary>
             Recipient information for release events
@@ -17039,6 +17059,16 @@
         <member name="T:BeyondImmersion.BannouService.Events.ValidationFailureInfo">
             <summary>
             Validation failure information for events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.AssetType">
+            <summary>
+            Type of asset that failed validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.FailureType">
+            <summary>
+            Type of validation failure
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.AffectedPartyId">

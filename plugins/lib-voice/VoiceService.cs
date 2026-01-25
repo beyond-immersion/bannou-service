@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 
 // Alias to disambiguate from internal SipCredentials type in Services namespace
 using ClientSipCredentials = BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials;
+using ClientVoiceTier = BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTier;
 
 namespace BeyondImmersion.BannouService.Voice;
 
@@ -810,8 +811,8 @@ public partial class VoiceService : IVoiceService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = roomId,
-                PreviousTier = "p2p",
-                NewTier = "scaled",
+                PreviousTier = ClientVoiceTier.P2p,
+                NewTier = ClientVoiceTier.Scaled,
                 RtpServerUri = rtpServerUri,
                 SipCredentials = clientCredentials,
                 MigrationDeadlineMs = _configuration.TierUpgradeMigrationDeadlineMs
