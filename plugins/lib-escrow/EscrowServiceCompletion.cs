@@ -116,7 +116,7 @@ public partial class EscrowService
                             agreementModel.ReleaseAllocations?
                                 .FirstOrDefault(a => a.RecipientPartyId == r.RecipientPartyId)?.Assets)
                     }).ToList(),
-                    Resolution = "released",
+                    Resolution = EscrowResolution.Released,
                     CompletedAt = now
                 };
                 await _messageBus.TryPublishAsync(EscrowTopics.EscrowReleased, releaseEvent, cancellationToken);
@@ -245,7 +245,7 @@ public partial class EscrowService
                                 .FirstOrDefault(d => d.PartyId == r.DepositorPartyId)?.Assets?.Assets)
                     }).ToList(),
                     Reason = body.Reason,
-                    Resolution = "refunded",
+                    Resolution = EscrowResolution.Refunded,
                     CompletedAt = now
                 };
                 await _messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent, cancellationToken);
@@ -641,7 +641,7 @@ public partial class EscrowService
                     EscrowId = body.EscrowId,
                     ArbiterId = body.ArbiterId,
                     ArbiterType = body.ArbiterType,
-                    Resolution = body.Resolution.ToString(),
+                    Resolution = body.Resolution,
                     Notes = body.Notes,
                     ResolvedAt = now
                 };

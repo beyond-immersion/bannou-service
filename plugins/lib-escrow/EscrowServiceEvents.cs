@@ -272,7 +272,7 @@ public partial class EscrowService
                         AssetSummary = GenerateAssetSummary(d.Assets?.Assets)
                     }).ToList(),
                 Reason = refundReason,
-                Resolution = "contract_terminated",
+                Resolution = EscrowResolution.Refunded,
                 CompletedAt = now
             };
             await _messageBus.TryPublishAsync(EscrowTopics.EscrowRefunded, refundEvent);

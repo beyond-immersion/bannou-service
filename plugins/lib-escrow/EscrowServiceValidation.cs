@@ -113,8 +113,8 @@ public partial class EscrowService
                         {
                             new ValidationFailureInfo
                             {
-                                AssetType = "contract_condition",
-                                FailureType = "condition_not_met",
+                                AssetType = AssetType.Custom,
+                                FailureType = ValidationFailureType.Asset_missing,
                                 AffectedPartyId = body.VerifierId,
                                 Details = body.VerificationData?.ToString()
                             }
@@ -281,8 +281,8 @@ public partial class EscrowService
                         EscrowId = body.EscrowId,
                         Failures = failures.Select(f => new ValidationFailureInfo
                         {
-                            AssetType = f.AssetType,
-                            FailureType = f.FailureType.ToString(),
+                            AssetType = Enum.TryParse<AssetType>(f.AssetType, out var at) ? at : AssetType.Custom,
+                            FailureType = f.FailureType,
                             AffectedPartyId = f.AffectedPartyId,
                             Details = null
                         }).ToList(),

@@ -199,7 +199,7 @@ public partial class EscrowService
                 {
                     PartyId = p.PartyId,
                     PartyType = p.PartyType,
-                    Role = p.Role.ToString()
+                    Role = p.Role
                 }).ToList(),
                 ExpectedDepositCount = expectedDepositModels.Count,
                 ExpiresAt = expiresAt,
