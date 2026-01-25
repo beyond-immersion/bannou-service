@@ -1,0 +1,39 @@
+openapi: 3.0.3
+info:
+  title: Common API Types
+  description: |
+    Shared type definitions used across multiple Bannou services.
+    These types are not owned by any specific plugin and provide
+    system-wide consistency for cross-service concepts.
+  version: 1.0.0
+
+# No paths - this schema only defines shared types
+paths: {}
+
+components:
+  schemas:
+    # ==========================================================================
+    # Shared Enums
+    # ==========================================================================
+
+    EntityType:
+      type: string
+      description: |
+        Universal entity type identifier used across Bannou services.
+        Provides first-class support for various kinds of entities in analytics,
+        achievements, leaderboards, contracts, relationships, and other systems.
+      enum:
+        - system
+        - account
+        - character
+        - actor
+        - guild
+        - organization
+        - government
+        - faction
+        - location
+        - realm
+        - item
+        - monster
+        - custom
+        - other

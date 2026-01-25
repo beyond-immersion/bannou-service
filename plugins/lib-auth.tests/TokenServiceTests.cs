@@ -402,7 +402,7 @@ public class TokenServiceTests
 
         // Assert
         Assert.False(string.IsNullOrWhiteSpace(token));
-        Assert.NotNull(sessionId);
+        Assert.NotEqual(Guid.Empty, sessionId);
         // JWT has 3 parts separated by dots
         Assert.Equal(3, token.Split('.').Length);
     }
@@ -443,7 +443,7 @@ public class TokenServiceTests
 
         // Assert - Should still generate a valid JWT
         Assert.False(string.IsNullOrWhiteSpace(token));
-        Assert.NotNull(sessionId);
+        Assert.NotEqual(Guid.Empty, sessionId);
         Assert.Equal(3, token.Split('.').Length);
     }
 

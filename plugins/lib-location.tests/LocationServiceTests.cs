@@ -92,7 +92,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Guid? realmId = null,
         string code = "TEST",
         string name = "Test Location",
-        string locationType = "CITY",
+        LocationType locationType = LocationType.CITY,
         Guid? parentLocationId = null,
         int depth = 0,
         bool isDeprecated = false)

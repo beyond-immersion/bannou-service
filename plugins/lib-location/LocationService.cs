@@ -146,7 +146,7 @@ public partial class LocationService : ILocationService
 
             if (body.LocationType.HasValue)
             {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value.ToString());
+                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
             }
 
             var filteredList = filtered.ToList();
@@ -215,7 +215,7 @@ public partial class LocationService : ILocationService
 
             if (body.LocationType.HasValue)
             {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value.ToString());
+                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
             }
 
             var filteredList = filtered.ToList();
@@ -293,7 +293,7 @@ public partial class LocationService : ILocationService
 
             if (body.LocationType.HasValue)
             {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value.ToString());
+                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
             }
 
             var filteredList = filtered.ToList();
@@ -362,7 +362,7 @@ public partial class LocationService : ILocationService
 
             if (body.LocationType.HasValue)
             {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value.ToString());
+                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
             }
 
             var filteredList = filtered.ToList();
@@ -483,7 +483,7 @@ public partial class LocationService : ILocationService
 
             if (body.LocationType.HasValue)
             {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value.ToString());
+                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
             }
 
             var filteredList = filtered.ToList();
@@ -621,7 +621,7 @@ public partial class LocationService : ILocationService
                 Code = code,
                 Name = body.Name,
                 Description = body.Description,
-                LocationType = body.LocationType.ToString(),
+                LocationType = body.LocationType,
                 ParentLocationId = body.ParentLocationId,
                 Depth = depth,
                 IsDeprecated = false,
@@ -708,9 +708,9 @@ public partial class LocationService : ILocationService
                 changedFields.Add("description");
             }
 
-            if (body.LocationType.HasValue && body.LocationType.Value.ToString() != model.LocationType)
+            if (body.LocationType.HasValue && body.LocationType.Value != model.LocationType)
             {
-                model.LocationType = body.LocationType.Value.ToString();
+                model.LocationType = body.LocationType.Value;
                 changedFields.Add("locationType");
             }
 
@@ -1114,7 +1114,7 @@ public partial class LocationService : ILocationService
                         {
                             existingModel.Name = seedLocation.Name;
                             if (seedLocation.Description != null) existingModel.Description = seedLocation.Description;
-                            existingModel.LocationType = seedLocation.LocationType.ToString();
+                            existingModel.LocationType = seedLocation.LocationType;
                             if (seedLocation.Metadata != null) existingModel.Metadata = seedLocation.Metadata;
                             existingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1357,7 +1357,7 @@ public partial class LocationService : ILocationService
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            LocationType = Enum.Parse<LocationType>(model.LocationType),
+            LocationType = model.LocationType,
             ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
@@ -1380,7 +1380,7 @@ public partial class LocationService : ILocationService
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            LocationType = model.LocationType,
+            LocationType = model.LocationType.ToString(),
             ParentLocationId = model.ParentLocationId ?? Guid.Empty,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
@@ -1405,7 +1405,7 @@ public partial class LocationService : ILocationService
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            LocationType = model.LocationType,
+            LocationType = model.LocationType.ToString(),
             ParentLocationId = model.ParentLocationId ?? Guid.Empty,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
@@ -1431,7 +1431,7 @@ public partial class LocationService : ILocationService
             Code = model.Code,
             Name = model.Name,
             Description = model.Description,
-            LocationType = model.LocationType,
+            LocationType = model.LocationType.ToString(),
             ParentLocationId = model.ParentLocationId ?? Guid.Empty,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
@@ -1468,7 +1468,7 @@ public partial class LocationService : ILocationService
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string LocationType { get; set; } = "OTHER";
+        public LocationType LocationType { get; set; } = LocationType.OTHER;
         public Guid? ParentLocationId { get; set; }
         public int Depth { get; set; }
         public bool IsDeprecated { get; set; }
