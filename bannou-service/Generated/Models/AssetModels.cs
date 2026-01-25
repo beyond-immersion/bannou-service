@@ -835,7 +835,7 @@ public partial class CreateBundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version string
@@ -887,7 +887,7 @@ public partial class CreateBundleResponse
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle creation status
@@ -919,7 +919,7 @@ public partial class GetBundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Desired download format (bannou or zip)
@@ -943,7 +943,7 @@ public partial class BundleWithDownloadUrl
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version string
@@ -1051,7 +1051,7 @@ public partial class BundleManifestPreview
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version from the manifest
@@ -1082,7 +1082,7 @@ public partial class SourceBundleReference
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Version of source bundle at composition time
@@ -1148,7 +1148,7 @@ public partial class ConflictingBundleEntry
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Content hash of asset in this bundle
@@ -1176,7 +1176,7 @@ public partial class CreateMetabundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string MetabundleId { get; set; } = default!;
+    public System.Guid MetabundleId { get; set; } = default!;
 
     /// <summary>
     /// Source bundle IDs to pull assets from. Can cherry-pick specific
@@ -1184,7 +1184,7 @@ public partial class CreateMetabundleRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
-    public System.Collections.Generic.ICollection<string>? SourceBundleIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? SourceBundleIds { get; set; } = default!;
 
     /// <summary>
     /// Individual asset IDs (not in bundles) to include directly.
@@ -1259,7 +1259,7 @@ public partial class CreateMetabundleResponse
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string MetabundleId { get; set; } = default!;
+    public System.Guid MetabundleId { get; set; } = default!;
 
     /// <summary>
     /// Job ID for async processing. Only present when status is 'queued' or 'processing'.
@@ -1362,7 +1362,7 @@ public partial class GetJobStatusResponse
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string MetabundleId { get; set; } = default!;
+    public System.Guid MetabundleId { get; set; } = default!;
 
     /// <summary>
     /// Current job status.
@@ -1598,7 +1598,7 @@ public partial class ResolvedBundle
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Whether source or metabundle
@@ -1831,7 +1831,7 @@ public partial class BundleSummary
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Source or metabundle
@@ -1991,7 +1991,7 @@ public partial class BundleInfo
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Whether source or metabundle
@@ -2104,7 +2104,7 @@ public partial class UpdateBundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// New bundle name (null to leave unchanged)
@@ -2157,7 +2157,7 @@ public partial class UpdateBundleResponse
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// New version number after update
@@ -2200,7 +2200,7 @@ public partial class DeleteBundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// If true, permanently delete (admin only). If false, soft-delete.
@@ -2229,7 +2229,7 @@ public partial class DeleteBundleResponse
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Deletion status
@@ -2269,7 +2269,7 @@ public partial class RestoreBundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for restoration (recorded in version history)
@@ -2292,7 +2292,7 @@ public partial class RestoreBundleResponse
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Current bundle status (should be "active")
@@ -2469,7 +2469,7 @@ public partial class ListBundleVersionsRequest
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Maximum versions to return
@@ -2498,7 +2498,7 @@ public partial class ListBundleVersionsResponse
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
+    public System.Guid BundleId { get; set; } = default!;
 
     /// <summary>
     /// Current version number

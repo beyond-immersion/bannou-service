@@ -16,7 +16,7 @@ This document provides a compact reference of all Bannou services.
 | [Asset](#asset) | 1.0.0 | 20 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 13 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Character](#character) | 1.0.0 | 10 | Character management service for Arcadia game world. |
+| [Character](#character) | 1.0.0 | 10 | Character management service for game worlds. |
 | [Character Encounter](#character-encounter) | 1.0.0 | 19 | Character encounter tracking service for memorable interacti... |
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
@@ -28,26 +28,26 @@ This document provides a compact reference of all Bannou services.
 Des... |
 | [Escrow](#escrow) | 1.0.0 | 20 | Full-custody orchestration layer for multi-party asset excha... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
-| [Game Session](#game-session) | 2.0.0 | 11 | Minimal game session management for Arcadia and other games. |
+| [Game Session](#game-session) | 2.0.0 | 11 | Minimal game session management for games. |
 | [Inventory](#inventory) | 1.0.0 | 16 | Container and inventory management service for games. |
 | [Item](#item) | 1.0.0 | 13 | Item template and instance management service. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
-| [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for Arcadia game worlds. |
+| [Location](#location) | 1.0.0 | 17 | Location management service for game worlds. |
+| [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for game worlds. |
 | [Matchmaking](#matchmaking) | 1.0.0 | 11 | Matchmaking service for competitive and casual game matching... |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Music](#music) | 1.0.0 | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
+| [Realm](#realm) | 1.0.0 | 10 | Realm management service for game worlds. |
 | [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
-| [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
+| [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for game worlds. |
 | [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
 Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
-| [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
+| [Species](#species) | 2.0.0 | 13 | Species management service for game worlds. |
 | [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
 Tracks which ac... |

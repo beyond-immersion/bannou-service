@@ -16,7 +16,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 12 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for Arcadia game world. |
+| [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
@@ -26,25 +26,25 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Escrow Service API](#escrow) | `client.Escrow` | 20 | Full-custody orchestration layer for multi-party asset excha... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
-| [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for Arcadia and other games. |
+| [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 13 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for Arcadia game world. |
-| [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for Arcadia game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for game worlds. |
+| [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Bannou Messaging Service API](#messaging) | `client.Messaging` | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Bannou Realm Service API](#realm) | `client.Realm` | 10 | Realm management service for Arcadia game world. |
+| [Bannou Realm Service API](#realm) | `client.Realm` | 10 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 10 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
-| [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for Arcadia game world. |
+| [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
-| [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for Arcadia game world. |
+| [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 6 | Repository pattern state management with Redis and MySQL bac... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
@@ -344,7 +344,7 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 
 **Proxy**: `client.Character` | **Version**: 1.0.0
 
-Character management service for Arcadia game world.
+Character management service for game worlds.
 
 ### Character Compression
 
@@ -815,7 +815,7 @@ Full-custody orchestration layer for multi-party asset exchanges.
 
 **Proxy**: `client.GameService` | **Version**: 1.0.0
 
-Registry service for game services that users can subscribe to. Provides a minimal registry of available services (games/applications) like Arcadia...
+Registry service for game services that users can subscribe to. Provides a minimal registry of available services (games/applications).
 
 ### Game Service Registry
 
@@ -833,7 +833,7 @@ Registry service for game services that users can subscribe to. Provides a minim
 
 **Proxy**: `client.GameSession` | **Version**: 2.0.0
 
-Minimal game session management for Arcadia and other games.
+Minimal game session management for games.
 
 ### Game Actions
 
@@ -987,7 +987,7 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 
 **Proxy**: `client.Location` | **Version**: 1.0.0
 
-Location management service for Arcadia game world.
+Location management service for game worlds.
 
 ### Location
 
@@ -1022,7 +1022,7 @@ Location management service for Arcadia game world.
 
 **Proxy**: `client.Mapping` | **Version**: 1.0.0
 
-Spatial data management service for Arcadia game worlds.
+Spatial data management service for game worlds.
 
 ### Authoring
 
@@ -1272,7 +1272,7 @@ Redis-backed high-performance permission system for WebSocket services.
 
 **Proxy**: `client.Realm` | **Version**: 1.0.0
 
-Realm management service for Arcadia game world.
+Realm management service for game worlds.
 
 ### Realm
 
@@ -1353,7 +1353,7 @@ Generic relationship management service for entity-to-entity relationships.
 
 **Proxy**: `client.RelationshipType` | **Version**: 2.0.0
 
-Relationship type management service for Arcadia game world.
+Relationship type management service for game worlds.
 
 ### RelationshipType
 
@@ -1510,7 +1510,7 @@ Hierarchical composition storage for game worlds.
 
 **Proxy**: `client.Species` | **Version**: 2.0.0
 
-Species management service for Arcadia game world.
+Species management service for game worlds.
 
 ### Species
 

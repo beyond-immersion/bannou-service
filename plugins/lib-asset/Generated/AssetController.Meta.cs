@@ -1293,6 +1293,7 @@ public partial class AssetController
                 },
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique bundle identifier"
                 },
                 "version": {
@@ -1330,7 +1331,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1362,6 +1363,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique bundle identifier"
                 },
                 "status": {
@@ -1456,6 +1458,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier to retrieve"
                 },
                 "format": {
@@ -1498,6 +1501,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique bundle identifier"
                 },
                 "version": {
@@ -1652,6 +1656,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier from the manifest"
                 },
                 "version": {
@@ -1845,12 +1850,14 @@ public partial class AssetController
             "properties": {
                 "metabundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique identifier for the new metabundle"
                 },
                 "sourceBundleIds": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "nullable": true,
                     "description": "Source bundle IDs to pull assets from. Can cherry-pick specific\nassets using assetFilter, or include all if assetFilter is null.\n"
@@ -1923,13 +1930,14 @@ public partial class AssetController
             "properties": {
                 "metabundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Metabundle identifier"
                 },
                 "jobId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Job ID for async processing. Only present when status is 'queued' or 'processing'.\nUse /bundles/job/status to poll for completion, or wait for\nMetabundleCreationCompleteEvent via WebSocket.\n"
+                    "description": "Job ID for async processing. Only present when status is 'queued' or 'processing'.\ nUse /bundles/job/status to poll for completion, or wait for\nMetabundleCreationCompleteEvent via WebSocket.\n"
                 },
                 "status": {
                     "type": "string",
@@ -1991,6 +1999,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Source bundle identifier"
                 },
                 "version": {
@@ -2043,6 +2052,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle containing this version"
                 },
                 "contentHash": {
@@ -2157,6 +2167,7 @@ public partial class AssetController
                 },
                 "metabundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Metabundle identifier being created"
                 },
                 "status": {
@@ -2250,6 +2261,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Source bundle identifier"
                 },
                 "version": {
@@ -2563,6 +2575,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier"
                 },
                 "bundleType": {
@@ -2853,6 +2866,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier"
                 },
                 "bundleType": {
@@ -2972,6 +2986,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier to update"
                 },
                 "name": {
@@ -3037,6 +3052,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Updated bundle identifier"
                 },
                 "version": {
@@ -3136,6 +3152,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier to delete"
                 },
                 "permanent": {
@@ -3171,6 +3188,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Deleted bundle identifier"
                 },
                 "status": {
@@ -3269,6 +3287,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier to restore"
                 },
                 "reason": {
@@ -3300,6 +3319,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Restored bundle identifier"
                 },
                 "status": {
@@ -3576,6 +3596,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique bundle identifier"
                 },
                 "bundleType": {
@@ -3656,7 +3677,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
         "GameRealm": {
             "type": "string",
@@ -3669,7 +3690,7 @@ public partial class AssetController
                 "deleted",
                 "processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }
@@ -3746,6 +3767,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier to get history for"
                 },
                 "limit": {
@@ -3782,6 +3804,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Bundle identifier"
                 },
                 "currentVersion": {
@@ -3865,6 +3888,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "Unique bundle identifier"
                 },
                 "bundleType": {

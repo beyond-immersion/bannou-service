@@ -2098,13 +2098,12 @@ public partial class GameSessionService : IGameSessionService
 
             // Create new lobby
             var lobbyId = Guid.NewGuid();
-            var gameType = MapStubNameToGameType(stubName);
 
             var lobby = new GameSessionModel
             {
                 SessionId = lobbyId.ToString(),
                 SessionName = $"{stubName} Lobby",
-                GameType = gameType,
+                GameType = stubName,
                 MaxPlayers = _configuration.DefaultLobbyMaxPlayers,
                 IsPrivate = false,
                 Status = SessionStatus.Active,
@@ -2171,18 +2170,6 @@ public partial class GameSessionService : IGameSessionService
     private bool IsOurService(string stubName)
     {
         return _supportedGameServices.Contains(stubName);
-    }
-
-    /// <summary>
-    /// Maps a stub name to a game type enum.
-    /// </summary>
-    private static GameType MapStubNameToGameType(string stubName)
-    {
-        return stubName.ToLowerInvariant() switch
-        {
-            "arcadia" => GameType.Arcadia,
-            _ => GameType.Generic
-        };
     }
 
     #endregion
@@ -2261,7 +2248,7 @@ public partial class GameSessionService : IGameSessionService
 internal class GameSessionModel
 {
     public string SessionId { get; set; } = string.Empty;
-    public GameType GameType { get; set; }
+    public string GameType { get; set; } = "generic";
     public string? SessionName { get; set; }
     public SessionStatus Status { get; set; }
     public int MaxPlayers { get; set; }

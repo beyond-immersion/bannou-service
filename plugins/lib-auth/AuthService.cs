@@ -153,7 +153,7 @@ public partial class AuthService : IAuthService
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             // Store refresh token
-            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("Successfully authenticated user: {Email} (ID: {AccountId})",
                 body.Email, account.AccountId);
@@ -241,7 +241,7 @@ public partial class AuthService : IAuthService
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             // Store refresh token
-            await _tokenService.StoreRefreshTokenAsync(accountResult.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(accountResult.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("Successfully registered user: {Username} with ID: {AccountId}",
                 body.Username, accountResult.AccountId);
@@ -317,7 +317,7 @@ public partial class AuthService : IAuthService
             // Generate tokens (returns both accessToken and sessionId for event publishing)
             var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = _tokenService.GenerateRefreshToken();
-            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("OAuth authentication successful for account {AccountId} via {Provider}",
                 account.AccountId, provider);
@@ -402,7 +402,7 @@ public partial class AuthService : IAuthService
             // Generate tokens (returns both accessToken and sessionId for event publishing)
             var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = _tokenService.GenerateRefreshToken();
-            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("Steam authentication successful for account {AccountId}", account.AccountId);
 
@@ -448,30 +448,30 @@ public partial class AuthService : IAuthService
 
             // Validate refresh token
             var accountId = await _tokenService.ValidateRefreshTokenAsync(body.RefreshToken, cancellationToken);
-            if (string.IsNullOrEmpty(accountId))
+            if (!accountId.HasValue)
             {
                 return (StatusCodes.Forbidden, null);
             }
 
             // Lookup account by ID via AccountClient
-            _logger.LogDebug("Looking up account by ID via AccountClient: {AccountId}", accountId);
+            _logger.LogDebug("Looking up account by ID via AccountClient: {AccountId}", accountId.Value);
 
             AccountResponse account;
             try
             {
-                account = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
+                account = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId.Value }, cancellationToken);
                 _logger.LogDebug("Account found for refresh: {AccountId}", account?.AccountId);
 
                 if (account == null)
                 {
-                    _logger.LogWarning("No account found for ID: {AccountId}", accountId);
+                    _logger.LogWarning("No account found for ID: {AccountId}", accountId.Value);
                     return (StatusCodes.Unauthorized, null);
                 }
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
                 // Account not found - return Unauthorized (refresh token may be stale)
-                _logger.LogWarning("Account not found for refresh token: {AccountId}", accountId);
+                _logger.LogWarning("Account not found for refresh token: {AccountId}", accountId.Value);
                 return (StatusCodes.Unauthorized, null);
             }
             catch (Exception ex)
@@ -486,7 +486,7 @@ public partial class AuthService : IAuthService
             var newRefreshToken = _tokenService.GenerateRefreshToken();
 
             // Store new refresh token and remove old one
-            await _tokenService.StoreRefreshTokenAsync(accountId, newRefreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(accountId.Value, newRefreshToken, cancellationToken);
             await _tokenService.RemoveRefreshTokenAsync(body.RefreshToken, cancellationToken);
 
             return (StatusCodes.OK, new AuthResponse
@@ -1016,7 +1016,7 @@ public partial class AuthService : IAuthService
         // Mock providers don't need audit events - discard sessionId
         var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
-        await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+        await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -1045,7 +1045,7 @@ public partial class AuthService : IAuthService
         // Mock providers don't need audit events - discard sessionId
         var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
-        await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+        await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
         return (StatusCodes.OK, new AuthResponse
         {

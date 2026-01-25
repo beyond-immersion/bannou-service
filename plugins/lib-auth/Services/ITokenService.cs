@@ -29,7 +29,7 @@ public interface ITokenService
     /// <param name="accountId">The account ID.</param>
     /// <param name="refreshToken">The refresh token to store.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken = default);
+    Task StoreRefreshTokenAsync(Guid accountId, string refreshToken, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validates a refresh token and returns the associated account ID.
@@ -37,7 +37,7 @@ public interface ITokenService
     /// <param name="refreshToken">The refresh token to validate.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The account ID if valid, null otherwise.</returns>
-    Task<string?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+    Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a refresh token from storage.

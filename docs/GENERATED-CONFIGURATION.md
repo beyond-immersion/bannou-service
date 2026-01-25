@@ -437,7 +437,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
 | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for optimistic concurrency on subscri... |
-| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `arcadia,generic` | Comma-separated list of supported game service stub names |
+| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `generic` | Comma-separated list of supported game service stub names |
 
 ### Inventory
 

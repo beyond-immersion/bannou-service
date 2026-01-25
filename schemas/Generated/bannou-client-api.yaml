@@ -6325,8 +6325,8 @@ paths:
   /realm/get-by-code:
     post:
       summary: Get realm by code
-      description: Retrieve a realm using its unique code (e.g., "OMEGA", 
-        "ARCADIA", "FANTASIA")
+      description: Retrieve a realm using its unique code (e.g., "REALM_1", 
+        "REALM_2")
       operationId: getRealmByCode
       tags:
       - Realm
@@ -10418,6 +10418,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
@@ -10497,6 +10498,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier from the manifest
         version:
           type: string
@@ -10517,6 +10519,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
@@ -10627,6 +10630,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         version:
           type: string
@@ -11973,6 +11977,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle containing this version
         contentHash:
           type: string
@@ -13066,6 +13071,7 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         version:
           type: string
@@ -13102,6 +13108,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         status:
           type: string
@@ -13769,11 +13776,13 @@ components:
       properties:
         metabundleId:
           type: string
+          format: uuid
           description: Unique identifier for the new metabundle
         sourceBundleIds:
           type: array
           items:
             type: string
+            format: uuid
           nullable: true
           description: |
             Source bundle IDs to pull assets from. Can cherry-pick specific
@@ -13833,6 +13842,7 @@ components:
       properties:
         metabundleId:
           type: string
+          format: uuid
           description: Metabundle identifier
         jobId:
           type: string
@@ -13908,8 +13918,8 @@ components:
           minLength: 1
           maxLength: 32
           pattern: '^[a-z][a-z0-9-]*$'
-          description: Game identifier for namespace isolation (e.g., "arcadia",
-            "fantasia")
+          description: Game identifier for namespace isolation (e.g., "game-1", 
+            "game-2")
         ownerId:
           type: string
           format: uuid
@@ -14550,6 +14560,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to delete
         permanent:
           type: boolean
@@ -14572,6 +14583,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Deleted bundle identifier
         status:
           type: string
@@ -17019,7 +17031,7 @@ components:
       type: string
       description: |
         Realm stub name (lowercase string identifier) that this asset belongs to.
-        Use the realm's stub_name property (e.g., "omega", "arcadia") from the Realm service.
+        Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
         Use "shared" for assets that are available across all realms.
     GameSessionResponse:
       description: Complete details of a game session including players and 
@@ -17091,10 +17103,9 @@ components:
           description: For matchmade sessions - when reservations expire
     GameType:
       type: string
-      description: Type of game for this session
-      enum:
-      - arcadia
-      - generic
+      description: Game service stub name for this session. Use the game 
+        service's stubName property (e.g., "my-game"). Use "generic" for 
+        non-game-specific sessions.
     GenerateCompositionRequest:
       description: Request to generate a complete musical composition
       type: object
@@ -17484,6 +17495,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
@@ -18126,6 +18138,7 @@ components:
           description: Job identifier
         metabundleId:
           type: string
+          format: uuid
           description: Metabundle identifier being created
         status:
           type: string
@@ -18526,8 +18539,7 @@ components:
           minLength: 1
           maxLength: 50
           pattern: '^[A-Z][A-Z0-9_]*$'
-          description: Unique code for the realm (e.g., "OMEGA", "ARCADIA", 
-            "FANTASIA")
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
     GetRealmEventParticipantsRequest:
       type: object
       description: Request payload for getting participants of an event
@@ -20389,6 +20401,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to get history for
         limit:
           type: integer
@@ -20410,6 +20423,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         currentVersion:
           type: integer
@@ -25061,7 +25075,7 @@ components:
           description: Unique identifier of the realm
         code:
           type: string
-          description: Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
         name:
           type: string
           description: Display name for the realm
@@ -26053,6 +26067,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
@@ -26146,6 +26161,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to restore
         reason:
           type: string
@@ -26164,6 +26180,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Restored bundle identifier
         status:
           type: string
@@ -26583,7 +26600,7 @@ components:
           nullable: true
           description: |
             Consumer-specific data stored without interpretation.
-            Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+            Use namespaced keys (e.g., render.castShadows, game.interactionType).
         attachmentPoints:
           type: array
           items:
@@ -26989,10 +27006,10 @@ components:
           description: Unique identifier for the service
         stubName:
           type: string
-          description: URL-safe identifier (e.g., "arcadia")
+          description: URL-safe identifier (e.g., "my-game")
         displayName:
           type: string
-          description: Human-readable name (e.g., "Arcadia Online")
+          description: Human-readable name (e.g., "My Game Online")
         description:
           type: string
           nullable: true
@@ -27011,11 +27028,9 @@ components:
           description: When the service was last updated
     SessionGameType:
       type: string
-      description: Game type for created sessions (maps to game-session service 
-        GameType)
-      enum:
-      - generic
-      - arcadia
+      description: Game service stub name for created sessions. Use the game 
+        service's stubName property (e.g., "my-game"). Use "generic" for 
+        non-game-specific sessions.
       default: generic
     SessionInfo:
       description: Information about an active user session including device and
@@ -27275,6 +27290,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Source bundle identifier
         version:
           type: string
@@ -28780,6 +28796,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to update
         name:
           type: string
@@ -28824,6 +28841,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Updated bundle identifier
         version:
           type: integer
@@ -29552,7 +29570,7 @@ components:
           nullable: true
           description: |
             Authorization strings from active subscriptions.
-            Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            Format: "{stubName}:{state}" (e.g., "my-game:authorized")
         remainingTime:
           type: integer
           description: Seconds until expiration
@@ -30233,7 +30251,7 @@ tags:
 - name: Bannou Auth
   description: Authentication and session management service (Internet-facing).
 - name: Bannou Character
-  description: Character management service for Arcadia game world.
+  description: Character management service for game worlds.
 - name: Bannou Character Encounter
   description: Character encounter tracking service for memorable interactions 
     between characters.
@@ -30250,26 +30268,26 @@ tags:
 - name: Bannou Game
   description: Registry service for game services that users can subscribe to.
 - name: Bannou Game Session
-  description: Minimal game session management for Arcadia and other games.
+  description: Minimal game session management for games.
 - name: Bannou Leaderboard
   description: Real-time leaderboard management using Redis Sorted Sets for 
     efficient ranking.
 - name: Bannou Location
-  description: Location management service for Arcadia game world.
+  description: Location management service for game worlds.
 - name: Bannou Mapping
-  description: Spatial data management service for Arcadia game worlds.
+  description: Spatial data management service for game worlds.
 - name: Bannou Matchmaking
   description: Matchmaking service for competitive and casual game matching.
 - name: Bannou Realm
-  description: Realm management service for Arcadia game world.
+  description: Realm management service for game worlds.
 - name: Bannou Realm History
   description: Historical event participation and lore management for realms.
 - name: Bannou RelationshipType
-  description: Relationship type management service for Arcadia game world.
+  description: Relationship type management service for game worlds.
 - name: Bannou Scene
   description: Hierarchical composition storage for game worlds.
 - name: Bannou Species
-  description: Species management service for Arcadia game world.
+  description: Species management service for game worlds.
 - name: Bannou Subscription
   description: Manages user subscriptions to game services.
 - name: Bannou Voice

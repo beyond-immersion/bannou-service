@@ -160,25 +160,32 @@ public class TokenService : ITokenService
     }
 
     /// <inheritdoc/>
-    public async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken = default)
+    public async Task StoreRefreshTokenAsync(Guid accountId, string refreshToken, CancellationToken cancellationToken = default)
     {
         var redisKey = $"refresh_token:{refreshToken}";
         var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
+        // Storage boundary: state store requires string value type (Guid is a value type)
         await stringStore.SaveAsync(
             redisKey,
-            accountId,
+            accountId.ToString(),
             new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.SessionTokenTtlDays).TotalSeconds },
             cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<string?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    public async Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
-            return await stringStore.GetAsync(redisKey, cancellationToken);
+            var storedAccountId = await stringStore.GetAsync(redisKey, cancellationToken);
+            // Storage boundary: parse once at read boundary
+            if (string.IsNullOrEmpty(storedAccountId) || !Guid.TryParse(storedAccountId, out var accountId))
+            {
+                return null;
+            }
+            return accountId;
         }
         catch (Exception ex)
         {

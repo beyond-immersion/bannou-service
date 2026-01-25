@@ -9555,7 +9555,7 @@
     "/realm/get-by-code": {
       "post": {
         "summary": "Get realm by code",
-        "description": "Retrieve a realm using its unique code (e.g., \"OMEGA\", \"ARCADIA\", \"FANTASIA\")",
+        "description": "Retrieve a realm using its unique code (e.g., \"REALM_1\", \"REALM_2\")",
         "operationId": "getRealmByCode",
         "tags": [
           "Realm"
@@ -15311,6 +15311,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Unique bundle identifier"
           },
           "bundleType": {
@@ -15406,6 +15407,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier from the manifest"
           },
           "version": {
@@ -15432,6 +15434,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier"
           },
           "bundleType": {
@@ -15570,6 +15573,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Unique bundle identifier"
           },
           "version": {
@@ -17216,6 +17220,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle containing this version"
           },
           "contentHash": {
@@ -18590,6 +18595,7 @@
           },
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Unique bundle identifier"
           },
           "version": {
@@ -18637,6 +18643,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Unique bundle identifier"
           },
           "status": {
@@ -19468,12 +19475,14 @@
         "properties": {
           "metabundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Unique identifier for the new metabundle"
           },
           "sourceBundleIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "nullable": true,
             "description": "Source bundle IDs to pull assets from. Can cherry-pick specific\nassets using assetFilter, or include all if assetFilter is null.\n"
@@ -19533,6 +19542,7 @@
         "properties": {
           "metabundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Metabundle identifier"
           },
           "jobId": {
@@ -19617,7 +19627,7 @@
             "minLength": 1,
             "maxLength": 32,
             "pattern": "^[a-z][a-z0-9-]*$",
-            "description": "Game identifier for namespace isolation (e.g., \"arcadia\", \"fantasia\")"
+            "description": "Game identifier for namespace isolation (e.g., \"game-1\", \"game-2\")"
           },
           "ownerId": {
             "type": "string",
@@ -20410,6 +20420,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier to delete"
           },
           "permanent": {
@@ -20436,6 +20447,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Deleted bundle identifier"
           },
           "status": {
@@ -23492,7 +23504,7 @@
       },
       "GameRealm": {
         "type": "string",
-        "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+        "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
       },
       "GameSessionResponse": {
         "description": "Complete details of a game session including players and settings",
@@ -23581,11 +23593,7 @@
       },
       "GameType": {
         "type": "string",
-        "description": "Type of game for this session",
-        "enum": [
-          "arcadia",
-          "generic"
-        ]
+        "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
       },
       "GenerateCompositionRequest": {
         "description": "Request to generate a complete musical composition",
@@ -24083,6 +24091,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier to retrieve"
           },
           "format": {
@@ -24912,6 +24921,7 @@
           },
           "metabundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Metabundle identifier being created"
           },
           "status": {
@@ -25415,7 +25425,7 @@
             "minLength": 1,
             "maxLength": 50,
             "pattern": "^[A-Z][A-Z0-9_]*$",
-            "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\", \"FANTASIA\")"
+            "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
           }
         }
       },
@@ -27775,6 +27785,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier to get history for"
           },
           "limit": {
@@ -27802,6 +27813,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier"
           },
           "currentVersion": {
@@ -33712,7 +33724,7 @@
           },
           "code": {
             "type": "string",
-            "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+            "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
           },
           "name": {
             "type": "string",
@@ -34965,6 +34977,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier"
           },
           "bundleType": {
@@ -35077,6 +35090,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier to restore"
           },
           "reason": {
@@ -35099,6 +35113,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Restored bundle identifier"
           },
           "status": {
@@ -35595,7 +35610,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+            "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
           },
           "attachmentPoints": {
             "type": "array",
@@ -36098,11 +36113,11 @@
           },
           "stubName": {
             "type": "string",
-            "description": "URL-safe identifier (e.g., \"arcadia\")"
+            "description": "URL-safe identifier (e.g., \"my-game\")"
           },
           "displayName": {
             "type": "string",
-            "description": "Human-readable name (e.g., \"Arcadia Online\")"
+            "description": "Human-readable name (e.g., \"My Game Online\")"
           },
           "description": {
             "type": "string",
@@ -36128,11 +36143,7 @@
       },
       "SessionGameType": {
         "type": "string",
-        "description": "Game type for created sessions (maps to game-session service GameType)",
-        "enum": [
-          "generic",
-          "arcadia"
-        ],
+        "description": "Game service stub name for created sessions. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions.",
         "default": "generic"
       },
       "SessionInfo": {
@@ -36460,6 +36471,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Source bundle identifier"
           },
           "version": {
@@ -38360,6 +38372,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Bundle identifier to update"
           },
           "name": {
@@ -38416,6 +38429,7 @@
         "properties": {
           "bundleId": {
             "type": "string",
+            "format": "uuid",
             "description": "Updated bundle identifier"
           },
           "version": {
@@ -39341,7 +39355,7 @@
               "type": "string"
             },
             "nullable": true,
-            "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
+            "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"my-game:authorized\")\n"
           },
           "remainingTime": {
             "type": "integer",
@@ -40212,7 +40226,7 @@
     },
     {
       "name": "Bannou Character",
-      "description": "Character management service for Arcadia game world."
+      "description": "Character management service for game worlds."
     },
     {
       "name": "Bannou Character Encounter",
@@ -40240,7 +40254,7 @@
     },
     {
       "name": "Bannou Game Session",
-      "description": "Minimal game session management for Arcadia and other games."
+      "description": "Minimal game session management for games."
     },
     {
       "name": "Bannou Leaderboard",
@@ -40248,11 +40262,11 @@
     },
     {
       "name": "Bannou Location",
-      "description": "Location management service for Arcadia game world."
+      "description": "Location management service for game worlds."
     },
     {
       "name": "Bannou Mapping",
-      "description": "Spatial data management service for Arcadia game worlds."
+      "description": "Spatial data management service for game worlds."
     },
     {
       "name": "Bannou Matchmaking",
@@ -40260,7 +40274,7 @@
     },
     {
       "name": "Bannou Realm",
-      "description": "Realm management service for Arcadia game world."
+      "description": "Realm management service for game worlds."
     },
     {
       "name": "Bannou Realm History",
@@ -40268,7 +40282,7 @@
     },
     {
       "name": "Bannou RelationshipType",
-      "description": "Relationship type management service for Arcadia game world."
+      "description": "Relationship type management service for game worlds."
     },
     {
       "name": "Bannou Scene",
@@ -40276,7 +40290,7 @@
     },
     {
       "name": "Bannou Species",
-      "description": "Species management service for Arcadia game world."
+      "description": "Species management service for game worlds."
     },
     {
       "name": "Bannou Subscription",

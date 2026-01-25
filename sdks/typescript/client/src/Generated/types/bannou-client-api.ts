@@ -4813,7 +4813,7 @@ export interface paths {
     put?: never;
     /**
      * Get realm by code
-     * @description Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+     * @description Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
      */
     post: operations['getRealmByCode'];
     delete?: never;
@@ -7712,7 +7712,10 @@ export interface components {
     BundleFormat: 'bannou' | 'zip';
     /** @description Complete metadata for an asset bundle (API response model) */
     BundleInfo: {
-      /** @description Unique bundle identifier */
+      /**
+       * Format: uuid
+       * @description Unique bundle identifier
+       */
       bundleId: string;
       /** @description Whether source or metabundle */
       bundleType: components['schemas']['BundleType'];
@@ -7767,7 +7770,10 @@ export interface components {
     BundleLifecycle: 'active' | 'deleted' | 'processing';
     /** @description Preview of bundle manifest for validation */
     BundleManifestPreview: {
-      /** @description Bundle identifier from the manifest */
+      /**
+       * Format: uuid
+       * @description Bundle identifier from the manifest
+       */
       bundleId: string;
       /** @description Bundle version from the manifest */
       version: string;
@@ -7776,7 +7782,10 @@ export interface components {
     };
     /** @description Summary information about a bundle */
     BundleSummary: {
-      /** @description Bundle identifier */
+      /**
+       * Format: uuid
+       * @description Bundle identifier
+       */
       bundleId: string;
       /** @description Source or metabundle */
       bundleType: components['schemas']['BundleType'];
@@ -7842,7 +7851,10 @@ export interface components {
     };
     /** @description Bundle metadata combined with a pre-signed download URL */
     BundleWithDownloadUrl: {
-      /** @description Unique bundle identifier */
+      /**
+       * Format: uuid
+       * @description Unique bundle identifier
+       */
       bundleId: string;
       /** @description Bundle version string */
       version: string;
@@ -8741,7 +8753,10 @@ export interface components {
     CompressionType: 'lz4' | 'lzma' | 'none';
     /** @description A bundle entry in an asset conflict */
     ConflictingBundleEntry: {
-      /** @description Bundle containing this version */
+      /**
+       * Format: uuid
+       * @description Bundle containing this version
+       */
       bundleId: string;
       /** @description Content hash of asset in this bundle */
       contentHash: string;
@@ -9467,7 +9482,10 @@ export interface components {
        *     For service-initiated bundles: the service name (e.g., "orchestrator").
        */
       owner: string;
-      /** @description Unique bundle identifier */
+      /**
+       * Format: uuid
+       * @description Unique bundle identifier
+       */
       bundleId: string;
       /**
        * @description Bundle version string
@@ -9490,7 +9508,10 @@ export interface components {
     };
     /** @description Response with bundle creation status and estimated size */
     CreateBundleResponse: {
-      /** @description Unique bundle identifier */
+      /**
+       * Format: uuid
+       * @description Unique bundle identifier
+       */
       bundleId: string;
       /**
        * @description Bundle creation status
@@ -9917,7 +9938,10 @@ export interface components {
      *     This enables packaging behaviors/scripts with 3D assets as a complete unit.
      */
     CreateMetabundleRequest: {
-      /** @description Unique identifier for the new metabundle */
+      /**
+       * Format: uuid
+       * @description Unique identifier for the new metabundle
+       */
       metabundleId: string;
       /**
        * @description Source bundle IDs to pull assets from. Can cherry-pick specific
@@ -9962,7 +9986,10 @@ export interface components {
      *     For async creation (large jobs): status=queued with jobId for polling.
      */
     CreateMetabundleResponse: {
-      /** @description Metabundle identifier */
+      /**
+       * Format: uuid
+       * @description Metabundle identifier
+       */
       metabundleId: string;
       /**
        * Format: uuid
@@ -10006,7 +10033,7 @@ export interface components {
     };
     /** @description Request to create a new save slot for an entity. */
     CreateSlotRequest: {
-      /** @description Game identifier for namespace isolation (e.g., "arcadia", "fantasia") */
+      /** @description Game identifier for namespace isolation (e.g., "game-1", "game-2") */
       gameId: string;
       /**
        * Format: uuid
@@ -10472,7 +10499,10 @@ export interface components {
     };
     /** @description Request to delete a bundle */
     DeleteBundleRequest: {
-      /** @description Bundle identifier to delete */
+      /**
+       * Format: uuid
+       * @description Bundle identifier to delete
+       */
       bundleId: string;
       /**
        * @description If true, permanently delete (admin only). If false, soft-delete.
@@ -10484,7 +10514,10 @@ export interface components {
     };
     /** @description Result of bundle deletion */
     DeleteBundleResponse: {
-      /** @description Deleted bundle identifier */
+      /**
+       * Format: uuid
+       * @description Deleted bundle identifier
+       */
       bundleId: string;
       /**
        * @description Deletion status
@@ -12144,7 +12177,7 @@ export interface components {
     };
     /**
      * @description Realm stub name (lowercase string identifier) that this asset belongs to.
-     *     Use the realm's stub_name property (e.g., "omega", "arcadia") from the Realm service.
+     *     Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
      *     Use "shared" for assets that are available across all realms.
      */
     GameRealm: string;
@@ -12193,11 +12226,8 @@ export interface components {
        */
       reservationExpiresAt?: string | null;
     };
-    /**
-     * @description Type of game for this session
-     * @enum {string}
-     */
-    GameType: 'arcadia' | 'generic';
+    /** @description Game service stub name for this session. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions. */
+    GameType: string;
     /** @description Request to generate a complete musical composition */
     GenerateCompositionRequest: {
       /**
@@ -12445,7 +12475,10 @@ export interface components {
     };
     /** @description Request to retrieve bundle metadata and download URL */
     GetBundleRequest: {
-      /** @description Bundle identifier to retrieve */
+      /**
+       * Format: uuid
+       * @description Bundle identifier to retrieve
+       */
       bundleId: string;
       /** @description Desired download format (bannou or zip) */
       format?: components['schemas']['BundleFormat'];
@@ -12914,7 +12947,10 @@ export interface components {
        * @description Job identifier
        */
       jobId: string;
-      /** @description Metabundle identifier being created */
+      /**
+       * Format: uuid
+       * @description Metabundle identifier being created
+       */
       metabundleId: string;
       /**
        * @description Current job status.
@@ -13186,7 +13222,7 @@ export interface components {
     };
     /** @description Request to retrieve a realm by its unique code identifier */
     GetRealmByCodeRequest: {
-      /** @description Unique code for the realm (e.g., "OMEGA", "ARCADIA", "FANTASIA") */
+      /** @description Unique code for the realm (e.g., "REALM_1", "REALM_2") */
       code: string;
     };
     /** @description Request payload for getting participants of an event */
@@ -14451,7 +14487,10 @@ export interface components {
     };
     /** @description Request to list bundle version history */
     ListBundleVersionsRequest: {
-      /** @description Bundle identifier to get history for */
+      /**
+       * Format: uuid
+       * @description Bundle identifier to get history for
+       */
       bundleId: string;
       /**
        * @description Maximum versions to return
@@ -14466,7 +14505,10 @@ export interface components {
     };
     /** @description Bundle version history */
     ListBundleVersionsResponse: {
-      /** @description Bundle identifier */
+      /**
+       * Format: uuid
+       * @description Bundle identifier
+       */
       bundleId: string;
       /** @description Current version number */
       currentVersion: number;
@@ -17543,7 +17585,7 @@ export interface components {
        * @description Unique identifier of the realm
        */
       realmId: string;
-      /** @description Unique code for the realm (e.g., "OMEGA", "ARCADIA") */
+      /** @description Unique code for the realm (e.g., "REALM_1", "REALM_2") */
       code: string;
       /** @description Display name for the realm */
       name: string;
@@ -18190,7 +18232,10 @@ export interface components {
     };
     /** @description A bundle selected for download in resolution */
     ResolvedBundle: {
-      /** @description Bundle identifier */
+      /**
+       * Format: uuid
+       * @description Bundle identifier
+       */
       bundleId: string;
       /** @description Whether source or metabundle */
       bundleType: components['schemas']['BundleType'];
@@ -18259,14 +18304,20 @@ export interface components {
     };
     /** @description Request to restore a soft-deleted bundle */
     RestoreBundleRequest: {
-      /** @description Bundle identifier to restore */
+      /**
+       * Format: uuid
+       * @description Bundle identifier to restore
+       */
       bundleId: string;
       /** @description Optional reason for restoration (recorded in version history) */
       reason?: string | null;
     };
     /** @description Result of bundle restoration */
     RestoreBundleResponse: {
-      /** @description Restored bundle identifier */
+      /**
+       * Format: uuid
+       * @description Restored bundle identifier
+       */
       bundleId: string;
       /** @description Current bundle status (should be "active") */
       status: string;
@@ -18565,7 +18616,7 @@ export interface components {
       tags?: string[];
       /**
        * @description Consumer-specific data stored without interpretation.
-       *     Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+       *     Use namespaced keys (e.g., render.castShadows, game.interactionType).
        */
       annotations?: {
         [key: string]: unknown;
@@ -18836,9 +18887,9 @@ export interface components {
        * @description Unique identifier for the service
        */
       serviceId: string;
-      /** @description URL-safe identifier (e.g., "arcadia") */
+      /** @description URL-safe identifier (e.g., "my-game") */
       stubName: string;
-      /** @description Human-readable name (e.g., "Arcadia Online") */
+      /** @description Human-readable name (e.g., "My Game Online") */
       displayName: string;
       /** @description Optional description */
       description?: string | null;
@@ -18856,11 +18907,10 @@ export interface components {
       updatedAt?: string | null;
     };
     /**
-     * @description Game type for created sessions (maps to game-session service GameType)
+     * @description Game service stub name for created sessions. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions.
      * @default generic
-     * @enum {string}
      */
-    SessionGameType: 'generic' | 'arcadia';
+    SessionGameType: string;
     /** @description Information about an active user session including device and activity details */
     SessionInfo: {
       /**
@@ -19033,7 +19083,10 @@ export interface components {
     SoulboundType: 'none' | 'on_pickup' | 'on_equip' | 'on_use';
     /** @description Provenance reference to a source bundle used in metabundle creation */
     SourceBundleReference: {
-      /** @description Source bundle identifier */
+      /**
+       * Format: uuid
+       * @description Source bundle identifier
+       */
       bundleId: string;
       /** @description Version of source bundle at composition time */
       version: string;
@@ -20019,7 +20072,10 @@ export interface components {
     };
     /** @description Request to update bundle metadata */
     UpdateBundleRequest: {
-      /** @description Bundle identifier to update */
+      /**
+       * Format: uuid
+       * @description Bundle identifier to update
+       */
       bundleId: string;
       /** @description New bundle name (null to leave unchanged) */
       name?: string | null;
@@ -20040,7 +20096,10 @@ export interface components {
     };
     /** @description Result of bundle update operation */
     UpdateBundleResponse: {
-      /** @description Updated bundle identifier */
+      /**
+       * Format: uuid
+       * @description Updated bundle identifier
+       */
       bundleId: string;
       /** @description New version number after update */
       version: number;
@@ -20464,7 +20523,7 @@ export interface components {
       roles?: string[] | null;
       /**
        * @description Authorization strings from active subscriptions.
-       *     Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+       *     Format: "{stubName}:{state}" (e.g., "my-game:authorized")
        */
       authorizations?: string[] | null;
       /** @description Seconds until expiration */

@@ -1974,7 +1974,7 @@ internal class QueueModel
 {
     public string QueueId { get; set; } = string.Empty;
     public string GameId { get; set; } = string.Empty;
-    public SessionGameType SessionGameType { get; set; } = SessionGameType.Generic;
+    public string SessionGameType { get; set; } = "generic";
     public string DisplayName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool Enabled { get; set; } = true;
