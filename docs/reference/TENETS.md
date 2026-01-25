@@ -79,7 +79,7 @@ Tenets are organized into three categories based on when they're needed:
 | **T21** | Configuration-First | Use generated config classes; no dead config; no hardcoded tunables |
 | **T23** | Async Method Pattern | Task-returning methods must be async with await |
 | **T24** | Using Statement Pattern | Use `using` for disposables; manual Dispose only for class-owned resources |
-| **T25** | Internal Model Type Safety | POCOs use proper types (enums, Guids); no string representations |
+| **T25** | Type Safety Across All Models | ALL models use proper types (enums, Guids); "JSON requires strings" is FALSE |
 
 ---
 
@@ -134,11 +134,14 @@ Tenets are organized into three categories based on when they're needed:
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |
-| String field for enum in internal POCO | T25 | Use the generated enum type |
-| String field for GUID in internal POCO | T25 | Use `Guid` type |
-| `Enum.Parse` in business logic | T25 | Use typed POCO, parse only at boundaries |
-| `.ToString()` populating internal model | T25 | Assign enum directly |
+| String field for enum in ANY model | T25 | Use the generated enum type |
+| String field for GUID in ANY model | T25 | Use `Guid` type |
+| `Enum.Parse` anywhere in service code | T25 | Your model definition is wrong - fix it |
+| `.ToString()` when assigning enum | T25 | Assign enum directly |
 | String comparison for enum value | T25 | Use enum equality operator |
+| Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
+| String in request/response/event model | T25 | Schema should define enum type |
+| String in configuration class | T25 | Config schema should define enum type |
 | `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |

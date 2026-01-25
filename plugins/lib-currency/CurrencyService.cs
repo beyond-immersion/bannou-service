@@ -233,13 +233,12 @@ public partial class CurrencyService : ICurrencyService
                 var model = await store.GetAsync($"{DEF_PREFIX}{id}", cancellationToken);
                 if (model is null) continue;
                 if (!body.IncludeInactive && !model.IsActive) continue;
-                if (body.Scope is not null && model.Scope != body.Scope.ToString()) continue;
+                if (body.Scope is not null && model.Scope != body.Scope) continue;
                 if (body.IsBaseCurrency is not null && model.IsBaseCurrency != body.IsBaseCurrency) continue;
                 if (body.RealmId is not null)
                 {
-                    var realmStr = body.RealmId.Value.ToString();
-                    if (model.Scope == CurrencyScope.Global.ToString()) { /* global is always available */ }
-                    else if (model.RealmsAvailable is null || !model.RealmsAvailable.Contains(realmStr)) continue;
+                    if (model.Scope == CurrencyScope.Global) { /* global is always available */ }
+                    else if (model.RealmsAvailable is null || !model.RealmsAvailable.Contains(body.RealmId.Value)) continue;
                 }
 
                 definitions.Add(MapDefinitionToResponse(model));
@@ -286,11 +285,11 @@ public partial class CurrencyService : ICurrencyService
             if (body.Tradeable is not null) model.Tradeable = body.Tradeable.Value;
             if (body.AllowNegative is not null) model.AllowNegative = body.AllowNegative;
             if (body.PerWalletCap is not null) model.PerWalletCap = body.PerWalletCap;
-            if (body.CapOverflowBehavior is not null) model.CapOverflowBehavior = body.CapOverflowBehavior.ToString();
+            if (body.CapOverflowBehavior is not null) model.CapOverflowBehavior = body.CapOverflowBehavior;
             if (body.DailyEarnCap is not null) model.DailyEarnCap = body.DailyEarnCap;
             if (body.WeeklyEarnCap is not null) model.WeeklyEarnCap = body.WeeklyEarnCap;
             if (body.AutogainEnabled is not null) model.AutogainEnabled = body.AutogainEnabled.Value;
-            if (body.AutogainMode is not null) model.AutogainMode = body.AutogainMode.ToString();
+            if (body.AutogainMode is not null) model.AutogainMode = body.AutogainMode;
             if (body.AutogainAmount is not null) model.AutogainAmount = body.AutogainAmount;
             if (body.AutogainInterval is not null) model.AutogainInterval = body.AutogainInterval;
             if (body.AutogainCap is not null) model.AutogainCap = body.AutogainCap;
@@ -299,7 +298,7 @@ public partial class CurrencyService : ICurrencyService
                 model.ExchangeRateToBase = body.ExchangeRateToBase;
                 model.ExchangeRateUpdatedAt = DateTimeOffset.UtcNow;
             }
-            if (body.IconAssetId is not null) model.IconAssetId = body.IconAssetId.ToString();
+            if (body.IconAssetId is not null) model.IconAssetId = body.IconAssetId;
             if (body.DisplayFormat is not null) model.DisplayFormat = body.DisplayFormat;
             if (body.IsActive is not null) model.IsActive = body.IsActive.Value;
             model.ModifiedAt = DateTimeOffset.UtcNow;
@@ -310,11 +309,11 @@ public partial class CurrencyService : ICurrencyService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                DefinitionId = Guid.Parse(model.DefinitionId),
+                DefinitionId = model.DefinitionId,
                 Code = model.Code,
                 Name = model.Name,
-                Scope = model.Scope,
-                Precision = model.Precision,
+                Scope = model.Scope.ToString(),
+                Precision = model.Precision.ToString(),
                 IsActive = model.IsActive,
                 CreatedAt = model.CreatedAt,
                 ModifiedAt = model.ModifiedAt
@@ -364,10 +363,10 @@ public partial class CurrencyService : ICurrencyService
 
             var model = new WalletModel
             {
-                WalletId = walletId.ToString(),
-                OwnerId = body.OwnerId.ToString(),
-                OwnerType = body.OwnerType.ToString(),
-                RealmId = body.RealmId?.ToString(),
+                WalletId = walletId,
+                OwnerId = body.OwnerId,
+                OwnerType = body.OwnerType,
+                RealmId = body.RealmId,
                 Status = WalletStatus.Active,
                 CreatedAt = now,
                 LastActivityAt = now
@@ -2789,39 +2788,39 @@ public partial class CurrencyService : ICurrencyService
     {
         return new CurrencyDefinitionResponse
         {
-            DefinitionId = Guid.Parse(m.DefinitionId),
+            DefinitionId = m.DefinitionId,
             Code = m.Code,
             Name = m.Name,
             Description = m.Description,
-            Scope = Enum.TryParse<CurrencyScope>(m.Scope, out var scope) ? scope : CurrencyScope.Global,
-            RealmsAvailable = m.RealmsAvailable?.Select(r => Guid.Parse(r)).ToList(),
-            Precision = Enum.TryParse<CurrencyPrecision>(m.Precision, out var prec) ? prec : CurrencyPrecision.Decimal_2,
+            Scope = m.Scope,
+            RealmsAvailable = m.RealmsAvailable,
+            Precision = m.Precision,
             Transferable = m.Transferable,
             Tradeable = m.Tradeable,
             AllowNegative = m.AllowNegative,
             PerWalletCap = m.PerWalletCap,
-            CapOverflowBehavior = Enum.TryParse<CapOverflowBehavior>(m.CapOverflowBehavior, out var cob) ? cob : null,
+            CapOverflowBehavior = m.CapOverflowBehavior,
             GlobalSupplyCap = m.GlobalSupplyCap,
             DailyEarnCap = m.DailyEarnCap,
             WeeklyEarnCap = m.WeeklyEarnCap,
             EarnCapResetTime = m.EarnCapResetTime,
             AutogainEnabled = m.AutogainEnabled,
-            AutogainMode = Enum.TryParse<AutogainMode>(m.AutogainMode, out var agm) ? agm : null,
+            AutogainMode = m.AutogainMode,
             AutogainAmount = m.AutogainAmount,
             AutogainInterval = m.AutogainInterval,
             AutogainCap = m.AutogainCap,
             Expires = m.Expires,
-            ExpirationPolicy = Enum.TryParse<ExpirationPolicy>(m.ExpirationPolicy, out var ep) ? ep : null,
+            ExpirationPolicy = m.ExpirationPolicy,
             ExpirationDate = m.ExpirationDate,
             ExpirationDuration = m.ExpirationDuration,
-            SeasonId = m.SeasonId is not null ? Guid.Parse(m.SeasonId) : null,
+            SeasonId = m.SeasonId,
             LinkedToItem = m.LinkedToItem,
-            LinkedItemTemplateId = m.LinkedItemTemplateId is not null ? Guid.Parse(m.LinkedItemTemplateId) : null,
-            LinkageMode = Enum.TryParse<ItemLinkageMode>(m.LinkageMode, out var lm) ? lm : null,
+            LinkedItemTemplateId = m.LinkedItemTemplateId,
+            LinkageMode = m.LinkageMode,
             IsBaseCurrency = m.IsBaseCurrency,
             ExchangeRateToBase = m.ExchangeRateToBase,
             ExchangeRateUpdatedAt = m.ExchangeRateUpdatedAt,
-            IconAssetId = m.IconAssetId is not null ? Guid.Parse(m.IconAssetId) : null,
+            IconAssetId = m.IconAssetId,
             DisplayFormat = m.DisplayFormat,
             IsActive = m.IsActive,
             CreatedAt = m.CreatedAt,
@@ -2833,10 +2832,10 @@ public partial class CurrencyService : ICurrencyService
     {
         return new WalletResponse
         {
-            WalletId = Guid.Parse(m.WalletId),
-            OwnerId = Guid.Parse(m.OwnerId),
-            OwnerType = Enum.TryParse<WalletOwnerType>(m.OwnerType, out var ot) ? ot : WalletOwnerType.Account,
-            RealmId = m.RealmId is not null ? Guid.Parse(m.RealmId) : null,
+            WalletId = m.WalletId,
+            OwnerId = m.OwnerId,
+            OwnerType = m.OwnerType,
+            RealmId = m.RealmId,
             Status = m.Status,
             FrozenReason = m.FrozenReason,
             FrozenAt = m.FrozenAt,
@@ -2849,15 +2848,15 @@ public partial class CurrencyService : ICurrencyService
     {
         return new CurrencyTransactionRecord
         {
-            TransactionId = Guid.Parse(m.TransactionId),
-            SourceWalletId = m.SourceWalletId is not null ? Guid.Parse(m.SourceWalletId) : null,
-            TargetWalletId = m.TargetWalletId is not null ? Guid.Parse(m.TargetWalletId) : null,
-            CurrencyDefinitionId = Guid.Parse(m.CurrencyDefinitionId),
+            TransactionId = m.TransactionId,
+            SourceWalletId = m.SourceWalletId,
+            TargetWalletId = m.TargetWalletId,
+            CurrencyDefinitionId = m.CurrencyDefinitionId,
             Amount = m.Amount,
-            TransactionType = Enum.TryParse<TransactionType>(m.TransactionType, out var tt) ? tt : TransactionType.Transfer,
+            TransactionType = m.TransactionType,
             ReferenceType = m.ReferenceType,
-            ReferenceId = m.ReferenceId is not null ? Guid.Parse(m.ReferenceId) : null,
-            EscrowId = m.EscrowId is not null ? Guid.Parse(m.EscrowId) : null,
+            ReferenceId = m.ReferenceId,
+            EscrowId = m.EscrowId,
             IdempotencyKey = m.IdempotencyKey,
             Timestamp = m.Timestamp,
             SourceBalanceBefore = m.SourceBalanceBefore,
@@ -2871,15 +2870,15 @@ public partial class CurrencyService : ICurrencyService
     {
         return new HoldRecord
         {
-            HoldId = Guid.Parse(m.HoldId),
-            WalletId = Guid.Parse(m.WalletId),
-            CurrencyDefinitionId = Guid.Parse(m.CurrencyDefinitionId),
+            HoldId = m.HoldId,
+            WalletId = m.WalletId,
+            CurrencyDefinitionId = m.CurrencyDefinitionId,
             Amount = m.Amount,
             Status = m.Status,
             CreatedAt = m.CreatedAt,
             ExpiresAt = m.ExpiresAt,
             ReferenceType = m.ReferenceType,
-            ReferenceId = m.ReferenceId is not null ? Guid.Parse(m.ReferenceId) : null,
+            ReferenceId = m.ReferenceId,
             CapturedAmount = m.CapturedAmount,
             CompletedAt = m.CompletedAt
         };
@@ -3020,7 +3019,7 @@ internal class CurrencyDefinitionModel
     public ExpirationPolicy? ExpirationPolicy { get; set; }
     public DateTimeOffset? ExpirationDate { get; set; }
     public string? ExpirationDuration { get; set; }
-    public string? SeasonId { get; set; }
+    public Guid? SeasonId { get; set; }
     public bool LinkedToItem { get; set; }
     public Guid? LinkedItemTemplateId { get; set; }
     public ItemLinkageMode? LinkageMode { get; set; }
