@@ -249,6 +249,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ScheduledEventManager> _logger;
+    private readonly ActorServiceConfiguration _config;
     private readonly ConcurrentDictionary<Guid, ScheduledEvent> _pendingEvents = new();
     private readonly Timer _timer;
     private bool _disposed;
@@ -266,6 +267,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     {
         _messageBus = messageBus;
         _logger = logger;
+        _config = configuration;
 
         var checkInterval = TimeSpan.FromMilliseconds(configuration.ScheduledEventCheckIntervalMilliseconds);
         _timer = new Timer(CheckEvents, null, checkInterval, checkInterval);
@@ -336,7 +338,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
                     SourceId = evt.SourceId,
                     SourceType = "scheduled",
                     Data = evt.Data,
-                    Urgency = 0.7f // Scheduled events are moderately urgent
+                    Urgency = (float)_config.ScheduledEventDefaultUrgency
                 }
             };
 

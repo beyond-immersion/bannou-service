@@ -38,13 +38,13 @@ public partial class MatchmakingService
     /// New connections don't require any matchmaking action - players must explicitly join queues.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
+    public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
     {
         // New connections don't require any matchmaking action
         // Players must explicitly join queues via the JoinMatchmaking endpoint
         _logger.LogDebug("Session {SessionId} connected, account {AccountId}",
             evt.SessionId, evt.AccountId);
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <summary>

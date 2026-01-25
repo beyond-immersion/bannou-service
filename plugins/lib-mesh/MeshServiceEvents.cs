@@ -92,6 +92,10 @@ public partial class MeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing service heartbeat from {AppId}", evt.AppId);
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "HandleServiceHeartbeat", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: "event:bannou.service-heartbeats",
+                details: new { AppId = evt.AppId }, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
     }
 
@@ -112,6 +116,8 @@ public partial class MeshService
 
         try
         {
+            await Task.CompletedTask; // T23 compliance - async method requires await in success path
+
             // Convert to dictionary - empty is valid (means reset to default)
             var mappingsDict = evt.Mappings?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                 ?? new Dictionary<string, string>();
@@ -162,9 +168,11 @@ public partial class MeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing service mappings event");
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "HandleServiceMappings", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "event:bannou.full-service-mappings",
+                details: new { Version = evt.Version }, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
-
-        await Task.CompletedTask;
     }
 
     /// <summary>

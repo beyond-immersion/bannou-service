@@ -18,6 +18,7 @@ x-service-configuration:
     # === Deployment Mode ===
     DeploymentMode:
       type: string
+      enum: [bannou, pool-per-type, shared-pool, auto-scale]
       env: ACTOR_DEPLOYMENT_MODE
       default: "bannou"
       description: "Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale"
@@ -187,6 +188,44 @@ x-service-configuration:
       env: ACTOR_OPERATION_TIMEOUT_SECONDS
       default: 5
       description: Timeout in seconds for individual actor operations
+
+    ActorStopTimeoutSeconds:
+      type: integer
+      env: ACTOR_STOP_TIMEOUT_SECONDS
+      default: 5
+      description: Timeout in seconds for graceful actor stop operations
+
+    # === Error Recovery (Tier 2) ===
+    ErrorRetryDelayMs:
+      type: integer
+      env: ACTOR_ERROR_RETRY_DELAY_MS
+      default: 1000
+      description: Delay in milliseconds before retrying after behavior loop error
+
+    StatePersistenceRetryDelayMs:
+      type: integer
+      env: ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS
+      default: 50
+      description: Base delay in milliseconds between state persistence retry attempts (multiplied by attempt number)
+
+    # === Default Urgency Values (Tier 2) ===
+    ScheduledEventDefaultUrgency:
+      type: number
+      env: ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY
+      default: 0.7
+      description: Default urgency value for scheduled event perceptions (0.0-1.0)
+
+    EventBrainDefaultUrgency:
+      type: number
+      env: ACTOR_EVENT_BRAIN_DEFAULT_URGENCY
+      default: 0.8
+      description: Default urgency for Event Brain instruction perceptions (0.0-1.0)
+
+    QueryOptionsDefaultMaxAgeMs:
+      type: integer
+      env: ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS
+      default: 5000
+      description: Default max age in milliseconds for cached query options
 
     # === Actor Data Caching (Tier 2) ===
     PersonalityCacheTtlMinutes:

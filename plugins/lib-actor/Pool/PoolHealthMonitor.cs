@@ -90,6 +90,11 @@ public sealed class PoolHealthMonitor : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during pool health check");
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "PoolHealthCheck",
+                    ex.GetType().Name,
+                    ex.Message);
             }
 
             try

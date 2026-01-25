@@ -437,8 +437,4 @@ Authoring Workflow
 
 14. **Hardcoded position exclusion tolerance**: Affordance exclusion check uses hardcoded `1.0` unit tolerance for position matching. Should be configurable.
 
-15. **ApiException not caught distinctly**: Methods calling `IAssetClient` (`RequestSnapshotAsync`, upload helpers) catch only generic `Exception`. Service client failures should be caught as `ApiException` with status propagation.
-
-16. **Missing error event in HandleIngestEventAsync**: The ingest handler logs errors but does not emit error events via `TryPublishErrorAsync`, losing monitoring visibility.
-
-17. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Documented as intentional but exceptions are silently lost.
+15. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Documented as intentional but exceptions are silently lost.

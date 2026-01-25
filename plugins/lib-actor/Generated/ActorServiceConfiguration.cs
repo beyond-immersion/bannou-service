@@ -57,7 +57,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
     /// Environment variable: ACTOR_DEPLOYMENT_MODE
     /// </summary>
-    public string DeploymentMode { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DeploymentMode { get; set; } = "bannou";
 
     /// <summary>
     /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
@@ -214,6 +214,42 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Environment variable: ACTOR_OPERATION_TIMEOUT_SECONDS
     /// </summary>
     public int ActorOperationTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Timeout in seconds for graceful actor stop operations
+    /// Environment variable: ACTOR_STOP_TIMEOUT_SECONDS
+    /// </summary>
+    public int ActorStopTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Delay in milliseconds before retrying after behavior loop error
+    /// Environment variable: ACTOR_ERROR_RETRY_DELAY_MS
+    /// </summary>
+    public int ErrorRetryDelayMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Base delay in milliseconds between state persistence retry attempts (multiplied by attempt number)
+    /// Environment variable: ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS
+    /// </summary>
+    public int StatePersistenceRetryDelayMs { get; set; } = 50;
+
+    /// <summary>
+    /// Default urgency value for scheduled event perceptions (0.0-1.0)
+    /// Environment variable: ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY
+    /// </summary>
+    public double ScheduledEventDefaultUrgency { get; set; } = 0.7;
+
+    /// <summary>
+    /// Default urgency for Event Brain instruction perceptions (0.0-1.0)
+    /// Environment variable: ACTOR_EVENT_BRAIN_DEFAULT_URGENCY
+    /// </summary>
+    public double EventBrainDefaultUrgency { get; set; } = 0.8;
+
+    /// <summary>
+    /// Default max age in milliseconds for cached query options
+    /// Environment variable: ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS
+    /// </summary>
+    public int QueryOptionsDefaultMaxAgeMs { get; set; } = 5000;
 
     /// <summary>
     /// TTL in minutes for cached personality data

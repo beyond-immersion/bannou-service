@@ -42,18 +42,22 @@ public sealed class EmitPerceptionHandler : IActionHandler
     private const string ACTION_NAME = "emit_perception";
     private readonly IMessageBus _messageBus;
     private readonly ILogger<EmitPerceptionHandler> _logger;
+    private readonly ActorServiceConfiguration _config;
 
     /// <summary>
     /// Creates a new emit perception handler.
     /// </summary>
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="config">Actor service configuration.</param>
     public EmitPerceptionHandler(
         IMessageBus messageBus,
-        ILogger<EmitPerceptionHandler> logger)
+        ILogger<EmitPerceptionHandler> logger,
+        ActorServiceConfiguration config)
     {
         _messageBus = messageBus;
         _logger = logger;
+        _config = config;
     }
 
     /// <inheritdoc/>
@@ -98,8 +102,8 @@ public sealed class EmitPerceptionHandler : IActionHandler
         // Get optional source_type
         var sourceType = evaluatedParams.GetValueOrDefault("source_type")?.ToString() ?? "coordinator";
 
-        // Get urgency (default 0.8 for Event Brain instructions)
-        var urgency = 0.8f;
+        // Get urgency (default from configuration for Event Brain instructions)
+        var urgency = (float)_config.EventBrainDefaultUrgency;
         if (evaluatedParams.TryGetValue("urgency", out var urgencyObj) && urgencyObj != null)
         {
             if (urgencyObj is float f)

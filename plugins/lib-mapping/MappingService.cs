@@ -239,6 +239,8 @@ public partial class MappingService : IMappingService
         }
         catch
         {
+            // Intentionally swallowing: any decode/parse exception means token is invalid
+            // Callers handle the (false, _, _) return and log appropriately
             return (false, Guid.Empty, default);
         }
     }
@@ -2025,6 +2027,12 @@ public partial class MappingService : IMappingService
             _logger.LogDebug("Uploaded large payload as asset {AssetId} for region {RegionId}", assetMetadata.AssetId, regionId);
             return assetMetadata.AssetId.ToString();
         }
+        catch (ApiException apiEx)
+        {
+            _logger.LogError(apiEx, "Asset service error uploading large payload for region {RegionId}: {Status}",
+                regionId, apiEx.StatusCode);
+            return null;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading large payload to lib-asset for region {RegionId}", regionId);
@@ -2046,7 +2054,7 @@ public partial class MappingService : IMappingService
                 authority.RequiresConsumeBeforePublish = false;
                 await _stateStoreFactory.GetStore<AuthorityRecord>(StateStoreDefinitions.Mapping)
                     .SaveAsync(authorityKey, authority, cancellationToken: cancellationToken);
-                _logger.LogInformation("Cleared RequiresConsumeBeforePublish flag for channel {ChannelId}", channelId);
+                _logger.LogDebug("Cleared RequiresConsumeBeforePublish flag for channel {ChannelId}", channelId);
             }
         }
     }
@@ -2502,6 +2510,10 @@ public partial class MappingService : IMappingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling ingest event for channel {ChannelId}", channelId);
+            await _messageBus.TryPublishErrorAsync(
+                "mapping", "HandleIngestEvent", "unexpected_exception", ex.Message,
+                dependency: "state", endpoint: $"event:map.ingest.{channelId}",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
     }
 

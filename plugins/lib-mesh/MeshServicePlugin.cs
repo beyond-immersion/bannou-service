@@ -124,7 +124,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             LastSeen = DateTimeOffset.UtcNow
         };
 
-        var registered = await _stateManager.RegisterEndpointAsync(endpoint, 90);
+        var registered = await _stateManager.RegisterEndpointAsync(endpoint, meshConfig.EndpointTtlSeconds);
         if (registered)
         {
             Logger?.LogInformation(

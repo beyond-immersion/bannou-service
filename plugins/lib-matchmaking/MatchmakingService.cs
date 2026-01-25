@@ -113,7 +113,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Listing matchmaking queues - GameId: {GameId}, IncludeDisabled: {IncludeDisabled}",
+            _logger.LogDebug("Listing matchmaking queues - GameId: {GameId}, IncludeDisabled: {IncludeDisabled}",
                 body.GameId, body.IncludeDisabled);
 
             var queueIds = await GetQueueIdsAsync(cancellationToken);
@@ -170,7 +170,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Getting queue {QueueId}", body.QueueId);
+            _logger.LogDebug("Getting queue {QueueId}", body.QueueId);
 
             var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
             if (queue == null)
@@ -200,7 +200,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Creating queue {QueueId} for game {GameId}", body.QueueId, body.GameId);
+            _logger.LogDebug("Creating queue {QueueId} for game {GameId}", body.QueueId, body.GameId);
 
             // Check if queue already exists
             var existing = await LoadQueueAsync(body.QueueId, cancellationToken);
@@ -287,7 +287,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Updating queue {QueueId}", body.QueueId);
+            _logger.LogDebug("Updating queue {QueueId}", body.QueueId);
 
             var queueStore = _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking);
             var queueKey = QUEUE_KEY_PREFIX + body.QueueId;
@@ -320,7 +320,8 @@ public partial class MatchmakingService : IMatchmakingService
 
             queue.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // Save queue with ETag
+            // Save queue with ETag - etag is non-null when queue was successfully loaded above;
+            // null-coalesce satisfies compiler nullable analysis (will never execute)
             var newEtag = await queueStore.TrySaveAsync(queueKey, queue, etag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
@@ -365,7 +366,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         try
         {
-            _logger.LogInformation("Deleting queue {QueueId}", body.QueueId);
+            _logger.LogDebug("Deleting queue {QueueId}", body.QueueId);
 
             var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
             if (queue == null)
@@ -432,7 +433,7 @@ public partial class MatchmakingService : IMatchmakingService
             var accountId = body.AccountId;
             var queueId = body.QueueId;
 
-            _logger.LogInformation("Player {AccountId} joining queue {QueueId}", accountId, queueId);
+            _logger.LogDebug("Player {AccountId} joining queue {QueueId}", accountId, queueId);
 
             // Load queue
             var queue = await LoadQueueAsync(queueId, cancellationToken);
@@ -555,6 +556,16 @@ public partial class MatchmakingService : IMatchmakingService
                     NewState = "in_queue"
                 }, cancellationToken);
             }
+            catch (ApiException apiEx)
+            {
+                _logger.LogWarning(apiEx, "Permission service error setting matchmaking state for session {SessionId}: {Status}",
+                    sessionId, apiEx.StatusCode);
+                // Rollback
+                await DeleteTicketAsync(ticketId, cancellationToken);
+                await RemoveFromPlayerTicketsAsync(accountId, ticketId, cancellationToken);
+                await RemoveFromQueueTicketsAsync(queueId, ticketId, cancellationToken);
+                return ((StatusCodes)apiEx.StatusCode, null);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to set matchmaking state for session {SessionId}", sessionId);
@@ -631,7 +642,7 @@ public partial class MatchmakingService : IMatchmakingService
             var ticketId = body.TicketId;
             var accountId = body.AccountId;
 
-            _logger.LogInformation("Player {AccountId} leaving matchmaking with ticket {TicketId}",
+            _logger.LogDebug("Player {AccountId} leaving matchmaking with ticket {TicketId}",
                 accountId, ticketId);
 
             var ticket = await LoadTicketAsync(ticketId, cancellationToken);
@@ -721,7 +732,7 @@ public partial class MatchmakingService : IMatchmakingService
             var accountId = body.AccountId;
             var sessionId = body.WebSocketSessionId;
 
-            _logger.LogInformation("Player {AccountId} accepting match {MatchId}", accountId, matchId);
+            _logger.LogDebug("Player {AccountId} accepting match {MatchId}", accountId, matchId);
 
             // Acquire lock on match (multiple players accept concurrently)
             await using var matchLock = await _lockProvider.LockAsync(
@@ -822,7 +833,7 @@ public partial class MatchmakingService : IMatchmakingService
             var matchId = body.MatchId;
             var accountId = body.AccountId;
 
-            _logger.LogInformation("Player {AccountId} declining match {MatchId}", accountId, matchId);
+            _logger.LogDebug("Player {AccountId} declining match {MatchId}", accountId, matchId);
 
             var match = await LoadMatchAsync(matchId, cancellationToken);
             if (match == null)
@@ -1176,6 +1187,12 @@ public partial class MatchmakingService : IMatchmakingService
             _logger.LogInformation("Match {MatchId} finalized with game session {GameSessionId}",
                 match.MatchId, sessionResponse.SessionId);
         }
+        catch (ApiException apiEx)
+        {
+            _logger.LogWarning(apiEx, "Game session service error finalizing match {MatchId}: {Status}",
+                match.MatchId, apiEx.StatusCode);
+            await CancelMatchAsync(match, null, cancellationToken);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error finalizing match {MatchId}", match.MatchId);
@@ -1251,7 +1268,10 @@ public partial class MatchmakingService : IMatchmakingService
                         NewState = "in_queue"
                     }, cancellationToken);
                 }
-                catch { /* Ignore */ }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to update permission state for session {SessionId}", ticket.WebSocketSessionId);
+                }
             }
         }
 
@@ -1304,7 +1324,10 @@ public partial class MatchmakingService : IMatchmakingService
                 ServiceId = "matchmaking"
             }, cancellationToken);
         }
-        catch { /* Ignore */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to clear permission state for session {SessionId}", ticket.WebSocketSessionId);
+        }
 
         // Clean up ticket
         await CleanupTicketAsync(ticketId, ticket.AccountId, ticket.QueueId, cancellationToken);

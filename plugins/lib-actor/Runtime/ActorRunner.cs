@@ -246,7 +246,7 @@ public sealed class ActorRunner : IActorRunner
         {
             try
             {
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_config.ActorStopTimeoutSeconds));
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
                 await _loopTask.WaitAsync(linkedCts.Token);
             }
@@ -519,7 +519,7 @@ public sealed class ActorRunner : IActorRunner
                     // Wait a bit before retrying
                     try
                     {
-                        await Task.Delay(1000, ct);
+                        await Task.Delay(_config.ErrorRetryDelayMs, ct);
                     }
                     catch (OperationCanceledException)
                     {
@@ -976,7 +976,7 @@ public sealed class ActorRunner : IActorRunner
             {
                 _logger.LogWarning(ex, "Actor {ActorId} state persist attempt {Attempt} failed, retrying",
                     ActorId, attempt + 1);
-                await Task.Delay(50 * (attempt + 1), ct);
+                await Task.Delay(_config.StatePersistenceRetryDelayMs * (attempt + 1), ct);
             }
             catch (Exception ex)
             {
