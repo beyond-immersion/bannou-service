@@ -55,7 +55,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
             var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
@@ -63,7 +63,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not found: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -84,7 +84,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting relationship type by code: {Code}", body.Code);
+            _logger.LogDebug("Getting relationship type by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code.ToUpperInvariant());
             var typeId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
@@ -92,7 +92,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (string.IsNullOrEmpty(typeId))
             {
-                _logger.LogWarning("Relationship type not found for code: {Code}", body.Code);
+                _logger.LogDebug("Relationship type not found for code: {Code}", body.Code);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -102,7 +102,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found: {TypeId}", typeId);
+                _logger.LogDebug("Relationship type not found: {TypeId}", typeId);
                 return (StatusCodes.NotFound, null);
             }
 
