@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -414,7 +415,7 @@ public partial class LocationService : ILocationService
 
             var ancestors = new List<LocationModel>();
             var currentParentId = model.ParentLocationId;
-            var maxDepth = 20; // Safety limit (matches IsDescendantOf and UpdateDescendantDepths)
+            var maxDepth = _configuration.MaxAncestorDepth;
             var depth = 0;
 
             while (currentParentId.HasValue && depth < maxDepth)
@@ -468,7 +469,7 @@ public partial class LocationService : ILocationService
                 return (StatusCodes.NotFound, null);
             }
 
-            var maxDepth = body.MaxDepth ?? 10;
+            var maxDepth = body.MaxDepth ?? _configuration.DefaultDescendantMaxDepth;
             var descendants = new List<LocationModel>();
             await CollectDescendantsAsync(body.LocationId.ToString(), model.RealmId.ToString(), descendants, 0, maxDepth, cancellationToken);
 
@@ -656,6 +657,15 @@ public partial class LocationService : ILocationService
 
             _logger.LogDebug("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Realm service error creating location {Code}: {StatusCode}", body.Code, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "CreateLocation", "realm_service_error", ex.Message,
+                dependency: "realm", endpoint: "post:/location/create",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return ((StatusCodes)ex.StatusCode, null);
         }
         catch (Exception ex)
         {
@@ -1190,6 +1200,16 @@ public partial class LocationService : ILocationService
                 Errors = errors
             });
         }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Realm service error seeding locations (created={Created}, updated={Updated}, skipped={Skipped}): {StatusCode}",
+                created, updated, skipped, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "SeedLocations", "realm_service_error", ex.Message,
+                dependency: "realm", endpoint: "post:/location/seed",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return ((StatusCodes)ex.StatusCode, null);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error seeding locations (created={Created}, updated={Updated}, skipped={Skipped})",
@@ -1310,14 +1330,14 @@ public partial class LocationService : ILocationService
     private async Task<bool> IsDescendantOfAsync(string potentialDescendantId, string potentialAncestorId, string realmId, CancellationToken cancellationToken)
     {
         var descendants = new List<LocationModel>();
-        await CollectDescendantsAsync(potentialAncestorId, realmId, descendants, 0, 20, cancellationToken);
+        await CollectDescendantsAsync(potentialAncestorId, realmId, descendants, 0, _configuration.MaxDescendantDepth, cancellationToken);
         return descendants.Any(d => d.LocationId.ToString() == potentialDescendantId);
     }
 
     private async Task UpdateDescendantDepthsAsync(string parentId, string realmId, int depthChange, CancellationToken cancellationToken)
     {
         var descendants = new List<LocationModel>();
-        await CollectDescendantsAsync(parentId, realmId, descendants, 0, 20, cancellationToken);
+        await CollectDescendantsAsync(parentId, realmId, descendants, 0, _configuration.MaxDescendantDepth, cancellationToken);
 
         foreach (var descendant in descendants)
         {

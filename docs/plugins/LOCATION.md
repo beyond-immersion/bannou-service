@@ -68,7 +68,9 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| (none) | — | — | Configuration class injected but unused (dead config) |
+| `MaxAncestorDepth` | `LOCATION_MAX_ANCESTOR_DEPTH` | `20` | Maximum depth for ancestor chain traversal |
+| `DefaultDescendantMaxDepth` | `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | `10` | Default max depth when listing descendants |
+| `MaxDescendantDepth` | `LOCATION_MAX_DESCENDANT_DEPTH` | `20` | Safety limit for descendant/circular reference checks |
 
 ---
 
@@ -204,7 +206,6 @@ State Store Layout
 ## Stubs & Unimplemented Features
 
 1. **No location type validation**: `LocationType` is stored as a string. Any value is accepted on creation/update. The enum (`LocationType`) is defined in schema but not validated at runtime against the model.
-2. **Configuration unused**: `LocationServiceConfiguration` is injected but never referenced. Hardcoded depth limits and pagination defaults could be configurable.
 
 ---
 
@@ -218,6 +219,16 @@ State Store Layout
 ---
 
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
+### Previously Fixed
+
+1. **T21 (Hardcoded depth limits)**: Replaced hardcoded 10, 20 values with `_configuration.MaxAncestorDepth`, `_configuration.DefaultDescendantMaxDepth`, and `_configuration.MaxDescendantDepth` properties.
+
+2. **T7 (ApiException handling)**: Added ApiException catch blocks for `IRealmClient` calls in `CreateLocationAsync` and `SeedLocationsAsync`. Service errors now propagate appropriate status codes.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -257,8 +268,4 @@ State Store Layout
 
 11. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
 
-12. **Hardcoded depth/traversal limits**: Magic numbers throughout: 20 for ancestor walk, 10 for default descendant depth, 20 for circular reference check. Should be configuration properties.
-
-13. **ApiException not caught distinctly**: Methods calling `IRealmClient` (`CreateLocationAsync`, `SeedLocationsAsync`) catch only generic `Exception`. Service client failures should be caught as `ApiException` with status propagation.
-
-14. **Event sentinel values for nullable fields**: Events use `Guid.Empty` for null parent, `default` for null deprecation date, and `new object()` for null metadata. Schema should define these as optional instead of using sentinel values.
+12. **Event sentinel values for nullable fields**: Events use `Guid.Empty` for null parent, `default` for null deprecation date, and `new object()` for null metadata. Schema should define these as optional instead of using sentinel values.

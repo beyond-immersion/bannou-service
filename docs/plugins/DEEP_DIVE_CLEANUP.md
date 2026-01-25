@@ -175,8 +175,8 @@ For each plugin deep dive document:
 | Inventory | DONE | Already compliant. Added Bugs section (empty). All tunables from config, proper T7 ApiException handling for mesh calls. |
 | Item | DONE | Already compliant (leaf node, no mesh calls). Added Bugs section (empty). T25 POCO type issues documented in Design Considerations. |
 | Leaderboard | DONE | Already compliant (leaf node, no mesh calls). Added Bugs section (empty). Analytics event matching and season lifecycle properly documented. |
-| Location | PENDING | |
-| Mapping | PENDING | |
+| Location | DONE | Fixed T21 (added 3 depth limit config props), T7 (ApiException handling for IRealmClient). Updated config and stubs sections. |
+| Mapping | DONE | Already compliant. T7 ApiException handled for IAssetClient. T21 hardcoded affordance scoring values kept in Design Considerations (many values, complex change). |
 | Matchmaking | PENDING | |
 | Mesh | PENDING | |
 | Messaging | PENDING | |

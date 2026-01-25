@@ -1331,22 +1331,39 @@ public partial class AccountService : IAccountService
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var accounts = new List<AccountResponse>();
             var notFound = new List<Guid>();
+            var failed = new List<BulkOperationFailure>();
 
-            // Fetch all accounts in parallel for efficiency
+            // Fetch all accounts in parallel with per-item error handling
             var accountIds = body.AccountIds.ToList();
             var fetchTasks = accountIds.Select(async accountId =>
             {
-                var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-                return (accountId, account);
+                try
+                {
+                    var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+                    return (accountId, account, error: (string?)null);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error fetching account {AccountId}", accountId);
+                    return (accountId, account: (AccountModel?)null, error: ex.Message);
+                }
             });
 
             var results = await Task.WhenAll(fetchTasks);
 
-            // Process results: separate found from not-found, load auth methods for found accounts
+            // Process results: separate found, not-found, and failed
             var foundAccounts = new List<(Guid Id, AccountModel Model)>();
-            foreach (var (accountId, account) in results)
+            foreach (var (accountId, account, error) in results)
             {
-                if (account == null || account.DeletedAt.HasValue)
+                if (error != null)
+                {
+                    failed.Add(new BulkOperationFailure
+                    {
+                        AccountId = accountId,
+                        Error = error
+                    });
+                }
+                else if (account == null || account.DeletedAt.HasValue)
                 {
                     notFound.Add(accountId);
                 }
@@ -1356,38 +1373,58 @@ public partial class AccountService : IAccountService
                 }
             }
 
-            // Load auth methods in parallel for all found accounts
+            // Load auth methods in parallel for all found accounts with per-item error handling
             var authMethodTasks = foundAccounts.Select(async item =>
             {
-                var authMethods = await GetAuthMethodsForAccountAsync(item.Id.ToString(), cancellationToken);
-                return (item.Model, authMethods);
+                try
+                {
+                    var authMethods = await GetAuthMethodsForAccountAsync(item.Id.ToString(), cancellationToken);
+                    return (item.Id, item.Model, authMethods, error: (string?)null);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error fetching auth methods for account {AccountId}", item.Id);
+                    return (item.Id, item.Model, authMethods: (List<AuthMethodInfo>?)null, error: ex.Message);
+                }
             });
 
             var authResults = await Task.WhenAll(authMethodTasks);
 
-            foreach (var (account, authMethods) in authResults)
+            foreach (var (accountId, account, authMethods, error) in authResults)
             {
-                accounts.Add(new AccountResponse
+                if (error != null)
                 {
-                    AccountId = account.AccountId,
-                    Email = account.Email,
-                    DisplayName = account.DisplayName,
-                    EmailVerified = account.IsVerified,
-                    CreatedAt = account.CreatedAt,
-                    UpdatedAt = account.UpdatedAt,
-                    Roles = account.Roles,
-                    AuthMethods = authMethods
-                });
+                    failed.Add(new BulkOperationFailure
+                    {
+                        AccountId = accountId,
+                        Error = $"Auth methods fetch failed: {error}"
+                    });
+                }
+                else
+                {
+                    accounts.Add(new AccountResponse
+                    {
+                        AccountId = account.AccountId,
+                        Email = account.Email,
+                        DisplayName = account.DisplayName,
+                        EmailVerified = account.IsVerified,
+                        CreatedAt = account.CreatedAt,
+                        UpdatedAt = account.UpdatedAt,
+                        Roles = account.Roles,
+                        AuthMethods = authMethods ?? new List<AuthMethodInfo>()
+                    });
+                }
             }
 
             var response = new BatchGetAccountsResponse
             {
                 Accounts = accounts,
-                NotFound = notFound
+                NotFound = notFound,
+                Failed = failed
             };
 
-            _logger.LogInformation("Batch get completed: {Found} found, {NotFound} not found",
-                accounts.Count, notFound.Count);
+            _logger.LogInformation("Batch get completed: {Found} found, {NotFound} not found, {Failed} failed",
+                accounts.Count, notFound.Count, failed.Count);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
@@ -1510,6 +1547,23 @@ public partial class AccountService : IAccountService
                         foreach (var role in body.RemoveRoles!)
                         {
                             currentRoles.Remove(role);
+                        }
+                    }
+
+                    // Apply anonymous role auto-management if configured
+                    if (_configuration.AutoManageAnonymousRole)
+                    {
+                        // If adding a non-anonymous role, remove "anonymous" if present
+                        if (hasAddRoles && body.AddRoles!.Any(r => r != "anonymous"))
+                        {
+                            currentRoles.Remove("anonymous");
+                        }
+
+                        // If resulting roles would be empty, add "anonymous"
+                        if (currentRoles.Count == 0)
+                        {
+                            currentRoles.Add("anonymous");
+                            _logger.LogDebug("Auto-added 'anonymous' role to account {AccountId} to prevent zero roles", accountId);
                         }
                     }
 

@@ -23918,7 +23918,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse">
             <summary>
-            Response containing found accounts and IDs not found
+            Response containing found accounts, IDs not found, and fetch failures
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.Accounts">
@@ -23929,6 +23929,11 @@
         <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.NotFound">
             <summary>
             Account IDs that were not found or are deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.Failed">
+            <summary>
+            Account IDs that failed to fetch with error reasons
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Account.CountAccountsResponse">
