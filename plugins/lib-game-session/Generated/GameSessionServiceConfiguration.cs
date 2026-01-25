@@ -117,6 +117,6 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     /// Comma-separated list of supported game service stub names
     /// Environment variable: GAME_SESSION_SUPPORTED_GAME_SERVICES
     /// </summary>
-    public string SupportedGameServices { get; set; } = "arcadia,generic";
+    public string SupportedGameServices { get; set; } = "generic";
 
 }

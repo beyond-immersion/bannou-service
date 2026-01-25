@@ -45,7 +45,7 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
     /// </summary>
 
     /// <remarks>
-    /// Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+    /// Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
     /// </remarks>
 
     /// <returns>Realm retrieved successfully</returns>
@@ -219,7 +219,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Get realm by code
     /// </summary>
     /// <remarks>
-    /// Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+    /// Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
     /// </remarks>
     /// <returns>Realm retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("realm/get-by-code")]

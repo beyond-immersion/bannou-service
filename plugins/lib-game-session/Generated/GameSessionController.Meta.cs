@@ -49,11 +49,7 @@ public partial class GameSessionController
         },
         "GameType": {
             "type": "string",
-            "description": "Type of game for this session",
-            "enum": [
-                "arcadia",
-                "generic"
-            ]
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         },
         "SessionStatus": {
             "type": "string",
@@ -182,11 +178,7 @@ public partial class GameSessionController
         },
         "GameType": {
             "type": "string",
-            "description": "Type of game for this session",
-            "enum": [
-                "arcadia",
-                "generic"
-            ]
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         },
         "SessionType": {
             "type": "string",
@@ -366,7 +358,7 @@ public partial class GameSessionController
             "properties": {
                 "gameType": {
                     "$ref": "#/$defs/GameType",
-                    "description": "Type of game for this session (arcadia or generic)"
+                    "description": "Game service stub name for this session"
                 },
                 "maxPlayers": {
                     "type": "integer",
@@ -420,11 +412,7 @@ public partial class GameSessionController
         },
         "GameType": {
             "type": "string",
-            "description": "Type of game for this session",
-            "enum": [
-                "arcadia",
-                "generic"
-            ]
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         },
         "SessionType": {
             "type": "string",
@@ -530,11 +518,7 @@ public partial class GameSessionController
         },
         "GameType": {
             "type": "string",
-            "description": "Type of game for this session",
-            "enum": [
-                "arcadia",
-                "generic"
-            ]
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         },
         "SessionType": {
             "type": "string",
@@ -814,11 +798,7 @@ public partial class GameSessionController
         },
         "GameType": {
             "type": "string",
-            "description": "Type of game for this session",
-            "enum": [
-                "arcadia",
-                "generic"
-            ]
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         },
         "SessionType": {
             "type": "string",
@@ -1009,7 +989,7 @@ public partial class GameSessionController
                 },
                 "gameType": {
                     "type": "string",
-                    "description": "Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system."
+                    "description": "Game service stub name to join. Determines which lobby to join. Provided by shortcut system."
                 },
                 "password": {
                     "type": "string",

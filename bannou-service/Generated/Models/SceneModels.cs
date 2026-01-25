@@ -726,7 +726,7 @@ public partial class SceneNode
 
     /// <summary>
     /// Consumer-specific data stored without interpretation.
-    /// <br/>Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+    /// <br/>Use namespaced keys (e.g., render.castShadows, game.interactionType).
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("annotations")]

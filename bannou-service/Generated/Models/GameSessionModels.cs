@@ -41,8 +41,7 @@ public partial class ListGameSessionsRequest
     /// Filter by game type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameType? GameType { get; set; } = default!;
+    public string? GameType { get; set; } = default!;
 
     /// <summary>
     /// Filter by session status (finished not included for active filters)
@@ -111,13 +110,12 @@ public partial class CreateGameSessionRequest
 {
 
     /// <summary>
-    /// Type of game for this session (arcadia or generic)
+    /// Game service stub name for this session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameType GameType { get; set; } = default!;
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of players allowed in the session
@@ -194,8 +192,7 @@ public partial class GameSessionResponse
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameType GameType { get; set; } = default!;
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Type of session - lobby or matchmade
@@ -326,7 +323,7 @@ public partial class JoinGameSessionRequest
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system.
+    /// Game service stub name to join. Determines which lobby to join. Provided by shortcut system.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -709,23 +706,6 @@ public enum SessionType
 
     [System.Runtime.Serialization.EnumMember(Value = @"matchmade")]
     Matchmade = 1,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Type of game for this session
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
-    Arcadia = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
-    Generic = 1,
 
 }
 #pragma warning restore CS1591

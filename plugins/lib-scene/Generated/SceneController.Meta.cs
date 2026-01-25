@@ -200,14 +200,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -676,14 +676,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -1272,14 +1272,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -2152,14 +2152,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -2628,14 +2628,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -3285,14 +3285,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -4290,14 +4290,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -4838,7 +4838,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
@@ -5324,7 +5324,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
@@ -7319,14 +7319,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",

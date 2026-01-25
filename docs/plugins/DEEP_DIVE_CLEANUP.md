@@ -1,13 +1,5 @@
 # Deep Dive Cleanup Checklist
 
-> **INSTRUCTIONS (DO NOT MODIFY)**:
->
-> Let's go through the deep dive documents in docs/plugins, in alphabetical order, and make comprehensive updates to each, and ensure each document is up to the original standards set in the DEEP_DIVE_TEMPLATE. Before you start though, I want you to clear the "_CLEANUP" file, empty it out so it's just an empty checklist again, and as you're going, anything in "bugs" sections that hasn't been handled, add to the list (keep em stacking up), any T21/T25/T26 related stuff, those are bugs, add them to the list, and any simple shit that has no reason to still be left, add those to the list. I want you to maintain that pattern of A) read the deep-dive for a plugin, B) investigate the plugin, C) update the deep-dive with new information as you investigate the plugin, especially new configuration, changes around quirks it mentions, new quirks it didn't mention, etc, D) clear out entries in the deep dive that say "FIXED" and such, update the relevant sections of the deep dive with updated information from our work in this branch, E) ensure each "this only requires one simple decision, no more" type bug or issue or tenet violation ends up in the "_CLEANUP" file, to be tracked more easily- be critical, and the criteria is "this is simple because it requires only a simple decision"- it is NOT determined by anything else (whether or not we need to edit schema files, etc), F) ensure the final deep dive document when you're done is pristine, exactly according to the "_TEMPLATE" document all deep dives are meant to follow, and finally G) move on to the next deep dive/plugin and repeat. Once you're done with ALL of the deep dives, we'll then go back and look at the cleanup file. I want you to copy all of these instructions VERBATIM into the top of the "_CLEANUP" file as instructions that must be followed for this task, so that every time you go to update it with an entry, you'll be reminded of what exactly you need to be doing, and you won't get off-track after compacts. Your compact message should always include precisely "re-read the docs/plugins/DEEP_DIVE_CLEANUP.md file again after compacting and then continue".
->
-> **Criteria for adding items here**: "This is simple because it requires only a simple decision" - NOT determined by implementation complexity, schema changes needed, etc.
-
----
-
 ## ⛔ WHAT NOT TO DO - FAILED EXAMPLE
 
 When fixing T25 type safety issues, **DO NOT** make a partial fix that only changes the POCO class fields while leaving internal data structures (dictionaries, tuples, local variables) as strings. This creates unnecessary conversions at every usage site.

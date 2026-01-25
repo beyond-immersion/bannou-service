@@ -188,7 +188,7 @@ public partial class CreateSlotRequest
 {
 
     /// <summary>
-    /// Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
+    /// Game identifier for namespace isolation (e.g., "game-1", "game-2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     [System.ComponentModel.DataAnnotations.Required]

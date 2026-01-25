@@ -38,7 +38,7 @@ public partial class SaveLoadController
                     "minLength": 1,
                     "maxLength": 32,
                     "pattern": "^[a-z][a-z0-9-]*$",
-                    "description": "Game identifier for namespace isolation (e.g., \"arcadia\", \"fantasia\")"
+                    "description": "Game identifier for namespace isolation (e.g., \"game-1\", \"game-2\")"
                 },
                 "ownerId": {
                     "type": "string",

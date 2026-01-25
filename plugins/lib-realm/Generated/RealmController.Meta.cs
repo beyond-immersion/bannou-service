@@ -68,7 +68,7 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
@@ -204,7 +204,7 @@ public partial class RealmController
                     "minLength": 1,
                     "maxLength": 50,
                     "pattern": "^[A-Z][A-Z0-9_]*$",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\", \"FANTASIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 }
             }
         }
@@ -239,7 +239,7 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
@@ -304,7 +304,7 @@ public partial class RealmController
     private static readonly string _GetRealmByCode_Info = """
 {
     "summary": "Get realm by code",
-    "description": "Retrieve a realm using its unique code (e.g., \"OMEGA\", \"ARCADIA\", \"FANTASIA\")",
+    "description": "Retrieve a realm using its unique code (e.g., \"REALM_1\", \"REALM_2\")",
     "tags": [
         "Realm"
     ],
@@ -468,7 +468,7 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
@@ -606,7 +606,7 @@ public partial class RealmController
                     "minLength": 1,
                     "maxLength": 50,
                     "pattern": "^[A-Z][A-Z0-9_]*$",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
@@ -675,7 +675,7 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
@@ -880,7 +880,7 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
@@ -1139,7 +1139,7 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
@@ -1308,7 +1308,7 @@ public partial class RealmController
                 },
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",

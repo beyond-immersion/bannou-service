@@ -222,7 +222,7 @@ public partial class ContainerRestartRequestBody
 {
 
     /// <summary>
-    /// Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
+    /// Container's app-id for mesh routing (e.g., "bannou", "npc-pool-01")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -484,7 +484,7 @@ public partial class ServiceHealthStatus
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// App-id for mesh routing (e.g., "bannou", "npc-omega-01")
+    /// App-id for mesh routing (e.g., "bannou", "npc-pool-01")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

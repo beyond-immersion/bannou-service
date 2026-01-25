@@ -233,7 +233,7 @@ public partial class SubscriptionController
                 "stubName": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Stub name of the service to filter by (e.g., \"arcadia\"). Returns all accounts subscribed to this service."
+                    "description": "Stub name of the service to filter by (e.g., \"my-game\"). Returns all accounts subscribed to this service."
                 }
             }
         }

@@ -8915,7 +8915,7 @@
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Name">
             <summary>
             Machine-readable identifier for this shortcut.
-            <br/>Examples: "join_game_arcadia", "get_my_stats"
+            <br/>Examples: "join_game_{service}", "get_my_stats"
             <br/>
             </summary>
         </member>
@@ -10161,7 +10161,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.Authorizations">
             <summary>
-            Authorization states from JWT (e.g., ["arcadia:authorized"]). Format is "serviceId:state".
+            Authorization states from JWT (e.g., ["my-game:authorized"]). Format is "serviceId:state".
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.ConnectInstanceId">
@@ -12508,7 +12508,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Authorizations">
             <summary>
-            Current authorization strings (e.g., ["arcadia:authorized"])
+            Current authorization strings (e.g., ["my-game:authorized"])
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Reason">
@@ -17308,7 +17308,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.GameType">
             <summary>
-            Type of game being played in this session
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.SessionName">
@@ -17363,7 +17363,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.GameType">
             <summary>
-            Type of game being played in this session
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.SessionName">
@@ -17423,7 +17423,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.GameType">
             <summary>
-            Type of game being played in this session
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.SessionName">
@@ -22879,7 +22879,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.StubName">
             <summary>
-            Stub name of the service (e.g., "arcadia")
+            Stub name of the service (e.g., "my-game")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.DisplayName">
@@ -30672,7 +30672,7 @@
         <member name="P:BeyondImmersion.BannouService.Auth.ValidateTokenResponse.Authorizations">
             <summary>
             Authorization strings from active subscriptions.
-            <br/>Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            <br/>Format: "{stubName}:{state}" (e.g., "my-game:authorized")
             <br/>
             </summary>
         </member>
@@ -47536,12 +47536,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.StubName">
             <summary>
-            URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+            URL-safe identifier for the service (e.g., "my-game", "my-other-game")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.DisplayName">
             <summary>
-            Human-readable name for the service (e.g., "Arcadia Online")
+            Human-readable name for the service (e.g., "My Game Online")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.Description">
@@ -47606,12 +47606,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.StubName">
             <summary>
-            URL-safe identifier (e.g., "arcadia")
+            URL-safe identifier (e.g., "my-game")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.DisplayName">
             <summary>
-            Human-readable name (e.g., "Arcadia Online")
+            Human-readable name (e.g., "My Game Online")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.Description">
@@ -48081,7 +48081,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.GameType">
             <summary>
-            Type of game for this session (arcadia or generic)
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.MaxPlayers">
@@ -48231,7 +48231,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.GameType">
             <summary>
-            Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system.
+            Game service stub name to join. Determines which lobby to join. Provided by shortcut system.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.Password">
@@ -48482,11 +48482,6 @@
         <member name="T:BeyondImmersion.BannouService.GameSession.SessionType">
             <summary>
             Type of game session - determines join behavior
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.GameSession.GameType">
-            <summary>
-            Type of game for this session
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.SessionStatus">
@@ -56848,11 +56843,6 @@
             Method for aggregating party member skills
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Matchmaking.SessionGameType">
-            <summary>
-            Game type for created sessions (maps to game-session service GameType)
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest">
             <summary>
             Request to join a matchmaking queue
@@ -60587,7 +60577,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.AppName">
             <summary>
-            Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
+            Container's app-id for mesh routing (e.g., "bannou", "npc-pool-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.Reason">
@@ -60764,7 +60754,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.AppId">
             <summary>
-            App-id for mesh routing (e.g., "bannou", "npc-omega-01")
+            App-id for mesh routing (e.g., "bannou", "npc-pool-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Status">
@@ -63067,7 +63057,7 @@
             Get realm by code
             </summary>
             <remarks>
-            Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+            Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
             </remarks>
             <returns>Realm retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -63262,7 +63252,7 @@
             Get realm by code
             </summary>
             <remarks>
-            Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+            Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
             </remarks>
             <returns>Realm retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -63424,7 +63414,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.GetRealmByCodeRequest.Code">
             <summary>
-            Unique code for the realm (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+            Unique code for the realm (e.g., "REALM_1", "REALM_2")
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Realm.ListRealmsRequest">
@@ -63464,7 +63454,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.Code">
             <summary>
-            Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+            Unique code for the realm (e.g., "REALM_1", "REALM_2")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.Name">
@@ -63669,7 +63659,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Code">
             <summary>
-            Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+            Unique code for the realm (e.g., "REALM_1", "REALM_2")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Name">
@@ -67004,7 +66994,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.GameId">
             <summary>
-            Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
+            Game identifier for namespace isolation (e.g., "game-1", "game-2")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.OwnerId">
@@ -69777,7 +69767,7 @@
         <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Annotations">
             <summary>
             Consumer-specific data stored without interpretation.
-            <br/>Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+            <br/>Use namespaced keys (e.g., render.castShadows, game.interactionType).
             <br/>
             </summary>
         </member>
@@ -73002,7 +72992,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Subscription.QueryCurrentSubscriptionsRequest.StubName">
             <summary>
-            Stub name of the service to filter by (e.g., "arcadia"). Returns all accounts subscribed to this service.
+            Stub name of the service to filter by (e.g., "my-game"). Returns all accounts subscribed to this service.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.GetSubscriptionRequest">

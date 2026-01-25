@@ -1235,6 +1235,7 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         version:
           type: string
@@ -1273,6 +1274,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         status:
           type: string
@@ -1296,6 +1298,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
@@ -1318,6 +1321,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         version:
           type: string
@@ -1384,6 +1388,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier from the manifest
         version:
           type: string
@@ -1408,6 +1413,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Source bundle identifier
         version:
           type: string
@@ -1448,6 +1454,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle containing this version
         contentHash:
           type: string
@@ -1467,11 +1474,13 @@ components:
       properties:
         metabundleId:
           type: string
+          format: uuid
           description: Unique identifier for the new metabundle
         sourceBundleIds:
           type: array
           items:
             type: string
+            format: uuid
           nullable: true
           description: |
             Source bundle IDs to pull assets from. Can cherry-pick specific
@@ -1532,6 +1541,7 @@ components:
       properties:
         metabundleId:
           type: string
+          format: uuid
           description: Metabundle identifier
         jobId:
           type: string
@@ -1615,6 +1625,7 @@ components:
           description: Job identifier
         metabundleId:
           type: string
+          format: uuid
           description: Metabundle identifier being created
         status:
           type: string
@@ -1803,6 +1814,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
@@ -1961,6 +1973,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
@@ -2071,6 +2084,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Unique bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
@@ -2137,6 +2151,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to update
         name:
           type: string
@@ -2181,6 +2196,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Updated bundle identifier
         version:
           type: integer
@@ -2207,6 +2223,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to delete
         permanent:
           type: boolean
@@ -2228,6 +2245,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Deleted bundle identifier
         status:
           type: string
@@ -2254,6 +2272,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to restore
         reason:
           type: string
@@ -2272,6 +2291,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Restored bundle identifier
         status:
           type: string
@@ -2403,6 +2423,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier to get history for
         limit:
           type: integer
@@ -2425,6 +2446,7 @@ components:
       properties:
         bundleId:
           type: string
+          format: uuid
           description: Bundle identifier
         currentVersion:
           type: integer

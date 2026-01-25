@@ -257,7 +257,7 @@ public partial class OrchestratorController
                 },
                 "appId": {
                     "type": "string",
-                    "description": "App-id for mesh routing (e.g., \"bannou\", \"npc-omega-01\")"
+                    "description": "App-id for mesh routing (e.g., \"bannou\", \"npc-pool-01\")"
                 },
                 "status": {
                     "type": "string",
@@ -3452,7 +3452,7 @@ public partial class OrchestratorController
             "properties": {
                 "appName": {
                     "type": "string",
-                    "description": "Container's app-id for mesh routing (e.g., \"bannou\", \"npc-omega\")"
+                    "description": "Container's app-id for mesh routing (e.g., \"bannou\", \"npc-pool-01\")"
                 },
                 "reason": {
                     "type": "string",

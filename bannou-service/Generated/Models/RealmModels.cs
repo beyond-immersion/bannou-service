@@ -55,7 +55,7 @@ public partial class GetRealmByCodeRequest
 {
 
     /// <summary>
-    /// Unique code for the realm (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -115,7 +115,7 @@ public partial class CreateRealmRequest
 {
 
     /// <summary>
-    /// Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -423,7 +423,7 @@ public partial class RealmResponse
     public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

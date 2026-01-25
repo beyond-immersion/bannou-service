@@ -55,13 +55,12 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Type of game being played in this session
+    /// Game service stub name for this session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameType GameType { get; set; } = default!;
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for the session
@@ -136,13 +135,12 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Type of game being played in this session
+    /// Game service stub name for this session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameType GameType { get; set; } = default!;
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for the session
@@ -225,13 +223,12 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Type of game being played in this session
+    /// Game service stub name for this session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameType GameType { get; set; } = default!;
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for the session
