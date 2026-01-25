@@ -223,7 +223,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, InfrastructureHealthResponse?)> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetInfrastructureHealth operation");
+        _logger.LogDebug("Executing GetInfrastructureHealth operation");
 
         try
         {
@@ -325,7 +325,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ServiceHealthReport?)> GetServicesHealthAsync(ServiceHealthRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetServicesHealth operation");
+        _logger.LogDebug("Executing GetServicesHealth operation");
 
         try
         {
@@ -382,7 +382,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, RestartRecommendation?)> ShouldRestartServiceAsync(ShouldRestartServiceRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ShouldRestartService operation for: {ServiceName}", body.ServiceName);
+        _logger.LogDebug("Executing ShouldRestartService operation for: {ServiceName}", body.ServiceName);
 
         try
         {
@@ -403,7 +403,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, BackendsResponse?)> GetBackendsAsync(ListBackendsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetBackends operation");
+        _logger.LogDebug("Executing GetBackends operation");
 
         try
         {
@@ -424,7 +424,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(ListPresetsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetPresets operation");
+        _logger.LogDebug("Executing GetPresets operation");
 
         try
         {
@@ -763,8 +763,8 @@ public partial class OrchestratorService : IOrchestratorService
                         Status = DeployedServiceStatus.Starting, // Use Starting as placeholder for dryRun
                         Node = Environment.MachineName
                     });
-                    _logger.LogInformation(
-                        "[DryRun] Would deploy node {NodeName} with app-id {AppId}, services: {Services}",
+                    _logger.LogDebug(
+                        "DryRun mode: Would deploy node {NodeName} with app-id {AppId}, services: {Services}",
                         node.Name, appId, string.Join(", ", node.Services));
                     continue;
                 }
@@ -1022,7 +1022,7 @@ public partial class OrchestratorService : IOrchestratorService
                 Backend = orchestrator.BackendType,
                 Duration = $"{duration.TotalSeconds:F1}s",
                 Message = body.DryRun
-                    ? $"[DryRun] Would deploy {deployedServices.Count} node(s)"
+                    ? $"DryRun mode: Would deploy {deployedServices.Count} node(s)"
                     : success
                         ? $"Successfully deployed {deployedServices.Count} node(s)"
                         : $"Deployed {deployedServices.Count} node(s), {failedServices.Count} failed: {string.Join("; ", failedServices)}"
@@ -1071,7 +1071,7 @@ public partial class OrchestratorService : IOrchestratorService
         GetServiceRoutingRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Executing GetServiceRouting operation");
+        _logger.LogDebug("Executing GetServiceRouting operation");
 
         try
         {
@@ -1133,7 +1133,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, EnvironmentStatus?)> GetStatusAsync(GetStatusRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetStatus operation");
+        _logger.LogDebug("Executing GetStatus operation");
 
         try
         {
@@ -2034,7 +2034,7 @@ public partial class OrchestratorService : IOrchestratorService
                     appliedChange.Error = ex.Message;
                     _logger.LogError(ex, "Error applying topology change: {Action} for {Target}",
                         change.Action, change.NodeName);
-                    _ = PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new { Action = change.Action, NodeName = change.NodeName });
+                    await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new { Action = change.Action, NodeName = change.NodeName });
                 }
 
                 appliedChanges.Add(appliedChange);
@@ -2112,7 +2112,7 @@ public partial class OrchestratorService : IOrchestratorService
     public async Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(GetContainerStatusRequest body, CancellationToken cancellationToken)
     {
         var appName = body.AppName;
-        _logger.LogInformation("Executing GetContainerStatus operation: app={AppName}", appName);
+        _logger.LogDebug("Executing GetContainerStatus operation: app={AppName}", appName);
 
         try
         {
@@ -2141,7 +2141,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ConfigRollbackResponse?)> RollbackConfigurationAsync(ConfigRollbackRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing RollbackConfiguration operation: reason={Reason}", body.Reason);
+        _logger.LogDebug("Executing RollbackConfiguration operation: reason={Reason}", body.Reason);
 
         try
         {
@@ -2230,7 +2230,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(GetConfigVersionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetConfigVersion operation");
+        _logger.LogDebug("Executing GetConfigVersion operation");
 
         try
         {

@@ -40,20 +40,19 @@ public class SmartRestartManager : ISmartRestartManager
         try
         {
             var dockerHost = _configuration.DockerHost ?? "unix:///var/run/docker.sock";
-            _logger.LogInformation("Initializing Docker client with host: {DockerHost}", dockerHost);
+            _logger.LogDebug("Initializing Docker client with host: {DockerHost}", dockerHost);
 
             using var config = new DockerClientConfiguration(new Uri(dockerHost));
             _dockerClient = config.CreateClient();
 
-            _logger.LogInformation("Docker client initialized successfully");
+            _logger.LogDebug("Docker client initialized successfully");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize Docker client");
             throw;
         }
-
-        await Task.CompletedTask;
+        await Task.CompletedTask; // Satisfies async interface requirement
     }
 
     /// <summary>
@@ -89,14 +88,14 @@ public class SmartRestartManager : ISmartRestartManager
 
             // Find container by service name
             var container = await FindContainerByServiceNameAsync(request.ServiceName) ?? throw new InvalidOperationException($"Container for service '{request.ServiceName}' not found");
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Restarting service: {ServiceName} (container: {ContainerId})",
                 request.ServiceName, container.ID[..12]);
 
             // Update environment variables if provided
             if (request.Environment != null && request.Environment.Any())
             {
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "Updating environment variables for {ServiceName}: {Count} variables",
                     request.ServiceName, request.Environment.Count);
 
@@ -199,7 +198,7 @@ public class SmartRestartManager : ISmartRestartManager
         var startTime = DateTime.UtcNow;
         var endTime = startTime + timeout;
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Waiting for {ServiceName} to become healthy (timeout: {TimeoutSeconds}s)",
             serviceName, timeout.TotalSeconds);
 

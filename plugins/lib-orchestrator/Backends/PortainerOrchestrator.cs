@@ -546,7 +546,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Listing infrastructure services (Portainer mode)");
+        _logger.LogDebug("Listing infrastructure services (Portainer mode)");
 
         try
         {

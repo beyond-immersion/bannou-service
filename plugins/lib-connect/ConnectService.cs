@@ -81,8 +81,8 @@ public partial class ConnectService : IConnectService
     private readonly string _instanceId;
 
     // Connection mode configuration
-    private readonly string _connectionMode;
-    private readonly string _internalAuthMode;
+    private readonly ConnectionMode _connectionMode;
+    private readonly InternalAuthMode _internalAuthMode;
     private readonly string? _internalServiceToken;
 
     public ConnectService(
@@ -135,15 +135,15 @@ public partial class ConnectService : IConnectService
         RegisterEventConsumers(eventConsumer);
 
         // Connection mode configuration
-        _connectionMode = configuration.ConnectionMode ?? "external";
-        _internalAuthMode = configuration.InternalAuthMode ?? "service-token";
+        _connectionMode = configuration.ConnectionMode;
+        _internalAuthMode = configuration.InternalAuthMode;
         _internalServiceToken = string.IsNullOrEmpty(configuration.InternalServiceToken)
             ? null
             : configuration.InternalServiceToken;
 
         // Validate Internal mode configuration
-        if (_connectionMode == "internal" &&
-            _internalAuthMode == "service-token" &&
+        if (_connectionMode == ConnectionMode.Internal &&
+            _internalAuthMode == InternalAuthMode.ServiceToken &&
             string.IsNullOrEmpty(_internalServiceToken))
         {
             throw new InvalidOperationException(
@@ -424,9 +424,9 @@ public partial class ConnectService : IConnectService
         try
         {
             // Internal mode authentication - bypass JWT validation
-            if (_connectionMode == "internal")
+            if (_connectionMode == ConnectionMode.Internal)
             {
-                if (_internalAuthMode == "network-trust")
+                if (_internalAuthMode == InternalAuthMode.NetworkTrust)
                 {
                     // Network trust: Accept connection without authentication
                     var sessionId = Guid.NewGuid().ToString();
@@ -434,7 +434,7 @@ public partial class ConnectService : IConnectService
                     return (sessionId, null, new List<string> { "internal" }, null, false);
                 }
 
-                if (_internalAuthMode == "service-token")
+                if (_internalAuthMode == InternalAuthMode.ServiceToken)
                 {
                     // Service token: Validate X-Service-Token header
                     if (string.IsNullOrEmpty(serviceTokenHeader))
@@ -605,7 +605,7 @@ public partial class ConnectService : IConnectService
         }
 
         // INTERNAL MODE: Skip all capability initialization - just peer routing
-        if (_connectionMode == "internal")
+        if (_connectionMode == ConnectionMode.Internal)
         {
             // Add connection to manager (enables peer routing via PeerGuid)
             _connectionManager.AddConnection(sessionId, webSocket, connectionState);
@@ -1112,7 +1112,7 @@ public partial class ConnectService : IConnectService
             {
                 // Broadcast: Send to all connected peers (except sender)
                 // Mode enforcement: External mode rejects broadcast with BroadcastNotAllowed
-                if (_connectionMode == "external")
+                if (_connectionMode == ConnectionMode.External)
                 {
                     _logger.LogWarning("Broadcast rejected in External mode for session {SessionId}", sessionId);
                     var errorResponse = MessageRouter.CreateErrorResponse(
@@ -2460,7 +2460,7 @@ public partial class ConnectService : IConnectService
             };
 
             // Include peerGuid only in relayed/internal modes where peer routing is supported
-            if (_connectionMode != "external")
+            if (_connectionMode != ConnectionMode.External)
             {
                 capabilityManifest["peerGuid"] = connectionState.PeerGuid.ToString();
             }

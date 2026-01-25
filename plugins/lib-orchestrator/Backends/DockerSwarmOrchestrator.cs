@@ -347,8 +347,9 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
             // of available methods in Docker.DotNet for task listing
             return Array.Empty<TaskResponse>();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogDebug(ex, "Failed to list service tasks for swarm service");
             return Array.Empty<TaskResponse>();
         }
     }

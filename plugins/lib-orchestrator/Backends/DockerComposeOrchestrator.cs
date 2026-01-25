@@ -84,7 +84,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         _presetsHostPath = config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
         _logsVolumeName = config.LogsVolumeName ?? "logs-data";
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "DockerComposeOrchestrator configured: Network={Network}, Certificates={Certs}, Presets={Presets}",
             _configuredDockerNetwork, _certificatesHostPath, _presetsHostPath);
     }
@@ -633,8 +633,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private static async Task<string> ReadDockerLogStreamAsync(MultiplexedStream stream, CancellationToken cancellationToken)
     {
         // Read all output from the multiplexed stream
-        var stdout = new MemoryStream();
-        var stderr = new MemoryStream();
+        using var stdout = new MemoryStream();
+        using var stderr = new MemoryStream();
         await stream.CopyOutputToAsync(Stream.Null, stdout, stderr, cancellationToken);
 
         stdout.Position = 0;
@@ -1019,7 +1019,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Listing infrastructure services (Docker Compose mode)");
+        _logger.LogDebug("Listing infrastructure services (Docker Compose mode)");
 
         try
         {

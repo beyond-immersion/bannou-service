@@ -44,7 +44,7 @@ public class BackendDetector : IBackendDetector
     /// </summary>
     public async Task<BackendsResponse> DetectBackendsAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Detecting available container orchestration backends...");
+        _logger.LogDebug("Detecting available container orchestration backends...");
 
         var backends = new List<BackendInfo>();
         var detectionTasks = new List<Task<BackendInfo>>

@@ -53,7 +53,7 @@ public enum DefaultPrecision
 /// <summary>
 /// How autogain is calculated (lazy = on-demand at query time, task = background processing)
 /// </summary>
-public enum AutogainProcessingMode
+public enum AutogainMode
 {
     Lazy,
     Task,
@@ -95,9 +95,9 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// How autogain is calculated (lazy = on-demand at query time, task = background processing)
-    /// Environment variable: CURRENCY_AUTOGAIN_PROCESSING_MODE
+    /// Environment variable: CURRENCY_AUTOGAIN_MODE
     /// </summary>
-    public AutogainProcessingMode AutogainProcessingMode { get; set; } = AutogainProcessingMode.Lazy;
+    public AutogainMode AutogainMode { get; set; } = AutogainMode.Lazy;
 
     /// <summary>
     /// Delay in seconds before first autogain task cycle (allows services to start)

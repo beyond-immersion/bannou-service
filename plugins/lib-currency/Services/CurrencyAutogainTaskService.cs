@@ -46,10 +46,10 @@ public class CurrencyAutogainTaskService : BackgroundService
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (_configuration.AutogainProcessingMode != "task")
+        if (_configuration.AutogainMode != AutogainMode.Task)
         {
             _logger.LogInformation("Autogain processing mode is '{Mode}', background task disabled",
-                _configuration.AutogainProcessingMode);
+                _configuration.AutogainMode);
             return;
         }
 
