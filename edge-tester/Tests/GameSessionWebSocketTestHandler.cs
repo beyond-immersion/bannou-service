@@ -150,15 +150,15 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
                 try
                 {
-                    // Step 1: Create a test service (arcadia type for game-session to recognize)
-                    Console.WriteLine("   Step 1: Creating test service 'arcadia'...");
+                    // Step 1: Create a test service (test-game type for game-session to recognize)
+                    Console.WriteLine("   Step 1: Creating test service 'test-game'...");
                     var serviceResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/game-service/services/create",
                         new
                         {
-                            stubName = "arcadia",
-                            displayName = "Arcadia Game Service",
+                            stubName = "test-game",
+                            displayName = "Test Game Service",
                             description = "Test game service for shortcut flow",
                             serviceType = "game"
                         },
@@ -174,7 +174,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     else if (serviceResponse.Error?.ResponseCode == 409)
                     {
                         // Service already exists - get it
-                        Console.WriteLine("   Service 'arcadia' already exists, fetching...");
+                        Console.WriteLine("   Service 'test-game' already exists, fetching...");
                         var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
                             "/game-service/services/list",
@@ -186,7 +186,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         {
                             foreach (var svc in services)
                             {
-                                if (svc?["stubName"]?.GetValue<string>() == "arcadia")
+                                if (svc?["stubName"]?.GetValue<string>() == "test-game")
                                 {
                                     serviceId = svc?["serviceId"]?.GetValue<string>();
                                     break;
@@ -239,7 +239,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     }
                     Console.WriteLine($"   Account ID: {accountId}");
 
-                    // Step 4: Create subscription for this account to the arcadia service
+                    // Step 4: Create subscription for this account to the test-game service
                     Console.WriteLine("   Step 4: Creating subscription...");
                     var subResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
@@ -272,11 +272,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
                     while (DateTime.UtcNow < deadline)
                     {
-                        // Check if we have a shortcut for join_game_arcadia
-                        shortcutGuid = client.GetServiceGuid("SHORTCUT", "join_game_arcadia");
+                        // Check if we have a shortcut for join_game_test-game
+                        shortcutGuid = client.GetServiceGuid("SHORTCUT", "join_game_test-game");
                         if (shortcutGuid.HasValue)
                         {
-                            Console.WriteLine($"   Found shortcut: SHORTCUT:join_game_arcadia -> {shortcutGuid}");
+                            Console.WriteLine($"   Found shortcut: SHORTCUT:join_game_test-game -> {shortcutGuid}");
                             break;
                         }
                         await Task.Delay(500);
@@ -293,7 +293,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 6: Invoking shortcut with empty payload...");
                     var joinResponse = await client.InvokeAsync<object, JsonElement>(
                         "SHORTCUT",
-                        "join_game_arcadia",
+                        "join_game_test-game",
                         new { }, // Empty payload - server injects the bound data
                         timeout: TimeSpan.FromSeconds(5));
 

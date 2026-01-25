@@ -322,16 +322,16 @@ public class RealmTestHandler : BaseHttpTestHandler
                 [
                     new SeedRealm
                     {
-                        Code = GenerateTestId("SEED_OMEGA"),
-                        Name = "Omega",
-                        Description = "Cyberpunk world",
+                        Code = GenerateTestId("SEED_REALM_1"),
+                        Name = "Test Realm 1",
+                        Description = "First test realm",
                         Category = "MAIN"
                     },
                     new SeedRealm
                     {
-                        Code = GenerateTestId("SEED_ARCADIA"),
-                        Name = "Arcadia",
-                        Description = "Fantasy world",
+                        Code = GenerateTestId("SEED_REALM_2"),
+                        Name = "Test Realm 2",
+                        Description = "Second test realm",
                         Category = "MAIN"
                     }
                 ],

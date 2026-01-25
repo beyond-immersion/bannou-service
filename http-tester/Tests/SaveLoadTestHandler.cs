@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 public class SaveLoadTestHandler : BaseHttpTestHandler
 {
     // Constants for test data
-    private const string TEST_GAME_ID = "arcadia";
+    private const string TEST_GAME_ID = "test-game";
 
     public override ServiceTest[] GetServiceTests() =>
     [

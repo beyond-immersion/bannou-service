@@ -1482,8 +1482,8 @@ public partial class AssetService : IAssetService
             }
 
             // Collect all assets from source bundles and standalone assets, checking for conflicts
-            var assetsByHash = new Dictionary<string, (StoredBundleAssetEntry Entry, string SourceBundleId)>();
-            var assetsByPlatformId = new Dictionary<string, List<(string BundleId, string ContentHash)>>();
+            var assetsByHash = new Dictionary<string, (StoredBundleAssetEntry Entry, Guid SourceBundleId)>();
+            var assetsByPlatformId = new Dictionary<string, List<(Guid BundleId, string ContentHash)>>();
             var standaloneByHash = new Dictionary<string, InternalAssetRecord>(); // Standalone assets tracked separately
             var conflicts = new List<AssetConflict>();
 
@@ -1500,15 +1500,15 @@ public partial class AssetService : IAssetService
                     // Track by platform ID to detect conflicts
                     if (!assetsByPlatformId.TryGetValue(asset.AssetId, out var versions))
                     {
-                        versions = new List<(string BundleId, string ContentHash)>();
+                        versions = new List<(Guid BundleId, string ContentHash)>();
                         assetsByPlatformId[asset.AssetId] = versions;
                     }
-                    versions.Add((sourceBundle.BundleId.ToString(), asset.ContentHash));
+                    versions.Add((sourceBundle.BundleId, asset.ContentHash));
 
                     // Deduplicate by content hash
                     if (!assetsByHash.ContainsKey(asset.ContentHash))
                     {
-                        assetsByHash[asset.ContentHash] = (asset, sourceBundle.BundleId.ToString());
+                        assetsByHash[asset.ContentHash] = (asset, sourceBundle.BundleId);
                     }
                 }
             }
@@ -1619,14 +1619,14 @@ public partial class AssetService : IAssetService
             using var writer = new BannouBundleWriter(bundleStream);
 
             // Track which assets came from which source bundle for provenance
-            var provenanceByBundle = new Dictionary<string, List<string>>();
+            var provenanceByBundle = new Dictionary<Guid, List<string>>();
             var standaloneAssetIds = new List<string>();
 
             // Process assets from source bundles
             foreach (var (entry, sourceBundleId) in assetsToInclude)
             {
                 // Get source bundle info
-                var sourceBundle = sourceBundles.First(b => b.BundleId.ToString() == sourceBundleId);
+                var sourceBundle = sourceBundles.First(b => b.BundleId == sourceBundleId);
 
                 // Download source bundle and extract asset data
                 using var sourceBundleStream = await _storageProvider.GetObjectAsync(
@@ -1699,12 +1699,12 @@ public partial class AssetService : IAssetService
 
             // Build provenance references
             var sourceBundleRefs = sourceBundles
-                .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId.ToString()))
+                .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId))
                 .Select(sb => new StoredSourceBundleReference
                 {
                     BundleId = sb.BundleId,
                     Version = sb.Version,
-                    AssetIds = provenanceByBundle[sb.BundleId.ToString()],
+                    AssetIds = provenanceByBundle[sb.BundleId],
                     ContentHash = sb.StorageKey // Use storage key as proxy for content hash
                 })
                 .ToList();
@@ -2062,7 +2062,7 @@ public partial class AssetService : IAssetService
             var response = new GetJobStatusResponse
             {
                 JobId = job.JobId,
-                MetabundleId = job.MetabundleId.ToString(),
+                MetabundleId = job.MetabundleId,
                 Status = apiStatus,
                 Progress = job.Progress,
                 CreatedAt = job.CreatedAt,
@@ -2096,9 +2096,9 @@ public partial class AssetService : IAssetService
                     response.SourceBundles = job.Result.SourceBundles
                         .Select(sb => new SourceBundleReference
                         {
-                            BundleId = sb.BundleId.ToString(),
+                            BundleId = sb.BundleId,
                             Version = sb.Version,
-                            AssetIds = sb.AssetIds.Select(a => a.ToString()).ToList(),
+                            AssetIds = sb.AssetIds,
                             ContentHash = sb.ContentHash
                         })
                         .ToList();
@@ -3581,7 +3581,7 @@ public partial class AssetService : IAssetService
         CreateMetabundleRequest request,
         List<BundleMetadata> sourceBundles,
         List<InternalAssetRecord> standaloneAssets,
-        List<(StoredBundleAssetEntry Entry, string SourceBundleId)> assetsToInclude,
+        List<(StoredBundleAssetEntry Entry, Guid SourceBundleId)> assetsToInclude,
         List<InternalAssetRecord> standalonesToInclude,
         int totalAssetCount,
         long totalSizeBytes,
@@ -3597,7 +3597,7 @@ public partial class AssetService : IAssetService
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = Guid.Parse(request.MetabundleId),
+            MetabundleId = request.MetabundleId,
             Status = InternalJobStatus.Queued,
             Request = request,
             RequesterSessionId = !string.IsNullOrEmpty(requesterSessionId) ? Guid.Parse(requesterSessionId) : null,
@@ -3622,7 +3622,7 @@ public partial class AssetService : IAssetService
             new MetabundleJobQueuedEvent
             {
                 JobId = jobId,
-                MetabundleId = Guid.Parse(request.MetabundleId),
+                MetabundleId = request.MetabundleId,
                 SourceBundleCount = sourceBundles.Count,
                 AssetCount = totalAssetCount,
                 EstimatedSizeBytes = totalSizeBytes,
@@ -3632,10 +3632,10 @@ public partial class AssetService : IAssetService
         // Build provenance data for response
         var sourceBundleRefs = sourceBundles.Select(sb => new SourceBundleReference
         {
-            BundleId = sb.BundleId.ToString(),
+            BundleId = sb.BundleId,
             Version = sb.Version,
             AssetIds = assetsToInclude
-                .Where(a => a.SourceBundleId == sb.BundleId.ToString())
+                .Where(a => a.SourceBundleId == sb.BundleId)
                 .Select(a => a.Entry.AssetId)
                 .ToList(),
             ContentHash = sb.StorageKey // Use storage key as proxy for content hash

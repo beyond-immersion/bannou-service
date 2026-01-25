@@ -17,7 +17,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// </summary>
 public class InventoryTestHandler : BaseHttpTestHandler
 {
-    private static readonly string TestGameId = "arcadia";
+    private static readonly string TestGameId = "test-game";
 
     public override ServiceTest[] GetServiceTests() =>
     [

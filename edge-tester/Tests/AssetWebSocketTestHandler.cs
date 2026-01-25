@@ -60,7 +60,7 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
                     {
                         tags = new[] { "test" },
                         assetType = "behavior",
-                        realm = "arcadia",
+                        realm = "test-realm",
                         limit = 10,
                         offset = 0
                     },
@@ -204,7 +204,7 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
                         metadata = new
                         {
                             assetType = "behavior",
-                            realm = "arcadia",
+                            realm = "test-realm",
                             tags = new[] { "test", "websocket", "edge-test" }
                         }
                     },
@@ -309,7 +309,7 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
                         standaloneAssetIds = new[] { standaloneAsset1, standaloneAsset2 },
                         owner = "edge-tester",
                         version = "1.0.0",
-                        realm = "arcadia"
+                        realm = "test-realm"
                     },
                     timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
@@ -361,7 +361,7 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
                     metadata = new
                     {
                         assetType = "behavior",
-                        realm = "arcadia",
+                        realm = "test-realm",
                         tags = new[] { "test", "edge-test", testName }
                     }
                 },
