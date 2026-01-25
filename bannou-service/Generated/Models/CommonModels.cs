@@ -22,8 +22,8 @@
 
 #nullable enable
 
-using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Common;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -41,10 +41,65 @@ using BeyondImmersion.BannouService;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Events;
+namespace BeyondImmersion.BannouService.Common;
 
 using System = global::System;
 
+/// <summary>
+/// Universal entity type identifier used across Bannou services.
+/// <br/>Provides first-class support for various kinds of entities in analytics,
+/// <br/>achievements, leaderboards, contracts, relationships, and other systems.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum EntityType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"system")]
+    System = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account")]
+    Account = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"character")]
+    Character = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"actor")]
+    Actor = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
+    Guild = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"organization")]
+    Organization = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"government")]
+    Government = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"faction")]
+    Faction = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"location")]
+    Location = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"realm")]
+    Realm = 9,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"item")]
+    Item = 10,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"monster")]
+    Monster = 11,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    Custom = 12,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"other")]
+    Other = 13,
+
+}
+#pragma warning restore CS1591
 
 
 

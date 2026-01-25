@@ -13788,7 +13788,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.ExperienceType">
             <summary>
-            Type of experience that caused the evolution (e.g., TRAUMA, BETRAYAL, VICTORY)
+            Type of experience that caused the evolution
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.Intensity">
@@ -13898,7 +13898,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.ExperienceType">
             <summary>
-            Type of combat experience that caused the evolution (e.g., DECISIVE_VICTORY, NEAR_DEATH)
+            Type of combat experience that caused the evolution
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.Intensity">
@@ -16468,12 +16468,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.EscrowType">
             <summary>
-            Type of escrow (two_party, multi_party, conditional, auction)
+            Type of escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.TrustMode">
             <summary>
-            Trust mode (full_consent, initiator_trusted, single_party_trusted)
+            Trust mode
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.Parties">
@@ -16633,7 +16633,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentType">
             <summary>
-            Type of consent (release, refund, dispute, reaffirm)
+            Type of consent
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentsReceived">
@@ -24354,11 +24354,6 @@
             <param name="headers">The response headers.</param>
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Achievement.EntityType">
-            <summary>
-            Type of entity that can earn achievements
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Achievement.AchievementType">
             <summary>
@@ -48061,7 +48056,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.ListGameSessionsRequest.Status">
             <summary>
-            Filter by session status
+            Filter by session status (finished not included for active filters)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GetGameSessionRequest">
@@ -48504,6 +48499,31 @@
             Type of game session - determines join behavior
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameType">
+            <summary>
+            Type of game for this session
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.SessionStatus">
+            <summary>
+            Current status of the game session
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerRole">
+            <summary>
+            Role of the player in the game session
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.ChatMessageType">
+            <summary>
+            Type of chat message
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameActionType">
+            <summary>
+            Type of game action
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
             <summary>
             Reservation token returned when creating a matchmade session
@@ -48617,6 +48637,19 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.GameSessionId">
             <summary>
             ID of the game session to leave.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.VoiceTier">
+            <summary>
+            Voice communication tier:
+            <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
+            <br/>- scaled: RTP server-mediated communication (unlimited participants)
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.VoiceCodec">
+            <summary>
+            Audio codec for voice communication
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Inventory.IInventoryClient">
@@ -74938,6 +74971,14 @@
         <member name="P:BeyondImmersion.BannouService.Website.ErrorResponse.Details">
             <summary>
             Additional error details or context
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.EntityType">
+            <summary>
+            Universal entity type identifier used across Bannou services.
+            <br/>Provides first-class support for various kinds of entities in analytics,
+            <br/>achievements, leaderboards, contracts, relationships, and other systems.
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.EventSubscriptionRegistration">

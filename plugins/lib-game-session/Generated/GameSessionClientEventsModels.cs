@@ -25,6 +25,21 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.Bannou.GameSession.ClientEvents;
 
@@ -62,7 +77,7 @@ public partial class SessionStateChangedEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionStateChangedEventPreviousState PreviousState { get; set; } = default!;
+    public SessionStatus PreviousState { get; set; } = default!;
 
     /// <summary>
     /// State after the change
@@ -71,7 +86,7 @@ public partial class SessionStateChangedEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionStateChangedEventNewState NewState { get; set; } = default!;
+    public SessionStatus NewState { get; set; } = default!;
 
     /// <summary>
     /// Reason for state change (e.g., "host_started", "timeout", "admin_action")
@@ -302,7 +317,7 @@ public partial class ChatMessageReceivedEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ChatMessageReceivedEventMessageType MessageType { get; set; } = default!;
+    public ChatMessageType MessageType { get; set; } = default!;
 
     /// <summary>
     /// True if this is a whisper directed at the receiving client
@@ -405,7 +420,7 @@ public partial class GameActionResultEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameActionResultEventActionType ActionType { get; set; } = default!;
+    public GameActionType ActionType { get; set; } = default!;
 
     /// <summary>
     /// Account ID of player who performed the action
@@ -461,7 +476,7 @@ public partial class PlayerInfo
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlayerInfoRole Role { get; set; } = default!;
+    public PlayerRole Role { get; set; } = default!;
 
     /// <summary>
     /// Game-specific character data
@@ -533,9 +548,12 @@ public partial class Position
 
 }
 
+/// <summary>
+/// Current status of the game session
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionStateChangedEventPreviousState
+public enum SessionStatus
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
@@ -544,8 +562,8 @@ public enum SessionStateChangedEventPreviousState
     [System.Runtime.Serialization.EnumMember(Value = @"active")]
     Active = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"paused")]
-    Paused = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    Full = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"finished")]
     Finished = 3,
@@ -553,29 +571,12 @@ public enum SessionStateChangedEventPreviousState
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Type of chat message
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionStateChangedEventNewState
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
-    Waiting = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
-    Active = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"paused")]
-    Paused = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"finished")]
-    Finished = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ChatMessageReceivedEventMessageType
+public enum ChatMessageType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"public")]
@@ -590,9 +591,12 @@ public enum ChatMessageReceivedEventMessageType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Type of game action
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameActionResultEventActionType
+public enum GameActionType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"move")]
@@ -613,9 +617,12 @@ public enum GameActionResultEventActionType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Role of the player in the game session
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerInfoRole
+public enum PlayerRole
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"player")]

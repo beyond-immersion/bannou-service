@@ -134,26 +134,12 @@ public partial class ContractController
                 "allowedEntityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "nullable": true,
                     "description": "Which entity types can fill this role (null for any)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ContractTerms": {
             "type": "object",
@@ -566,26 +552,12 @@ public partial class ContractController
                 "allowedEntityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "nullable": true,
                     "description": "Which entity types can fill this role (null for any)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ContractTerms": {
             "type": "object",
@@ -1081,26 +1053,12 @@ public partial class ContractController
                 "allowedEntityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "nullable": true,
                     "description": "Which entity types can fill this role (null for any)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ContractTerms": {
             "type": "object",
@@ -1650,26 +1608,12 @@ public partial class ContractController
                 "allowedEntityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "nullable": true,
                     "description": "Which entity types can fill this role (null for any)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ContractTerms": {
             "type": "object",
@@ -2185,26 +2129,12 @@ public partial class ContractController
                 "allowedEntityTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/EntityType"
+                        "type": "object"
                     },
                     "nullable": true,
                     "description": "Which entity types can fill this role (null for any)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ContractTerms": {
             "type": "object",
@@ -2702,7 +2632,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -2710,20 +2640,6 @@ public partial class ContractController
                     "description": "Role from template"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ContractTerms": {
             "type": "object",
@@ -2949,7 +2865,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -2967,20 +2883,6 @@ public partial class ContractController
                     "description": "When consent was given"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ConsentStatus": {
             "type": "string",
@@ -3359,7 +3261,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -3377,20 +3279,6 @@ public partial class ContractController
                     "description": "When consent was given"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ConsentStatus": {
             "type": "string",
@@ -3619,24 +3507,10 @@ public partial class ContractController
                     "description": "Entity ID of consenting party"
                 },
                 "partyEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type of consenting party"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -3794,7 +3668,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -3812,20 +3686,6 @@ public partial class ContractController
                     "description": "When consent was given"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ConsentStatus": {
             "type": "string",
@@ -4204,7 +4064,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -4222,20 +4082,6 @@ public partial class ContractController
                     "description": "When consent was given"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ConsentStatus": {
             "type": "string",
@@ -4455,7 +4301,7 @@ public partial class ContractController
                     "description": "Filter by party entity ID"
                 },
                 "partyEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Filter by party entity type"
                 },
@@ -4487,20 +4333,6 @@ public partial class ContractController
                     "description": "Results per page"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ContractStatus": {
             "type": "string",
@@ -4711,7 +4543,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -4729,20 +4561,6 @@ public partial class ContractController
                     "description": "When consent was given"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ConsentStatus": {
             "type": "string",
@@ -4971,7 +4789,7 @@ public partial class ContractController
                     "description": "Entity requesting termination"
                 },
                 "requestingEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of requesting entity"
                 },
                 "reason": {
@@ -4981,20 +4799,6 @@ public partial class ContractController
                     "description": "Reason for termination"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -5152,7 +4956,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -5170,20 +4974,6 @@ public partial class ContractController
                     "description": "When consent was given"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ConsentStatus": {
             "type": "string",
@@ -5527,7 +5317,7 @@ public partial class ContractController
                     "description": "Entity ID"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "role": {
@@ -5535,20 +5325,6 @@ public partial class ContractController
                     "description": "Role in contract"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "BreachSummary": {
             "type": "object",
@@ -6227,7 +6003,7 @@ public partial class ContractController
                     "description": "Entity that breached"
                 },
                 "breachingEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of breaching entity"
                 },
                 "breachType": {
@@ -6246,20 +6022,6 @@ public partial class ContractController
                     "description": "Breach description"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "BreachType": {
             "type": "string",
@@ -6310,7 +6072,7 @@ public partial class ContractController
                     "description": "Entity that breached"
                 },
                 "breachingEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of breaching entity"
                 },
                 "breachType": {
@@ -6355,20 +6117,6 @@ public partial class ContractController
                     "description": "When consequences were applied"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "BreachType": {
             "type": "string",
@@ -6517,7 +6265,7 @@ public partial class ContractController
                     "description": "Entity that breached"
                 },
                 "breachingEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of breaching entity"
                 },
                 "breachType": {
@@ -6562,20 +6310,6 @@ public partial class ContractController
                     "description": "When consequences were applied"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "BreachType": {
             "type": "string",
@@ -6718,7 +6452,7 @@ public partial class ContractController
                     "description": "Entity that breached"
                 },
                 "breachingEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of breaching entity"
                 },
                 "breachType": {
@@ -6763,20 +6497,6 @@ public partial class ContractController
                     "description": "When consequences were applied"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "BreachType": {
             "type": "string",
@@ -7132,7 +6852,7 @@ public partial class ContractController
                     "description": "Entity to check"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "constraintType": {
@@ -7146,20 +6866,6 @@ public partial class ContractController
                     "description": "What the entity wants to do"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "ConstraintType": {
             "type": "string",
@@ -7345,7 +7051,7 @@ public partial class ContractController
                     "description": "Entity to query"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type"
                 },
                 "templateCodes": {
@@ -7357,20 +7063,6 @@ public partial class ContractController
                     "description": "Filter by template codes"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -7810,7 +7502,7 @@ public partial class ContractController
                     "description": "Current party entity ID"
                 },
                 "fromEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Current party entity type"
                 },
                 "toEntityId": {
@@ -7819,7 +7511,7 @@ public partial class ContractController
                     "description": "New entity ID to receive the role"
                 },
                 "toEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "New entity type"
                 },
                 "guardianId": {
@@ -7839,20 +7531,6 @@ public partial class ContractController
                     "description": "Optional idempotency key for the operation"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity that can be a contract party",
-            "enum": [
-                "character",
-                "npc",
-                "guild",
-                "company",
-                "government",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }

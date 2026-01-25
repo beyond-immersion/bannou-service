@@ -74,17 +74,17 @@ paths:
         \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"User-provided
         metadata for asset categorization\",\n            \"properties\": {\n                \"assetType\": {\n          \
         \          \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification for the asset\"\
-        \n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n           \
-        \         \"description\": \"Game realm the asset belongs to\"\n                },\n                \"tags\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        \n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n       \
+        \             \"description\": \"Game realm the asset belongs to\"\n                },\n                \"tags\":
+        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
         string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\n       \
         \         }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"\
         enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
         behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
-        \            \"description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n         \
-        \       \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset
-        belongs to\"\n        }\n    }\n}"
+        \            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n   \
+        \             \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm
+        the asset belongs to\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UploadResponse\"\
         ,\n    \"$defs\": {\n        \"UploadResponse\": {\n            \"description\": \"Response containing pre-signed
         URL and configuration for uploading an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -187,10 +187,10 @@ paths:
         type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"File size
         in bytes\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
         ,\n                    \"description\": \"Type classification for the asset\"\n                },\n              \
-        \  \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm
-        the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
+        \  \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game
+        realm the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
         : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
         of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
         : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
@@ -202,12 +202,12 @@ paths:
         \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
         audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
         \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
-        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
-        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
-        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
-        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
-        \        }\n    }\n}"
+        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n    \
+        \            \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n           \
+        \ \"description\": \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n    \
+        \            \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
+        pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark upload as complete, trigger processing\",\n    \"description\": \"\
         Called after the client has uploaded the file to the pre-signed URL.\\nTriggers the asset processing pipeline (texture
         conversion, model validation, etc.)\\nand emits completion events via WebSocket.\\n\",\n    \"tags\": [\n        \"\
@@ -281,7 +281,7 @@ paths:
         \                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
         ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
         : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
-        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\"\
+        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\"\
         ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
         tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
         type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
@@ -296,8 +296,8 @@ paths:
         \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
         \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
         \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
-        description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
+        description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
         ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
         \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
         \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
@@ -454,9 +454,9 @@ paths:
         \                    \"description\": \"Filter by tags (assets must have all specified tags) (null to skip tag filtering)\"\
         \n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n   \
         \                 \"description\": \"Filter by asset type\"\n                },\n                \"realm\": {\n  \
-        \                  \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Filter by game realm\"\n \
-        \               },\n                \"contentType\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"MIME content type filter (null to skip content
+        \                  \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Filter by game realm\"\
+        \n                },\n                \"contentType\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"MIME content type filter (null to skip content
         type filtering)\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n\
         \                    \"default\": 50,\n                    \"description\": \"Maximum number of results to return\"\
         \n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n                \
@@ -464,10 +464,10 @@ paths:
         \        }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"\
         enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
         behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
-        \            \"description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n         \
-        \       \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset
-        belongs to\"\n        }\n    }\n}"
+        \            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n   \
+        \             \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm
+        the asset belongs to\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetSearchResult\"\
         ,\n    \"$defs\": {\n        \"AssetSearchResult\": {\n            \"description\": \"Paginated results from an asset
         search query\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -494,7 +494,7 @@ paths:
         \               \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
         ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
         : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
-        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\"\
+        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\"\
         ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
         tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
         type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
@@ -509,8 +509,8 @@ paths:
         \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
         \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
         \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
-        description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
+        description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
         ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
         \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
         \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
@@ -563,8 +563,8 @@ paths:
         \  \"description\": \"Unique bundle identifier\"\n                },\n                \"version\": {\n           \
         \         \"type\": \"string\",\n                    \"default\": \"1.0.0\",\n                    \"description\"\
         : \"Bundle version string\"\n                },\n                \"realm\": {\n                    \"allOf\": [\n\
-        \                        {\n                            \"$ref\": \"#/$defs/Realm\"\n                        }\n \
-        \                   ],\n                    \"nullable\": true,\n                    \"description\": \"Game realm
+        \                        {\n                            \"$ref\": \"#/$defs/GameRealm\"\n                        }\n\
+        \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Game realm
         this bundle belongs to.\\nDefaults to 'shared' if not specified.\\n\"\n                },\n                \"assetIds\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
         : \"string\"\n                    },\n                    \"description\": \"List of asset IDs to include in the bundle\"\
@@ -572,8 +572,8 @@ paths:
         ,\n                    \"description\": \"Compression algorithm to use for the bundle\"\n                },\n    \
         \            \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata for the bundle
-        (null if none)\"\n                }\n            }\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
+        (null if none)\"\n                }\n            }\n        },\n        \"GameRealm\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
         ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
         \        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
         \        \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n            \"description\"\
@@ -802,8 +802,8 @@ paths:
         ,\n                    \"description\": \"Metabundle version string\"\n                },\n                \"owner\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Owner of this metabundle. NOT
         a session ID.\\nFor user-initiated: the accountId (UUID format).\\nFor service-initiated: the service name.\\n\"\n\
-        \                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n            \
-        \        \"description\": \"Game realm for this metabundle\"\n                },\n                \"description\"\
+        \                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n        \
+        \            \"description\": \"Game realm for this metabundle\"\n                },\n                \"description\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Human-readable description\"\n                },\n                \"assetFilter\": {\n                    \"type\"\
         : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
@@ -812,9 +812,9 @@ paths:
         included regardless of this filter.\\n\"\n                },\n                \"metadata\": {\n                  \
         \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
         \                    \"description\": \"Custom metadata for the metabundle\"\n                }\n            }\n \
-        \       },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\"\
-        ,\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n     \
-        \       \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n}"
+        \       },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
+        \ \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n          \
+        \  ],\n            \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateMetabundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response from metabundle creation.\\nFor synchronous creation (small jobs):
@@ -1068,16 +1068,17 @@ paths:
         properties\": {\n                \"assetIds\": {\n                    \"type\": \"array\",\n                    \"\
         items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
         : \"Platform asset IDs to resolve\"\n                },\n                \"realm\": {\n                    \"$ref\"\
-        : \"#/$defs/Realm\",\n                    \"description\": \"Game realm to search within\"\n                },\n \
-        \               \"preferMetabundles\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : \"#/$defs/GameRealm\",\n                    \"description\": \"Game realm to search within\"\n                },\n\
+        \                \"preferMetabundles\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : true,\n                    \"description\": \"Prefer metabundles when coverage is equal\"\n                },\n\
         \                \"includeStandalone\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : true,\n                    \"description\": \"Include standalone assets not in any bundle\"\n                },\n\
         \                \"maxBundles\": {\n                    \"type\": \"integer\",\n                    \"nullable\":
         true,\n                    \"description\": \"Maximum number of bundles to return (optimization limit)\"\n       \
-        \         }\n            }\n        },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\
-        \n            ],\n            \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n}"
+        \         }\n            }\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n             \
+        \   \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n\
+        }"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResolveBundlesResponse\"\
         ,\n    \"$defs\": {\n        \"ResolveBundlesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Optimal bundle set for requested assets\",\n            \"required\": [\n\
@@ -1178,7 +1179,7 @@ paths:
         ,\n            \"required\": [\n                \"assetId\",\n                \"realm\"\n            ],\n        \
         \    \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n              \
         \      \"description\": \"Platform asset ID to search for\"\n                },\n                \"realm\": {\n  \
-        \                  \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm to search within\"\
+        \                  \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game realm to search within\"\
         \n                },\n                \"bundleType\": {\n                    \"allOf\": [\n                      \
         \  {\n                            \"$ref\": \"#/$defs/BundleType\"\n                        }\n                  \
         \  ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by bundle type (optional,
@@ -1186,11 +1187,11 @@ paths:
         ,\n                    \"default\": 50,\n                    \"description\": \"Maximum results to return\"\n    \
         \            },\n                \"offset\": {\n                    \"type\": \"integer\",\n                    \"\
         default\": 0,\n                    \"description\": \"Pagination offset\"\n                }\n            }\n    \
-        \    },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\"\
-        ,\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n     \
-        \       \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleType\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n      \
-        \      ],\n            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created
+        \    },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
+        omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n\
+        \            \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleType\": {\n       \
+        \     \"type\": \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n\
+        \            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created
         from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesByAssetResponse\"\
         ,\n    \"$defs\": {\n        \"QueryBundlesByAssetResponse\": {\n            \"type\": \"object\",\n            \"\
@@ -1217,16 +1218,16 @@ paths:
         Number of assets in bundle\"\n                },\n                \"sizeBytes\": {\n                    \"type\":
         \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Bundle file size\"\n                },\n                \"realm\": {\n                 \
-        \   \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        \   \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game realm\"\n                },\n  \
+        \              \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"When the bundle was created\"\n\
         \                }\n            }\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n    \
         \        \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"\
         description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle:
-        Composed from other bundles server-side\\n\"\n        },\n        \"Realm\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n\
-        \                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n  \
-        \      }\n    }\n}"
+        Composed from other bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
+        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find all bundles containing a specific asset\",\n    \"description\": \"\
         Query the reverse index to find all bundles (source and metabundle)\\nthat contain a specific asset ID. Useful for
         understanding asset\\ndistribution and debugging resolution issues.\\n\",\n    \"tags\": [\n        \"Bundles\"\n\
@@ -1485,11 +1486,11 @@ paths:
         : \"Filter bundles with name containing this string (case-insensitive)\"\n                },\n                \"owner\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by bundle owner account ID\"\n                },\n                \"realm\": {\n                    \"\
-        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/Realm\"\n                 \
-        \       }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"\
-        Filter by realm\"\n                },\n                \"bundleType\": {\n                    \"allOf\": [\n     \
-        \                   {\n                            \"$ref\": \"#/$defs/BundleType\"\n                        }\n \
-        \                   ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/GameRealm\"\n             \
+        \           }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by realm\"\n                },\n                \"bundleType\": {\n                    \"allOf\": [\n \
+        \                       {\n                            \"$ref\": \"#/$defs/BundleType\"\n                        }\n\
+        \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by
         bundle type (source or metabundle)\"\n                },\n                \"sortField\": {\n                    \"\
         type\": \"string\",\n                    \"enum\": [\n                        \"created_at\",\n                  \
         \      \"updated_at\",\n                        \"name\",\n                        \"size\"\n                    ],\n\
@@ -1506,7 +1507,7 @@ paths:
         : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
         ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
         Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
-        is being processed (metabundle creation)\\n\"\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
+        is being processed (metabundle creation)\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\"\
         ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
         ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
         \        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
@@ -1541,8 +1542,8 @@ paths:
         : \"Bundle description\"\n                },\n                \"owner\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Owner account ID or service name
         (null for system-owned bundles)\"\n                },\n                \"realm\": {\n                    \"$ref\"\
-        : \"#/$defs/Realm\",\n                    \"description\": \"Game realm this bundle belongs to\"\n               \
-        \ },\n                \"tags\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : \"#/$defs/GameRealm\",\n                    \"description\": \"Game realm this bundle belongs to\"\n           \
+        \     },\n                \"tags\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
         \                    \"description\": \"Key-value tags for categorization and filtering\"\n                },\n  \
         \              \"status\": {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\"\
@@ -1560,13 +1561,13 @@ paths:
         \           }\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
         \                \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle
         category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other
-        bundles server-side\\n\"\n        },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\
-        \n            ],\n            \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleLifecycle\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
-        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
-        Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
-        is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
+        bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n             \
+        \   \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n        },\n   \
+        \     \"BundleLifecycle\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\"\
+        ,\n                \"deleted\",\n                \"processing\"\n            ],\n            \"description\": \"Bundle
+        lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention
+        period)\\n- processing: Bundle is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query bundles with advanced filters\",\n    \"description\": \"Query bundles
         with flexible filtering options including:\\n- Tag matching (exact, exists, not exists)\\n- Status filtering (active,
         deleted)\\n- Date range filtering\\n- Name search (contains)\\n- Owner filtering\\n- Realm and bundle type filtering\\
@@ -1659,33 +1660,33 @@ paths:
         \       \"nullable\": true,\n                    \"description\": \"Bundle description\"\n                },\n   \
         \             \"owner\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Owner account ID or service name (null for system-owned bundles)\"\n      \
-        \          },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n                  \
-        \  \"description\": \"Game realm this bundle belongs to\"\n                },\n                \"tags\": {\n     \
-        \               \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Key-value tags for categorization and filtering\"\n                },\n                \"status\": {\n       \
-        \             \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\": \"Bundle lifecycle status\"\
-        \n                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n            \
-        \        \"description\": \"Number of assets in the bundle\"\n                },\n                \"sizeBytes\": {\n\
-        \                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Bundle file size in bytes (null if not yet calculated)\"\n       \
-        \         },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the bundle was created\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When the bundle metadata was last
-        updated\"\n                },\n                \"deletedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the bundle was soft-deleted (null if active)\"\n                }\n            }\n        },\n        \"\
-        BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"source\",\n       \
-        \         \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle
-        (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        },\n\
-        \        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n  \
-        \              \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n         \
-        \   \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleLifecycle\": {\n           \
-        \ \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\",\n    \
-        \            \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active: Bundle
-        is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle is
-        being processed (metabundle creation)\\n\"\n        }\n    }\n}"
+        \          },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n              \
+        \      \"description\": \"Game realm this bundle belongs to\"\n                },\n                \"tags\": {\n \
+        \                   \"type\": \"object\",\n                    \"additionalProperties\": {\n                     \
+        \   \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"Key-value tags for categorization and filtering\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\": \"Bundle lifecycle
+        status\"\n                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n    \
+        \                \"description\": \"Number of assets in the bundle\"\n                },\n                \"sizeBytes\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Bundle file size in bytes (null if not yet calculated)\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the bundle was created\"\n        \
+        \        },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the bundle
+        metadata was last updated\"\n                },\n                \"deletedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"When the bundle was soft-deleted (null if active)\"\n                }\n            }\n\
+        \        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
+        \   \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
+        n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
+        n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
+        \      \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n     \
+        \       ],\n            \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleLifecycle\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
+        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
+        Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
+        is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List version history for a bundle\",\n    \"description\": \"Get the version
         history for a bundle, showing all metadata changes\\nover time. Each version record includes:\\n- Version number\\
         n- When the change was made\\n- Who made the change\\n- What changed\\n- Optional reason for the change\\n\\nThe current
@@ -1770,10 +1771,10 @@ paths:
         \               \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
         : \"File size in bytes\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
         ,\n                    \"description\": \"Type classification for the asset\"\n                },\n              \
-        \  \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm
-        the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
+        \  \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game
+        realm the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
         : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
         of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
         : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
@@ -1785,12 +1786,12 @@ paths:
         \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
         audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
         \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
-        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
-        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
-        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
-        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
-        \        }\n    }\n}"
+        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n    \
+        \            \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n           \
+        \ \"description\": \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n    \
+        \            \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
+        pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Batch asset metadata lookup\",\n    \"description\": \"Retrieve metadata
         for multiple assets in a single request.\\nOptionally includes pre-signed download URLs.\\nMaximum 100 asset IDs per
         request.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkGetAssets\"\
@@ -1808,7 +1809,7 @@ components:
       - prefab
       - other
       description: Type classification for assets
-    Realm:
+    GameRealm:
       type: string
       enum:
       - omega
@@ -1987,7 +1988,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         tags:
           type: array
@@ -2032,7 +2033,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         tags:
           type: array
@@ -2226,7 +2227,7 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Filter by asset type
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Filter by game realm
         contentType:
           type: string
@@ -2288,7 +2289,7 @@ components:
           description: Bundle version string
         realm:
           allOf:
-          - $ref: '#/components/schemas/Realm'
+          - $ref: '#/components/schemas/GameRealm'
           nullable: true
           description: |
             Game realm this bundle belongs to.
@@ -2526,7 +2527,7 @@ components:
             For user-initiated: the accountId (UUID format).
             For service-initiated: the service name.
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm for this metabundle
         description:
           type: string
@@ -2761,7 +2762,7 @@ components:
             type: string
           description: Platform asset IDs to resolve
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm to search within
         preferMetabundles:
           type: boolean
@@ -2910,7 +2911,7 @@ components:
           type: string
           description: Platform asset ID to search for
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm to search within
         bundleType:
           allOf:
@@ -2982,7 +2983,7 @@ components:
           nullable: true
           description: Bundle file size
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm
         createdAt:
           type: string
@@ -3086,7 +3087,7 @@ components:
           nullable: true
           description: Owner account ID or service name (null for system-owned bundles)
         realm:
-          $ref: '#/components/schemas/Realm'
+          $ref: '#/components/schemas/GameRealm'
           description: Game realm this bundle belongs to
         tags:
           type: object
@@ -3317,7 +3318,7 @@ components:
           description: Filter by bundle owner account ID
         realm:
           allOf:
-          - $ref: '#/components/schemas/Realm'
+          - $ref: '#/components/schemas/GameRealm'
           nullable: true
           description: Filter by realm
         bundleType:

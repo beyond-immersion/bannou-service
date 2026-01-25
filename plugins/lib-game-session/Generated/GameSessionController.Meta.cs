@@ -28,23 +28,42 @@ public partial class GameSessionController
             "additionalProperties": false,
             "properties": {
                 "gameType": {
-                    "type": "string",
-                    "enum": [
-                        "arcadia",
-                        "generic"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameType"
+                        }
                     ],
+                    "nullable": true,
                     "description": "Filter by game type"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "waiting",
-                        "active",
-                        "full"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SessionStatus"
+                        }
                     ],
-                    "description": "Filter by session status"
+                    "nullable": true,
+                    "description": "Filter by session status (finished not included for active filters)"
                 }
             }
+        },
+        "GameType": {
+            "type": "string",
+            "description": "Type of game for this session",
+            "enum": [
+                "arcadia",
+                "generic"
+            ]
+        },
+        "SessionStatus": {
+            "type": "string",
+            "description": "Current status of the game session",
+            "enum": [
+                "waiting",
+                "active",
+                "full",
+                "finished"
+            ]
         }
     }
 }
@@ -94,11 +113,7 @@ public partial class GameSessionController
                     "description": "Unique identifier for the game session"
                 },
                 "gameType": {
-                    "type": "string",
-                    "enum": [
-                        "arcadia",
-                        "generic"
-                    ],
+                    "$ref": "#/$defs/GameType",
                     "description": "Type of game for this session"
                 },
                 "sessionType": {
@@ -111,13 +126,7 @@ public partial class GameSessionController
                     "description": "Display name for the session"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "waiting",
-                        "active",
-                        "full",
-                        "finished"
-                    ],
+                    "$ref": "#/$defs/SessionStatus",
                     "description": "Current status of the game session"
                 },
                 "maxPlayers": {
@@ -171,12 +180,30 @@ public partial class GameSessionController
                 }
             }
         },
+        "GameType": {
+            "type": "string",
+            "description": "Type of game for this session",
+            "enum": [
+                "arcadia",
+                "generic"
+            ]
+        },
         "SessionType": {
             "type": "string",
             "description": "Type of game session - determines join behavior",
             "enum": [
                 "lobby",
                 "matchmade"
+            ]
+        },
+        "SessionStatus": {
+            "type": "string",
+            "description": "Current status of the game session",
+            "enum": [
+                "waiting",
+                "active",
+                "full",
+                "finished"
             ]
         },
         "GamePlayer": {
@@ -206,12 +233,7 @@ public partial class GameSessionController
                     "description": "Display name shown to other players"
                 },
                 "role": {
-                    "type": "string",
-                    "enum": [
-                        "player",
-                        "spectator",
-                        "moderator"
-                    ],
+                    "$ref": "#/$defs/PlayerRole",
                     "description": "Role of the player in the game session"
                 },
                 "joinedAt": {
@@ -232,6 +254,15 @@ public partial class GameSessionController
                     "description": "Voice participant session ID (if player has joined voice)"
                 }
             }
+        },
+        "PlayerRole": {
+            "type": "string",
+            "description": "Role of the player in the game session",
+            "enum": [
+                "player",
+                "spectator",
+                "moderator"
+            ]
         },
         "ReservationInfo": {
             "type": "object",
@@ -334,11 +365,7 @@ public partial class GameSessionController
             ],
             "properties": {
                 "gameType": {
-                    "type": "string",
-                    "enum": [
-                        "arcadia",
-                        "generic"
-                    ],
+                    "$ref": "#/$defs/GameType",
                     "description": "Type of game for this session (arcadia or generic)"
                 },
                 "maxPlayers": {
@@ -391,6 +418,14 @@ public partial class GameSessionController
                 }
             }
         },
+        "GameType": {
+            "type": "string",
+            "description": "Type of game for this session",
+            "enum": [
+                "arcadia",
+                "generic"
+            ]
+        },
         "SessionType": {
             "type": "string",
             "description": "Type of game session - determines join behavior",
@@ -426,11 +461,7 @@ public partial class GameSessionController
                     "description": "Unique identifier for the game session"
                 },
                 "gameType": {
-                    "type": "string",
-                    "enum": [
-                        "arcadia",
-                        "generic"
-                    ],
+                    "$ref": "#/$defs/GameType",
                     "description": "Type of game for this session"
                 },
                 "sessionType": {
@@ -443,13 +474,7 @@ public partial class GameSessionController
                     "description": "Display name for the session"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "waiting",
-                        "active",
-                        "full",
-                        "finished"
-                    ],
+                    "$ref": "#/$defs/SessionStatus",
                     "description": "Current status of the game session"
                 },
                 "maxPlayers": {
@@ -503,12 +528,30 @@ public partial class GameSessionController
                 }
             }
         },
+        "GameType": {
+            "type": "string",
+            "description": "Type of game for this session",
+            "enum": [
+                "arcadia",
+                "generic"
+            ]
+        },
         "SessionType": {
             "type": "string",
             "description": "Type of game session - determines join behavior",
             "enum": [
                 "lobby",
                 "matchmade"
+            ]
+        },
+        "SessionStatus": {
+            "type": "string",
+            "description": "Current status of the game session",
+            "enum": [
+                "waiting",
+                "active",
+                "full",
+                "finished"
             ]
         },
         "GamePlayer": {
@@ -538,12 +581,7 @@ public partial class GameSessionController
                     "description": "Display name shown to other players"
                 },
                 "role": {
-                    "type": "string",
-                    "enum": [
-                        "player",
-                        "spectator",
-                        "moderator"
-                    ],
+                    "$ref": "#/$defs/PlayerRole",
                     "description": "Role of the player in the game session"
                 },
                 "joinedAt": {
@@ -564,6 +602,15 @@ public partial class GameSessionController
                     "description": "Voice participant session ID (if player has joined voice)"
                 }
             }
+        },
+        "PlayerRole": {
+            "type": "string",
+            "description": "Role of the player in the game session",
+            "enum": [
+                "player",
+                "spectator",
+                "moderator"
+            ]
         },
         "ReservationInfo": {
             "type": "object",
@@ -698,11 +745,7 @@ public partial class GameSessionController
                     "description": "Unique identifier for the game session"
                 },
                 "gameType": {
-                    "type": "string",
-                    "enum": [
-                        "arcadia",
-                        "generic"
-                    ],
+                    "$ref": "#/$defs/GameType",
                     "description": "Type of game for this session"
                 },
                 "sessionType": {
@@ -715,13 +758,7 @@ public partial class GameSessionController
                     "description": "Display name for the session"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "waiting",
-                        "active",
-                        "full",
-                        "finished"
-                    ],
+                    "$ref": "#/$defs/SessionStatus",
                     "description": "Current status of the game session"
                 },
                 "maxPlayers": {
@@ -775,12 +812,30 @@ public partial class GameSessionController
                 }
             }
         },
+        "GameType": {
+            "type": "string",
+            "description": "Type of game for this session",
+            "enum": [
+                "arcadia",
+                "generic"
+            ]
+        },
         "SessionType": {
             "type": "string",
             "description": "Type of game session - determines join behavior",
             "enum": [
                 "lobby",
                 "matchmade"
+            ]
+        },
+        "SessionStatus": {
+            "type": "string",
+            "description": "Current status of the game session",
+            "enum": [
+                "waiting",
+                "active",
+                "full",
+                "finished"
             ]
         },
         "GamePlayer": {
@@ -810,12 +865,7 @@ public partial class GameSessionController
                     "description": "Display name shown to other players"
                 },
                 "role": {
-                    "type": "string",
-                    "enum": [
-                        "player",
-                        "spectator",
-                        "moderator"
-                    ],
+                    "$ref": "#/$defs/PlayerRole",
                     "description": "Role of the player in the game session"
                 },
                 "joinedAt": {
@@ -836,6 +886,15 @@ public partial class GameSessionController
                     "description": "Voice participant session ID (if player has joined voice)"
                 }
             }
+        },
+        "PlayerRole": {
+            "type": "string",
+            "description": "Role of the player in the game session",
+            "enum": [
+                "player",
+                "spectator",
+                "moderator"
+            ]
         },
         "ReservationInfo": {
             "type": "object",
@@ -1016,12 +1075,7 @@ public partial class GameSessionController
                     "description": "ID of the joined game session"
                 },
                 "playerRole": {
-                    "type": "string",
-                    "enum": [
-                        "player",
-                        "spectator",
-                        "moderator"
-                    ],
+                    "$ref": "#/$defs/PlayerRole",
                     "description": "Role assigned to the player in this session"
                 },
                 "gameData": {
@@ -1042,6 +1096,15 @@ public partial class GameSessionController
                 }
             }
         },
+        "PlayerRole": {
+            "type": "string",
+            "description": "Role of the player in the game session",
+            "enum": [
+                "player",
+                "spectator",
+                "moderator"
+            ]
+        },
         "VoiceConnectionInfo": {
             "type": "object",
             "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
@@ -1061,20 +1124,19 @@ public partial class GameSessionController
                     "description": "Voice room ID (null until room is created when 2+ participants join with voice)"
                 },
                 "tier": {
-                    "type": "string",
-                    "enum": [
-                        "p2p",
-                        "scaled"
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
                     ],
                     "nullable": true,
                     "description": "Expected voice tier (may change based on participant count)"
                 },
                 "codec": {
-                    "type": "string",
-                    "enum": [
-                        "opus",
-                        "g711",
-                        "g722"
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
                     ],
                     "nullable": true,
                     "description": "Audio codec to use"
@@ -1376,11 +1438,10 @@ public partial class GameSessionController
                     "description": "Content of the chat message"
                 },
                 "messageType": {
-                    "type": "string",
-                    "enum": [
-                        "public",
-                        "whisper",
-                        "system"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ChatMessageType"
+                        }
                     ],
                     "default": "public",
                     "description": "Type of message (public to all, whisper to one player, or system announcement)"
@@ -1392,6 +1453,15 @@ public partial class GameSessionController
                     "description": "For whisper messages"
                 }
             }
+        },
+        "ChatMessageType": {
+            "type": "string",
+            "description": "Type of chat message",
+            "enum": [
+                "public",
+                "whisper",
+                "system"
+            ]
         }
     }
 }
@@ -1488,14 +1558,7 @@ public partial class GameSessionController
                     "description": "Game type for the action. Determines which lobby to apply the action. Provided by shortcut system."
                 },
                 "actionType": {
-                    "type": "string",
-                    "enum": [
-                        "move",
-                        "interact",
-                        "attack",
-                        "cast_spell",
-                        "use_item"
-                    ],
+                    "$ref": "#/$defs/GameActionType",
                     "description": "Type of game action to perform"
                 },
                 "actionData": {
@@ -1511,6 +1574,17 @@ public partial class GameSessionController
                     "description": "Target of the action (if applicable)"
                 }
             }
+        },
+        "GameActionType": {
+            "type": "string",
+            "description": "Type of game action",
+            "enum": [
+                "move",
+                "interact",
+                "attack",
+                "cast_spell",
+                "use_item"
+            ]
         }
     }
 }
@@ -1702,12 +1776,7 @@ public partial class GameSessionController
                     "description": "ID of the joined game session"
                 },
                 "playerRole": {
-                    "type": "string",
-                    "enum": [
-                        "player",
-                        "spectator",
-                        "moderator"
-                    ],
+                    "$ref": "#/$defs/PlayerRole",
                     "description": "Role assigned to the player in this session"
                 },
                 "gameData": {
@@ -1728,6 +1797,15 @@ public partial class GameSessionController
                 }
             }
         },
+        "PlayerRole": {
+            "type": "string",
+            "description": "Role of the player in the game session",
+            "enum": [
+                "player",
+                "spectator",
+                "moderator"
+            ]
+        },
         "VoiceConnectionInfo": {
             "type": "object",
             "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
@@ -1747,20 +1825,19 @@ public partial class GameSessionController
                     "description": "Voice room ID (null until room is created when 2+ participants join with voice)"
                 },
                 "tier": {
-                    "type": "string",
-                    "enum": [
-                        "p2p",
-                        "scaled"
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
                     ],
                     "nullable": true,
                     "description": "Expected voice tier (may change based on participant count)"
                 },
                 "codec": {
-                    "type": "string",
-                    "enum": [
-                        "opus",
-                        "g711",
-                        "g722"
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
                     ],
                     "nullable": true,
                     "description": "Audio codec to use"

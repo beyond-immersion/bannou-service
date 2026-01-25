@@ -98,77 +98,73 @@ paths:
         \                \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
         \                    \"description\": \"Maximum entities allowed in this role\"\n                },\n            \
         \    \"allowedEntityTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
-        \                   \"$ref\": \"#/$defs/EntityType\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Which entity types can fill this role (null for any)\"\n                }\n\
-        \            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that can be a contract party\",\n            \"enum\": [\n                \"character\",\n    \
-        \            \"npc\",\n                \"guild\",\n                \"company\",\n                \"government\",\n\
-        \                \"faction\",\n                \"location\",\n                \"system\"\n            ]\n        },\n\
-        \        \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract
-        terms\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\"\
+        \                   \"type\": \"object\"\n                    },\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Which entity types can fill this role (null for any)\"\n                }\n    \
+        \        }\n        },\n        \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Configurable contract terms\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"duration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Contract duration (ISO 8601 duration, null for perpetual)\"\n            \
+        \    },\n                \"paymentSchedule\": {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"When payments occur\"\n             \
+        \   },\n                \"paymentFrequency\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Recurring payment frequency (ISO 8601 duration)\"\n    \
+        \            },\n                \"terminationPolicy\": {\n                    \"$ref\": \"#/$defs/TerminationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How contract can be terminated\"\
+        \n                },\n                \"terminationNoticePeriod\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Required notice for termination (ISO
+        8601 duration)\"\n                },\n                \"breachThreshold\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breaches before auto-termination (0 for no auto)\"\n                },\n                \"gracePeriodForCure\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Contract duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\"\
-        : {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
-        {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
+        : \"Time to cure breach (ISO 8601 duration)\"\n                },\n                \"customTerms\": {\n          \
+        \          \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-specific custom terms\"\n                }\n            }\n \
+        \       },\n        \"PaymentSchedule\": {\n            \"type\": \"string\",\n            \"description\": \"When
+        payments occur\",\n            \"enum\": [\n                \"one_time\",\n                \"recurring\",\n      \
+        \          \"milestone_based\"\n            ]\n        },\n        \"TerminationPolicy\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How the contract can be terminated\",\n            \"enum\": [\n   \
+        \             \"mutual_consent\",\n                \"unilateral_with_notice\",\n                \"unilateral_immediate\"\
+        ,\n                \"non_terminable\"\n            ]\n        },\n        \"MilestoneDefinition\": {\n           \
+        \ \"type\": \"object\",\n            \"description\": \"Milestone definition in a template\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"sequence\"\
+        ,\n                \"required\"\n            ],\n            \"properties\": {\n                \"code\": {\n    \
+        \                \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Unique milestone code within template\"\n                },\n                \"name\": {\n                   \
+        \ \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"description\": \"Human-readable
+        name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n      \
+        \              \"maxLength\": 1000,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"What this milestone represents\"\n                },\n                \"sequence\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Order in the contract
+        flow\"\n                },\n                \"required\": {\n                    \"type\": \"boolean\",\n        \
+        \            \"description\": \"Whether milestone must be completed\"\n                },\n                \"deadline\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Required notice for termination (ISO 8601 duration)\"\n                },\n                \"breachThreshold\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Breaches before auto-termination (0 for no auto)\"\n             \
-        \   },\n                \"gracePeriodForCure\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Time to cure breach (ISO 8601 duration)\"\n        \
-        \        },\n                \"customTerms\": {\n                    \"type\": \"object\",\n                    \"\
-        additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific
-        custom terms\"\n                }\n            }\n        },\n        \"PaymentSchedule\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"When payments occur\",\n            \"enum\": [\n                \"\
-        one_time\",\n                \"recurring\",\n                \"milestone_based\"\n            ]\n        },\n    \
-        \    \"TerminationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How the contract
-        can be terminated\",\n            \"enum\": [\n                \"mutual_consent\",\n                \"unilateral_with_notice\"\
-        ,\n                \"unilateral_immediate\",\n                \"non_terminable\"\n            ]\n        },\n    \
-        \    \"MilestoneDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Milestone definition
-        in a template\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"code\"\
-        ,\n                \"name\",\n                \"sequence\",\n                \"required\"\n            ],\n      \
-        \      \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n               \
-        \     \"maxLength\": 64,\n                    \"description\": \"Unique milestone code within template\"\n       \
-        \         },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 1000,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"What this milestone represents\"\n                },\n           \
-        \     \"sequence\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n         \
-        \           \"description\": \"Order in the contract flow\"\n                },\n                \"required\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether milestone must be completed\"\
-        \n                },\n                \"deadline\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Relative deadline (ISO 8601 duration)\"\n      \
-        \          },\n                \"onComplete\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"APIs to call on completion\"\n                },\n\
-        \                \"onExpire\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/PreboundApi\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"APIs to call if deadline passes\"\n                }\n           \
-        \ }\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"description\": \"Pre-configured
-        API call to execute on contract events\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"serviceName\",\n                \"endpoint\",\n                \"payloadTemplate\"\n      \
-        \      ],\n            \"properties\": {\n                \"serviceName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Target service name\"\n                },\n                \"endpoint\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint path\"\n  \
-        \              },\n                \"payloadTemplate\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"JSON payload with variable placeholders\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Human-readable description\"\n                },\n                \"executionMode\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"sync\",\n                        \"\
-        async\",\n                        \"fire_and_forget\"\n                    ],\n                    \"default\": \"\
-        sync\",\n                    \"description\": \"How to execute the API call\"\n                },\n              \
-        \  \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Optional validation rules for the response\"\n         \
-        \       }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\": \"object\",\n     \
-        \       \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed by lib-contract to
-        validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"successConditions\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\n  \
-        \                  },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
+        : \"Relative deadline (ISO 8601 duration)\"\n                },\n                \"onComplete\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"APIs to
+        call on completion\"\n                },\n                \"onExpire\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PreboundApi\"\n                 \
+        \   },\n                    \"nullable\": true,\n                    \"description\": \"APIs to call if deadline passes\"\
+        \n                }\n            }\n        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n  \
+        \          \"description\": \"Pre-configured API call to execute on contract events\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"serviceName\",\n                \"endpoint\",\n         \
+        \       \"payloadTemplate\"\n            ],\n            \"properties\": {\n                \"serviceName\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Target service name\"\n        \
+        \        },\n                \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Target endpoint path\"\n                },\n                \"payloadTemplate\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"JSON payload with variable placeholders\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Human-readable description\"\n                },\n                \"\
+        executionMode\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                 \
+        \       \"sync\",\n                        \"async\",\n                        \"fire_and_forget\"\n             \
+        \       ],\n                    \"default\": \"sync\",\n                    \"description\": \"How to execute the
+        API call\"\n                },\n                \"responseValidation\": {\n                    \"$ref\": \"#/$defs/ResponseValidation\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional validation rules for the
+        response\"\n                }\n            }\n        },\n        \"ResponseValidation\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Validation rules for API responses with three-outcome model.\\nUsed
+        by lib-contract to validate clause conditions without\\nunderstanding the specific API semantics.\\n\",\n        \
+        \    \"additionalProperties\": false,\n            \"properties\": {\n                \"successConditions\": {\n \
+        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ValidationCondition\"\
+        \n                    },\n                    \"description\": \"Conditions that must ALL pass for success.\\nIf any
         fail, checks permanent failure conditions.\\n\"\n                },\n                \"permanentFailureConditions\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/ValidationCondition\"\n                    },\n                    \"description\": \"Conditions that
@@ -248,20 +244,16 @@ paths:
         \                  \"description\": \"Minimum entities required in this role\"\n                },\n             \
         \   \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n           \
         \         \"description\": \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/EntityType\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"Which entity types can fill this role (null for any)\"\n                }\n            }\n      \
-        \  },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"object\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Which entity types can fill this role (null for any)\"\n                }\n            }\n        },\n       \
+        \ \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\"\
+        ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\"\
+        : {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
         {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
         \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
@@ -440,20 +432,16 @@ paths:
         \                  \"description\": \"Minimum entities required in this role\"\n                },\n             \
         \   \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n           \
         \         \"description\": \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/EntityType\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"Which entity types can fill this role (null for any)\"\n                }\n            }\n      \
-        \  },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"object\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Which entity types can fill this role (null for any)\"\n                }\n            }\n        },\n       \
+        \ \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\"\
+        ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\"\
+        : {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
         {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
         \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
@@ -645,20 +633,16 @@ paths:
         \                  \"description\": \"Minimum entities required in this role\"\n                },\n             \
         \   \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n           \
         \         \"description\": \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/EntityType\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"Which entity types can fill this role (null for any)\"\n                }\n            }\n      \
-        \  },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"object\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Which entity types can fill this role (null for any)\"\n                }\n            }\n        },\n       \
+        \ \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\"\
+        ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\"\
+        : {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
         {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
         \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
@@ -840,20 +824,16 @@ paths:
         \                  \"description\": \"Minimum entities required in this role\"\n                },\n             \
         \   \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n           \
         \         \"description\": \"Maximum entities allowed in this role\"\n                },\n                \"allowedEntityTypes\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/EntityType\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"Which entity types can fill this role (null for any)\"\n                }\n            }\n      \
-        \  },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        },\n        \"ContractTerms\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
-        \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\": {\n \
-        \                   \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"object\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Which entity types can fill this role (null for any)\"\n                }\n            }\n        },\n       \
+        \ \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\"\
+        ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\"\
+        : {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
         {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
         \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
@@ -1042,38 +1022,34 @@ paths:
         \       \"required\": [\n                \"entityId\",\n                \"entityType\",\n                \"role\"\n\
         \            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity ID\"\n       \
-        \         },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n         \
-        \           \"description\": \"Entity type\"\n                },\n                \"role\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Role from template\"\n                }\n       \
-        \     }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Type of entity that can be a contract party\",\n            \"enum\": [\n                \"character\",\n        \
-        \        \"npc\",\n                \"guild\",\n                \"company\",\n                \"government\",\n   \
-        \             \"faction\",\n                \"location\",\n                \"system\"\n            ]\n        },\n\
-        \        \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract
-        terms\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\"\
+        \         },\n                \"entityType\": {\n                    \"type\": \"object\",\n                    \"\
+        description\": \"Entity type\"\n                },\n                \"role\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Role from template\"\n                }\n            }\n       \
+        \ },\n        \"ContractTerms\": {\n            \"type\": \"object\",\n            \"description\": \"Configurable
+        contract terms\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"\
+        duration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Contract duration (ISO 8601 duration, null for perpetual)\"\n                },\n      \
+        \          \"paymentSchedule\": {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"When payments occur\"\n                },\n       \
+        \         \"paymentFrequency\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n  \
+        \              \"terminationPolicy\": {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"How contract can be terminated\"\n        \
+        \        },\n                \"terminationNoticePeriod\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Required notice for termination (ISO 8601
+        duration)\"\n                },\n                \"breachThreshold\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breaches before auto-termination (0 for no auto)\"\n                },\n                \"gracePeriodForCure\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Contract duration (ISO 8601 duration, null for perpetual)\"\n                },\n                \"paymentSchedule\"\
-        : {\n                    \"$ref\": \"#/$defs/PaymentSchedule\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"When payments occur\"\n                },\n                \"paymentFrequency\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Recurring payment frequency (ISO 8601 duration)\"\n                },\n                \"terminationPolicy\":
-        {\n                    \"$ref\": \"#/$defs/TerminationPolicy\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"How contract can be terminated\"\n                },\n                \"terminationNoticePeriod\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Required notice for termination (ISO 8601 duration)\"\n                },\n                \"breachThreshold\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Breaches before auto-termination (0 for no auto)\"\n             \
-        \   },\n                \"gracePeriodForCure\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Time to cure breach (ISO 8601 duration)\"\n        \
-        \        },\n                \"customTerms\": {\n                    \"type\": \"object\",\n                    \"\
-        additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific
-        custom terms\"\n                }\n            }\n        },\n        \"PaymentSchedule\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"When payments occur\",\n            \"enum\": [\n                \"\
-        one_time\",\n                \"recurring\",\n                \"milestone_based\"\n            ]\n        },\n    \
-        \    \"TerminationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How the contract
-        can be terminated\",\n            \"enum\": [\n                \"mutual_consent\",\n                \"unilateral_with_notice\"\
-        ,\n                \"unilateral_immediate\",\n                \"non_terminable\"\n            ]\n        }\n    }\n\
-        }"
+        : \"Time to cure breach (ISO 8601 duration)\"\n                },\n                \"customTerms\": {\n          \
+        \          \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Game-specific custom terms\"\n                }\n            }\n \
+        \       },\n        \"PaymentSchedule\": {\n            \"type\": \"string\",\n            \"description\": \"When
+        payments occur\",\n            \"enum\": [\n                \"one_time\",\n                \"recurring\",\n      \
+        \          \"milestone_based\"\n            ]\n        },\n        \"TerminationPolicy\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How the contract can be terminated\",\n            \"enum\": [\n   \
+        \             \"mutual_consent\",\n                \"unilateral_with_notice\",\n                \"unilateral_immediate\"\
+        ,\n                \"non_terminable\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContractInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ContractInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Contract instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
@@ -1125,19 +1101,15 @@ paths:
         \      \"role\",\n                \"consentStatus\"\n            ],\n            \"properties\": {\n             \
         \   \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
         \              \"description\": \"Entity ID\"\n                },\n                \"entityType\": {\n           \
-        \         \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n              \
-        \  },\n                \"role\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Role in contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"\
-        #/$defs/ConsentStatus\",\n                    \"description\": \"Consent status\"\n                },\n          \
-        \      \"consentedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When consent was given\"\n    \
-        \            }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Type of entity that can be a contract party\",\n            \"enum\": [\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"company\",\n               \
-        \ \"government\",\n                \"faction\",\n                \"location\",\n                \"system\"\n     \
-        \       ]\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\"\
-        ,\n                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
+        \         \"type\": \"object\",\n                    \"description\": \"Entity type\"\n                },\n      \
+        \          \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in
+        contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"#/$defs/ConsentStatus\"\
+        ,\n                    \"description\": \"Consent status\"\n                },\n                \"consentedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When consent was given\"\n                }\n          \
+        \  }\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\",\n\
+        \                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
         \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
         \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
@@ -1273,19 +1245,15 @@ paths:
         \      \"role\",\n                \"consentStatus\"\n            ],\n            \"properties\": {\n             \
         \   \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
         \              \"description\": \"Entity ID\"\n                },\n                \"entityType\": {\n           \
-        \         \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n              \
-        \  },\n                \"role\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Role in contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"\
-        #/$defs/ConsentStatus\",\n                    \"description\": \"Consent status\"\n                },\n          \
-        \      \"consentedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When consent was given\"\n    \
-        \            }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Type of entity that can be a contract party\",\n            \"enum\": [\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"company\",\n               \
-        \ \"government\",\n                \"faction\",\n                \"location\",\n                \"system\"\n     \
-        \       ]\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\"\
-        ,\n                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
+        \         \"type\": \"object\",\n                    \"description\": \"Entity type\"\n                },\n      \
+        \          \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in
+        contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"#/$defs/ConsentStatus\"\
+        ,\n                    \"description\": \"Consent status\"\n                },\n                \"consentedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When consent was given\"\n                }\n          \
+        \  }\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\",\n\
+        \                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
         \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
         \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
@@ -1371,12 +1339,8 @@ paths:
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract to consent to\"\n  \
         \              },\n                \"partyEntityId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"description\": \"Entity ID of consenting party\"\n          \
-        \      },\n                \"partyEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n       \
-        \             \"description\": \"Entity type of consenting party\"\n                }\n            }\n        },\n\
-        \        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that
-        can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\",\n  \
-        \              \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        }\n    }\n}"
+        \      },\n                \"partyEntityType\": {\n                    \"type\": \"object\",\n                   \
+        \ \"description\": \"Entity type of consenting party\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContractInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ContractInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Contract instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
@@ -1428,19 +1392,15 @@ paths:
         \      \"role\",\n                \"consentStatus\"\n            ],\n            \"properties\": {\n             \
         \   \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
         \              \"description\": \"Entity ID\"\n                },\n                \"entityType\": {\n           \
-        \         \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n              \
-        \  },\n                \"role\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Role in contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"\
-        #/$defs/ConsentStatus\",\n                    \"description\": \"Consent status\"\n                },\n          \
-        \      \"consentedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When consent was given\"\n    \
-        \            }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Type of entity that can be a contract party\",\n            \"enum\": [\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"company\",\n               \
-        \ \"government\",\n                \"faction\",\n                \"location\",\n                \"system\"\n     \
-        \       ]\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\"\
-        ,\n                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
+        \         \"type\": \"object\",\n                    \"description\": \"Entity type\"\n                },\n      \
+        \          \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in
+        contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"#/$defs/ConsentStatus\"\
+        ,\n                    \"description\": \"Consent status\"\n                },\n                \"consentedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When consent was given\"\n                }\n          \
+        \  }\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\",\n\
+        \                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
         \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
         \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
@@ -1571,19 +1531,15 @@ paths:
         \      \"role\",\n                \"consentStatus\"\n            ],\n            \"properties\": {\n             \
         \   \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
         \              \"description\": \"Entity ID\"\n                },\n                \"entityType\": {\n           \
-        \         \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n              \
-        \  },\n                \"role\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Role in contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"\
-        #/$defs/ConsentStatus\",\n                    \"description\": \"Consent status\"\n                },\n          \
-        \      \"consentedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When consent was given\"\n    \
-        \            }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Type of entity that can be a contract party\",\n            \"enum\": [\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"company\",\n               \
-        \ \"government\",\n                \"faction\",\n                \"location\",\n                \"system\"\n     \
-        \       ]\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\"\
-        ,\n                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
+        \         \"type\": \"object\",\n                    \"description\": \"Entity type\"\n                },\n      \
+        \          \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in
+        contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"#/$defs/ConsentStatus\"\
+        ,\n                    \"description\": \"Consent status\"\n                },\n                \"consentedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When consent was given\"\n                }\n          \
+        \  }\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\",\n\
+        \                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
         \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
         \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
@@ -1664,26 +1620,22 @@ paths:
         \      \"properties\": {\n                \"partyEntityId\": {\n                    \"type\": \"string\",\n      \
         \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by party entity ID\"\n                },\n                \"partyEntityType\": {\n                    \"\
-        $ref\": \"#/$defs/EntityType\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Filter by party entity type\"\n                },\n                \"templateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Filter by template\"\n                },\n                \"statuses\": {\n            \
-        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ContractStatus\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Filter by
-        statuses\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n        \
-        \            \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number
-        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
-        \                 \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n \
-        \                   \"description\": \"Results per page\"\n                }\n            }\n        },\n        \"\
-        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can be a contract
-        party\",\n            \"enum\": [\n                \"character\",\n                \"npc\",\n                \"guild\"\
-        ,\n                \"company\",\n                \"government\",\n                \"faction\",\n                \"\
-        location\",\n                \"system\"\n            ]\n        },\n        \"ContractStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Current status of a contract instance\",\n            \"enum\"\
-        : [\n                \"draft\",\n                \"proposed\",\n                \"pending\",\n                \"active\"\
-        ,\n                \"fulfilled\",\n                \"expired\",\n                \"terminated\",\n               \
-        \ \"breached\",\n                \"suspended\",\n                \"disputed\",\n                \"declined\"\n   \
-        \         ]\n        }\n    }\n}"
+        type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by party
+        entity type\"\n                },\n                \"templateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by template\"\n                },\n                \"statuses\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ContractStatus\"\n              \
+        \      },\n                    \"nullable\": true,\n                    \"description\": \"Filter by statuses\"\n\
+        \                },\n                \"page\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number (1-based)\"\
+        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
+        \        \"description\": \"Results per page\"\n                }\n            }\n        },\n        \"ContractStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a contract instance\",\n\
+        \            \"enum\": [\n                \"draft\",\n                \"proposed\",\n                \"pending\",\n\
+        \                \"active\",\n                \"fulfilled\",\n                \"expired\",\n                \"terminated\"\
+        ,\n                \"breached\",\n                \"suspended\",\n                \"disputed\",\n                \"\
+        declined\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryContractInstancesResponse\"\
         ,\n    \"$defs\": {\n        \"QueryContractInstancesResponse\": {\n            \"type\": \"object\",\n          \
         \  \"description\": \"Paginated list of contract instances\",\n            \"additionalProperties\": false,\n    \
@@ -1747,19 +1699,15 @@ paths:
         \      \"role\",\n                \"consentStatus\"\n            ],\n            \"properties\": {\n             \
         \   \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
         \              \"description\": \"Entity ID\"\n                },\n                \"entityType\": {\n           \
-        \         \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n              \
-        \  },\n                \"role\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Role in contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"\
-        #/$defs/ConsentStatus\",\n                    \"description\": \"Consent status\"\n                },\n          \
-        \      \"consentedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When consent was given\"\n    \
-        \            }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Type of entity that can be a contract party\",\n            \"enum\": [\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"company\",\n               \
-        \ \"government\",\n                \"faction\",\n                \"location\",\n                \"system\"\n     \
-        \       ]\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\"\
-        ,\n                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
+        \         \"type\": \"object\",\n                    \"description\": \"Entity type\"\n                },\n      \
+        \          \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in
+        contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"#/$defs/ConsentStatus\"\
+        ,\n                    \"description\": \"Consent status\"\n                },\n                \"consentedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When consent was given\"\n                }\n          \
+        \  }\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\",\n\
+        \                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
         \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
         \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
@@ -1845,14 +1793,11 @@ paths:
         \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Contract to terminate\"\n                },\n                \"requestingEntityId\": {\n                    \"\
         type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity requesting
-        termination\"\n                },\n                \"requestingEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\
+        termination\"\n                },\n                \"requestingEntityType\": {\n                    \"type\": \"object\"\
         ,\n                    \"description\": \"Type of requesting entity\"\n                },\n                \"reason\"\
         : {\n                    \"type\": \"string\",\n                    \"maxLength\": 1000,\n                    \"nullable\"\
         : true,\n                    \"description\": \"Reason for termination\"\n                }\n            }\n     \
-        \   },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        }\n    }\n}"
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContractInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ContractInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Contract instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
@@ -1904,19 +1849,15 @@ paths:
         \      \"role\",\n                \"consentStatus\"\n            ],\n            \"properties\": {\n             \
         \   \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
         \              \"description\": \"Entity ID\"\n                },\n                \"entityType\": {\n           \
-        \         \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n              \
-        \  },\n                \"role\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Role in contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"\
-        #/$defs/ConsentStatus\",\n                    \"description\": \"Consent status\"\n                },\n          \
-        \      \"consentedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When consent was given\"\n    \
-        \            }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Type of entity that can be a contract party\",\n            \"enum\": [\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"company\",\n               \
-        \ \"government\",\n                \"faction\",\n                \"location\",\n                \"system\"\n     \
-        \       ]\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\"\
-        ,\n                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
+        \         \"type\": \"object\",\n                    \"description\": \"Entity type\"\n                },\n      \
+        \          \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in
+        contract\"\n                },\n                \"consentStatus\": {\n                    \"$ref\": \"#/$defs/ConsentStatus\"\
+        ,\n                    \"description\": \"Consent status\"\n                },\n                \"consentedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When consent was given\"\n                }\n          \
+        \  }\n        },\n        \"ConsentStatus\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Party's consent status\",\n            \"enum\": [\n                \"pending\",\n                \"consented\",\n\
+        \                \"declined\",\n                \"implicit\"\n            ]\n        },\n        \"ContractTerms\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Configurable contract terms\",\n          \
         \  \"additionalProperties\": false,\n            \"properties\": {\n                \"duration\": {\n            \
         \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
@@ -2034,28 +1975,24 @@ paths:
         \ \"additionalProperties\": false,\n            \"required\": [\n                \"entityId\",\n                \"\
         entityType\",\n                \"role\"\n            ],\n            \"properties\": {\n                \"entityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Entity ID\"\n                },\n                \"entityType\": {\n                    \"$ref\"\
-        : \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n                },\n            \
-        \    \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role in contract\"\
-        \n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Type of entity that can be a contract party\",\n            \"enum\": [\n           \
-        \     \"character\",\n                \"npc\",\n                \"guild\",\n                \"company\",\n       \
-        \         \"government\",\n                \"faction\",\n                \"location\",\n                \"system\"\
-        \n            ]\n        },\n        \"BreachSummary\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Brief breach information\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
-        \           \"breachId\",\n                \"breachType\",\n                \"status\"\n            ],\n         \
-        \   \"properties\": {\n                \"breachId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Breach ID\"\n                },\n           \
-        \     \"breachType\": {\n                    \"$ref\": \"#/$defs/BreachType\",\n                    \"description\"\
-        : \"Type of breach\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BreachStatus\"\
-        ,\n                    \"description\": \"Current status\"\n                }\n            }\n        },\n       \
-        \ \"BreachType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n\
-        \            \"enum\": [\n                \"term_violation\",\n                \"milestone_missed\",\n           \
-        \     \"unauthorized_action\",\n                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of a breach record\",\n    \
-        \        \"enum\": [\n                \"detected\",\n                \"cure_period\",\n                \"cured\",\n\
-        \                \"consequences_applied\",\n                \"disputed\",\n                \"forgiven\"\n        \
-        \    ]\n        }\n    }\n}"
+        description\": \"Entity ID\"\n                },\n                \"entityType\": {\n                    \"type\"\
+        : \"object\",\n                    \"description\": \"Entity type\"\n                },\n                \"role\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Role in contract\"\n      \
+        \          }\n            }\n        },\n        \"BreachSummary\": {\n            \"type\": \"object\",\n       \
+        \     \"description\": \"Brief breach information\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"breachId\",\n                \"breachType\",\n                \"status\"\n      \
+        \      ],\n            \"properties\": {\n                \"breachId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Breach ID\"\n               \
+        \ },\n                \"breachType\": {\n                    \"$ref\": \"#/$defs/BreachType\",\n                 \
+        \   \"description\": \"Type of breach\"\n                },\n                \"status\": {\n                    \"\
+        $ref\": \"#/$defs/BreachStatus\",\n                    \"description\": \"Current status\"\n                }\n  \
+        \          }\n        },\n        \"BreachType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of contract breach\",\n            \"enum\": [\n                \"term_violation\",\n                \"milestone_missed\"\
+        ,\n                \"unauthorized_action\",\n                \"non_payment\"\n            ]\n        },\n        \"\
+        BreachStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current status of a breach record\"\
+        ,\n            \"enum\": [\n                \"detected\",\n                \"cure_period\",\n                \"cured\"\
+        ,\n                \"consequences_applied\",\n                \"disputed\",\n                \"forgiven\"\n      \
+        \      ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current status and milestone progress\",\n    \"description\": \"Gets
         the current status of a contract including milestone progress,\\npending consents, and any active breaches.\\n\",\n\
         \    \"tags\": [\n        \"Instances\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getContractInstanceStatus\"\
@@ -2306,21 +2243,17 @@ paths:
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Contract that was breached\"\n                },\n                \"breachingEntityId\": {\n                 \
         \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity
-        that breached\"\n                },\n                \"breachingEntityType\": {\n                    \"$ref\": \"\
-        #/$defs/EntityType\",\n                    \"description\": \"Type of breaching entity\"\n                },\n   \
-        \             \"breachType\": {\n                    \"$ref\": \"#/$defs/BreachType\",\n                    \"description\"\
-        : \"Type of breach\"\n                },\n                \"breachedTermOrMilestone\": {\n                    \"type\"\
+        that breached\"\n                },\n                \"breachingEntityType\": {\n                    \"type\": \"\
+        object\",\n                    \"description\": \"Type of breaching entity\"\n                },\n               \
+        \ \"breachType\": {\n                    \"$ref\": \"#/$defs/BreachType\",\n                    \"description\": \"\
+        Type of breach\"\n                },\n                \"breachedTermOrMilestone\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Code of breached term
         or milestone\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
         \                    \"maxLength\": 2000,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Breach description\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Type of entity that can be a contract party\",\n            \"\
-        enum\": [\n                \"character\",\n                \"npc\",\n                \"guild\",\n                \"\
-        company\",\n                \"government\",\n                \"faction\",\n                \"location\",\n       \
-        \         \"system\"\n            ]\n        },\n        \"BreachType\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"Type of contract breach\",\n            \"enum\": [\n                \"term_violation\"\
-        ,\n                \"milestone_missed\",\n                \"unauthorized_action\",\n                \"non_payment\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Breach description\"\n                }\n            }\n        },\n        \"BreachType\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n        \
+        \        \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n  \
+        \              \"non_payment\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BreachResponse\"\
         ,\n    \"$defs\": {\n        \"BreachResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Breach record details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -2332,32 +2265,28 @@ paths:
         \       \"format\": \"uuid\",\n                    \"description\": \"Contract that was breached\"\n             \
         \   },\n                \"breachingEntityId\": {\n                    \"type\": \"string\",\n                    \"\
         format\": \"uuid\",\n                    \"description\": \"Entity that breached\"\n                },\n         \
-        \       \"breachingEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"\
-        description\": \"Type of breaching entity\"\n                },\n                \"breachType\": {\n             \
-        \       \"$ref\": \"#/$defs/BreachType\",\n                    \"description\": \"Type of breach\"\n             \
-        \   },\n                \"breachedTermOrMilestone\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"What was breached\"\n                },\n     \
-        \           \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Breach description\"\n                },\n                \"status\": {\n\
-        \                    \"$ref\": \"#/$defs/BreachStatus\",\n                    \"description\": \"Current status\"\n\
-        \                },\n                \"detectedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When breach was detected\"\n           \
-        \     },\n                \"cureDeadline\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Deadline to cure
-        breach\"\n                },\n                \"curedAt\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When breach was cured\"\n                },\n                \"consequencesAppliedAt\": {\n                  \
-        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When consequences were applied\"\n                }\n            }\n     \
-        \   },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        },\n        \"BreachType\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\"\
-        : [\n                \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\"\
-        ,\n                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\":
-        \"string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n      \
-        \          \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
+        \       \"breachingEntityType\": {\n                    \"type\": \"object\",\n                    \"description\"\
+        : \"Type of breaching entity\"\n                },\n                \"breachType\": {\n                    \"$ref\"\
+        : \"#/$defs/BreachType\",\n                    \"description\": \"Type of breach\"\n                },\n         \
+        \       \"breachedTermOrMilestone\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"What was breached\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breach description\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BreachStatus\"\
+        ,\n                    \"description\": \"Current status\"\n                },\n                \"detectedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When breach was detected\"\n                },\n                \"cureDeadline\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Deadline to cure breach\"\n                },\n                \"\
+        curedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"When breach was cured\"\n               \
+        \ },\n                \"consequencesAppliedAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        consequences were applied\"\n                }\n            }\n        },\n        \"BreachType\": {\n           \
+        \ \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n    \
+        \            \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n\
+        \                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n        \
+        \        \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
         ,\n                \"disputed\",\n                \"forgiven\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Report a contract breach\",\n    \"description\": \"Reports a breach of
         contract terms. This can be called by parties\\nor external systems. The breach enters a grace period for cure\\nif
@@ -2412,32 +2341,28 @@ paths:
         \       \"format\": \"uuid\",\n                    \"description\": \"Contract that was breached\"\n             \
         \   },\n                \"breachingEntityId\": {\n                    \"type\": \"string\",\n                    \"\
         format\": \"uuid\",\n                    \"description\": \"Entity that breached\"\n                },\n         \
-        \       \"breachingEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"\
-        description\": \"Type of breaching entity\"\n                },\n                \"breachType\": {\n             \
-        \       \"$ref\": \"#/$defs/BreachType\",\n                    \"description\": \"Type of breach\"\n             \
-        \   },\n                \"breachedTermOrMilestone\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"What was breached\"\n                },\n     \
-        \           \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Breach description\"\n                },\n                \"status\": {\n\
-        \                    \"$ref\": \"#/$defs/BreachStatus\",\n                    \"description\": \"Current status\"\n\
-        \                },\n                \"detectedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When breach was detected\"\n           \
-        \     },\n                \"cureDeadline\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Deadline to cure
-        breach\"\n                },\n                \"curedAt\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When breach was cured\"\n                },\n                \"consequencesAppliedAt\": {\n                  \
-        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When consequences were applied\"\n                }\n            }\n     \
-        \   },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        },\n        \"BreachType\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\"\
-        : [\n                \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\"\
-        ,\n                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\":
-        \"string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n      \
-        \          \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
+        \       \"breachingEntityType\": {\n                    \"type\": \"object\",\n                    \"description\"\
+        : \"Type of breaching entity\"\n                },\n                \"breachType\": {\n                    \"$ref\"\
+        : \"#/$defs/BreachType\",\n                    \"description\": \"Type of breach\"\n                },\n         \
+        \       \"breachedTermOrMilestone\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"What was breached\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breach description\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BreachStatus\"\
+        ,\n                    \"description\": \"Current status\"\n                },\n                \"detectedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When breach was detected\"\n                },\n                \"cureDeadline\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Deadline to cure breach\"\n                },\n                \"\
+        curedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"When breach was cured\"\n               \
+        \ },\n                \"consequencesAppliedAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        consequences were applied\"\n                }\n            }\n        },\n        \"BreachType\": {\n           \
+        \ \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n    \
+        \            \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n\
+        \                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n        \
+        \        \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
         ,\n                \"disputed\",\n                \"forgiven\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark breach as cured (system/admin action)\",\n    \"description\": \"\
         Marks a breach as cured within the grace period. This prevents\\nconsequences from being applied. Called by systems
@@ -2485,32 +2410,28 @@ paths:
         \       \"format\": \"uuid\",\n                    \"description\": \"Contract that was breached\"\n             \
         \   },\n                \"breachingEntityId\": {\n                    \"type\": \"string\",\n                    \"\
         format\": \"uuid\",\n                    \"description\": \"Entity that breached\"\n                },\n         \
-        \       \"breachingEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"\
-        description\": \"Type of breaching entity\"\n                },\n                \"breachType\": {\n             \
-        \       \"$ref\": \"#/$defs/BreachType\",\n                    \"description\": \"Type of breach\"\n             \
-        \   },\n                \"breachedTermOrMilestone\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"What was breached\"\n                },\n     \
-        \           \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Breach description\"\n                },\n                \"status\": {\n\
-        \                    \"$ref\": \"#/$defs/BreachStatus\",\n                    \"description\": \"Current status\"\n\
-        \                },\n                \"detectedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When breach was detected\"\n           \
-        \     },\n                \"cureDeadline\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Deadline to cure
-        breach\"\n                },\n                \"curedAt\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When breach was cured\"\n                },\n                \"consequencesAppliedAt\": {\n                  \
-        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When consequences were applied\"\n                }\n            }\n     \
-        \   },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\"\
-        ,\n                \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        },\n        \"BreachType\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\"\
-        : [\n                \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\"\
-        ,\n                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\":
-        \"string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n      \
-        \          \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
+        \       \"breachingEntityType\": {\n                    \"type\": \"object\",\n                    \"description\"\
+        : \"Type of breaching entity\"\n                },\n                \"breachType\": {\n                    \"$ref\"\
+        : \"#/$defs/BreachType\",\n                    \"description\": \"Type of breach\"\n                },\n         \
+        \       \"breachedTermOrMilestone\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"What was breached\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Breach description\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BreachStatus\"\
+        ,\n                    \"description\": \"Current status\"\n                },\n                \"detectedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When breach was detected\"\n                },\n                \"cureDeadline\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Deadline to cure breach\"\n                },\n                \"\
+        curedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"When breach was cured\"\n               \
+        \ },\n                \"consequencesAppliedAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        consequences were applied\"\n                }\n            }\n        },\n        \"BreachType\": {\n           \
+        \ \"type\": \"string\",\n            \"description\": \"Type of contract breach\",\n            \"enum\": [\n    \
+        \            \"term_violation\",\n                \"milestone_missed\",\n                \"unauthorized_action\",\n\
+        \                \"non_payment\"\n            ]\n        },\n        \"BreachStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Current status of a breach record\",\n            \"enum\": [\n        \
+        \        \"detected\",\n                \"cure_period\",\n                \"cured\",\n                \"consequences_applied\"\
         ,\n                \"disputed\",\n                \"forgiven\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get breach details\",\n    \"description\": \"Retrieves details of a specific
         breach record.\",\n    \"tags\": [\n        \"Breaches\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -2647,19 +2568,15 @@ paths:
         \              \"entityId\",\n                \"entityType\",\n                \"constraintType\"\n            ],\n\
         \            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"description\": \"Entity to check\"\n                },\n\
-        \                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"\
-        description\": \"Entity type\"\n                },\n                \"constraintType\": {\n                    \"\
-        $ref\": \"#/$defs/ConstraintType\",\n                    \"description\": \"Type of constraint to check\"\n      \
-        \          },\n                \"proposedAction\": {\n                    \"type\": \"object\",\n                \
-        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"What the entity wants to do\"\n                }\n            }\n        },\n        \"EntityType\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Type of entity that can be a contract party\",\n   \
-        \         \"enum\": [\n                \"character\",\n                \"npc\",\n                \"guild\",\n    \
-        \            \"company\",\n                \"government\",\n                \"faction\",\n                \"location\"\
-        ,\n                \"system\"\n            ]\n        },\n        \"ConstraintType\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Type of constraint to check\",\n            \"enum\": [\n              \
-        \  \"exclusivity\",\n                \"non_compete\",\n                \"territory\",\n                \"time_commitment\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"entityType\": {\n                    \"type\": \"object\",\n                    \"description\"\
+        : \"Entity type\"\n                },\n                \"constraintType\": {\n                    \"$ref\": \"#/$defs/ConstraintType\"\
+        ,\n                    \"description\": \"Type of constraint to check\"\n                },\n                \"proposedAction\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"What the entity wants to do\"\n             \
+        \   }\n            }\n        },\n        \"ConstraintType\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"Type of constraint to check\",\n            \"enum\": [\n                \"exclusivity\",\n     \
+        \           \"non_compete\",\n                \"territory\",\n                \"time_commitment\"\n            ]\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CheckConstraintResponse\"\
         ,\n    \"$defs\": {\n        \"CheckConstraintResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Constraint check result\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
@@ -2724,14 +2641,10 @@ paths:
         required\": [\n                \"entityId\",\n                \"entityType\"\n            ],\n            \"properties\"\
         : {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         uuid\",\n                    \"description\": \"Entity to query\"\n                },\n                \"entityType\"\
-        : {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type\"\n\
-        \                },\n                \"templateCodes\": {\n                    \"type\": \"array\",\n            \
-        \        \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"\
-        nullable\": true,\n                    \"description\": \"Filter by template codes\"\n                }\n        \
-        \    }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Type of entity that can be a contract party\",\n            \"enum\": [\n                \"character\",\n        \
-        \        \"npc\",\n                \"guild\",\n                \"company\",\n                \"government\",\n   \
-        \             \"faction\",\n                \"location\",\n                \"system\"\n            ]\n        }\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type\"\n           \
+        \     },\n                \"templateCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Filter by template codes\"\n                }\n            }\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryActiveContractsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryActiveContractsResponse\": {\n            \"type\": \"object\",\n            \"\
@@ -2920,21 +2833,17 @@ paths:
         ,\n                    \"description\": \"Contract instance ID\"\n                },\n                \"fromEntityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Current party entity ID\"\n                },\n                \"fromEntityType\": {\n          \
-        \          \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Current party entity type\"\n\
-        \                },\n                \"toEntityId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"New entity ID to receive the role\"\n       \
-        \         },\n                \"toEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n       \
-        \             \"description\": \"New entity type\"\n                },\n                \"guardianId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Guardian entity ID (must be current guardian)\"\n                },\n                \"guardianType\": {\n   \
-        \                 \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"description\"\
-        : \"Guardian entity type\"\n                },\n                \"idempotencyKey\": {\n                    \"type\"\
-        : \"string\",\n                    \"maxLength\": 64,\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Optional idempotency key for the operation\"\n                }\n            }\n        },\n\
-        \        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that
-        can be a contract party\",\n            \"enum\": [\n                \"character\",\n                \"npc\",\n  \
-        \              \"guild\",\n                \"company\",\n                \"government\",\n                \"faction\"\
-        ,\n                \"location\",\n                \"system\"\n            ]\n        }\n    }\n}"
+        \          \"type\": \"object\",\n                    \"description\": \"Current party entity type\"\n           \
+        \     },\n                \"toEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"New entity ID to receive the role\"\n                },\n    \
+        \            \"toEntityType\": {\n                    \"type\": \"object\",\n                    \"description\":
+        \"New entity type\"\n                },\n                \"guardianId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Guardian entity ID (must be current
+        guardian)\"\n                },\n                \"guardianType\": {\n                    \"type\": \"string\",\n\
+        \                    \"maxLength\": 64,\n                    \"description\": \"Guardian entity type\"\n         \
+        \       },\n                \"idempotencyKey\": {\n                    \"type\": \"string\",\n                   \
+        \ \"maxLength\": 64,\n                    \"nullable\": true,\n                    \"description\": \"Optional idempotency
+        key for the operation\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferContractPartyResponse\"\
         ,\n    \"$defs\": {\n        \"TransferContractPartyResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Response from transferring a party role\",\n            \"additionalProperties\": false,\n  \
@@ -3298,18 +3207,6 @@ paths:
         \    \"operationId\": \"executeContract\"\n}"
 components:
   schemas:
-    EntityType:
-      type: string
-      description: Type of entity that can be a contract party
-      enum:
-      - character
-      - npc
-      - guild
-      - company
-      - government
-      - faction
-      - location
-      - system
     ContractStatus:
       type: string
       description: Current status of a contract instance
@@ -3726,7 +3623,7 @@ components:
           format: uuid
           description: Entity ID of consenting party
         partyEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type of consenting party
     GetContractInstanceRequest:
       type: object
@@ -3750,7 +3647,7 @@ components:
           nullable: true
           description: Filter by party entity ID
         partyEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Filter by party entity type
         templateId:
@@ -3793,7 +3690,7 @@ components:
           format: uuid
           description: Entity requesting termination
         requestingEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of requesting entity
         reason:
           type: string
@@ -3989,7 +3886,7 @@ components:
         allowedEntityTypes:
           type: array
           items:
-            $ref: '#/components/schemas/EntityType'
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Which entity types can fill this role (null for any)
     ContractPartyInput:
@@ -4006,7 +3903,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -4026,7 +3923,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -4053,7 +3950,7 @@ components:
           format: uuid
           description: Entity ID
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         role:
           type: string
@@ -4287,7 +4184,7 @@ components:
           format: uuid
           description: Entity that breached
         breachingEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of breaching entity
         breachType:
           $ref: '#/components/schemas/BreachType'
@@ -4354,7 +4251,7 @@ components:
           format: uuid
           description: Entity that breached
         breachingEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of breaching entity
         breachType:
           $ref: '#/components/schemas/BreachType'
@@ -4474,7 +4371,7 @@ components:
           format: uuid
           description: Entity to check
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         constraintType:
           $ref: '#/components/schemas/ConstraintType'
@@ -4517,7 +4414,7 @@ components:
           format: uuid
           description: Entity to query
         entityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type
         templateCodes:
           type: array
@@ -4799,14 +4696,14 @@ components:
           format: uuid
           description: Current party entity ID
         fromEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Current party entity type
         toEntityId:
           type: string
           format: uuid
           description: New entity ID to receive the role
         toEntityType:
-          $ref: '#/components/schemas/EntityType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: New entity type
         guardianId:
           type: string

@@ -49,7 +49,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity this event relates to"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type the event is attributed to"
                 },
                 "timestamp": {
@@ -69,18 +69,6 @@ public partial class AnalyticsController
                     "description": "Additional event-specific data"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -221,7 +209,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity this event relates to"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type the event is attributed to"
                 },
                 "timestamp": {
@@ -241,18 +229,6 @@ public partial class AnalyticsController
                     "description": "Additional event-specific data"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -376,22 +352,10 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type to summarize"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -420,7 +384,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this summary"
                 },
                 "totalEvents": {
@@ -455,18 +419,6 @@ public partial class AnalyticsController
                     "description": "Aggregated numeric values (sums, averages)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -547,7 +499,7 @@ public partial class AnalyticsController
                     "description": "ID of the game service"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Optional filter by entity type"
                 },
@@ -582,18 +534,6 @@ public partial class AnalyticsController
                     "description": "Number of results to skip"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -645,7 +585,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this summary"
                 },
                 "totalEvents": {
@@ -680,18 +620,6 @@ public partial class AnalyticsController
                     "description": "Aggregated numeric values (sums, averages)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -780,7 +708,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type whose rating is requested"
                 },
                 "ratingType": {
@@ -788,18 +716,6 @@ public partial class AnalyticsController
                     "description": "Type of rating (e.g., overall, ranked, casual)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -830,7 +746,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this rating record"
                 },
                 "ratingType": {
@@ -863,18 +779,6 @@ public partial class AnalyticsController
                     "description": "Timestamp of last rated match"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -992,7 +896,7 @@ public partial class AnalyticsController
                     "description": "ID of the participating entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this match participant"
                 },
                 "outcome": {
@@ -1009,18 +913,6 @@ public partial class AnalyticsController
                     "description": "Optional numeric score for the match"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -1072,7 +964,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type for this rating change"
                 },
                 "previousRating": {
@@ -1091,18 +983,6 @@ public partial class AnalyticsController
                     "description": "Change in rating (can be negative)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -1198,7 +1078,7 @@ public partial class AnalyticsController
                     "description": "ID of the entity being controlled"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type being controlled"
                 },
                 "action": {
@@ -1217,18 +1097,6 @@ public partial class AnalyticsController
                     "description": "Game session ID (if applicable)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         },
         "ControllerAction": {
             "type": "string",
@@ -1333,7 +1201,7 @@ public partial class AnalyticsController
                     "description": "Filter by controlled entity"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Filter by entity type"
                 },
@@ -1356,18 +1224,6 @@ public partial class AnalyticsController
                     "description": "Maximum results to return"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         }
     }
 }
@@ -1424,7 +1280,7 @@ public partial class AnalyticsController
                     "description": "ID of the controlled entity"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Entity type that was controlled"
                 },
                 "action": {
@@ -1443,18 +1299,6 @@ public partial class AnalyticsController
                     "description": "Associated game session ID"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "description": "Type of entity being tracked",
-            "enum": [
-                "account",
-                "character",
-                "guild",
-                "actor",
-                "realm",
-                "custom"
-            ]
         },
         "ControllerAction": {
             "type": "string",

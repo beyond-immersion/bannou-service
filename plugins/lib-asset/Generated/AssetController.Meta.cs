@@ -66,7 +66,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -91,7 +91,7 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -366,7 +366,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -410,7 +410,7 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -620,7 +620,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -664,7 +664,7 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -1049,7 +1049,7 @@ public partial class AssetController
                     "description": "Filter by asset type"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Filter by game realm"
                 },
                 "contentType": {
@@ -1082,7 +1082,7 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -1178,7 +1178,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -1222,7 +1222,7 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -1333,7 +1333,7 @@ public partial class AssetController
                 "realm": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/Realm"
+                            "$ref": "#/$defs/GameRealm"
                         }
                     ],
                     "nullable": true,
@@ -1358,7 +1358,7 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -1909,7 +1909,7 @@ public partial class AssetController
                     "description": "Owner of this metabundle. NOT a session ID.\nFor user-initiated: the accountId (UUID format).\nFor service-initiated: the service name.\n"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm for this metabundle"
                 },
                 "description": {
@@ -1933,7 +1933,7 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -2519,7 +2519,7 @@ public partial class AssetController
                     "description": "Platform asset IDs to resolve"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm to search within"
                 },
                 "preferMetabundles": {
@@ -2539,7 +2539,7 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -2805,7 +2805,7 @@ public partial class AssetController
                     "description": "Platform asset ID to search for"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm to search within"
                 },
                 "bundleType": {
@@ -2829,7 +2829,7 @@ public partial class AssetController
                 }
             }
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -2928,7 +2928,7 @@ public partial class AssetController
                     "description": "Bundle file size"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm"
                 },
                 "createdAt": {
@@ -2947,7 +2947,7 @@ public partial class AssetController
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -3505,7 +3505,7 @@ public partial class AssetController
                 "realm": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/Realm"
+                            "$ref": "#/$defs/GameRealm"
                         }
                     ],
                     "nullable": true,
@@ -3566,7 +3566,7 @@ public partial class AssetController
             ],
             "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -3672,7 +3672,7 @@ public partial class AssetController
                     "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm this bundle belongs to"
                 },
                 "tags": {
@@ -3724,7 +3724,7 @@ public partial class AssetController
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -3967,7 +3967,7 @@ public partial class AssetController
                     "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm this bundle belongs to"
                 },
                 "tags": {
@@ -4017,9 +4017,9 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
@@ -4256,7 +4256,7 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/Realm",
+                    "$ref": "#/$defs/GameRealm",
                     "description": "Game realm the asset belongs to"
                 },
                 "tags": {
@@ -4300,7 +4300,7 @@ public partial class AssetController
             ],
             "description": "Type classification for assets"
         },
-        "Realm": {
+        "GameRealm": {
             "type": "string",
             "enum": [
                 "omega",
