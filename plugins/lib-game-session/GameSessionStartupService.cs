@@ -62,7 +62,7 @@ public class GameSessionStartupService : BackgroundService
     private async Task InitializeSubscriptionCachesAsync(CancellationToken cancellationToken)
     {
         var supportedGameServices = _configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            ?? new[] { "arcadia", "generic" };
+            ?? new[] { generic };
 
         foreach (var stubName in supportedGameServices)
         {

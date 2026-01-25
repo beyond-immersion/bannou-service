@@ -1546,7 +1546,7 @@ public class PermissionServiceTests : IAsyncLifetime
         var service = CreateService();
         var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-auth-001";
-        var authorizations = new List<string> { "arcadia:authorized", "omega:registered" };
+        var authorizations = new List<string> { "game-1:authorized", "game-2:registered" };
 
         // Setup empty activeConnections
         _mockHashSetStore
@@ -1596,12 +1596,12 @@ public class PermissionServiceTests : IAsyncLifetime
         Assert.NotNull(savedSessionStates);
 
         // Authorization states should be stored as serviceId=state
-        // Format: "arcadia:authorized" -> sessionStates["arcadia"] = "authorized"
-        Assert.True(savedSessionStates!.ContainsKey("arcadia"), "Should have 'arcadia' authorization state");
-        Assert.Equal("authorized", savedSessionStates["arcadia"]);
+        // Format: "game-1:authorized" -> sessionStates["game-1"] = "authorized"
+        Assert.True(savedSessionStates!.ContainsKey("game-1"), "Should have 'game-1' authorization state");
+        Assert.Equal("authorized", savedSessionStates["game-1"]);
 
-        Assert.True(savedSessionStates.ContainsKey("omega"), "Should have 'omega' authorization state");
-        Assert.Equal("registered", savedSessionStates["omega"]);
+        Assert.True(savedSessionStates.ContainsKey("game-2"), "Should have 'game-2' authorization state");
+        Assert.Equal("registered", savedSessionStates["game-2"]);
     }
 
     [Fact]
@@ -1612,7 +1612,7 @@ public class PermissionServiceTests : IAsyncLifetime
         var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-both-001";
         var roles = new List<string> { "admin" };
-        var authorizations = new List<string> { "arcadia:authorized" };
+        var authorizations = new List<string> { "game-1:authorized" };
 
         // Setup empty activeConnections
         _mockHashSetStore
@@ -1663,7 +1663,7 @@ public class PermissionServiceTests : IAsyncLifetime
 
         // Should have both role and authorization state
         Assert.Equal("admin", savedSessionStates!["role"]);
-        Assert.Equal("authorized", savedSessionStates["arcadia"]);
+        Assert.Equal("authorized", savedSessionStates["game-1"]);
     }
 
     #endregion

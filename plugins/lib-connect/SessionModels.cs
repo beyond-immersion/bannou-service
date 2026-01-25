@@ -74,7 +74,7 @@ public class ConnectionStateData
 
     /// <summary>
     /// Authorization strings at time of disconnect (preserved for reconnection).
-    /// Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+    /// Format: "{stubName}:{state}" (e.g., "my-game:authorized")
     /// </summary>
     public List<string>? Authorizations { get; set; }
 

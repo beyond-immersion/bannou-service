@@ -50,7 +50,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
 
     private const string TEST_SERVER_SALT = "test-server-salt-2025";
     private const string TEST_QUEUE_ID = "test-queue";
-    private const string TEST_GAME_ID = "arcadia";
+    private const string TEST_GAME_ID = "test-game";
 
     public MatchmakingServiceTests()
     {

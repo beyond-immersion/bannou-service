@@ -130,7 +130,7 @@
             <param name="metadata">Optional asset metadata.</param>
             <param name="cancellationToken">Cancellation token.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.Finalize(System.String,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.Finalize(System.Guid,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
             <summary>
             Finalizes the bundle and writes it to the output stream.
             </summary>
@@ -141,7 +141,7 @@
             <param name="description">Optional description.</param>
             <param name="tags">Optional metadata tags.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.FinalizeAsync(System.String,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.FinalizeAsync(System.Guid,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Threading.CancellationToken)">
             <summary>
             Finalizes the bundle asynchronously.
             </summary>
@@ -392,7 +392,7 @@
             Creates a new bundle validator.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleValidator.ValidateAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleValidator.ValidateAsync(System.IO.Stream,System.Guid,System.Threading.CancellationToken)">
             <summary>
             Validates a bundle stream and returns the validation result.
             </summary>

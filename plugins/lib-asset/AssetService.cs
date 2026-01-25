@@ -1469,7 +1469,7 @@ public partial class AssetService : IAssetService
                     }
 
                     // Validate realm consistency
-                    var assetRealm = asset.Realm ?? "omega";
+                    var assetRealm = asset.Realm ?? "shared";
                     if (assetRealm != body.Realm && assetRealm != "shared")
                     {
                         _logger.LogWarning("CreateMetabundle: Realm mismatch - asset {AssetId} is {AssetRealm}, expected {ExpectedRealm}",

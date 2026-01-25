@@ -121,7 +121,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var service = CreateService();
         var realmId = Guid.NewGuid();
         var request = new GetRealmRequest { RealmId = realmId };
-        var testModel = CreateTestRealmModel(realmId, "OMEGA", "Omega Realm");
+        var testModel = CreateTestRealmModel(realmId, "TEST_REALM", "Test Realm");
 
         _mockRealmStore
             .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
@@ -134,8 +134,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(realmId, response.RealmId);
-        Assert.Equal("OMEGA", response.Code);
-        Assert.Equal("Omega Realm", response.Name);
+        Assert.Equal("TEST_REALM", response.Code);
+        Assert.Equal("Test Realm", response.Name);
     }
 
     [Fact]
@@ -192,7 +192,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
-        var code = "ARCADIA";
+        var code = "TEST_REALM_2";
         var request = new GetRealmByCodeRequest { Code = code };
         var testModel = CreateTestRealmModel(realmId, code, "Arcadia Realm");
 

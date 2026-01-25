@@ -146,7 +146,7 @@ public sealed class BannouBundleWriter : IDisposable
     /// <param name="description">Optional description.</param>
     /// <param name="tags">Optional metadata tags.</param>
     public void Finalize(
-        string bundleId,
+        Guid bundleId,
         string name,
         string version,
         string createdBy,
@@ -209,7 +209,7 @@ public sealed class BannouBundleWriter : IDisposable
     /// Finalizes the bundle asynchronously.
     /// </summary>
     public async Task FinalizeAsync(
-        string bundleId,
+        Guid bundleId,
         string name,
         string version,
         string createdBy,

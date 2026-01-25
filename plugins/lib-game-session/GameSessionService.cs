@@ -155,7 +155,7 @@ public partial class GameSessionService : IGameSessionService
 
         // Initialize supported game services from configuration
         var configuredServices = configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        _supportedGameServices = new HashSet<string>(configuredServices ?? new[] { "arcadia", "generic" }, StringComparer.OrdinalIgnoreCase);
+        _supportedGameServices = new HashSet<string>(configuredServices ?? new[] { generic }, StringComparer.OrdinalIgnoreCase);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -197,7 +197,7 @@ public partial class GameSessionService : IGameSessionService
                 }
 
                 // Apply game type filter if provided (non-default value)
-                // Since enums default to first value (Arcadia=0), we can't distinguish "not set" from "arcadia"
+                // GameType defaults to "generic" if not specified
                 // So we just skip filtering if the request body doesn't have explicit filter values
 
                 // Apply status filter - skip finished sessions by default
@@ -1716,7 +1716,7 @@ public partial class GameSessionService : IGameSessionService
     /// Called internally by GameSessionEventsController.
     /// </summary>
     /// <param name="accountId">Account whose subscription changed.</param>
-    /// <param name="stubName">Stub name of the service (e.g., "arcadia").</param>
+    /// <param name="stubName">Stub name of the service (e.g., "my-game").</param>
     /// <param name="action">Action that triggered the event (created, updated, cancelled, expired, renewed).</param>
     /// <param name="isActive">Whether the subscription is currently active.</param>
     internal async Task HandleSubscriptionUpdatedInternalAsync(Guid accountId, string stubName, string action, bool isActive)
@@ -1992,7 +1992,7 @@ public partial class GameSessionService : IGameSessionService
             {
                 SessionId = sessionId,
                 AccountId = accountId,
-                GameType = stubName  // e.g., "arcadia", "generic"
+                GameType = stubName  // e.g., generic
             };
 
             var shortcutEvent = new ShortcutPublishedEvent

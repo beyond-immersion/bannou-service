@@ -85,7 +85,7 @@ public partial class RealmService : IRealmService
     }
 
     /// <summary>
-    /// Get realm by unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA").
+    /// Get realm by unique code (e.g., "REALM_1", "REALM_2").
     /// </summary>
     public async Task<(StatusCodes, RealmResponse?)> GetRealmByCodeAsync(
         GetRealmByCodeRequest body,

@@ -17,7 +17,7 @@ public class ModelTests
         var slot = new SaveSlotMetadata
         {
             SlotId = Guid.NewGuid(),
-            GameId = "arcadia",
+            GameId = "test-game",
             OwnerId = ownerId,
             OwnerType = OwnerType.ACCOUNT,
             SlotName = "main-save",
@@ -28,7 +28,7 @@ public class ModelTests
         var key = slot.GetStateKey();
 
         // Assert
-        Assert.Equal($"slot:arcadia:ACCOUNT:{ownerId}:main-save", key);
+        Assert.Equal($"slot:test-game:ACCOUNT:{ownerId}:main-save", key);
     }
 
     [Fact]
@@ -368,10 +368,10 @@ public class ModelTests
     public void SaveSchemaDefinition_GetStateKey_ReturnsCorrectFormat()
     {
         // Arrange & Act
-        var key = SaveSchemaDefinition.GetStateKey("arcadia", "v1.0.0");
+        var key = SaveSchemaDefinition.GetStateKey("test-game", "v1.0.0");
 
         // Assert
-        Assert.Equal("arcadia:v1.0.0", key);
+        Assert.Equal("test-game:v1.0.0", key);
     }
 
     [Fact]

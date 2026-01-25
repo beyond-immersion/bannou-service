@@ -14,7 +14,7 @@ public sealed class BundleManifest
     /// <summary>
     /// Unique identifier for this bundle.
     /// </summary>
-    public required string BundleId { get; init; }
+    public required Guid BundleId { get; init; }
 
     /// <summary>
     /// Human-readable name for the bundle.

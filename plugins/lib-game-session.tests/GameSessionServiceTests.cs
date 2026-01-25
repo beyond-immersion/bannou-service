@@ -42,7 +42,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private const string LOBBY_KEY_PREFIX = "lobby:";
 
     private const string TEST_SERVER_SALT = "test-server-salt-2025";
-    private const string TEST_GAME_TYPE = "arcadia";
+    private const string TEST_GAME_TYPE = "test-game";
 
     public GameSessionServiceTests()
     {
