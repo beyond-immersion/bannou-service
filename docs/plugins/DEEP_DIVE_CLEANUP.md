@@ -8,11 +8,41 @@
 
 ---
 
+## ⛔ WHAT NOT TO DO - FAILED EXAMPLE
+
+When fixing T25 type safety issues, **DO NOT** make a partial fix that only changes the POCO class fields while leaving internal data structures (dictionaries, tuples, local variables) as strings. This creates unnecessary conversions at every usage site.
+
+**Bad approach (what was done wrong in lib-asset):**
+1. Changed `BundleMetadata.BundleId` from `string` to `Guid` ✓
+2. Left `Dictionary<string, List<string>> provenanceByBundle` with string keys ✗
+3. Left tuples like `(StoredBundleAssetEntry, string SourceBundleId)` with string ✗
+4. Added `.ToString()` everywhere to convert back to string for dictionary keys ✗
+5. Result: 25+ unnecessary conversions, code is harder to read, defeats the purpose
+
+**Correct approach - FIX EVERYTHING:**
+1. Change the POCO class fields to proper types (Guid, enum) ✓
+2. Change ALL internal data structures (dictionaries, tuples, local vars) to use proper types ✓
+3. Change API request/response schemas to use proper types ✓
+4. If the schema uses `type: string` for a GUID or enum, **fix the schema** ✓
+5. Result: Zero conversions anywhere. Type safety end-to-end.
+
+**The goal is ZERO `.ToString()` and ZERO `Guid.Parse()`/`Enum.Parse()` calls in service code.**
+
+If you find yourself adding conversions, you haven't fixed everything - go back and fix the schema or the model you missed.
+
+**Signs you're doing it wrong:**
+- Adding `.ToString()` anywhere (fix the destination type instead)
+- Adding `Guid.Parse()` anywhere (fix the source type instead)
+- Adding `Enum.Parse()` anywhere (fix the source type instead)
+- Any conversion at all means something is still the wrong type
+
+---
+
 ## Cleanup Items
 
 ### lib-asset
 
-- [x] **T25**: `BundleMetadata.BundleId`, `SourceBundleReferenceInternal.BundleId`, and related bundle model ID fields store GUIDs as strings requiring `Guid.Parse()` at usage sites. **Decision**: Change internal POCOs to use `Guid` type. **DONE**
+- [ ] **T25**: `BundleMetadata.BundleId`, `SourceBundleReferenceInternal.BundleId`, and related bundle model ID fields store GUIDs as strings requiring `Guid.Parse()` at usage sites. **Decision**: Change internal POCOs to use `Guid` type. **NEEDS REDO** - partial fix applied incorrectly, left internal dictionaries/tuples as strings. Must also fix: `provenanceByBundle`, `assetsByPlatformId`, `assetsByHash`, `assetsBySourceBundle`, `assetsToInclude` tuple types.
 
 - [ ] **T25**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). **Decision**: Define an `AssetProcessingErrorCode` enum in schema.
 
@@ -110,6 +140,8 @@
 
 - [ ] **T25**: `SceneIndexEntry.SceneType` is stored as string requiring `Enum.TryParse<SceneType>()`. **Decision**: Change POCO to use `SceneType` enum directly.
 
+- [ ] **T25**: Multiple internal models store GUIDs as strings: `SceneIndexEntry.SceneId`, `SceneIndexEntry.AssetId`, `CheckoutState.SceneId`, `CheckoutState.EditorId`, `SceneContentEntry.SceneId`. **Decision**: Change to `Guid` type.
+
 ### lib-species
 
 - [ ] **T25**: `SpeciesModel` uses `string` for `SpeciesId` and `List<string>` for `RealmIds` instead of proper GUID types. **Decision**: Change to `Guid` and `List<Guid>`.
@@ -121,4 +153,12 @@
 ### lib-voice
 
 - [ ] **T25**: `VoiceRoomData` stores tier and codec as strings, requiring parsing in service methods. **Decision**: Change to enum types (`VoiceTier`, `VoiceCodec`).
+
+---
+
+## Code Generation Issues
+
+### bannou-service (Program.cs)
+
+- [ ] **T25**: `Program.ServiceGUID` is declared as `string` constant, causing all generated `*PermissionRegistration.cs` files to use `Guid.Parse(Program.ServiceGUID)`. This affects ALL services. **Decision**: Change `Program.ServiceGUID` to `Guid` type and update code generator.
 

@@ -44,7 +44,7 @@ public partial class RealmService : IRealmService
 
     #region Key Building Helpers
 
-    private static string BuildRealmKey(string realmId) => $"{REALM_KEY_PREFIX}{realmId}";
+    private static string BuildRealmKey(Guid realmId) => $"{REALM_KEY_PREFIX}{realmId}";
     private static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}";
 
     #endregion
@@ -62,7 +62,7 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Getting realm by ID: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
@@ -138,7 +138,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Listing realms with filters - Category: {Category}, IsActive: {IsActive}, IncludeDeprecated: {IncludeDeprecated}",
                 body.Category, body.IsActive, body.IncludeDeprecated);
 
-            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken);
+            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken);
 
             if (allRealmIds == null || allRealmIds.Count == 0)
             {
@@ -216,7 +216,7 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Checking if realm exists: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
@@ -233,7 +233,7 @@ public partial class RealmService : IRealmService
             {
                 Exists = true,
                 IsActive = model.IsActive && !model.IsDeprecated,
-                RealmId = Guid.Parse(model.RealmId)
+                RealmId = model.RealmId
             });
         }
         catch (Exception ex)
@@ -279,7 +279,7 @@ public partial class RealmService : IRealmService
 
             var model = new RealmModel
             {
-                RealmId = realmId.ToString(),
+                RealmId = realmId,
                 Code = code,
                 Name = body.Name,
                 GameServiceId = body.GameServiceId,
@@ -295,18 +295,18 @@ public partial class RealmService : IRealmService
             };
 
             // Save the model
-            var realmKey = BuildRealmKey(realmId.ToString());
+            var realmKey = BuildRealmKey(realmId);
             await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
             // Update code index
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).SaveAsync(codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<Guid>(StateStoreDefinitions.Realm).SaveAsync(codeIndexKey, realmId, cancellationToken: cancellationToken);
 
             // Update all-realms list
-            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<string>();
-            if (!allRealmIds.Contains(realmId.ToString()))
+            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
+            if (!allRealmIds.Contains(realmId))
             {
-                allRealmIds.Add(realmId.ToString());
-                await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
+                allRealmIds.Add(realmId);
+                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
             }
 
             // Publish realm created event
@@ -337,7 +337,7 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Updating realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
@@ -414,7 +414,7 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Deleting realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
@@ -435,13 +435,13 @@ public partial class RealmService : IRealmService
 
             // Delete code index
             var codeIndexKey = BuildCodeIndexKey(model.Code);
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).DeleteAsync(codeIndexKey, cancellationToken);
+            await _stateStoreFactory.GetStore<Guid>(StateStoreDefinitions.Realm).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from all-realms list
-            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<string>();
-            if (allRealmIds.Remove(body.RealmId.ToString()))
+            var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<Guid>();
+            if (allRealmIds.Remove(body.RealmId))
             {
-                await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
             }
 
             // Publish realm deleted event
@@ -476,7 +476,7 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Deprecating realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
@@ -526,7 +526,7 @@ public partial class RealmService : IRealmService
         {
             _logger.LogDebug("Undeprecating realm: {RealmId}", body.RealmId);
 
-            var realmKey = BuildRealmKey(body.RealmId.ToString());
+            var realmKey = BuildRealmKey(body.RealmId);
             var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
@@ -683,7 +683,7 @@ public partial class RealmService : IRealmService
 
     #region Helper Methods
 
-    private async Task<List<RealmModel>> LoadRealmsByIdsAsync(List<string> realmIds, CancellationToken cancellationToken)
+    private async Task<List<RealmModel>> LoadRealmsByIdsAsync(List<Guid> realmIds, CancellationToken cancellationToken)
     {
         if (realmIds.Count == 0)
         {
@@ -709,7 +709,7 @@ public partial class RealmService : IRealmService
     {
         return new RealmResponse
         {
-            RealmId = Guid.Parse(model.RealmId),
+            RealmId = model.RealmId,
             Code = model.Code,
             Name = model.Name,
             GameServiceId = model.GameServiceId,
@@ -740,7 +740,7 @@ public partial class RealmService : IRealmService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RealmId = Guid.Parse(model.RealmId),
+                RealmId = model.RealmId,
                 Code = model.Code,
                 Name = model.Name,
                 GameServiceId = model.GameServiceId,
@@ -768,7 +768,7 @@ public partial class RealmService : IRealmService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RealmId = Guid.Parse(model.RealmId),
+                RealmId = model.RealmId,
                 Code = model.Code,
                 Name = model.Name,
                 GameServiceId = model.GameServiceId,
@@ -804,7 +804,7 @@ public partial class RealmService : IRealmService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                RealmId = Guid.Parse(model.RealmId),
+                RealmId = model.RealmId,
                 Code = model.Code,
                 Name = model.Name,
                 GameServiceId = model.GameServiceId,
@@ -850,7 +850,7 @@ public partial class RealmService : IRealmService
 /// </summary>
 internal class RealmModel
 {
-    public string RealmId { get; set; } = string.Empty;
+    public Guid RealmId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public Guid GameServiceId { get; set; }
