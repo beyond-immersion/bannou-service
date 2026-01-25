@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -51,6 +52,10 @@ public partial class ActorService : IActorService
 
     // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
+
+    // Regex cache for auto-spawn patterns to prevent ReDoS and improve performance
+    private static readonly ConcurrentDictionary<string, Regex> _regexCache = new();
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
 
     /// <summary>
     /// Creates a new instance of the ActorService.
@@ -789,15 +794,25 @@ public partial class ActorService : IActorService
                 continue;
             }
 
-            // Check if actorId matches the pattern
+            // Check if actorId matches the pattern using cached regex with timeout
             Match match;
             try
             {
-                match = Regex.Match(actorId, template.AutoSpawn.IdPattern);
+                var pattern = template.AutoSpawn.IdPattern;
+                var regex = _regexCache.GetOrAdd(pattern, p => new Regex(p, RegexOptions.Compiled, RegexTimeout));
+                match = regex.Match(actorId);
                 if (!match.Success)
                 {
                     continue;
                 }
+            }
+            catch (RegexMatchTimeoutException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Regex pattern timed out in template {TemplateId}: {Pattern}",
+                    template.TemplateId, template.AutoSpawn.IdPattern);
+                continue;
             }
             catch (ArgumentException ex)
             {

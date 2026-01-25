@@ -116,7 +116,7 @@ public partial class MeshService
 
         try
         {
-            await Task.CompletedTask; // T23 compliance - async method requires await in success path
+            await Task.CompletedTask; // Async method requires await in success path
 
             // Convert to dictionary - empty is valid (means reset to default)
             var mappingsDict = evt.Mappings?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
