@@ -265,9 +265,7 @@ The following items from the original audit were determined to be false positive
 
 2. **No distributed lock on character compression (T9)**: `CompressCharacterAsync` reads a character, generates summaries, stores archive, and optionally deletes source data without concurrency protection. Fix requires: inject `IDistributedLockProvider`, wrap compression in lock scope.
 
-3. **RefCount update without optimistic concurrency (T9)**: `CheckCharacterReferencesAsync` reads `RefCountData`, modifies it, and saves without ETag-based concurrency. Fix requires: use `GetWithETagAsync` and `TrySaveAsync` with retry loop.
-
-4. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
+3. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 
 2. **Global index double-write**: Both Redis (realm index) and MySQL (global index) are updated on create/delete. Extra write for resilience across restarts but adds complexity.
 

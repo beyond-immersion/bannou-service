@@ -67,6 +67,8 @@ This plugin does not consume external events.
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `SeedPageSize` | `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | `100` | Batch size for paginated relationship migration during merge |
+| `MaxHierarchyDepth` | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | `20` | Maximum depth for hierarchy traversal to prevent infinite loops |
+| `MaxMigrationErrorsToTrack` | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | `100` | Maximum number of individual migration error details to track |
 
 ---
 
@@ -200,8 +202,7 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. **Merge doesn't delete source**: After migrating relationships, the source type remains deprecated. Admin must explicitly call `DeleteRelationshipType` separately. The response always returns `SourceDeleted=false`.
-2. **No event consumption**: Event consumer registered but no handlers implemented. Future: could listen for relationship deletion events to track type usage.
+1. **No event consumption**: Event consumer registered but no handlers implemented. Future: could listen for relationship deletion events to track type usage.
 
 ---
 
@@ -216,6 +217,10 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+None identified.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Code immutability**: Once a relationship type is created, its code cannot be changed. The code index key is never updated or deleted on type update.
@@ -228,11 +233,11 @@ State Store Layout
 
 5. **Guid.Empty as null marker in events**: Event payloads use `Guid.Empty` for nullable fields like `ParentTypeId` and `InverseTypeId` when no value is set.
 
-6. **Merge error detail limit**: Merge operations track up to 100 individual error details. Beyond that, only the count is accurate.
+6. **Merge error detail limit**: Merge operations track up to `MaxMigrationErrorsToTrack` (default 100) individual error details. Beyond that, only the count is accurate.
 
 ### Design Considerations (Requires Planning)
 
-1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. The depth calculation would produce incorrect values. Hierarchy traversal methods (`MatchesHierarchy`, `GetAncestors`, `GetChildTypeIdsAsync`) have a safety limit of 20 iterations to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment.
+1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. The depth calculation would produce incorrect values. Hierarchy traversal methods (`MatchesHierarchy`, `GetAncestors`, `GetChildTypeIdsAsync`) have a configurable safety limit (`MaxHierarchyDepth`, default 20) to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment.
 
 2. **Code index not cleaned on delete**: When a type is deleted, its code index entry is removed. However, if the code was reassigned between deprecation and deletion (unlikely given code immutability), the index could become stale.
 
@@ -244,36 +249,24 @@ State Store Layout
 
 6. **Merge page fetch error stops pagination**: Like species merge, if `ListRelationshipsByTypeAsync` fails on a page, the migration loop terminates. Relationships on subsequent pages remain un-migrated.
 
-7. **Recursive child query is sequential**: `GetChildTypeIdsAsync` with `recursive=true` traverses the subtree via recursive calls with a depth limit of 20 levels. Each level generates a state store call for the parent index, and wide hierarchies could generate many sequential calls.
+7. **Recursive child query is sequential**: `GetChildTypeIdsAsync` with `recursive=true` traverses the subtree via recursive calls with a configurable depth limit (`MaxHierarchyDepth`, default 20). Each level generates a state store call for the parent index, and wide hierarchies could generate many sequential calls.
 
 8. **Depth is snapshot at creation, never updated**: A type's `Depth` field is set based on parent's depth at creation time (line 407: `depth = parent.Depth + 1`). If a parent's depth changes later, children's depths become stale. The `Depth` field is not recomputed on parent reassignment.
 
----
+### Previously Fixed
 
-## Tenet Violations (Audit)
+1. **T21 (Configuration-First)**: Moved hardcoded constants to configuration - `MaxHierarchyDepth` (was `MAX_HIERARCHY_DEPTH = 20`) and `MaxMigrationErrorsToTrack` (was `maxErrorsToTrack = 100`).
 
-### Category: IMPLEMENTATION
+2. **Documentation accuracy**: Fixed Stubs section - delete-after-merge IS implemented (lines 1017-1040) and `SourceDeleted` can be true when `DeleteAfterMerge=true` and all migrations succeed.
 
-1. **Multi-Instance Safety (T9)** - Read-modify-write operations without distributed locks
-   - **Locations**: `AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`
-   - **Issue**: Concurrent operations can cause lost updates
-   - **Scope**: Requires `IDistributedLockProvider` integration
-
-2. **Internal Model Type Safety (T25)** - RelationshipTypeModel uses string for GUID fields
-   - **Locations**: `RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`
-   - **Issue**: Forces `Guid.Parse()` calls throughout, loses compile-time type safety
-   - **Scope**: Requires model refactoring to use `Guid` and `Guid?` types
-
-3. **Configuration-First (T21)** - Hardcoded tunable constants
-   - **Locations**: `MAX_HIERARCHY_DEPTH = 20`, `maxErrorsToTrack = 100`
-   - **Fix**: Move to configuration schema with env vars
-
-### False Positives (Not Violations)
+### False Positives Removed
 
 - **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
 - **T7 ApiException handling**: RelationshipType service uses `IRelationshipClient` for merge operations (mesh call), but T7 only applies when ApiException is actually thrown by the client. The current catch pattern is acceptable as it handles all exceptions uniformly.
 - **T9 seed Dictionary**: `codeToId` Dictionary is method-local, single-threaded (request-scoped), not shared state
 
-### Documentation Update Needed
+### Additional Design Considerations
 
-- **Stubs section says "SourceDeleted=false always"** but delete-after-merge IS implemented (lines 1017-1040). Update docs to reflect actual behavior.
+9. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks on `AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`. Concurrent operations can cause lost updates. Requires `IDistributedLockProvider` integration.
+
+10. **T25 (POCO Type Safety)**: RelationshipTypeModel uses string for GUID fields (`RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`). Forces `Guid.Parse()` calls throughout, loses compile-time type safety.

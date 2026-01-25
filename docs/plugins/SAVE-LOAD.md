@@ -519,24 +519,20 @@ Circuit Breaker State Machine
 
 12. **Storage quota check is per-slot, not per-owner**: The quota check only examines the current slot's TotalSizeBytes against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. True per-owner enforcement requires querying all slots for the owner before each save.
 
----
+### Bugs (Fix Immediately)
 
-## Tenet Violations (Audit)
+None identified.
 
-### Category: IMPLEMENTATION TENETS
+### Previously Fixed
 
-1. **Internal Model Type Safety** - Internal POCOs use string fields for enum and GUID types
-   - **Locations**: `SaveSlotMetadata` (Category, CompressionType), `SaveVersionManifest` (CompressionType, UploadStatus), `PendingUploadEntry` (CompressionType), `HotSaveEntry` (CompressionType), `StorageCircuitBreaker` (State)
-   - **Issue**: String fields force `Enum.TryParse` and `.ToString()` throughout business logic
-   - **Scope**: Requires model refactoring to use proper enum/Guid types
+(This plugin was cleaned up by a previous audit pass.)
 
-### Category: QUALITY TENETS
-
-2. **XML Documentation** - `Migration/SchemaMigrator.cs` - MigrationResult properties lack documentation
-   - **Issue**: `Data` and `Warnings` properties have empty `<summary>` tags
-   - **Fix**: Add descriptions: Data = "The transformed save data after migration", Warnings = "Non-fatal issues encountered during migration steps"
-
-### False Positives (Not Violations)
+### False Positives Removed
 
 - **T6 constructor null checks**: NRTs enabled project-wide - compile-time null safety eliminates need for runtime guards
-- **T7 ApiException handling**: SaveLoad service calls external IAssetClient via mesh for upload/download; asset failures are caught and logged as warnings with best-effort continuation (lines 1844, 2662)
+- **T7 ApiException handling**: SaveLoad service calls external IAssetClient via mesh for upload/download; asset failures are caught and logged as warnings with best-effort continuation
+- **T19 (XML Documentation)**: MigrationResult properties already have documentation ("Migrated data." and "Non-fatal warnings from migration.")
+
+### Additional Design Considerations
+
+13. **T25 (POCO Type Safety)**: Internal POCOs use string fields for enum and GUID types (`SaveSlotMetadata`, `SaveVersionManifest`, `PendingUploadEntry`, `HotSaveEntry`, `StorageCircuitBreaker`). String fields force `Enum.TryParse` and `.ToString()` throughout business logic. Requires model refactoring.

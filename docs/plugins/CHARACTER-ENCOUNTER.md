@@ -316,8 +316,6 @@ No bugs identified.
 
 2. **T25 - MemoryDecayMode as string**: Configuration property is string but represents discrete values ("lazy", "scheduled"). Should be an enum. Requires schema change, regeneration, and updating comparison at line 1997.
 
-3. **`?? string.Empty` patterns need compiler satisfaction comments**: ETag null-coalescing at lines 1084, 1160, 1433, 2017 should include comments explaining that `GetWithETagAsync` returns non-null etag when data is found.
-
 ## False Positives Removed
 
 The following items from the original audit were determined to be false positives:

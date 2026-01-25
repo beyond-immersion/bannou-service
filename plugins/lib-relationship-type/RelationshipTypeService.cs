@@ -27,7 +27,6 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string PARENT_INDEX_PREFIX = "parent-index:";
     private const string ALL_TYPES_KEY = "all-types";
-    private const int MAX_HIERARCHY_DEPTH = 20;
 
     public RelationshipTypeService(
         IStateStoreFactory stateStoreFactory,
@@ -288,7 +287,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var depth = 0;
             var currentParentId = currentType.ParentTypeId;
 
-            while (!string.IsNullOrEmpty(currentParentId) && depth < MAX_HIERARCHY_DEPTH)
+            while (!string.IsNullOrEmpty(currentParentId) && depth < _configuration.MaxHierarchyDepth)
             {
                 depth++;
                 if (currentParentId == ancestorIdStr)
@@ -341,7 +340,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var currentParentId = currentType.ParentTypeId;
             var iterations = 0;
 
-            while (!string.IsNullOrEmpty(currentParentId) && iterations < MAX_HIERARCHY_DEPTH)
+            while (!string.IsNullOrEmpty(currentParentId) && iterations < _configuration.MaxHierarchyDepth)
             {
                 iterations++;
                 var parentKey = BuildTypeKey(currentParentId);
@@ -927,7 +926,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var migratedCount = 0;
             var failedCount = 0;
             var migrationErrors = new List<MigrationError>();
-            const int maxErrorsToTrack = 100;
+            var maxErrorsToTrack = _configuration.MaxMigrationErrorsToTrack;
             var page = 1;
             var pageSize = _configuration.SeedPageSize;
             var hasMorePages = true;
@@ -1073,7 +1072,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         var directChildren = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType)
             .GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
-        if (!recursive || directChildren.Count == 0 || currentDepth >= MAX_HIERARCHY_DEPTH)
+        if (!recursive || directChildren.Count == 0 || currentDepth >= _configuration.MaxHierarchyDepth)
         {
             return directChildren;
         }
