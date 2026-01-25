@@ -111,7 +111,7 @@ public class P2PCoordinator : IP2PCoordinator
     public async Task<JoinVoiceRoomResponse> BuildP2PConnectionInfoAsync(
         Guid roomId,
         List<VoicePeer> peers,
-        string defaultCodec,
+        VoiceCodec defaultCodec,
         List<string> stunServers,
         bool tierUpgradePending = false,
         CancellationToken cancellationToken = default)
@@ -121,7 +121,7 @@ public class P2PCoordinator : IP2PCoordinator
         {
             RoomId = roomId,
             Tier = VoiceTier.P2p,
-            Codec = ParseVoiceCodec(defaultCodec),
+            Codec = defaultCodec,
             Peers = peers,
             RtpServerUri = null, // P2P mode, no RTP server
             StunServers = stunServers,
@@ -129,19 +129,5 @@ public class P2PCoordinator : IP2PCoordinator
         };
 
         return response;
-    }
-
-    /// <summary>
-    /// Parses codec string to VoiceCodec enum value.
-    /// </summary>
-    private static VoiceCodec ParseVoiceCodec(string codec)
-    {
-        return codec?.ToLowerInvariant() switch
-        {
-            "opus" => VoiceCodec.Opus,
-            "g711" => VoiceCodec.G711,
-            "g722" => VoiceCodec.G722,
-            _ => VoiceCodec.Opus // Default
-        };
     }
 }

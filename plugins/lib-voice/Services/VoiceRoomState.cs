@@ -19,12 +19,12 @@ public class VoiceRoomData
     /// <summary>
     /// Current voice tier (p2p or scaled).
     /// </summary>
-    public string Tier { get; set; } = "p2p";
+    public VoiceTier Tier { get; set; } = VoiceTier.P2p;
 
     /// <summary>
     /// Audio codec for the room.
     /// </summary>
-    public string Codec { get; set; } = "opus";
+    public VoiceCodec Codec { get; set; } = VoiceCodec.Opus;
 
     /// <summary>
     /// Maximum participants before tier upgrade.

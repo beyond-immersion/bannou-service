@@ -101,8 +101,8 @@ public partial class VoiceService : IVoiceService
             {
                 RoomId = roomId,
                 SessionId = body.SessionId,
-                Tier = body.PreferredTier == VoiceTier.Scaled ? "scaled" : "p2p",
-                Codec = body.Codec == VoiceCodec.G711 ? "g711" : body.Codec == VoiceCodec.G722 ? "g722" : "opus",
+                Tier = body.PreferredTier,
+                Codec = body.Codec,
                 MaxParticipants = body.MaxParticipants > 0 ? body.MaxParticipants : _p2pCoordinator.GetP2PMaxParticipants(),
                 CreatedAt = now,
                 RtpServerUri = null
@@ -121,8 +121,8 @@ public partial class VoiceService : IVoiceService
             {
                 RoomId = roomId,
                 SessionId = body.SessionId,
-                Tier = ParseVoiceTier(roomData.Tier),
-                Codec = ParseVoiceCodec(roomData.Codec),
+                Tier = roomData.Tier,
+                Codec = roomData.Codec,
                 MaxParticipants = roomData.MaxParticipants,
                 CurrentParticipants = 0,
                 Participants = new List<VoiceParticipant>(),
@@ -171,8 +171,8 @@ public partial class VoiceService : IVoiceService
             {
                 RoomId = roomData.RoomId,
                 SessionId = roomData.SessionId,
-                Tier = ParseVoiceTier(roomData.Tier),
-                Codec = ParseVoiceCodec(roomData.Codec),
+                Tier = roomData.Tier,
+                Codec = roomData.Codec,
                 MaxParticipants = roomData.MaxParticipants,
                 CurrentParticipants = participants.Count,
                 Participants = participants.Select(p => p.ToVoiceParticipant()).ToList(),
@@ -218,7 +218,7 @@ public partial class VoiceService : IVoiceService
 
             // Check participant count
             var currentCount = await _endpointRegistry.GetParticipantCountAsync(body.RoomId, cancellationToken);
-            var isScaledTier = roomData.Tier?.ToLowerInvariant() == "scaled";
+            var isScaledTier = roomData.Tier == VoiceTier.Scaled;
 
             // Check if room can accept new participant based on current tier
             bool canAccept;
@@ -304,7 +304,7 @@ public partial class VoiceService : IVoiceService
                 {
                     RoomId = body.RoomId,
                     Tier = VoiceTier.Scaled,
-                    Codec = ParseVoiceCodec(roomData.Codec),
+                    Codec = roomData.Codec,
                     Peers = new List<VoicePeer>(), // No peers in scaled mode
                     RtpServerUri = roomData.RtpServerUri,
                     StunServers = stunServers,
@@ -367,7 +367,7 @@ public partial class VoiceService : IVoiceService
             {
                 RoomId = body.RoomId,
                 Tier = VoiceTier.P2p,
-                Codec = ParseVoiceCodec(roomData.Codec),
+                Codec = roomData.Codec,
                 Peers = peers,
                 RtpServerUri = null,
                 StunServers = stunServers,
@@ -462,7 +462,7 @@ public partial class VoiceService : IVoiceService
 
             // If this was a scaled tier room, release RTP server resources
             // Fail-fast: RTP cleanup failures propagate to caller for proper error handling
-            if (roomData.Tier?.ToLowerInvariant() == "scaled" && !string.IsNullOrEmpty(roomData.RtpServerUri))
+            if (roomData.Tier == VoiceTier.Scaled && !string.IsNullOrEmpty(roomData.RtpServerUri))
             {
                 await _scaledTierCoordinator.ReleaseRtpServerAsync(body.RoomId, cancellationToken);
                 _logger.LogDebug("Released RTP server resources for room {RoomId}", body.RoomId);
@@ -862,7 +862,7 @@ public partial class VoiceService : IVoiceService
             {
                 RoomId = roomData.RoomId,
                 SessionId = roomData.SessionId,
-                Tier = "scaled",
+                Tier = VoiceTier.Scaled,
                 Codec = roomData.Codec,
                 MaxParticipants = _scaledTierCoordinator.GetScaledMaxParticipants(),
                 CreatedAt = roomData.CreatedAt,
@@ -892,35 +892,6 @@ public partial class VoiceService : IVoiceService
                 stack: ex.StackTrace);
             return false;
         }
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Parses a tier string to VoiceTier enum.
-    /// </summary>
-    private static VoiceTier ParseVoiceTier(string tier)
-    {
-        return tier?.ToLowerInvariant() switch
-        {
-            "scaled" => VoiceTier.Scaled,
-            _ => VoiceTier.P2p
-        };
-    }
-
-    /// <summary>
-    /// Parses a codec string to VoiceCodec enum.
-    /// </summary>
-    private static VoiceCodec ParseVoiceCodec(string codec)
-    {
-        return codec?.ToLowerInvariant() switch
-        {
-            "g711" => VoiceCodec.G711,
-            "g722" => VoiceCodec.G722,
-            _ => VoiceCodec.Opus
-        };
     }
 
     #endregion

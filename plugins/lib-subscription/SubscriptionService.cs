@@ -322,9 +322,9 @@ public partial class SubscriptionService : ISubscriptionService
 
             var model = new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = body.AccountId.ToString(),
-                ServiceId = body.ServiceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = body.AccountId,
+                ServiceId = body.ServiceId,
                 StubName = serviceInfo.StubName,
                 DisplayName = serviceInfo.DisplayName,
                 StartDateUnix = startDate.ToUnixTimeSeconds(),
@@ -340,13 +340,13 @@ public partial class SubscriptionService : ISubscriptionService
             await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", model, cancellationToken: cancellationToken);
 
             // Add to account index
-            await AddToAccountIndexAsync(body.AccountId.ToString(), subscriptionId.ToString(), cancellationToken);
+            await AddToAccountIndexAsync(body.AccountId, subscriptionId, cancellationToken);
 
             // Add to service index
-            await AddToServiceIndexAsync(body.ServiceId.ToString(), subscriptionId.ToString(), cancellationToken);
+            await AddToServiceIndexAsync(body.ServiceId, subscriptionId, cancellationToken);
 
             // Add to global subscription index (used by expiration worker)
-            await AddToSubscriptionIndexAsync(subscriptionId.ToString(), cancellationToken);
+            await AddToSubscriptionIndexAsync(subscriptionId, cancellationToken);
 
             // Publish subscription.updated event
             await PublishSubscriptionUpdatedEventAsync(model, "created", cancellationToken);
@@ -570,10 +570,10 @@ public partial class SubscriptionService : ISubscriptionService
 
     #region Private Helpers
 
-    private async Task AddToAccountIndexAsync(string accountId, string subscriptionId, CancellationToken cancellationToken)
+    private async Task AddToAccountIndexAsync(Guid accountId, Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-        var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", cancellationToken) ?? new List<Guid>();
 
         if (!subscriptionIds.Contains(subscriptionId))
         {
@@ -582,10 +582,10 @@ public partial class SubscriptionService : ISubscriptionService
         }
     }
 
-    private async Task AddToServiceIndexAsync(string serviceId, string subscriptionId, CancellationToken cancellationToken)
+    private async Task AddToServiceIndexAsync(Guid serviceId, Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-        var subscriptionIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", cancellationToken) ?? new List<Guid>();
 
         if (!subscriptionIds.Contains(subscriptionId))
         {
@@ -594,10 +594,10 @@ public partial class SubscriptionService : ISubscriptionService
         }
     }
 
-    private async Task AddToSubscriptionIndexAsync(string subscriptionId, CancellationToken cancellationToken)
+    private async Task AddToSubscriptionIndexAsync(Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-        var subscriptionIds = await listStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken) ?? new List<Guid>();
 
         if (!subscriptionIds.Contains(subscriptionId))
         {
@@ -648,9 +648,9 @@ public partial class SubscriptionService : ISubscriptionService
     {
         return new SubscriptionInfo
         {
-            SubscriptionId = Guid.Parse(model.SubscriptionId),
-            AccountId = Guid.Parse(model.AccountId),
-            ServiceId = Guid.Parse(model.ServiceId),
+            SubscriptionId = model.SubscriptionId,
+            AccountId = model.AccountId,
+            ServiceId = model.ServiceId,
             StubName = model.StubName,
             DisplayName = model.DisplayName,
             StartDate = DateTimeOffset.FromUnixTimeSeconds(model.StartDateUnix),
@@ -716,9 +716,9 @@ public partial class SubscriptionService : ISubscriptionService
 /// </summary>
 internal class SubscriptionDataModel
 {
-    public string SubscriptionId { get; set; } = string.Empty;
-    public string AccountId { get; set; } = string.Empty;
-    public string ServiceId { get; set; } = string.Empty;
+    public Guid SubscriptionId { get; set; }
+    public Guid AccountId { get; set; }
+    public Guid ServiceId { get; set; }
     public string StubName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public long StartDateUnix { get; set; }

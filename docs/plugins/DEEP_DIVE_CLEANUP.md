@@ -144,7 +144,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-voice
 
-- [ ] **T25**: `VoiceRoomData` stores tier and codec as strings, requiring parsing in service methods. **Decision**: Change to enum types (`VoiceTier`, `VoiceCodec`).
+- [x] **T25**: `VoiceRoomData` stores tier and codec as strings, requiring parsing in service methods. **Decision**: Change to enum types (`VoiceTier`, `VoiceCodec`). **FIXED** - Changed `VoiceRoomData.Tier` to `VoiceTier`, `VoiceRoomData.Codec` to `VoiceCodec`. Updated interface signatures `IP2PCoordinator.BuildP2PConnectionInfoAsync` and `IScaledTierCoordinator.BuildScaledConnectionInfoAsync` to use enum types. Removed all `ParseVoiceTier` and `ParseVoiceCodec` helper methods.
 
 ---
 

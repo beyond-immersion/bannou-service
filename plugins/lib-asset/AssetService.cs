@@ -1770,7 +1770,7 @@ public partial class AssetService : IAssetService
                     Version = body.Version ?? "1.0.0",
                     Realm = body.Realm,
                     SourceBundleCount = sourceBundles.Count,
-                    SourceBundleIds = (ICollection<Guid>)sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
+                    SourceBundleIds = sourceBundles.Select(sb => sb.BundleId).ToList(),
                     AssetCount = metabundleAssets.Count,
                     StandaloneAssetCount = standalonesToInclude.Count,
                     Bucket = bucket,
@@ -2746,7 +2746,7 @@ public partial class AssetService : IAssetService
                 // Publish delayed retry event
                 var retryEvent = new AssetProcessingRetryEvent
                 {
-                    AssetId = Guid.Parse(assetId),
+                    AssetId = assetId,
                     StorageKey = storageKey,
                     ContentType = metadata.ContentType,
                     PoolType = poolType,
@@ -2785,7 +2785,7 @@ public partial class AssetService : IAssetService
             // Publish processing job event for the processor to pick up
             var processingJob = new AssetProcessingJobEvent
             {
-                AssetId = Guid.Parse(assetId),
+                AssetId = assetId,
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
                 ProcessorId = processorResponse.ProcessorId,
@@ -2806,7 +2806,7 @@ public partial class AssetService : IAssetService
             // Publish delayed retry event
             var retryEvent = new AssetProcessingRetryEvent
             {
-                AssetId = Guid.Parse(assetId),
+                AssetId = assetId,
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
                 PoolType = poolType,
@@ -3678,7 +3678,7 @@ public partial class AssetService : IAssetService
 public sealed class AssetProcessingJobEvent
 {
     public Guid JobId { get; set; } = Guid.NewGuid();
-    public Guid AssetId { get; set; }
+    public string AssetId { get; set; } = string.Empty;
     public string StorageKey { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
@@ -3703,7 +3703,7 @@ public sealed class AssetProcessingJobEvent
 /// </summary>
 public sealed class AssetProcessingRetryEvent
 {
-    public Guid AssetId { get; set; }
+    public string AssetId { get; set; } = string.Empty;
     public string StorageKey { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public string PoolType { get; set; } = string.Empty;

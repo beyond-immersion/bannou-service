@@ -418,7 +418,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             // Create processing context
             var context = new AssetProcessingContext
             {
-                AssetId = job.AssetId.ToString(),
+                AssetId = job.AssetId,
                 StorageKey = job.StorageKey,
                 ContentType = job.ContentType,
                 SizeBytes = job.SizeBytes,
@@ -433,7 +433,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             var result = await processor.ProcessAsync(context, cancellationToken);
 
             // Update asset metadata with processing results
-            await UpdateAssetMetadataAsync(job.AssetId.ToString(), result, cancellationToken);
+            await UpdateAssetMetadataAsync(job.AssetId, result, cancellationToken);
 
             // Release the processor lease
             if (job.LeaseId != Guid.Empty)
@@ -559,7 +559,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AssetId = job.AssetId.ToString(),
+                AssetId = job.AssetId,
                 ProcessingType = MapProcessingType(job.ContentType),
                 Success = result.Success,
                 ErrorMessage = result.ErrorMessage,
@@ -611,7 +611,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AssetId = job.AssetId.ToString(),
+                AssetId = job.AssetId,
                 ProcessingType = MapProcessingType(job.ContentType),
                 Success = false,
                 ErrorMessage = errorMessage

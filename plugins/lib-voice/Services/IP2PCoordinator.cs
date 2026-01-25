@@ -62,7 +62,7 @@ public interface IP2PCoordinator
     Task<JoinVoiceRoomResponse> BuildP2PConnectionInfoAsync(
         Guid roomId,
         List<VoicePeer> peers,
-        string defaultCodec,
+        VoiceCodec defaultCodec,
         List<string> stunServers,
         bool tierUpgradePending = false,
         CancellationToken cancellationToken = default);

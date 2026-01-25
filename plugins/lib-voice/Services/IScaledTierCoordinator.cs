@@ -45,7 +45,7 @@ public interface IScaledTierCoordinator
         Guid roomId,
         Guid sessionId,
         string rtpServerUri,
-        string codec,
+        VoiceCodec codec,
         CancellationToken cancellationToken = default);
 
     /// <summary>

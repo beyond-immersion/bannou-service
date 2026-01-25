@@ -112,7 +112,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         Guid roomId,
         Guid sessionId,
         string rtpServerUri,
-        string codec,
+        VoiceCodec codec,
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
@@ -122,7 +122,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         {
             RoomId = roomId,
             Tier = VoiceTier.Scaled,
-            Codec = ParseVoiceCodec(codec),
+            Codec = codec,
             Peers = new List<VoicePeer>(), // No peers in scaled mode - use RTPEngine
             RtpServerUri = rtpServerUri,
             StunServers = GetStunServers(),
@@ -194,17 +194,6 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    private static VoiceCodec ParseVoiceCodec(string codec)
-    {
-        return codec?.ToLowerInvariant() switch
-        {
-            "opus" => VoiceCodec.Opus,
-            "g711" => VoiceCodec.G711,
-            "g722" => VoiceCodec.G722,
-            _ => VoiceCodec.Opus // Default
-        };
     }
 
     private List<string> GetStunServers()
