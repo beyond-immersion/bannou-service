@@ -183,50 +183,31 @@ None. The service is feature-complete for its scope.
 
 None identified.
 
-## Tenet Violations (Fix Immediately)
+## Design Considerations (Requires Planning - T25 Type Safety)
 
-*Fixed/Removed Violations:*
-- *#6: NRT null checks NOT needed - NRTs provide compile-time safety per T12*
-- *#7, #8: FIXED - Unused `_stateStoreFactory` and `_configuration` fields removed*
-- *#11: FIXED - Duplicate InternalsVisibleTo attributes removed from CharacterHistoryService.cs*
+The following T25 (Internal Model Type Safety) violations require coordinated changes to POCOs, mappers, and storage serialization:
 
-1. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `ParticipationData` internal POCO uses `string` for fields that have proper C# types. `ParticipationId`, `CharacterId`, and `EventId` should be `Guid`; `EventCategory` should be `EventCategory` enum; `Role` should be `ParticipationRole` enum.
-   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`
-   - **Fix**: Change POCO types from string to proper types, remove `Guid.Parse`/`Enum.Parse` from mappers.
+1. **ParticipationData POCO types**: `ParticipationId`, `CharacterId`, `EventId` should be `Guid`; `EventCategory` should be `EventCategory` enum; `Role` should be `ParticipationRole` enum. Currently stored as strings with `Guid.Parse`/`Enum.Parse` on read and `.ToString()` on write.
 
-2. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `BackstoryElementData` internal POCO uses `string` for `ElementType` field that has a proper `BackstoryElementType` C# enum.
-   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`
-   - **Fix**: Change `ElementType` to `BackstoryElementType` enum type, update switch statements.
+2. **BackstoryElementData.ElementType**: Uses `string` instead of `BackstoryElementType` enum. Requires updating switch statements and storage patterns.
 
-3. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `BackstoryData` internal POCO uses `string` for `CharacterId` which should be `Guid`.
-   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`
-   - **Fix**: Change `CharacterId` to `Guid` type.
+3. **BackstoryData.CharacterId**: Uses `string` instead of `Guid`.
 
-4. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `GenerateParticipationSummary` uses string comparison for enum values.
-   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`
-   - **Fix**: Once POCO types are fixed, update switch to use `ParticipationRole.Leader =>` etc.
+4. **GenerateParticipationSummary string comparisons**: Uses string comparison for enum values. Will be resolved by fixing POCO types above.
 
-5. **[IMPLEMENTATION TENETS - T7 Error Handling]** All catch blocks catch only `Exception` without distinguishing `ApiException` from unexpected exceptions.
-   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`
-   - **Fix**: Add `catch (ApiException ex)` before `catch (Exception ex)` in each try-catch.
+## False Positives Removed
 
-6. **[QUALITY TENETS - T19 XML Documentation]** Internal data model properties lack XML documentation.
-   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`
-   - **Fix**: Add `/// <summary>` documentation to internal data model properties.
+The following items from the original audit were determined to be false positives:
 
-7. **[QUALITY TENETS - T19 XML Documentation]** Methods lack XML `<param>` and `<returns>` tags.
-   - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`
-   - **Fix**: Add XML documentation to methods, especially `RegisterServicePermissionsAsync`.
+- **T7 ApiException catch clauses**: Service is a leaf node (no inter-service mesh calls). T7 ApiException only applies to mesh client calls.
+- **T19 on internal data model properties**: Internal classes don't require XML documentation per T19.
+- **T19 param/returns on interface methods**: Can use `<inheritdoc/>` for interface implementations.
 
-8. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `Guid.Parse()` used in business logic for GUID fields that should be typed.
-    - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 337-338, 761-763, 782
-    - **What's wrong**: `Guid.Parse(data.CharacterId)`, `Guid.Parse(data.EventId)`, `Guid.Parse(data.ParticipationId)` are called in business logic mapping methods. T25 states "Enum parsing belongs only at system boundaries" - the same applies to GUID parsing. If the POCO fields were `Guid` type (per violation #1), these parse calls would not be needed.
-    - **Fix**: This is resolved by fixing violation #1 (changing POCO fields to `Guid` type).
+### Previously Fixed
 
-13. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `.ToString()` used to populate internal model fields with enum and GUID values.
-    - **File**: `plugins/lib-character-history/CharacterHistoryService.cs`, lines 124-129, 152, 791
-    - **What's wrong**: `body.EventCategory.ToString()`, `body.Role.ToString()`, `participationId.ToString()`, `body.CharacterId.ToString()`, `body.EventId.ToString()`, and `element.ElementType.ToString()` are used to populate internal POCO string fields. T25 explicitly forbids "`.ToString()` populating internal model."
-    - **Fix**: This is resolved by fixing violations #1 and #2 (changing POCO fields to proper types and assigning directly).
+- NRT null checks NOT needed - NRTs provide compile-time safety per T12
+- Unused `_stateStoreFactory` and `_configuration` fields removed
+- Duplicate InternalsVisibleTo attributes removed from CharacterHistoryService.cs
 
 ### Intentional Quirks (Documented Behavior)
 

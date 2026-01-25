@@ -259,14 +259,16 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting HEAD commit for repository at {Path}", localPath);
-            _messageBus.TryPublishErrorAsync(
+            // Fire-and-forget error publishing: this is a synchronous method and error is already logged;
+            // per IMPLEMENTATION TENETS, use discard to avoid blocking on async call
+            _ = _messageBus.TryPublishErrorAsync(
                 "documentation",
                 "GetHeadCommit",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "git",
                 details: new { localPath },
-                stack: ex.StackTrace).GetAwaiter().GetResult();
+                stack: ex.StackTrace);
             return null;
         }
     }
@@ -400,14 +402,16 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to clone repository {Url}", repositoryUrl);
-            _messageBus.TryPublishErrorAsync(
+            // Fire-and-forget error publishing: this is a synchronous method and error is already logged;
+            // per IMPLEMENTATION TENETS, use discard to avoid blocking on async call
+            _ = _messageBus.TryPublishErrorAsync(
                 "documentation",
                 "CloneRepository",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "git",
                 details: new { repositoryUrl, branch, localPath },
-                stack: ex.StackTrace).GetAwaiter().GetResult();
+                stack: ex.StackTrace);
             return GitSyncResult.Failed(ex.Message);
         }
     }
@@ -472,14 +476,16 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to pull repository at {Path}", localPath);
-            _messageBus.TryPublishErrorAsync(
+            // Fire-and-forget error publishing: this is a synchronous method and error is already logged;
+            // per IMPLEMENTATION TENETS, use discard to avoid blocking on async call
+            _ = _messageBus.TryPublishErrorAsync(
                 "documentation",
                 "PullRepository",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "git",
                 details: new { localPath, branch },
-                stack: ex.StackTrace).GetAwaiter().GetResult();
+                stack: ex.StackTrace);
             return GitSyncResult.Failed(ex.Message);
         }
     }

@@ -162,15 +162,15 @@ For each plugin deep dive document:
 | Auth | DONE | Fixed T21 (removed DEFAULT_CONNECT_URL, hardcoded 60min fallback, added MockTwitchId to schema, removed dead "000000" fallback, extracted Unknown constants), T7 (ApiException catch), T10 (LogInfo → Debug for routine ops, mock email log). Removed T19 false positives (internal class, Generated/, base class overrides). Moved SessionDataModel type issues to Design Considerations. |
 | Behavior | DONE | Already clean - all violations addressed previously. Design considerations properly documented (ValueTask, IHttpClientFactory, static CognitionConstants, in-memory runtime state). |
 | Character | DONE | Removed false positives (T21 stub config, T19 interface methods, T19 private helpers). Moved T9 concurrency issues to Design Considerations (require architectural planning for distributed locking). |
-| Character-Encounter | PENDING | |
-| Character-History | PENDING | |
-| Character-Personality | PENDING | |
-| Connect | PENDING | |
-| Contract | PENDING | |
-| Currency | PENDING | |
-| Documentation | PENDING | |
-| Escrow | PENDING | |
-| Game-Service | PENDING | |
+| Character-Encounter | DONE | Removed false positives (T7 - leaf node, T9 method-local dict, T19 internal/interface, T5 diagnostic metadata, T21 stub config). Moved T25 POCO type issues to Design Considerations. |
+| Character-History | DONE | Removed false positives (T7 - leaf node, T19 internal classes). Consolidated T25 POCO type issues into Design Considerations section. |
+| Character-Personality | DONE | Removed false positives (T7 - leaf node). Consolidated T25 POCO type issues into Design Considerations section. |
+| Connect | DONE | Identified 1 bug (empty catch blocks). Removed T5 false positives (internal protocol, not cross-service events). Moved T23/T9 patterns to Additional Design Considerations. |
+| Contract | DONE | Identified 1 bug (silent catch-all). T7/T21/T5 issues require planning (mesh calls, config, schema events). Removed T19 false positives (private methods). |
+| Currency | DONE | Moved T25 POCO types and T16/T8 to Design Considerations. Removed T10/T19 false positives (entry logging not mandatory, private members don't need docs). |
+| Documentation | DONE | Fixed T23 (GitSyncService → fire-and-forget, RedisSearchIndexService → Error logging + discard). Removed false positives (T23 interface contract, T5 diagnostics, T19 internal, T10 controller). Moved T16 return type to Design Considerations. |
+| Escrow | DONE | All violations were false positives or already fixed. Removed T6/T9/T7/T10/T25 false positives. Moved POCO string defaults and EscrowExpiredEvent to Design Considerations. |
+| Game-Service | DONE | All violations previously fixed (T25 ServiceId→Guid, T10 logging, T9 ETag concurrency). Removed false positives (T6 NRT, T7 no mesh calls, T19 internal, T21 framework boilerplate). |
 | Game-Session | PENDING | |
 | Inventory | PENDING | |
 | Item | PENDING | |

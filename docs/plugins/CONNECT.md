@@ -459,56 +459,35 @@ Connection Mode Behavior Matrix
 
 ---
 
-## Tenet Violations (Fix Immediately)
+## Bugs (Fix Immediately)
 
-*Fixed/Removed Violations:*
-- *#1: FIXED - Removed dead configuration properties (DefaultServices, AuthenticatedServices, BinaryProtocolVersion, RabbitMqConnectionString, ConnectUrl) from connect-configuration.yaml*
-- *#2: FIXED - Added configuration properties (RpcCleanupIntervalSeconds, DefaultRpcTimeoutSeconds, ConnectionCleanupIntervalSeconds, InactiveConnectionTimeoutMinutes, PendingMessageTimeoutSeconds) and updated code to use them*
-- *#13: FIXED - Added warning log when ServiceName is null in RPC event handling*
-
-1. **[IMPLEMENTATION TENETS - T23 Async Pattern] `await Task.CompletedTask` anti-pattern** - Four occurrences of `await Task.CompletedTask` used to satisfy async signatures on synchronous methods.
-   - **File**: `plugins/lib-connect/ConnectService.cs`
-   - **Lines**: 312 (`GetClientCapabilitiesAsync`), 1610 (`OnStartAsync`), 2201 (`ValidateSessionAsync`), 2227 (`InitializeSessionCapabilitiesAsync`)
-   - **Fix**: Either remove `async` and return `Task.FromResult` (if truly sync), or refactor to perform actual async work.
-
-2. **[IMPLEMENTATION TENETS - T23 Async Pattern] `.Wait()` synchronous blocking on Task** - The `WebSocketConnectionManager.Dispose()` method uses `.Wait()` to synchronously block on an async WebSocket close operation.
+1. **Empty catch blocks suppress errors silently (T10/T7)** - Two empty catch blocks in `WebSocketConnectionManager` swallow exceptions without logging.
    - **File**: `plugins/lib-connect/WebSocketConnectionManager.cs`
-   - **Fix**: Implement `IAsyncDisposable` with `DisposeAsync()` and use `await` instead of `.Wait()`.
+   - **Fix**: Add at minimum a debug-level log message.
 
-3. **[IMPLEMENTATION TENETS - T9 Multi-Instance Safety] Non-thread-safe Dictionary used for concurrent access** - `ConnectionState` uses plain `Dictionary<ushort, uint>` for `ChannelSequences` and `Dictionary<ulong, PendingMessageInfo>` for `PendingMessages`.
-   - **File**: `plugins/lib-connect/Protocol/ConnectionState.cs`
-   - **Fix**: Replace with `ConcurrentDictionary` or add lock protection.
+## Additional Design Considerations
 
-4. **[QUALITY TENETS - T19 XML Documentation] Missing XML documentation on public properties** - Multiple public properties lack `<summary>` documentation in `MessageRouter.cs`, `SessionModels.cs`, `ConnectionState.cs`.
-   - **Fix**: Add `/// <summary>` documentation to all public properties.
+These T23/T9 patterns require architectural planning beyond the Design Considerations section below:
 
-5. **[QUALITY TENETS - T19 XML Documentation] Missing XML documentation on `MessagePriority` enum members** - The `Normal` and `High` enum members lack `<summary>` tags.
-   - **File**: `plugins/lib-connect/Protocol/MessageRouter.cs`
-   - **Fix**: Add `/// <summary>` documentation to each enum member.
+1. **T23 - `await Task.CompletedTask` pattern**: Four occurrences in `GetClientCapabilitiesAsync`, `OnStartAsync`, `ValidateSessionAsync`, `InitializeSessionCapabilitiesAsync`. These satisfy interface async signatures for currently-synchronous operations. Either remove `async` and return `Task.FromResult`, or refactor to perform actual async work (may require architectural decision on sync vs async for these operations).
 
-6. **[IMPLEMENTATION TENETS - T5 Event-Driven Architecture] Anonymous objects returned from event handlers** - Multiple methods return anonymous objects instead of typed response classes.
-   - **File**: `plugins/lib-connect/ConnectService.cs`
-   - **Fix**: Define typed response classes (e.g., `EventProcessingResult`) and return those instead of anonymous objects.
+2. **T23 - `.Wait()` synchronous blocking in Dispose**: `WebSocketConnectionManager.Dispose()` uses `.Wait()` to block on async WebSocket close. Fix requires implementing `IAsyncDisposable` with `DisposeAsync()`.
 
-7. **[IMPLEMENTATION TENETS - T5 Event-Driven Architecture] Anonymous object used for admin notification payload** - The `HandleServiceErrorAsync` method constructs an anonymous object for WebSocket payload.
-   - **File**: `plugins/lib-connect/ConnectServiceEvents.cs`
-   - **Fix**: Define a typed `AdminNotificationPayload` class.
+3. **T9 - Non-thread-safe Dictionary in ConnectionState**: `ChannelSequences` and `PendingMessages` use plain `Dictionary`. ConnectionState is per-connection so thread safety depends on how MessageRouter accesses it. Requires analysis of threading model.
 
-8. **[IMPLEMENTATION TENETS - T5 Event-Driven Architecture] Anonymous objects in capability manifest construction** - Multiple locations construct anonymous objects for capability manifest entries.
-   - **File**: `plugins/lib-connect/ConnectService.cs`
-   - **Fix**: Define typed classes for `CapabilityManifestEntry`, `ShortcutManifestEntry`, `CapabilityManifest`, and `InternalModeResponse`.
+## False Positives Removed
 
-9. **[QUALITY TENETS - T19 XML Documentation] Missing XML documentation on `WebSocketConnection.Metadata` purpose** - The `Metadata` property lacks documentation of known keys.
-   - **File**: `plugins/lib-connect/WebSocketConnectionManager.cs`
-   - **Fix**: Add `<remarks>` documenting known metadata keys and their semantics.
+The following items from the original audit were determined to be false positives:
 
-10. **[IMPLEMENTATION TENETS] `string.Empty` default without validation** - Several properties use `= string.Empty` as defaults without validation that they are set to meaningful values.
-    - **Files**: `plugins/lib-connect/Protocol/ConnectionState.cs`, `plugins/lib-connect/SessionModels.cs`
-    - **Fix**: Either make these nullable or add validation.
+- **T5 Anonymous objects for protocol payloads**: Capability manifests, admin notifications, and internal protocol messages use anonymous objects for WebSocket wire format - these are internal protocol structures, not cross-service events published via IMessageBus. T5 targets events schema, not wire protocol payloads.
+- **T19 on internal classes**: `ConnectionState`, `SessionModels`, `MessagePriority` may be internal implementation details. T19 applies to public API surface.
+- **string.Empty defaults**: Several are intentional for POCO initialization - should be documented if acceptable.
 
-11. **[QUALITY TENETS - T10/T7 Error Handling] Empty catch blocks suppress errors silently** - Two empty catch blocks in `WebSocketConnectionManager` swallow exceptions without logging.
-    - **File**: `plugins/lib-connect/WebSocketConnectionManager.cs`
-    - **Fix**: Add at minimum a debug-level log message.
+### Previously Fixed
+
+- Removed dead configuration properties
+- Added configuration properties (RpcCleanupIntervalSeconds, etc.) and wired to code
+- Added warning log when ServiceName is null in RPC event handling
 
 ---
 

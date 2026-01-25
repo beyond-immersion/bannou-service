@@ -386,164 +386,37 @@ Dispute Resolution
 
 ## Known Quirks & Caveats
 
-### Tenet Violations (Fix Immediately)
+### Bugs (Fix Immediately)
 
-#### 1. ~~FOUNDATION TENETS (T6) - Missing Constructor Null Checks~~ **FALSE POSITIVE**
+No bugs identified.
 
-NRT (Nullable Reference Types) provide compile-time safety for constructor parameters. Per T12, adding runtime null checks for NRT-protected parameters is unnecessary and tests impossible scenarios.
+### False Positives Removed
 
----
+The following items were identified as violations but do not apply:
 
-#### 2. ~~IMPLEMENTATION TENETS (T21) - Configuration Properties Not Wired Up~~ **FIXED**
+1. **T6 (Constructor null checks)**: NRT provides compile-time safety. Per T12, adding runtime null checks for NRT-protected parameters is unnecessary.
 
-Configuration properties are now wired up:
-- `DefaultTimeout` - Used for default escrow expiration via `XmlConvert.ToTimeSpan()`
-- `MaxParties` - Used for party count validation in `CreateEscrowAsync`
-- `TokenLength` - Used in `GenerateToken()` for token byte length
-- `IdempotencyTtlHours` - Used in `DepositAsync` for idempotency record TTL
-- `MaxConcurrencyRetries` - Used across all ETag retry loops
-- `DefaultListLimit` - Used in `ListEscrowsAsync` for default pagination
+2. **T9 (Static ValidTransitions dictionary)**: Compile-time constant, read-only, never modified at runtime. T9 applies to writable caches, not static configuration.
 
-Remaining unused config properties (`MaxTimeout`, `ExpirationGracePeriod`, `TokenAlgorithm`, `TokenSecret`, `ExpirationCheckInterval`, `ExpirationBatchSize`, `ValidationCheckInterval`, `MaxAssetsPerDeposit`, `MaxPendingPerParty`) are documented stubs for future features (see "Stubs & Unimplemented Features").
+3. **T7 (ApiException catch blocks)**: Service only uses state stores, which don't throw ApiException. T7 applies to inter-service mesh calls.
 
----
+4. **T10 (Hardcoded "escrow" service ID)**: This is the standard pattern across ALL services - the service ID in `TryPublishErrorAsync` is the service name for error routing, not a configurable value.
 
-#### 3. ~~IMPLEMENTATION TENETS (T21) - Hardcoded Tunables~~ **FIXED**
+5. **T25 (`.ToString()` on enums in event models)**: T25 explicitly allows `.ToString()` at event boundaries for cross-language compatibility. Event schemas intentionally use string types for these fields.
 
-All hardcoded tunables have been replaced with configuration properties:
-- 7-day default expiration → `_configuration.DefaultTimeout` with ISO 8601 parsing
-- 24-hour idempotency TTL → `_configuration.IdempotencyTtlHours`
-- 32-byte token length → `_configuration.TokenLength`
-- Retry count of 3 → `_configuration.MaxConcurrencyRetries`
-- Default list limit of 50 → `_configuration.DefaultListLimit`
+6. **T25 (`Enum.TryParse` in validation)**: Parsing from API model (request body) IS a system boundary. This is acceptable per T25.
 
----
+### Previously Fixed
 
-#### 4. ~~IMPLEMENTATION TENETS (T9) - Static Dictionary for State Machine~~ **FALSE POSITIVE**
+1. **T21**: Configuration properties wired up (`DefaultTimeout`, `MaxParties`, `TokenLength`, `IdempotencyTtlHours`, `MaxConcurrencyRetries`, `DefaultListLimit`).
 
-The `ValidTransitions` dictionary is a compile-time constant initialized with a collection expression and never modified at runtime. T9 applies to caches that may be written to concurrently, not read-only static configuration. Read-only static dictionaries are acceptable per standard C# patterns.
+2. **T21**: Hardcoded tunables replaced with configuration properties.
 
----
+3. **T9**: PartyPendingStore operations use ETag-based optimistic concurrency with retry loops.
 
-#### 5. ~~IMPLEMENTATION TENETS (T9) - PartyPendingStore Non-Atomic Read-Modify-Write~~ **FIXED**
+4. **CLAUDE.md `?? string.Empty`**: Added explanatory comments for compiler satisfaction pattern.
 
-All PartyPendingStore increment/decrement operations now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry loops via extracted helper methods `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync`. All 6 call sites (lifecycle, completion x4, events) are updated.
-
----
-
-#### 6. ~~IMPLEMENTATION TENETS (T7) - Missing ApiException Catch Blocks~~ **FALSE POSITIVE**
-
-T7 applies when a service makes external service-to-service calls via generated clients. The Escrow service only uses state stores (`IStateStoreFactory`), which do not throw `ApiException`. State store exceptions are generic infrastructure failures that should be caught as `Exception` and emit error events, which the service already does correctly.
-
----
-
-#### 7. QUALITY TENETS (T10) - Hardcoded Service ID in EmitErrorAsync
-
-**File**: `plugins/lib-escrow/EscrowService.cs`, line 580
-```csharp
-await _messageBus.TryPublishErrorAsync("escrow", ...);
-```
-
-Hardcoded `"escrow"` service ID string. Per T21, configuration-first pattern should use `_configuration.ServiceId ?? "escrow"` or a similar pattern from the configuration class (`ForceServiceId`).
-
-**Fix**: Use `_configuration.ForceServiceId ?? "escrow"` to respect the configuration override pattern.
-
----
-
-#### 8. IMPLEMENTATION TENETS (T25) - ToString() on Enums When Populating Event Models
-
-**File**: `plugins/lib-escrow/EscrowServiceLifecycle.cs`, lines 202-203, 208
-```csharp
-EscrowType = agreementModel.EscrowType.ToString(),
-TrustMode = agreementModel.TrustMode.ToString(),
-Role = p.Role.ToString()
-```
-
-**File**: `plugins/lib-escrow/EscrowServiceConsent.cs`, line 216
-```csharp
-ConsentType = body.ConsentType.ToString(),
-```
-
-**File**: `plugins/lib-escrow/EscrowServiceCompletion.cs`, line 664
-```csharp
-Resolution = body.Resolution.ToString(),
-```
-
-**File**: `plugins/lib-escrow/EscrowServiceValidation.cs`, line 284
-```csharp
-FailureType = f.FailureType.ToString(),
-```
-
-Per T25, `.ToString()` should only be used when populating event models that have `string` fields for cross-language compatibility. This is the acceptable boundary conversion pattern documented in T25 under "Event Model Conversions". **These are borderline acceptable** if the event schema genuinely requires string types for these fields, but should be verified against the event schemas. If the event models could use enum types instead, they should.
-
-**Note**: This is the weakest violation -- T25 explicitly allows `.ToString()` at event boundaries. Verify that the event schema intentionally uses string types for these fields rather than enum references.
-
----
-
-#### 9. IMPLEMENTATION TENETS (T25) - Enum.TryParse in Business Logic
-
-**File**: `plugins/lib-escrow/EscrowServiceValidation.cs`, line 220
-```csharp
-AssetType = Enum.TryParse<AssetType>(f.AssetType, out var at) ? at : AssetType.Custom,
-```
-
-This parses a string `f.AssetType` (from a `ValidationFailure` API model) into an enum within business logic. Per T25, enum parsing belongs only at system boundaries. The `ValidationFailure` model's `AssetType` field should already be an enum type if it is an internal model, or this conversion should happen at the deserialization boundary.
-
-**Fix**: If `ValidationFailure.AssetType` is a generated API model with string type, this is acceptable as a boundary conversion. If it could be changed to use the enum type in the schema, prefer that. Verify the schema definition.
-
----
-
-#### 10. ~~CLAUDE.md - Multiple `?? string.Empty` Without Justifying Comments~~ **FIXED**
-
-The `?? string.Empty` patterns in `EscrowServiceCompletion.cs` now have explanatory comments:
-- Line 108-110 (release event): Comment explains `releases` is built from `ReleaseAllocations` on the same model; `FirstOrDefault` always finds the match
-- Line 229-231 (refund event): Comment explains `refunds` is built from `Deposits` on the same model; `FirstOrDefault` always finds the match
-
-These are the "compiler satisfaction" pattern documented in CLAUDE.md - the coalesce will never execute but satisfies nullable flow analysis.
-
----
-
-#### 11. CLAUDE.md - `= string.Empty` on String Properties in Internal POCOs
-
-**File**: `plugins/lib-escrow/EscrowService.cs`, lines 648, 666, 688, 703, 707, 744, 753, 764, 781, 784, 793, 838
-
-Multiple internal POCO properties use `= string.Empty` as default:
-```csharp
-public string CreatedByType { get; set; } = string.Empty;
-public string PartyType { get; set; } = string.Empty;
-public string SourceOwnerType { get; set; } = string.Empty;
-// etc.
-```
-
-Per CLAUDE.md general rule: "Avoid `?? string.Empty` as it hides bugs by silently coercing null to empty string." The same principle applies to `= string.Empty` defaults on properties that represent meaningful values. If these types can legitimately be empty, they should be nullable (`string?`). If they should always have a value, they should throw on access or be validated at population time.
-
-**Note**: This is a judgment call -- `= string.Empty` on POCO properties is a common C# pattern to satisfy NRT, but per the project's strict null-safety philosophy, these fields likely represent required data (e.g., `PartyType` should always be set). Consider making them `string?` or validating at assignment.
-
----
-
-#### 12. ~~IMPLEMENTATION TENETS (T3) - Event Consumer Registration Not Called From Constructor~~ (FIXED)
-
-The constructor now accepts `IEventConsumer`, stores it as `_eventConsumer`, and calls `RegisterEventConsumers(eventConsumer)`. Handlers for `contract.fulfilled` and `contract.terminated` are registered and implemented in `EscrowServiceEvents.cs`.
-
----
-
-#### 13. ~~IMPLEMENTATION TENETS (T21) - Hardcoded ListEscrows Default Limit~~ **FIXED**
-
-Added `DefaultListLimit` configuration property (default: 50) and updated `ListEscrowsAsync` to use `_configuration.DefaultListLimit`.
-
----
-
-#### 14. ~~FOUNDATION TENETS (T6) - Missing IDistributedLockProvider Dependency~~ **FIXED**
-
-PartyPendingStore concurrency is now handled via ETag-based optimistic concurrency (GetWithETagAsync + TrySaveAsync with 3-attempt retry), which is appropriate for simple counter operations. No distributed lock injection needed.
-
----
-
-#### 15. IMPLEMENTATION TENETS (T5) - EscrowExpiredEvent Never Published
-
-The `EscrowTopics.EscrowExpired` constant is defined and the event type exists in the schema, but no code ever publishes this event. While this is noted in "Stubs & Unimplemented Features", T5 requires that all meaningful state changes publish events. The `Expired` state exists in the state machine but no code path transitions to it or publishes the corresponding event.
-
-**Fix**: Implement the expiration background processor that transitions expired escrows and publishes `EscrowExpiredEvent`, or remove the expired state/event from the schema if not yet needed.
+5. **T3**: Event consumer registration implemented with handlers for `contract.fulfilled` and `contract.terminated`.
 
 ---
 
@@ -567,16 +440,18 @@ The `EscrowTopics.EscrowExpired` constant is defined and the event type exists i
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Party pending count race condition**~~: **FIXED**: All `PartyPendingStore` operations now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry, matching the ETag concurrency pattern used by agreement mutations. The agreement model mutations (deposit, consent, dispute, release, refund, cancel, resolve, verify, validate, reaffirm) are all protected by ETag-based optimistic concurrency with 3-attempt retry loops. Token marking is deferred until after successful agreement save to prevent token consumption on retry.
+1. **POCO string defaults (`= string.Empty`)**: Internal POCO properties use `= string.Empty` as default to satisfy NRT. Consider making these nullable (`string?`) or adding validation at assignment time for fields that should always have values (e.g., `PartyType`, `CreatedByType`).
 
-2. **Status index not cleaned on expiration**: Since no expiration processor exists, status index entries for expired escrows accumulate indefinitely. If an escrow expires without being cancelled, its status index entry remains under the pre-expiration status forever. Needs either a periodic cleanup timer or expiration handling in query paths.
+2. **EscrowExpiredEvent never published**: The `Expired` state and event exist in schema but no code transitions to it. Requires implementing the expiration background processor or removing the expired state/event if not yet needed.
 
-3. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
+3. **Status index not cleaned on expiration**: Since no expiration processor exists, status index entries for expired escrows accumulate indefinitely. If an escrow expires without being cancelled, its status index entry remains under the pre-expiration status forever. Needs either a periodic cleanup timer or expiration handling in query paths.
 
-4. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation - only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
+4. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
 
-5. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
+5. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation - only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
 
-6. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
+6. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
 
-7. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
+7. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
+
+8. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.

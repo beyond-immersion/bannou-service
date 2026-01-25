@@ -421,81 +421,22 @@ Escrow Integration Flow
 
 ## Known Quirks & Caveats
 
-### Tenet Violations (Fix Immediately)
+### Bugs (Fix Immediately)
 
-#### IMPLEMENTATION TENETS - T25: Internal Model Type Safety
+No bugs identified.
 
-**File**: `plugins/lib-currency/CurrencyService.cs`, lines 2988-3103
+### Design Considerations (Requires Planning)
 
-The internal models (`CurrencyDefinitionModel`, `WalletModel`, `BalanceModel`, `TransactionModel`, `HoldModel`) extensively use `string` for fields that have proper C# types:
+1. **T25 - Internal Model Type Safety (MAJOR)**: All internal models use `string` for Guid fields (DefinitionId, WalletId, etc.) and enum fields (Scope, Precision, etc.). Changing to proper types requires updating all mapping methods and storage patterns. See detailed list below.
 
-1. **String for Guid fields**: `DefinitionId`, `WalletId`, `OwnerId`, `TransactionId`, `HoldId`, `CurrencyDefinitionId`, `ReferenceId`, `EscrowId`, `SeasonId`, `LinkedItemTemplateId`, `IconAssetId` are all `string` but represent GUIDs. Per T25 they must be `Guid` or `Guid?`.
+2. **T16 - Event Topic Naming**: Topics use inconsistent patterns (some 2-segment, some 3-segment with underscores). Standardizing requires schema changes and downstream consumer updates.
 
-2. **String for enum fields**: `Scope` (should be `CurrencyScope`), `Precision` (should be `CurrencyPrecision`), `CapOverflowBehavior` (should be `CapOverflowBehavior?`), `AutogainMode` (should be `AutogainMode?`), `ExpirationPolicy` (should be `ExpirationPolicy?`), `LinkageMode` (should be `ItemLinkageMode?`), `TransactionType` (should be `TransactionType`), `OwnerType` (should be `WalletOwnerType`).
+3. **T8 - Cast to (StatusCodes)422**: 15 instances of `(StatusCodes)422`. Adding `UnprocessableEntity = 422` to StatusCodes enum requires explicit approval.
 
-3. **`.ToString()` populating internal models**: Enum and Guid values are converted to strings when creating models. Per T25, enums and Guids should be assigned directly.
+### False Positives Removed
 
-4. **String comparison for enum values**: `definition.CapOverflowBehavior == CapOverflowBehavior.Reject.ToString()` and `definition.AutogainMode == AutogainMode.Compound.ToString()` patterns. Per T25, these should be direct enum equality comparisons.
-
-5. **`Enum.Parse`/`Enum.TryParse` in mapping methods**: `MapDefinitionToResponse`, `MapWalletToResponse`, `MapTransactionToRecord` all parse strings back to enums. If models used proper types, these would be unnecessary.
-
-**Fix**: Change all internal model properties to use their proper typed equivalents (Guid, enums, DateTimeOffset). Remove all `.ToString()` calls when populating models. Remove all `Enum.TryParse`/`Guid.Parse` calls in mapping methods and assign directly.
-
-**Status**: MAJOR refactoring required - deferred for dedicated effort.
-
----
-
-#### QUALITY TENETS - T10: Missing Operation Entry Logging
-
-**File**: `plugins/lib-currency/CurrencyService.cs`
-
-Only `CreateCurrencyDefinitionAsync` has an entry-level log statement. All other 30+ public methods lack Debug-level operation entry logging. Per T10, "Operation Entry (Debug): Log input parameters" is a required log point.
-
-**Fix**: Add `_logger.LogDebug(...)` at the entry of each public method with relevant input parameter context.
-
----
-
-#### QUALITY TENETS - T19: Missing XML Documentation on Private/Internal Members
-
-**File**: `plugins/lib-currency/CurrencyService.cs`
-
-1. **Private helper methods without `<summary>`**: Many private helper methods lack XML documentation.
-
-2. **Internal model properties without `<summary>`**: All properties on `CurrencyDefinitionModel`, `WalletModel`, `BalanceModel`, `TransactionModel`, `HoldModel` lack XML documentation.
-
-**Fix**: Add `<summary>` tags to all private/internal methods and properties that do not already have them.
-
----
-
-#### QUALITY TENETS - T16: Event Topic Naming (Requires Discussion)
-
-**File**: `plugins/lib-currency/CurrencyService.cs`
-
-Event topics use inconsistent separators. Some use hyphens in the entity part (matching `{entity}.{action}`), others use dots for compound actions:
-
-- `currency-definition.updated` -- entity part uses hyphen: correct per convention
-- `currency-wallet.created` -- correct
-- `currency.earn_cap.reached` -- uses underscores and 3 segments
-- `currency.wallet_cap.reached` -- uses underscores and 3 segments
-- `currency.credited` -- correct
-- `currency.hold.created` -- 3 segments
-- `currency.autogain.calculated` -- 3 segments
-
-Per T16/T5, the topic pattern is `{entity}.{action}` (2 segments). Standardizing would require event schema changes and downstream consumer updates.
-
-**Status**: Breaking change - requires discussion before implementing.
-
----
-
-#### IMPLEMENTATION TENETS - T8: Cast to StatusCodes Instead of Enum Member (Requires Approval)
-
-**File**: `plugins/lib-currency/CurrencyService.cs`
-
-15 instances of `(StatusCodes)422` -- casting a raw integer to the StatusCodes enum. Per T8, the service should use a defined enum member. However, the StatusCodes enum in `bannou-service/Enums.cs` has a warning: "DO NOT ADD NEW STATUS CODES WITHOUT EXPLICIT APPROVAL."
-
-**Status**: Requires explicit approval to add `UnprocessableEntity = 422` to the StatusCodes enum.
-
----
+- **T19 on private/internal members**: Private helper methods and internal model properties do not require XML documentation per T19 (only applies to public API surface)
+- **T10 missing operation entry logging**: T10 only requires logging at decision points and significant state changes. Operation entry logging is recommended but not mandatory.
 
 ### Fixed Violations
 

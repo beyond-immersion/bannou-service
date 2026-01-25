@@ -181,7 +181,9 @@ public class RedisSearchIndexService : ISearchIndexService
     {
         // Redis Search automatically indexes documents stored via ISearchableStateStore
         // when they match the index prefix. No explicit indexing needed - just ensure index exists.
-        Task.Run(async () =>
+        // Fire-and-forget: index creation is best-effort; synchronous interface contract requires this pattern.
+        // Log at Error level per QUALITY TENETS since this is infrastructure failure, not user error.
+        _ = Task.Run(async () =>
         {
             try
             {
@@ -189,7 +191,7 @@ public class RedisSearchIndexService : ISearchIndexService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to ensure index exists for namespace '{Namespace}'", namespaceId);
+                _logger.LogError(ex, "Failed to ensure index exists for namespace '{Namespace}'", namespaceId);
             }
         });
 

@@ -212,41 +212,32 @@ None. The service is feature-complete for its scope.
 
 ---
 
-## Tenet Violations (Fix Immediately)
+## Bugs (Fix Immediately)
 
-*Fixed/Removed Violations:*
-- *#7: FIXED - Removed "(TENET 5)" from source code comments*
-- *#8: FIXED - Changed LogInformation to LogDebug for all operation entry logs*
-- *#9: FIXED - Added MaxBatchSize configuration property, used in BatchGetPersonalitiesAsync*
-- *#10: FIXED - Added MaxConcurrencyRetries configuration property, used in optimistic concurrency loops*
-- *#11: FIXED - Added combat evolution configuration properties (CombatStyleTransitionProbability, CombatDefeatStyleTransitionProbability, CombatVictoryBalancedTransitionProbability, CombatRoleTransitionProbability, CombatDefensiveShiftProbability, CombatIntenseShiftMultiplier, CombatMildShiftMultiplier, CombatMildestShiftMultiplier)*
-- *#15: NRT null checks NOT needed - NRTs provide compile-time safety per T12*
-- *#16: Not applicable - service has no external client calls, only state store operations (no ApiException possible)*
-- *#17: FIXED - Removed duplicate InternalsVisibleTo attribute from CharacterPersonalityService.cs*
+No bugs identified.
 
-1. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `CombatPreferencesData` internal model uses `string` for `Style`, `PreferredRange`, and `GroupRole` fields instead of the generated enum types (`CombatStyle`, `PreferredRange`, `GroupRole`). This causes `Enum.Parse` calls throughout business logic and string comparisons in `ApplyCombatEvolution`.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Change POCO types from string to proper enum types, update switch statements and comparisons.
+## Design Considerations (Requires Planning - T25 Type Safety)
 
-2. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Change `CharacterId` to `Guid` type in both POCOs.
+The following T25 (Internal Model Type Safety) violations require coordinated changes to POCOs, mappers, and storage serialization:
 
-3. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `.ToString()` used to populate internal model fields from enums and Guids in `SetCombatPreferencesAsync` and `SetPersonalityAsync`.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Once internal models use proper types, assign directly without `.ToString()`.
+1. **CombatPreferencesData enum fields**: `Style`, `PreferredRange`, and `GroupRole` use `string` instead of `CombatStyle`, `PreferredRange`, `GroupRole` enums. Causes `Enum.Parse` calls and string comparisons in `ApplyCombatEvolution`.
 
-4. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `Enum.Parse` and `Guid.Parse` used in business logic (`MapToCombatPreferences`, `MapToPersonalityResponse`). These are not system boundary conversions.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Once internal models use proper types, no parsing is needed - direct field access.
+2. **CharacterId fields**: Both `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`.
 
-5. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** String comparisons for enum values throughout `ApplyCombatEvolution`.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Once POCOs use proper enum types, use enum equality instead of string comparison.
+3. **Cascading impacts**: Fixing these POCOs eliminates `.ToString()` on write, `Enum.Parse`/`Guid.Parse` on read, and string comparisons in evolution logic.
 
-6. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** String assignment to enum fields in `ApplyCombatEvolution`.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Once POCOs use proper enum types, assign enum values directly.
+## False Positives Removed
+
+- **T7 ApiException**: Service is a leaf node with no external client calls (only state store operations)
+- **NRT null checks**: NRTs provide compile-time safety
+
+### Previously Fixed
+
+- Removed "(TENET 5)" from source code comments
+- Changed LogInformation to LogDebug for operation entry logs
+- Added MaxBatchSize and MaxConcurrencyRetries configuration properties
+- Added combat evolution configuration properties
+- Removed duplicate InternalsVisibleTo attribute
 
 7. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `PersonalityData.Traits` uses `Dictionary<string, float>` with string keys representing trait axes instead of `Dictionary<TraitAxis, float>`.
    - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`

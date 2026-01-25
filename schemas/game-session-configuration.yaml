@@ -56,6 +56,11 @@ x-service-configuration:
       description: Maximum retry attempts for optimistic concurrency on subscriber session state
       default: 3
       env: GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed session locks
+      default: 60
+      env: GAME_SESSION_LOCK_TIMEOUT_SECONDS
     SupportedGameServices:
       type: string
       description: Comma-separated list of supported game service stub names

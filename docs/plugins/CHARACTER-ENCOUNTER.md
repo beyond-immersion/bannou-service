@@ -306,93 +306,35 @@ Index Architecture
 
 ---
 
-## Tenet Violations (Fix Immediately)
+## Bugs (Fix Immediately)
 
-*Fixed/Removed Violations:*
-- *#1: NRT null checks NOT needed - NRTs provide compile-time safety per T12*
-- *#10: `etag ?? string.Empty` is intentional optimistic concurrency pattern (empty etag = create new, non-empty = version check)*
-- *#17: Already marked as FIXED (ETag-based concurrency)*
-- *#18: FIXED - Duplicate InternalsVisibleTo removed from CharacterEncounterService.cs*
+No bugs identified.
 
-2. **[IMPLEMENTATION]** Missing `ApiException` catch clause in all public methods. Per T7 (Error Handling), all external calls (state store, service client) must be wrapped with a catch block that distinguishes `ApiException` from generic `Exception`. Every public endpoint method only catches `Exception` generically. The service should catch `ApiException` first (log as Warning, propagate status code), then catch `Exception` (log as Error, emit error event).
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 90-146, 156-195, 204-251, 260-307, 316-358, 367-426, 440-590, 603-683, 693-760, 769-832, 841-866, 875-945, 955-1001, 1015-1048, 1058-1128, 1138-1203, 1216-1279, 1288-1376, 1386-1488
-   - **Wrong**: Only `catch (Exception ex)` is present
-   - **Should be**: `catch (ApiException ex) { ... LogWarning ... return ((StatusCodes)ex.StatusCode, null); }` before the generic `catch (Exception ex)`
+## Design Considerations (Requires Planning)
 
-3. **[IMPLEMENTATION]** Internal POCO `EncounterData.Outcome` uses `string` instead of the `EncounterOutcome` enum type. Per T25 (Internal Model Type Safety), internal data models must use the strongest available C# type. The `Outcome` property is declared as `string` and populated via `.ToString()`, then parsed back via `Enum.Parse<EncounterOutcome>` on every read.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 2185
-   - **Wrong**: `public string Outcome { get; set; } = string.Empty;`
-   - **Should be**: `public EncounterOutcome Outcome { get; set; }`
+1. **T25 - Internal POCOs use string instead of enum types**: `EncounterData.Outcome`, `PerspectiveData.EmotionalImpact`, and `EncounterTypeData.DefaultEmotionalImpact` use string fields with `.ToString()` on write and `Enum.Parse` on read. Changing to enum types requires updating all mapping methods, storage/retrieval patterns, and potentially state store serialization.
 
-4. **[IMPLEMENTATION]** Internal POCO `PerspectiveData.EmotionalImpact` uses `string` instead of the `EmotionalImpact` enum type. Per T25 (Internal Model Type Safety), string representations of typed values are forbidden in internal models. The field is populated via `.ToString()` and parsed back via `Enum.Parse<EmotionalImpact>` on every read.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 2196
-   - **Wrong**: `public string EmotionalImpact { get; set; } = string.Empty;`
-   - **Should be**: `public EmotionalImpact EmotionalImpact { get; set; }`
+2. **T25 - MemoryDecayMode as string**: Configuration property is string but represents discrete values ("lazy", "scheduled"). Should be an enum. Requires schema change, regeneration, and updating comparison at line 1997.
 
-5. **[IMPLEMENTATION]** Internal POCO `EncounterTypeData.DefaultEmotionalImpact` uses `string?` instead of `EmotionalImpact?`. Per T25, this causes `.ToString()` on write (lines 118, 284, 389, 517-518, 1079, 1531) and `Enum.Parse<EmotionalImpact>` on read (lines 503, 2116), both of which are forbidden patterns in business logic.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 2171
-   - **Wrong**: `public string? DefaultEmotionalImpact { get; set; }`
-   - **Should be**: `public EmotionalImpact? DefaultEmotionalImpact { get; set; }`
+3. **`?? string.Empty` patterns need compiler satisfaction comments**: ETag null-coalescing at lines 1084, 1160, 1433, 2017 should include comments explaining that `GetWithETagAsync` returns non-null etag when data is found.
 
-6. **[IMPLEMENTATION]** `Enum.Parse` used in business logic (mapping methods). Per T25, `Enum.Parse` belongs only at system boundaries (deserialization, external input). The mapping methods at lines 2116, 2133, 2147, and line 503 all use `Enum.Parse` to convert string fields back to enums. This is caused by violation #3/#4/#5 above; fixing the POCO types eliminates these.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 503, 2116, 2133, 2147
-   - **Wrong**: `Outcome = Enum.Parse<EncounterOutcome>(data.Outcome)`
-   - **Should be**: `Outcome = data.Outcome` (after fixing POCO type to use enum directly)
+## False Positives Removed
 
-7. **[IMPLEMENTATION]** `.ToString()` used to populate internal model fields. Per T25, assigning enum values via `.ToString()` to internal POCOs is forbidden. Multiple locations store enum values as strings:
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 118, 284, 389, 489, 517-518, 558, 1079, 1531
-   - **Wrong**: `Outcome = body.Outcome.ToString()` and `EmotionalImpact = provided.EmotionalImpact.ToString()`
-   - **Should be**: `Outcome = body.Outcome` and `EmotionalImpact = provided.EmotionalImpact` (after fixing POCO types)
+The following items from the original audit were determined to be false positives:
 
-8. **[IMPLEMENTATION]** String comparison for enum value at line 630. Per T25, enum comparisons must use the enum equality operator, not string comparison.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 630
-   - **Wrong**: `if (body.Outcome.HasValue && encounter.Outcome != body.Outcome.Value.ToString())`
-   - **Should be**: `if (body.Outcome.HasValue && encounter.Outcome != body.Outcome.Value)` (after fixing POCO type)
+- **T7 ApiException catch clauses**: Service is a leaf node (no inter-service mesh calls via `ICharacterClient`, `IRealmClient`, etc.). T7 ApiException only applies to mesh client calls, not state store operations.
+- **T9 method-local Dictionary**: Dictionary at line 893 is purely method-scoped, not a field-level cache. T9 applies to shared caches that need thread safety.
+- **T19 on internal classes**: `EncounterTypeData`, `EncounterData`, `PerspectiveData`, etc. are internal. T19 only applies to public members.
+- **T19 param/returns on interface methods**: Public endpoint methods implement `ICharacterEncounterService` interface. Can use `<inheritdoc/>` if needed.
+- **T5 anonymous objects in TryPublishErrorAsync**: The `details` parameter is diagnostic metadata (`object?`), not a published event schema. This is infrastructure tracing, not service events.
+- **T21 ServerSalt config**: Stub config for future GUID salting feature - acceptable scaffolding documented in Stubs section.
 
-9. **[IMPLEMENTATION]** `MemoryDecayMode` configuration property is `string` type but represents a discrete set of values ("lazy", "scheduled"). Per T25, this should be an enum. Additionally, the comparison at line 1997 uses a magic string `"lazy"` instead of an enum value.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 1997
-   - **Wrong**: `_configuration.MemoryDecayMode != "lazy"`
-   - **Should be**: Define a `MemoryDecayMode` enum with `Lazy` and `Scheduled` values, use `_configuration.MemoryDecayMode != MemoryDecayMode.Lazy`
+### Previously Fixed
 
-10. **[IMPLEMENTATION]** `?? string.Empty` used without justification in `TrySaveAsync` calls. Per CLAUDE.md rules, `?? string.Empty` is only acceptable with a compiler-satisfaction comment (when the value cannot be null) or external-service defensive coding (with error logging). The ETag null-coalescing at lines 1084, 1160, 1433, and 2017 silently coerces a null ETag to empty string without explanation.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 1084, 1160, 1433, 2017
-    - **Wrong**: `etag ?? string.Empty` (no comment explaining why coalesce is safe)
-    - **Should be**: Either validate etag is non-null and throw if null (since GetWithETagAsync was just called), or add a comment: `// GetWithETagAsync returns non-null etag when perspective is non-null; coalesce satisfies compiler`
-
-11. **[IMPLEMENTATION]** Dead configuration property: `ServerSalt` is defined in the configuration schema (line 60 of `CharacterEncounterServiceConfiguration.cs`) but never referenced anywhere in `CharacterEncounterService.cs`. Per T21 (Configuration-First), every defined config property MUST be referenced in service code. Either wire it up or remove from the configuration schema.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/Generated/CharacterEncounterServiceConfiguration.cs`, line 60
-    - **Wrong**: `ServerSalt` property exists but is never used by the service
-    - **Should be**: Either use it for GUID generation in the service, or remove from `schemas/character-encounter-configuration.yaml`
-
-12. **[IMPLEMENTATION]** Plain `Dictionary<EmotionalImpact, int>` used at line 893 instead of `ConcurrentDictionary`. Per T9 (Multi-Instance Safety), local caches must use `ConcurrentDictionary`. While this particular dictionary is method-local and not shared across threads, the tenet states "Use ConcurrentDictionary for local caches, never plain Dictionary." Since this is strictly method-local and not a field-level cache, this is a borderline case but worth noting.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 893
-    - **Note**: This may be acceptable since it is purely method-scoped (not a field). However, the tenet language is absolute.
-
-13. **[QUALITY]** Missing XML documentation on internal classes and their properties. Per T19, all public classes/methods must have XML documentation. While these are `internal`, several lack `<summary>` tags: `EncounterTypeData` (line 2164), `EncounterData` (line 2177), `PerspectiveData` (line 2191), `CharacterIndexData` (line 2205), `PairIndexData` (line 2211), `LocationIndexData` (line 2218). Also `BuiltInEncounterType` record (line 2162).
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 2162-2239
-    - **Note**: T19 specifies "public" members. These are internal, so this is informational rather than a strict violation.
-
-14. **[QUALITY]** Missing `<param>` and `<returns>` XML documentation on public methods. Per T19, all public methods must have `<param>` for all parameters and `<returns>` for return values. Every public endpoint method (e.g., `CreateEncounterTypeAsync`, `GetEncounterTypeAsync`, `RecordEncounterAsync`, etc.) only has a `<summary>` tag but is missing `<param name="body">` and `<param name="cancellationToken">` and `<returns>` tags.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, all public method declarations
-    - **Wrong**: Only `/// <summary>` provided
-    - **Should be**: Include `/// <param name="body">...</param>`, `/// <param name="cancellationToken">...</param>`, `/// <returns>...</returns>`
-
-15. **[QUALITY]** Missing `<param>` tag for `RegisterServicePermissionsAsync`. The method at line 1497 documents with `<summary>` but is missing `<param name="appId">`.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 1494-1497
-    - **Wrong**: No `<param>` tag for `appId`
-    - **Should be**: `/// <param name="appId">The application ID for permission registration.</param>`
-
-16. **[IMPLEMENTATION]** Anonymous object used in `TryPublishErrorAsync` `details` parameter across all error handlers. Per T5 (Event-Driven Architecture), anonymous objects are forbidden for event publishing. While `TryPublishErrorAsync` details parameter may accept `object?`, the use of `new { body.Code }`, `new { body.CharacterId, body.EncounterId }`, etc. constitutes anonymous object creation for event payload data. This applies to every catch block in the service (17 occurrences) and the event handler in `CharacterEncounterServiceEvents.cs` line 71.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 142, 190, 302, 353, 585, 678, 755, 827, 861, 940, 996, 1043, 1123, 1198, 1274, 1371, 1483
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterServiceEvents.cs`, line 71
-    - **Note**: If `TryPublishErrorAsync` details parameter is explicitly typed as `object?` for diagnostic metadata (not a published event schema), this may be acceptable as infrastructure diagnostic data rather than a service event. Verify against `IMessageBus.TryPublishErrorAsync` signature.
-
-17. **[IMPLEMENTATION]** ~~Index operations use read-modify-write without ETags (optimistic concurrency).~~ **FIXED**: All 10 index operations now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry on conflict, matching the established ETag concurrency pattern used by perspective updates.
-
-18. **[FOUNDATION]** Duplicate `[assembly: InternalsVisibleTo("lib-character-encounter.tests")]` attribute. This attribute is declared in both `AssemblyInfo.cs` (line 5) and `CharacterEncounterService.cs` (line 10). While not a compilation error (the compiler deduplicates), it indicates maintenance debt.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, line 10
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/AssemblyInfo.cs`, line 5
-    - **Should be**: Remove the duplicate from `CharacterEncounterService.cs` (keep in `AssemblyInfo.cs`)
+- NRT null checks NOT needed - NRTs provide compile-time safety per T12
+- `etag ?? string.Empty` is intentional optimistic concurrency pattern (empty etag = create new, non-empty = version check)
+- ETag-based concurrency on index operations
+- Duplicate InternalsVisibleTo removed from CharacterEncounterService.cs
 
 ---
 
