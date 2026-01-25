@@ -114,7 +114,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Name = body.Name,
                 Description = body.Description,
                 IsBuiltIn = false,
-                DefaultEmotionalImpact = body.DefaultEmotionalImpact?.ToString(),
+                DefaultEmotionalImpact = body.DefaultEmotionalImpact,
                 SortOrder = body.SortOrder,
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -280,7 +280,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             // Apply updates
             if (body.Name != null) data.Name = body.Name;
             if (body.Description != null) data.Description = body.Description;
-            if (body.DefaultEmotionalImpact != null) data.DefaultEmotionalImpact = body.DefaultEmotionalImpact.Value.ToString();
+            if (body.DefaultEmotionalImpact != null) data.DefaultEmotionalImpact = body.DefaultEmotionalImpact.Value;
             if (body.SortOrder != null) data.SortOrder = body.SortOrder.Value;
 
             await store.SaveAsync(key, data, cancellationToken: cancellationToken);
@@ -385,7 +385,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     // Reset to defaults
                     existing.Name = builtIn.Name;
                     existing.Description = builtIn.Description;
-                    existing.DefaultEmotionalImpact = builtIn.DefaultEmotionalImpact.ToString();
+                    existing.DefaultEmotionalImpact = builtIn.DefaultEmotionalImpact;
                     existing.SortOrder = builtIn.SortOrder;
                     existing.IsActive = true;
                     await store.SaveAsync(key, existing, cancellationToken: cancellationToken);
@@ -485,7 +485,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 LocationId = body.LocationId,
                 EncounterTypeCode = body.EncounterTypeCode.ToUpperInvariant(),
                 Context = body.Context,
-                Outcome = body.Outcome.ToString(),
+                Outcome = body.Outcome,
                 ParticipantIds = participantIds,
                 Metadata = body.Metadata,
                 CreatedAtUnix = now.ToUnixTimeSeconds()
@@ -498,9 +498,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var perspectives = new List<EncounterPerspectiveModel>();
 
             var providedPerspectives = body.Perspectives?.ToDictionary(p => p.CharacterId) ?? new Dictionary<Guid, PerspectiveInput>();
-            var defaultEmotionalImpact = typeData.DefaultEmotionalImpact != null
-                ? Enum.Parse<EmotionalImpact>(typeData.DefaultEmotionalImpact)
-                : GetDefaultEmotionalImpactForOutcome(body.Outcome);
+            var defaultEmotionalImpact = typeData.DefaultEmotionalImpact
+                ?? GetDefaultEmotionalImpactForOutcome(body.Outcome);
 
             foreach (var participantId in participantIds)
             {
@@ -513,8 +512,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     EncounterId = encounterId,
                     CharacterId = participantId,
                     EmotionalImpact = hasProvidedPerspective && provided != null
-                        ? provided.EmotionalImpact.ToString()
-                        : defaultEmotionalImpact.ToString(),
+                        ? provided.EmotionalImpact
+                        : defaultEmotionalImpact,
                     SentimentShift = hasProvidedPerspective ? provided?.SentimentShift : GetDefaultSentimentShiftForOutcome(body.Outcome),
                     MemoryStrength = (float)(hasProvidedPerspective ? provided?.MemoryStrength ?? _configuration.DefaultMemoryStrength : _configuration.DefaultMemoryStrength),
                     RememberedAs = hasProvidedPerspective ? provided?.RememberedAs : null,
@@ -547,7 +546,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
             await PrunePairEncountersIfNeededAsync(participantIds, cancellationToken);
 
-            // Publish event
+            // Publish event - convert enum to string at API boundary for event schema
             await _messageBus.TryPublishAsync(ENCOUNTER_RECORDED_TOPIC, new EncounterRecordedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1075,7 +1074,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             var previousSentiment = perspective.SentimentShift;
 
             // Apply updates
-            if (body.EmotionalImpact.HasValue) perspective.EmotionalImpact = body.EmotionalImpact.Value.ToString();
+            if (body.EmotionalImpact.HasValue) perspective.EmotionalImpact = body.EmotionalImpact.Value;
             if (body.SentimentShift.HasValue) perspective.SentimentShift = body.SentimentShift.Value;
             if (body.RememberedAs != null) perspective.RememberedAs = body.RememberedAs;
             perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -1087,7 +1086,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return (StatusCodes.Conflict, null);
             }
 
-            // Publish event
+            // Publish event - convert enum to string at API boundary for event schema
             await _messageBus.TryPublishAsync(ENCOUNTER_PERSPECTIVE_UPDATED_TOPIC, new EncounterPerspectiveUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1095,7 +1094,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 EncounterId = body.EncounterId,
                 CharacterId = body.CharacterId,
                 PerspectiveId = perspective.PerspectiveId,
-                PreviousEmotionalImpact = previousEmotion,
+                PreviousEmotionalImpact = previousEmotion.ToString(),
                 NewEmotionalImpact = body.EmotionalImpact?.ToString(),
                 PreviousSentimentShift = previousSentiment,
                 NewSentimentShift = body.SentimentShift
@@ -1527,7 +1526,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             Name = builtIn.Name,
             Description = builtIn.Description,
             IsBuiltIn = true,
-            DefaultEmotionalImpact = builtIn.DefaultEmotionalImpact.ToString(),
+            DefaultEmotionalImpact = builtIn.DefaultEmotionalImpact,
             SortOrder = builtIn.SortOrder,
             IsActive = true,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -2257,7 +2256,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             Name = data.Name,
             Description = data.Description,
             IsBuiltIn = data.IsBuiltIn,
-            DefaultEmotionalImpact = data.DefaultEmotionalImpact != null ? Enum.Parse<EmotionalImpact>(data.DefaultEmotionalImpact) : null,
+            DefaultEmotionalImpact = data.DefaultEmotionalImpact,
             SortOrder = data.SortOrder,
             IsActive = data.IsActive,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix)
@@ -2274,7 +2273,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             LocationId = data.LocationId,
             EncounterTypeCode = data.EncounterTypeCode,
             Context = data.Context,
-            Outcome = Enum.Parse<EncounterOutcome>(data.Outcome),
+            Outcome = data.Outcome,
             ParticipantIds = data.ParticipantIds,
             Metadata = data.Metadata,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix)
@@ -2288,7 +2287,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             PerspectiveId = data.PerspectiveId,
             EncounterId = data.EncounterId,
             CharacterId = data.CharacterId,
-            EmotionalImpact = Enum.Parse<EmotionalImpact>(data.EmotionalImpact),
+            EmotionalImpact = data.EmotionalImpact,
             SentimentShift = data.SentimentShift,
             MemoryStrength = data.MemoryStrength,
             RememberedAs = data.RememberedAs,
@@ -2312,7 +2311,7 @@ internal class EncounterTypeData
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsBuiltIn { get; set; }
-    public string? DefaultEmotionalImpact { get; set; }
+    public EmotionalImpact? DefaultEmotionalImpact { get; set; }
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
     public long CreatedAtUnix { get; set; }
@@ -2326,7 +2325,7 @@ internal class EncounterData
     public Guid? LocationId { get; set; }
     public string EncounterTypeCode { get; set; } = string.Empty;
     public string? Context { get; set; }
-    public string Outcome { get; set; } = string.Empty;
+    public EncounterOutcome Outcome { get; set; }
     public List<Guid> ParticipantIds { get; set; } = new();
     public object? Metadata { get; set; }
     public long CreatedAtUnix { get; set; }
@@ -2337,7 +2336,7 @@ internal class PerspectiveData
     public Guid PerspectiveId { get; set; }
     public Guid EncounterId { get; set; }
     public Guid CharacterId { get; set; }
-    public string EmotionalImpact { get; set; } = string.Empty;
+    public EmotionalImpact EmotionalImpact { get; set; }
     public float? SentimentShift { get; set; }
     public float MemoryStrength { get; set; } = 1.0f;
     public string? RememberedAs { get; set; }

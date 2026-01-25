@@ -187,26 +187,18 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
-            var allParticipations = new List<RealmHistoricalParticipation>();
 
-            foreach (var participationId in index.ParticipationIds)
-            {
-                var data = await participationStore.GetAsync(
-                    $"{PARTICIPATION_KEY_PREFIX}{participationId}",
-                    cancellationToken);
-                if (data != null)
-                {
-                    var participation = MapToRealmHistoricalParticipation(data);
+            // Bulk fetch all participations in single call instead of N individual calls
+            var keys = index.ParticipationIds.Select(id => $"{PARTICIPATION_KEY_PREFIX}{id}").ToList();
+            var dataDict = await participationStore.GetBulkAsync(keys, cancellationToken);
 
-                    // Apply filters
-                    if (body.EventCategory.HasValue && participation.EventCategory != body.EventCategory.Value)
-                        continue;
-                    if (body.MinimumImpact.HasValue && participation.Impact < body.MinimumImpact.Value)
-                        continue;
-
-                    allParticipations.Add(participation);
-                }
-            }
+            // Map, filter, and collect results
+            var allParticipations = dataDict.Values
+                .Select(MapToRealmHistoricalParticipation)
+                .Where(p =>
+                    (!body.EventCategory.HasValue || p.EventCategory == body.EventCategory.Value) &&
+                    (!body.MinimumImpact.HasValue || p.Impact >= body.MinimumImpact.Value))
+                .ToList();
 
             // Sort by event date descending (most recent first)
             allParticipations = allParticipations.OrderByDescending(p => p.EventDate).ToList();
@@ -272,27 +264,17 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
-            var allParticipations = new List<RealmHistoricalParticipation>();
 
-            foreach (var participationId in index.ParticipationIds)
-            {
-                var data = await participationStore.GetAsync(
-                    $"{PARTICIPATION_KEY_PREFIX}{participationId}",
-                    cancellationToken);
-                if (data != null)
-                {
-                    var participation = MapToRealmHistoricalParticipation(data);
+            // Bulk fetch all participations in single call instead of N individual calls
+            var keys = index.ParticipationIds.Select(id => $"{PARTICIPATION_KEY_PREFIX}{id}").ToList();
+            var dataDict = await participationStore.GetBulkAsync(keys, cancellationToken);
 
-                    // Apply role filter
-                    if (body.Role.HasValue && participation.Role != body.Role.Value)
-                        continue;
-
-                    allParticipations.Add(participation);
-                }
-            }
-
-            // Sort by impact descending (most impactful first)
-            allParticipations = allParticipations.OrderByDescending(p => p.Impact).ToList();
+            // Map, filter, and sort results
+            var allParticipations = dataDict.Values
+                .Select(MapToRealmHistoricalParticipation)
+                .Where(p => !body.Role.HasValue || p.Role == body.Role.Value)
+                .OrderByDescending(p => p.Impact)
+                .ToList();
 
             // Paginate
             var totalCount = allParticipations.Count;

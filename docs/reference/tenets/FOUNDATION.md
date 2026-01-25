@@ -355,10 +355,7 @@ await _messageBus.PublishAsync("account.created", new { AccountId = id }); // NO
 await _messageBus.PublishAsync(topic, new { event_name = "...", session_id = "..." }); // NO!
 ```
 
-**Critical Technical Limitation**: MassTransit (used by lib-messaging) throws `System.ArgumentException: Message types must not be anonymous types` at runtime when attempting to publish anonymous objects. This error is not caught at compile time.
-
 **Why Typed Events Are Required**:
-- **MassTransit Requirement**: MassTransit cannot serialize anonymous types for RabbitMQ transport
 - Event schemas enable code generation for consumers
 - Type safety catches breaking changes at compile time
 - Documentation is auto-generated from schemas

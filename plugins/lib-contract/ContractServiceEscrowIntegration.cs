@@ -894,8 +894,9 @@ public partial class ContractService
     /// <summary>
     /// Queries the current balance of a specific currency in a wallet via the currency service.
     /// Used for resolving "remainder" amounts during clause execution.
+    /// Returns null on failure to distinguish from actual zero balance.
     /// </summary>
-    private async Task<double> QueryWalletBalanceAsync(
+    private async Task<double?> QueryWalletBalanceAsync(
         string walletId, string currencyCode, ContractInstanceModel contract, CancellationToken ct)
     {
         try
@@ -929,7 +930,7 @@ public partial class ContractService
             {
                 _logger.LogWarning("Wallet balance query failed for wallet {WalletId}: status={Status}",
                     walletId, result.Result?.StatusCode);
-                return 0;
+                return null;
             }
 
             if (!string.IsNullOrEmpty(result.Result.ResponseBody))
@@ -946,12 +947,13 @@ public partial class ContractService
                 }
             }
 
-            return 0;
+            _logger.LogWarning("Wallet balance response for {WalletId} had no parseable balance field", walletId);
+            return null;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to query wallet balance for {WalletId}", walletId);
-            return 0;
+            return null;
         }
     }
 
@@ -1237,7 +1239,14 @@ public partial class ContractService
                 if (amount == REMAINDER_SENTINEL)
                 {
                     var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
-                    amount = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
+                    var balanceResult = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
+                    if (balanceResult == null)
+                    {
+                        _logger.LogWarning("Fee clause {ClauseId} failed: could not query remainder balance for wallet {WalletId}",
+                            clause.Id, sourceId);
+                        return null;
+                    }
+                    amount = balanceResult.Value;
                 }
 
                 var currencyCode = clause.GetProperty("currency_code") ?? "gold";
