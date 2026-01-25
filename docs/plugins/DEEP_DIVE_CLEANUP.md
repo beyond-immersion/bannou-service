@@ -1,32 +1,44 @@
 # Deep Dive Cleanup Checklist
 
-## ⛔ WHAT NOT TO DO - FAILED EXAMPLE
+## ⛔ CRITICAL: UNDERSTAND SEMANTIC INTENT BEFORE CHANGING TYPES
 
-When fixing T25 type safety issues, **DO NOT** make a partial fix that only changes the POCO class fields while leaving internal data structures (dictionaries, tuples, local variables) as strings. This creates unnecessary conversions at every usage site.
+**Before changing ANY field from `string` to `Guid` or enum, you MUST determine the semantic intent:**
 
-**Bad approach (what was done wrong in lib-asset):**
-1. Changed `BundleMetadata.BundleId` from `string` to `Guid` ✓
-2. Left `Dictionary<string, List<string>> provenanceByBundle` with string keys ✗
-3. Left tuples like `(StoredBundleAssetEntry, string SourceBundleId)` with string ✗
-4. Added `.ToString()` everywhere to convert back to string for dictionary keys ✗
-5. Result: 25+ unnecessary conversions, code is harder to read, defeats the purpose
+1. **Who provides this value?**
+   - If a HUMAN provides it → should be human-readable `string`
+   - If a SYSTEM generates it → could be `Guid` or opaque identifier
 
-**Correct approach - FIX EVERYTHING:**
-1. Change the POCO class fields to proper types (Guid, enum) ✓
-2. Change ALL internal data structures (dictionaries, tuples, local vars) to use proper types ✓
-3. Change API request/response schemas to use proper types ✓
-4. If the schema uses `type: string` for a GUID or enum, **fix the schema** ✓
-5. Result: Zero conversions anywhere. Type safety end-to-end.
+2. **How is it used?**
+   - If users query/filter/categorize by it → should be human-readable `string`
+   - If it's just a unique key with no semantic meaning → `Guid` is fine
 
-**The goal is ZERO `.ToString()` and ZERO `Guid.Parse()`/`Enum.Parse()` calls in service code.**
+3. **Check the SDKs and documentation FIRST**
+   - The SDK examples show how developers are EXPECTED to use the API
+   - If SDKs show `"my-bundle-v1"` or `"synty/polygon-adventure"`, it's a human-readable string
+   - Don't assume something is a Guid just because it's an "ID" field
 
-If you find yourself adding conversions, you haven't fixed everything - go back and fix the schema or the model you missed.
+**lib-asset was an example of getting this WRONG:**
+- BundleId was changed from `string` to `Guid` without understanding the design
+- The SDK documentation clearly shows BundleId should be human-readable: `"synty/polygon-adventure"`, `"game-assets-v1"`
+- This change now needs to be REVERTED
 
-**Signs you're doing it wrong:**
-- Adding `.ToString()` anywhere (fix the destination type instead)
-- Adding `Guid.Parse()` anywhere (fix the source type instead)
-- Adding `Enum.Parse()` anywhere (fix the source type instead)
-- Any conversion at all means something is still the wrong type
+---
+
+## T25 Fix Guidelines (Once Semantic Intent Is Confirmed)
+
+When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
+
+**DO NOT** make partial fixes - change everything end-to-end:
+1. Change the POCO class fields to proper types (Guid, enum)
+2. Change ALL internal data structures (dictionaries, tuples, local vars)
+3. Change API request/response schemas
+4. Result: Zero `.ToString()` or `Parse()` conversions anywhere
+
+**Signs something is wrong:**
+- Adding `.ToString()` anywhere → fix the destination type instead
+- Adding `Guid.Parse()` anywhere → fix the source type instead
+- Adding `Enum.Parse()` anywhere → fix the source type instead
+- OR you misidentified the semantic intent and it should stay a string
 
 ---
 
@@ -34,7 +46,49 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-asset
 
-- [ ] **T25**: `BundleMetadata.BundleId`, `SourceBundleReferenceInternal.BundleId`, and related bundle model ID fields store GUIDs as strings requiring `Guid.Parse()` at usage sites. **Decision**: Change internal POCOs to use `Guid` type. **NEEDS REDO** - partial fix applied incorrectly, left internal dictionaries/tuples as strings. Must also fix: `provenanceByBundle`, `assetsByPlatformId`, `assetsByHash`, `assetsBySourceBundle`, `assetsToInclude` tuple types.
+#### ⚠️ CRITICAL SEMANTIC CLARIFICATION: AssetId and BundleId are BOTH strings
+
+**The rule**: If a human provides it, it should be human-readable. If the system generates it, it's opaque.
+
+**AssetId - STRING (server-generated content hash)**:
+- **Semantic origin**: SERVER generates from uploaded file content
+- **Format**: `{type-prefix}-{hash-prefix}` (e.g., `image-a1b2c3d4e5f6`)
+- **Generation**: `AssetService.GenerateAssetId()` computes from SHA256 content hash
+- **Why string**: Content-addressable identifier - same bytes = same ID
+- **Type**: `string` is CORRECT
+
+**BundleId - STRING (human-provided identifier)**:
+- **Semantic origin**: HUMAN/DEVELOPER provides when creating bundles
+- **Format**: Human-readable names like `"synty/polygon-adventure"`, `"my-bundle-v1"`, `"game-assets-v1"`
+- **Evidence from SDKs**:
+  - `asset-bundler/README.md`: `sourceId: "synty/polygon-adventure"`, `.WithId("game-assets-v1")`
+  - `bundle-format/README.md`: `bundleId: "my-bundle-v1"`
+  - `asset-loader/README.md`: `source.RegisterBundle("my-bundle", ...)`
+- **Why string**: Developers need to categorize, query, and retrieve bundles by meaningful names
+- **Type**: `string` is CORRECT
+
+**Summary**:
+- AssetId = content hash → `string` ✓
+- BundleId = human-readable identifier → `string` ✓
+- **NEITHER should be Guid**
+
+#### Status: REVERT REQUIRED
+
+- [ ] **REVERT BundleId to string**: The previous "fix" that changed BundleId from `string` to `Guid` was **WRONG**. The SDK documentation clearly shows BundleId is meant to be a human-readable string like `"synty/polygon-adventure"`, not a UUID. This needs to be reverted:
+
+  **Schema changes required**:
+  - `schemas/asset-api.yaml`: Remove `format: uuid` from all bundleId/metabundleId fields
+
+  **Internal model changes required**:
+  - `BundleMetadata.BundleId`: Change back to `string`
+  - `StoredSourceBundleReference.BundleId`: Change back to `string`
+  - `StoredBundleAssetEntry` related fields: Change back to `string`
+  - All internal dictionaries/tuples: Change back to `string` keys
+
+  **SDK changes required**:
+  - `sdks/bundle-format/BannouBundleWriter.cs`: `Finalize()` bundleId parameter should be `string`
+  - `sdks/bundle-format/BundleManifest.cs`: `BundleId` should be `string`
+  - Verify all SDK usages expect human-readable strings
 
 - [ ] **T25**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). **Decision**: Define an `AssetProcessingErrorCode` enum in schema.
 
@@ -136,11 +190,11 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-species
 
-- [ ] **T25**: `SpeciesModel` uses `string` for `SpeciesId` and `List<string>` for `RealmIds` instead of proper GUID types. **Decision**: Change to `Guid` and `List<Guid>`.
+- [x] **T25**: `SpeciesModel` uses `string` for `SpeciesId` and `List<string>` for `RealmIds` instead of proper GUID types. **Decision**: Change to `Guid` and `List<Guid>`. **FIXED** - Changed `SpeciesModel.SpeciesId` to `Guid`, `SpeciesModel.RealmIds` to `List<Guid>`. Updated all helper methods (`AddToRealmIndexAsync`, `RemoveFromRealmIndexAsync`, `LoadSpeciesByIdsAsync`, `BuildSpeciesKey`, `BuildRealmIndexKey`) to use `Guid` parameters. Removed `Guid.Parse()` from all event publishing and mapping methods. Note: Code index (code→ID reverse lookup) uses string storage due to state store reference type constraint, with `Guid.TryParse` at the boundary.
 
 ### lib-subscription
 
-- [ ] **T25**: `SubscriptionDataModel` stores `SubscriptionId`, `AccountId`, and `ServiceId` as `string` rather than `Guid`. **Decision**: Change to `Guid` type.
+- [x] **T25**: `SubscriptionDataModel` stores `SubscriptionId`, `AccountId`, and `ServiceId` as `string` rather than `Guid`. **Decision**: Change to `Guid` type. **FIXED** - Changed internal `SubscriptionDataModel` fields to `Guid`. Updated helper methods, index stores to use `List<Guid>`, removed all `Guid.Parse()` and `.ToString()` conversions. Fixed `SubscriptionExpirationService.cs` to use `Guid` types throughout.
 
 ### lib-voice
 

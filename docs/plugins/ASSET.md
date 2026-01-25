@@ -321,27 +321,29 @@ Client                    Asset Service                     MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (Internal POCO uses string for Guid)**: `BundleMetadata.BundleId`, `SourceBundleReferenceInternal.BundleId`, and related bundle model ID fields store GUIDs as strings requiring `Guid.Parse()` at usage sites. Should use `Guid` type directly.
+1. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define an `AssetProcessingErrorCode` enum for compile-time validation.
 
-2. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define an `AssetProcessingErrorCode` enum for compile-time validation.
+2. **BundleId incorrectly changed to Guid**: The BundleId fields were changed from `string` to `Guid`, but this was WRONG. BundleId is a human-provided identifier (e.g., `"synty/polygon-adventure"`, `"my-bundle-v1"`) as shown in the SDK documentation. This needs to be reverted to `string`. See `docs/plugins/DEEP_DIVE_CLEANUP.md` for details.
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **AssetId is SHA-256 hash string (intentional)**: `InternalAssetRecord.AssetId` and `AssetProcessingContext.AssetId` are SHA-256 content hashes stored as hex strings. This is NOT a T25 violation - these are legitimately strings (hashes), not GUIDs.
 
-2. **Dual S3 clients**: Both `IMinioClient` and `IAmazonS3` are registered because the MinIO .NET SDK has a bug where pre-signed PUT URLs include Content-Type in the signature, causing uploads with different Content-Type headers to fail with 403. The AWS SDK is used exclusively for pre-signed URL generation while MinIO SDK handles bucket operations. See: https://github.com/minio/minio-dotnet/issues/1150
+2. **BundleId is human-readable string (intentional)**: `BundleMetadata.BundleId` and related fields are human-provided identifiers like `"synty/polygon-adventure"`, `"game-assets-v1"`. This is NOT a T25 violation - developers need meaningful names to categorize and retrieve bundles. See SDK examples in `sdks/asset-bundler/README.md` and `sdks/bundle-format/README.md`.
 
-3. **`application/octet-stream` as model type**: The content type registry includes `application/octet-stream` in the 3D model list because `.glb` files are commonly served with this generic MIME type. This means any `application/octet-stream` upload will match the model processor pool, even if it's not actually a 3D model.
+3. **Dual S3 clients**: Both `IMinioClient` and `IAmazonS3` are registered because the MinIO .NET SDK has a bug where pre-signed PUT URLs include Content-Type in the signature, causing uploads with different Content-Type headers to fail with 403. The AWS SDK is used exclusively for pre-signed URL generation while MinIO SDK handles bucket operations. See: https://github.com/minio/minio-dotnet/issues/1150
 
-4. **Self-consuming event pattern**: The service publishes `asset.metabundle.job.queued` and subscribes to it in the same service. This is intentional for load distribution: in multi-instance deployments, the instance that queues the job is not necessarily the one that processes it (any instance can pick up the event).
+4. **`application/octet-stream` as model type**: The content type registry includes `application/octet-stream` in the 3D model list because `.glb` files are commonly served with this generic MIME type. This means any `application/octet-stream` upload will match the model processor pool, even if it's not actually a 3D model.
 
-5. **Deterministic asset IDs from SHA-256**: Re-uploading identical content (same bytes) produces the same asset ID regardless of filename, content type, or tags. The second upload will overwrite the first asset's metadata but the storage object remains identical.
+5. **Self-consuming event pattern**: The service publishes `asset.metabundle.job.queued` and subscribes to it in the same service. This is intentional for load distribution: in multi-instance deployments, the instance that queues the job is not necessarily the one that processes it (any instance can pick up the event).
 
-6. **Webhook validation is optional**: If `MinioWebhookSecret` is not set, all webhook requests are accepted without authentication. This simplifies development but requires network-level isolation in production.
+6. **Deterministic asset IDs from SHA-256**: Re-uploading identical content (same bytes) produces the same asset ID regardless of filename, content type, or tags. The second upload will overwrite the first asset's metadata but the storage object remains identical.
 
-7. **MinIO startup retry with exponential backoff cap**: The plugin waits up to 30 retries with delays capped at `5 × retryDelayMs` (10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start.
+7. **Webhook validation is optional**: If `MinioWebhookSecret` is not set, all webhook requests are accepted without authentication. This simplifies development but requires network-level isolation in production.
 
-8. **CA2000 pragma suppression**: The MinIO connectivity check in `AssetServicePlugin` suppresses CA2000 (dispose warning) because the MinIO client's fluent builder API returns `this` from `Build()`, making the same object both builder and built client. The `using` on `Build()` result correctly disposes it.
+8. **MinIO startup retry with exponential backoff cap**: The plugin waits up to 30 retries with delays capped at `5 × retryDelayMs` (10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start.
+
+9. **CA2000 pragma suppression**: The MinIO connectivity check in `AssetServicePlugin` suppresses CA2000 (dispose warning) because the MinIO client's fluent builder API returns `this` from `Build()`, making the same object both builder and built client. The `using` on `Build()` result correctly disposes it.
 
 ### Design Considerations (Requires Planning)
 

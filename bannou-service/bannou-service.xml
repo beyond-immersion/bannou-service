@@ -76722,7 +76722,7 @@
             Convenience overload without messageId parameter.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishErrorAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishErrorAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.Nullable{System.Guid},System.Threading.CancellationToken)">
             <summary>
             Publish a service error event. Convenience method replacing IErrorEventEmitter.
             </summary>

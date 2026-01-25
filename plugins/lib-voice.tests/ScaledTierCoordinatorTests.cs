@@ -345,7 +345,7 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, sessionId, rtpServerUri, "opus", CancellationToken.None);
+            roomId, sessionId, rtpServerUri, VoiceCodec.Opus, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -359,7 +359,7 @@ public class ScaledTierCoordinatorTests
     }
 
     [Fact]
-    public async Task BuildScaledConnectionInfo_WithG711Codec_ParsesCorrectly()
+    public async Task BuildScaledConnectionInfo_WithG711Codec_ReturnsCorrectCodec()
     {
         // Arrange
         var coordinator = CreateCoordinator();
@@ -367,14 +367,14 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, Guid.NewGuid(), "udp://host:1234", "g711", CancellationToken.None);
+            roomId, Guid.NewGuid(), "udp://host:1234", VoiceCodec.G711, CancellationToken.None);
 
         // Assert
         Assert.Equal(VoiceCodec.G711, result.Codec);
     }
 
     [Fact]
-    public async Task BuildScaledConnectionInfo_WithG722Codec_ParsesCorrectly()
+    public async Task BuildScaledConnectionInfo_WithG722Codec_ReturnsCorrectCodec()
     {
         // Arrange
         var coordinator = CreateCoordinator();
@@ -382,25 +382,10 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, Guid.NewGuid(), "udp://host:1234", "g722", CancellationToken.None);
+            roomId, Guid.NewGuid(), "udp://host:1234", VoiceCodec.G722, CancellationToken.None);
 
         // Assert
         Assert.Equal(VoiceCodec.G722, result.Codec);
-    }
-
-    [Fact]
-    public async Task BuildScaledConnectionInfo_WithUnknownCodec_DefaultsToOpus()
-    {
-        // Arrange
-        var coordinator = CreateCoordinator();
-        var roomId = Guid.NewGuid();
-
-        // Act
-        var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, Guid.NewGuid(), "udp://host:1234", "unknown", CancellationToken.None);
-
-        // Assert
-        Assert.Equal(VoiceCodec.Opus, result.Codec);
     }
 
     #endregion

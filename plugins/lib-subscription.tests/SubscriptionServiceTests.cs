@@ -114,9 +114,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -160,9 +160,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{activeSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = activeSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = activeSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -175,9 +175,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{inactiveSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = inactiveSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = inactiveSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game-2",
                 DisplayName = "Test Game 2",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -221,9 +221,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{activeSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = activeSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = activeSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -237,9 +237,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{expiredSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = expiredSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = expiredSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game-2",
                 DisplayName = "Test Game 2",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-60).ToUnixTimeSeconds(),
@@ -305,9 +305,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{activeSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = activeSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = activeSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -347,9 +347,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{expiredSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = expiredSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = expiredSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-60).ToUnixTimeSeconds(),
@@ -388,9 +388,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{inactiveSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = inactiveSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = inactiveSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -442,9 +442,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -598,9 +598,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{existingSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = existingSubId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = existingSubId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -691,9 +691,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -770,9 +770,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -824,9 +824,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -895,9 +895,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-25).ToUnixTimeSeconds(),
@@ -950,9 +950,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
@@ -1027,9 +1027,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
@@ -1092,9 +1092,9 @@ public class SubscriptionServiceTests
             .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
-                SubscriptionId = subscriptionId.ToString(),
-                AccountId = accountId.ToString(),
-                ServiceId = serviceId.ToString(),
+                SubscriptionId = subscriptionId,
+                AccountId = accountId,
+                ServiceId = serviceId,
                 StubName = "test-game",
                 DisplayName = "Test Game",
                 IsActive = false, // Already inactive

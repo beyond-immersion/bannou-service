@@ -208,8 +208,8 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = sessionId,
-            Tier = "p2p",
-            Codec = "opus",
+            Tier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -267,8 +267,8 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = "p2p",
-            Codec = "opus",
+            Tier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -346,8 +346,8 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = "p2p",
-            Codec = "opus",
+            Tier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
             MaxParticipants = 2,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -391,8 +391,8 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = "p2p",
-            Codec = "opus",
+            Tier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -470,8 +470,8 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = "p2p",
-            Codec = "opus",
+            Tier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -535,8 +535,8 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = Guid.NewGuid(),
-                Tier = "p2p",
-                Codec = "opus"
+                Tier = VoiceTier.P2p,
+                Codec = VoiceCodec.Opus
             });
 
         // Room has one existing participant
@@ -677,8 +677,8 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = sessionId,
-            Tier = "p2p",
-            Codec = "opus",
+            Tier = VoiceTier.P2p,
+            Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -914,7 +914,7 @@ public class VoiceServiceTests
             It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(),
             It.IsAny<string?>(),
-            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
