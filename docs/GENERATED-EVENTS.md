@@ -66,7 +66,6 @@ This document lists all events defined in Bannou's event schemas.
 | `AssetReadyEvent` | Custom | `asset-ready` | Event published when an asset is fully processed a... |
 | `AssetUploadCompletedEvent` | Custom | `asset-upload-completed` | Event published when an upload is completed and fi... |
 | `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
 | `BundleDeletedEvent` | Lifecycle (Deleted) | `bundle.deleted` | Event published when a bundle is soft-deleted or p... |
 | `BundleRestoredEvent` | Custom | `bundle-restored` | Event published when a soft-deleted bundle is rest... |
@@ -96,7 +95,6 @@ This document lists all events defined in Bannou's event schemas.
 | `AuthPasswordResetSuccessfulEvent` | Custom | `auth-password-reset-successful` | Published when a password reset is successfully co... |
 | `AuthRegistrationSuccessfulEvent` | Custom | `auth-registration-successful` | Published when a new user successfully registers |
 | `AuthSteamLoginSuccessfulEvent` | Custom | `auth-steam-login-successful` | Published when a user authenticates via Steam |
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
@@ -327,28 +325,19 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
-
-### Messaging
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Orchestrator
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
 
 ### Permission
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
 ### Realm History
@@ -382,7 +371,6 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` | Base type for all service events |
 | `EventQuaternion` | Custom | `event-quaternion` | Quaternion for events |
 | `EventTransform` | Custom | `event-transform` | Transform for event payloads |
 | `EventVector3` | Custom | `event-vector3` | 3D vector for events |
@@ -399,27 +387,13 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SpeciesMergedEvent` | Custom | `species-merged` | Published when two species are merged, with the so... |
-
-### State
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Subscription
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
-
-### Voice
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Voice (client)
 

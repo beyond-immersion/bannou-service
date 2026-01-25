@@ -75890,14 +75890,6 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>The HTTP response message.</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Common.EntityType">
-            <summary>
-            Universal entity type identifier used across Bannou services.
-            <br/>Provides first-class support for various kinds of entities in analytics,
-            <br/>achievements, leaderboards, contracts, relationships, and other systems.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Services.StateStoreDefinitions">
             <summary>
             State store name constants and configuration definitions.

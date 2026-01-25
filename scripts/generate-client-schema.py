@@ -22,7 +22,7 @@ Usage:
 import json
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 try:
     from ruamel.yaml import YAML
@@ -71,6 +71,9 @@ def get_refs_from_schema(schema: dict, refs: set) -> None:
         ref = schema['$ref']
         if ref.startswith('#/components/schemas/'):
             refs.add(ref.split('/')[-1])
+        elif 'common-api.yaml#/components/schemas/' in ref:
+            # Handle refs to common-api.yaml
+            refs.add(ref.split('/')[-1])
 
     for key, value in schema.items():
         if isinstance(value, dict):
@@ -79,6 +82,23 @@ def get_refs_from_schema(schema: dict, refs: set) -> None:
             for item in value:
                 if isinstance(item, dict):
                     get_refs_from_schema(item, refs)
+
+
+def rewrite_common_refs(schema: Any) -> Any:
+    """Recursively rewrite common-api.yaml refs to local refs."""
+    if isinstance(schema, dict):
+        result = {}
+        for key, value in schema.items():
+            if key == '$ref' and isinstance(value, str) and 'common-api.yaml#' in value:
+                # Rewrite common-api.yaml#/components/schemas/X to #/components/schemas/X
+                result[key] = value.replace('common-api.yaml#', '#')
+            else:
+                result[key] = rewrite_common_refs(value)
+        return result
+    elif isinstance(schema, list):
+        return [rewrite_common_refs(item) for item in schema]
+    else:
+        return schema
 
 
 def collect_required_schemas(
@@ -241,6 +261,17 @@ See the x-bannou-protocol extension for protocol details.
     service_tags: list = []
     endpoint_count = 0
 
+    # Load common-api.yaml first to get shared types like EntityType
+    common_api_path = schema_dir / 'common-api.yaml'
+    if common_api_path.exists():
+        common_schema = parse_service_schema(common_api_path)
+        if common_schema:
+            common_components = common_schema.get('components', {})
+            common_schemas = common_components.get('schemas', {})
+            for schema_name, schema_def in common_schemas.items():
+                all_schemas[schema_name] = schema_def
+            print(f"  Loaded {len(common_schemas)} common types from common-api.yaml")
+
     # Process each service schema
     for schema_path in sorted(schema_dir.glob('*-api.yaml')):
         service_name = schema_path.stem.replace('-api', '')
@@ -338,6 +369,9 @@ def main():
 
     # Merge schemas
     consolidated = merge_schemas(schema_dir)
+
+    # Rewrite common-api.yaml refs to local refs (since types are now inlined)
+    consolidated = rewrite_common_refs(consolidated)
 
     # Write YAML output
     yaml_path = output_dir / 'bannou-client-api.yaml'

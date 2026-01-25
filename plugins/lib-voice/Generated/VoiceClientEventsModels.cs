@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Voice;
 
 
 namespace BeyondImmersion.Bannou.Voice.ClientEvents;
@@ -407,46 +408,6 @@ public partial class SipCredentials
     public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Voice communication tier:
-/// <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
-/// <br/>- scaled: RTP server-mediated communication (unlimited participants)
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceTier
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
-    P2p = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
-    Scaled = 1,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Audio codec for voice communication
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceCodec
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"opus")]
-    Opus = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"g711")]
-    G711 = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"g722")]
-    G722 = 2,
-
-}
-#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

@@ -110,6 +110,36 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
 
     echo -e "${BLUE}  🔧 Processing $service_name...${NC}"
 
+    # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
+    # Client events often reference enums/types from the service's API schema
+    API_REFS=$(extract_api_refs "$schema_file" "$service_name")
+
+    # Extract $refs to common-api.yaml types (shared types like EntityType)
+    COMMON_REFS=$(extract_common_api_refs "$schema_file")
+
+    # Build exclusion list: base exclusions + any API-referenced types + common types
+    EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseClientEvent"
+    if [ -n "$API_REFS" ]; then
+        EXCLUSIONS="${EXCLUSIONS},${API_REFS}"
+        echo -e "    ${BLUE}Excluding API types: ${API_REFS}${NC}"
+    fi
+    if [ -n "$COMMON_REFS" ]; then
+        EXCLUSIONS="${EXCLUSIONS},${COMMON_REFS}"
+        echo -e "    ${BLUE}Excluding common types: ${COMMON_REFS}${NC}"
+    fi
+
+    # Build namespace usages: base + service API namespace if we have API refs
+    NAMESPACE_USAGES="BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService.ClientEvents"
+    if [ -n "$API_REFS" ]; then
+        NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.${pascal_case}"
+    fi
+    if [ -n "$COMMON_REFS" ]; then
+        # Ensure BannouService namespace is included for common types
+        if [[ "$NAMESPACE_USAGES" != *"BeyondImmersion.BannouService"* ]]; then
+            NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService"
+        fi
+    fi
+
     "$NSWAG_EXE" openapi2csclient \
         "/input:$schema_file" \
         "/output:$TARGET_DIR/${pascal_case}ClientEventsModels.cs" \
@@ -117,8 +147,8 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseClientEvent" \
-        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService.ClientEvents" \
+        "/excludedTypeNames:${EXCLUSIONS}" \
+        "/additionalNamespaceUsages:${NAMESPACE_USAGES}" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \

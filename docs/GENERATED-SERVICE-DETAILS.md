@@ -20,6 +20,7 @@ This document provides a compact reference of all Bannou services.
 | [Character Encounter](#character-encounter) | 1.0.0 | 19 | Character encounter tracking service for memorable interacti... |
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
+| [Common](#common) | 1.0.0 | 0 | Shared type definitions used across multiple Bannou services... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract](#contract) | 1.0.0 | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency](#currency) | 1.0.0 | 32 | Multi-currency management service for game economies. |
@@ -140,6 +141,16 @@ Historical event participation and backstory management for characters. Tracks w
 **Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
 
 Machine-readable personality traits and combat preferences for NPC behavior decisions. Features probabilistic personality evolution based on character experiences (trauma, victory, corruption, etc.) and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes (e.g., -1.0 pacifist to +1.0 confrontational) that shift probabilistically based on experience intensity. Used by the Actor service's behavior system for decision-making.
+
+---
+
+## Common {#common}
+
+**Version**: 1.0.0 | **Schema**: `schemas/common-api.yaml` | **Deep Dive**: [docs/plugins/COMMON.md](plugins/COMMON.md)
+
+Shared type definitions used across multiple Bannou services.
+These types are not owned by any specific plugin and provide
+system-wide consistency for cross-service concepts.
 
 ---
 
@@ -377,7 +388,7 @@ Public-facing website service for browser-based access to registration, news, ac
 
 ## Summary
 
-- **Total services**: 40
+- **Total services**: 41
 - **Total endpoints**: 540
 
 ---

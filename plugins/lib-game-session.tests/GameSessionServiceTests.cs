@@ -164,7 +164,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var request = new CreateGameSessionRequest
         {
             SessionName = "Test Session",
-            GameType = CreateGameSessionRequestGameType.Arcadia,
+            GameType = GameType.Arcadia,
             MaxPlayers = 4,
             IsPrivate = false
         };
@@ -183,7 +183,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal("Test Session", response.SessionName);
         Assert.Equal(4, response.MaxPlayers);
         Assert.Equal(0, response.CurrentPlayers);
-        Assert.Equal(GameSessionResponseStatus.Waiting, response.Status);
+        Assert.Equal(SessionStatus.Waiting, response.Status);
 
         // Verify state was saved
         _mockGameSessionStore.Verify(s => s.SaveAsync(
@@ -216,7 +216,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var request = new CreateGameSessionRequest
         {
             SessionName = "Private Game",
-            GameType = CreateGameSessionRequestGameType.Arcadia,
+            GameType = GameType.Arcadia,
             MaxPlayers = 2,
             IsPrivate = true
         };
@@ -242,7 +242,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var request = new CreateGameSessionRequest
         {
             SessionName = "Test",
-            GameType = CreateGameSessionRequestGameType.Arcadia,
+            GameType = GameType.Arcadia,
             MaxPlayers = 4
         };
 
@@ -274,10 +274,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         {
             SessionId = sessionId.ToString(),
             SessionName = "Existing Session",
-            GameType = GameSessionResponseGameType.Arcadia,
+            GameType = GameType.Arcadia,
             MaxPlayers = 4,
             CurrentPlayers = 2,
-            Status = GameSessionResponseStatus.Active,
+            Status = SessionStatus.Active,
             Players = new List<GamePlayer>(),
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -378,7 +378,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             {
                 SessionId = sessionId,
                 SessionName = "Active Game",
-                Status = GameSessionResponseStatus.Active,
+                Status = SessionStatus.Active,
                 MaxPlayers = 4,
                 CurrentPlayers = 2,
                 Players = new List<GamePlayer>(),
@@ -415,7 +415,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             {
                 SessionId = activeSessionId,
                 SessionName = "Active",
-                Status = GameSessionResponseStatus.Active,
+                Status = SessionStatus.Active,
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow
             });
@@ -426,7 +426,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             {
                 SessionId = finishedSessionId,
                 SessionName = "Finished",
-                Status = GameSessionResponseStatus.Finished,
+                Status = SessionStatus.Finished,
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow
             });
@@ -504,7 +504,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = lobbyId.ToString(),
             MaxPlayers = 2,
             CurrentPlayers = 2,
-            Status = GameSessionResponseStatus.Full,
+            Status = SessionStatus.Full,
             Players = new List<GamePlayer>
             {
                 new() { AccountId = Guid.NewGuid() },
@@ -546,7 +546,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = lobbyId.ToString(),
             MaxPlayers = 4,
             CurrentPlayers = 0,
-            Status = GameSessionResponseStatus.Finished,
+            Status = SessionStatus.Finished,
             Players = new List<GamePlayer>(),
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -584,7 +584,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = lobbyId.ToString(),
             MaxPlayers = 4,
             CurrentPlayers = 1,
-            Status = GameSessionResponseStatus.Active,
+            Status = SessionStatus.Active,
             Players = new List<GamePlayer>(),
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -635,7 +635,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = lobbyId.ToString(),
             MaxPlayers = 4,
             CurrentPlayers = 1,
-            Status = GameSessionResponseStatus.Active,
+            Status = SessionStatus.Active,
             Players = new List<GamePlayer>(),
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -687,7 +687,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = lobbyId.ToString(),
             MaxPlayers = 4,
             CurrentPlayers = 2,
-            Status = GameSessionResponseStatus.Active,
+            Status = SessionStatus.Active,
             Players = new List<GamePlayer>
             {
                 new() { AccountId = accountId, DisplayName = "TestPlayer" },
@@ -763,7 +763,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = clientSessionId,
             AccountId = accountId,
             GameType = TEST_GAME_TYPE,
-            ActionType = GameActionRequestActionType.Move
+            ActionType = GameActionType.Move
         };
 
         // Return a lobby from lobby key lookup, but nothing from session key lookup
@@ -797,14 +797,14 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             SessionId = clientSessionId,
             AccountId = accountId,
             GameType = TEST_GAME_TYPE,
-            ActionType = GameActionRequestActionType.Move
+            ActionType = GameActionType.Move
         };
 
         // Setup finished lobby
         var lobby = new GameSessionModel
         {
             SessionId = lobbyId.ToString(),
-            Status = GameSessionResponseStatus.Finished,
+            Status = SessionStatus.Finished,
             Players = new List<GamePlayer>(),
             CreatedAt = DateTimeOffset.UtcNow
         };

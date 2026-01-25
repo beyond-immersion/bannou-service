@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Matchmaking;
 
 
 namespace BeyondImmersion.Bannou.Matchmaking.ClientEvents;
@@ -438,35 +439,6 @@ public partial class MatchmakingStatusUpdateEvent : BaseClientEvent
     public int? Position { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Reason codes for matchmaking cancellation
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CancelReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled_by_user")]
-    Cancelled_by_user = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
-    Timeout = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session_disconnected")]
-    Session_disconnected = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"party_disbanded")]
-    Party_disbanded = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"match_declined")]
-    Match_declined = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"queue_disabled")]
-    Queue_disabled = 5,
-
-}
-#pragma warning restore CS1591
 
 
 

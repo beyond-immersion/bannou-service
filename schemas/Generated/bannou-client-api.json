@@ -12973,7 +12973,6 @@
           },
           "iconUrl": {
             "type": "string",
-            "format": "uri",
             "nullable": true,
             "description": "Achievement icon URL"
           },
@@ -13780,7 +13779,7 @@
             "description": "Type classification for the asset"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Game realm the asset belongs to"
           },
           "tags": {
@@ -13821,7 +13820,7 @@
             "description": "Type classification for the asset"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Game realm the asset belongs to"
           },
           "tags": {
@@ -13904,7 +13903,7 @@
             "description": "Filter by asset type"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Filter by game realm"
           },
           "contentType": {
@@ -15342,7 +15341,7 @@
             "description": "Owner account ID or service name (null for system-owned bundles)"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Game realm this bundle belongs to"
           },
           "tags": {
@@ -15454,7 +15453,7 @@
             "description": "Bundle file size"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Game realm"
           },
           "createdAt": {
@@ -16198,11 +16197,10 @@
             "description": "Content of the chat message"
           },
           "messageType": {
-            "type": "string",
-            "enum": [
-              "public",
-              "whisper",
-              "system"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChatMessageType"
+              }
             ],
             "default": "public",
             "description": "Type of message (public to all, whisper to one player, or system announcement)"
@@ -16214,6 +16212,15 @@
             "description": "For whisper messages"
           }
         }
+      },
+      "ChatMessageType": {
+        "type": "string",
+        "description": "Type of chat message",
+        "enum": [
+          "public",
+          "whisper",
+          "system"
+        ]
       },
       "CheckAssetRequirementsRequest": {
         "type": "object",
@@ -18414,7 +18421,6 @@
           },
           "iconUrl": {
             "type": "string",
-            "format": "uri",
             "nullable": true,
             "description": "URL to achievement icon"
           },
@@ -18594,7 +18600,7 @@
           "realm": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Realm"
+                "$ref": "#/components/schemas/GameRealm"
               }
             ],
             "nullable": true,
@@ -19490,7 +19496,7 @@
             "description": "Owner of this metabundle. NOT a session ID.\nFor user-initiated: the accountId (UUID format).\nFor service-initiated: the service name.\n"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Game realm for this metabundle"
           },
           "description": {
@@ -21850,13 +21856,22 @@
       },
       "EntityType": {
         "type": "string",
-        "description": "Type of entity that can earn achievements",
+        "description": "Universal entity type identifier used across Bannou services.\nProvides first-class support for various kinds of entities in analytics,\nachievements, leaderboards, contracts, relationships, and other systems.\n",
         "enum": [
+          "system",
           "account",
           "character",
-          "guild",
           "actor",
-          "custom"
+          "guild",
+          "organization",
+          "government",
+          "faction",
+          "location",
+          "realm",
+          "item",
+          "monster",
+          "custom",
+          "other"
         ]
       },
       "ErrorResponse": {
@@ -23371,14 +23386,7 @@
             "description": "Game type for the action. Determines which lobby to apply the action. Provided by shortcut system."
           },
           "actionType": {
-            "type": "string",
-            "enum": [
-              "move",
-              "interact",
-              "attack",
-              "cast_spell",
-              "use_item"
-            ],
+            "$ref": "#/components/schemas/GameActionType",
             "description": "Type of game action to perform"
           },
           "actionData": {
@@ -23422,6 +23430,17 @@
           }
         }
       },
+      "GameActionType": {
+        "type": "string",
+        "description": "Type of game action",
+        "enum": [
+          "move",
+          "interact",
+          "attack",
+          "cast_spell",
+          "use_item"
+        ]
+      },
       "GamePlayer": {
         "description": "Information about a player currently participating in a game session",
         "type": "object",
@@ -23449,12 +23468,7 @@
             "description": "Display name shown to other players"
           },
           "role": {
-            "type": "string",
-            "enum": [
-              "player",
-              "spectator",
-              "moderator"
-            ],
+            "$ref": "#/components/schemas/PlayerRole",
             "description": "Role of the player in the game session"
           },
           "joinedAt": {
@@ -23476,6 +23490,10 @@
           }
         }
       },
+      "GameRealm": {
+        "type": "string",
+        "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+      },
       "GameSessionResponse": {
         "description": "Complete details of a game session including players and settings",
         "type": "object",
@@ -23494,11 +23512,7 @@
             "description": "Unique identifier for the game session"
           },
           "gameType": {
-            "type": "string",
-            "enum": [
-              "arcadia",
-              "generic"
-            ],
+            "$ref": "#/components/schemas/GameType",
             "description": "Type of game for this session"
           },
           "sessionType": {
@@ -23511,13 +23525,7 @@
             "description": "Display name for the session"
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "waiting",
-              "active",
-              "full",
-              "finished"
-            ],
+            "$ref": "#/components/schemas/SessionStatus",
             "description": "Current status of the game session"
           },
           "maxPlayers": {
@@ -23570,6 +23578,14 @@
             "description": "For matchmade sessions - when reservations expire"
           }
         }
+      },
+      "GameType": {
+        "type": "string",
+        "description": "Type of game for this session",
+        "enum": [
+          "arcadia",
+          "generic"
+        ]
       },
       "GenerateCompositionRequest": {
         "description": "Request to generate a complete musical composition",
@@ -31783,6 +31799,15 @@
           "internal"
         ]
       },
+      "PlayerRole": {
+        "type": "string",
+        "description": "Role of the player in the game session",
+        "enum": [
+          "player",
+          "spectator",
+          "moderator"
+        ]
+      },
       "Position3D": {
         "type": "object",
         "additionalProperties": false,
@@ -32230,7 +32255,7 @@
             "description": "Platform asset ID to search for"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Game realm to search within"
           },
           "bundleType": {
@@ -32354,7 +32379,7 @@
           "realm": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Realm"
+                "$ref": "#/components/schemas/GameRealm"
               }
             ],
             "nullable": true,
@@ -33351,16 +33376,6 @@
             "description": "Whether all parties have reaffirmed"
           }
         }
-      },
-      "Realm": {
-        "type": "string",
-        "enum": [
-          "omega",
-          "arcadia",
-          "fantasia",
-          "shared"
-        ],
-        "description": "Game realm the asset belongs to"
       },
       "RealmEventCategory": {
         "type": "string",
@@ -34771,7 +34786,7 @@
             "description": "Platform asset IDs to resolve"
           },
           "realm": {
-            "$ref": "#/components/schemas/Realm",
+            "$ref": "#/components/schemas/GameRealm",
             "description": "Game realm to search within"
           },
           "preferMetabundles": {
@@ -36161,6 +36176,16 @@
             "description": "Geographic location derived from the IP address"
           }
         }
+      },
+      "SessionStatus": {
+        "type": "string",
+        "description": "Current status of the game session",
+        "enum": [
+          "waiting",
+          "active",
+          "full",
+          "finished"
+        ]
       },
       "SessionType": {
         "type": "string",
@@ -38151,7 +38176,6 @@
           },
           "iconUrl": {
             "type": "string",
-            "format": "uri",
             "nullable": true,
             "description": "Achievement icon"
           },

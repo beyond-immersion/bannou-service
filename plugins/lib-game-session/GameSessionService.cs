@@ -1,6 +1,5 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
-using ClientChatMessageType = BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageType;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
@@ -1540,7 +1539,7 @@ public partial class GameSessionService : IGameSessionService
                 SenderId = senderId,
                 SenderName = senderPlayer?.DisplayName,
                 Message = body.Message,
-                MessageType = (ClientChatMessageType)body.MessageType,
+                MessageType = body.MessageType,
                 IsWhisperToMe = false // Will be set per-recipient for whispers
             };
 

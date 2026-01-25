@@ -21,8 +21,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-// Alias to distinguish client events CancelReason from API events CancelReason
-using ClientCancelReason = BeyondImmersion.Bannou.Matchmaking.ClientEvents.CancelReason;
 
 [assembly: InternalsVisibleTo("lib-matchmaking.tests")]
 
@@ -377,7 +375,7 @@ public partial class MatchmakingService : IMatchmakingService
             var ticketIds = await GetQueueTicketIdsAsync(body.QueueId, cancellationToken);
             foreach (var ticketId in ticketIds)
             {
-                await CancelTicketInternalAsync(ticketId, ClientCancelReason.Queue_disabled, cancellationToken);
+                await CancelTicketInternalAsync(ticketId, CancelReason.Queue_disabled, cancellationToken);
             }
 
             // Delete queue
@@ -657,7 +655,7 @@ public partial class MatchmakingService : IMatchmakingService
                 return StatusCodes.Forbidden;
             }
 
-            await CancelTicketInternalAsync(ticketId, ClientCancelReason.Cancelled_by_user, cancellationToken);
+            await CancelTicketInternalAsync(ticketId, CancelReason.Cancelled_by_user, cancellationToken);
 
             return StatusCodes.OK;
         }
@@ -1232,7 +1230,7 @@ public partial class MatchmakingService : IMatchmakingService
             if (ticket.AccountId == declinedBy)
             {
                 // Cancel the decliner's ticket
-                await CancelTicketInternalAsync(ticket.TicketId, ClientCancelReason.Match_declined, cancellationToken);
+                await CancelTicketInternalAsync(ticket.TicketId, CancelReason.Match_declined, cancellationToken);
             }
             else if (_configuration.AutoRequeueOnDecline)
             {
@@ -1242,7 +1240,7 @@ public partial class MatchmakingService : IMatchmakingService
             else
             {
                 // Cancel all tickets
-                await CancelTicketInternalAsync(ticket.TicketId, ClientCancelReason.Match_declined, cancellationToken);
+                await CancelTicketInternalAsync(ticket.TicketId, CancelReason.Match_declined, cancellationToken);
             }
         }
 
@@ -1292,7 +1290,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// <summary>
     /// Cancels a ticket internally with reason.
     /// </summary>
-    private async Task CancelTicketInternalAsync(Guid ticketId, ClientCancelReason reason, CancellationToken cancellationToken)
+    private async Task CancelTicketInternalAsync(Guid ticketId, CancelReason reason, CancellationToken cancellationToken)
     {
         var ticket = await LoadTicketAsync(ticketId, cancellationToken);
         if (ticket == null) return;
@@ -1310,7 +1308,7 @@ public partial class MatchmakingService : IMatchmakingService
             QueueId = ticket.QueueId,
             Reason = reason,
             WaitTimeSeconds = waitTime,
-            CanRequeue = reason != ClientCancelReason.Session_disconnected && reason != ClientCancelReason.Queue_disabled
+            CanRequeue = reason != CancelReason.Session_disconnected && reason != CancelReason.Queue_disabled
         }, cancellationToken);
 
         // Clear state
@@ -1863,7 +1861,7 @@ public partial class MatchmakingService : IMatchmakingService
                 ticket.TicketId, ticket.IntervalsElapsed);
             await CancelTicketInternalAsync(
                 ticket.TicketId,
-                ClientCancelReason.Timeout,
+                CancelReason.Timeout,
                 cancellationToken);
         }
 

@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.GameSession;
 
 
 namespace BeyondImmersion.Bannou.GameSession.ClientEvents;
@@ -532,95 +533,6 @@ public partial class Position
     public double Z { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Current status of the game session
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
-    Waiting = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
-    Active = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"finished")]
-    Finished = 3,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Type of chat message
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ChatMessageType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"public")]
-    Public = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"whisper")]
-    Whisper = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"system")]
-    System = 2,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Type of game action
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameActionType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"move")]
-    Move = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"interact")]
-    Interact = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"attack")]
-    Attack = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cast_spell")]
-    Cast_spell = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"use_item")]
-    Use_item = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Role of the player in the game session
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerRole
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"player")]
-    Player = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"spectator")]
-    Spectator = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"moderator")]
-    Moderator = 2,
-
-}
-#pragma warning restore CS1591
 
 
 

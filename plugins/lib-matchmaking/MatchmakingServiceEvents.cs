@@ -2,8 +2,6 @@ using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
 
-using ClientCancelReason = BeyondImmersion.Bannou.Matchmaking.ClientEvents.CancelReason;
-
 namespace BeyondImmersion.BannouService.Matchmaking;
 
 /// <summary>
@@ -91,7 +89,7 @@ public partial class MatchmakingService
                 // Cancel the ticket
                 await CancelTicketInternalAsync(
                     ticket.TicketId,
-                    ClientCancelReason.Session_disconnected,
+                    CancelReason.Session_disconnected,
                     CancellationToken.None);
             }
         }
