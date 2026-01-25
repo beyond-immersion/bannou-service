@@ -179,35 +179,19 @@ EmotionalState Dimensions
 
 ---
 
-## Tenet Violations (Fix Immediately)
+## Tenet Violations (Require Schema Changes)
 
-### 1. FOUNDATION TENETS (T6): Missing Null Checks in Constructor
-
-**File**: `plugins/lib-music/MusicService.cs`, lines 40-50
-
-The constructor does not perform `ArgumentNullException.ThrowIfNull()` or `?? throw new ArgumentNullException(...)` on any of its injected dependencies (`messageBus`, `stateStoreFactory`, `logger`, `configuration`). The standard service pattern requires explicit null checks on all constructor parameters.
-
-**Fix**: Add null checks for all injected dependencies:
-```csharp
-_messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-_stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-_logger = logger ?? throw new ArgumentNullException(nameof(logger));
-_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-```
-
----
-
-### 2. IMPLEMENTATION TENETS (T21): Defined State Store Not Used (`music-styles`)
+### 1. IMPLEMENTATION TENETS: Defined State Store Not Used (`music-styles`)
 
 **File**: `schemas/state-stores.yaml` (music-styles definition) and `plugins/lib-music/MusicService.cs`
 
-The `music-styles` MySQL state store is defined in `state-stores.yaml` but is never referenced in the service implementation. `StateStoreDefinitions.MusicStyles` is never used. All styles come from hardcoded `BuiltInStyles`. Per T21, if a defined cache/state store is genuinely unnecessary, it must be removed from `schemas/state-stores.yaml`.
+The `music-styles` MySQL state store is defined in `state-stores.yaml` but is never referenced in the service implementation. `StateStoreDefinitions.MusicStyles` is never used. All styles come from hardcoded `BuiltInStyles`. If a defined cache/state store is genuinely unnecessary, it must be removed from `schemas/state-stores.yaml`.
 
 **Fix**: Either implement persistence for custom styles using the `music-styles` store, or remove the store definition from `schemas/state-stores.yaml`.
 
 ---
 
-### 3. IMPLEMENTATION TENETS (T21): Hardcoded Tunables
+### 2. IMPLEMENTATION TENETS: Hardcoded Tunables
 
 **File**: `plugins/lib-music/MusicService.cs`
 
@@ -215,13 +199,13 @@ Multiple hardcoded numeric values represent tunables that should be configuratio
 
 | Line(s) | Value | Purpose |
 |---------|-------|---------|
-| 114, 521, 602, 622 | `480` | Ticks per beat (MIDI resolution) |
-| 146, 621 | `0.2` | Default syncopation |
-| 620 | `0.7` | Default rhythm density |
-| 130, 522 | `1` | Chords per bar |
-| 517 | `8` | Default progression length |
-| 137 | `4` | Voice count for voice leading |
-| 864, 870 | `0.2` | Tension threshold for contour detection |
+| ~114, ~519, ~600, ~618 | `480` | Ticks per beat (MIDI resolution) |
+| ~144, ~617 | `0.2` | Default syncopation |
+| ~616 | `0.7` | Default rhythm density |
+| ~128, ~520 | `1` | Chords per bar |
+| ~513 | `8` | Default progression length |
+| ~135 | `4` | Voice count for voice leading |
+| ~862, ~868 | `0.2` | Tension threshold for contour detection |
 
 **Fix**: Define configuration properties in `schemas/music-configuration.yaml` for each tunable:
 - `MUSIC_TICKS_PER_BEAT` (default 480)
@@ -236,107 +220,9 @@ Note: The validation constants (24, 960, 0, 127, 0, 15) in `ValidateMidiJsonAsyn
 
 ---
 
-### 4. IMPLEMENTATION TENETS (T23): Improper Async Pattern (`await Task.CompletedTask`)
+### 3. IMPLEMENTATION TENETS: Hardcoded Default Emotional State Values
 
-**File**: `plugins/lib-music/MusicService.cs`, lines 322, 371, 433, 480, 557, 663, 736
-
-Six methods (`ValidateMidiJsonAsync`, `GetStyleAsync`, `ListStylesAsync`, `CreateStyleAsync`, `GenerateProgressionAsync`, `GenerateMelodyAsync`, `ApplyVoiceLeadingAsync`) use `await Task.CompletedTask` as their only await. Per T23, this pattern is only acceptable when implementing a synchronous operation required by an async interface. However, these methods also call `_messageBus.TryPublishErrorAsync` in their catch blocks -- meaning they DO have async work. The `await Task.CompletedTask` on the happy path is technically acceptable per T23's guidance ("Synchronous Implementation of Async Interface") but is unnecessary because the catch block already provides async operations. The core issue is that the happy-path code is entirely synchronous and only the error path is async.
-
-**Fix**: This is a minor stylistic issue. The current pattern is technically compliant since the `catch` block has real awaits, but the `await Task.CompletedTask` statements on the happy path are unnecessary noise. They could be removed if the method body is restructured, but this is low priority.
-
----
-
-### 5. IMPLEMENTATION TENETS (T7): Missing `ApiException` Catch Block
-
-**File**: `plugins/lib-music/MusicService.cs`, all endpoint methods
-
-Every endpoint method catches only the generic `Exception` type. Per T7, methods making external calls (including state store operations in `GenerateCompositionAsync`) must distinguish `ApiException` from `Exception`. While some methods (style lookup, validation) are purely in-memory computation, `GenerateCompositionAsync` calls `TryGetCachedCompositionAsync` and `CacheCompositionAsync` which interact with the state store. Those helper methods have their own try-catch, but the outer catch in `GenerateCompositionAsync` should still distinguish `ApiException` for any future state store calls added to the method body.
-
-**Fix**: Add `catch (ApiException ex)` before `catch (Exception ex)` in `GenerateCompositionAsync` at minimum:
-```csharp
-catch (ApiException ex)
-{
-    _logger.LogWarning(ex, "State store call failed with status {Status}", ex.StatusCode);
-    return ((StatusCodes)ex.StatusCode, null);
-}
-catch (Exception ex)
-{
-    // existing error handling
-}
-```
-
----
-
-### 6. QUALITY TENETS (T10): LogInformation Used for Operation Entry Points
-
-**File**: `plugins/lib-music/MusicService.cs`, lines 61, 222, 349, 398, 460, 507, 584, 690
-
-All endpoint entry-point log statements use `LogInformation` level. Per T10, operation entry logging should use `LogDebug` level. `LogInformation` is reserved for "significant state changes" (business decisions), not routine operation entry.
-
-**Fix**: Change all entry-point log statements from `_logger.LogInformation(...)` to `_logger.LogDebug(...)`. For example:
-```csharp
-_logger.LogDebug("Generating composition with style {StyleId}", body.StyleId);
-```
-
----
-
-### 7. QUALITY TENETS (T19): Missing XML Documentation on Private Helper Methods
-
-**File**: `plugins/lib-music/MusicService.cs`
-
-Several private helper methods lack `<summary>` XML documentation:
-
-| Line | Method |
-|------|--------|
-| 758 | `GetStyleDefinition` |
-| 1002 | `ToModeType` |
-| 1015 | `ToApiMode` |
-| 1027 | `ToChordQuality` |
-| 1044 | `ToApiChordQuality` |
-| 1061 | `ToContourShape` |
-| 1071 | `ToApiFunctionalAnalysis` |
-| 1096 | `GetRomanNumeral` |
-| 1110 | `ConvertToStyleResponse` |
-
-While T19 specifically requires documentation on "all public classes, interfaces, methods, and properties," consistency within the file is important. Some private methods have documentation (e.g., `BuildStorytellerRequest`, `GetContourFromStoryResult`) while others do not.
-
-**Fix**: Add `<summary>` documentation to all private helper methods for consistency. This is lower priority than public API documentation.
-
----
-
-### 8. Dead Code: Unused Method `ToApiFunctionalAnalysis`
-
-**File**: `plugins/lib-music/MusicService.cs`, line 1071
-
-The method `ToApiFunctionalAnalysis(HarmonicFunctionType function)` is defined but never called anywhere in the codebase. `GetFunctionalAnalysis(int degree)` is used instead for functional analysis derivation from scale degree.
-
-**Fix**: Remove the dead `ToApiFunctionalAnalysis` method.
-
----
-
-### 9. Dead Code: Unused `Random` Variables
-
-**File**: `plugins/lib-music/MusicService.cs`, lines 512, 589
-
-In `GenerateProgressionAsync` (line 512) and `GenerateMelodyAsync` (line 589), a `var random = new Random(seed)` is created but never used. The `seed` value is passed directly to `ProgressionGenerator` and `MelodyGenerator` constructors instead.
-
-**Fix**: Remove the unused `var random = new Random(seed);` declarations from both methods.
-
----
-
-### 10. Duplicate `InternalsVisibleTo` Assembly Attribute
-
-**File**: `plugins/lib-music/MusicService.cs` (line 21) and `plugins/lib-music/AssemblyInfo.cs` (line 5)
-
-Both files declare `[assembly: InternalsVisibleTo("lib-music.tests")]`. This duplication is harmless but represents unnecessary noise.
-
-**Fix**: Remove the `[assembly: InternalsVisibleTo("lib-music.tests")]` from `MusicService.cs` line 21 (keep it in `AssemblyInfo.cs` which is the canonical location for assembly attributes).
-
----
-
-### 11. IMPLEMENTATION TENETS (T21): Hardcoded Default Emotional State Values
-
-**File**: `plugins/lib-music/MusicService.cs`, lines 844-849
+**File**: `plugins/lib-music/MusicService.cs`, `ToSdkEmotionalState` method
 
 The `ToSdkEmotionalState` method uses hardcoded default values (0.2, 0.5, 0.5, 0.5, 0.8, 0.5) for each emotional dimension when not provided by the request. These defaults represent tunable parameters for the "neutral" emotional starting point.
 
@@ -350,13 +236,34 @@ The `ToSdkEmotionalState` method uses hardcoded default values (0.2, 0.5, 0.5, 0
 
 ---
 
-### 12. FOUNDATION TENETS (T6): `MusicServicePlugin` Does Not Follow Standard Pattern
+### 4. FOUNDATION TENETS: `MusicServicePlugin` Scope Lifecycle Issue
 
 **File**: `plugins/lib-music/MusicServicePlugin.cs`
 
-The `MusicServicePlugin` class creates a DI scope in `OnStartAsync` (line 66), resolves `IMusicService` into a field `_service`, and then the scope is disposed at the end of the `using` block. This means `_service` holds a reference to a scoped service whose scope has already been disposed. Any subsequent calls to `_service` (in `OnRunningAsync` or `OnShutdownAsync`) operate on an object whose injected scoped dependencies may already be disposed.
+The `MusicServicePlugin` class creates a DI scope in `OnStartAsync`, resolves `IMusicService` into a field `_service`, and then the scope is disposed at the end of the `using` block. This means `_service` holds a reference to a scoped service whose scope has already been disposed. Any subsequent calls to `_service` (in `OnRunningAsync` or `OnShutdownAsync`) operate on an object whose injected scoped dependencies may already be disposed.
 
 **Fix**: Either store the scope for the lifetime of the plugin (disposing it in `OnShutdownAsync`), or resolve the service fresh in each lifecycle method.
+
+---
+
+### 5. QUALITY TENETS: Missing XML Documentation on Private Helper Methods
+
+**File**: `plugins/lib-music/MusicService.cs`
+
+Several private helper methods lack `<summary>` XML documentation:
+
+| Method |
+|--------|
+| `GetStyleDefinition` |
+| `ToModeType` |
+| `ToApiMode` |
+| `ToChordQuality` |
+| `ToApiChordQuality` |
+| `ToContourShape` |
+| `GetRomanNumeral` |
+| `ConvertToStyleResponse` |
+
+While private methods don't strictly require documentation, consistency within the file is valuable. Some private methods have documentation (e.g., `BuildStorytellerRequest`, `GetContourFromStoryResult`) while others do not. Low priority.
 
 ---
 
@@ -364,10 +271,9 @@ The `MusicServicePlugin` class creates a DI scope in `OnStartAsync` (line 66), r
 
 | Category | Count | Severity |
 |----------|-------|----------|
-| FOUNDATION TENETS | 2 | Medium (null checks), Medium (plugin lifecycle) |
-| IMPLEMENTATION TENETS | 4 | High (unused state store, hardcoded tunables), Low (async pattern, error handling) |
-| QUALITY TENETS | 2 | Low (log levels, XML docs) |
-| Dead Code | 3 | Low (unused method, unused variables, duplicate attribute) |
+| FOUNDATION TENETS | 1 | Medium (plugin lifecycle) |
+| IMPLEMENTATION TENETS | 3 | High (unused state store, hardcoded tunables) |
+| QUALITY TENETS | 1 | Low (XML docs consistency) |
 
 ---
 

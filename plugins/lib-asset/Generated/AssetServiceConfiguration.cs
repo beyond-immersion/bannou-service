@@ -32,6 +32,60 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Asset;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Storage backend type
+/// </summary>
+public enum StorageProvider
+{
+    Minio,
+    S3,
+    R2,
+    Azure,
+    Filesystem,
+}
+#pragma warning restore CS1591
+
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Service mode
+/// </summary>
+public enum ProcessingMode
+{
+    Api,
+    Worker,
+    Both,
+}
+#pragma warning restore CS1591
+
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Default audio output format
+/// </summary>
+public enum AudioOutputFormat
+{
+    Mp3,
+    Opus,
+    Aac,
+}
+#pragma warning restore CS1591
+
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Default compression for bundles
+/// </summary>
+public enum BundleCompressionDefault
+{
+    Lz4,
+    Lzma,
+    None,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for Asset service.
 /// Properties are automatically bound from environment variables.
@@ -57,7 +111,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Storage backend type
     /// Environment variable: ASSET_STORAGE_PROVIDER
     /// </summary>
-    public string StorageProvider { get; set; } = "minio";
+    public StorageProvider StorageProvider { get; set; } = StorageProvider.Minio;
 
     /// <summary>
     /// Primary bucket/container name for assets
@@ -165,7 +219,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Service mode
     /// Environment variable: ASSET_PROCESSING_MODE
     /// </summary>
-    public string ProcessingMode { get; set; } = "both";
+    public ProcessingMode ProcessingMode { get; set; } = ProcessingMode.Both;
 
     /// <summary>
     /// Worker pool identifier when running in worker mode
@@ -219,7 +273,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Default audio output format
     /// Environment variable: ASSET_AUDIO_OUTPUT_FORMAT
     /// </summary>
-    public string AudioOutputFormat { get; set; } = "mp3";
+    public AudioOutputFormat AudioOutputFormat { get; set; } = AudioOutputFormat.Mp3;
 
     /// <summary>
     /// Default audio bitrate in kbps
@@ -237,7 +291,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Default compression for bundles
     /// Environment variable: ASSET_BUNDLE_COMPRESSION_DEFAULT
     /// </summary>
-    public string BundleCompressionDefault { get; set; } = "lz4";
+    public BundleCompressionDefault BundleCompressionDefault { get; set; } = BundleCompressionDefault.Lz4;
 
     /// <summary>
     /// TTL for cached ZIP conversions in hours

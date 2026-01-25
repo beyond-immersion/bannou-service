@@ -32,6 +32,31 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Connect;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)
+/// </summary>
+public enum ConnectionMode
+{
+    External,
+    Relayed,
+    Internal,
+}
+#pragma warning restore CS1591
+
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)
+/// </summary>
+public enum InternalAuthMode
+{
+    ServiceToken,
+    NetworkTrust,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for Connect service.
 /// Properties are automatically bound from environment variables.
@@ -105,13 +130,13 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)
     /// Environment variable: CONNECT_CONNECTION_MODE
     /// </summary>
-    public string ConnectionMode { get; set; } = "external";
+    public ConnectionMode ConnectionMode { get; set; } = ConnectionMode.External;
 
     /// <summary>
     /// Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)
     /// Environment variable: CONNECT_INTERNAL_AUTH_MODE
     /// </summary>
-    public string InternalAuthMode { get; set; } = "service-token";
+    public InternalAuthMode InternalAuthMode { get; set; } = InternalAuthMode.ServiceToken;
 
     /// <summary>
     /// Secret for X-Service-Token validation when InternalAuthMode is service-token

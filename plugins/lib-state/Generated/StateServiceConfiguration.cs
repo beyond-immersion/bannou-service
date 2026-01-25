@@ -32,6 +32,18 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.State;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Default consistency level for state operations
+/// </summary>
+public enum DefaultConsistency
+{
+    Strong,
+    Eventual,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for State service.
 /// Properties are automatically bound from environment variables.
@@ -81,7 +93,7 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// Default consistency level for state operations
     /// Environment variable: STATE_DEFAULT_CONSISTENCY
     /// </summary>
-    public string DefaultConsistency { get; set; } = "strong";
+    public DefaultConsistency DefaultConsistency { get; set; } = DefaultConsistency.Strong;
 
     /// <summary>
     /// Enable metrics collection for state operations

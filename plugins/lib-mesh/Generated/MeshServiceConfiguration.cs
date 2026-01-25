@@ -32,6 +32,20 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Mesh;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Default load balancing algorithm
+/// </summary>
+public enum DefaultLoadBalancer
+{
+    RoundRobin,
+    LeastConnections,
+    Weighted,
+    Random,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for Mesh service.
 /// Properties are automatically bound from environment variables.
@@ -93,7 +107,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Default load balancing algorithm
     /// Environment variable: MESH_DEFAULT_LOAD_BALANCER
     /// </summary>
-    public string DefaultLoadBalancer { get; set; } = "RoundRobin";
+    public DefaultLoadBalancer DefaultLoadBalancer { get; set; } = DefaultLoadBalancer.RoundRobin;
 
     /// <summary>
     /// Load percentage above which an endpoint is considered high-load

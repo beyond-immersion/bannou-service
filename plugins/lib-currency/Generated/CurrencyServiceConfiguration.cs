@@ -32,6 +32,34 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Currency;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Default precision for currencies that do not specify
+/// </summary>
+public enum DefaultPrecision
+{
+    Integer,
+    Decimal2,
+    Decimal4,
+    Decimal8,
+    DecimalFull,
+    BigInteger,
+}
+#pragma warning restore CS1591
+
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// How autogain is calculated (lazy = on-demand at query time, task = background processing)
+/// </summary>
+public enum AutogainProcessingMode
+{
+    Lazy,
+    Task,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for Currency service.
 /// Properties are automatically bound from environment variables.
@@ -63,13 +91,13 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
     /// Default precision for currencies that do not specify
     /// Environment variable: CURRENCY_DEFAULT_PRECISION
     /// </summary>
-    public string DefaultPrecision { get; set; } = "decimal_2";
+    public DefaultPrecision DefaultPrecision { get; set; } = DefaultPrecision.Decimal2;
 
     /// <summary>
     /// How autogain is calculated (lazy = on-demand at query time, task = background processing)
     /// Environment variable: CURRENCY_AUTOGAIN_PROCESSING_MODE
     /// </summary>
-    public string AutogainProcessingMode { get; set; } = "lazy";
+    public AutogainProcessingMode AutogainProcessingMode { get; set; } = AutogainProcessingMode.Lazy;
 
     /// <summary>
     /// Delay in seconds before first autogain task cycle (allows services to start)

@@ -56,7 +56,7 @@ public partial class MusicService : IMusicService
         GenerateCompositionRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Generating composition with style {StyleId}", body.StyleId);
+        _logger.LogDebug("Generating composition with style {StyleId}", body.StyleId);
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -217,7 +217,7 @@ public partial class MusicService : IMusicService
         ValidateMidiJsonRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Validating MIDI-JSON structure");
+        _logger.LogDebug("Validating MIDI-JSON structure");
 
         try
         {
@@ -344,7 +344,7 @@ public partial class MusicService : IMusicService
         GetStyleRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting style {StyleId} / {StyleName}", body.StyleId, body.StyleName);
+        _logger.LogDebug("Getting style {StyleId} / {StyleName}", body.StyleId, body.StyleName);
 
         try
         {
@@ -393,7 +393,7 @@ public partial class MusicService : IMusicService
         ListStylesRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Listing styles with category filter {Category}", body.Category);
+        _logger.LogDebug("Listing styles with category filter {Category}", body.Category);
 
         try
         {
@@ -455,7 +455,7 @@ public partial class MusicService : IMusicService
         CreateStyleRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating style {Name}", body.Name);
+        _logger.LogDebug("Creating style {Name}", body.Name);
 
         try
         {
@@ -502,13 +502,11 @@ public partial class MusicService : IMusicService
         GenerateProgressionRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
+        _logger.LogDebug("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
 
         try
         {
             var seed = body.Seed ?? Environment.TickCount;
-            var random = new Random(seed);
-
             var scale = new Scale(body.Key.Tonic, ToModeType(body.Key.Mode));
             var generator = new ProgressionGenerator(seed);
 
@@ -579,12 +577,11 @@ public partial class MusicService : IMusicService
         GenerateMelodyRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Generating melody over {ChordCount} chords", body.Harmony?.Count ?? 0);
+        _logger.LogDebug("Generating melody over {ChordCount} chords", body.Harmony?.Count ?? 0);
 
         try
         {
             var seed = body.Seed ?? Environment.TickCount;
-            var random = new Random(seed);
 
             // Infer key from first chord (or default to C major)
             var firstChord = body.Harmony?.FirstOrDefault();
@@ -685,7 +682,7 @@ public partial class MusicService : IMusicService
         VoiceLeadRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Applying voice leading to {ChordCount} chords", body.Chords?.Count ?? 0);
+        _logger.LogDebug("Applying voice leading to {ChordCount} chords", body.Chords?.Count ?? 0);
 
         try
         {
@@ -1065,15 +1062,6 @@ public partial class MusicService : IMusicService
         GenerateMelodyRequestContour.Static => ContourShape.Static,
         _ => ContourShape.Arch
     };
-
-    private static FunctionalAnalysis ToApiFunctionalAnalysis(HarmonicFunctionType function) =>
-        function switch
-        {
-            HarmonicFunctionType.Tonic => FunctionalAnalysis.Tonic,
-            HarmonicFunctionType.Subdominant => FunctionalAnalysis.Subdominant,
-            HarmonicFunctionType.Dominant => FunctionalAnalysis.Dominant,
-            _ => FunctionalAnalysis.Tonic
-        };
 
     /// <summary>
     /// Derives functional analysis from scale degree.
