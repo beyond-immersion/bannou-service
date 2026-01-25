@@ -190,9 +190,6 @@ x-service-configuration:
     MaxConcurrentConnections:
       type: integer
       env: CONNECT_MAX_CONCURRENT_CONNECTIONS  # CORRECT: Underscores between words
-    Enabled:
-      type: boolean
-      env: BEHAVIOR_ENABLED          # CORRECT: Even simple properties need explicit env
 ```
 
 **Correct Examples**:
@@ -208,7 +205,6 @@ x-service-configuration:
 - `auth-jwt-secret` - kebab-case not allowed
 - `AUTH_JWTSECRET` - Missing underscore delimiter in property name
 - `REDIS_CONNECTION_STRING` - Missing service prefix (should be `STATE_REDIS_CONNECTION_STRING`)
-- `GAME-SESSION_ENABLED` - Hyphen in prefix (should be `GAME_SESSION_ENABLED`)
 
 ### Namespace for Generated Events
 

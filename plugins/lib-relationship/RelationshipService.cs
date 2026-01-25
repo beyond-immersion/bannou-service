@@ -68,7 +68,7 @@ public partial class RelationshipService : IRelationshipService
         {
             _logger.LogDebug("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
 
-            var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
+            var relationshipKey = BuildRelationshipKey(body.RelationshipId);
             var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetAsync(relationshipKey, cancellationToken);
 
@@ -105,9 +105,9 @@ public partial class RelationshipService : IRelationshipService
                 body.EntityId, body.EntityType);
 
             // Get all relationship IDs for this entity from the entity index
-            var entityIndexKey = BuildEntityIndexKey(body.EntityType.ToString(), body.EntityId.ToString());
-            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship)
-                .GetAsync(entityIndexKey, cancellationToken) ?? new List<string>();
+            var entityIndexKey = BuildEntityIndexKey(body.EntityType, body.EntityId);
+            var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+                .GetAsync(entityIndexKey, cancellationToken) ?? new List<Guid>();
 
             if (relationshipIds.Count == 0)
             {
@@ -142,18 +142,18 @@ public partial class RelationshipService : IRelationshipService
             // Filter by relationship type
             if (body.RelationshipTypeId.HasValue)
             {
-                var typeIdStr = body.RelationshipTypeId.Value.ToString();
-                filtered = filtered.Where(r => r.RelationshipTypeId == typeIdStr);
+                var typeId = body.RelationshipTypeId.Value;
+                filtered = filtered.Where(r => r.RelationshipTypeId == typeId);
             }
 
             // Filter by other entity type
             if (body.OtherEntityType.HasValue)
             {
-                var otherType = body.OtherEntityType.Value.ToString();
-                var entityIdStr = body.EntityId.ToString();
+                var otherType = body.OtherEntityType.Value;
+                var entityId = body.EntityId;
                 filtered = filtered.Where(r =>
-                    (r.Entity1Id == entityIdStr && r.Entity2Type == otherType) ||
-                    (r.Entity2Id == entityIdStr && r.Entity1Type == otherType));
+                    (r.Entity1Id == entityId && r.Entity2Type == otherType) ||
+                    (r.Entity2Id == entityId && r.Entity1Type == otherType));
             }
 
             // Apply pagination
@@ -202,9 +202,9 @@ public partial class RelationshipService : IRelationshipService
                 body.Entity1Id, body.Entity2Id);
 
             // Get relationships from entity1's index
-            var entity1IndexKey = BuildEntityIndexKey(body.Entity1Type.ToString(), body.Entity1Id.ToString());
-            var entity1RelationshipIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship)
-                .GetAsync(entity1IndexKey, cancellationToken) ?? new List<string>();
+            var entity1IndexKey = BuildEntityIndexKey(body.Entity1Type, body.Entity1Id);
+            var entity1RelationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+                .GetAsync(entity1IndexKey, cancellationToken) ?? new List<Guid>();
 
             if (entity1RelationshipIds.Count == 0)
             {
@@ -217,7 +217,7 @@ public partial class RelationshipService : IRelationshipService
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
-            var entity2IdStr = body.Entity2Id.ToString();
+            var entity2Id = body.Entity2Id;
 
             foreach (var (key, model) in bulkResults)
             {
@@ -228,7 +228,7 @@ public partial class RelationshipService : IRelationshipService
                 }
 
                 // Filter to only include relationships with entity2
-                if (model.Entity1Id == entity2IdStr || model.Entity2Id == entity2IdStr)
+                if (model.Entity1Id == entity2Id || model.Entity2Id == entity2Id)
                 {
                     relationships.Add(model);
                 }
@@ -246,8 +246,8 @@ public partial class RelationshipService : IRelationshipService
             // Filter by relationship type
             if (body.RelationshipTypeId.HasValue)
             {
-                var typeIdStr = body.RelationshipTypeId.Value.ToString();
-                filtered = filtered.Where(r => r.RelationshipTypeId == typeIdStr);
+                var typeId = body.RelationshipTypeId.Value;
+                filtered = filtered.Where(r => r.RelationshipTypeId == typeId);
             }
 
             var results = filtered.OrderByDescending(r => r.CreatedAt).ToList();
@@ -286,9 +286,9 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogDebug("Listing relationships by type: {RelationshipTypeId}", body.RelationshipTypeId);
 
             // Get all relationship IDs for this type from the type index
-            var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId.ToString());
-            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship)
-                .GetAsync(typeIndexKey, cancellationToken) ?? new List<string>();
+            var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId);
+            var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+                .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
 
             if (relationshipIds.Count == 0)
             {
@@ -607,7 +607,7 @@ public partial class RelationshipService : IRelationshipService
     /// <summary>
     /// Builds the state store key for a relationship record.
     /// </summary>
-    private static string BuildRelationshipKey(string relationshipId) =>
+    private static string BuildRelationshipKey(Guid relationshipId) =>
         $"{RELATIONSHIP_KEY_PREFIX}{relationshipId}";
 
     /// <summary>
@@ -871,32 +871,32 @@ internal class RelationshipModel
     /// <summary>
     /// Unique identifier for the relationship.
     /// </summary>
-    public string RelationshipId { get; set; } = string.Empty;
+    public Guid RelationshipId { get; set; }
 
     /// <summary>
     /// ID of the first entity in the relationship.
     /// </summary>
-    public string Entity1Id { get; set; } = string.Empty;
+    public Guid Entity1Id { get; set; }
 
     /// <summary>
     /// Type of the first entity (CHARACTER, NPC, ITEM, etc.).
     /// </summary>
-    public string Entity1Type { get; set; } = string.Empty;
+    public EntityType Entity1Type { get; set; }
 
     /// <summary>
     /// ID of the second entity in the relationship.
     /// </summary>
-    public string Entity2Id { get; set; } = string.Empty;
+    public Guid Entity2Id { get; set; }
 
     /// <summary>
     /// Type of the second entity.
     /// </summary>
-    public string Entity2Type { get; set; } = string.Empty;
+    public EntityType Entity2Type { get; set; }
 
     /// <summary>
     /// ID of the relationship type (from RelationshipType service).
     /// </summary>
-    public string RelationshipTypeId { get; set; } = string.Empty;
+    public Guid RelationshipTypeId { get; set; }
 
     /// <summary>
     /// In-game timestamp when the relationship started.
