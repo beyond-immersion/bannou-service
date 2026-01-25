@@ -96,7 +96,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         ServiceErrorEventSeverity severity = ServiceErrorEventSeverity.Error,
         object? details = null,
         string? stack = null,
-        string? correlationId = null,
+        Guid? correlationId = null,
         CancellationToken cancellationToken = default)
     {
         _logger.LogWarning(

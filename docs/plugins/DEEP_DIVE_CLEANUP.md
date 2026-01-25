@@ -40,7 +40,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-auth
 
-- [x] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type. **FIXED** - `SessionDataModel.SessionId` was already `Guid`. Changed `ISessionService` and `ITokenService` method signatures from `string sessionId/accountId` to `Guid`. Conversions occur only at storage boundaries (state store requires reference types). Updated tests.
+- [ ] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type.
 
 ### lib-character-encounter
 
@@ -96,7 +96,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-location
 
-- [x] **T25**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()`. **Decision**: Change POCO to use `LocationType` enum directly. **FIXED** - LocationModel already used enum type; fixed helper methods to use `Guid` instead of strings throughout, changed `List<string>` index stores to `List<Guid>`.
+- [ ] **T25**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()`. **Decision**: Change POCO to use `LocationType` enum directly.
 
 ### lib-permission
 
@@ -104,7 +104,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-realm
 
-- [x] **T25**: `RealmModel.RealmId` stored as string instead of Guid. **Decision**: Change POCO to use `Guid` type. **FIXED** - Changed `RealmModel.RealmId` to `Guid`, changed all helper method signatures, changed `List<string>` index to `List<Guid>`.
+- [ ] **T25**: `RealmModel.RealmId` stored as string instead of Guid. **Decision**: Change POCO to use `Guid` type.
 
 ### lib-realm-history
 
@@ -152,5 +152,4 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### bannou-service (Program.cs)
 
-- [x] **T25**: `Program.ServiceGUID` is now declared as `Guid` type. All generated `*PermissionRegistration.cs` files and service implementations now use `Program.ServiceGUID` directly without `Guid.Parse()`. Generator scripts updated.
-
+- [x] **T25**: `Program.ServiceGUID` is now declared as `Guid` type. All generated `*PermissionRegistration.cs` files and service implementations now use `Program.Service-GUID` directly without `Guid.Parse()`. Generator scripts updated.

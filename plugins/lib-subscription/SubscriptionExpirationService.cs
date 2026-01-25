@@ -118,7 +118,7 @@ public class SubscriptionExpirationService : BackgroundService
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
         // Get the subscription index to find all subscription IDs
-        var indexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Subscription);
+        var indexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Subscription);
         var subscriptionIndex = await indexStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
 
         if (subscriptionIndex == null || subscriptionIndex.Count == 0)
@@ -129,7 +129,7 @@ public class SubscriptionExpirationService : BackgroundService
 
         var nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var expiredCount = 0;
-        var idsToRemoveFromIndex = new List<string>();
+        var idsToRemoveFromIndex = new List<Guid>();
 
         // Use the shared SubscriptionDataModel from SubscriptionService (same assembly, internal access)
         var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreDefinitions.Subscription);
@@ -191,25 +191,14 @@ public class SubscriptionExpirationService : BackgroundService
                         subscription,
                         cancellationToken: cancellationToken);
 
-                    // Publish expiration event with all required fields
-                    if (!Guid.TryParse(subscription.SubscriptionId, out var subGuid) ||
-                        !Guid.TryParse(subscription.AccountId, out var accountGuid) ||
-                        !Guid.TryParse(subscription.ServiceId, out var serviceGuid))
-                    {
-                        _logger.LogError("Subscription {SubscriptionId} has invalid GUID fields - skipping event publish",
-                            subscription.SubscriptionId);
-                        idsToRemoveFromIndex.Add(subscriptionId);
-                        expiredCount++;
-                        continue;
-                    }
-
+                    // Publish expiration event
                     var expirationEvent = new SubscriptionUpdatedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
-                        SubscriptionId = subGuid,
-                        AccountId = accountGuid,
-                        ServiceId = serviceGuid,
+                        SubscriptionId = subscription.SubscriptionId,
+                        AccountId = subscription.AccountId,
+                        ServiceId = subscription.ServiceId,
                         StubName = subscription.StubName,
                         DisplayName = subscription.DisplayName,
                         Action = SubscriptionUpdatedEventAction.Expired,
@@ -255,8 +244,8 @@ public class SubscriptionExpirationService : BackgroundService
     /// Uses optimistic concurrency to handle concurrent modifications safely.
     /// </summary>
     private async Task CleanupSubscriptionIndexAsync(
-        IStateStore<List<string>> indexStore,
-        List<string> idsToRemove,
+        IStateStore<List<Guid>> indexStore,
+        List<Guid> idsToRemove,
         CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt < 3; attempt++)
@@ -267,7 +256,7 @@ public class SubscriptionExpirationService : BackgroundService
                 return;
             }
 
-            var removeSet = new HashSet<string>(idsToRemove);
+            var removeSet = new HashSet<Guid>(idsToRemove);
             var updatedIndex = currentIndex.Where(id => !removeSet.Contains(id)).ToList();
 
             if (updatedIndex.Count == currentIndex.Count)

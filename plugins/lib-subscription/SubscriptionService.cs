@@ -64,7 +64,7 @@ public partial class SubscriptionService : ISubscriptionService
 
         try
         {
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken);
 
             var subscriptions = new List<SubscriptionInfo>();
@@ -135,11 +135,11 @@ public partial class SubscriptionService : ISubscriptionService
             var subscriptions = new List<SubscriptionInfo>();
             var accountIds = new HashSet<Guid>();
             var now = DateTimeOffset.UtcNow;
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
 
             // Determine which subscription IDs to fetch
-            var subscriptionIds = new List<string>();
+            var subscriptionIds = new List<Guid>();
 
             if (body.AccountId.HasValue)
             {
@@ -198,10 +198,7 @@ public partial class SubscriptionService : ISubscriptionService
                     }
 
                     subscriptions.Add(MapToSubscriptionInfo(model));
-                    if (Guid.TryParse(model.AccountId, out var accountGuid))
-                    {
-                        accountIds.Add(accountGuid);
-                    }
+                    accountIds.Add(model.AccountId);
                 }
             }
 
@@ -286,16 +283,16 @@ public partial class SubscriptionService : ISubscriptionService
             }
 
             // Check for existing active subscription
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
-            var existingSubscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken) ?? new List<string>();
+            var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
+            var existingSubscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken) ?? new List<Guid>();
 
             foreach (var existingId in existingSubscriptionIds)
             {
                 var existing = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{existingId}", cancellationToken);
 
                 if (existing != null &&
-                    existing.ServiceId == body.ServiceId.ToString() &&
+                    existing.ServiceId == body.ServiceId &&
                     existing.IsActive)
                 {
                     _logger.LogWarning("Active subscription already exists for account {AccountId} and service {ServiceId}",
@@ -613,9 +610,9 @@ public partial class SubscriptionService : ISubscriptionService
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            SubscriptionId = Guid.Parse(model.SubscriptionId),
-            AccountId = Guid.Parse(model.AccountId),
-            ServiceId = Guid.Parse(model.ServiceId),
+            SubscriptionId = model.SubscriptionId,
+            AccountId = model.AccountId,
+            ServiceId = model.ServiceId,
             StubName = model.StubName,
             DisplayName = model.DisplayName,
             Action = ParseAction(action),
