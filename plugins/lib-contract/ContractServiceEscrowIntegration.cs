@@ -1299,7 +1299,14 @@ public partial class ContractService
                 if (amount == REMAINDER_SENTINEL)
                 {
                     var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
-                    amount = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
+                    var balanceResult = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
+                    if (balanceResult == null)
+                    {
+                        _logger.LogWarning("Distribution clause {ClauseId} failed: could not query remainder balance for wallet {WalletId}",
+                            clause.Id, sourceId);
+                        return null;
+                    }
+                    amount = balanceResult.Value;
                 }
 
                 var currencyCode = clause.GetProperty("currency_code") ?? "gold";

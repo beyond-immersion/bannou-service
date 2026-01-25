@@ -625,7 +625,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     !encounter.EncounterTypeCode.Equals(body.EncounterTypeCode, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                if (body.Outcome.HasValue && encounter.Outcome != body.Outcome.Value.ToString())
+                if (body.Outcome.HasValue && encounter.Outcome != body.Outcome.Value)
                     continue;
 
                 var encounterTimestamp = DateTimeOffset.FromUnixTimeSeconds(encounter.Timestamp);
