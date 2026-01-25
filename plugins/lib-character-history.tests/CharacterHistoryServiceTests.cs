@@ -228,12 +228,12 @@ public class CharacterHistoryServiceTests
 
         var warParticipation = new ParticipationData
         {
-            ParticipationId = warParticipationId.ToString(),
-            CharacterId = characterId.ToString(),
-            EventId = Guid.NewGuid().ToString(),
+            ParticipationId = warParticipationId,
+            CharacterId = characterId,
+            EventId = Guid.NewGuid(),
             EventName = "War Event",
-            EventCategory = "WAR",
-            Role = "COMBATANT",
+            EventCategory = EventCategory.WAR,
+            Role = ParticipationRole.COMBATANT,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Significance = 0.8f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -241,12 +241,12 @@ public class CharacterHistoryServiceTests
 
         var culturalParticipation = new ParticipationData
         {
-            ParticipationId = culturalParticipationId.ToString(),
-            CharacterId = characterId.ToString(),
-            EventId = Guid.NewGuid().ToString(),
+            ParticipationId = culturalParticipationId,
+            CharacterId = characterId,
+            EventId = Guid.NewGuid(),
             EventName = "Cultural Event",
-            EventCategory = "CULTURAL",
-            Role = "WITNESS",
+            EventCategory = EventCategory.CULTURAL,
+            Role = ParticipationRole.WITNESS,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Significance = 0.5f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
