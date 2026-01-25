@@ -65,7 +65,7 @@ public partial class RelationshipService : IRelationshipService
     {
         try
         {
-            _logger.LogInformation("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
+            _logger.LogDebug("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
             var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
@@ -73,7 +73,7 @@ public partial class RelationshipService : IRelationshipService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
+                _logger.LogDebug("Relationship not found: {RelationshipId}", body.RelationshipId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -100,7 +100,7 @@ public partial class RelationshipService : IRelationshipService
     {
         try
         {
-            _logger.LogInformation("Listing relationships for entity: {EntityId} ({EntityType})",
+            _logger.LogDebug("Listing relationships for entity: {EntityId} ({EntityType})",
                 body.EntityId, body.EntityType);
 
             // Get all relationship IDs for this entity from the entity index
@@ -197,7 +197,7 @@ public partial class RelationshipService : IRelationshipService
     {
         try
         {
-            _logger.LogInformation("Getting relationships between {Entity1Id} and {Entity2Id}",
+            _logger.LogDebug("Getting relationships between {Entity1Id} and {Entity2Id}",
                 body.Entity1Id, body.Entity2Id);
 
             // Get relationships from entity1's index
@@ -282,7 +282,7 @@ public partial class RelationshipService : IRelationshipService
     {
         try
         {
-            _logger.LogInformation("Listing relationships by type: {RelationshipTypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Listing relationships by type: {RelationshipTypeId}", body.RelationshipTypeId);
 
             // Get all relationship IDs for this type from the type index
             var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId.ToString());
@@ -380,13 +380,13 @@ public partial class RelationshipService : IRelationshipService
     {
         try
         {
-            _logger.LogInformation("Creating relationship between {Entity1Id} ({Entity1Type}) and {Entity2Id} ({Entity2Type}) with type {TypeId}",
+            _logger.LogDebug("Creating relationship between {Entity1Id} ({Entity1Type}) and {Entity2Id} ({Entity2Type}) with type {TypeId}",
                 body.Entity1Id, body.Entity1Type, body.Entity2Id, body.Entity2Type, body.RelationshipTypeId);
 
             // Validate that entities are different
             if (body.Entity1Id == body.Entity2Id && body.Entity1Type == body.Entity2Type)
             {
-                _logger.LogWarning("Cannot create relationship between an entity and itself");
+                _logger.LogDebug("Cannot create relationship between an entity and itself");
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -401,7 +401,7 @@ public partial class RelationshipService : IRelationshipService
 
             if (!string.IsNullOrEmpty(existingId))
             {
-                _logger.LogWarning("Relationship already exists with composite key: {CompositeKey}", compositeKey);
+                _logger.LogDebug("Relationship already exists with composite key: {CompositeKey}", compositeKey);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -467,7 +467,7 @@ public partial class RelationshipService : IRelationshipService
     {
         try
         {
-            _logger.LogInformation("Updating relationship: {RelationshipId}", body.RelationshipId);
+            _logger.LogDebug("Updating relationship: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
             var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
@@ -475,14 +475,14 @@ public partial class RelationshipService : IRelationshipService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
+                _logger.LogDebug("Relationship not found: {RelationshipId}", body.RelationshipId);
                 return (StatusCodes.NotFound, null);
             }
 
             // Check if relationship has ended
             if (model.EndedAt.HasValue)
             {
-                _logger.LogWarning("Cannot update ended relationship: {RelationshipId}", body.RelationshipId);
+                _logger.LogDebug("Cannot update ended relationship: {RelationshipId}", body.RelationshipId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -551,7 +551,7 @@ public partial class RelationshipService : IRelationshipService
     {
         try
         {
-            _logger.LogInformation("Ending relationship: {RelationshipId}", body.RelationshipId);
+            _logger.LogDebug("Ending relationship: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
             var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
@@ -559,14 +559,14 @@ public partial class RelationshipService : IRelationshipService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
+                _logger.LogDebug("Relationship not found: {RelationshipId}", body.RelationshipId);
                 return StatusCodes.NotFound;
             }
 
             // Check if already ended
             if (model.EndedAt.HasValue)
             {
-                _logger.LogWarning("Relationship already ended: {RelationshipId}", body.RelationshipId);
+                _logger.LogDebug("Relationship already ended: {RelationshipId}", body.RelationshipId);
                 return StatusCodes.Conflict;
             }
 
@@ -855,7 +855,7 @@ public partial class RelationshipService : IRelationshipService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Relationship service permissions...");
+        _logger.LogDebug("Registering Relationship service permissions...");
         await RelationshipPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 

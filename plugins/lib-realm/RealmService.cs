@@ -67,7 +67,7 @@ public partial class RealmService : IRealmService
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -100,7 +100,7 @@ public partial class RealmService : IRealmService
 
             if (string.IsNullOrEmpty(realmId))
             {
-                _logger.LogWarning("Realm not found by code: {Code}", body.Code);
+                _logger.LogDebug("Realm not found by code: {Code}", body.Code);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -270,7 +270,7 @@ public partial class RealmService : IRealmService
 
             if (!string.IsNullOrEmpty(existingId))
             {
-                _logger.LogWarning("Realm with code already exists: {Code}", code);
+                _logger.LogDebug("Realm with code already exists: {Code}", code);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -342,7 +342,7 @@ public partial class RealmService : IRealmService
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for update: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for update: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -419,14 +419,14 @@ public partial class RealmService : IRealmService
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for deletion: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for deletion: {RealmId}", body.RealmId);
                 return StatusCodes.NotFound;
             }
 
             // Realm should be deprecated before deletion
             if (!model.IsDeprecated)
             {
-                _logger.LogWarning("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
+                _logger.LogDebug("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
                 return StatusCodes.Conflict;
             }
 
@@ -481,13 +481,13 @@ public partial class RealmService : IRealmService
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for deprecation: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for deprecation: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (model.IsDeprecated)
             {
-                _logger.LogWarning("Realm already deprecated: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm already deprecated: {RealmId}", body.RealmId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -531,13 +531,13 @@ public partial class RealmService : IRealmService
 
             if (model == null)
             {
-                _logger.LogWarning("Realm not found for undeprecation: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found for undeprecation: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!model.IsDeprecated)
             {
-                _logger.LogWarning("Realm is not deprecated: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm is not deprecated: {RealmId}", body.RealmId);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -838,7 +838,7 @@ public partial class RealmService : IRealmService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Realm service permissions...");
+        _logger.LogDebug("Registering Realm service permissions...");
         await RealmPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 

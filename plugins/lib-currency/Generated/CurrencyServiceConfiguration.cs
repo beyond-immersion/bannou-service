@@ -85,7 +85,7 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
     /// How autogain is calculated (lazy = on-demand at query time, task = background processing)
     /// Environment variable: CURRENCY_AUTOGAIN_PROCESSING_MODE
     /// </summary>
-    public BeyondImmersion.BannouService.AutogainProcessingMode AutogainProcessingMode { get; set; } = BeyondImmersion.BannouService.AutogainProcessingMode.Lazy;
+    public AutogainProcessingMode AutogainProcessingMode { get; set; } = AutogainProcessingMode.Lazy;
 
     /// <summary>
     /// Delay in seconds before first autogain task cycle (allows services to start)

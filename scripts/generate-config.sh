@@ -110,9 +110,9 @@ try:
                 enum_type_name = to_pascal_case(prop_name)
                 # Check if this enum already exists in API schema (avoid duplicates)
                 if enum_type_name in existing_api_enums:
-                    # API schema already defines this enum - use the API enum type (fully qualified)
-                    csharp_type = f'BeyondImmersion.BannouService.{enum_type_name}'
-                    print(f'# NOTE: Using API enum {enum_type_name} from BannouService namespace', file=sys.stderr)
+                    # API schema already defines this enum - use it directly (same namespace)
+                    csharp_type = enum_type_name
+                    print(f'# NOTE: Reusing API enum {enum_type_name} (already in same namespace)', file=sys.stderr)
                 else:
                     # Store enum for generation
                     enum_types.append({

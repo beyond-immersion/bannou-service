@@ -224,138 +224,19 @@ None identified.
 
 ## Tenet Violations (Audit)
 
-*Audit performed: 2026-01-24*
-*Audited files: RealmHistoryService.cs, RealmHistoryServicePlugin.cs, AssemblyInfo.cs*
-
 ### Category: IMPLEMENTATION
 
-1. **T25: Internal Model Type Safety** - RealmHistoryService.cs:1043-1053 - `RealmParticipationData` uses string fields for Guid and enum types
-   - What's wrong: Internal POCO `RealmParticipationData` uses `string` for `ParticipationId`, `RealmId`, `EventId`, `EventCategory`, and `Role` fields instead of proper `Guid` and enum types. This violates T25 which requires internal models to use the strongest available C# type.
-   - Fix: Change `ParticipationId`, `RealmId`, `EventId` to `Guid` type. Change `EventCategory` to `RealmEventCategory` enum. Change `Role` to `RealmEventRole` enum. Remove `Enum.TryParse` calls in mapping methods since the model would already be typed.
+1. **T25: Internal Model Type Safety** - Internal POCOs use string fields for Guid and enum types
+   - **Locations**: `RealmParticipationData`, `RealmParticipationIndexData`, `RealmLoreData`, `RealmLoreElementData`
+   - **Issue**: Fields like `ParticipationId`, `RealmId`, `EventId`, `EventCategory`, `Role`, `ElementType` are strings instead of proper `Guid`/enum types
+   - **Scope**: Requires model refactoring to use proper types, eliminating `Enum.TryParse` and `.ToString()` calls
 
-2. **T25: Internal Model Type Safety** - RealmHistoryService.cs:1058-1062 - `RealmParticipationIndexData` uses string for Guid
-   - What's wrong: `RealmId` field is `string` instead of `Guid`. Additionally, `ParticipationIds` is `List<string>` instead of `List<Guid>`.
-   - Fix: Change `RealmId` to `Guid` and `ParticipationIds` to `List<Guid>`.
+2. **T9: Multi-Instance Safety** - Read-modify-write operations without distributed locks
+   - **Locations**: Record/delete participation (dual-index updates), set/add lore elements (merge operations)
+   - **Issue**: Concurrent modifications could lose updates due to race conditions
+   - **Scope**: Requires `IDistributedLockProvider` integration
 
-3. **T25: Internal Model Type Safety** - RealmHistoryService.cs:1067-1073 - `RealmLoreData` uses string for Guid
-   - What's wrong: `RealmId` field is `string` instead of `Guid`.
-   - Fix: Change `RealmId` to `Guid` type.
+### False Positives (Not Violations)
 
-4. **T25: Internal Model Type Safety** - RealmHistoryService.cs:1078-1086 - `RealmLoreElementData` uses string for enum
-   - What's wrong: `ElementType` field is `string` instead of `RealmLoreElementType` enum.
-   - Fix: Change `ElementType` to `RealmLoreElementType` enum type.
-
-5. **T25: Internal Model Type Safety - Enum.Parse in business logic** - RealmHistoryService.cs:940-945 - `MapToRealmHistoricalParticipation` uses Enum.TryParse
-   - What's wrong: Business logic uses `Enum.TryParse` to convert stored strings to enums. T25 states "Enum parsing belongs only at system boundaries (deserialization, external input)" - the internal POCO should already be typed.
-   - Fix: Once the internal models use proper enum types, the `Enum.TryParse` calls become unnecessary. `BannouJson` handles serialization/deserialization of enum-typed fields automatically.
-
-6. **T25: Internal Model Type Safety - Enum.Parse in business logic** - RealmHistoryService.cs:957-959 - `MapToRealmLoreElement` uses Enum.TryParse
-   - What's wrong: Same issue as above - parsing enum from string in mapping method instead of having typed POCO.
-   - Fix: Same as above - use enum-typed POCO.
-
-7. **T25: Internal Model Type Safety - ToString() populating internal model** - RealmHistoryService.cs:96-101 - `RecordRealmParticipationAsync` uses ToString() for enum/Guid
-   - What's wrong: Lines 96-101 use `.ToString()` to populate `RealmParticipationData` fields (`ParticipationId`, `RealmId`, `EventId`, `EventCategory`, `Role`). T25 prohibits using `.ToString()` to populate internal models.
-   - Fix: Once internal models use proper types, assign values directly without `.ToString()`.
-
-8. **T25: Internal Model Type Safety - ToString() populating internal model** - RealmHistoryService.cs:974 - `MapToRealmLoreElementData` uses ToString() for enum
-   - What's wrong: `ElementType = element.ElementType.ToString()` converts enum to string for storage.
-   - Fix: Once internal model uses enum type, assign directly.
-
-9. **T9: Multi-Instance Safety** - RealmHistoryService.cs:113-126 - No distributed lock for read-modify-write on indexes
-   - What's wrong: The dual-index update pattern (read index, add ID, save index) at lines 113-126 is not protected by a distributed lock. If two instances concurrently record participations for the same realm/event, one update could be lost due to the read-modify-write race condition.
-   - Fix: Use `IDistributedLockProvider` to acquire a lock on the realm/event index keys before the read-modify-write sequence.
-
-10. **T9: Multi-Instance Safety** - RealmHistoryService.cs:352-369 - No distributed lock for read-modify-write on deletion
-    - What's wrong: `DeleteRealmParticipationAsync` performs read-modify-write on both realm and event indexes without distributed locks.
-    - Fix: Acquire distributed lock before modifying indexes.
-
-11. **T9: Multi-Instance Safety** - RealmHistoryService.cs:480-528 - No distributed lock for lore merge operation
-    - What's wrong: `SetRealmLoreAsync` with `replaceExisting=false` performs a read-modify-write on lore data without a distributed lock. Concurrent modifications could lose updates.
-    - Fix: Use distributed lock when merging lore elements.
-
-12. **T9: Multi-Instance Safety** - RealmHistoryService.cs:596-633 - No distributed lock for add lore element
-    - What's wrong: `AddRealmLoreElementAsync` performs read-modify-write without distributed lock.
-    - Fix: Use distributed lock for the lore key.
-
-### Category: QUALITY
-
-13. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:70-71 - Operation entry logged at Information instead of Debug
-    - What's wrong: T10 specifies "Operation Entry (Debug): Log input parameters" but line 70 uses `LogInformation` for "Recording participation for realm...". This is operation entry, not a significant business decision.
-    - Fix: Change to `LogDebug`.
-
-14. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:168 - GetRealmParticipationAsync logs at Information
-    - What's wrong: Same issue - operation entry should be Debug level.
-    - Fix: Change `LogInformation` to `LogDebug`.
-
-15. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:253 - GetRealmEventParticipantsAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-16. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:336 - DeleteRealmParticipationAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-17. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:412 - GetRealmLoreAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-18. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:477-478 - SetRealmLoreAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-19. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:589-590 - AddRealmLoreElementAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-20. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:695 - DeleteRealmLoreAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-21. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:749 - DeleteAllRealmHistoryAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-22. **T10: Logging Standards - Wrong log level for operation entry** - RealmHistoryService.cs:845 - SummarizeRealmHistoryAsync logs at Information
-    - What's wrong: Same issue.
-    - Fix: Change to `LogDebug`.
-
-23. **T10: Logging Standards - Completion log at Information** - RealmHistoryService.cs:139-140 - Success logged at Information for individual record
-    - What's wrong: Logging individual record operations at Information level is too verbose. Lines 139-140 "Recorded participation {ParticipationId}" should be Debug. The Information level is for "significant state changes" - a single record creation is routine, not significant.
-    - Fix: Change to `LogDebug` or remove (the operation entry log + event publication is sufficient).
-
-24. **T10: Logging Standards - Completion log at Information** - RealmHistoryService.cs:381 - Success logged at Information
-    - What's wrong: Same issue for delete completion.
-    - Fix: Change to `LogDebug`.
-
-25. **T10: Logging Standards - Completion log at Information** - RealmHistoryService.cs:554-555 - Success logged at Information
-    - What's wrong: Same issue for lore set completion.
-    - Fix: Change to `LogDebug`.
-
-26. **T10: Logging Standards - Completion log at Information** - RealmHistoryService.cs:661 - Success logged at Information
-    - What's wrong: Same issue for add lore element completion.
-    - Fix: Change to `LogDebug`.
-
-27. **T10: Logging Standards - Completion log at Information** - RealmHistoryService.cs:718 - Success logged at Information
-    - What's wrong: Same issue for delete lore completion.
-    - Fix: Change to `LogDebug`.
-
-### Category: FOUNDATION
-
-28. **T6: Service Implementation Pattern** - RealmHistoryService.cs:44-57 - Missing IEventConsumer parameter null check comment
-    - What's wrong: While the tenet states "NRT-protected parameters: no null checks needed - compiler enforces non-null at call sites", the code does not have any comment explaining the reliance on NRT. Other services in the codebase explicitly use `ArgumentNullException.ThrowIfNull()` for constructor parameters to be explicit. The inconsistency itself is not a violation, but should be noted.
-    - Fix: This is a minor observation. The code relies on NRT which is compliant with T6.
-
-### Summary
-
-**Total violations found: 27**
-
-| Category | Count |
-|----------|-------|
-| IMPLEMENTATION | 12 |
-| QUALITY | 15 |
-| FOUNDATION | 0 |
-
-**Critical issues requiring immediate attention:**
-1. T25 violations (Internal Model Type Safety) - 8 violations - The internal POCOs use strings for Guids and enums, causing unnecessary parsing in business logic
-2. T9 violations (Multi-Instance Safety) - 4 violations - Read-modify-write operations on indexes without distributed locks
-3. T10 violations (Logging Standards) - 15 violations - Operation entry logs at Information level instead of Debug
+- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
+- **T7 ApiException handling**: RealmHistory service only calls state store (infrastructure lib), not external services via mesh

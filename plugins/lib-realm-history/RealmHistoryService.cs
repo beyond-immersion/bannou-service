@@ -67,7 +67,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         RecordRealmParticipationRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Recording participation for realm {RealmId} in event {EventId}",
+        _logger.LogDebug("Recording participation for realm {RealmId} in event {EventId}",
             body.RealmId, body.EventId);
 
         try
@@ -136,7 +136,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 Role = body.Role.ToString()
             }, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Recorded participation {ParticipationId} for realm {RealmId}",
+            _logger.LogDebug("Recorded participation {ParticipationId} for realm {RealmId}",
                 participationId, body.RealmId);
 
             return (StatusCodes.OK, participation);
@@ -165,7 +165,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         GetRealmParticipationRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting participation for realm {RealmId}", body.RealmId);
+        _logger.LogDebug("Getting participation for realm {RealmId}", body.RealmId);
 
         try
         {
@@ -250,7 +250,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         GetRealmEventParticipantsRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting participants for event {EventId}", body.EventId);
+        _logger.LogDebug("Getting participants for event {EventId}", body.EventId);
 
         try
         {
@@ -333,7 +333,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         DeleteRealmParticipationRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting participation {ParticipationId}", body.ParticipationId);
+        _logger.LogDebug("Deleting participation {ParticipationId}", body.ParticipationId);
 
         try
         {
@@ -378,7 +378,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 HistoricalEventId = Guid.Parse(participation.EventId)
             }, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Deleted participation {ParticipationId}", body.ParticipationId);
+            _logger.LogDebug("Deleted participation {ParticipationId}", body.ParticipationId);
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -409,7 +409,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         GetRealmLoreRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting lore for realm {RealmId}", body.RealmId);
+        _logger.LogDebug("Getting lore for realm {RealmId}", body.RealmId);
 
         try
         {
@@ -474,7 +474,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         SetRealmLoreRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Setting lore for realm {RealmId}, replaceExisting={ReplaceExisting}",
+        _logger.LogDebug("Setting lore for realm {RealmId}, replaceExisting={ReplaceExisting}",
             body.RealmId, body.ReplaceExisting);
 
         try
@@ -551,7 +551,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 }, cancellationToken: cancellationToken);
             }
 
-            _logger.LogInformation("Set lore for realm {RealmId}, {ElementCount} elements",
+            _logger.LogDebug("Set lore for realm {RealmId}, {ElementCount} elements",
                 body.RealmId, loreData.Elements.Count);
 
             return (StatusCodes.OK, new RealmLoreResponse
@@ -586,7 +586,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         AddRealmLoreElementRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Adding lore element for realm {RealmId}, type={ElementType}, key={Key}",
+        _logger.LogDebug("Adding lore element for realm {RealmId}, type={ElementType}, key={Key}",
             body.RealmId, body.Element.ElementType, body.Element.Key);
 
         try
@@ -658,7 +658,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 }, cancellationToken: cancellationToken);
             }
 
-            _logger.LogInformation("Added lore element for realm {RealmId}", body.RealmId);
+            _logger.LogDebug("Added lore element for realm {RealmId}", body.RealmId);
 
             return (StatusCodes.OK, new RealmLoreResponse
             {
@@ -692,7 +692,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         DeleteRealmLoreRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting lore for realm {RealmId}", body.RealmId);
+        _logger.LogDebug("Deleting lore for realm {RealmId}", body.RealmId);
 
         try
         {
@@ -715,7 +715,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 RealmId = body.RealmId
             }, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Deleted lore for realm {RealmId}", body.RealmId);
+            _logger.LogDebug("Deleted lore for realm {RealmId}", body.RealmId);
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -746,7 +746,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         DeleteAllRealmHistoryRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting all history for realm {RealmId}", body.RealmId);
+        _logger.LogDebug("Deleting all history for realm {RealmId}", body.RealmId);
 
         try
         {
@@ -807,7 +807,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 LoreDeleted = loreDeleted
             }, cancellationToken: cancellationToken);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Deleted all history for realm {RealmId}: {ParticipationsDeleted} participations, lore={LoreDeleted}",
                 body.RealmId, participationsDeleted, loreDeleted);
 
@@ -842,7 +842,7 @@ public partial class RealmHistoryService : IRealmHistoryService
         SummarizeRealmHistoryRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Summarizing history for realm {RealmId}", body.RealmId);
+        _logger.LogDebug("Summarizing history for realm {RealmId}", body.RealmId);
 
         try
         {
@@ -1024,7 +1024,7 @@ public partial class RealmHistoryService : IRealmHistoryService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering RealmHistory service permissions...");
+        _logger.LogDebug("Registering RealmHistory service permissions...");
         await RealmHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
