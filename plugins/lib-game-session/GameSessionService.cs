@@ -449,7 +449,7 @@ public partial class GameSessionService : IGameSessionService
             // Acquire lock on session (multiple players may join concurrently)
             var sessionKey = SESSION_KEY_PREFIX + lobbyId.ToString();
             await using var sessionLock = await _lockProvider.LockAsync(
-                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+                "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
             if (!sessionLock.Success)
             {
                 _logger.LogWarning("Could not acquire session lock for lobby {LobbyId}", lobbyId);
@@ -702,7 +702,7 @@ public partial class GameSessionService : IGameSessionService
             // Acquire lock on session (multiple players may leave concurrently)
             var sessionKey = SESSION_KEY_PREFIX + lobbyId.ToString();
             await using var sessionLock = await _lockProvider.LockAsync(
-                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+                "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
             if (!sessionLock.Success)
             {
                 _logger.LogWarning("Could not acquire session lock for lobby {LobbyId}", lobbyId);
@@ -874,7 +874,7 @@ public partial class GameSessionService : IGameSessionService
             // Acquire lock on session (multiple players may join concurrently)
             var sessionKey = SESSION_KEY_PREFIX + gameSessionId;
             await using var sessionLock = await _lockProvider.LockAsync(
-                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+                "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
             if (!sessionLock.Success)
             {
                 _logger.LogWarning("Could not acquire session lock for {GameSessionId}", gameSessionId);
@@ -1072,7 +1072,7 @@ public partial class GameSessionService : IGameSessionService
             // Acquire lock on session (multiple players may leave concurrently)
             var sessionKey = SESSION_KEY_PREFIX + gameSessionId;
             await using var sessionLock = await _lockProvider.LockAsync(
-                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+                "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
             if (!sessionLock.Success)
             {
                 _logger.LogWarning("Could not acquire session lock for {GameSessionId}", gameSessionId);
@@ -1335,7 +1335,7 @@ public partial class GameSessionService : IGameSessionService
             // Acquire lock on session (concurrent modification protection)
             var sessionKey = SESSION_KEY_PREFIX + sessionId;
             await using var sessionLock = await _lockProvider.LockAsync(
-                "game-session", sessionKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+                "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
             if (!sessionLock.Success)
             {
                 _logger.LogWarning("Could not acquire session lock for {SessionId}", sessionId);

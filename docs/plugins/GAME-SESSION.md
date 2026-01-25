@@ -254,67 +254,25 @@ Subscription Cache Architecture
 
 ## Known Quirks & Caveats
 
-### Tenet Violations (Fix Immediately)
-
-1. **FOUNDATION TENETS (T6) - Missing null checks in constructor**: The constructor at `GameSessionService.cs` lines 134-170 does not perform `ArgumentNullException.ThrowIfNull()` or `?? throw new ArgumentNullException()` checks on any of its injected dependencies (`stateStoreFactory`, `messageBus`, `logger`, `configuration`, `clientEventPublisher`, `voiceClient`, `permissionClient`, `subscriptionClient`, `lockProvider`). The T6 pattern requires explicit null-guard on all constructor parameters.
-   - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 146-154
-   - **Fix**: Add `ArgumentNullException.ThrowIfNull()` for each constructor parameter before assignment.
-
-2. **IMPLEMENTATION TENETS (T21) - Hardcoded lock timeout**: All `_lockProvider.LockAsync()` calls use a hardcoded `60` second expiry (lines 452, 705, 877, 1075, 1338). This is a tunable value that must be defined as a configuration property.
-   - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 452, 705, 877, 1075, 1338
-   - **Fix**: Add `LockTimeoutSeconds` to `schemas/game-session-configuration.yaml` and use `_configuration.LockTimeoutSeconds` instead of the literal `60`.
-
-3. **IMPLEMENTATION TENETS (T25) - String field for GUID in internal POCO**: `GameSessionModel.SessionId` is declared as `string` (line 2212) but represents a GUID. All operations on it involve `Guid.Parse()` or `.ToString()` conversions. Similarly, `CleanupSessionModel.SessionId` at `ReservationCleanupService.cs` line 226.
-   - **File**: `plugins/lib-game-session/GameSessionService.cs`, line 2212; `ReservationCleanupService.cs`, line 226
-   - **Fix**: Change `SessionId` to `Guid` type in both `GameSessionModel` and `CleanupSessionModel`. Remove all `Guid.Parse(model.SessionId)` and `sessionId.ToString()` conversions.
-
-4. **IMPLEMENTATION TENETS (T25) - String comparison for enum values**: `HandleSubscriptionUpdatedInternalAsync` at line 1635 accepts `action` as `string` and compares it with string literals (`"created"`, `"renewed"`, `"updated"`, `"cancelled"`, `"expired"`) at lines 1641, 1656. The `SubscriptionUpdatedEvent.Action` is a typed `SubscriptionUpdatedEventAction` enum, but `GameSessionServiceEvents.cs` line 77 converts it to string with `.ToString().ToLowerInvariant()`.
-   - **File**: `plugins/lib-game-session/GameSessionServiceEvents.cs`, line 77; `GameSessionService.cs`, lines 1635, 1641, 1656
-   - **Fix**: Change `HandleSubscriptionUpdatedInternalAsync` parameter from `string action` to `SubscriptionUpdatedEventAction action` and use enum equality checks instead of string comparisons.
-
-5. **IMPLEMENTATION TENETS (T25) - `.ToString()` populating event models**: `CreateGameSessionAsync` at lines 345-347 uses `session.GameType.ToString()` and `session.Status.ToString()` to populate `GameSessionCreatedEvent`. The `GameSessionActionPerformedEvent.ActionType` at line 643 uses `body.ActionType.ToString()`. If the event models use string fields for cross-language compatibility, this conversion should be at the event boundary only, which it is -- but the internal `GameSessionModel` stores `SessionId` as string (see violation 3 above).
-   - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 345, 347, 643
-   - **Fix**: Verify that event model schema fields are intentionally string for cross-language compatibility. If so, this is acceptable at the event boundary. The primary fix is violation 3.
-
-6. **IMPLEMENTATION TENETS (T7) - Missing ApiException catch**: All endpoint methods (e.g., `ListGameSessionsAsync`, `CreateGameSessionAsync`, `JoinGameSessionAsync`, etc.) catch only the generic `Exception` at their outer try-catch. They do not catch `ApiException` separately for expected API failures from downstream service calls (`_voiceClient`, `_permissionClient`, `_subscriptionClient`). Per T7, `ApiException` should be caught first and logged as warning with status propagation, before the generic `Exception` catch.
-   - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 219-232, 360-373, 565-578, 662-675, 840-853, 1039-1052, 1189-1202, 1304-1317, 1391-1403, 1521-1534
-   - **Fix**: Add `catch (ApiException ex)` before `catch (Exception ex)` in each endpoint method. Log as warning and propagate status code.
-
-7. **IMPLEMENTATION TENETS (T21) - Hardcoded fallback for SupportedGameServices**: `GameSessionStartupService.cs` line 65 has `?? new[] { "arcadia", "generic" }` as a fallback when `_configuration.SupportedGameServices` is null. Similarly in `GameSessionService.cs` line 158. The configuration has a default value of `"arcadia,generic"` already, so this fallback masks configuration issues.
-   - **File**: `plugins/lib-game-session/GameSessionStartupService.cs`, line 65; `GameSessionService.cs`, line 158
-   - **Fix**: Since `GameSessionServiceConfiguration.SupportedGameServices` has a non-null default (`"arcadia,generic"`), remove the `?? new[]` fallback. If the value can genuinely be null despite the default, throw an `InvalidOperationException` for fail-fast behavior.
-
-8. **QUALITY TENETS (T10) - LogInformation used for operation entry**: Multiple endpoints log at `Information` level for routine operation entry (e.g., line 181 "Listing game sessions", line 246 "Creating game session", line 385 "Getting game session", line 429 "Player joining game"). Per T10, operation entry should be `Debug` level. `Information` is for significant state changes.
-   - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 181, 246, 385, 429, 597, 692, 871, 1069, 1221, 1332, 1423
-   - **Fix**: Change operation entry logs from `LogInformation` to `LogDebug`. Keep `LogInformation` only for the success outcome logs that represent meaningful state changes (e.g., "Game session created successfully", "Player joined").
-
-9. **QUALITY TENETS (T19) - Missing XML documentation on internal helper methods**: `LoadSessionAsync` (line 2099), `MapModelToResponse` (line 2107), `MapRequestGameTypeToResponse` (line 2135), `MapChatMessageType` (line 2157), `MapVoiceTierToConnectionInfoTier` (line 2168), `MapVoiceCodecToConnectionInfoCodec` (line 2178) are missing `<summary>` XML documentation.
-   - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 2099, 2107, 2135, 2157, 2168, 2178
-   - **Fix**: Add `/// <summary>` documentation to each helper method.
-
-10. **QUALITY TENETS (T19) - Missing XML documentation on internal model properties**: `GameSessionModel` properties (lines 2212-2222) are missing `<summary>` tags on: `SessionId`, `GameType`, `SessionName`, `Status`, `MaxPlayers`, `CurrentPlayers`, `IsPrivate`, `Owner`, `Players`, `CreatedAt`, `GameSettings`.
-    - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 2212-2222
-    - **Fix**: Add `/// <summary>` documentation to each property.
-
-11. **IMPLEMENTATION TENETS (T5) - Untyped event models defined inline**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline in `ReservationCleanupService.cs` (lines 254-270) rather than being defined in a schema file and generated. Per T5, all events must be typed schemas.
-    - **File**: `plugins/lib-game-session/ReservationCleanupService.cs`, lines 254-270
-    - **Fix**: Define `SessionCancelledClientEvent` in `schemas/game-session-client-events.yaml` and `SessionCancelledServerEvent` in `schemas/game-session-events.yaml`, then regenerate.
-
-12. **CLAUDE.md - `?? string.Empty` without justification**: `GameSessionModel.SessionId` (line 2212) and `ReservationModel.Token` (line 2263) use `= string.Empty` initializers on fields that should be `Guid` (violation 3) or should throw on null. `CleanupSessionModel.SessionId` (line 226), `CleanupPlayerModel.WebSocketSessionId` (line 248), `SessionCancelledClientEvent.SessionId` (line 257), `SessionCancelledClientEvent.Reason` (line 258), `SessionCancelledServerEvent.SessionId` (line 268), `SessionCancelledServerEvent.Reason` (line 269) all use `= string.Empty` without the required justification comment.
-    - **File**: `plugins/lib-game-session/GameSessionService.cs`, lines 2212, 2263; `ReservationCleanupService.cs`, lines 226, 248, 257, 258, 268, 269
-    - **Fix**: For `SessionId` fields, change to `Guid` type (per violation 3). For `Token`, `Reason`, and `WebSocketSessionId` fields on internal models, either make them nullable (`string?`) or add the required justification comment explaining why empty string is acceptable.
-
-13. **IMPLEMENTATION TENETS (T25) - String field for WebSocketSessionId in CleanupPlayerModel**: `CleanupPlayerModel.WebSocketSessionId` at `ReservationCleanupService.cs` line 248 is `string` but represents a GUID (WebSocket session IDs are GUIDs).
-    - **File**: `plugins/lib-game-session/ReservationCleanupService.cs`, line 248
-    - **Fix**: Change to `Guid WebSocketSessionId { get; set; }`.
-
-14. **IMPLEMENTATION TENETS (T25) - String field for SessionId in SessionCancelledClientEvent and SessionCancelledServerEvent**: Both inline event models at `ReservationCleanupService.cs` lines 257, 268 use `string SessionId` instead of `Guid SessionId`.
-    - **File**: `plugins/lib-game-session/ReservationCleanupService.cs`, lines 257, 268
-    - **Fix**: Change to `Guid SessionId`. However, the better fix is violation 11 (define in schema and generate).
-
 ### Bugs (Fix Immediately)
 
-None identified beyond the tenet violations above.
+No bugs identified.
+
+### False Positives Removed
+
+The following items were identified as violations but do not apply:
+
+1. **T6 (Constructor null checks)**: NRT provides compile-time safety. Adding runtime null checks for NRT-protected parameters is unnecessary.
+
+2. **T19 (Internal helper methods)**: T19 applies to PUBLIC members only. Private helper methods don't require XML documentation.
+
+3. **T19 (Internal model properties)**: T19 applies to PUBLIC members only. Internal model properties don't require XML documentation.
+
+4. **T25 (`.ToString()` on event models)**: T25 explicitly allows `.ToString()` at event boundaries for cross-language compatibility. Event schemas intentionally use string types.
+
+### Previously Fixed
+
+1. **T21 (Hardcoded lock timeout)**: Added `LockTimeoutSeconds` to configuration schema (default: 60). All `_lockProvider.LockAsync()` calls now use `_configuration.LockTimeoutSeconds`.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -338,26 +296,36 @@ None identified beyond the tenet violations above.
 
 ### Design Considerations (Requires Planning)
 
-1. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
+1. **T25 (String SessionId in POCOs)**: `GameSessionModel.SessionId` and `CleanupSessionModel.SessionId` are `string` instead of `Guid`. Requires model refactoring and updating all `Guid.Parse()`/`.ToString()` conversions.
 
-2. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
+2. **T25 (String comparison for enum)**: `HandleSubscriptionUpdatedInternalAsync` compares string literals for subscription actions. Should accept typed enum parameter and use enum equality.
 
-3. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
+3. **T7 (ApiException catch)**: Service makes inter-service calls via `_voiceClient`, `_permissionClient`, `_subscriptionClient` but doesn't catch `ApiException` separately. Requires adding catch blocks to all endpoint methods.
 
-4. **Chat broadcasts to all players regardless of game state**: `SendChatMessageAsync` sends to all players in the session. There's no concept of "muted" players or chat rate limiting.
+4. **T5 (Inline event models)**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline. Should be defined in schema files and generated.
 
-5. **Lock timeout is hardcoded 60 seconds**: All `_lockProvider.LockAsync` calls use a 60-second expiry. Not configurable. Long-running operations under lock (e.g., multiple voice/permission calls) could approach this limit.
+5. **T10 (Logging levels)**: Operation entry logs use `LogInformation` instead of `LogDebug`. Multiple endpoints need logging level fixes.
 
-6. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+6. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
 
-7. **Chat allows messages from non-members**: `SendChatMessageAsync` (line 1435) looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
+7. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
 
-8. **Whisper to non-existent target silently succeeds**: Lines 1468-1487 - if the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
+8. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 
-9. **Chat returns OK when no players exist**: Line 1461 returns `StatusCodes.OK` even when all players have left (no WebSocket sessions to deliver to). From the sender's perspective, the message "sent" successfully.
+9. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
 
-10. **Move action special-cased for empty data**: Line 617 - `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
+10. **Chat broadcasts to all players regardless of game state**: `SendChatMessageAsync` sends to all players in the session. There's no concept of "muted" players or chat rate limiting.
 
-11. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` (lines 576-626) verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
+11. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
-12. **Lock owner is random GUID per call**: Lines 444, 696, 868, 1066, 1330 all use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.
+12. **Chat allows messages from non-members**: `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
+
+13. **Whisper to non-existent target silently succeeds**: If the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
+
+14. **Chat returns OK when no players exist**: Returns `StatusCodes.OK` even when all players have left (no WebSocket sessions to deliver to). From the sender's perspective, the message "sent" successfully.
+
+15. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
+
+16. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
+
+17. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.

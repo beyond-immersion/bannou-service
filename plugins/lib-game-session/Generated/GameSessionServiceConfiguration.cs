@@ -108,6 +108,12 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     public int SubscriberSessionRetryMaxAttempts { get; set; } = 3;
 
     /// <summary>
+    /// Timeout in seconds for distributed session locks
+    /// Environment variable: GAME_SESSION_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int LockTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
     /// Comma-separated list of supported game service stub names
     /// Environment variable: GAME_SESSION_SUPPORTED_GAME_SERVICES
     /// </summary>

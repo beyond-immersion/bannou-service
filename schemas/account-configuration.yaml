@@ -43,3 +43,14 @@ x-service-configuration:
       description: Number of accounts to process per batch in list operations
       env: ACCOUNT_LIST_BATCH_SIZE
       default: 100
+
+    # Role Management Configuration
+    AutoManageAnonymousRole:
+      type: boolean
+      description: |
+        When true, automatically manages the "anonymous" role:
+        - If removing roles would leave zero roles, "anonymous" is added automatically
+        - If adding a non-anonymous role, "anonymous" is removed if present
+        This ensures accounts always have at least one role for permission resolution.
+      env: ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE
+      default: true

@@ -171,10 +171,10 @@ For each plugin deep dive document:
 | Documentation | DONE | Fixed T23 (GitSyncService → fire-and-forget, RedisSearchIndexService → Error logging + discard). Removed false positives (T23 interface contract, T5 diagnostics, T19 internal, T10 controller). Moved T16 return type to Design Considerations. |
 | Escrow | DONE | All violations were false positives or already fixed. Removed T6/T9/T7/T10/T25 false positives. Moved POCO string defaults and EscrowExpiredEvent to Design Considerations. |
 | Game-Service | DONE | All violations previously fixed (T25 ServiceId→Guid, T10 logging, T9 ETag concurrency). Removed false positives (T6 NRT, T7 no mesh calls, T19 internal, T21 framework boilerplate). |
-| Game-Session | PENDING | |
-| Inventory | PENDING | |
-| Item | PENDING | |
-| Leaderboard | PENDING | |
+| Game-Session | DONE | Fixed T21 (added LockTimeoutSeconds config). Removed false positives (T6 NRT, T19 private/internal, T25 event boundaries). Moved T25 POCO types, T7, T5, T10 to Design Considerations. |
+| Inventory | DONE | Already compliant. Added Bugs section (empty). All tunables from config, proper T7 ApiException handling for mesh calls. |
+| Item | DONE | Already compliant (leaf node, no mesh calls). Added Bugs section (empty). T25 POCO type issues documented in Design Considerations. |
+| Leaderboard | DONE | Already compliant (leaf node, no mesh calls). Added Bugs section (empty). Analytics event matching and season lifecycle properly documented. |
 | Location | PENDING | |
 | Mapping | PENDING | |
 | Matchmaking | PENDING | |
@@ -194,6 +194,47 @@ For each plugin deep dive document:
 | Subscription | DONE | Fixed T10 logging (operation entry → Debug) and T23 (empty catch → Debug log). Removed T6 false positives. Moved T25/T9/T21/T7 to Design Considerations. |
 | Voice | DONE | Fixed T10 logging (operation entry → Debug). Removed T6 false positives, T23 borderline compliant patterns. Moved T25/T21 to Design Considerations. |
 | Website | DONE | Fixed T10 logging (Warning → Debug for stub calls). Removed T6 false positive. Moved T21/T19 (stub-acceptable) to Design Considerations. |
+
+---
+
+## Phase 2: Actionable Bug Pass
+
+After the initial cleanup (removing false positives, fixing obvious violations, restructuring documents), a second pass identifies which remaining issues can be fixed NOW vs which require a full planning session.
+
+**Neither category means "production-ready"** - both A and B are issues that prevent production deployment. The difference is whether we can fix them in this session.
+
+### Goal
+
+For each plugin, categorize remaining Design Considerations and Bugs:
+
+**Category A - Complex Issues (Requires Planning Session)**:
+- Requires multiple decisions or significant design discussion
+- Architectural changes affecting multiple components
+- Cross-service coordination needed
+- Schema changes requiring migration strategy
+- Unclear solution path requiring exploration
+
+**Category B - Actionable Issues (Requires ≤1 Decision)**:
+- Solution path is clear OR requires only one quick decision
+- Decision can be presented to user and answered immediately
+- Can be fixed in current session once decision is made
+- Does NOT mean "simple" or "one-line" - can be substantial work
+
+The key question: "Can I fix this with at most one question to the user, or does it need a whole planning conversation?"
+
+### Process
+
+1. Read the plugin's deep dive document, focusing on Design Considerations and any remaining Bugs
+2. For each item, ask: "Does this require more than one decision?"
+3. For Category B items: Present the decision (if any), get answer, move to `### Bugs (Fix Immediately)`, fix the code, verify build
+4. Continue until only Category A (complex) issues remain
+5. Update progress tracker noting what was fixed and what complex issues remain
+
+### Progress Notation
+
+In the Progress Tracker, append to existing notes:
+- `| PHASE2: Fixed [X], remaining: [brief description of Category A items]`
+- `| PHASE2: No actionable bugs, remaining: [brief description of Category A items]`
 
 ---
 

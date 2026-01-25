@@ -53,4 +53,22 @@ public class LocationServiceConfiguration : IServiceConfiguration
     /// <inheritdoc />
     public string? ForceServiceId { get; set; }
 
+    /// <summary>
+    /// Maximum depth to traverse when walking ancestor chain (prevents infinite loops from corrupted data)
+    /// Environment variable: LOCATION_MAX_ANCESTOR_DEPTH
+    /// </summary>
+    public int MaxAncestorDepth { get; set; } = 20;
+
+    /// <summary>
+    /// Default max depth when listing descendants if not specified in request
+    /// Environment variable: LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH
+    /// </summary>
+    public int DefaultDescendantMaxDepth { get; set; } = 10;
+
+    /// <summary>
+    /// Safety limit for descendant traversal and circular reference checks
+    /// Environment variable: LOCATION_MAX_DESCENDANT_DEPTH
+    /// </summary>
+    public int MaxDescendantDepth { get; set; } = 20;
+
 }

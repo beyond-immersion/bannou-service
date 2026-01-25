@@ -2221,11 +2221,12 @@ public partial class AccountController
     "$defs": {
         "BatchGetAccountsResponse": {
             "type": "object",
-            "description": "Response containing found accounts and IDs not found",
+            "description": "Response containing found accounts, IDs not found, and fetch failures",
             "additionalProperties": false,
             "required": [
                 "accounts",
-                "notFound"
+                "notFound",
+                "failed"
             ],
             "properties": {
                 "accounts": {
@@ -2242,6 +2243,13 @@ public partial class AccountController
                         "format": "uuid"
                     },
                     "description": "Account IDs that were not found or are deleted"
+                },
+                "failed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BulkOperationFailure"
+                    },
+                    "description": "Account IDs that failed to fetch with error reasons"
                 }
             }
         },
@@ -2360,6 +2368,26 @@ public partial class AccountController
                 "twitch",
                 "steam"
             ]
+        },
+        "BulkOperationFailure": {
+            "type": "object",
+            "description": "Details of a failed bulk operation item",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "error"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID that failed"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Human-readable error reason"
+                }
+            }
         }
     }
 }

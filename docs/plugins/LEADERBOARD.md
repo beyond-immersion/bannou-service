@@ -216,6 +216,10 @@ Season Lifecycle
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Polymorphic member keys**: Sorted set members use format `{EntityType}:{EntityId}` enabling mixed entity types on a single leaderboard. `ParseMemberKey` uses `Enum.Parse` with `ignoreCase=true` for deserialization.

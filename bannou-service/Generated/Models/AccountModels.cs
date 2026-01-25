@@ -776,7 +776,7 @@ public partial class BulkUpdateRolesRequest
 }
 
 /// <summary>
-/// Response containing found accounts and IDs not found
+/// Response containing found accounts, IDs not found, and fetch failures
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BatchGetAccountsResponse
@@ -797,6 +797,14 @@ public partial class BatchGetAccountsResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> NotFound { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Account IDs that failed to fetch with error reasons
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failed")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BulkOperationFailure> Failed { get; set; } = new System.Collections.ObjectModel.Collection<BulkOperationFailure>();
 
 }
 

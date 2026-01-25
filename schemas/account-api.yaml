@@ -905,11 +905,12 @@ components:
     # Bulk Operation Response Models
     BatchGetAccountsResponse:
       type: object
-      description: Response containing found accounts and IDs not found
+      description: Response containing found accounts, IDs not found, and fetch failures
       additionalProperties: false
       required:
       - accounts
       - notFound
+      - failed
       properties:
         accounts:
           type: array
@@ -922,6 +923,11 @@ components:
             type: string
             format: uuid
           description: Account IDs that were not found or are deleted
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkOperationFailure'
+          description: Account IDs that failed to fetch with error reasons
 
     CountAccountsResponse:
       type: object

@@ -83,4 +83,14 @@ public class AccountServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ListBatchSize { get; set; } = 100;
 
+    /// <summary>
+    /// When true, automatically manages the "anonymous" role:
+- If removing roles would leave zero roles, "anonymous" is added automatically
+- If adding a non-anonymous role, "anonymous" is removed if present
+This ensures accounts always have at least one role for permission resolution.
+
+    /// Environment variable: ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE
+    /// </summary>
+    public bool AutoManageAnonymousRole { get; set; } = true;
+
 }

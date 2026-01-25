@@ -275,6 +275,10 @@ Container Deletion Strategies
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Lock acquisition failure returns 409**: When the distributed lock cannot be acquired within `LockTimeoutSeconds`, the operation returns Conflict (not 500). The caller should retry.

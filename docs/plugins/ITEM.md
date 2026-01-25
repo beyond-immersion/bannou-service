@@ -235,6 +235,10 @@ Soulbound Types
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Template immutable fields**: Code, gameId, quantityModel, scope, and soulboundType are set at creation and cannot be changed. This prevents breaking existing instances that depend on these properties.
