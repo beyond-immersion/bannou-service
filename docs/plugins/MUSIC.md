@@ -181,11 +181,11 @@ EmotionalState Dimensions
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-None identified.
+No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **480 ticks per beat hardcoded**: All generation uses 480 TPB (standard MIDI resolution). Not configurable per request. This is a common MIDI standard value.
 
@@ -201,11 +201,7 @@ None identified.
 
 7. **Melody infers key from first chord**: `GenerateMelodyAsync` uses the root of the first harmony chord as the key center with Major mode. Does not attempt to detect actual key from the full progression.
 
-### False Positives Removed
-
-1. **T19 (XML docs on private methods)**: TENETS explicitly state "PUBLIC" members only. Private helper methods do not require XML documentation.
-
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **Unused state store (music-styles)**: The MySQL store is defined in `state-stores.yaml` but never accessed. All styles come from hardcoded `BuiltInStyles`. Either implement CreateStyle persistence or remove the store from schema.
 

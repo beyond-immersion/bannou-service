@@ -95,7 +95,7 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<InventoryService>` | Scoped | Structured logging |
-| `InventoryServiceConfiguration` | Singleton | All 9 config properties |
+| `InventoryServiceConfiguration` | Singleton | All 10 config properties |
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access |
 | `IDistributedLockProvider` | Singleton | Container-level distributed locks |
 | `IMessageBus` | Scoped | Event publishing and error events |
@@ -275,11 +275,13 @@ Container Deletion Strategies
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T21/T25 (String config should be enum)**: `DefaultWeightContribution` in `inventory-configuration.yaml` is `type: string` but represents `WeightContribution` enum. Service parses at startup with `Enum.TryParse`. Schema should define as enum with `$ref` to ensure type safety and eliminate runtime parsing.
+*T21/T25 violation has been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
 
-### Intentional Quirks (Documented Behavior)
+No other bugs identified.
+
+### Intentional Quirks
 
 1. **Lock acquisition failure returns 409**: When the distributed lock cannot be acquired within `LockTimeoutSeconds`, the operation returns Conflict (not 500). The caller should retry.
 
@@ -295,7 +297,7 @@ Container Deletion Strategies
 
 7. **TransferItem checks tradeable and binding**: Transfer validates that the item template's `Tradeable` flag is true AND the instance is not bound. Bound or non-tradeable items cannot be transferred between owners.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **N+1 query pattern**: `QueryItems` and `GetContainer(includeContents)` load items individually from the item service. Large containers generate many cross-service calls.
 

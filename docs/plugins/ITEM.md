@@ -235,16 +235,13 @@ Soulbound Types
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T21/T25 (String config should be enum)**: Three configuration properties in `item-configuration.yaml` are `type: string` but represent enums:
-   - `defaultWeightPrecision` → `WeightPrecision` enum
-   - `defaultRarity` → `ItemRarity` enum
-   - `defaultSoulboundType` → `SoulboundType` enum
+*T21/T25 and T25 violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
 
-   Service parses at startup with `Enum.TryParse`. Schema should define as enums with `$ref` to ensure type safety and eliminate runtime parsing.
+No other bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Template immutable fields**: Code, gameId, quantityModel, scope, and soulboundType are set at creation and cannot be changed. This prevents breaking existing instances that depend on these properties.
 
@@ -260,34 +257,32 @@ Soulbound Types
 
 7. **Config defaults applied at creation**: `DefaultRarity`, `DefaultMaxStackSize`, etc. are applied when the template doesn't specify values. Once created, these are stored on the template and don't change if config changes.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
-1. **String-for-Guid fields in internal models**: Both `ItemTemplateModel` and `ItemInstanceModel` store GUID fields as `string` types, requiring `Guid.Parse()` in mappings and `.ToString()` when populating. Converting to proper `Guid` types requires updating all model fields, changing serialization behavior, and migrating existing data. Functional but adds runtime parsing overhead and fragility.
+1. **List index N+1 loading**: `ListItemsByContainer` and `ListItemsByTemplate` load each instance individually from the state store. With large containers or popular templates, this generates many calls.
 
-2. **List index N+1 loading**: `ListItemsByContainer` and `ListItemsByTemplate` load each instance individually from the state store. With large containers or popular templates, this generates many calls.
+2. **No template deletion**: Templates can only be deprecated, never deleted. This preserves instance integrity but means the template store grows monotonically.
 
-3. **No template deletion**: Templates can only be deprecated, never deleted. This preserves instance integrity but means the template store grows monotonically.
+3. **JSON-stored complex fields**: Stats, effects, requirements, display, and metadata are stored as serialized JSON strings. No schema validation is performed on these fields - they're opaque to the item service.
 
-4. **JSON-stored complex fields**: Stats, effects, requirements, display, and metadata are stored as serialized JSON strings. No schema validation is performed on these fields - they're opaque to the item service.
+4. **Container index not validated**: The item service trusts the `containerId` provided during creation. It does not validate that the container exists in the inventory service.
 
-5. **Container index not validated**: The item service trusts the `containerId` provided during creation. It does not validate that the container exists in the inventory service.
+5. **No event consumption**: The item service is purely a publisher. It doesn't react to external events (e.g., container deletion). The inventory service is responsible for calling `DestroyItemInstance` when needed.
 
-6. **No event consumption**: The item service is purely a publisher. It doesn't react to external events (e.g., container deletion). The inventory service is responsible for calling `DestroyItemInstance` when needed.
+6. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified.
 
-7. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified.
+7. **Destroy bypasses destroyable check with "admin" reason**: If `body.Reason == "admin"`, the template's `Destroyable` flag is ignored, allowing admin-level destruction of indestructible items.
 
-8. **Destroy bypasses destroyable check with "admin" reason**: If `body.Reason == "admin"`, the template's `Destroyable` flag is ignored, allowing admin-level destruction of indestructible items.
+8. **BatchGetItemInstances is sequential**: Each instance is fetched one by one in a foreach loop rather than parallel fetching. Could be slow for large batches.
 
-9. **BatchGetItemInstances is sequential**: Each instance is fetched one by one in a foreach loop rather than parallel fetching. Could be slow for large batches.
+9. **Empty container/template index not cleaned up**: After `RemoveFromListAsync`, if the list becomes empty, it remains as an empty JSON array `[]` in the store rather than being deleted.
 
-10. **Empty container/template index not cleaned up**: After `RemoveFromListAsync`, if the list becomes empty, it remains as an empty JSON array `[]` in the store rather than being deleted.
+10. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. Large containers lose items silently.
 
-11. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. Large containers lose items silently.
+11. **ListItemsByTemplate filters AFTER fetching all instances**: All instances are fetched then filtered by RealmId in memory. For templates with many instances, this fetches far more data than needed.
 
-12. **ListItemsByTemplate filters AFTER fetching all instances**: All instances are fetched then filtered by RealmId in memory. For templates with many instances, this fetches far more data than needed.
+12. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
 
-13. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
+13. **Deprecate is idempotent (no conflict)**: Unlike other services that return Conflict if already deprecated, `DeprecateItemTemplateAsync` will re-deprecate with a new timestamp, overwriting the original deprecation timestamp.
 
-14. **Deprecate is idempotent (no conflict)**: Unlike other services that return Conflict if already deprecated, `DeprecateItemTemplateAsync` will re-deprecate with a new timestamp, overwriting the original deprecation timestamp.
-
-15. **CreateInstance validates IsActive but not IsDeprecated**: Checks `!template.IsActive` but not `template.IsDeprecated`. A deprecated but still-active template can continue spawning new instances.
+14. **CreateInstance validates IsActive but not IsDeprecated**: Checks `!template.IsActive` but not `template.IsDeprecated`. A deprecated but still-active template can continue spawning new instances.

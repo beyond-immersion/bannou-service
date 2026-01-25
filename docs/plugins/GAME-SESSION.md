@@ -92,6 +92,7 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | `StartupServiceDelaySeconds` | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | `2` | Delay before subscription cache warmup |
 | `SubscriberSessionRetryMaxAttempts` | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | `3` | Max retries for ETag-based optimistic concurrency |
 | `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `arcadia,generic` | Comma-separated game service stub names |
+| `LockTimeoutSeconds` | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | `60` | Timeout in seconds for distributed session locks |
 
 ---
 
@@ -100,7 +101,7 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<GameSessionService>` | Scoped | Structured logging |
-| `GameSessionServiceConfiguration` | Singleton | All 10 config properties |
+| `GameSessionServiceConfiguration` | Singleton | All 11 config properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
@@ -256,31 +257,13 @@ Subscription Cache Architecture
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-No bugs identified.
+*T25 violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
 
-### False Positives Removed
+No other bugs identified.
 
-The following items were identified as violations but do not apply:
-
-1. **T6 (Constructor null checks)**: NRT provides compile-time safety. Adding runtime null checks for NRT-protected parameters is unnecessary.
-
-2. **T19 (Internal helper methods)**: T19 applies to PUBLIC members only. Private helper methods don't require XML documentation.
-
-3. **T19 (Internal model properties)**: T19 applies to PUBLIC members only. Internal model properties don't require XML documentation.
-
-4. **T25 (`.ToString()` on event models)**: T25 explicitly allows `.ToString()` at event boundaries for cross-language compatibility. Event schemas intentionally use string types.
-
-### Previously Fixed
-
-1. **T21 (Hardcoded lock timeout)**: Added `LockTimeoutSeconds` to configuration schema (default: 60). All `_lockProvider.LockAsync()` calls now use `_configuration.LockTimeoutSeconds`.
-
-2. **T10 (Logging levels)**: Changed operation entry logs from `LogInformation` to `LogDebug` for: Listing, Creating, Getting, Performing, and Kicking operations.
-
-3. **T7 (ApiException catch)**: Added `ApiException` catches before `Exception` catches for all mesh client calls (voice, permission, subscription). ApiException logged at Warning level with status code; generic Exception logged at Error or Warning level depending on operation criticality.
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Static `_accountSubscriptions` cache with eviction**: A `static ConcurrentDictionary` shared across all scoped instances. Only holds accounts with active subscriptions - entries are evicted when the last subscription is removed. Unsubscribed accounts are NOT cached (triggers a fresh Subscription service query on each connect event). This is a local filter cache only - authoritative state is in lib-state's subscriber sessions.
 
@@ -300,34 +283,30 @@ The following items were identified as violations but do not apply:
 
 9. **Whisper chat delivery**: Whisper messages are sent to exactly two recipients (sender and target) using individual `PublishToSessionAsync` calls. The sender receives a copy with `IsWhisperToMe=false` for local echo.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
-1. **T25 (String SessionId in POCOs)**: `GameSessionModel.SessionId` and `CleanupSessionModel.SessionId` are `string` instead of `Guid`. Requires model refactoring and updating all `Guid.Parse()`/`.ToString()` conversions.
+1. **T5 (Inline event models)**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline. Should be defined in schema files and generated.
 
-2. **T25 (String comparison for enum)**: `HandleSubscriptionUpdatedInternalAsync` compares string literals for subscription actions. Should accept typed enum parameter and use enum equality.
+2. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
 
-3. **T5 (Inline event models)**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline. Should be defined in schema files and generated.
+3. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
 
-4. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
+4. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 
-7. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
+5. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
 
-8. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
+6. **Chat broadcasts to all players regardless of game state**: `SendChatMessageAsync` sends to all players in the session. There's no concept of "muted" players or chat rate limiting.
 
-9. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
+7. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
-10. **Chat broadcasts to all players regardless of game state**: `SendChatMessageAsync` sends to all players in the session. There's no concept of "muted" players or chat rate limiting.
+8. **Chat allows messages from non-members**: `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
 
-11. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+9. **Whisper to non-existent target silently succeeds**: If the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
 
-12. **Chat allows messages from non-members**: `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
+10. **Chat returns OK when no players exist**: Returns `StatusCodes.OK` even when all players have left (no WebSocket sessions to deliver to). From the sender's perspective, the message "sent" successfully.
 
-13. **Whisper to non-existent target silently succeeds**: If the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
+11. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
 
-14. **Chat returns OK when no players exist**: Returns `StatusCodes.OK` even when all players have left (no WebSocket sessions to deliver to). From the sender's perspective, the message "sent" successfully.
+12. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
 
-15. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
-
-16. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
-
-17. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.
+13. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.

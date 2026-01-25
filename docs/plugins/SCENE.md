@@ -406,11 +406,11 @@ Optimistic Concurrency Pattern (Checkout)
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T25 (Internal POCO uses string for enum)**: `SceneIndexEntry.SceneType` is stored as string requiring `Enum.TryParse<SceneType>()`. Model should use `SceneType` enum directly.
+1. **Internal POCO uses string for enum**: `SceneIndexEntry.SceneType` is stored as string requiring `Enum.TryParse<SceneType>()`. Model should use `SceneType` enum directly.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Expired checkout takeover**: If a checkout lock has expired, the next `CheckoutScene` call silently takes over the lock without publishing a `scene.checkout.expired` event. The previous editor loses their token.
 
@@ -428,7 +428,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 8. **Patch version only**: UpdateScene and CommitScene always increment the PATCH version. There is no mechanism to increment MAJOR or MINOR versions. Callers who need semantic versioning must set the version manually before the update.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **Global index unbounded growth**: The `scene:global-index` key holds ALL scene IDs in a single `HashSet<string>`. At scale (millions of scenes), this set becomes a memory and serialization bottleneck. Consider partitioned indexes or cursor-based iteration.
 
@@ -449,6 +449,4 @@ Optimistic Concurrency Pattern (Checkout)
 9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes.
 
 10. **Internal model type safety**: `SceneIndexEntry.SceneType` is stored as `string` instead of the typed `SceneType` enum, requiring `Enum.TryParse` conversions throughout business logic. Refactoring to use the enum type directly would improve type safety and eliminate parsing overhead.
-
-11. ~~**Hardcoded checkout TTL buffer**~~: **FIXED** - Moved to `CheckoutTtlBufferMinutes` configuration property (default 5 minutes).
 

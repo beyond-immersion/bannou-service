@@ -250,15 +250,13 @@ Reconnection Support
 
 ---
 
----
-
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-None identified.
+No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **ServerSalt required (fail-fast)**: Constructor throws `InvalidOperationException` if `ServerSalt` is empty. All instances must share the same salt for consistent shortcut GUID generation.
 
@@ -278,7 +276,7 @@ None identified.
 
 9. **Match lock timeout 30 seconds**: Accept/decline operations use a 30-second distributed lock on the match. Shorter than game-session's 60-second locks because accept operations are simpler.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **Queue ticket lists grow unbounded**: `queue-tickets:{queueId}` accumulates ticket IDs. Cancelled/completed tickets are removed individually, but during processing, all IDs are loaded to check status.
 

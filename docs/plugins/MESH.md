@@ -75,10 +75,11 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `UseLocalRouting` | `MESH_USE_LOCAL_ROUTING` | `false` | Bypass Redis, route all calls to local instance (testing only) |
 | `EndpointHost` | `MESH_ENDPOINT_HOST` | `null` | Hostname for endpoint registration (defaults to app-id) |
 | `EndpointPort` | `MESH_ENDPOINT_PORT` | `80` | Port for endpoint registration |
+| `DefaultMaxConnections` | `MESH_DEFAULT_MAX_CONNECTIONS` | `1000` | Default max connections for auto-registered endpoints when heartbeat does not provide capacity info |
 | `HeartbeatIntervalSeconds` | `MESH_HEARTBEAT_INTERVAL_SECONDS` | `30` | Recommended interval between heartbeats |
 | `EndpointTtlSeconds` | `MESH_ENDPOINT_TTL_SECONDS` | `90` | TTL for endpoint registration (>2x heartbeat) |
 | `DegradationThresholdSeconds` | `MESH_DEGRADATION_THRESHOLD_SECONDS` | `60` | Time without heartbeat before marking degraded |
-| `DefaultLoadBalancer` | `MESH_DEFAULT_LOAD_BALANCER` | `RoundRobin` | Algorithm: RoundRobin, LeastConnections, Weighted, Random |
+| `DefaultLoadBalancer` | `MESH_DEFAULT_LOAD_BALANCER` | `RoundRobin` | Load balancing algorithm (enum: RoundRobin, LeastConnections, Weighted, Random) |
 | `LoadThresholdPercent` | `MESH_LOAD_THRESHOLD_PERCENT` | `80` | Load % above which endpoint is considered high-load |
 | `EnableServiceMappingSync` | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | `true` | Subscribe to FullServiceMappingsEvent for routing updates |
 | `HealthCheckEnabled` | `MESH_HEALTH_CHECK_ENABLED` | `false` | Enable active health check probing |
@@ -103,7 +104,7 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MeshService>` | Scoped | Structured logging |
-| `MeshServiceConfiguration` | Singleton | All 23 config properties above |
+| `MeshServiceConfiguration` | Singleton | All 24 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Heartbeat and mapping event subscription |
 | `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores) |
@@ -224,15 +225,13 @@ Event-Driven Auto-Registration
 
 ---
 
----
-
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-None identified.
+No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Auto-registration uses appId as Host**: When an endpoint is auto-registered from a heartbeat event, `Host` is set to the app-id string (not an IP). This enables Docker Compose DNS-based routing where the app-id is the container service name.
 
@@ -248,7 +247,7 @@ None identified.
 
 7. **Circuit breaker is per-instance, not distributed**: Each `MeshInvocationClient` instance maintains its own circuit breaker state. In multi-instance deployments, one instance may have an open circuit while others are still closed.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **EndpointCache uses Dictionary + lock, not ConcurrentDictionary**: The `EndpointCache` inner class in MeshInvocationClient uses a plain `Dictionary<>` with explicit lock statements instead of `ConcurrentDictionary`. Lower overhead for simple get/set but not lock-free.
 
@@ -264,6 +263,4 @@ None identified.
 
 7. **LocalMeshStateManager uses Task.FromResult pattern**: All methods return `Task.FromResult(...)` instead of async/await. This is intentional for a synchronous testing implementation where no I/O occurs - async would add unnecessary state machine overhead.
 
-8. **DefaultLoadBalancer parsed at runtime**: Configuration defines `DefaultLoadBalancer` as string with enum constraint. The service parses it with `Enum.TryParse` at runtime. This is a boundary conversion (config loading is a system boundary).
-
-9. **MeshService doesn't call external services**: ApiException catches would be dead code since the service uses IMeshStateManager directly (no service-to-service calls). Pattern conformance deferred.
+8. **MeshService doesn't call external services**: ApiException catches would be dead code since the service uses IMeshStateManager directly (no service-to-service calls). Pattern conformance deferred.

@@ -89,7 +89,7 @@ No traditional topic-based event publications. Capability updates go directly to
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<PermissionService>` | Singleton | Structured logging |
-| `PermissionServiceConfiguration` | Singleton | Lock retry config |
+| `PermissionServiceConfiguration` | Singleton | All 3 config properties |
 | `IStateStoreFactory` | Singleton | Redis state operations |
 | `IMessageBus` | Scoped (injected) | Error event publishing |
 | `IDistributedLockProvider` | Singleton | Distributed lock acquisition |
@@ -216,11 +216,11 @@ None. The service is feature-complete for its scope.
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 None identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Singleton lifetime**: Unlike most services (Scoped), PermissionService is Singleton. The in-memory `ConcurrentDictionary` cache persists for the application lifetime, enabling fast capability lookups without Redis calls.
 
@@ -236,7 +236,7 @@ None identified.
 
 7. **ValidateApiAccess never uses cache**: Unlike `GetCapabilities` which uses the in-memory cache, `ValidateApiAccess` always reads from Redis. This ensures validation uses the latest compiled permissions at the cost of latency.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **Full session recompilation on service registration**: Every time a service registers, ALL active sessions are recompiled. With many concurrent sessions and frequent service restarts, this generates O(sessions * services) Redis operations.
 
@@ -248,18 +248,6 @@ None identified.
 
 5. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
 
----
+6. **Read-modify-write on session sets**: `activeConnections`/`activeSessions` set operations without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
 
-### False Positives Removed
-
-- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
-- **T7 ApiException handling**: Permission service does not call external services via mesh/generated clients - only infrastructure libs
-- **T19 private method XML docs**: T19 applies to public APIs only; private helpers do not require XML documentation
-- **T21 hardcoded role hierarchy**: `ROLE_ORDER` is an intentional fixed hierarchy matching the authentication system design. Role priority is a security invariant, not a tunable configuration.
-- **T16 SCREAMING_CASE constants**: Internal constants can use any consistent naming convention. This is a style preference, not a tenet requirement.
-
-### Additional Design Considerations
-
-6. **T9 (Multi-Instance Safety)**: Read-modify-write on `activeConnections`/`activeSessions` sets without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
-
-7. **T25 (Anonymous type for registration)**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. Should define a typed `ServiceRegistrationInfo` POCO class.
+7. **Anonymous type for registration info**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. Should define a typed `ServiceRegistrationInfo` POCO class.

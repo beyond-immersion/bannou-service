@@ -56,3 +56,69 @@
 
 - [ ] **T25**: `AssetFailureData.AssetType` is stored as string requiring `Enum.TryParse<AssetType>()`. **Decision**: Change POCO to use `AssetType` enum directly.
 
+### lib-game-session
+
+- [ ] **T25**: `GameSessionModel.SessionId` and `CleanupSessionModel.SessionId` are `string` instead of `Guid`. **Decision**: Change to `Guid` type.
+
+- [ ] **T25**: `HandleSubscriptionUpdatedInternalAsync` compares string literals for subscription actions instead of using typed enum. **Decision**: Accept typed enum parameter and use enum equality.
+
+### lib-inventory
+
+- [ ] **T21/T25**: `DefaultWeightContribution` configuration property is `string` type but represents `WeightContribution` enum. Service parses with `Enum.TryParse`. **Decision**: Define as enum in configuration schema.
+
+### lib-item
+
+- [ ] **T21/T25**: Three configuration properties are `string` type but represent enums: `DefaultWeightPrecision` → `WeightPrecision`, `DefaultRarity` → `ItemRarity`, `DefaultSoulboundType` → `SoulboundType`. **Decision**: Define as enums in configuration schema.
+
+- [ ] **T25**: Both `ItemTemplateModel` and `ItemInstanceModel` store GUID fields as `string` types, requiring `Guid.Parse()` in mappings. **Decision**: Change to `Guid` type.
+
+### lib-location
+
+- [ ] **T25**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()`. **Decision**: Change POCO to use `LocationType` enum directly.
+
+### lib-permission
+
+- [ ] **T25**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. **Decision**: Define a typed `ServiceRegistrationInfo` POCO class.
+
+### lib-realm
+
+- [ ] **T25**: `RealmModel.RealmId` stored as string instead of Guid. **Decision**: Change POCO to use `Guid` type.
+
+### lib-realm-history
+
+- [ ] **T25**: Multiple internal models store enums as strings requiring `Enum.TryParse`: `RealmEventDataModel.EventCategory`, `RealmEventDataModel.Role`, `RealmLoreDataModel.ElementType`. **Decision**: Change POCOs to use enum types directly.
+
+- [ ] **T25**: Multiple internal models store GUIDs as strings: `ParticipationId`, `RealmId`, `EventId`. **Decision**: Change to `Guid` type.
+
+### lib-relationship
+
+- [ ] **T25**: `RelationshipModel` stores entity types as strings requiring `Enum.Parse`: `Entity1Type`, `Entity2Type`. **Decision**: Change POCOs to use `EntityType` enum directly.
+
+- [ ] **T25**: `RelationshipModel` stores GUIDs as strings: `RelationshipId`, `Entity1Id`, `Entity2Id`, `RelationshipTypeId`. **Decision**: Change to `Guid` type.
+
+### lib-relationship-type
+
+- [ ] **T25**: `RelationshipTypeModel` stores GUIDs as strings: `RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`. **Decision**: Change to `Guid` type.
+
+### lib-save-load
+
+- [ ] **T21/T25**: `DefaultCompressionType` and `DefaultDeltaAlgorithm` configuration properties are `string` but represent enums. **Decision**: Define as enums in configuration schema.
+
+- [ ] **T25**: Multiple internal models store enums as strings: `PendingUploadEntry.CompressionType`, `SaveVersionManifest.CompressionType`, `SaveSlotMetadata.CompressionType/OwnerType/Category`, `ExportManifest.OwnerType`. **Decision**: Change POCOs to use enum types directly.
+
+### lib-scene
+
+- [ ] **T25**: `SceneIndexEntry.SceneType` is stored as string requiring `Enum.TryParse<SceneType>()`. **Decision**: Change POCO to use `SceneType` enum directly.
+
+### lib-species
+
+- [ ] **T25**: `SpeciesModel` uses `string` for `SpeciesId` and `List<string>` for `RealmIds` instead of proper GUID types. **Decision**: Change to `Guid` and `List<Guid>`.
+
+### lib-subscription
+
+- [ ] **T25**: `SubscriptionDataModel` stores `SubscriptionId`, `AccountId`, and `ServiceId` as `string` rather than `Guid`. **Decision**: Change to `Guid` type.
+
+### lib-voice
+
+- [ ] **T25**: `VoiceRoomData` stores tier and codec as strings, requiring parsing in service methods. **Decision**: Change to enum types (`VoiceTier`, `VoiceCodec`).
+

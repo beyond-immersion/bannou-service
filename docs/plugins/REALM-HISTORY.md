@@ -166,14 +166,15 @@ None. The service is feature-complete for its scope.
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T25 (Internal POCO uses string for enum)**: Internal models store enums as strings requiring `Enum.TryParse`:
+1. **Internal POCOs use string for enums and GUIDs**: Internal models store enums as strings requiring `Enum.TryParse` and GUIDs as strings:
    - `RealmEventDataModel.EventCategory`: string → `RealmEventCategory`
    - `RealmEventDataModel.Role`: string → `RealmEventRole`
    - `RealmLoreDataModel.ElementType`: string → `RealmLoreElementType`
+   - `ParticipationId`, `RealmId`, `EventId`: string → `Guid`
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict.
 
@@ -189,7 +190,7 @@ None. The service is feature-complete for its scope.
 
 7. **DeleteAll is O(n)**: Iterates through all participations for the realm, removing each from event indexes individually. For realms with thousands of events, this could be slow.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **In-memory filtering and pagination**: All list operations load full indexes, fetch all records, filter in memory, then paginate. For realms with very high participation counts, this loads everything into memory.
 
@@ -221,15 +222,4 @@ None. The service is feature-complete for its scope.
 
 15. **Doesn't use shared helper classes**: Unlike character-history which uses `DualIndexHelper` and `BackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
 
----
-
-### False Positives Removed
-
-- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
-- **T7 ApiException handling**: RealmHistory service only calls state store (infrastructure lib), not external services via mesh
-
-### Additional Design Considerations
-
-17. **T25 (POCO Type Safety)**: Internal POCOs use string fields for Guid and enum types (`ParticipationId`, `RealmId`, `EventId`, `EventCategory`, `Role`, `ElementType`). Forces Enum.TryParse and .ToString() conversions.
-
-18. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks on dual-index updates and lore merge operations.
+16. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection.

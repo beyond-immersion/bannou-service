@@ -77,7 +77,7 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RelationshipTypeService>` | Scoped | Structured logging |
-| `RelationshipTypeServiceConfiguration` | Singleton | Config properties (SeedPageSize) |
+| `RelationshipTypeServiceConfiguration` | Singleton | All 3 config properties |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
@@ -217,11 +217,11 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 None identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Code immutability**: Once a relationship type is created, its code cannot be changed. The code index key is never updated or deleted on type update.
 
@@ -235,7 +235,7 @@ None identified.
 
 6. **Merge error detail limit**: Merge operations track up to `MaxMigrationErrorsToTrack` (default 100) individual error details. Beyond that, only the count is accurate.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. The depth calculation would produce incorrect values. Hierarchy traversal methods (`MatchesHierarchy`, `GetAncestors`, `GetChildTypeIdsAsync`) have a configurable safety limit (`MaxHierarchyDepth`, default 20) to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment.
 
@@ -253,20 +253,6 @@ None identified.
 
 8. **Depth is snapshot at creation, never updated**: A type's `Depth` field is set based on parent's depth at creation time (line 407: `depth = parent.Depth + 1`). If a parent's depth changes later, children's depths become stale. The `Depth` field is not recomputed on parent reassignment.
 
-### Previously Fixed
+9. **Read-modify-write without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, etc.) have no concurrency protection. Concurrent operations can cause lost updates.
 
-1. **T21 (Configuration-First)**: Moved hardcoded constants to configuration - `MaxHierarchyDepth` (was `MAX_HIERARCHY_DEPTH = 20`) and `MaxMigrationErrorsToTrack` (was `maxErrorsToTrack = 100`).
-
-2. **Documentation accuracy**: Fixed Stubs section - delete-after-merge IS implemented (lines 1017-1040) and `SourceDeleted` can be true when `DeleteAfterMerge=true` and all migrations succeed.
-
-### False Positives Removed
-
-- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
-- **T7 ApiException handling**: RelationshipType service uses `IRelationshipClient` for merge operations (mesh call), but T7 only applies when ApiException is actually thrown by the client. The current catch pattern is acceptable as it handles all exceptions uniformly.
-- **T9 seed Dictionary**: `codeToId` Dictionary is method-local, single-threaded (request-scoped), not shared state
-
-### Additional Design Considerations
-
-9. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks on `AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`. Concurrent operations can cause lost updates. Requires `IDistributedLockProvider` integration.
-
-10. **T25 (POCO Type Safety)**: RelationshipTypeModel uses string for GUID fields (`RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`). Forces `Guid.Parse()` calls throughout, loses compile-time type safety.
+10. **GUID fields stored as strings**: `RelationshipTypeModel` uses string for GUID fields (`RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`). Forces `Guid.Parse()` calls throughout, loses compile-time type safety.

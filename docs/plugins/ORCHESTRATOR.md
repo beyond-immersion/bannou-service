@@ -96,12 +96,13 @@ Central intelligence for Bannou environment management and service orchestration
 |----------|---------|---------|---------|
 | `SecureWebsocket` | `ORCHESTRATOR_SECURE_WEBSOCKET` | `true` | When true, publishes blank permission registration (no WebSocket access) |
 | `CacheTtlMinutes` | `ORCHESTRATOR_CACHE_TTL_MINUTES` | `5` | Cache TTL for orchestrator data |
-| `DefaultBackend` | `ORCHESTRATOR_DEFAULT_BACKEND` | `"compose"` | Default container backend: compose, swarm, portainer, kubernetes |
+| `DefaultBackend` | `ORCHESTRATOR_DEFAULT_BACKEND` | `Compose` | Default container backend (enum: Compose, Swarm, Portainer, Kubernetes) |
 | `HeartbeatTimeoutSeconds` | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | `90` | Heartbeat staleness threshold |
 | `DegradationThresholdMinutes` | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | `5` | Time before marking service degraded |
 | `PortainerUrl` | `ORCHESTRATOR_PORTAINER_URL` | (nullable) | Portainer API URL |
 | `PortainerApiKey` | `ORCHESTRATOR_PORTAINER_API_KEY` | (nullable) | Portainer API key |
 | `PortainerEndpointId` | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | `1` | Portainer endpoint ID |
+| `DockerImageName` | `ORCHESTRATOR_DOCKER_IMAGE_NAME` | `"bannou:latest"` | Docker image name for deployed Bannou containers |
 | `DockerHost` | `ORCHESTRATOR_DOCKER_HOST` | `"unix:///var/run/docker.sock"` | Docker socket path |
 | `DockerNetwork` | `ORCHESTRATOR_DOCKER_NETWORK` | `"bannou_default"` | Docker network for deployed containers |
 | `CertificatesHostPath` | `ORCHESTRATOR_CERTIFICATES_HOST_PATH` | `"/app/provisioning/certificates"` | TLS certificates host path |
@@ -115,6 +116,9 @@ Central intelligence for Bannou environment management and service orchestration
 | `HeartbeatTtlSeconds` | `ORCHESTRATOR_HEARTBEAT_TTL_SECONDS` | `90` | Heartbeat state TTL |
 | `RoutingTtlSeconds` | `ORCHESTRATOR_ROUTING_TTL_SECONDS` | `300` | Routing entry TTL (5 min) |
 | `ConfigHistoryTtlDays` | `ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS` | `30` | Config version history retention |
+| `RestartTimeoutSeconds` | `ORCHESTRATOR_RESTART_TIMEOUT_SECONDS` | `120` | Default timeout for container restart operations |
+| `HealthCheckIntervalMs` | `ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS` | `2000` | Interval between health checks during restart |
+| `DefaultWaitBeforeKillSeconds` | `ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS` | `30` | Seconds to wait before killing a container during stop |
 | `ContainerStatusPollIntervalSeconds` | `ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS` | `2` | Deploy readiness poll interval |
 | `RedisConnectionString` | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis connection string |
 
@@ -125,7 +129,7 @@ Central intelligence for Bannou environment management and service orchestration
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<OrchestratorService>` | Scoped | Structured logging |
-| `OrchestratorServiceConfiguration` | Singleton | All 23 config properties |
+| `OrchestratorServiceConfiguration` | Singleton | All 27 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access (via IOrchestratorStateManager) |
 | `IDistributedLockProvider` | Singleton | Pool-level distributed locks (`orchestrator-pool`, 15s TTL) |
 | `IMessageBus` | Scoped | Event publishing |

@@ -761,10 +761,14 @@
             Gets the next sequence number for a channel.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.AddPendingMessage(System.UInt64,System.String,System.DateTimeOffset)">
+        <member name="M:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.AddPendingMessage(System.UInt64,System.String,System.DateTimeOffset,System.Int32)">
             <summary>
             Adds a pending message awaiting response.
             </summary>
+            <param name="messageId">Unique message identifier.</param>
+            <param name="serviceName">Target service name.</param>
+            <param name="sentAt">Timestamp when message was sent.</param>
+            <param name="timeoutSeconds">Timeout in seconds before message is considered expired.</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Connect.Protocol.ConnectionState.RemovePendingMessage(System.UInt64)">
             <summary>
@@ -1909,6 +1913,14 @@
         <member name="P:BeyondImmersion.BannouService.Connect.PermissionRecompileEvent.Metadata">
             <summary>
             Additional context for the recompilation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.EntityType">
+            <summary>
+            Universal entity type identifier used across Bannou services.
+            <br/>Provides first-class support for various kinds of entities in analytics,
+            <br/>achievements, leaderboards, contracts, relationships, and other systems.
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent">
@@ -3154,7 +3166,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse">
             <summary>
-            Response containing found accounts and IDs not found
+            Response containing found accounts, IDs not found, and fetch failures
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.Accounts">
@@ -3165,6 +3177,11 @@
         <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.NotFound">
             <summary>
             Account IDs that were not found or are deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Account.BatchGetAccountsResponse.Failed">
+            <summary>
+            Account IDs that failed to fetch with error reasons
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Account.CountAccountsResponse">
@@ -3600,11 +3617,6 @@
             <param name="headers">The response headers.</param>
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Achievement.EntityType">
-            <summary>
-            Type of entity that can earn achievements
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Achievement.AchievementType">
             <summary>
@@ -6353,11 +6365,6 @@
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Analytics.EntityType">
-            <summary>
-            Type of entity being tracked
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Analytics.ControllerAction">
             <summary>
             Type of controller action
@@ -7633,11 +7640,6 @@
         <member name="T:BeyondImmersion.BannouService.Asset.AssetType">
             <summary>
             Type classification for assets
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.Realm">
-            <summary>
-            Game realm the asset belongs to
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ProcessingStatus">
@@ -15986,11 +15988,6 @@
             <param name="headers">The response headers.</param>
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Contract.EntityType">
-            <summary>
-            Type of entity that can be a contract party
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ContractStatus">
             <summary>
@@ -27274,7 +27271,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.ListGameSessionsRequest.Status">
             <summary>
-            Filter by session status
+            Filter by session status (finished not included for active filters)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GetGameSessionRequest">
@@ -27717,6 +27714,31 @@
             Type of game session - determines join behavior
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameType">
+            <summary>
+            Type of game for this session
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.SessionStatus">
+            <summary>
+            Current status of the game session
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerRole">
+            <summary>
+            Role of the player in the game session
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.ChatMessageType">
+            <summary>
+            Type of chat message
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameActionType">
+            <summary>
+            Type of game action
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
             <summary>
             Reservation token returned when creating a matchmade session
@@ -27830,6 +27852,19 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.GameSessionId">
             <summary>
             ID of the game session to leave.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.VoiceTier">
+            <summary>
+            Voice communication tier:
+            <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
+            <br/>- scaled: RTP server-mediated communication (unlimited participants)
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.VoiceCodec">
+            <summary>
+            Audio codec for voice communication
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Inventory.IInventoryClient">
@@ -31445,11 +31480,6 @@
             <param name="headers">The response headers.</param>
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Leaderboard.EntityType">
-            <summary>
-            Type of entity on the leaderboard
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Leaderboard.SortOrder">
             <summary>
@@ -44093,22 +44123,6 @@
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Relationship.EntityType">
-            <summary>
-            Type of entity in a relationship.
-            <br/>- CHARACTER: Player-controlled characters
-            <br/>- NPC: Non-player characters
-            <br/>- MONSTER: Hostile or neutral creatures
-            <br/>- ITEM: Physical objects, artifacts, etc.
-            <br/>- LOCATION: Places, regions, buildings
-            <br/>- ORGANIZATION: Guilds, companies, groups
-            <br/>- FACTION: Political or social factions
-            <br/>- REALM: Game realms/worlds
-            <br/>- SOUL: Immortal soul entity for reincarnation chains
-            <br/>- OTHER: Catch-all for future entity types
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Relationship.CreateRelationshipRequest">
             <summary>
             Request to create a new relationship between two entities
@@ -56150,24 +56164,9 @@
             Game realm of the bundle
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.AssetTypeEnum">
-            <summary>
-            Category of asset in the system
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.RealmEnum">
-            <summary>
-            Game realm the asset is associated with
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ProcessingTypeEnum">
             <summary>
             Type of processing being performed
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.CompressionTypeEnum">
-            <summary>
-            Compression algorithm used for bundle packaging
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ProcessingOutput">
@@ -57524,7 +57523,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.ExperienceType">
             <summary>
-            Type of experience that caused the evolution (e.g., TRAUMA, BETRAYAL, VICTORY)
+            Type of experience that caused the evolution
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.Intensity">
@@ -57634,7 +57633,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.ExperienceType">
             <summary>
-            Type of combat experience that caused the evolution (e.g., DECISIVE_VICTORY, NEAR_DEATH)
+            Type of combat experience that caused the evolution
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.Intensity">
@@ -59469,7 +59468,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionCreatedEvent.Scope">
             <summary>
-            Currency scope (global, realm_specific, multi_realm)
+            Currency scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionCreatedEvent.Precision">
@@ -59519,7 +59518,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionUpdatedEvent.Scope">
             <summary>
-            Currency scope (global, realm_specific, multi_realm)
+            Currency scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionUpdatedEvent.Precision">
@@ -59574,7 +59573,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionDeletedEvent.Scope">
             <summary>
-            Currency scope (global, realm_specific, multi_realm)
+            Currency scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionDeletedEvent.Precision">
@@ -59634,7 +59633,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletCreatedEvent.Status">
             <summary>
-            Wallet status (active, frozen, closed)
+            Wallet status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletCreatedEvent.CreatedAt">
@@ -59674,7 +59673,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletUpdatedEvent.Status">
             <summary>
-            Wallet status (active, frozen, closed)
+            Wallet status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletUpdatedEvent.CreatedAt">
@@ -59719,7 +59718,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletDeletedEvent.Status">
             <summary>
-            Wallet status (active, frozen, closed)
+            Wallet status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletDeletedEvent.CreatedAt">
@@ -60204,12 +60203,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.EscrowType">
             <summary>
-            Type of escrow (two_party, multi_party, conditional, auction)
+            Type of escrow
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.TrustMode">
             <summary>
-            Trust mode (full_consent, initiator_trusted, single_party_trusted)
+            Trust mode
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowCreatedEvent.Parties">
@@ -60369,7 +60368,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentType">
             <summary>
-            Type of consent (release, refund, dispute, reaffirm)
+            Type of consent
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowConsentReceivedEvent.ConsentsReceived">
@@ -60449,7 +60448,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.Resolution">
             <summary>
-            Resolution type (released)
+            How the escrow was resolved
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowReleasedEvent.CompletedAt">
@@ -60489,7 +60488,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.Resolution">
             <summary>
-            Resolution type (refunded, expired_refunded, etc.)
+            How the escrow was resolved
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowRefundedEvent.CompletedAt">
@@ -60569,7 +60568,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.Resolution">
             <summary>
-            Resolution type (released, refunded, split)
+            Resolution decision by arbiter
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowResolvedEvent.Notes">
@@ -60749,7 +60748,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.EscrowPartyInfo.Role">
             <summary>
-            Role in escrow (depositor, recipient, etc.)
+            Role of the party in the escrow
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.RecipientInfo">
@@ -60799,12 +60798,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.AssetType">
             <summary>
-            Type of asset affected
+            Type of asset that failed validation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.FailureType">
             <summary>
-            Type of failure (asset_missing, asset_mutated, etc.)
+            Type of validation failure
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ValidationFailureInfo.AffectedPartyId">
@@ -61054,7 +61053,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.Status">
             <summary>
-            Current status of the game session (e.g., waiting, active, completed)
+            Current status of the game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.MaxPlayers">
@@ -61109,7 +61108,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.Status">
             <summary>
-            Current status of the game session (e.g., waiting, active, completed)
+            Current status of the game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.MaxPlayers">
@@ -61169,7 +61168,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.Status">
             <summary>
-            Current status of the game session (e.g., waiting, active, completed)
+            Current status of the game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.MaxPlayers">
@@ -61969,7 +61968,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemInstanceBoundEvent.BindType">
             <summary>
-            Type of binding (on_pickup, on_equip, on_use)
+            Type of binding
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ItemInstanceUnboundEvent">
@@ -62064,7 +62063,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.QuantityModel">
             <summary>
-            How quantities are tracked (discrete, continuous, unique)
+            How quantities are tracked
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Scope">
@@ -62129,7 +62128,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.QuantityModel">
             <summary>
-            How quantities are tracked (discrete, continuous, unique)
+            How quantities are tracked
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Scope">
@@ -62199,7 +62198,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.QuantityModel">
             <summary>
-            How quantities are tracked (discrete, continuous, unique)
+            How quantities are tracked
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Scope">
@@ -62574,7 +62573,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.LocationType">
             <summary>
-            Type classification of the location (e.g., room, area, zone)
+            Type classification of the location
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.ParentLocationId">
@@ -62654,7 +62653,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.LocationType">
             <summary>
-            Type classification of the location (e.g., room, area, zone)
+            Type classification of the location
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.ParentLocationId">
@@ -62739,7 +62738,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.LocationType">
             <summary>
-            Type classification of the location (e.g., room, area, zone)
+            Type classification of the location
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.ParentLocationId">
@@ -64680,7 +64679,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Entity1Type">
             <summary>
-            Type classification of the first entity (e.g., character, account, npc)
+            Type classification of the first entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Entity2Id">
@@ -64690,7 +64689,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Entity2Type">
             <summary>
-            Type classification of the second entity (e.g., character, account, npc)
+            Type classification of the second entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.RelationshipTypeId">
@@ -64745,7 +64744,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Entity1Type">
             <summary>
-            Type classification of the first entity (e.g., character, account, npc)
+            Type classification of the first entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Entity2Id">
@@ -64755,7 +64754,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Entity2Type">
             <summary>
-            Type classification of the second entity (e.g., character, account, npc)
+            Type classification of the second entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.RelationshipTypeId">
@@ -64815,7 +64814,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Entity1Type">
             <summary>
-            Type classification of the first entity (e.g., character, account, npc)
+            Type classification of the first entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Entity2Id">
@@ -64825,7 +64824,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Entity2Type">
             <summary>
-            Type classification of the second entity (e.g., character, account, npc)
+            Type classification of the second entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.RelationshipTypeId">
@@ -65562,7 +65561,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.OwnerType">
             <summary>
-            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            Type of entity that owns this save
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SizeBytes">
@@ -65669,7 +65668,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.OwnerType">
             <summary>
-            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            Type of entity that owns this save
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.ErrorMessage">
@@ -78086,11 +78085,6 @@
         <member name="P:BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchmakingStatusUpdateEvent.Position">
             <summary>
             Current queue position (if tracked)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.CancelReason">
-            <summary>
-            Reason codes for matchmaking cancellation
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent">

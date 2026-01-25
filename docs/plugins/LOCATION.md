@@ -79,7 +79,7 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<LocationService>` | Scoped | Structured logging |
-| `LocationServiceConfiguration` | Singleton | Configuration (currently unused) |
+| `LocationServiceConfiguration` | Singleton | All 3 config properties |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
@@ -220,17 +220,13 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T25 (Internal POCO uses string for enum)**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()` at line 1360. Model should use `LocationType` enum directly.
+*T25 violation has been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
 
-### Previously Fixed
+No other bugs identified.
 
-1. **T21 (Hardcoded depth limits)**: Replaced hardcoded 10, 20 values with `_configuration.MaxAncestorDepth`, `_configuration.DefaultDescendantMaxDepth`, and `_configuration.MaxDescendantDepth` properties.
-
-2. **T7 (ApiException handling)**: Added ApiException catch blocks for `IRealmClient` calls in `CreateLocationAsync` and `SeedLocationsAsync`. Service errors now propagate appropriate status codes.
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Code uniqueness is per-realm**: The same code (e.g., "TAVERN") can exist in multiple realms. The code index key includes realm ID: `code-index:{realmId}:{CODE}`.
 
@@ -244,28 +240,26 @@ State Store Layout
 
 6. **Same-realm enforcement for parents**: `SetLocationParent` validates that the new parent is in the same realm as the location. Cross-realm parent-child relationships are forbidden.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **N+1 query pattern**: `LoadLocationsByIdsAsync` issues one state store call per location ID. List operations for realms with hundreds of locations generate hundreds of individual calls. No bulk-get optimization exists.
 
-2. **LocationType stored as string**: The internal `LocationModel` stores `LocationType` as a string, not the generated enum. Response mapping uses `Enum.Parse<LocationType>()` which could throw on invalid stored values.
+2. **No caching layer**: Unlike other services (item, inventory), location has no Redis cache. Every read hits the state store directly. For frequently-accessed locations (realm capitals, major cities), this could be a performance concern.
 
-3. **No caching layer**: Unlike other services (item, inventory), location has no Redis cache. Every read hits the state store directly. For frequently-accessed locations (realm capitals, major cities), this could be a performance concern.
+3. **Root-locations index maintenance**: The `root-locations:{realmId}` index must be updated whenever a location gains or loses a parent. Missing updates could cause roots to be missed in `ListRootLocations`.
 
-4. **Root-locations index maintenance**: The `root-locations:{realmId}` index must be updated whenever a location gains or loses a parent. Missing updates could cause roots to be missed in `ListRootLocations`.
+4. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
 
-5. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
+5. **Seed update doesn't publish events**: Lines 1084-1101 - when updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
 
-6. **Seed update doesn't publish events**: Lines 1084-1101 - when updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
+6. **Index updates lack optimistic concurrency**: Index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
 
-7. **Index updates lack optimistic concurrency**: Index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
+7. **Empty parent index key not cleaned up**: When the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
 
-8. **Empty parent index key not cleaned up**: When the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
+8. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
 
-9. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
+9. **ListLocationsByParent returns NotFound for missing parent**: Lines 264-267 - if the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
 
-10. **ListLocationsByParent returns NotFound for missing parent**: Lines 264-267 - if the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
+10. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
 
-11. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
-
-12. **Event sentinel values for nullable fields**: Events use `Guid.Empty` for null parent, `default` for null deprecation date, and `new object()` for null metadata. Schema should define these as optional instead of using sentinel values.
+11. **Event sentinel values for nullable fields**: Events use `Guid.Empty` for null parent, `default` for null deprecation date, and `new object()` for null metadata. Schema should define these as optional instead of using sentinel values.

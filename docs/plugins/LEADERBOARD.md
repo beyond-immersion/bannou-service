@@ -216,11 +216,11 @@ Season Lifecycle
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Polymorphic member keys**: Sorted set members use format `{EntityType}:{EntityId}` enabling mixed entity types on a single leaderboard. `ParseMemberKey` uses `Enum.Parse` with `ignoreCase=true` for deserialization.
 
@@ -236,7 +236,7 @@ No bugs identified.
 
 7. **Delete cascades to all seasons**: `DeleteLeaderboardDefinition` for seasonal leaderboards iterates the season index and deletes each season's sorted set. If the season index is empty but `CurrentSeason` is set, it falls back to deleting just the current season.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **No distributed locks**: Unlike game-session or matchmaking, leaderboard operations don't use distributed locks. Redis sorted set operations are atomic at the command level, but the read-calculate-write pattern in `SubmitScore` (get previous, calculate final, add) is not atomic across the full operation.
 

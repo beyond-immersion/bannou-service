@@ -82,9 +82,11 @@ This plugin does not consume external events.
 | `SipDomain` | `VOICE_SIP_DOMAIN` | `"voice.bannou.local"` | SIP registration domain |
 | `KamailioHost` | `VOICE_KAMAILIO_HOST` | `"localhost"` | Kamailio server address |
 | `KamailioRpcPort` | `VOICE_KAMAILIO_RPC_PORT` | `5080` | Kamailio JSON-RPC port |
+| `KamailioSipPort` | `VOICE_KAMAILIO_SIP_PORT` | `5060` | Kamailio SIP signaling port for client registration |
 | `RtpEngineHost` | `VOICE_RTPENGINE_HOST` | `"localhost"` | RTPEngine server address |
 | `RtpEnginePort` | `VOICE_RTPENGINE_PORT` | `22222` | RTPEngine ng protocol port |
 | `KamailioRequestTimeoutSeconds` | `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | `5` | Kamailio HTTP timeout |
+| `SipCredentialExpirationHours` | `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | `24` | Hours until SIP credentials expire |
 
 ---
 
@@ -202,17 +204,11 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 None identified.
 
-### Previously Fixed
-
-1. **T21 (Hardcoded SIP credential expiration)**: Added `SipCredentialExpirationHours` to configuration schema (default: 24). `ScaledTierCoordinator.GenerateSipCredentials` now uses `_configuration.SipCredentialExpirationHours`.
-
-2. **T10 (Logging levels)**: Operation entry logs changed from `LogInformation` to `LogDebug`.
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **SDP answer in SdpOffer field**: The `VoicePeerUpdatedEvent` reuses the `SdpOffer` field to carry the SDP answer from `/voice/peer/answer`. Not a bug - intentional field reuse for the asymmetric WebRTC handshake (offer from joiner, answer from existing peer).
 
@@ -228,7 +224,7 @@ None identified.
 
 7. **Defensive null coalescing for Kamailio responses**: External API responses use `?? string.Empty` with explanatory comments. Valid per TENETS for third-party service data where null responses are possible.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **No participant TTL enforcement**: Heartbeats are tracked but no background worker expires stale participants. If a client disconnects without leaving, the participant remains until room deletion.
 

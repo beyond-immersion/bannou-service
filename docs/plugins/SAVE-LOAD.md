@@ -471,7 +471,21 @@ Circuit Breaker State Machine
 
 ## Known Quirks & Caveats
 
-### Intentional Quirks (Documented Behavior)
+### Bugs
+
+1. **String config properties should be enums**: Two configuration properties in `save-load-configuration.yaml` are `type: string` but represent enums:
+   - `DefaultCompressionType` → `CompressionType` enum
+   - `DefaultDeltaAlgorithm` → `DeltaAlgorithm` enum
+
+2. **Internal POCOs use string for enums**: Multiple internal models store enums as strings requiring `Enum.Parse`/`Enum.TryParse`:
+   - `PendingUploadEntry.CompressionType`: string → `CompressionType`
+   - `SaveVersionManifest.CompressionType`: string → `CompressionType`
+   - `SaveSlotMetadata.CompressionType`: string → `CompressionType`
+   - `SaveSlotMetadata.OwnerType`: string → `OwnerType`
+   - `SaveSlotMetadata.Category`: string → `SaveCategory`
+   - `ExportManifest.OwnerType`: string → `OwnerType`
+
+### Intentional Quirks
 
 1. **Slot lock on save prevents concurrent writes**: The save operation acquires a distributed lock on the slot to allocate version numbers atomically. Two concurrent saves to the same slot will serialize; the second waiter gets 409 Conflict if lock acquisition times out.
 
@@ -493,7 +507,7 @@ Circuit Breaker State Machine
 
 10. **Asset deletion is best-effort**: When deleting versions or slots, Asset service failures are caught and logged as warnings but do not fail the operation. Orphaned assets may accumulate if the Asset service is repeatedly unavailable.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **Full table scan in AdminStats**: AdminStats queries all slots and all versions (`_ => true`). For large deployments with millions of saves, this will be extremely slow and memory-intensive.
 
@@ -519,32 +533,4 @@ Circuit Breaker State Machine
 
 12. **Storage quota check is per-slot, not per-owner**: The quota check only examines the current slot's TotalSizeBytes against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. True per-owner enforcement requires querying all slots for the owner before each save.
 
-### Bugs (Fix Immediately)
-
-1. **T21/T25 (String config should be enum)**: Two configuration properties in `save-load-configuration.yaml` are `type: string` but represent enums:
-   - `DefaultCompressionType` → `CompressionType` enum
-   - `DefaultDeltaAlgorithm` → algorithm enum (if defined)
-
-   Service parses at runtime with `Enum.TryParse`. Schema should define as enums.
-
-2. **T25 (Internal POCO uses string for enum)**: Multiple internal models store enums as strings requiring `Enum.Parse`/`Enum.TryParse`:
-   - `PendingUploadEntry.CompressionType`: string → `CompressionType`
-   - `SaveVersionManifest.CompressionType`: string → `CompressionType`
-   - `SaveSlotMetadata.CompressionType`: string → `CompressionType`
-   - `SaveSlotMetadata.OwnerType`: string → `OwnerType`
-   - `SaveSlotMetadata.Category`: string → `SaveCategory`
-   - `ExportManifest.OwnerType`: string → `OwnerType`
-
-### Previously Fixed
-
-(This plugin was cleaned up by a previous audit pass.)
-
-### False Positives Removed
-
-- **T6 constructor null checks**: NRTs enabled project-wide - compile-time null safety eliminates need for runtime guards
-- **T7 ApiException handling**: SaveLoad service calls external IAssetClient via mesh for upload/download; asset failures are caught and logged as warnings with best-effort continuation
-- **T19 (XML Documentation)**: MigrationResult properties already have documentation ("Migrated data." and "Non-fatal warnings from migration.")
-
-### Additional Design Considerations
-
-13. **T25 (POCO Type Safety)**: Internal POCOs use string fields for enum and GUID types (`SaveSlotMetadata`, `SaveVersionManifest`, `PendingUploadEntry`, `HotSaveEntry`, `StorageCircuitBreaker`). String fields force `Enum.TryParse` and `.ToString()` throughout business logic. Requires model refactoring.
+13. **Internal POCOs use string for GUID types**: Internal models (`SaveSlotMetadata`, `SaveVersionManifest`, `PendingUploadEntry`, `HotSaveEntry`) use string fields for GUID types. String fields force `.ToString()` and `Guid.Parse()` throughout business logic.

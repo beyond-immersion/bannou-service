@@ -209,15 +209,11 @@ State Store Layout
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 None identified.
 
-### Previously Fixed
-
-1. **T7 (ApiException catch for mesh calls)**: Added `ApiException` catches before `Exception` catches for all `ICharacterClient` calls (delete verification, realm removal verification, merge pagination, character update). ApiException logged at Warning with status code; generic Exception logged at Error/Warning depending on operation criticality.
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Code normalization to uppercase**: All species codes are stored and indexed as uppercase via `ToUpperInvariant()`. Lookups are case-insensitive by normalizing input.
 
@@ -231,7 +227,7 @@ None identified.
 
 6. **Update event includes all current state**: `SpeciesUpdatedEvent` publishes the full species data plus `ChangedFields` list, even if only one field changed. Consumers can use `ChangedFields` to determine what actually changed.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **All-species list loaded in full**: `ListSpecies` loads all species IDs from the `all-species` key, then bulk-loads each. With hundreds of species, this generates O(N) state store calls.
 

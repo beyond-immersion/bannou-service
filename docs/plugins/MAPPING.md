@@ -86,6 +86,7 @@ Spatial data management service for Arcadia game worlds. Handles authority-based
 | `MaxPayloadsPerPublish` | `MAPPING_MAX_PAYLOADS_PER_PUBLISH` | `100` | Maximum payloads in a single publish/ingest event |
 | `AffordanceCacheTimeoutSeconds` | `MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS` | `60` | TTL for cached affordance results |
 | `MaxAffordanceCandidates` | `MAPPING_MAX_AFFORDANCE_CANDIDATES` | `1000` | Maximum candidates evaluated in affordance queries |
+| `AffordanceExclusionToleranceUnits` | `MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS` | `1.0` | Distance tolerance in world units for position exclusion matching |
 | `InlinePayloadMaxBytes` | `MAPPING_INLINE_PAYLOAD_MAX_BYTES` | `65536` | Threshold for offloading to lib-asset (64KB) |
 | `MaxCheckoutDurationSeconds` | `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | `1800` | Maximum authoring lock duration (30 min) |
 | `DefaultLayerCacheTtlSeconds` | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | `3600` | Default TTL for ephemeral layer data (1 hour) |
@@ -111,7 +112,7 @@ Spatial data management service for Arcadia game worlds. Handles authority-based
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MappingService>` | Scoped | Structured logging |
-| `MappingServiceConfiguration` | Singleton | All 25 config properties |
+| `MappingServiceConfiguration` | Singleton | All 26 config properties |
 | `IStateStoreFactory` | Singleton | Redis state store access |
 | `IMessageBus` | Scoped | Event publishing |
 | `IMessageSubscriber` | Scoped | Dynamic per-channel ingest subscriptions |
@@ -383,7 +384,7 @@ Authoring Workflow
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix When Discovered)
+### Bugs
 
 1. **Version counter race condition**: `IncrementVersionAsync` performs a non-atomic read-increment-write on the version counter. Two concurrent publishes could read the same version and both write version+1, producing duplicate version numbers. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode where unauthorized publishes are processed concurrently with authorized ones.
 
@@ -391,7 +392,7 @@ Authoring Workflow
 
 3. **Index operations are not atomic**: The spatial, type, and region index operations perform read-modify-write on Redis lists without atomicity. Two concurrent requests adding objects to the same index cell could both read the same list, both add their object, and save—the second save overwrites the first, losing an object. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Static ConcurrentDictionary for subscriptions**: `IngestSubscriptions` and `EventAggregationBuffers` are `static readonly` fields. This means subscription state survives across scoped service instances within the same process. This is intentional -- subscriptions must outlive individual HTTP requests.
 
@@ -407,7 +408,7 @@ Authoring Workflow
 
 7. **Heartbeat returns warning but does NOT fail**: When remaining authority time is below `AuthorityGracePeriodSeconds`, the heartbeat still succeeds (returns `valid=true`) but includes a warning string. The caller is expected to react to the warning by increasing heartbeat frequency.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **N+1 query pattern**: All spatial queries (point, bounds, type, affordance) load objects individually from Redis. A region with thousands of objects in a single bounds query generates thousands of Redis GET operations. Pipelining or MGET would be a significant performance improvement.
 

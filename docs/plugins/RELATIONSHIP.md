@@ -154,13 +154,13 @@ End relationship:
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T25 (Internal POCO uses string for enum)**: `RelationshipModel` stores entity types as strings requiring `Enum.Parse`:
-   - `Entity1Type`: string → `EntityType`
-   - `Entity2Type`: string → `EntityType`
+1. **Internal POCOs use string for enums and GUIDs**: `RelationshipModel` stores entity types as strings requiring `Enum.Parse` and GUIDs as strings:
+   - `Entity1Type`, `Entity2Type`: string → `EntityType`
+   - `RelationshipId`, `Entity1Id`, `Entity2Id`, `RelationshipTypeId`: string → `Guid`
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Bidirectional uniqueness via string sort**: Composite keys are normalized so `A→B` and `B→A` are the same relationship. This prevents duplicate relationships regardless of creation order. Self-relationships (same entity and type) are explicitly rejected.
 
@@ -174,7 +174,7 @@ End relationship:
 
 6. **Entity types parsed on every response**: `EntityType` enum stored as string in state store, parsed via `Enum.Parse<EntityType>()` in `MapToResponse()` on every read. Adds minor overhead but avoids enum serialization issues.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
 
@@ -186,23 +186,6 @@ End relationship:
 
 5. **Type migration during merge**: The update endpoint allows changing `RelationshipTypeId`, which is used by the RelationshipType service during type merges. This modifies type indexes atomically but without distributed transaction guarantees — a crash between removing from old index and adding to new could leave the relationship in neither index.
 
----
+6. **Read-modify-write without distributed locks**: Index updates and composite key checks have no concurrency protection. Requires IDistributedLockProvider integration.
 
-### Previously Fixed
-
-1. **T19 (XML Documentation)**: Fixed constructor param name mismatch - XML doc said `errorEventEmitter` but param is `eventConsumer`. Also added missing `messageBus` param doc.
-
-### False Positives Removed
-
-- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
-- **T7 ApiException handling**: Relationship service only calls state store (infrastructure lib), not external services via mesh
-
-### Additional Design Considerations
-
-6. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks on index updates and composite key checks. Requires IDistributedLockProvider integration.
-
-7. **T25 (POCO Type Safety)**: RelationshipModel uses string for GUIDs and Enums (`RelationshipId`, `Entity1Id`, etc.). Forces `Guid.Parse()` and `Enum.Parse()` in business logic.
-
-8. **T10 (Data inconsistency logging)**: Lines 126, 225, 307 log Error when index contains ID but model not found, without publishing error event. Could add TryPublishErrorAsync for monitoring.
-
-9. **Unused CancellationToken**: Event publishing methods accept but don't pass CancellationToken to TryPublishAsync. Minor cleanup item.
+7. **Data inconsistency logging without error events**: Lines 126, 225, 307 log Error when index contains ID but model not found, without publishing error event. Could add TryPublishErrorAsync for monitoring.

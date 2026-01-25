@@ -157,11 +157,11 @@ subscription.updated (Renewed)
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 None identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Denormalized service metadata**: `StubName` and `DisplayName` are copied from GameService at creation time. If the game service's display name later changes, existing subscriptions retain the old name. This is intentional — subscriptions reference the state at creation time.
 
@@ -173,7 +173,7 @@ None identified.
 
 5. **Renewal logic depends on expiration state**: `RenewSubscriptionAsync` with `extensionDays` extends from current expiration if still valid, but from "now" if already expired. Specifically: if `currentExpiration > now`, extends from `currentExpiration`; otherwise extends from `now`. A subscription that expired 5 days ago with 30-day extension expires 30 days from now (not 25).
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **No optimistic concurrency**: Two simultaneous cancellations or renewals could produce inconsistent state. The `IsActive` flag could be toggled unexpectedly if a cancel and renew arrive simultaneously.
 

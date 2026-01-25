@@ -201,15 +201,13 @@ Messaging Architecture
 
 ---
 
----
-
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-None identified.
+No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Crash-fast buffer philosophy**: If the retry buffer exceeds `RetryBufferMaxSize` (10,000) or oldest message exceeds `RetryBufferMaxAgeSeconds` (300s), the node calls `Environment.FailFast()`. Philosophy: better to crash and restart than silently drop events.
 
@@ -225,7 +223,7 @@ None identified.
 
 7. **Exchange caching**: Both `RabbitMQMessageBus` and `MessageRetryBuffer` cache declared exchanges in ConcurrentDictionaries to avoid redundant `ExchangeDeclareAsync` calls. Lock-free thread-safe access.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch).
 

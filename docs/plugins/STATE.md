@@ -100,7 +100,7 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Notes |
 |----------|---------|---------|-------|
-| `DefaultConsistency` | `STATE_DEFAULT_CONSISTENCY` | `"strong"` | Defined but never evaluated in service code |
+| `DefaultConsistency` | `STATE_DEFAULT_CONSISTENCY` | `Strong` | Defined but never evaluated in service code |
 | `EnableMetrics` | `STATE_ENABLE_METRICS` | `true` | Feature flag, never implemented |
 | `EnableTracing` | `STATE_ENABLE_TRACING` | `true` | Feature flag, never implemented |
 
@@ -204,11 +204,11 @@ State Store Architecture
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 None identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Sync-over-async in GetStore()**: `StateStoreFactory.GetStore<T>()` calls `.GetAwaiter().GetResult()` if initialization hasn't completed. This supports services that call GetStore in constructors but can deadlock in async contexts. Prefer `GetStoreAsync<T>()`.
 
@@ -224,9 +224,9 @@ None identified.
 
 7. **MySQL JSON query operators**: `Contains` uses `LIKE %value%`, `FullText` also uses `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
-1. **Three unused config properties**: `DefaultConsistency`, `EnableMetrics`, `EnableTracing` are defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS.
+1. **Unused config properties**: `DefaultConsistency`, `EnableMetrics`, `EnableTracing` are defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS.
 
 2. **MySQL query loads all into memory**: `JsonQueryPagedAsync` builds SQL with WHERE/ORDER BY/LIMIT but the result mapping still deserializes all matching rows. For very large result sets this could be memory-intensive.
 
@@ -236,10 +236,8 @@ None identified.
 
 5. **Connection initialization retry**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry (relies on StackExchange.Redis auto-reconnect).
 
-6. **Unused configuration properties**: `DefaultConsistency`, `EnableMetrics`, and `EnableTracing` are defined in the configuration schema but never referenced in service code. Either wire up to actual functionality or remove from schema.
+6. **Hardcoded retry delay minimum**: The retry delay uses a hardcoded minimum of 1000ms in `StateStoreFactory.cs:121`. Should be a configuration property (`MinRetryDelayMs`).
 
-7. **Hardcoded retry delay minimum**: The retry delay uses a hardcoded minimum of 1000ms in `StateStoreFactory.cs:121`. Should be a configuration property (`MinRetryDelayMs`).
+7. **ConnectionRetryCount not in schema**: `ConnectionRetryCount` has a hardcoded default of `10` in `StateStoreFactoryConfiguration` but is not exposed in the configuration schema. Should be added to `state-configuration.yaml`.
 
-8. **ConnectionRetryCount not in schema**: `ConnectionRetryCount` has a hardcoded default of `10` in `StateStoreFactoryConfiguration` but is not exposed in the configuration schema. Should be added to `state-configuration.yaml`.
-
-9. **Infrastructure-level error events**: `RedisDistributedLockProvider.LockAsync` catches exceptions and logs them but does not call `TryPublishErrorAsync`. Injecting `IMessageBus` into infrastructure code requires careful consideration of circular dependencies and whether infrastructure libs should publish events at all.
+8. **Infrastructure-level error events**: `RedisDistributedLockProvider.LockAsync` catches exceptions and logs them but does not call `TryPublishErrorAsync`. Injecting `IMessageBus` into infrastructure code requires careful consideration of circular dependencies and whether infrastructure libs should publish events at all.

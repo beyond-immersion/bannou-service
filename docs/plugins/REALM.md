@@ -162,11 +162,11 @@ Realm Deletion Safety Chain
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 None identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Codes are always uppercase**: `ToUpperInvariant()` normalization means "omega" and "OMEGA" resolve to the same realm. Original case is lost at creation time.
 
@@ -194,7 +194,7 @@ None identified.
 
 13. **Event publishing failures are swallowed**: Lines 754-757, 790-793, 825-828 catch event publishing exceptions and log warnings, but don't fail the operation. State changes succeed even if events fail to publish.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **GameServiceId mutability**: `UpdateRealmRequest` allows changing `GameServiceId`. This could break the game-service → realm relationship if not handled carefully by dependent systems that assume realm ownership is immutable.
 
@@ -204,21 +204,6 @@ None identified.
 
 4. **Event publishing non-transactional**: State store writes and event publishing are separate operations. A crash between writing state and publishing the event would leave dependent services unaware of the change until they directly query.
 
----
+5. **Read-modify-write without distributed locks**: Create/Delete modify the all-realms list, Update modifies realm model. Requires ETag-based optimistic concurrency or distributed locks.
 
-### False Positives Removed
-
-- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
-- **T6 state store initialization pattern**: Multiple typed stores (`RealmModel`, `string`, `List<string>`) for same definition is valid; GetStore is factory pattern, not expensive per-call
-- **T7 ApiException handling**: Realm service only calls state store (infrastructure lib), not external services via mesh
-- **T19 private method XML docs**: T19 applies to public APIs only; private helpers do not require XML documentation
-- **T19 internal model properties**: RealmModel is internal; T19 applies to public members
-- **T21 dead configuration**: `_configuration` with only `ForceServiceId` is framework-handled; no service-specific config to use
-- **T21 hardcoded service ID**: Using literal "realm" in error publishing is consistent with the `[BannouService("realm", ...)]` attribute
-- **T16 SCREAMING_CASE constants**: Internal constants can use any consistent naming convention
-
-### Additional Design Considerations
-
-5. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks. Create/Delete modify the all-realms list, Update modifies realm model. Requires ETag-based optimistic concurrency or distributed locks.
-
-6. **T25 (RealmId as string)**: `RealmModel.RealmId` stored as string instead of Guid. Forces conversions throughout and string defaults hide deserialization errors.
+6. **RealmId as string**: `RealmModel.RealmId` stored as string instead of Guid. Forces conversions throughout and string defaults hide deserialization errors.

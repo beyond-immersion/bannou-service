@@ -311,11 +311,11 @@ Generated Model Hierarchy
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix When Implementing)
+### Bugs
 
 1. **Unreachable catch blocks**: Every endpoint method has a try-catch where the try block cannot throw (contains only `LogWarning` + return). The catch blocks with `TryPublishErrorAsync` are dead code. When real logic is added, the error handling structure is already in place but the current code is misleading.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **REST exception to POST-only pattern**: This service deliberately uses GET/PUT/DELETE for browser compatibility. This is explicitly documented in the BANNOU_DESIGN.md as an exception: "Website service uses traditional REST patterns for browser compatibility (bookmarkable URLs, SEO, caching)."
 
@@ -327,7 +327,7 @@ Generated Model Hierarchy
 
 5. **No NotImplemented mapping in ConvertToActionResult**: The generated `ConvertToActionResult` switch expression has no case for `StatusCodes.NotImplemented`. Since all stubs currently return NotImplemented, the controller will fall through to the `_ => StatusCode(500, result)` default case, meaning clients receive 500 Internal Server Error instead of 501 Not Implemented.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **No WebSocket access**: Because this service uses REST HTTP methods, it cannot be accessed via the Connect WebSocket gateway. This means browser clients must make direct HTTP requests to the Bannou service, which has implications for authentication (must use Bearer tokens, not WebSocket session tokens).
 
