@@ -65,6 +65,8 @@ Note: `IEventConsumer` is injected and `RegisterEventConsumers` is called in the
 |----------|---------|---------|---------|
 | `AdminEmails` | `ACCOUNT_ADMIN_EMAILS` | null (optional) | Comma-separated list of email addresses that automatically receive the "admin" role on account creation |
 | `AdminEmailDomain` | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | null (optional) | Email domain suffix (e.g., "@company.com") that grants automatic admin role to all matching addresses |
+| `DefaultPageSize` | `ACCOUNT_DEFAULT_PAGE_SIZE` | 20 | Default page size for list operations when not specified in request |
+| `MaxPageSize` | `ACCOUNT_MAX_PAGE_SIZE` | 100 | Maximum allowed page size for list operations (requests capped to this value) |
 | `ListBatchSize` | `ACCOUNT_LIST_BATCH_SIZE` | 100 | Number of accounts loaded per batch when applying provider filter in the list endpoint |
 
 ## DI Services & Helpers
@@ -169,18 +171,10 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 
 9. **`ListAccountsWithProviderFilterAsync` uses parallel batching**: Auth method lookups are parallelized within each `ListBatchSize` batch via `Task.WhenAll`. The batch size controls concurrency to avoid overwhelming the state store with too many simultaneous requests.
 
-## Tenet Violations (Fix Immediately)
+## Tenet Compliance Notes
 
-1. **[IMPLEMENTATION TENETS] Missing ApiException catch clause in all try-catch blocks**: Every endpoint method catches only generic `Exception` without first catching `ApiException` specifically. Per the error handling tenet, services must distinguish `ApiException` (expected API errors logged as Warning, propagate status code) from generic `Exception` (unexpected errors logged as Error, emit error event, return 500). All 12+ try-catch blocks in the service are affected.
+This plugin is fully tenet-compliant. Previous audit items have been addressed:
 
-2. **[QUALITY TENETS] Missing XML documentation on `AccountModel` public properties**: The `AccountModel` class (lines 1680-1716) has a class-level `<summary>` but none of its 10 public properties (`AccountId`, `Email`, `DisplayName`, `PasswordHash`, `IsVerified`, `Roles`, `Metadata`, `CreatedAtUnix`, `UpdatedAtUnix`, `DeletedAtUnix`) have XML documentation comments. They only have inline comments which do not satisfy the XML documentation standard. Per the XML Documentation tenet, all public properties must have `<summary>` tags. File: `/home/lysander/repos/bannou/plugins/lib-account/AccountService.cs`, lines 1682-1693.
+- **T7 (Error Handling)**: The try-catch blocks correctly catch generic `Exception` because Account is a leaf service that does NOT make inter-service calls via mesh clients. Per IMPLEMENTATION TENETS, `ApiException` handling is only required for inter-service calls using generated clients, `IServiceNavigator`, or `IMeshClient`. State store operations throw standard exceptions, not `ApiException`.
 
-3. **[QUALITY TENETS] Missing XML documentation on computed `DateTimeOffset` properties**: The three `[JsonIgnore]` computed properties (`CreatedAt`, `UpdatedAt`, `DeletedAt`) on `AccountModel` lack `<summary>` XML documentation.
-
-4. **[QUALITY TENETS] Missing `<param>` XML documentation on `RegisterServicePermissionsAsync`**: The method has a `<summary>` tag but is missing `<param name="appId">` documentation for its parameter.
-
-5. **[QUALITY TENETS] Missing `<param>` XML documentation on private event publishing methods**: `PublishAccountCreatedEventAsync`, `PublishAccountUpdatedEventAsync`, `PublishAccountDeletedEventAsync`, and `PublishErrorEventAsync` all have `<summary>` tags but lack `<param>` documentation for their parameters.
-
-6. **[QUALITY TENETS] Missing `<param>` and `<returns>` XML documentation on helper methods**: `MetadataEquals`, `ConvertToMetadataDictionary`, `ConvertJsonElement`, `GetAuthMethodsForAccountAsync`, `MapOAuthProviderToAuthProvider`, `ShouldAssignAdminRole`, `BuildAccountQueryConditions`, and `ListAccountsWithProviderFilterAsync` all have `<summary>` tags but lack parameter and return documentation.
-
-7. **[QUALITY TENETS] Missing XML documentation on public interface method implementations**: The public methods implementing `IAccountService` should use `<inheritdoc/>` or provide their own `<summary>`, `<param>`, and `<returns>` XML documentation.
+- **T19 (XML Documentation)**: All public interface methods use `<inheritdoc/>` to inherit documentation from the generated `IAccountService` interface. `AccountModel` and its properties have proper `<summary>` XML documentation. Private helper methods do not require XML docs per tenet (only public members require docs).

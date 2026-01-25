@@ -2,7 +2,6 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Item;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -27,7 +26,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     private readonly Mock<IStateStore<string>> _mockTemplateStringStore;
     private readonly Mock<IStateStore<string>> _mockInstanceStringStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IServiceNavigator> _mockNavigator;
     private readonly Mock<ILogger<ItemService>> _mockLogger;
 
     public ItemServiceTests()
@@ -40,7 +38,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockTemplateStringStore = new Mock<IStateStore<string>>();
         _mockInstanceStringStore = new Mock<IStateStore<string>>();
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockNavigator = new Mock<IServiceNavigator>();
         _mockLogger = new Mock<ILogger<ItemService>>();
 
         // Template persistent stores
@@ -118,7 +115,6 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     {
         return new ItemService(
             _mockMessageBus.Object,
-            _mockNavigator.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             Configuration);

@@ -1714,20 +1714,46 @@ public partial class AccountService : IAccountService
 /// </summary>
 public class AccountModel
 {
+    /// <summary>Unique identifier for the account.</summary>
     public Guid AccountId { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string? DisplayName { get; set; }
-    public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
-    public bool IsVerified { get; set; }
-    public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
-    public Dictionary<string, object>? Metadata { get; set; } // Custom metadata for the account
 
-    // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
+    /// <summary>Email address used for login and notifications.</summary>
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>User-visible display name, optional.</summary>
+    public string? DisplayName { get; set; }
+
+    /// <summary>BCrypt hashed password for email/password authentication.</summary>
+    public string? PasswordHash { get; set; }
+
+    /// <summary>Whether the email address has been verified.</summary>
+    public bool IsVerified { get; set; }
+
+    /// <summary>User roles for permission checks (e.g., "admin", "user").</summary>
+    public List<string> Roles { get; set; } = new List<string>();
+
+    /// <summary>Custom metadata key-value pairs for the account.</summary>
+    public Dictionary<string, object>? Metadata { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for account creation.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
     public long CreatedAtUnix { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for last account update.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
     public long UpdatedAtUnix { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for soft-deletion, null if not deleted.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
     public long? DeletedAtUnix { get; set; }
 
-    // Expose as DateTimeOffset for code convenience (not serialized)
+    /// <summary>Computed property for code convenience - not serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public DateTimeOffset CreatedAt
     {
@@ -1735,6 +1761,7 @@ public class AccountModel
         set => CreatedAtUnix = value.ToUnixTimeSeconds();
     }
 
+    /// <summary>Computed property for code convenience - not serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public DateTimeOffset UpdatedAt
     {
@@ -1742,6 +1769,7 @@ public class AccountModel
         set => UpdatedAtUnix = value.ToUnixTimeSeconds();
     }
 
+    /// <summary>Computed property for code convenience - not serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public DateTimeOffset? DeletedAt
     {

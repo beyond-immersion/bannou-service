@@ -80,7 +80,8 @@ This plugin does not consume external events.
 | `DefaultMaxNestingDepth` | `INVENTORY_DEFAULT_MAX_NESTING_DEPTH` | `3` | Maximum container nesting depth |
 | `DefaultWeightContribution` | `INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION` | `self_plus_contents` | How weight propagates to parent |
 | `ContainerCacheTtlSeconds` | `INVENTORY_CONTAINER_CACHE_TTL_SECONDS` | `300` | Redis cache TTL (5 min) |
-| `LockTimeoutSeconds` | `INVENTORY_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock expiry |
+| `LockTimeoutSeconds` | `INVENTORY_LOCK_TIMEOUT_SECONDS` | `30` | Container-level distributed lock expiry |
+| `ListLockTimeoutSeconds` | `INVENTORY_LIST_LOCK_TIMEOUT_SECONDS` | `15` | Owner/type index list lock expiry |
 | `EnableLazyContainerCreation` | `INVENTORY_ENABLE_LAZY_CONTAINER_CREATION` | `true` | Allow get-or-create pattern |
 | `DefaultMaxSlots` | `INVENTORY_DEFAULT_MAX_SLOTS` | `20` | Default slot count for new containers |
 | `DefaultMaxWeight` | `INVENTORY_DEFAULT_MAX_WEIGHT` | `100.0` | Default weight capacity |
@@ -272,79 +273,7 @@ Container Deletion Strategies
 
 ---
 
-## Tenet Violations (Fix Immediately)
-
-### 1. IMPLEMENTATION TENETS (T21): Hardcoded Index Lock Timeout
-
-**File**: `plugins/lib-inventory/InventoryService.cs`, lines 1912 and 1938
-
-The `AddToListAsync` and `RemoveFromListAsync` methods use a hardcoded `15` second lock timeout instead of a configuration property. Per T21, any tunable value (limits, timeouts, thresholds) MUST be a configuration property.
-
-**Fix**: Add a `ListLockTimeoutSeconds` property to `schemas/inventory-configuration.yaml` with default `15`, regenerate, and replace the hardcoded `15` with `_configuration.ListLockTimeoutSeconds`.
-
-### 2. IMPLEMENTATION TENETS (T25/T21): DefaultWeightContribution Config Is String Requiring Enum.Parse in Business Logic
-
-**File**: `schemas/inventory-configuration.yaml`, line 16; `plugins/lib-inventory/InventoryService.cs`, line 127
-
-The `DefaultWeightContribution` configuration property is defined as `type: string` in the schema. This forces `Enum.TryParse<WeightContribution>` in business logic (line 127). Per T25, Enum.Parse belongs only at system boundaries (deserialization, external input), not in service business logic. The configuration system IS a boundary, but the parse occurs per-request inside CreateContainerAsync rather than once at startup.
-
-**Fix**: Parse the config value once in the constructor and store it as a `WeightContribution` typed field, or change the schema property to reference the WeightContribution enum type so the generated config class uses the enum directly.
-
-### 3. QUALITY TENETS (T10): Validation Failures Logged at Warning Instead of Debug
-
-**File**: `plugins/lib-inventory/InventoryService.cs`, lines 75, 80, 85, 90, 95, 111, 119, 276, 503, 657, 667, 677, 907, 1001, 1007, 1096, 1117, 1245, 528
-
-T10 specifies that "Expected Outcomes" (resource not found, validation failures) should be logged at Debug level. The service logs input validation failures at Warning level. Per T7, these are 400-class responses representing expected user input issues, not security events or unexpected failures.
-
-**Fix**: Change `LogWarning` to `LogDebug` for all input validation failures and expected business rule violations that return 400 BadRequest.
-
-### 4. CLAUDE.md: `?? string.Empty` Without Justification Comment
-
-**File**: `plugins/lib-inventory/InventoryService.cs`, line 1335
-
-Uses `containerEtag ?? string.Empty` without the required explanatory comment. Per CLAUDE.md rules, `?? string.Empty` requires either (1) a comment explaining the coalesce can never execute (compiler satisfaction), or (2) defensive coding for external service with error logging.
-
-**Fix**: Either validate the ETag is non-null with a throw or log, or add a justifying comment explaining why empty string is safe for `TrySaveAsync` in this context.
-
-### 5. QUALITY TENETS (T16): Duplicate Assembly Attributes
-
-**File**: `plugins/lib-inventory/InventoryService.cs`, lines 14-15; `plugins/lib-inventory/AssemblyInfo.cs`, lines 5-6
-
-The `[assembly: InternalsVisibleTo]` attributes are declared in both files redundantly.
-
-**Fix**: Remove the duplicate declarations and the `using System.Runtime.CompilerServices;` import from `InventoryService.cs` (keep them only in `AssemblyInfo.cs`).
-
-### 6. ~~IMPLEMENTATION TENETS (T9): TransferItem Lacks Distributed Lock~~ **FIXED**
-
-TransferItem now acquires a distributed lock on the source container before tradeable/bound validation and the delegated MoveItemAsync call.
-
-### 7. ~~IMPLEMENTATION TENETS (T9): DeleteContainer Lacks Distributed Lock~~ **FIXED**
-
-DeleteContainer now acquires a distributed lock on the container before item fetching, handling, index cleanup, and deletion. Also returns ServiceUnavailable (503) if items can't be fetched instead of orphaning them.
-
-### 8. ~~IMPLEMENTATION TENETS (T9): SplitStack Does Not Update Container UsedSlots~~ **FIXED**
-
-SplitStack now acquires a distributed lock on the container and increments UsedSlots after successfully creating the new item instance.
-
-### 9. ~~IMPLEMENTATION TENETS (T9): MergeStacks Container Update Lacks Distributed Lock~~ **FIXED**
-
-MergeStacks now acquires a distributed lock on the source container before modifying quantities. The container slot decrement uses the cache read-through/write-through pattern under lock instead of raw ETag-without-retry.
-
-### 10. QUALITY TENETS (T10): Missing Debug-Level Operation Entry Logging
-
-**File**: `plugins/lib-inventory/InventoryService.cs`
-
-T10 requires "Operation Entry (Debug): Log input parameters" for all operations. Most endpoint methods lack Debug-level entry logging. Only `CreateContainerAsync` has an entry log (line 69), but at Information level rather than Debug.
-
-**Fix**: Add `_logger.LogDebug(...)` entry logging at the beginning of each endpoint method. Change line 69 from `LogInformation` to `LogDebug` for the entry log.
-
----
-
 ## Known Quirks & Caveats
-
-### Bugs (Fix Immediately)
-
-None identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -352,13 +281,13 @@ None identified.
 
 2. **Same-container move is no-op**: Moving an item within the same container (different slot) returns OK immediately without modifying weight/volume counters. Only slot position changes.
 
-3. **Item service graceful degradation**: Container read operations continue if lib-item is unavailable (`GetContainer` returns empty contents, logged as warning). **FIXED**: `DeleteContainer` now returns `ServiceUnavailable` (503) when items can't be fetched, preventing orphaned items. Previously it would proceed with deletion assuming the container was empty.
+3. **Item service graceful degradation**: Container read operations continue if lib-item is unavailable (`GetContainer` returns empty contents, logged as warning). `DeleteContainer` returns `ServiceUnavailable` (503) when items can't be fetched, preventing orphaned items.
 
 4. **Stack merge overflow handling**: Merging stacks respects MaxStackSize. If combined exceeds max, target gets capped and source retains the remainder. Source is only destroyed if fully consumed.
 
 5. **Container full event after add**: The `inventory-container.full` event is emitted after successfully adding an item that fills the container. Future add attempts will fail constraint checks.
 
-6. **List index locking separate from container lock**: Owner/type indexes use their own 15-second locks (shorter than the 30-second container lock). Index lock failure is non-fatal - a warning is logged but the main operation succeeds.
+6. **List index locking separate from container lock**: Owner/type indexes use `ListLockTimeoutSeconds` (default 15s, shorter than container locks). Index lock failure is non-fatal - a warning is logged but the main operation succeeds.
 
 7. **TransferItem checks tradeable and binding**: Transfer validates that the item template's `Tradeable` flag is true AND the instance is not bound. Bound or non-tradeable items cannot be transferred between owners.
 
@@ -374,14 +303,14 @@ None identified.
 
 5. **No event consumption**: Inventory doesn't listen for item events (destroy, bind, modify). If an item is destroyed directly via lib-item (bypassing inventory), the container's UsedSlots/ContentsWeight counters become stale.
 
-6. **Lock timeout not configurable per-operation**: All operations use the same `LockTimeoutSeconds`. Quick operations (update metadata) and slow operations (delete with destroy) share the same timeout.
+6. **Lock timeout not configurable per-operation**: All container operations use the same `LockTimeoutSeconds`. Quick operations (update metadata) and slow operations (delete with destroy) share the same timeout.
 
-7. **Cache errors are non-fatal**: Lines 2017-2018, 2036-2037, 2053-2054 - cache lookup failures, write failures, and invalidation failures are all logged at debug/warning level but don't fail operations. Container operations succeed even if Redis cache is unavailable.
+7. **Cache errors are non-fatal**: Cache lookup failures, write failures, and invalidation failures are logged but don't fail operations. Container operations succeed even if Redis cache is unavailable.
 
-8. **Nesting depth validation uses parent's limit**: Line 116 - when creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children, not its own creation.
+8. **Nesting depth validation uses parent's limit**: When creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children.
 
-9. **Missing parent returns BadRequest not NotFound**: Line 110-112 - if `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound. Logged as warning.
+9. **Missing parent returns BadRequest not NotFound**: If `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound.
 
-10. **Container deletion with "destroy" continues on item failure**: Lines 518-522 - when deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed.
+10. **Container deletion with "destroy" continues on item failure**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed.
 
-11. **Merge stack source destruction failure non-fatal**: Lines 1322-1325 - when stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity.
+11. **Merge stack source destruction failure non-fatal**: When stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity.

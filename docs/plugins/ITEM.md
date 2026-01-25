@@ -19,7 +19,6 @@ Dual-model item management with templates (definitions/prototypes) and instances
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence + Redis caching for templates and instances |
 | lib-messaging (`IMessageBus`) | Publishing item lifecycle events; error event publishing |
-| lib-mesh (`IServiceNavigator`) | Retained for future currency-item integration (currently unused) |
 
 ---
 
@@ -99,7 +98,6 @@ This plugin does not consume external events.
 | `ItemServiceConfiguration` | Singleton | All 9 config properties |
 | `IStateStoreFactory` | Singleton | Access to 4 state stores |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IServiceNavigator` | Scoped | Future mesh calls (retained, unused) |
 
 Service lifetime is **Scoped** (per-request). No background services.
 
@@ -222,8 +220,7 @@ Soulbound Types
 ## Stubs & Unimplemented Features
 
 1. **Unbound event not implemented**: `item-instance.unbound` event type is defined in the event schema but no unbinding endpoint exists. Items can only be bound, not unbound (except via admin override rebinding).
-2. **IServiceNavigator unused**: The `_navigator` field is retained with pragma warning disable for planned future currency-item integration via lib-mesh.
-3. **Deprecation without cascade**: Deprecating a template doesn't automatically migrate, disable, or destroy existing instances. Admin must manage instances separately.
+2. **Deprecation without cascade**: Deprecating a template doesn't automatically migrate, disable, or destroy existing instances. Admin must manage instances separately.
 
 ---
 

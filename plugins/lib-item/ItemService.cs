@@ -3,15 +3,10 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-item.tests")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace BeyondImmersion.BannouService.Item;
 
@@ -27,10 +22,10 @@ public partial class ItemService : IItemService
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
 
-#pragma warning disable IDE0052 // Remove unread private members
-    // Retained for future currency-item integration via lib-mesh
-    private readonly IServiceNavigator _navigator;
-#pragma warning restore IDE0052
+    // Parsed config defaults (boundary parsing per T25)
+    private readonly ItemRarity _defaultRarity;
+    private readonly WeightPrecision _defaultWeightPrecision;
+    private readonly SoulboundType _defaultSoulboundType;
 
     // Template store key prefixes
     private const string TPL_PREFIX = "tpl:";
@@ -48,16 +43,28 @@ public partial class ItemService : IItemService
     /// </summary>
     public ItemService(
         IMessageBus messageBus,
-        IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
         ILogger<ItemService> logger,
         ItemServiceConfiguration configuration)
     {
         _messageBus = messageBus;
-        _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+
+        // Parse config defaults once at startup (boundary parsing per T25)
+        if (!Enum.TryParse<ItemRarity>(_configuration.DefaultRarity, true, out _defaultRarity))
+        {
+            _defaultRarity = ItemRarity.Common;
+        }
+        if (!Enum.TryParse<WeightPrecision>(_configuration.DefaultWeightPrecision, true, out _defaultWeightPrecision))
+        {
+            _defaultWeightPrecision = WeightPrecision.Decimal_2;
+        }
+        if (!Enum.TryParse<SoulboundType>(_configuration.DefaultSoulboundType, true, out _defaultSoulboundType))
+        {
+            _defaultSoulboundType = SoulboundType.None;
+        }
     }
 
     #region Template Operations
@@ -69,7 +76,7 @@ public partial class ItemService : IItemService
     {
         try
         {
-            _logger.LogInformation("Creating item template with code {Code} for game {GameId}", body.Code, body.GameId);
+            _logger.LogDebug("Creating item template with code {Code} for game {GameId}", body.Code, body.GameId);
 
             var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
@@ -96,11 +103,11 @@ public partial class ItemService : IItemService
                 Category = body.Category,
                 Subcategory = body.Subcategory,
                 Tags = body.Tags?.ToList() ?? new List<string>(),
-                Rarity = body.Rarity ?? Enum.Parse<ItemRarity>(_configuration.DefaultRarity, ignoreCase: true),
+                Rarity = body.Rarity ?? _defaultRarity,
                 QuantityModel = body.QuantityModel,
                 MaxStackSize = body.MaxStackSize > 0 ? body.MaxStackSize : _configuration.DefaultMaxStackSize,
                 UnitOfMeasure = body.UnitOfMeasure,
-                WeightPrecision = body.WeightPrecision ?? Enum.Parse<WeightPrecision>(_configuration.DefaultWeightPrecision, ignoreCase: true),
+                WeightPrecision = body.WeightPrecision ?? _defaultWeightPrecision,
                 Weight = body.Weight,
                 Volume = body.Volume,
                 GridWidth = body.GridWidth,
@@ -109,7 +116,7 @@ public partial class ItemService : IItemService
                 BaseValue = body.BaseValue,
                 Tradeable = body.Tradeable,
                 Destroyable = body.Destroyable,
-                SoulboundType = body.SoulboundType ?? Enum.Parse<SoulboundType>(_configuration.DefaultSoulboundType, ignoreCase: true),
+                SoulboundType = body.SoulboundType ?? _defaultSoulboundType,
                 HasDurability = body.HasDurability,
                 MaxDurability = body.MaxDurability,
                 Scope = body.Scope,
@@ -158,7 +165,7 @@ public partial class ItemService : IItemService
                 CreatedAt = now
             }, cancellationToken);
 
-            _logger.LogInformation("Created item template {TemplateId} code={Code}", templateId, body.Code);
+            _logger.LogDebug("Created item template {TemplateId} code={Code}", templateId, body.Code);
             return (StatusCodes.OK, MapTemplateToResponse(model));
         }
         catch (Exception ex)
@@ -324,7 +331,7 @@ public partial class ItemService : IItemService
                 UpdatedAt = now
             }, cancellationToken);
 
-            _logger.LogInformation("Updated item template {TemplateId}", body.TemplateId);
+            _logger.LogDebug("Updated item template {TemplateId}", body.TemplateId);
             return (StatusCodes.OK, MapTemplateToResponse(model));
         }
         catch (Exception ex)
@@ -381,7 +388,7 @@ public partial class ItemService : IItemService
                 UpdatedAt = now
             }, cancellationToken);
 
-            _logger.LogInformation("Deprecated item template {TemplateId}", body.TemplateId);
+            _logger.LogDebug("Deprecated item template {TemplateId}", body.TemplateId);
             return (StatusCodes.OK, MapTemplateToResponse(model));
         }
         catch (Exception ex)
@@ -406,7 +413,7 @@ public partial class ItemService : IItemService
     {
         try
         {
-            _logger.LogInformation("Creating item instance for template {TemplateId} in container {ContainerId}",
+            _logger.LogDebug("Creating item instance for template {TemplateId} in container {ContainerId}",
                 body.TemplateId, body.ContainerId);
 
             // Get template (uses cache)
@@ -484,7 +491,7 @@ public partial class ItemService : IItemService
                 CreatedAt = now
             }, cancellationToken);
 
-            _logger.LogInformation("Created item instance {InstanceId}", instanceId);
+            _logger.LogDebug("Created item instance {InstanceId}", instanceId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
         catch (Exception ex)
@@ -580,7 +587,7 @@ public partial class ItemService : IItemService
                 ModifiedAt = now
             }, cancellationToken);
 
-            _logger.LogInformation("Modified item instance {InstanceId}", body.InstanceId);
+            _logger.LogDebug("Modified item instance {InstanceId}", body.InstanceId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
         catch (Exception ex)
@@ -616,7 +623,7 @@ public partial class ItemService : IItemService
                     _logger.LogWarning("Item {InstanceId} is already bound to {BoundToId}", body.InstanceId, model.BoundToId);
                     return (StatusCodes.Conflict, null);
                 }
-                _logger.LogInformation("Admin override: rebinding item {InstanceId} from {OldBound} to {NewBound}",
+                _logger.LogDebug("Admin override: rebinding item {InstanceId} from {OldBound} to {NewBound}",
                     body.InstanceId, model.BoundToId, body.CharacterId);
             }
 
@@ -653,7 +660,7 @@ public partial class ItemService : IItemService
                 BindType = body.BindType.ToString()
             }, cancellationToken);
 
-            _logger.LogInformation("Bound item {InstanceId} to character {CharacterId}", body.InstanceId, body.CharacterId);
+            _logger.LogDebug("Bound item {InstanceId} to character {CharacterId}", body.InstanceId, body.CharacterId);
             return (StatusCodes.OK, MapInstanceToResponse(model));
         }
         catch (Exception ex)
@@ -716,7 +723,7 @@ public partial class ItemService : IItemService
                 ModifiedAt = now
             }, cancellationToken);
 
-            _logger.LogInformation("Destroyed item instance {InstanceId} reason={Reason}", body.InstanceId, body.Reason);
+            _logger.LogDebug("Destroyed item instance {InstanceId} reason={Reason}", body.InstanceId, body.Reason);
             return (StatusCodes.OK, new DestroyItemInstanceResponse
             {
                 Destroyed = true,
