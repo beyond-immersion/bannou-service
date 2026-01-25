@@ -1333,7 +1333,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1345,7 +1345,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

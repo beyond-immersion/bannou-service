@@ -2002,7 +2002,7 @@ public partial class MappingService : IMappingService
                 {
                     AssetType = AssetType.Other,
                     Tags = new List<string> { "mapping", "snapshot", regionId.ToString() },
-                    Realm = BeyondImmersion.BannouService.Asset.GameRealm.Shared
+                    Realm = "shared"
                 }
             };
 

@@ -394,7 +394,7 @@ public partial class AssetService : IAssetService
                 ContentType = session.ContentType,
                 Size = assetRef.Size,
                 AssetType = session.Metadata?.AssetType ?? AssetType.Other,
-                Realm = session.Metadata?.Realm ?? GameRealm.Shared,
+                Realm = session.Metadata?.Realm ?? "shared",
                 Tags = session.Metadata?.Tags ?? new List<string>(),
                 ProcessingStatus = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
                 StorageKey = finalKey,
@@ -1017,7 +1017,7 @@ public partial class AssetService : IAssetService
                 BundleId = body.BundleId,
                 Version = body.Version ?? "1.0.0",
                 BundleType = BundleType.Source,
-                Realm = body.Realm ?? GameRealm.Shared,
+                Realm = body.Realm ?? "shared",
                 AssetIds = body.AssetIds.ToList(),
                 Assets = bundleAssetEntries,
                 StorageKey = bundlePath,
@@ -1434,7 +1434,7 @@ public partial class AssetService : IAssetService
                     }
 
                     // Validate realm consistency (all must be same realm or 'shared')
-                    if (sourceBundle.Realm != body.Realm && sourceBundle.Realm != GameRealm.Shared)
+                    if (sourceBundle.Realm != body.Realm && sourceBundle.Realm != "shared")
                     {
                         _logger.LogWarning("CreateMetabundle: Realm mismatch - bundle {BundleId} is {BundleRealm}, expected {ExpectedRealm}",
                             sourceBundleId, sourceBundle.Realm, body.Realm);
@@ -1469,8 +1469,8 @@ public partial class AssetService : IAssetService
                     }
 
                     // Validate realm consistency
-                    var assetRealm = asset.Realm ?? GameRealm.Omega;
-                    if (assetRealm != body.Realm && assetRealm != GameRealm.Shared)
+                    var assetRealm = asset.Realm ?? "omega";
+                    if (assetRealm != body.Realm && assetRealm != "shared")
                     {
                         _logger.LogWarning("CreateMetabundle: Realm mismatch - asset {AssetId} is {AssetRealm}, expected {ExpectedRealm}",
                             assetId, assetRealm, body.Realm);
@@ -3313,9 +3313,9 @@ public partial class AssetService : IAssetService
                 bundles = bundles.Where(b => b.LifecycleStatus == targetStatus);
             }
 
-            if (body.Realm.HasValue)
+            if (!string.IsNullOrWhiteSpace(body.Realm))
             {
-                bundles = bundles.Where(b => b.Realm == body.Realm.Value);
+                bundles = bundles.Where(b => b.Realm == body.Realm);
             }
 
             if (body.BundleType.HasValue)

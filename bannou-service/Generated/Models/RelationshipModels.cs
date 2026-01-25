@@ -31,58 +31,6 @@ namespace BeyondImmersion.BannouService.Relationship;
 using System = global::System;
 
 /// <summary>
-/// Type of entity in a relationship.
-/// <br/>- CHARACTER: Player-controlled characters
-/// <br/>- NPC: Non-player characters
-/// <br/>- MONSTER: Hostile or neutral creatures
-/// <br/>- ITEM: Physical objects, artifacts, etc.
-/// <br/>- LOCATION: Places, regions, buildings
-/// <br/>- ORGANIZATION: Guilds, companies, groups
-/// <br/>- FACTION: Political or social factions
-/// <br/>- REALM: Game realms/worlds
-/// <br/>- SOUL: Immortal soul entity for reincarnation chains
-/// <br/>- OTHER: Catch-all for future entity types
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum EntityType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"CHARACTER")]
-    CHARACTER = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"NPC")]
-    NPC = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"MONSTER")]
-    MONSTER = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ITEM")]
-    ITEM = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"LOCATION")]
-    LOCATION = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ORGANIZATION")]
-    ORGANIZATION = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"FACTION")]
-    FACTION = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"REALM")]
-    REALM = 7,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SOUL")]
-    SOUL = 8,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"OTHER")]
-    OTHER = 9,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Request to create a new relationship between two entities
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

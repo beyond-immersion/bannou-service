@@ -834,7 +834,7 @@ public partial class CharacterService : ICharacterService
                     new ListRelationshipsByEntityRequest
                     {
                         EntityId = body.CharacterId,
-                        EntityType = EntityType.CHARACTER
+                        EntityType = EntityType.Character
                     },
                     cancellationToken);
 
@@ -955,7 +955,7 @@ public partial class CharacterService : ICharacterService
                 new ListRelationshipsByEntityRequest
                 {
                     EntityId = characterId,
-                    EntityType = EntityType.CHARACTER
+                    EntityType = EntityType.Character
                 },
                 cancellationToken);
 

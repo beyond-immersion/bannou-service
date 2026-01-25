@@ -27102,11 +27102,6 @@
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Analytics.EntityType">
-            <summary>
-            Type of entity being tracked
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Analytics.ControllerAction">
             <summary>
             Type of controller action
@@ -28382,11 +28377,6 @@
         <member name="T:BeyondImmersion.BannouService.Asset.AssetType">
             <summary>
             Type classification for assets
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.GameRealm">
-            <summary>
-            Game realm the asset belongs to
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ProcessingStatus">
@@ -36768,11 +36758,6 @@
             <param name="headers">The response headers.</param>
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Contract.EntityType">
-            <summary>
-            Type of entity that can be a contract party
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Contract.ContractStatus">
             <summary>
@@ -52266,11 +52251,6 @@
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Leaderboard.EntityType">
-            <summary>
-            Type of entity on the leaderboard
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Leaderboard.SortOrder">
             <summary>
             How scores are sorted
@@ -64913,22 +64893,6 @@
             <param name="cancellationToken">A cancellation token.</param>
             <returns>The deserialized response object and raw text.</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Relationship.EntityType">
-            <summary>
-            Type of entity in a relationship.
-            <br/>- CHARACTER: Player-controlled characters
-            <br/>- NPC: Non-player characters
-            <br/>- MONSTER: Hostile or neutral creatures
-            <br/>- ITEM: Physical objects, artifacts, etc.
-            <br/>- LOCATION: Places, regions, buildings
-            <br/>- ORGANIZATION: Guilds, companies, groups
-            <br/>- FACTION: Political or social factions
-            <br/>- REALM: Game realms/worlds
-            <br/>- SOUL: Immortal soul entity for reincarnation chains
-            <br/>- OTHER: Catch-all for future entity types
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Relationship.CreateRelationshipRequest">
             <summary>
             Request to create a new relationship between two entities
@@ -75925,6 +75889,14 @@
             <param name="request">The HTTP request message.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>The HTTP response message.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Common.EntityType">
+            <summary>
+            Universal entity type identifier used across Bannou services.
+            <br/>Provides first-class support for various kinds of entities in analytics,
+            <br/>achievements, leaderboards, contracts, relationships, and other systems.
+            <br/>
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.StateStoreDefinitions">
             <summary>

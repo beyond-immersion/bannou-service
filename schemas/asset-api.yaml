@@ -709,12 +709,10 @@ components:
 
     GameRealm:
       type: string
-      enum:
-      - omega
-      - arcadia
-      - fantasia
-      - shared
-      description: Game realm the asset belongs to
+      description: |
+        Realm stub name (lowercase string identifier) that this asset belongs to.
+        Use the realm's stub_name property (e.g., "omega", "arcadia") from the Realm service.
+        Use "shared" for assets that are available across all realms.
 
     ProcessingStatus:
       type: string

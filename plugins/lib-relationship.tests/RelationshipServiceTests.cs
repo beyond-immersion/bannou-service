@@ -147,9 +147,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.CHARACTER,
+            Entity2Type = EntityType.Character,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = startedAt
         };
@@ -170,8 +170,8 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         Assert.StartsWith("rel:", savedKey);
         Assert.Equal(entity1Id, savedModel.Entity1Id);
         Assert.Equal(entity2Id, savedModel.Entity2Id);
-        Assert.Equal(EntityType.CHARACTER, savedModel.Entity1Type);
-        Assert.Equal(EntityType.CHARACTER, savedModel.Entity2Type);
+        Assert.Equal(EntityType.Character, savedModel.Entity1Type);
+        Assert.Equal(EntityType.Character, savedModel.Entity2Type);
         Assert.Equal(relationshipTypeId, savedModel.RelationshipTypeId);
         Assert.Equal(startedAt, savedModel.StartedAt);
     }
@@ -191,9 +191,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.CHARACTER,
+            Entity2Type = EntityType.Character,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = DateTimeOffset.UtcNow
         };
@@ -227,9 +227,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.NPC,
+            Entity2Type = EntityType.Actor,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = DateTimeOffset.UtcNow,
             Metadata = metadata
@@ -246,8 +246,8 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Assert - State was saved with metadata
         Assert.NotNull(savedModel);
         Assert.NotNull(savedModel.Metadata);
-        Assert.Equal(EntityType.CHARACTER, savedModel.Entity1Type);
-        Assert.Equal(EntityType.NPC, savedModel.Entity2Type);
+        Assert.Equal(EntityType.Character, savedModel.Entity1Type);
+        Assert.Equal(EntityType.Actor, savedModel.Entity2Type);
     }
 
     [Fact]
@@ -280,9 +280,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = entity2Id,
-            Entity2Type = EntityType.CHARACTER,
+            Entity2Type = EntityType.Character,
             RelationshipTypeId = relationshipTypeId,
             StartedAt = DateTimeOffset.UtcNow
         };
@@ -567,7 +567,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new ListRelationshipsByEntityRequest
         {
             EntityId = entityId,
-            EntityType = EntityType.CHARACTER
+            EntityType = EntityType.Character
         };
 
         // Act
@@ -604,7 +604,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new ListRelationshipsByEntityRequest
         {
             EntityId = entityId,
-            EntityType = EntityType.CHARACTER,
+            EntityType = EntityType.Character,
             IncludeEnded = true
         };
 
@@ -663,9 +663,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         {
             RelationshipId = relationshipId,
             Entity1Id = Guid.NewGuid(),
-            Entity1Type = EntityType.CHARACTER,
+            Entity1Type = EntityType.Character,
             Entity2Id = Guid.NewGuid(),
-            Entity2Type = EntityType.CHARACTER,
+            Entity2Type = EntityType.Character,
             RelationshipTypeId = Guid.NewGuid(),
             StartedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow

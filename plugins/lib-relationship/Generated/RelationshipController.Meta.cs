@@ -41,7 +41,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity in the relationship"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity in the relationship"
                 },
                 "entity2Id": {
@@ -50,7 +50,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity in the relationship"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity in the relationship"
                 },
                 "relationshipTypeId": {
@@ -70,22 +70,6 @@ public partial class RelationshipController
                     "description": "Type-specific relationship data (JSON)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -122,7 +106,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity in the relationship"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity in the relationship"
                 },
                 "entity2Id": {
@@ -131,7 +115,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity in the relationship"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity in the relationship"
                 },
                 "relationshipTypeId": {
@@ -168,22 +152,6 @@ public partial class RelationshipController
                     "description": "System timestamp when the relationship record was last updated"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -300,7 +268,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity in the relationship"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity in the relationship"
                 },
                 "entity2Id": {
@@ -309,7 +277,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity in the relationship"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity in the relationship"
                 },
                 "relationshipTypeId": {
@@ -346,22 +314,6 @@ public partial class RelationshipController
                     "description": "System timestamp when the relationship record was last updated"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -443,7 +395,7 @@ public partial class RelationshipController
                     "description": "ID of the entity to get relationships for"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the entity to get relationships for"
                 },
                 "relationshipTypeId": {
@@ -453,7 +405,7 @@ public partial class RelationshipController
                     "description": "Optional filter by relationship type"
                 },
                 "otherEntityType": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Optional filter by the other entity's type"
                 },
@@ -476,22 +428,6 @@ public partial class RelationshipController
                     "description": "Number of results per page (max 100)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -568,7 +504,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity in the relationship"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity in the relationship"
                 },
                 "entity2Id": {
@@ -577,7 +513,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity in the relationship"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity in the relationship"
                 },
                 "relationshipTypeId": {
@@ -614,22 +550,6 @@ public partial class RelationshipController
                     "description": "System timestamp when the relationship record was last updated"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -713,7 +633,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity to check relationships for"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity"
                 },
                 "entity2Id": {
@@ -722,7 +642,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity to check relationships for"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity"
                 },
                 "relationshipTypeId": {
@@ -737,22 +657,6 @@ public partial class RelationshipController
                     "description": "Include relationships that have ended"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -829,7 +733,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity in the relationship"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity in the relationship"
                 },
                 "entity2Id": {
@@ -838,7 +742,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity in the relationship"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity in the relationship"
                 },
                 "relationshipTypeId": {
@@ -875,22 +779,6 @@ public partial class RelationshipController
                     "description": "System timestamp when the relationship record was last updated"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -971,12 +859,12 @@ public partial class RelationshipController
                     "description": "Relationship type to filter by"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Optional filter by entity1 type"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Optional filter by entity2 type"
                 },
@@ -999,22 +887,6 @@ public partial class RelationshipController
                     "description": "Number of results per page (max 100)"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\ n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -1091,7 +963,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity in the relationship"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity in the relationship"
                 },
                 "entity2Id": {
@@ -1100,7 +972,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity in the relationship"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity in the relationship"
                 },
                 "relationshipTypeId": {
@@ -1137,22 +1009,6 @@ public partial class RelationshipController
                     "description": "System timestamp when the relationship record was last updated"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }
@@ -1281,7 +1137,7 @@ public partial class RelationshipController
                     "description": "ID of the first entity in the relationship"
                 },
                 "entity1Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the first entity in the relationship"
                 },
                 "entity2Id": {
@@ -1290,7 +1146,7 @@ public partial class RelationshipController
                     "description": "ID of the second entity in the relationship"
                 },
                 "entity2Type": {
-                    "$ref": "#/$defs/EntityType",
+                    "type": "object",
                     "description": "Type of the second entity in the relationship"
                 },
                 "relationshipTypeId": {
@@ -1327,22 +1183,6 @@ public partial class RelationshipController
                     "description": "System timestamp when the relationship record was last updated"
                 }
             }
-        },
-        "EntityType": {
-            "type": "string",
-            "enum": [
-                "CHARACTER",
-                "NPC",
-                "MONSTER",
-                "ITEM",
-                "LOCATION",
-                "ORGANIZATION",
-                "FACTION",
-                "REALM",
-                "SOUL",
-                "OTHER"
-            ],
-            "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- SOUL: Immortal soul entity for reincarnation chains\n- OTHER: Catch-all for future entity types\n"
         }
     }
 }

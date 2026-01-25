@@ -56,9 +56,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var createRequest = new CreateRelationshipRequest
             {
                 Entity1Id = Guid.NewGuid(),
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = Guid.NewGuid(),
-                Entity2Type = EntityType.NPC,
+                Entity2Type = EntityType.Actor,
                 RelationshipTypeId = typeResponse.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow
             };
@@ -98,9 +98,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var createRequest = new CreateRelationshipRequest
             {
                 Entity1Id = Guid.NewGuid(),
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = Guid.NewGuid(),
-                Entity2Type = EntityType.NPC,
+                Entity2Type = EntityType.Actor,
                 RelationshipTypeId = typeResponse.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow
             };
@@ -137,9 +137,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var created = await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
             {
                 Entity1Id = Guid.NewGuid(),
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = Guid.NewGuid(),
-                Entity2Type = EntityType.NPC,
+                Entity2Type = EntityType.Actor,
                 RelationshipTypeId = typeResponse.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow,
                 Metadata = new Dictionary<string, object> { { "initial", "value" } }
@@ -193,9 +193,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var created = await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
             {
                 Entity1Id = Guid.NewGuid(),
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = Guid.NewGuid(),
-                Entity2Type = EntityType.NPC,
+                Entity2Type = EntityType.Actor,
                 RelationshipTypeId = typeResponse.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow
             });
@@ -240,9 +240,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
                 await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
                 {
                     Entity1Id = entityId,
-                    Entity1Type = EntityType.CHARACTER,
+                    Entity1Type = EntityType.Character,
                     Entity2Id = Guid.NewGuid(),
-                    Entity2Type = EntityType.NPC,
+                    Entity2Type = EntityType.Actor,
                     RelationshipTypeId = typeResponse.RelationshipTypeId,
                     StartedAt = DateTimeOffset.UtcNow
                 });
@@ -252,7 +252,7 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var response = await relationshipClient.ListRelationshipsByEntityAsync(new ListRelationshipsByEntityRequest
             {
                 EntityId = entityId,
-                EntityType = EntityType.CHARACTER
+                EntityType = EntityType.Character
             });
 
             if (response.Relationships == null || response.Relationships.Count < 3)
@@ -288,9 +288,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
             {
                 Entity1Id = entity1Id,
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = entity2Id,
-                Entity2Type = EntityType.CHARACTER,
+                Entity2Type = EntityType.Character,
                 RelationshipTypeId = type1.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow
             });
@@ -298,9 +298,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
             {
                 Entity1Id = entity1Id,
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = entity2Id,
-                Entity2Type = EntityType.CHARACTER,
+                Entity2Type = EntityType.Character,
                 RelationshipTypeId = type2.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow
             });
@@ -309,9 +309,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var response = await relationshipClient.GetRelationshipsBetweenAsync(new GetRelationshipsBetweenRequest
             {
                 Entity1Id = entity1Id,
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = entity2Id,
-                Entity2Type = EntityType.CHARACTER
+                Entity2Type = EntityType.Character
             });
 
             if (response.Relationships == null || response.Relationships.Count < 2)
@@ -340,9 +340,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
                 await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
                 {
                     Entity1Id = Guid.NewGuid(),
-                    Entity1Type = EntityType.CHARACTER,
+                    Entity1Type = EntityType.Character,
                     Entity2Id = Guid.NewGuid(),
-                    Entity2Type = EntityType.NPC,
+                    Entity2Type = EntityType.Actor,
                     RelationshipTypeId = typeResponse.RelationshipTypeId,
                     StartedAt = DateTimeOffset.UtcNow
                 });
@@ -396,9 +396,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
             {
                 Entity1Id = entity1Id,
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = entity2Id,
-                Entity2Type = EntityType.NPC,
+                Entity2Type = EntityType.Actor,
                 RelationshipTypeId = typeResponse.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow
             });
@@ -409,9 +409,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
                 await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
                 {
                     Entity1Id = entity1Id,
-                    Entity1Type = EntityType.CHARACTER,
+                    Entity1Type = EntityType.Character,
                     Entity2Id = entity2Id,
-                    Entity2Type = EntityType.NPC,
+                    Entity2Type = EntityType.Actor,
                     RelationshipTypeId = typeResponse.RelationshipTypeId,
                     StartedAt = DateTimeOffset.UtcNow
                 });
@@ -447,9 +447,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationship = await relationshipClient.CreateRelationshipAsync(new CreateRelationshipRequest
             {
                 Entity1Id = entity1Id,
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = entity2Id,
-                Entity2Type = EntityType.CHARACTER,
+                Entity2Type = EntityType.Character,
                 RelationshipTypeId = typeResponse.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow,
                 Metadata = new Dictionary<string, object> { { "trust_level", 50 } }
@@ -491,7 +491,7 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var entityList = await relationshipClient.ListRelationshipsByEntityAsync(new ListRelationshipsByEntityRequest
             {
                 EntityId = entity1Id,
-                EntityType = EntityType.CHARACTER
+                EntityType = EntityType.Character
             });
 
             if (entityList.Relationships == null || !entityList.Relationships.Any(r => r.RelationshipId == relationship.RelationshipId))
@@ -502,9 +502,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var betweenList = await relationshipClient.GetRelationshipsBetweenAsync(new GetRelationshipsBetweenRequest
             {
                 Entity1Id = entity1Id,
-                Entity1Type = EntityType.CHARACTER,
+                Entity1Type = EntityType.Character,
                 Entity2Id = entity2Id,
-                Entity2Type = EntityType.CHARACTER
+                Entity2Type = EntityType.Character
             });
 
             if (betweenList.Relationships == null || !betweenList.Relationships.Any(r => r.RelationshipId == relationship.RelationshipId))
