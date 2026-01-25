@@ -59,12 +59,11 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: Associated game session ID
         tier:
-          type: string
-          enum: [p2p, scaled]
+          $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
           description: Current voice tier
         codec:
-          type: string
-          enum: [opus, g711, g722]
+          allOf:
+          - $ref: 'voice-api.yaml#/components/schemas/VoiceCodec'
           nullable: true  # NRT: Optional property MUST be nullable
           description: Audio codec to use
         peers:

@@ -94,13 +94,7 @@ components:
           format: uuid
           description: ID of the entity that unlocked it
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'achievement-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         points:
           type: integer
@@ -160,13 +154,7 @@ components:
           format: uuid
           description: ID of the entity
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'achievement-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         previousProgress:
           type: integer
@@ -216,21 +204,10 @@ components:
           format: uuid
           description: ID of the entity (account for platform sync)
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'achievement-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         platform:
-          type: string
-          enum:
-            - steam
-            - xbox
-            - playstation
-            - internal
+          $ref: 'achievement-api.yaml#/components/schemas/Platform'
           description: Platform that was synced to
         platformAchievementId:
           type: string
@@ -283,12 +260,7 @@ components:
           nullable: true
           description: Detailed description of how to earn the achievement
         achievementType:
-          type: string
-          enum:
-            - standard
-            - progressive
-            - hidden
-            - secret
+          $ref: 'achievement-api.yaml#/components/schemas/AchievementType'
           description: Type of achievement
         points:
           type: integer
@@ -300,12 +272,7 @@ components:
         platforms:
           type: array
           items:
-            type: string
-            enum:
-              - steam
-              - xbox
-              - playstation
-              - internal
+            $ref: 'achievement-api.yaml#/components/schemas/Platform'
           description: Platforms where this achievement is available
 
     AchievementDefinitionUpdatedEvent:

@@ -75,13 +75,7 @@ components:
           format: uuid
           description: ID of the entity whose rank changed
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'leaderboard-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         previousRank:
           type: integer
@@ -138,13 +132,7 @@ components:
           format: uuid
           description: ID of the new entity
         entityType:
-          type: string
-          enum:
-            - account
-            - character
-            - guild
-            - actor
-            - custom
+          $ref: 'leaderboard-api.yaml#/components/schemas/EntityType'
           description: Type of entity
         score:
           type: number

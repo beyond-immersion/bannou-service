@@ -782,13 +782,13 @@ components:
           nullable: true
           description: Voice room ID (null until room is created when 2+ participants join with voice)
         tier:
-          type: string
-          enum: [p2p, scaled]
+          allOf:
+          - $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
           nullable: true
           description: Expected voice tier (may change based on participant count)
         codec:
-          type: string
-          enum: [opus, g711, g722]
+          allOf:
+          - $ref: 'voice-api.yaml#/components/schemas/VoiceCodec'
           # NRT: Optional enum MUST be nullable (Rule 2)
           nullable: true
           description: Audio codec to use
