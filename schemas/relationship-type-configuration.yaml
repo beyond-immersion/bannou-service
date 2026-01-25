@@ -17,3 +17,14 @@ x-service-configuration:
       description: Number of records to process per page during seed operations
       env: RELATIONSHIP_TYPE_SEED_PAGE_SIZE
       default: 100
+    # Safety Limits
+    MaxHierarchyDepth:
+      type: integer
+      description: Maximum depth for hierarchy traversal to prevent infinite loops on corrupted data
+      env: RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH
+      default: 20
+    MaxMigrationErrorsToTrack:
+      type: integer
+      description: Maximum number of individual migration error details to track during merge operations
+      env: RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK
+      default: 100

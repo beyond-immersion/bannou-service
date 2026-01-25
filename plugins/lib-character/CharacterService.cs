@@ -853,23 +853,51 @@ public partial class CharacterService : ICharacterService
                 _logger.LogDebug("No relationships found for character {CharacterId}", body.CharacterId);
             }
 
-            // Get/update reference tracking data
+            // Get/update reference tracking data with optimistic concurrency
             var refCountKey = $"{REF_COUNT_KEY_PREFIX}{body.CharacterId}";
-            var refData = await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
-                .GetAsync(refCountKey, cancellationToken) ?? new RefCountData { CharacterId = body.CharacterId };
+            var refCountStore = _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character);
+            var (initialData, initialEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
+            var refData = initialData ?? new RefCountData { CharacterId = body.CharacterId };
 
-            // Track when refCount first hit zero
-            if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
+            const int maxRetries = 3;
+            for (var retry = 0; retry < maxRetries; retry++)
             {
-                refData.ZeroRefSinceUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
-                    .SaveAsync(refCountKey, refData, cancellationToken: cancellationToken);
-            }
-            else if (referenceCount > 0 && refData.ZeroRefSinceUnix != null)
-            {
-                refData.ZeroRefSinceUnix = null;
-                await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
-                    .SaveAsync(refCountKey, refData, cancellationToken: cancellationToken);
+                if (retry > 0)
+                {
+                    // Re-fetch on retry
+                    var (storedData, newEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
+                    refData = storedData ?? new RefCountData { CharacterId = body.CharacterId };
+                    initialEtag = newEtag;
+                }
+
+                // Track when refCount first hit zero
+                bool needsSave = false;
+                if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
+                {
+                    refData.ZeroRefSinceUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    needsSave = true;
+                }
+                else if (referenceCount > 0 && refData.ZeroRefSinceUnix != null)
+                {
+                    refData.ZeroRefSinceUnix = null;
+                    needsSave = true;
+                }
+
+                if (!needsSave)
+                {
+                    break; // No changes needed
+                }
+
+                var savedEtag = await refCountStore.TrySaveAsync(refCountKey, refData, initialEtag ?? string.Empty, cancellationToken);
+                if (savedEtag != null)
+                {
+                    break; // Successfully saved
+                }
+
+                if (retry == maxRetries - 1)
+                {
+                    _logger.LogWarning("RefCount update retry exhausted for character {CharacterId}", body.CharacterId);
+                }
             }
 
             // Determine cleanup eligibility - grace period from configuration in days, converted to seconds
