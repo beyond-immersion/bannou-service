@@ -39,7 +39,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
         try
         {
             var stateStoreFactory = _serviceProvider.GetRequiredService<IStateStoreFactory>();
-            Logger?.LogInformation("Initializing StateStoreFactory connections...");
+            Logger?.LogDebug("Initializing StateStoreFactory connections...");
             await stateStoreFactory.InitializeAsync();
             Logger?.LogInformation("StateStoreFactory initialized successfully");
             return true;

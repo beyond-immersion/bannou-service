@@ -43,6 +43,11 @@ x-service-configuration:
       description: Mock Google user ID for testing
       env: AUTH_MOCK_GOOGLE_ID
       default: "mock-google-123456"
+    MockTwitchId:
+      type: string
+      description: Mock Twitch user ID for testing
+      env: AUTH_MOCK_TWITCH_ID
+      default: "mock-twitch-123456"
     MockSteamId:
       type: string
       description: Mock Steam user ID for testing

@@ -35,8 +35,6 @@ public partial class AuthService : IAuthService
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
 
-    private const string DEFAULT_CONNECT_URL = "ws://localhost:5014/connect";
-
     public AuthService(
         IAccountClient accountClient,
         ISubscriptionClient subscriptionClient,
@@ -70,28 +68,21 @@ public partial class AuthService : IAuthService
 
     /// <summary>
     /// Gets the effective WebSocket URL for client connections.
-    /// Priority: AUTH_CONNECT_URL > ws://BANNOU_SERVICE_DOMAIN/connect > default localhost
+    /// Priority: BANNOU_SERVICE_DOMAIN (production) > AUTH_CONNECT_URL (configured default)
     /// </summary>
     private Uri EffectiveConnectUrl
     {
         get
         {
-            // If explicit ConnectUrl is configured, use it
-            if (!string.IsNullOrWhiteSpace(_configuration.ConnectUrl) &&
-                _configuration.ConnectUrl != DEFAULT_CONNECT_URL)
-            {
-                return new Uri(_configuration.ConnectUrl);
-            }
-
-            // If ServiceDomain is configured, derive WebSocket URL from it
+            // If ServiceDomain is configured, derive WebSocket URL from it (production pattern)
             var serviceDomain = _appConfiguration.ServiceDomain;
             if (!string.IsNullOrWhiteSpace(serviceDomain))
             {
                 return new Uri($"wss://{serviceDomain}/connect");
             }
 
-            // Default to localhost
-            return new Uri(DEFAULT_CONNECT_URL);
+            // Use configured ConnectUrl (defaults to ws://localhost:5014/connect via schema)
+            return new Uri(_configuration.ConnectUrl);
         }
     }
 
@@ -463,19 +454,25 @@ public partial class AuthService : IAuthService
             }
 
             // Lookup account by ID via AccountClient
-            _logger.LogInformation("Looking up account by ID via AccountClient: {AccountId}", accountId);
+            _logger.LogDebug("Looking up account by ID via AccountClient: {AccountId}", accountId);
 
             AccountResponse account;
             try
             {
                 account = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
-                _logger.LogInformation("Account found for refresh: {AccountId}", account?.AccountId);
+                _logger.LogDebug("Account found for refresh: {AccountId}", account?.AccountId);
 
                 if (account == null)
                 {
                     _logger.LogWarning("No account found for ID: {AccountId}", accountId);
                     return (StatusCodes.Unauthorized, null);
                 }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Account not found - return Unauthorized (refresh token may be stale)
+                _logger.LogWarning("Account not found for refresh token: {AccountId}", accountId);
+                return (StatusCodes.Unauthorized, null);
             }
             catch (Exception ex)
             {
@@ -731,9 +728,7 @@ public partial class AuthService : IAuthService
             {
                 // Generate secure reset token
                 var resetToken = _tokenService.GenerateSecureToken();
-                var resetTokenTtlMinutes = _configuration.PasswordResetTokenTtlMinutes > 0
-                    ? _configuration.PasswordResetTokenTtlMinutes
-                    : 60; // Default 1 hour
+                var resetTokenTtlMinutes = _configuration.PasswordResetTokenTtlMinutes;
 
                 var resetData = new PasswordResetData
                 {
@@ -1069,9 +1064,11 @@ public partial class AuthService : IAuthService
     /// Public wrapper for invalidating all sessions for a specific account.
     /// Called by AuthServiceEvents.HandleAccountDeletedAsync when account.deleted event is received.
     /// </summary>
-    public async Task InvalidateAccountSessionsAsync(Guid accountId)
+    /// <param name="accountId">The account ID whose sessions should be invalidated.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task InvalidateAccountSessionsAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await _sessionService.InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted);
+        await _sessionService.InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted, cancellationToken);
     }
 
 

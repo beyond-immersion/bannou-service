@@ -205,23 +205,10 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 7. **Resolution caches are event-invalidated**: The character-to-realm and realm-to-gameService resolution caches subscribe to `character.updated` and `realm.updated` lifecycle events. When a character's realm or a realm's game service changes, the cached entry is immediately deleted. This ensures cache staleness is bounded to in-flight lookups only, not the full TTL window.
 
-## Tenet Violations (Fix Immediately)
+### Bugs (Fix Immediately)
 
-1. [IMPLEMENTATION] **`?? string.Empty` used without justification (CLAUDE.md violation)** -
-   File: `plugins/lib-analytics/AnalyticsService.cs`.
-   `summaryEtag ?? string.Empty` coerces a potentially null ETag to empty string. If the API requires non-null, add a comment per CLAUDE.md acceptable patterns explaining the compiler satisfaction case.
+No bugs identified.
 
-2. [IMPLEMENTATION] **`string.Empty` default for internal POCO string fields (potential T25 boundary)** -
-   `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. While these are strings (not enums or GUIDs) so T25 is not strictly violated, the pattern silently allows empty-string entities which could mask bugs.
+### Design Considerations (Requires Planning)
 
-3. [IMPLEMENTATION] **Local `Dictionary<string, SkillRatingData>` in UpdateSkillRatingAsync (T9 consideration)** -
-   `var currentRatings = new Dictionary<string, SkillRatingData>();` uses a plain `Dictionary` rather than `ConcurrentDictionary`. While this dictionary is method-local and protected by the distributed lock (making concurrent access unlikely within a single request), T9 explicitly states "Use ConcurrentDictionary for local caches, never plain Dictionary."
-
-4. [QUALITY] **Operation-entry logging at Information level for high-throughput endpoints (T10 concern)** -
-   Per T10, "Operation Entry" should be logged at Debug level. The service logs at Information for every `IngestEvent`, `IngestEventBatch`, etc. For a high-throughput ingestion service, logging every single event at Information creates excessive log volume.
-
-5. [QUALITY] **Validation failures logged at LogWarning but are not security events (T10 nuance)** -
-   Validation failures (invalid limit, offset, minEvents, sortBy, time range) are logged at Warning. Per T10, expected outcomes like validation failures should be logged at Debug level. Warning is reserved for security events.
-
-6. [QUALITY] **Missing XML documentation on private helper methods and constructor parameters** -
-   Several private helpers lack `<returns>` tags, the constructor lacks `<param>` tags, and `BuildResolutionCacheOptions`/`BuildSessionMappingCacheOptions` lack `<summary>` documentation.
+1. **`string.Empty` default for internal POCO string fields** - `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. While not a T25 violation (these are strings, not enums), empty strings could mask bugs. Consider using nullable strings with validation at ingestion boundaries.

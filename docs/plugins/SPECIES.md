@@ -245,60 +245,11 @@ State Store Layout
 
 10. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` (called at line 1089) receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
 
----
+11. **Internal model type safety**: `SpeciesModel` uses `string` for `SpeciesId` and `List<string>` for `RealmIds` instead of `Guid` and `List<Guid>`. This requires `Guid.Parse()`/`ToString()` conversions throughout the code. Refactoring to use proper types would improve type safety.
 
-## Tenet Violations (Audit)
+12. **Missing ApiException catch for mesh client calls**: Calls to `ICharacterClient` and `IRealmClient` use generic `Exception` catch instead of distinguishing `ApiException` (expected API errors) from unexpected exceptions. Should add `ApiException` catch blocks per error handling tenets.
 
-### Category: QUALITY TENETS
+13. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
 
-1. **Logging Standards (T10)** - SpeciesService.cs:125, 155, 194, 268, 343, 442, 526, 605, 665, 743, 905, 952, 999, 1361 - Operation entry logs use `LogInformation` instead of `LogDebug`
-   - What's wrong: Multiple operation entry log statements use `LogInformation` (e.g., "Getting species by ID", "Creating species with code"). According to T10, operation entry should be logged at Debug level, not Information.
-   - Fix: Change all operation entry `LogInformation` calls to `LogDebug`. Reserve `LogInformation` for significant business decisions/state changes.
+14. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
 
-2. **Logging Standards (T10)** - SpeciesService.cs:132, 162, 171, 274, 353, 364, 371, 449, 533, 546, 611, 617, 626, 633, 671, 678, 698, 912, 918, 959, 965, 1007, 1013, 1023 - Expected outcomes (NotFound, Conflict, BadRequest) logged at Warning level
-   - What's wrong: Expected outcomes like "Species not found" are logged at `LogWarning`. Per T10, expected outcomes should be logged at Debug level, not Warning. Warning is for security events and transient failures, not normal business logic outcomes.
-   - Fix: Change these expected outcome logs from `LogWarning` to `LogDebug`.
-
-### Category: IMPLEMENTATION TENETS
-
-3. **Internal Model Type Safety (T25)** - SpeciesService.cs:1373 - `SpeciesId` stored as `string` instead of `Guid`
-   - What's wrong: The `SpeciesModel` internal POCO uses `string SpeciesId` instead of `Guid SpeciesId`. This requires `Guid.Parse()` conversions throughout the code (lines 1190, 1224, 1252, 1291, 1333, 1335) and `ToString()` when populating (line 382).
-   - Fix: Change `SpeciesModel.SpeciesId` to `Guid` type and remove string conversions.
-
-4. **Internal Model Type Safety (T25)** - SpeciesService.cs:1382 - `RealmIds` stored as `List<string>` instead of `List<Guid>`
-   - What's wrong: The `SpeciesModel.RealmIds` property uses `List<string>` instead of `List<Guid>`. This requires `Guid.Parse()` conversions when reading (lines 1199, 1264, 1303) and `ToString()` when writing (lines 391, 630, 676).
-   - Fix: Change `SpeciesModel.RealmIds` to `List<Guid>` type and remove string conversions.
-
-5. **Multi-Instance Safety (T9)** - SpeciesService.cs:405-411, 566-570, 1163-1172, 1175-1183 - Read-modify-write sequences on list indexes without distributed locks
-   - What's wrong: Operations like `AddToRealmIndexAsync` and index updates in `CreateSpeciesAsync`/`DeleteSpeciesAsync` perform read-modify-write sequences without distributed locks. Concurrent operations could cause lost updates to the `all-species` and `realm-index` lists.
-   - Fix: Use `IDistributedLockProvider` to protect read-modify-write sequences on shared index lists, or use optimistic concurrency with ETags.
-
-6. **Error Handling (T7)** - SpeciesService.cs:77-80, 551-556, 703-708 - Missing `ApiException` catch for expected API errors
-   - What's wrong: The generic `Exception` catch at lines 81-86 (ValidateRealmAsync), 551-556 (DeleteSpeciesAsync character check), and 703-708 (RemoveSpeciesFromRealm character check) does not distinguish between `ApiException` (expected API errors) and unexpected exceptions. Per T7, `ApiException` should be caught separately and logged as Warning.
-   - Fix: Add `catch (ApiException ex)` blocks to handle expected API errors with Warning log level before the generic `Exception` catch.
-
-7. **Error Handling (T7)** - SpeciesService.cs:1062-1067, 1073-1077 - Missing error event publishing for unexpected exceptions during merge
-   - What's wrong: When character migration fails during merge (lines 1062-1067) or page fetch fails (lines 1073-1077), the exception is logged as Warning but no error event is published via `TryPublishErrorAsync`. While partial failures are expected, complete page fetch failures could indicate infrastructure issues that warrant error events.
-   - Fix: For the page fetch failure (lines 1073-1077), consider publishing an error event since this could indicate character service unavailability.
-
-8. **Configuration-First (T21)** - SpeciesService.cs - `SeedPageSize` is the only configurable property but is also used for merge pagination
-   - What's wrong: The configuration property `SeedPageSize` is used for both seeding pagination (as intended per its name) and character migration during merge (line 1031). This dual use is not clearly documented and the property name is misleading for the merge use case.
-   - Fix: Either rename the configuration property to something more generic like `DefaultPageSize` or add a separate `MergePageSize` configuration property for merge operations.
-
-### Category: FOUNDATION TENETS
-
-9. **Service Implementation Pattern (T6)** - SpeciesService.cs - Missing `SpeciesServiceEvents.cs` partial class file
-   - What's wrong: The service calls `RegisterEventConsumers(eventConsumer)` at line 52, but there is no `SpeciesServiceEvents.cs` file implementing the `RegisterEventConsumers` method. The service relies on the default no-op implementation from `IBannouService`. While this is technically allowed per the tenet documentation ("ServiceEvents.cs is OPTIONAL"), the explicit call to register consumers without any actual consumers is misleading.
-   - Fix: Either remove the `RegisterEventConsumers` call since no events are consumed, or create a `SpeciesServiceEvents.cs` file with an empty implementation and comment explaining it's prepared for future event consumption.
-
-10. **Event-Driven Architecture (T5)** - SpeciesService.cs:420-421 - `species.created` event missing full entity data
-    - What's wrong: The `SpeciesCreatedEvent` at lines 1220-1228 only includes a subset of fields (EventId, Timestamp, SpeciesId, Code, Name, Category, IsPlayable) but omits Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt. Per T5, lifecycle events should include full entity data.
-    - Fix: Include all species fields in `SpeciesCreatedEvent` to match the pattern of `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
-
-### Additional Observations (Not Tenet Violations)
-
-The following items were identified but are not strict tenet violations:
-
-1. **Unused import** - SpeciesService.cs:11 - `using System.Text.Json;` is imported but never used directly. All JSON operations should use BannouJson per T20, so this import appears to be dead code.
-
-2. **XML Documentation** - SpeciesService.cs:1371-1389 - The `SpeciesModel` class has an outer `<summary>` but internal properties lack individual documentation. While this is an internal class (marked with `internal`), the lack of property documentation reduces maintainability.

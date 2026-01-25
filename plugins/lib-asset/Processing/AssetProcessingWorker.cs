@@ -48,8 +48,6 @@ public sealed class AssetProcessingWorker : BackgroundService
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ILogger<AssetProcessingWorker> _logger;
 
-    private const string ASSET_PREFIX = "asset:";
-
     // Job tracking for load reporting
     private int _currentJobCount;
     private readonly object _jobCountLock = new();
@@ -486,7 +484,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {
-        var stateKey = $"{ASSET_PREFIX}{assetId}";
+        var stateKey = $"{_configuration.AssetKeyPrefix}{assetId}";
 
         try
         {

@@ -157,8 +157,8 @@ For each plugin deep dive document:
 | Account | DONE | Added `<inheritdoc/>`, XML docs to AccountModel, cleaned violations. Design Considerations are legitimate architectural choices. |
 | Achievement | DONE | All violations were false positives, restructured quirks. Design Consideration (caching) requires architectural planning. |
 | Actor | DONE | Fixed all 5 bugs: (1) anonymous memory value → PerceptionData, (2) hardcoded tunables → config properties + wired, (3) ApiException handling → added, (4) error event publishing → added, (5) regex caching → added with timeout. DeploymentMode now enum. Bugs section cleared. |
-| Analytics | PENDING | |
-| Asset | PENDING | |
+| Analytics | DONE | Fixed T10 logging (ingestion → Debug, validation → Debug). Added comment for `?? string.Empty` compiler satisfaction. Removed false positives (T9 local dict protected by lock, T19 private methods). |
+| Asset | DONE | Fixed T21 hardcoded constant → config. Added compiler satisfaction comments to `?? string.Empty`. Removed T19 false positives (internal classes, private methods). Moved T25 type improvements to Design Considerations. |
 | Auth | PENDING | |
 | Behavior | PENDING | |
 | Character | PENDING | |
@@ -189,8 +189,8 @@ For each plugin deep dive document:
 | Relationship-Type | PENDING | |
 | Save-Load | DONE | Fixed T20 (BannouJson), T10 logging levels. Removed T6 false positives. T25 → Design Considerations. |
 | Scene | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Moved T9/T25/T21 to Design Considerations. |
-| Species | PENDING | |
-| State | PENDING | |
+| Species | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Moved T25/T9/T7/T21/T5 to Design Considerations. |
+| State | DONE | Fixed T10 logging (operation entry → Debug) and T7 (Warning → Error for index failure). Moved T21 config issues to Design Considerations. |
 | Subscription | PENDING | |
 | Voice | PENDING | |
 | Website | PENDING | |

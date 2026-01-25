@@ -321,56 +321,17 @@ Client                    Asset Service                     MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-None identified.
+No bugs identified.
 
-## Tenet Violations (Fix Immediately)
+### Design Considerations (Requires Planning)
 
-1. **[IMPLEMENTATION]** T25: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use `string?` instead of an enum type. These are internal models used only within the service where error codes are known constants (e.g., `"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`).
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/IAssetProcessor.cs` lines 133, 202
-   - **Fix**: Define a `ProcessingErrorCode` enum (or use the generated one) and change the `ErrorCode` property to the enum type.
+1. **T25: String IDs instead of Guid types** - Multiple internal models use `string` for ID fields that are always GUIDs: `AssetProcessingContext.AssetId`, `InternalAssetRecord.AssetId`, `BundleMetadata.BundleId`, and related bundle models. Converting to Guid types would improve type safety but requires coordinated changes across state store key generation, serialization, and all consumers.
 
-2. **[IMPLEMENTATION]** T25: `AssetProcessingContext.AssetId` is `string` instead of `Guid`. The property receives values via `job.AssetId.ToString()` at the call site, converting a Guid to string unnecessarily. Same issue with `AssetProcessingContext.RealmId` being `string?` instead of `Guid?`.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/IAssetProcessor.cs` lines 55, 87
-   - **Fix**: Change `AssetId` to `Guid` and `RealmId` to `Guid?`, remove `.ToString()` calls at call sites.
+2. **T25: ErrorCode strings instead of enum** - `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`). A dedicated enum would provide compile-time validation.
 
-3. **[IMPLEMENTATION]** T25: `InternalAssetRecord.AssetId` is `string` instead of `Guid`. Asset IDs are GUIDs throughout the system but stored as strings in this internal model.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/InternalAssetRecord.cs` line 12
-   - **Fix**: Change to `public required Guid AssetId { get; init; }`.
+3. **Interface async contract vs sync implementation** - `TextureProcessor`, `ModelProcessor`, and stub paths use `await Task.CompletedTask` to satisfy async interfaces. Consider `ValueTask` or separate sync/async interface paths if this becomes a performance concern.
 
-4. **[IMPLEMENTATION]** T25: `BundleMetadata.BundleId` and related models (`StoredBundleAssetEntry.AssetId`, `StoredSourceBundleReference.BundleId`, `BundleCreationJob.JobId`, `BundleCreationJob.BundleId`, `BundleUploadSession.UploadId`, `BundleUploadSession.BundleId`, `StoredBundleVersionRecord.BundleId`) all use `string` instead of `Guid` for ID fields that are always GUIDs.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/BundleModels.cs`
-   - **Fix**: Change all ID fields that represent GUIDs to `Guid` type.
-
-5. **[IMPLEMENTATION]** T23: `await Task.CompletedTask` is used as a hack to make synchronous methods appear async. The methods should either be truly synchronous or actually perform async work. Using `await Task.CompletedTask` wastes a state machine allocation for no benefit.
-   - **Files**: `TextureProcessor.cs`, `ModelProcessor.cs`, `AudioProcessor.cs`, `AssetHealthChecks.cs`
-   - **Fix**: Refactor to use `ValueTask` or make the interface support sync paths.
-
-6. **[QUALITY]** T19: Multiple internal classes lack XML documentation on their properties: `AssetUploadNotification`, `AssetProcessingJobEvent`, `AssetProcessingRetryEvent`, `BundleDownloadToken`, `MetabundleJobResult`, `SourceBundleReferenceInternal`.
-
-14. **[QUALITY]** T19: `MetabundleJobQueuedEvent.RequesterSessionId` property lacks XML documentation on the property itself (only a comment about it being nullable exists in the summary).
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` line 3894
-    - Note: Other properties in this class do have proper docs.
-    - **Fix**: Add `<summary>` XML comment.
-
-15. **[IMPLEMENTATION]** T21: `AssetProcessingWorker` uses a hardcoded constant `private const string ASSET_PREFIX = "asset:"` instead of referencing the configuration's `AssetKeyPrefix` property.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Processing/AssetProcessingWorker.cs` line 51
-    - **Fix**: Use `_configuration.AssetKeyPrefix` instead of the hardcoded constant.
-
-16. **[IMPLEMENTATION]** CLAUDE.md rule: `bundleEtag ?? string.Empty` is used in three places to pass a fallback value to `TrySaveAsync`. The `GetWithETagAsync` method returns `string?` for the ETag, and when the value is null it means the record was just fetched without an ETag (which should not happen for an existing record that was found). This silently passes an empty string as the ETag, which may bypass optimistic concurrency. This is not an external-service defensive coding pattern nor a compiler satisfaction pattern.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 2956, 3091, 3201
-    - **Fix**: If `bundleEtag` is null after a successful `GetWithETagAsync`, this is an internal error and should throw (the record was found, so an ETag should exist). Use `bundleEtag ?? throw new InvalidOperationException("Expected ETag from state store")`.
-
-17. **[QUALITY]** T19: `MinioWebhookHandler` constructor parameters lack XML documentation (no `<param>` tags).
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Webhooks/MinioWebhookHandler.cs` lines 24-28
-    - **Fix**: Add a `<summary>` with `<param>` tags to the constructor.
-
-18. **[QUALITY]** T19: `UploadSession` model uses `= string.Empty` initializers on `Filename`, `ContentType`, `Owner`, and `StorageKey` properties, which makes them technically non-nullable but effectively unvalidated. These are `set` properties without `required`, meaning they can silently be left as empty strings. This does not match the documented external-service defensive pattern.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/Models/UploadSession.cs` lines 17, 27, 39, 44
-    - **Fix**: Either make them `required` or validate at creation boundaries.
-
-19. **[IMPLEMENTATION]** T25: `SourceBundleReferenceInternal.Version` and `SourceBundleReferenceInternal.ContentHash` use `= string.Empty` default, effectively making Guid/version fields string-typed when they should be more strongly typed. `Version` in particular could be a structured type.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-asset/AssetService.cs` lines 3854, 3856
-    - **Fix**: At minimum, use `required` keyword to prevent empty defaults from hiding missing data.
+4. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
 
 ### Intentional Quirks (Documented Behavior)
 

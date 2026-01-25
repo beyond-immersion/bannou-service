@@ -2952,6 +2952,8 @@ public partial class AssetService : IAssetService
             await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
             // Save updated bundle with ETag
+            // GetWithETagAsync returns non-null ETag when bundle is found (null check above);
+            // coalesce satisfies compiler's nullable analysis
             var newBundleEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
             if (newBundleEtag == null)
             {
@@ -3087,6 +3089,7 @@ public partial class AssetService : IAssetService
                 var versionIndexKey = $"bundle-version-index:{body.BundleId}";
                 await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
+                // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
                 var deleteEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
                 if (deleteEtag == null)
                 {
@@ -3197,6 +3200,7 @@ public partial class AssetService : IAssetService
             var versionIndexKey = $"bundle-version-index:{body.BundleId}";
             await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
 
+            // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
             var restoreEtag = await bundleStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken);
             if (restoreEtag == null)
             {

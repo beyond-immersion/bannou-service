@@ -141,7 +141,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, IngestEventResponse?)> IngestEventAsync(IngestEventRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Ingesting analytics event for entity {EntityType}:{EntityId}", body.EntityType, body.EntityId);
+        _logger.LogDebug("Ingesting analytics event for entity {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
         try
         {
@@ -192,7 +192,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, IngestEventBatchResponse?)> IngestEventBatchAsync(IngestEventBatchRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Ingesting batch of {Count} analytics events", body.Events.Count);
+        _logger.LogDebug("Ingesting batch of {Count} analytics events", body.Events.Count);
 
         try
         {
@@ -325,19 +325,19 @@ public partial class AnalyticsService : IAnalyticsService
         {
             if (body.Limit <= 0)
             {
-                _logger.LogWarning("Invalid limit {Limit} for analytics summary query", body.Limit);
+                _logger.LogDebug("Invalid limit {Limit} for analytics summary query", body.Limit);
                 return (StatusCodes.BadRequest, null);
             }
 
             if (body.Offset < 0)
             {
-                _logger.LogWarning("Invalid offset {Offset} for analytics summary query", body.Offset);
+                _logger.LogDebug("Invalid offset {Offset} for analytics summary query", body.Offset);
                 return (StatusCodes.BadRequest, null);
             }
 
             if (body.MinEvents < 0)
             {
-                _logger.LogWarning("Invalid minEvents {MinEvents} for analytics summary query", body.MinEvents);
+                _logger.LogDebug("Invalid minEvents {MinEvents} for analytics summary query", body.MinEvents);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -349,7 +349,7 @@ public partial class AnalyticsService : IAnalyticsService
                     sortBy != "lasteventat" &&
                     sortBy != "eventcount")
                 {
-                    _logger.LogWarning("Unsupported sortBy value {SortBy} for analytics summary query", body.SortBy);
+                    _logger.LogDebug("Unsupported sortBy value {SortBy} for analytics summary query", body.SortBy);
                     return (StatusCodes.BadRequest, null);
                 }
             }
@@ -737,13 +737,13 @@ public partial class AnalyticsService : IAnalyticsService
         {
             if (body.Limit <= 0)
             {
-                _logger.LogWarning("Invalid limit {Limit} for controller history query", body.Limit);
+                _logger.LogDebug("Invalid limit {Limit} for controller history query", body.Limit);
                 return (StatusCodes.BadRequest, null);
             }
 
             if (body.StartTime.HasValue && body.EndTime.HasValue && body.StartTime > body.EndTime)
             {
-                _logger.LogWarning("Invalid controller history time range {StartTime} to {EndTime}",
+                _logger.LogDebug("Invalid controller history time range {StartTime} to {EndTime}",
                     body.StartTime, body.EndTime);
                 return (StatusCodes.BadRequest, null);
             }
@@ -1870,6 +1870,8 @@ public partial class AnalyticsService : IAnalyticsService
                 var summarySaved = false;
                 try
                 {
+                    // GetWithETagAsync returns null ETag for new entities; TrySaveAsync expects
+                    // empty string for create operations - coalesce satisfies compiler's nullable analysis
                     var newSummaryEtag = await summaryStore.TrySaveAsync(entityKey, summary, summaryEtag ?? string.Empty, cancellationToken);
                     if (newSummaryEtag == null)
                     {

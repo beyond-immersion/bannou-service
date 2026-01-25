@@ -122,14 +122,14 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Getting species by ID: {SpeciesId}", body.SpeciesId);
+            _logger.LogDebug("Getting species by ID: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
             var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Species not found: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not found: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -152,14 +152,14 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Getting species by code: {Code}", body.Code);
+            _logger.LogDebug("Getting species by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code);
             var speciesId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
             if (string.IsNullOrEmpty(speciesId))
             {
-                _logger.LogWarning("Species not found by code: {Code}", body.Code);
+                _logger.LogDebug("Species not found by code: {Code}", body.Code);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -168,7 +168,7 @@ public partial class SpeciesService : ISpeciesService
 
             if (model == null)
             {
-                _logger.LogWarning("Species data inconsistency - code index exists but species not found: {Code}", body.Code);
+                _logger.LogDebug("Species data inconsistency - code index exists but species not found: {Code}", body.Code);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -191,7 +191,7 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Listing all species with filters - Category: {Category}, IsPlayable: {IsPlayable}",
+            _logger.LogDebug("Listing all species with filters - Category: {Category}, IsPlayable: {IsPlayable}",
                 body.Category, body.IsPlayable);
 
             var allSpeciesIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken);
@@ -265,13 +265,13 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Listing species by realm: {RealmId}", body.RealmId);
+            _logger.LogDebug("Listing species by realm: {RealmId}", body.RealmId);
 
             // Validate realm exists (regardless of deprecation status - allow viewing deprecated realm species)
             var (realmExists, _) = await ValidateRealmAsync(body.RealmId, cancellationToken);
             if (!realmExists)
             {
-                _logger.LogWarning("Realm not found: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -340,7 +340,7 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Creating species with code: {Code}", body.Code);
+            _logger.LogDebug("Creating species with code: {Code}", body.Code);
 
             var code = body.Code.ToUpperInvariant();
 
@@ -350,7 +350,7 @@ public partial class SpeciesService : ISpeciesService
 
             if (!string.IsNullOrEmpty(existingId))
             {
-                _logger.LogWarning("Species with code already exists: {Code}", code);
+                _logger.LogDebug("Species with code already exists: {Code}", code);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -361,14 +361,14 @@ public partial class SpeciesService : ISpeciesService
 
                 if (invalidRealms.Count > 0)
                 {
-                    _logger.LogWarning("Cannot create species {Code}: realms not found: {RealmIds}",
+                    _logger.LogDebug("Cannot create species {Code}: realms not found: {RealmIds}",
                         code, string.Join(", ", invalidRealms));
                     return (StatusCodes.BadRequest, null);
                 }
 
                 if (deprecatedRealms.Count > 0)
                 {
-                    _logger.LogWarning("Cannot create species {Code}: realms are deprecated: {RealmIds}",
+                    _logger.LogDebug("Cannot create species {Code}: realms are deprecated: {RealmIds}",
                         code, string.Join(", ", deprecatedRealms));
                     return (StatusCodes.BadRequest, null);
                 }
@@ -439,14 +439,14 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Updating species: {SpeciesId}", body.SpeciesId);
+            _logger.LogDebug("Updating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
             var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Species not found for update: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not found for update: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -523,14 +523,14 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Deleting species: {SpeciesId}", body.SpeciesId);
+            _logger.LogDebug("Deleting species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
             var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Species not found for deletion: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not found for deletion: {SpeciesId}", body.SpeciesId);
                 return StatusCodes.NotFound;
             }
 
@@ -543,7 +543,7 @@ public partial class SpeciesService : ISpeciesService
 
                 if (charactersResponse.TotalCount > 0)
                 {
-                    _logger.LogWarning("Cannot delete species {Code}: {Count} characters use this species",
+                    _logger.LogDebug("Cannot delete species {Code}: {Count} characters use this species",
                         model.Code, charactersResponse.TotalCount);
                     return StatusCodes.Conflict;
                 }
@@ -602,19 +602,19 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Adding species {SpeciesId} to realm {RealmId}", body.SpeciesId, body.RealmId);
+            _logger.LogDebug("Adding species {SpeciesId} to realm {RealmId}", body.SpeciesId, body.RealmId);
 
             // Validate realm exists and is active
             var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
             if (!realmExists)
             {
-                _logger.LogWarning("Realm not found: {RealmId}", body.RealmId);
+                _logger.LogDebug("Realm not found: {RealmId}", body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!realmIsActive)
             {
-                _logger.LogWarning("Cannot add species to deprecated realm: {RealmId}", body.RealmId);
+                _logger.LogDebug("Cannot add species to deprecated realm: {RealmId}", body.RealmId);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -623,14 +623,14 @@ public partial class SpeciesService : ISpeciesService
 
             if (model == null)
             {
-                _logger.LogWarning("Species not found: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not found: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
             var realmIdStr = body.RealmId.ToString();
             if (model.RealmIds.Contains(realmIdStr))
             {
-                _logger.LogWarning("Species {SpeciesId} already in realm {RealmId}", body.SpeciesId, body.RealmId);
+                _logger.LogDebug("Species {SpeciesId} already in realm {RealmId}", body.SpeciesId, body.RealmId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -662,21 +662,21 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Removing species {SpeciesId} from realm {RealmId}", body.SpeciesId, body.RealmId);
+            _logger.LogDebug("Removing species {SpeciesId} from realm {RealmId}", body.SpeciesId, body.RealmId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
             var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Species not found: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not found: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
             var realmIdStr = body.RealmId.ToString();
             if (!model.RealmIds.Contains(realmIdStr))
             {
-                _logger.LogWarning("Species {SpeciesId} not in realm {RealmId}", body.SpeciesId, body.RealmId);
+                _logger.LogDebug("Species {SpeciesId} not in realm {RealmId}", body.SpeciesId, body.RealmId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -695,7 +695,7 @@ public partial class SpeciesService : ISpeciesService
 
                 if (charactersResponse.TotalCount > 0)
                 {
-                    _logger.LogWarning("Cannot remove species {Code} from realm {RealmId}: {Count} characters use this species in this realm",
+                    _logger.LogDebug("Cannot remove species {Code} from realm {RealmId}: {Count} characters use this species in this realm",
                         model.Code, body.RealmId, charactersResponse.TotalCount);
                     return (StatusCodes.Conflict, null);
                 }
@@ -740,7 +740,7 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Seeding {Count} species, updateExisting: {UpdateExisting}",
+            _logger.LogDebug("Seeding {Count} species, updateExisting: {UpdateExisting}",
                 body.Species.Count, body.UpdateExisting);
 
             var created = 0;
@@ -902,20 +902,20 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Deprecating species: {SpeciesId}", body.SpeciesId);
+            _logger.LogDebug("Deprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
             var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Species not found for deprecation: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not found for deprecation: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (model.IsDeprecated)
             {
-                _logger.LogWarning("Species already deprecated: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species already deprecated: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -949,20 +949,20 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Undeprecating species: {SpeciesId}", body.SpeciesId);
+            _logger.LogDebug("Undeprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
             var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Species not found for undeprecation: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not found for undeprecation: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!model.IsDeprecated)
             {
-                _logger.LogWarning("Species not deprecated: {SpeciesId}", body.SpeciesId);
+                _logger.LogDebug("Species not deprecated: {SpeciesId}", body.SpeciesId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -996,7 +996,7 @@ public partial class SpeciesService : ISpeciesService
     {
         try
         {
-            _logger.LogInformation("Merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
+            _logger.LogDebug("Merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
 
             // Verify source exists and is deprecated
             var sourceKey = BuildSpeciesKey(body.SourceSpeciesId.ToString());
@@ -1004,13 +1004,13 @@ public partial class SpeciesService : ISpeciesService
 
             if (sourceModel == null)
             {
-                _logger.LogWarning("Source species not found: {SpeciesId}", body.SourceSpeciesId);
+                _logger.LogDebug("Source species not found: {SpeciesId}", body.SourceSpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!sourceModel.IsDeprecated)
             {
-                _logger.LogWarning("Source species must be deprecated before merging: {SpeciesId}", body.SourceSpeciesId);
+                _logger.LogDebug("Source species must be deprecated before merging: {SpeciesId}", body.SourceSpeciesId);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1020,7 +1020,7 @@ public partial class SpeciesService : ISpeciesService
 
             if (targetModel == null)
             {
-                _logger.LogWarning("Target species not found: {SpeciesId}", body.TargetSpeciesId);
+                _logger.LogDebug("Target species not found: {SpeciesId}", body.TargetSpeciesId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1358,7 +1358,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Species service permissions...");
+        _logger.LogDebug("Registering Species service permissions...");
         await SpeciesPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
