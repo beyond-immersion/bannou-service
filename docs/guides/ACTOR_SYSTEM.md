@@ -5,7 +5,7 @@
 > **Location**: `plugins/lib-actor/`, `plugins/lib-behavior/`, `plugins/lib-character-personality/`, `plugins/lib-character-history/`
 > **Related**: [ABML Guide](./ABML.md), [GOAP Guide](./GOAP.md), [Mapping System Guide](./MAPPING_SYSTEM.md)
 
-The Actor System provides the cognitive layer for Arcadia's living world. Actors are long-running processes that give characters personality, make regions feel alive, and orchestrate dramatic moments. They are the invisible directors that turn static game worlds into dynamic, responsive experiences.
+The Actor System provides the cognitive layer for living game worlds. Actors are long-running processes that give characters personality, make regions feel alive, and orchestrate dramatic moments. They are the invisible directors that turn static game worlds into dynamic, responsive experiences.
 
 ---
 
@@ -189,7 +189,7 @@ The actor never controls the character directly - it influences how the already-
 
 ### 4.1 The Character Co-Pilot Pattern
 
-In Arcadia, players don't control characters directly - they **possess** them as "guardian spirits". The character has their own agent (NPC brain) that:
+In games using Bannou's actor system, players can co-pilot characters rather than controlling them directly - they **possess** them as "guardian spirits". The character has their own agent (NPC brain) that:
 - Is always running, always perceiving, always computing
 - Has intimate knowledge of capabilities, state, and preferences
 - Makes decisions when the player doesn't (or can't respond fast enough)
@@ -367,7 +367,7 @@ The character's nature shows through even when (especially when) the player fail
 
 ### 5.1 The Character Data Layer
 
-Characters in Arcadia have persistent personality traits, combat preferences, and backstory that inform their behavior. This data is stored in dedicated services and made available to actors through ABML variable providers.
+Characters in Bannou-powered games have persistent personality traits, combat preferences, and backstory that inform their behavior. This data is stored in dedicated services and made available to actors through ABML variable providers.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐

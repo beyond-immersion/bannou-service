@@ -1270,7 +1270,7 @@ public partial class AssetService : IAssetService
 
             // Validate manifest preview
             if (body.ManifestPreview == null ||
-                string.IsNullOrWhiteSpace(body.ManifestPreview.BundleId))
+                body.ManifestPreview.BundleId == Guid.Empty)
             {
                 _logger.LogWarning("RequestBundleUpload: Missing manifest preview");
                 return (StatusCodes.BadRequest, null);
@@ -1310,7 +1310,8 @@ public partial class AssetService : IAssetService
                 tokenTtl,
                 new Dictionary<string, string>
                 {
-                    { "bundle-id", body.ManifestPreview.BundleId },
+                    // S3 metadata requires string values
+                    { "bundle-id", body.ManifestPreview.BundleId.ToString() },
                     { "upload-id", uploadIdForPath }, // Use path format for S3 metadata
                     { "validation-required", "true" }
                 });
@@ -1319,7 +1320,7 @@ public partial class AssetService : IAssetService
             var uploadSession = new BundleUploadSession
             {
                 UploadId = uploadIdGuid,
-                BundleId = Guid.Parse(body.ManifestPreview.BundleId),
+                BundleId = body.ManifestPreview.BundleId,
                 Filename = sanitizedFilename,
                 ContentType = contentType,
                 SizeBytes = body.Size,
