@@ -452,7 +452,7 @@ paths:
         user\"\n                },\n                \"authorizations\": {\n                    \"type\": \"array\",\n    \
         \                \"items\": {\n                        \"type\": \"string\"\n                    },\n            \
         \        \"nullable\": true,\n                    \"description\": \"Authorization strings from active subscriptions.\\
-        nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"arcadia:authorized\\\")\\n\"\n                },\n                \"\
+        nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"my-game:authorized\\\")\\n\"\n                },\n                \"\
         remainingTime\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Seconds until
         expiration\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
@@ -929,7 +929,7 @@ components:
           nullable: true
           description: |
             Authorization strings from active subscriptions.
-            Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            Format: "{stubName}:{state}" (e.g., "my-game:authorized")
         remainingTime:
           type: integer
           description: Seconds until expiration

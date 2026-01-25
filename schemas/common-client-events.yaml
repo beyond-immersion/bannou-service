@@ -402,7 +402,7 @@ components:
           maxLength: 128
           description: |
             Machine-readable identifier for this shortcut.
-            Examples: "join_game_arcadia", "get_my_stats"
+            Examples: "join_game_{service}", "get_my_stats"
         description:
           type: string
           maxLength: 500

@@ -31,8 +31,8 @@ components:
           format: uuid
           description: "Unique identifier for the game session"
         gameType: &id002
-          $ref: '../game-session-api.yaml#/components/schemas/GameType'
-          description: "Type of game being played in this session"
+          type: string
+          description: "Game service stub name for this session"
         sessionName: &id003
           type: string
           nullable: true

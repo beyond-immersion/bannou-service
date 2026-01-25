@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Bannou Mapping Service API
   description: |
-    Spatial data management service for Arcadia game worlds.
+    Spatial data management service for game worlds.
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.

@@ -147,7 +147,7 @@ paths:
         : {\n                \"serviceId\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Service ID (e.g., \\\"behavior\\\", \\\"account\\\")\"\n                },\n                \"appId\": {\n   \
         \                 \"type\": \"string\",\n                    \"description\": \"App-id for mesh routing (e.g., \\\"\
-        bannou\\\", \\\"npc-omega-01\\\")\"\n                },\n                \"status\": {\n                    \"type\"\
+        bannou\\\", \\\"npc-pool-01\\\")\"\n                },\n                \"status\": {\n                    \"type\"\
         : \"string\",\n                    \"description\": \"Service status from heartbeat\"\n                },\n      \
         \          \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"Last heartbeat timestamp\"\n                },\n                \"capacity\"\
@@ -1487,8 +1487,8 @@ paths:
         a container by its app-id\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
         \          \"required\": [\n                \"appName\",\n                \"reason\"\n            ],\n           \
         \ \"properties\": {\n                \"appName\": {\n                    \"type\": \"string\",\n                 \
-        \   \"description\": \"Container's app-id for mesh routing (e.g., \\\"bannou\\\", \\\"npc-omega\\\")\"\n         \
-        \       },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \   \"description\": \"Container's app-id for mesh routing (e.g., \\\"bannou\\\", \\\"npc-pool-01\\\")\"\n       \
+        \         },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Why restart is needed (for logging/auditing)\",\n                    \"example\": \"configuration_change\"\n \
         \               },\n                \"priority\": {\n                    \"$ref\": \"#/$defs/RestartPriority\",\n\
         \                    \"description\": \"Urgency level for the restart\"\n                },\n                \"shutdownGracePeriod\"\
@@ -2118,7 +2118,7 @@ components:
       properties:
         appName:
           type: string
-          description: Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
+          description: Container's app-id for mesh routing (e.g., "bannou", "npc-pool-01")
         reason:
           type: string
           description: Why restart is needed (for logging/auditing)
@@ -2284,7 +2284,7 @@ components:
           description: Service ID (e.g., "behavior", "account")
         appId:
           type: string
-          description: App-id for mesh routing (e.g., "bannou", "npc-omega-01")
+          description: App-id for mesh routing (e.g., "bannou", "npc-pool-01")
         status:
           type: string
           description: Service status from heartbeat

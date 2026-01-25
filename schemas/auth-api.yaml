@@ -622,7 +622,7 @@ components:
           nullable: true
           description: |
             Authorization strings from active subscriptions.
-            Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            Format: "{stubName}:{state}" (e.g., "my-game:authorized")
         remainingTime:
           type: integer
           description: Seconds until expiration

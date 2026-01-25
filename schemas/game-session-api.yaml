@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Bannou Game Session Service API
   description: |
-    Minimal game session management for Arcadia and other games.
+    Minimal game session management for games.
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
@@ -381,7 +381,7 @@ components:
       properties:
         gameType:
           $ref: '#/components/schemas/GameType'
-          description: Type of game for this session (arcadia or generic)
+          description: Game service stub name for this session
         maxPlayers:
           type: integer
           minimum: 1
@@ -526,8 +526,7 @@ components:
           description: Account ID of the player joining. Provided by shortcut system.
         gameType:
           type: string
-          description: Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by 
-            shortcut system.
+          description: Game service stub name to join. Determines which lobby to join. Provided by shortcut system.
         password:
           type: string
           nullable: true
@@ -807,8 +806,7 @@ components:
 
     GameType:
       type: string
-      description: Type of game for this session
-      enum: [arcadia, generic]
+      description: Game service stub name for this session. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions.
 
     SessionStatus:
       type: string

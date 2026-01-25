@@ -2,13 +2,13 @@ openapi: 3.0.0
 info:
   title: Bannou Realm Service API
   description: |
-    Realm management service for Arcadia game world.
+    Realm management service for game worlds.
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    Realms are the top-level persistent worlds in Arcadia (e.g., Omega, Arcadia, Fantasia).
+    Realms are the top-level persistent worlds (independent world instances).
     Each realm operates as an independent peer with distinct characteristics, species populations,
     and cultural contexts.
 
@@ -69,8 +69,8 @@ paths:
         createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
-        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
+        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
@@ -97,7 +97,7 @@ paths:
   /realm/get-by-code:
     post:
       summary: Get realm by code
-      description: Retrieve a realm using its unique code (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+      description: Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
       operationId: getRealmByCode
       tags:
       - Realm
@@ -125,8 +125,8 @@ paths:
         \            \"required\": [\n                \"code\"\n            ],\n            \"properties\": {\n          \
         \      \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n           \
         \         \"maxLength\": 50,\n                    \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n                    \"description\"\
-        : \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\", \\\"FANTASIA\\\")\"\n                }\n    \
-        \        }\n        }\n    }\n}"
+        : \"Unique code for the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                }\n            }\n     \
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -135,8 +135,8 @@ paths:
         createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
-        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
+        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
@@ -159,8 +159,8 @@ paths:
         \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
         Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get realm by code\",\n    \"description\": \"Retrieve a realm using its
-        unique code (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\", \\\"FANTASIA\\\")\",\n    \"tags\": [\n        \"Realm\"\n    ],\n\
-        \    \"deprecated\": false,\n    \"operationId\": \"getRealmByCode\"\n}"
+        unique code (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\",\n    \"tags\": [\n        \"Realm\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"getRealmByCode\"\n}"
   /realm/list:
     post:
       summary: List all realms
@@ -222,11 +222,11 @@ paths:
         \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"Unique identifier of the realm\"\n                },\n                \"code\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g.,
-        \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\":
-        \"string\",\n                    \"description\": \"Display name for the realm\"\n                },\n           \
-        \     \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the game service this realm belongs to\"\n                },\n     \
-        \           \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Display name for the realm\"\n                },\n         \
+        \       \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the game service this realm belongs to\"\n                },\n   \
+        \             \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Detailed description of the realm\"\n                },\n                \"\
         category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Category for grouping realms\"\n                },\n                \"isActive\": {\n  \
@@ -280,9 +280,9 @@ paths:
         \            \"required\": [\n                \"code\",\n                \"name\",\n                \"gameServiceId\"\
         \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
         ,\n                    \"minLength\": 1,\n                    \"maxLength\": 50,\n                    \"pattern\"\
-        : \"^[A-Z][A-Z0-9_]*$\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\
-        \"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n   \
-        \                 \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"^[A-Z][A-Z0-9_]*$\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\"\
+        , \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n\
+        \                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
         : \"Display name for the realm\"\n                },\n                \"gameServiceId\": {\n                    \"\
         type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game
         service this realm belongs to\"\n                },\n                \"description\": {\n                    \"type\"\
@@ -303,8 +303,8 @@ paths:
         createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
-        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
+        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
@@ -382,8 +382,8 @@ paths:
         createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
-        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
+        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
@@ -495,8 +495,8 @@ paths:
         createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
-        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
+        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
@@ -566,8 +566,8 @@ paths:
         createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\
-        \", \\\"ARCADIA\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
+        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
@@ -734,7 +734,7 @@ components:
           minLength: 1
           maxLength: 50
           pattern: '^[A-Z][A-Z0-9_]*$'
-          description: Unique code for the realm (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
     ListRealmsRequest:
       description: Request to list realms with optional filtering and pagination
       type: object
@@ -777,7 +777,7 @@ components:
           minLength: 1
           maxLength: 50
           pattern: '^[A-Z][A-Z0-9_]*$'
-          description: Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
         name:
           type: string
           minLength: 1
@@ -987,7 +987,7 @@ components:
           description: Unique identifier of the realm
         code:
           type: string
-          description: Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
         name:
           type: string
           description: Display name for the realm

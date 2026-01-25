@@ -927,7 +927,7 @@ components:
           nullable: true
           description: |
             Consumer-specific data stored without interpretation.
-            Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+            Use namespaced keys (e.g., render.castShadows, game.interactionType).
         # Scene Composer extensions for procedural content and AI systems
         attachmentPoints:
           type: array

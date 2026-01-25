@@ -948,7 +948,7 @@ public partial class AuthController
                         "type": "string"
                     },
                     "nullable": true,
-                    "description": "Authorization strings from active subscriptions.\ nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
+                    "description": "Authorization strings from active subscriptions.\ nFormat: \"{stubName}:{state}\" (e.g., \"my-game:authorized\")\n"
                 },
                 "remainingTime": {
                     "type": "integer",

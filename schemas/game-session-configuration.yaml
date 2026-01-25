@@ -64,5 +64,5 @@ x-service-configuration:
     SupportedGameServices:
       type: string
       description: Comma-separated list of supported game service stub names
-      default: "arcadia,generic"
+      default: "generic"
       env: GAME_SESSION_SUPPORTED_GAME_SERVICES

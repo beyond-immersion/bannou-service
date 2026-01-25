@@ -1035,7 +1035,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = Guid.NewGuid().ToString(),
             AssetIds = new List<string>()
         };
 
@@ -1054,7 +1054,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = Guid.NewGuid().ToString(),
             AssetIds = new List<string> { "asset-1" }
         };
 
@@ -1646,7 +1646,7 @@ public class AssetServiceTests
 
         var existingMetabundle = new BundleMetadata
         {
-            BundleId = "existing-metabundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             BundleType = BundleType.Metabundle,
             Realm = "arcadia",
@@ -1840,7 +1840,7 @@ public class AssetServiceTests
 
         var wrongRealmBundle = new BundleMetadata
         {
-            BundleId = "wrong-realm-bundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "fantasia", // Different realm
@@ -1886,7 +1886,7 @@ public class AssetServiceTests
 
         var sharedBundle = new BundleMetadata
         {
-            BundleId = "shared-bundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared", // Shared realm should work with any target realm
@@ -1965,7 +1965,7 @@ public class AssetServiceTests
         // Bundle 1 has asset "shared-asset" with hash "hash-a"
         var bundle1 = new BundleMetadata
         {
-            BundleId = "bundle-1",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/bundle-1.bundle",
@@ -1991,7 +1991,7 @@ public class AssetServiceTests
         // Bundle 2 has same asset "shared-asset" but with different hash "hash-b"
         var bundle2 = new BundleMetadata
         {
-            BundleId = "bundle-2",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/bundle-2.bundle",
@@ -2050,7 +2050,7 @@ public class AssetServiceTests
 
         var sourceBundle = new BundleMetadata
         {
-            BundleId = "multi-asset-bundle",
+            BundleId = Guid.NewGuid(),
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/multi-asset-bundle.bundle",

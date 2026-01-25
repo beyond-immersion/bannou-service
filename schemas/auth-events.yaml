@@ -120,7 +120,7 @@ components:
           type: array
           items:
             type: string
-          description: Current authorization strings (e.g., ["arcadia:authorized"])
+          description: Current authorization strings (e.g., ["my-game:authorized"])
         reason:
           $ref: '#/components/schemas/SessionUpdatedEventReason'
           description: The reason why the session was updated

@@ -55,9 +55,9 @@ paths:
         category\"\n            ],\n            \"properties\": {\n                \"gameId\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 32,\n                   \
         \ \"pattern\": \"^[a-z][a-z0-9-]*$\",\n                    \"description\": \"Game identifier for namespace isolation
-        (e.g., \\\"arcadia\\\", \\\"fantasia\\\")\"\n                },\n                \"ownerId\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of
-        the owning entity\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
+        (e.g., \\\"game-1\\\", \\\"game-2\\\")\"\n                },\n                \"ownerId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the
+        owning entity\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
         ,\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n        \
         \        \"slotName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n     \
         \               \"maxLength\": 64,\n                    \"pattern\": \"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$\",\n      \
@@ -2073,7 +2073,7 @@ components:
           minLength: 1
           maxLength: 32
           pattern: '^[a-z][a-z0-9-]*$'
-          description: Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
+          description: Game identifier for namespace isolation (e.g., "game-1", "game-2")
         ownerId:
           type: string
           format: uuid

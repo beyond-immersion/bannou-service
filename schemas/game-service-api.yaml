@@ -3,7 +3,7 @@ info:
   title: Bannou Game Service API
   description: |
     Registry service for game services that users can subscribe to.
-    Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
+    Provides a minimal registry of available services (games/applications).
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
@@ -187,12 +187,12 @@ components:
           pattern: '^[a-z0-9-]+$'
           minLength: 2
           maxLength: 50
-          description: URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+          description: URL-safe identifier for the service (e.g., "my-game", "my-other-game")
         displayName:
           type: string
           minLength: 1
           maxLength: 100
-          description: Human-readable name for the service (e.g., "Arcadia Online")
+          description: Human-readable name for the service (e.g., "My Game Online")
         description:
           type: string
           nullable: true
@@ -263,10 +263,10 @@ components:
           description: Unique identifier for the service
         stubName:
           type: string
-          description: URL-safe identifier (e.g., "arcadia")
+          description: URL-safe identifier (e.g., "my-game")
         displayName:
           type: string
-          description: Human-readable name (e.g., "Arcadia Online")
+          description: Human-readable name (e.g., "My Game Online")
         description:
           type: string
           nullable: true

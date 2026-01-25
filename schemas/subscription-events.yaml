@@ -49,7 +49,7 @@ components:
           description: ID of the service (game) the subscription is for
         stubName:
           type: string
-          description: Stub name of the service (e.g., "arcadia")
+          description: Stub name of the service (e.g., "my-game")
         displayName:
           type: string
           nullable: true  # NRT: Optional property MUST be nullable

@@ -93,7 +93,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -406,7 +406,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -654,7 +654,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -1066,7 +1066,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -1200,7 +1200,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -1330,7 +1330,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1899,7 +1899,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -2499,7 +2499,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -2783,7 +2783,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -2895,7 +2895,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }
@@ -3508,7 +3508,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -3660,7 +3660,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -3669,7 +3669,7 @@ public partial class AssetController
                 "deleted",
                 "processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }
@@ -3949,7 +3949,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -4224,7 +4224,7 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"omega\", \"arcadia\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",

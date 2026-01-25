@@ -711,7 +711,7 @@ components:
       type: string
       description: |
         Realm stub name (lowercase string identifier) that this asset belongs to.
-        Use the realm's stub_name property (e.g., "omega", "arcadia") from the Realm service.
+        Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
         Use "shared" for assets that are available across all realms.
 
     ProcessingStatus:

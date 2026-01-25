@@ -854,7 +854,7 @@ components:
       properties:
         appName:
           type: string
-          description: Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
+          description: Container's app-id for mesh routing (e.g., "bannou", "npc-pool-01")
         reason:
           type: string
           description: Why restart is needed (for logging/auditing)
@@ -1025,7 +1025,7 @@ components:
           description: Service ID (e.g., "behavior", "account")
         appId:
           type: string
-          description: App-id for mesh routing (e.g., "bannou", "npc-omega-01")
+          description: App-id for mesh routing (e.g., "bannou", "npc-pool-01")
         status:
           type: string
           description: Service status from heartbeat
