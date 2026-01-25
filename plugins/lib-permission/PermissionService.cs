@@ -117,7 +117,7 @@ public partial class PermissionService : IPermissionService
     {
         try
         {
-            _logger.LogInformation("Getting capabilities for session {SessionId}", body.SessionId);
+            _logger.LogDebug("Getting capabilities for session {SessionId}", body.SessionId);
 
             // Check in-memory cache first
             var sessionIdStr = body.SessionId.ToString();
@@ -134,7 +134,7 @@ public partial class PermissionService : IPermissionService
 
             if (permissionsData == null || permissionsData.Count == 0)
             {
-                _logger.LogWarning("No permissions found for session {SessionId}", body.SessionId);
+                _logger.LogDebug("No permissions found for session {SessionId}", body.SessionId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -178,7 +178,7 @@ public partial class PermissionService : IPermissionService
             // Cache the response for future requests
             _sessionCapabilityCache[sessionIdStr] = response;
 
-            _logger.LogInformation("Retrieved capabilities for session {SessionId} with {ServiceCount} services",
+            _logger.LogDebug("Retrieved capabilities for session {SessionId} with {ServiceCount} services",
                 body.SessionId, permissions.Count);
 
             return (StatusCodes.OK, response);
@@ -516,7 +516,7 @@ public partial class PermissionService : IPermissionService
     {
         try
         {
-            _logger.LogInformation("Updating session {SessionId} state for service {ServiceId}: {OldState} → {NewState}",
+            _logger.LogDebug("Updating session {SessionId} state for service {ServiceId}: {OldState} → {NewState}",
                 body.SessionId, body.ServiceId, body.PreviousState, body.NewState);
 
             var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
@@ -583,7 +583,7 @@ public partial class PermissionService : IPermissionService
     {
         try
         {
-            _logger.LogInformation("Updating session {SessionId} role: {OldRole} → {NewRole}",
+            _logger.LogDebug("Updating session {SessionId} role: {OldRole} → {NewRole}",
                 body.SessionId, body.PreviousRole, body.NewRole);
 
             var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
@@ -648,7 +648,7 @@ public partial class PermissionService : IPermissionService
             // If no states exist, nothing to clear
             if (sessionStates == null || sessionStates.Count == 0)
             {
-                _logger.LogInformation("No states to clear for session {SessionId}", body.SessionId);
+                _logger.LogDebug("No states to clear for session {SessionId}", body.SessionId);
 
                 return (StatusCodes.OK, new SessionUpdateResponse
                 {
@@ -662,7 +662,7 @@ public partial class PermissionService : IPermissionService
             if (string.IsNullOrEmpty(body.ServiceId))
             {
                 var stateCount = sessionStates.Count;
-                _logger.LogInformation("Clearing all {StateCount} states for session {SessionId}",
+                _logger.LogDebug("Clearing all {StateCount} states for session {SessionId}",
                     stateCount, body.SessionId);
 
                 sessionStates.Clear();
@@ -680,7 +680,7 @@ public partial class PermissionService : IPermissionService
             // Clear specific service state
             if (!sessionStates.ContainsKey(body.ServiceId))
             {
-                _logger.LogInformation("No state to clear for session {SessionId}, service {ServiceId}",
+                _logger.LogDebug("No state to clear for session {SessionId}, service {ServiceId}",
                     body.SessionId, body.ServiceId);
 
                 return (StatusCodes.OK, new SessionUpdateResponse
@@ -698,7 +698,7 @@ public partial class PermissionService : IPermissionService
             {
                 if (!body.States.Contains(currentState))
                 {
-                    _logger.LogInformation(
+                    _logger.LogDebug(
                         "State '{CurrentState}' for session {SessionId}, service {ServiceId} does not match filter {States}",
                         currentState, body.SessionId, body.ServiceId, string.Join(", ", body.States));
 
@@ -711,7 +711,7 @@ public partial class PermissionService : IPermissionService
                 }
             }
 
-            _logger.LogInformation("Clearing state '{CurrentState}' for session {SessionId}, service {ServiceId}",
+            _logger.LogDebug("Clearing state '{CurrentState}' for session {SessionId}, service {ServiceId}",
                 currentState, body.SessionId, body.ServiceId);
 
             // Remove the state
@@ -765,12 +765,12 @@ public partial class PermissionService : IPermissionService
 
             await Task.WhenAll(statesTask, permissionsTask);
 
-            var states = statesTask.Result ?? new Dictionary<string, string>();
-            var permissionsData = permissionsTask.Result ?? new Dictionary<string, object>();
+            var states = await statesTask ?? new Dictionary<string, string>();
+            var permissionsData = await permissionsTask ?? new Dictionary<string, object>();
 
             if (states.Count == 0)
             {
-                _logger.LogWarning("No session info found for {SessionId}", body.SessionId);
+                _logger.LogDebug("No session info found for {SessionId}", body.SessionId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -873,7 +873,7 @@ public partial class PermissionService : IPermissionService
             }
 
             var role = sessionStates.GetValueOrDefault("role", "user");
-            _logger.LogInformation("Recompiling permissions for session {SessionId}, role: {Role}, reason: {Reason}",
+            _logger.LogDebug("Recompiling permissions for session {SessionId}, role: {Role}, reason: {Reason}",
                 sessionId, role, reason);
 
             // Compile permissions for each service
@@ -883,7 +883,7 @@ public partial class PermissionService : IPermissionService
             var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
             var registeredServices = await hashSetStore.GetAsync(REGISTERED_SERVICES_KEY) ?? new HashSet<string>();
 
-            _logger.LogInformation("Found {Count} registered services: {Services}",
+            _logger.LogDebug("Found {Count} registered services: {Services}",
                 registeredServices.Count, string.Join(", ", registeredServices));
 
             foreach (var serviceId in registeredServices)
@@ -1051,7 +1051,7 @@ public partial class PermissionService : IPermissionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error publishing capabilities for session {SessionId}", sessionId);
-            _ = PublishErrorEventAsync("PublishCapabilities", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
+            await PublishErrorEventAsync("PublishCapabilities", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
         }
     }
 
@@ -1175,7 +1175,7 @@ public partial class PermissionService : IPermissionService
                 });
             }
 
-            _logger.LogInformation("Returning {Count} registered services", services.Count);
+            _logger.LogDebug("Returning {Count} registered services", services.Count);
 
             return (StatusCodes.OK, new RegisteredServicesResponse
             {
@@ -1205,7 +1205,7 @@ public partial class PermissionService : IPermissionService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Permission service permissions...");
+        _logger.LogDebug("Registering Permission service permissions...");
         await PermissionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
@@ -1234,7 +1234,7 @@ public partial class PermissionService : IPermissionService
     {
         try
         {
-            _logger.LogInformation("Handling session connected: {SessionId} for account {AccountId} with {RoleCount} roles and {AuthCount} authorizations",
+            _logger.LogDebug("Handling session connected: {SessionId} for account {AccountId} with {RoleCount} roles and {AuthCount} authorizations",
                 sessionId, accountId, roles?.Count ?? 0, authorizations?.Count ?? 0);
 
             // Build session states dictionary with role and authorizations
@@ -1326,7 +1326,7 @@ public partial class PermissionService : IPermissionService
     {
         try
         {
-            _logger.LogInformation("Handling session disconnected: {SessionId}, Reconnectable: {Reconnectable}",
+            _logger.LogDebug("Handling session disconnected: {SessionId}, Reconnectable: {Reconnectable}",
                 sessionId, reconnectable);
 
             // Remove from activeConnections (no longer has WebSocket/exchange)

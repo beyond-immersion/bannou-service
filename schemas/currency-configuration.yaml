@@ -22,10 +22,10 @@ x-service-configuration:
       env: CURRENCY_DEFAULT_PRECISION
       default: decimal_2
       description: Default precision for currencies that do not specify
-    autogainMode:
+    autogainProcessingMode:
       type: string
       enum: ["lazy", "task"]
-      env: CURRENCY_AUTOGAIN_MODE
+      env: CURRENCY_AUTOGAIN_PROCESSING_MODE
       default: lazy
       description: How autogain is calculated (lazy = on-demand at query time, task = background processing)
     autogainTaskStartupDelaySeconds:

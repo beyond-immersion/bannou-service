@@ -393,9 +393,10 @@ public partial class MeshService : IMeshService
 
             // Determine effective algorithm (use configured default when request uses default value)
             var effectiveAlgorithm = body.Algorithm;
-            if (effectiveAlgorithm == default && Enum.TryParse<LoadBalancerAlgorithm>(_configuration.DefaultLoadBalancer, true, out var configuredAlgorithm))
+            if (effectiveAlgorithm == default)
             {
-                effectiveAlgorithm = configuredAlgorithm;
+                // Cast config enum to API enum (both have same values in same order)
+                effectiveAlgorithm = (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
             }
 
             // Apply load balancing algorithm

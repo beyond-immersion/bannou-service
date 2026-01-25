@@ -75,21 +75,16 @@ public partial class OrchestratorService : IOrchestratorService
         InfrastructureServices.Contains(serviceName);
 
     /// <summary>
-    /// Gets the configured default backend, parsing from the configuration string.
-    /// Falls back to Compose if the configured value is invalid.
+    /// Gets the configured default backend type from configuration.
     /// </summary>
     private BackendType GetConfiguredDefaultBackend()
     {
-        var configuredBackend = _configuration.DefaultBackend;
-        if (string.IsNullOrWhiteSpace(configuredBackend))
-            return BackendType.Compose;
-
-        return configuredBackend.ToLowerInvariant() switch
+        return _configuration.DefaultBackend switch
         {
-            "kubernetes" => BackendType.Kubernetes,
-            "portainer" => BackendType.Portainer,
-            "swarm" => BackendType.Swarm,
-            "compose" => BackendType.Compose,
+            DefaultBackend.Kubernetes => BackendType.Kubernetes,
+            DefaultBackend.Portainer => BackendType.Portainer,
+            DefaultBackend.Swarm => BackendType.Swarm,
+            DefaultBackend.Compose => BackendType.Compose,
             _ => BackendType.Compose
         };
     }

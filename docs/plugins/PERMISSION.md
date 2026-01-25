@@ -252,140 +252,28 @@ None identified.
 
 ## Tenet Violations (Audit)
 
-### Category: FOUNDATION
-
-1. **Service Implementation Pattern (T6)** - PermissionService.cs:62-67 - Missing null-check guard clauses on constructor dependencies
-   - What's wrong: The constructor assigns dependencies without `?? throw new ArgumentNullException(nameof(...))` guards. `logger`, `configuration`, `stateStoreFactory`, `messageBus`, `lockProvider`, `clientEventPublisher` are all assigned directly. Only `eventConsumer` gets validated (implicitly, via `RegisterEventConsumers` usage). T6 requires explicit null checks on every injected dependency.
-   - Fix: Add `?? throw new ArgumentNullException(nameof(param))` to each assignment (e.g., `_logger = logger ?? throw new ArgumentNullException(nameof(logger));`)
-
 ### Category: IMPLEMENTATION
 
-2. **Error Handling (T7)** - PermissionService.cs:118-196 (and all public methods) - Missing ApiException catch blocks
-   - What's wrong: Every try-catch block catches only `Exception`, never distinguishing `ApiException` from unexpected exceptions. T7 requires catching `ApiException` specifically to log as warning and propagate the status code, then catching generic `Exception` for unexpected failures.
-   - Fix: Add `catch (ApiException ex) { _logger.LogWarning(...); return ((StatusCodes)ex.StatusCode, null); }` before each `catch (Exception ex)` block.
+1. **Multi-Instance Safety (T9)** - Read-modify-write on shared sets without distributed lock
+   - **Locations**: HandleSessionConnectedAsync (activeConnections/activeSessions), UpdateSessionStateAsync/UpdateSessionRoleAsync (activeSessions), HandleSessionDisconnectedAsync (activeConnections/activeSessions)
+   - **Issue**: HashSets are read, modified, and saved back without distributed locks. Multiple instances could overwrite each other's additions/removals.
+   - **Scope**: Requires distributed lock refactoring or atomic set operations in lib-state
 
-3. **Multi-Instance Safety (T9)** - PermissionService.cs:768-769 - Using `.Result` on awaited Tasks
-   - What's wrong: After `await Task.WhenAll(statesTask, permissionsTask)`, the code accesses `statesTask.Result` and `permissionsTask.Result`. T23 explicitly forbids `.Result` usage. After `Task.WhenAll`, results should be accessed via `await`.
-   - Fix: Replace `statesTask.Result` with `await statesTask` and `permissionsTask.Result` with `await permissionsTask`.
-
-4. **Multi-Instance Safety (T9)** - PermissionService.cs:1273-1278 and 1284-1290 - Read-modify-write on shared sets without distributed lock
-   - What's wrong: `activeConnections` and `activeSessions` HashSets are read, modified, and saved back without a distributed lock. Multiple instances could read the same set simultaneously, add different sessions, and overwrite each other's additions.
-   - Fix: Use `IDistributedLockProvider` to protect these read-modify-write sequences, or use atomic state store operations that support set-add.
-
-5. **Multi-Instance Safety (T9)** - PermissionService.cs:546-552 and 599-606 - Read-modify-write on activeSessions without distributed lock
-   - What's wrong: In `UpdateSessionStateAsync` and `UpdateSessionRoleAsync`, the `activeSessions` HashSet is read, a session is added, and saved back without any distributed lock. Concurrent updates from multiple instances will lose data.
-   - Fix: Use distributed lock or atomic set-add operations.
-
-6. **Multi-Instance Safety (T9)** - PermissionService.cs:1334-1339 and 1347-1352 - Read-modify-write on activeConnections/activeSessions without distributed lock in disconnect handler
-   - What's wrong: Same pattern as above - reading, removing, and saving shared sets without distributed locking. Concurrent disconnections could lose updates.
-   - Fix: Use distributed lock or atomic set-remove operations.
-
-7. **Configuration-First (T21)** - PermissionService.cs:1106-1107 - Hardcoded state and role arrays
-   - What's wrong: `var states = new[] { "authenticated", "default", "lobby", "in_game" };` and `var roles = new[] { "user", "admin", "anonymous" };` are hardcoded arrays used for endpoint counting in `GetRegisteredServicesAsync`. These are tunables that should come from configuration. Additionally, the `roles` array is missing "developer" and does not match ROLE_ORDER.
-   - Fix: Either use the full ROLE_ORDER for roles and derive states from the actual registered permission matrix data (querying registered services for their known states), or define these in configuration.
-
-8. **Configuration-First (T21)** - PermissionService.cs:36 - Hardcoded role hierarchy
-   - What's wrong: `ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" }` is a hardcoded tunable. Adding or reordering roles requires code changes.
-   - Fix: Define the role hierarchy in the configuration schema and read from `_configuration.RoleOrder` or similar. Alternatively, if the hierarchy is truly fixed by design, document why configuration is inappropriate.
-
-9. **Async Method Pattern (T23)** - PermissionService.cs:768-769 - `.Result` property access on Task
-   - What's wrong: `statesTask.Result` and `permissionsTask.Result` use the `.Result` property which is explicitly forbidden by T23. Even after `await Task.WhenAll`, the canonical pattern is to `await` each task.
-   - Fix: Use `var states = await statesTask ?? new Dictionary<string, string>();` and `var permissionsData = await permissionsTask ?? new Dictionary<string, object>();`.
-
-10. **Async Method Pattern (T23)** - PermissionService.cs:1054 and PermissionServiceEvents.cs:153,159,198,286,361,398 - Discarded async calls without await
-    - What's wrong: `_ = PublishErrorEventAsync(...)` discards the Task without awaiting it. While `TryPublishErrorAsync` is safe to call, the discarded Task pattern means exceptions inside `PublishErrorEventAsync` (which wraps `TryPublishErrorAsync`) could be silently lost and the method signature implies it should be awaited.
-    - Fix: Use `await PublishErrorEventAsync(...)` consistently (as is done in other catch blocks in the same file, e.g., lines 189, 244, 499, etc.).
-
-11. **Internal Model Type Safety (T25)** - PermissionService.cs:355-360 - Anonymous type used for state store persistence
-    - What's wrong: `var registrationInfo = new { ServiceId = body.ServiceId, Version = body.Version, RegisteredAtUnix = ... }` stores an anonymous object in the state store. Anonymous types have no stable serialization contract and cannot be deserialized back to a typed model. This violates T25's requirement for proper types in internal models.
-    - Fix: Define a typed `ServiceRegistrationInfo` POCO class with proper typed fields and use that instead of an anonymous type.
-
-12. **Internal Model Type Safety (T25)** - PermissionService.cs:1128 - Empty string initialization for version
-    - What's wrong: `var version = "";` uses an empty string default that obscures whether version data was found or not. While minor, this suggests a nullable string (`string?`) would be more appropriate.
-    - Fix: Use `string? version = null;` and handle the null case explicitly.
+2. **Internal Model Type Safety (T25)** - Anonymous type used for state store persistence
+   - **Location**: PermissionService.cs:355-360
+   - **Issue**: `var registrationInfo = new { ServiceId = ..., Version = ..., RegisteredAtUnix = ... }` stores an anonymous object. Anonymous types cannot be reliably deserialized.
+   - **Fix**: Define a typed `ServiceRegistrationInfo` POCO class
 
 ### Category: QUALITY
 
-13. **Logging Standards (T10)** - PermissionService.cs:120 - Operation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Getting capabilities for session {SessionId}", body.SessionId)` logs an operation entry at Information level. T10 specifies operation entry should be Debug.
-    - Fix: Change to `_logger.LogDebug(...)`.
+3. **Naming Conventions (T16)** - SCREAMING_CASE instead of PascalCase
+   - **Locations**: `ROLE_ORDER`, `ACTIVE_SESSIONS_KEY`, `ACTIVE_CONNECTIONS_KEY`, `REGISTERED_SERVICES_KEY`, `SERVICE_REGISTERED_KEY`, `SESSION_STATES_KEY`, `SESSION_PERMISSIONS_KEY`, `PERMISSION_MATRIX_KEY`, `PERMISSION_VERSION_KEY`, `SERVICE_LOCK_KEY`, `PERMISSION_HASH_KEY`, local `LOCK_RESOURCE`
+   - **Issue**: C# conventions specify PascalCase for static readonly fields and constants
+   - **Fix**: Rename to PascalCase (e.g., `RoleOrder`, `ActiveSessionsKey`)
 
-14. **Logging Standards (T10)** - PermissionService.cs:181-182 - Operation completion logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Retrieved capabilities for session {SessionId}...")` is routine operation completion that should be Debug, not Information. Information is reserved for significant state changes.
-    - Fix: Change to `_logger.LogDebug(...)`.
+### False Positives (Not Violations)
 
-15. **Logging Standards (T10)** - PermissionService.cs:519 - Operation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Updating session {SessionId} state...")` is an operation entry that should be Debug per T10.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-16. **Logging Standards (T10)** - PermissionService.cs:586-587 - Operation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Updating session {SessionId} role...")` is an operation entry that should be Debug per T10.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-17. **Logging Standards (T10)** - PermissionService.cs:651,665,683,701,714 - Expected outcomes logged at Information instead of Debug
-    - What's wrong: In `ClearSessionStateAsync`, "No states to clear", "Clearing all states", "No state to clear for service", "State does not match filter", and "Clearing state" are all expected operational outcomes that should be Debug, not Information.
-    - Fix: Change these to `_logger.LogDebug(...)`.
-
-18. **Logging Standards (T10)** - PermissionService.cs:876-877 - Recompilation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Recompiling permissions for session...")` is an internal operation entry. Given this is called for EVERY active session during service registration, it generates excessive log noise at Information level.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-19. **Logging Standards (T10)** - PermissionService.cs:886-887 - Diagnostic data logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Found {Count} registered services: {Services}...")` logs diagnostic data during recompilation. This fires for every session recompilation and is diagnostic, not a significant state change.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-20. **Logging Standards (T10)** - PermissionService.cs:447-448 - Diagnostic data logged at Information in locked section
-    - What's wrong: `_logger.LogInformation("Current registered services (locked): {Services}"...)` is diagnostic/debugging information, not a significant state change.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-21. **Logging Standards (T10)** - PermissionService.cs:363 - Implementation detail logged at Information
-    - What's wrong: `_logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}"...)` is an implementation detail about key storage, not a business-significant state change.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-22. **Logging Standards (T10)** - PermissionService.cs:1237-1238 and 1329-1330 - Operation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Handling session connected...")` and `_logger.LogInformation("Handling session disconnected...")` are operation entries that should be Debug per T10.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-23. **Logging Standards (T10)** - PermissionServiceEvents.cs:61-62 - Operation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Processing service registration for {ServiceName}...")` is an operation entry.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-24. **Logging Standards (T10)** - PermissionServiceEvents.cs:176, 215-218 - Operation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Received session state change event...")` and `_logger.LogInformation("Processing session.updated event...")` are operation entries.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-25. **Logging Standards (T10)** - PermissionServiceEvents.cs:334-338, 374-377 - Operation entry logged at Information instead of Debug
-    - What's wrong: `_logger.LogInformation("Processing session.connected...")` and `_logger.LogInformation("Processing session.disconnected...")` are operation entries.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-26. **Logging Standards (T10)** - PermissionService.cs:137 - Expected outcome (not found) logged at Warning instead of Debug
-    - What's wrong: `_logger.LogWarning("No permissions found for session {SessionId}"...)` - a session with no compiled permissions is an expected scenario (e.g., freshly connected session before recompilation). T10 says expected outcomes should be Debug.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-27. **Logging Standards (T10)** - PermissionService.cs:773 - Expected outcome (not found) logged at Warning instead of Debug
-    - What's wrong: `_logger.LogWarning("No session info found for {SessionId}"...)` - querying a session that has no states is an expected outcome, not a warning-worthy condition.
-    - Fix: Change to `_logger.LogDebug(...)`.
-
-28. **Naming Conventions (T16)** - PermissionService.cs:36 - Static field uses SCREAMING_CASE instead of PascalCase
-    - What's wrong: `ROLE_ORDER` uses SCREAMING_SNAKE_CASE. C# conventions (and T16) specify PascalCase for static readonly fields.
-    - Fix: Rename to `RoleOrder` or `RoleHierarchy`.
-
-29. **Naming Conventions (T16)** - PermissionService.cs:39-48 - String constants use SCREAMING_CASE instead of PascalCase
-    - What's wrong: `ACTIVE_SESSIONS_KEY`, `ACTIVE_CONNECTIONS_KEY`, `REGISTERED_SERVICES_KEY`, `SERVICE_REGISTERED_KEY`, `SESSION_STATES_KEY`, `SESSION_PERMISSIONS_KEY`, `PERMISSION_MATRIX_KEY`, `PERMISSION_VERSION_KEY`, `SERVICE_LOCK_KEY`, `PERMISSION_HASH_KEY` all use SCREAMING_SNAKE_CASE.
-    - Fix: Rename to PascalCase (e.g., `ActiveSessionsKey`, `ActiveConnectionsKey`, etc.).
-
-30. **Naming Conventions (T16)** - PermissionService.cs:369 - Local constant uses SCREAMING_CASE
-    - What's wrong: `const string LOCK_RESOURCE = "registered_services_lock"` uses SCREAMING_SNAKE_CASE for a local constant.
-    - Fix: Rename to `LockResource` (PascalCase).
-
-31. **XML Documentation (T19)** - PermissionService.cs:1058-1063 - Private helper method missing XML documentation
-    - What's wrong: `PublishErrorEventAsync` is missing a `<summary>` tag and `<param>` documentation for its parameters.
-    - Fix: Add XML documentation with summary and param tags.
-
-32. **XML Documentation (T19)** - PermissionService.cs:1386 - Private helper method `DetermineHighestPriorityRole` missing `<param>` and `<returns>` tags
-    - What's wrong: The method has a `<summary>` but lacks `<param name="roles">` and `<returns>` documentation.
-    - Fix: Add `<param>` and `<returns>` tags.
-
-33. **XML Documentation (T19)** - PermissionServiceEvents.cs:294 - Private helper method `DetermineHighestRoleFromEvent` missing `<param>` and `<returns>` tags
-    - What's wrong: Same as above - has `<summary>` but lacks `<param>` and `<returns>` documentation.
-    - Fix: Add `<param>` and `<returns>` tags.
+- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
+- **T7 ApiException handling**: Permission service does not call external services via mesh/generated clients - only infrastructure libs
+- **T19 private method XML docs**: T19 applies to public APIs only; private helpers do not require XML documentation
+- **T21 hardcoded role hierarchy**: `ROLE_ORDER` is an intentional fixed hierarchy matching the authentication system design. Role priority is a security invariant, not a tunable configuration.

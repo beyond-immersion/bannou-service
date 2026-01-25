@@ -70,6 +70,21 @@ try:
     service_pascal = '$SERVICE_PASCAL'
     service_name = '$SERVICE_NAME'
 
+    # Check for existing API enums to avoid duplicates
+    # Look for enums in the corresponding API schema and generated models
+    api_schema_path = f'../schemas/{service_name}-api.yaml'
+    existing_api_enums = set()
+    try:
+        with open(api_schema_path, 'r') as api_f:
+            api_schema = yaml.safe_load(api_f)
+            # Extract enum names from components/schemas
+            if api_schema and 'components' in api_schema and 'schemas' in api_schema['components']:
+                for schema_name, schema_def in api_schema['components']['schemas'].items():
+                    if schema_def and schema_def.get('type') == 'string' and 'enum' in schema_def:
+                        existing_api_enums.add(schema_name)
+    except FileNotFoundError:
+        pass  # No API schema, no conflicts possible
+
     # Track enum types to generate
     enum_types = []
 
@@ -93,13 +108,19 @@ try:
             if prop_enum and prop_type == 'string':
                 # Generate enum type name from property name
                 enum_type_name = to_pascal_case(prop_name)
-                # Store enum for generation
-                enum_types.append({
-                    'name': enum_type_name,
-                    'values': prop_enum,
-                    'description': prop_description
-                })
-                csharp_type = enum_type_name
+                # Check if this enum already exists in API schema (avoid duplicates)
+                if enum_type_name in existing_api_enums:
+                    # API schema already defines this enum - use the API enum type (fully qualified)
+                    csharp_type = f'BeyondImmersion.BannouService.{enum_type_name}'
+                    print(f'# NOTE: Using API enum {enum_type_name} from BannouService namespace', file=sys.stderr)
+                else:
+                    # Store enum for generation
+                    enum_types.append({
+                        'name': enum_type_name,
+                        'values': prop_enum,
+                        'description': prop_description
+                    })
+                    csharp_type = enum_type_name
             else:
                 # Convert type to C# type
                 csharp_type = {

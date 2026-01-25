@@ -48,18 +48,6 @@ public enum DefaultPrecision
 }
 #pragma warning restore CS1591
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// How autogain is calculated (lazy = on-demand at query time, task = background processing)
-/// </summary>
-public enum AutogainMode
-{
-    Lazy,
-    Task,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Currency service.
 /// Properties are automatically bound from environment variables.
@@ -95,9 +83,9 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// How autogain is calculated (lazy = on-demand at query time, task = background processing)
-    /// Environment variable: CURRENCY_AUTOGAIN_MODE
+    /// Environment variable: CURRENCY_AUTOGAIN_PROCESSING_MODE
     /// </summary>
-    public AutogainMode AutogainMode { get; set; } = AutogainMode.Lazy;
+    public BeyondImmersion.BannouService.AutogainProcessingMode AutogainProcessingMode { get; set; } = BeyondImmersion.BannouService.AutogainProcessingMode.Lazy;
 
     /// <summary>
     /// Delay in seconds before first autogain task cycle (allows services to start)
