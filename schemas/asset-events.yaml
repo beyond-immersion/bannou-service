@@ -54,29 +54,13 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    # Base event schema for $ref resolution
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
-
     # ==========================================================================
     # Upload Events
     # ==========================================================================
 
     AssetUploadRequestedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a new upload is initiated via requestUpload API
@@ -113,10 +97,10 @@ components:
           type: string
           description: MIME content type
         assetType:
-          $ref: 'asset-api.yaml#/components/schemas/AssetType'
+          $ref: '../asset-api.yaml#/components/schemas/AssetType'
           description: Category of asset being uploaded
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
         isMultipart:
           type: boolean
@@ -125,7 +109,7 @@ components:
 
     AssetUploadCompletedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an upload is completed and file is stored
@@ -180,7 +164,7 @@ components:
 
     AssetProcessingQueuedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is queued for processing
@@ -209,7 +193,7 @@ components:
 
     AssetProcessingCompletedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when asset processing completes
@@ -248,7 +232,7 @@ components:
 
     AssetReadyEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is fully processed and available
@@ -284,10 +268,10 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
         assetType:
-          $ref: 'asset-api.yaml#/components/schemas/AssetType'
+          $ref: '../asset-api.yaml#/components/schemas/AssetType'
           description: Category of the asset
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm the asset belongs to
 
     # ==========================================================================
@@ -296,7 +280,7 @@ components:
 
     BundleCreatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is successfully created
@@ -328,7 +312,7 @@ components:
           type: integer
           description: Number of assets in the bundle
         compression:
-          $ref: 'asset-api.yaml#/components/schemas/CompressionType'
+          $ref: '../asset-api.yaml#/components/schemas/CompressionType'
           description: Compression algorithm used for the bundle
         owner:
           type: string
@@ -340,7 +324,7 @@ components:
 
     MetabundleCreatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a metabundle is successfully created from source bundles
@@ -360,7 +344,7 @@ components:
           type: string
           description: Metabundle version string
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm for this metabundle
         sourceBundleCount:
           type: integer
@@ -399,7 +383,7 @@ components:
 
     BundleUpdatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when bundle metadata is updated
@@ -432,12 +416,12 @@ components:
           type: string
           description: Account ID or service name that performed the update
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleDeletedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is soft-deleted or permanently deleted
@@ -465,12 +449,12 @@ components:
           type: string
           description: Account ID or service name that performed the deletion
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     BundleRestoredEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a soft-deleted bundle is restored
@@ -493,7 +477,7 @@ components:
           type: string
           description: Account ID or service name that performed the restoration
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          $ref: '../asset-api.yaml#/components/schemas/GameRealm'
           description: Game realm of the bundle
 
     # ==========================================================================

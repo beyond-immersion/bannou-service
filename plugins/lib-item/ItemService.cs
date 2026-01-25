@@ -582,7 +582,7 @@ public partial class ItemService : IItemService
                 ContainerId = Guid.Parse(model.ContainerId),
                 RealmId = Guid.Parse(model.RealmId),
                 Quantity = model.Quantity,
-                OriginType = model.OriginType.ToString(),
+                OriginType = model.OriginType,
                 CreatedAt = model.CreatedAt,
                 ModifiedAt = now
             }, cancellationToken);
@@ -657,7 +657,7 @@ public partial class ItemService : IItemService
                 TemplateCode = templateCode,
                 RealmId = Guid.Parse(model.RealmId),
                 CharacterId = body.CharacterId,
-                BindType = body.BindType.ToString()
+                BindType = body.BindType
             }, cancellationToken);
 
             _logger.LogDebug("Bound item {InstanceId} to character {CharacterId}", body.InstanceId, body.CharacterId);
@@ -718,7 +718,7 @@ public partial class ItemService : IItemService
                 ContainerId = Guid.Parse(model.ContainerId),
                 RealmId = Guid.Parse(model.RealmId),
                 Quantity = model.Quantity,
-                OriginType = model.OriginType.ToString(),
+                OriginType = model.OriginType,
                 CreatedAt = model.CreatedAt,
                 ModifiedAt = now
             }, cancellationToken);

@@ -264,7 +264,7 @@ components:
           nullable: true
         deltaType:
           allOf:
-          - $ref: 'mapping-api.yaml#/components/schemas/DeltaType'
+          - $ref: '../mapping-api.yaml#/components/schemas/DeltaType'
           nullable: true
           description: Whether this is incremental or full
         sourceAppId:
@@ -458,7 +458,7 @@ components:
           description: App-id that currently has authority
           nullable: true
         handlingMode:
-          $ref: 'mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode'
+          $ref: '../mapping-api.yaml#/components/schemas/NonAuthorityHandlingMode'
           description: How the attempt was handled
         publishAccepted:
           type: boolean

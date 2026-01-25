@@ -76,7 +76,7 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            var entityType = evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -177,7 +177,7 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            var entityType = evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -289,7 +289,7 @@ public partial class AchievementService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            var entityType = evt.EntityType;
 
             foreach (var definition in definitions)
             {
@@ -429,38 +429,6 @@ public partial class AchievementService
         return definitions;
     }
 
-    private static EntityType MapToEntityType(AnalyticsScoreUpdatedEventEntityType entityType)
-        => entityType switch
-        {
-            AnalyticsScoreUpdatedEventEntityType.Account => EntityType.Account,
-            AnalyticsScoreUpdatedEventEntityType.Character => EntityType.Character,
-            AnalyticsScoreUpdatedEventEntityType.Guild => EntityType.Guild,
-            AnalyticsScoreUpdatedEventEntityType.Actor => EntityType.Actor,
-            AnalyticsScoreUpdatedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
-
-    private static EntityType MapToEntityType(AnalyticsMilestoneReachedEventEntityType entityType)
-        => entityType switch
-        {
-            AnalyticsMilestoneReachedEventEntityType.Account => EntityType.Account,
-            AnalyticsMilestoneReachedEventEntityType.Character => EntityType.Character,
-            AnalyticsMilestoneReachedEventEntityType.Guild => EntityType.Guild,
-            AnalyticsMilestoneReachedEventEntityType.Actor => EntityType.Actor,
-            AnalyticsMilestoneReachedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
-
-    private static EntityType MapToEntityType(LeaderboardRankChangedEventEntityType entityType)
-        => entityType switch
-        {
-            LeaderboardRankChangedEventEntityType.Account => EntityType.Account,
-            LeaderboardRankChangedEventEntityType.Character => EntityType.Character,
-            LeaderboardRankChangedEventEntityType.Guild => EntityType.Guild,
-            LeaderboardRankChangedEventEntityType.Actor => EntityType.Actor,
-            LeaderboardRankChangedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
 
     private static bool TryConvertDeltaToIncrement(double delta, out int increment)
     {

@@ -111,10 +111,10 @@ components:
           format: uuid
           description: Escrow agreement ID
         escrowType:
-          $ref: 'escrow-api.yaml#/components/schemas/EscrowType'
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowType'
           description: Type of escrow
         trustMode:
-          $ref: 'escrow-api.yaml#/components/schemas/EscrowTrustMode'
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowTrustMode'
           description: Trust mode
         parties:
           type: array
@@ -274,7 +274,7 @@ components:
           type: string
           description: Type of the consenting party
         consentType:
-          $ref: 'escrow-api.yaml#/components/schemas/EscrowConsentType'
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowConsentType'
           description: Type of consent
         consentsReceived:
           type: integer

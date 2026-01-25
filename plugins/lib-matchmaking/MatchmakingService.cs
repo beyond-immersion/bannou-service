@@ -21,9 +21,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-// Alias to distinguish client events CancelReason from service events
+// Alias to distinguish client events CancelReason from API events CancelReason
 using ClientCancelReason = BeyondImmersion.Bannou.Matchmaking.ClientEvents.CancelReason;
-using EventCancelReason = BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEventReason;
 
 [assembly: InternalsVisibleTo("lib-matchmaking.tests")]
 

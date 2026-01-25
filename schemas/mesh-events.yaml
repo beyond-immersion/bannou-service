@@ -27,28 +27,12 @@ paths: {}
 
 components:
   schemas:
-    # Base event schema for $ref resolution
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
-
     # =========================================================================
     # Mesh-Published Events
     # =========================================================================
     MeshEndpointRegisteredEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
@@ -82,7 +66,7 @@ components:
 
     MeshEndpointDeregisteredEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |

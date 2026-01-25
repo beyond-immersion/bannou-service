@@ -496,7 +496,7 @@ public partial class LeaderboardService : ILeaderboardService
                     GameServiceId = body.GameServiceId,
                     LeaderboardId = body.LeaderboardId,
                     EntityId = body.EntityId,
-                    EntityType = MapToEntryAddedEventEntityType(body.EntityType),
+                    EntityType = body.EntityType,
                     Score = finalScore,
                     Rank = currentRank,
                     TotalEntries = totalEntries
@@ -513,7 +513,7 @@ public partial class LeaderboardService : ILeaderboardService
                     GameServiceId = body.GameServiceId,
                     LeaderboardId = body.LeaderboardId,
                     EntityId = body.EntityId,
-                    EntityType = MapToEventEntityType(body.EntityType),
+                    EntityType = body.EntityType,
                     PreviousRank = prevRank,
                     NewRank = currentRank,
                     RankChange = rankChange,
@@ -1078,34 +1078,6 @@ public partial class LeaderboardService : ILeaderboardService
             EntryCount = entryCount,
             CreatedAt = definition.CreatedAt,
             Metadata = definition.Metadata
-        };
-
-    /// <summary>
-    /// Maps EntityType to LeaderboardRankChangedEvent entity type.
-    /// </summary>
-    private static LeaderboardRankChangedEventEntityType MapToEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => LeaderboardRankChangedEventEntityType.Account,
-            EntityType.Character => LeaderboardRankChangedEventEntityType.Character,
-            EntityType.Guild => LeaderboardRankChangedEventEntityType.Guild,
-            EntityType.Actor => LeaderboardRankChangedEventEntityType.Actor,
-            EntityType.Custom => LeaderboardRankChangedEventEntityType.Custom,
-            _ => LeaderboardRankChangedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to LeaderboardEntryAddedEvent entity type.
-    /// </summary>
-    private static LeaderboardEntryAddedEventEntityType MapToEntryAddedEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => LeaderboardEntryAddedEventEntityType.Account,
-            EntityType.Character => LeaderboardEntryAddedEventEntityType.Character,
-            EntityType.Guild => LeaderboardEntryAddedEventEntityType.Guild,
-            EntityType.Actor => LeaderboardEntryAddedEventEntityType.Actor,
-            EntityType.Custom => LeaderboardEntryAddedEventEntityType.Custom,
-            _ => LeaderboardEntryAddedEventEntityType.Custom
         };
 
     #endregion

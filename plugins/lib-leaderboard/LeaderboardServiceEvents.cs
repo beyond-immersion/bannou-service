@@ -47,7 +47,8 @@ public partial class LeaderboardService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            // Cast Analytics.EntityType to Leaderboard.EntityType (same enum values)
+            var entityType = (EntityType)evt.EntityType;
             if (definition.EntityTypes != null && !definition.EntityTypes.Contains(entityType))
             {
                 _logger.LogWarning(
@@ -128,7 +129,8 @@ public partial class LeaderboardService
                 return;
             }
 
-            var entityType = MapToEntityType(evt.EntityType);
+            // Cast Analytics.EntityType to Leaderboard.EntityType (same enum values)
+            var entityType = (EntityType)evt.EntityType;
             if (definition.EntityTypes != null && !definition.EntityTypes.Contains(entityType))
             {
                 _logger.LogWarning(
@@ -269,25 +271,4 @@ public partial class LeaderboardService
         return matched;
     }
 
-    private static EntityType MapToEntityType(AnalyticsScoreUpdatedEventEntityType entityType)
-        => entityType switch
-        {
-            AnalyticsScoreUpdatedEventEntityType.Account => EntityType.Account,
-            AnalyticsScoreUpdatedEventEntityType.Character => EntityType.Character,
-            AnalyticsScoreUpdatedEventEntityType.Guild => EntityType.Guild,
-            AnalyticsScoreUpdatedEventEntityType.Actor => EntityType.Actor,
-            AnalyticsScoreUpdatedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
-
-    private static EntityType MapToEntityType(AnalyticsRatingUpdatedEventEntityType entityType)
-        => entityType switch
-        {
-            AnalyticsRatingUpdatedEventEntityType.Account => EntityType.Account,
-            AnalyticsRatingUpdatedEventEntityType.Character => EntityType.Character,
-            AnalyticsRatingUpdatedEventEntityType.Guild => EntityType.Guild,
-            AnalyticsRatingUpdatedEventEntityType.Actor => EntityType.Actor,
-            AnalyticsRatingUpdatedEventEntityType.Custom => EntityType.Custom,
-            _ => EntityType.Custom
-        };
 }

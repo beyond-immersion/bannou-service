@@ -51,10 +51,10 @@ components:
           format: uuid
           description: ID of the game session
         previousState:
-          $ref: 'game-session-api.yaml#/components/schemas/SessionStatus'
+          $ref: '../game-session-api.yaml#/components/schemas/SessionStatus'
           description: State before the change
         newState:
-          $ref: 'game-session-api.yaml#/components/schemas/SessionStatus'
+          $ref: '../game-session-api.yaml#/components/schemas/SessionStatus'
           description: State after the change
         reason:
           type: string
@@ -235,7 +235,7 @@ components:
           type: string
           description: Chat message content
         messageType:
-          $ref: 'game-session-api.yaml#/components/schemas/ChatMessageType'
+          $ref: '../game-session-api.yaml#/components/schemas/ChatMessageType'
           description: Type of chat message
         isWhisperToMe:
           type: boolean
@@ -319,7 +319,7 @@ components:
           format: uuid
           description: ID of the action that produced this result
         actionType:
-          $ref: 'game-session-api.yaml#/components/schemas/GameActionType'
+          $ref: '../game-session-api.yaml#/components/schemas/GameActionType'
           description: Type of action performed
         actorId:
           type: string
@@ -362,7 +362,7 @@ components:
           nullable: true
           description: Player's display name
         role:
-          $ref: 'game-session-api.yaml#/components/schemas/PlayerRole'
+          $ref: '../game-session-api.yaml#/components/schemas/PlayerRole'
           description: Player's role in the session
         characterData:
           type: object

@@ -644,7 +644,7 @@ public partial class AnalyticsService : IAnalyticsService
                     Timestamp = now,
                     GameServiceId = body.GameServiceId,
                     EntityId = result.EntityId,
-                    EntityType = MapToRatingEventEntityType(result.EntityType),
+                    EntityType = result.EntityType,
                     RatingType = body.RatingType,
                     PreviousRating = previousRating,
                     NewRating = newRating,
@@ -1856,7 +1856,7 @@ public partial class AnalyticsService : IAnalyticsService
                             Timestamp = DateTimeOffset.UtcNow,
                             GameServiceId = bufferedEvent.GameServiceId,
                             EntityId = bufferedEvent.EntityId,
-                            EntityType = MapToScoreEventEntityType(bufferedEvent.EntityType),
+                            EntityType = bufferedEvent.EntityType,
                             ScoreType = bufferedEvent.EventType,
                             PreviousValue = hasPrevious ? previousValue : null,
                             NewValue = newValue,
@@ -1960,7 +1960,7 @@ public partial class AnalyticsService : IAnalyticsService
                     Timestamp = DateTimeOffset.UtcNow,
                     GameServiceId = gameServiceId,
                     EntityId = entityId,
-                    EntityType = MapToMilestoneEventEntityType(entityType),
+                    EntityType = entityType,
                     MilestoneType = scoreType,
                     MilestoneValue = milestone,
                     MilestoneName = $"{scoreType}_{milestone}"
@@ -1969,51 +1969,6 @@ public partial class AnalyticsService : IAnalyticsService
             }
         }
     }
-
-    /// <summary>
-    /// Maps EntityType to AnalyticsScoreUpdatedEventEntityType.
-    /// </summary>
-    private static AnalyticsScoreUpdatedEventEntityType MapToScoreEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AnalyticsScoreUpdatedEventEntityType.Account,
-            EntityType.Character => AnalyticsScoreUpdatedEventEntityType.Character,
-            EntityType.Guild => AnalyticsScoreUpdatedEventEntityType.Guild,
-            EntityType.Actor => AnalyticsScoreUpdatedEventEntityType.Actor,
-            EntityType.Realm => AnalyticsScoreUpdatedEventEntityType.Realm,
-            EntityType.Custom => AnalyticsScoreUpdatedEventEntityType.Custom,
-            _ => AnalyticsScoreUpdatedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to AnalyticsRatingUpdatedEventEntityType.
-    /// </summary>
-    private static AnalyticsRatingUpdatedEventEntityType MapToRatingEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AnalyticsRatingUpdatedEventEntityType.Account,
-            EntityType.Character => AnalyticsRatingUpdatedEventEntityType.Character,
-            EntityType.Guild => AnalyticsRatingUpdatedEventEntityType.Guild,
-            EntityType.Actor => AnalyticsRatingUpdatedEventEntityType.Actor,
-            EntityType.Realm => AnalyticsRatingUpdatedEventEntityType.Realm,
-            EntityType.Custom => AnalyticsRatingUpdatedEventEntityType.Custom,
-            _ => AnalyticsRatingUpdatedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to AnalyticsMilestoneReachedEventEntityType.
-    /// </summary>
-    private static AnalyticsMilestoneReachedEventEntityType MapToMilestoneEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AnalyticsMilestoneReachedEventEntityType.Account,
-            EntityType.Character => AnalyticsMilestoneReachedEventEntityType.Character,
-            EntityType.Guild => AnalyticsMilestoneReachedEventEntityType.Guild,
-            EntityType.Actor => AnalyticsMilestoneReachedEventEntityType.Actor,
-            EntityType.Realm => AnalyticsMilestoneReachedEventEntityType.Realm,
-            EntityType.Custom => AnalyticsMilestoneReachedEventEntityType.Custom,
-            _ => AnalyticsMilestoneReachedEventEntityType.Custom
-        };
 
     #endregion
 

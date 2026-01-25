@@ -256,10 +256,10 @@ components:
           type: string
           description: Pool node where the actor is running
         previousStatus:
-          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
+          $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
           description: Actor status before the change
         newStatus:
-          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
+          $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
           description: Actor status after the change
         reason:
           type: string

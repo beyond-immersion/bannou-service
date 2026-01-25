@@ -624,7 +624,7 @@ public partial class AchievementService : IAchievementService
                 AchievementId = body.AchievementId,
                 DisplayName = definition.DisplayName,
                 EntityId = body.EntityId,
-                EntityType = MapToProgressEventEntityType(body.EntityType),
+                EntityType = body.EntityType,
                 PreviousProgress = previousProgress,
                 NewProgress = achievementProgress.CurrentProgress,
                 TargetProgress = achievementProgress.TargetProgress,
@@ -1267,7 +1267,7 @@ public partial class AchievementService : IAchievementService
             DisplayName = definition.DisplayName,
             Description = definition.Description,
             EntityId = entityId,
-            EntityType = MapToUnlockedEventEntityType(entityType),
+            EntityType = entityType,
             Points = definition.Points,
             TotalPoints = totalPoints,
             IconUrl = definition.IconUrl,
@@ -1501,8 +1501,8 @@ public partial class AchievementService : IAchievementService
             GameServiceId = gameServiceId,
             AchievementId = achievementId,
             EntityId = entityId,
-            EntityType = MapToSyncEventEntityType(EntityType.Account), // Platform sync is account-level
-            Platform = MapToEventPlatform(platform),
+            EntityType = EntityType.Account, // Platform sync is account-level
+            Platform = platform,
             PlatformAchievementId = platformAchievementId,
             Success = result.Success,
             ErrorMessage = result.ErrorMessage
@@ -1552,87 +1552,6 @@ public partial class AchievementService : IAchievementService
             UnlockedAt = data.UnlockedAt
         };
 
-    /// <summary>
-    /// Maps EntityType to unlocked event entity type.
-    /// </summary>
-    private static AchievementUnlockedEventEntityType MapToUnlockedEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AchievementUnlockedEventEntityType.Account,
-            EntityType.Character => AchievementUnlockedEventEntityType.Character,
-            EntityType.Guild => AchievementUnlockedEventEntityType.Guild,
-            EntityType.Actor => AchievementUnlockedEventEntityType.Actor,
-            EntityType.Custom => AchievementUnlockedEventEntityType.Custom,
-            _ => AchievementUnlockedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to progress event entity type.
-    /// </summary>
-    private static AchievementProgressUpdatedEventEntityType MapToProgressEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AchievementProgressUpdatedEventEntityType.Account,
-            EntityType.Character => AchievementProgressUpdatedEventEntityType.Character,
-            EntityType.Guild => AchievementProgressUpdatedEventEntityType.Guild,
-            EntityType.Actor => AchievementProgressUpdatedEventEntityType.Actor,
-            EntityType.Custom => AchievementProgressUpdatedEventEntityType.Custom,
-            _ => AchievementProgressUpdatedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps EntityType to platform sync event entity type.
-    /// </summary>
-    private static AchievementPlatformSyncedEventEntityType MapToSyncEventEntityType(EntityType entityType)
-        => entityType switch
-        {
-            EntityType.Account => AchievementPlatformSyncedEventEntityType.Account,
-            EntityType.Character => AchievementPlatformSyncedEventEntityType.Character,
-            EntityType.Guild => AchievementPlatformSyncedEventEntityType.Guild,
-            EntityType.Actor => AchievementPlatformSyncedEventEntityType.Actor,
-            EntityType.Custom => AchievementPlatformSyncedEventEntityType.Custom,
-            _ => AchievementPlatformSyncedEventEntityType.Custom
-        };
-
-    /// <summary>
-    /// Maps Platform to event platform type.
-    /// </summary>
-    private static AchievementPlatformSyncedEventPlatform MapToEventPlatform(Platform platform)
-        => platform switch
-        {
-            Platform.Steam => AchievementPlatformSyncedEventPlatform.Steam,
-            Platform.Xbox => AchievementPlatformSyncedEventPlatform.Xbox,
-            Platform.Playstation => AchievementPlatformSyncedEventPlatform.Playstation,
-            Platform.Internal => AchievementPlatformSyncedEventPlatform.Internal,
-            _ => AchievementPlatformSyncedEventPlatform.Internal
-        };
-
-    /// <summary>
-    /// Maps AchievementType to definition created event achievement type.
-    /// </summary>
-    private static AchievementDefinitionCreatedEventAchievementType MapToCreatedEventAchievementType(AchievementType achievementType)
-        => achievementType switch
-        {
-            AchievementType.Standard => AchievementDefinitionCreatedEventAchievementType.Standard,
-            AchievementType.Progressive => AchievementDefinitionCreatedEventAchievementType.Progressive,
-            AchievementType.Hidden => AchievementDefinitionCreatedEventAchievementType.Hidden,
-            AchievementType.Secret => AchievementDefinitionCreatedEventAchievementType.Secret,
-            _ => AchievementDefinitionCreatedEventAchievementType.Standard
-        };
-
-    /// <summary>
-    /// Maps Platform to definition created event platform enum.
-    /// </summary>
-    private static Platforms MapToCreatedEventPlatform(Platform platform)
-        => platform switch
-        {
-            Platform.Steam => Platforms.Steam,
-            Platform.Xbox => Platforms.Xbox,
-            Platform.Playstation => Platforms.Playstation,
-            Platform.Internal => Platforms.Internal,
-            _ => Platforms.Internal
-        };
-
     #endregion
 
     #region Definition Lifecycle Event Publishing
@@ -1652,10 +1571,10 @@ public partial class AchievementService : IAchievementService
                 AchievementId = definition.AchievementId,
                 DisplayName = definition.DisplayName,
                 Description = definition.Description,
-                AchievementType = MapToCreatedEventAchievementType(definition.AchievementType),
+                AchievementType = definition.AchievementType,
                 Points = definition.Points,
                 ProgressTarget = definition.ProgressTarget,
-                Platforms = definition.Platforms?.Select(MapToCreatedEventPlatform).ToList() ?? new List<Platforms>()
+                Platforms = definition.Platforms?.ToList() ?? new List<Platform>()
             };
             await _messageBus.TryPublishAsync("achievement.definition.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published achievement.definition.created event for {AchievementId}", definition.AchievementId);

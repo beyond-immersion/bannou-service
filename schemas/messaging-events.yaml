@@ -23,19 +23,4 @@ info:
 paths: {}  # Events don't have HTTP paths
 
 components:
-  schemas:
-    # Base event schema for $ref resolution
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
+  schemas: {}

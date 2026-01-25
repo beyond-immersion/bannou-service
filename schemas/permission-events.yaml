@@ -39,22 +39,6 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    # Base event schema for $ref resolution
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
-
     # NOTE: Events the Permission service subscribes to (ServiceRegistrationEvent, SessionConnectedEvent, etc.)
     # are defined in their canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
 
@@ -134,7 +118,7 @@ components:
 
     SessionStateChangeEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |

@@ -239,7 +239,7 @@ components:
           type: string
           description: Queue the ticket was in
         reason:
-          $ref: 'matchmaking-api.yaml#/components/schemas/CancelReason'
+          $ref: '../matchmaking-api.yaml#/components/schemas/CancelReason'
           description: Reason for cancellation
         reasonDetail:
           type: string

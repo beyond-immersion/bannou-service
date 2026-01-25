@@ -197,7 +197,7 @@ components:
           format: double
           description: Current quantity
         originType:
-          $ref: 'item-api.yaml#/components/schemas/ItemOriginType'
+          $ref: '../item-api.yaml#/components/schemas/ItemOriginType'
           description: How this instance was created
         createdAt:
           type: string
@@ -253,7 +253,7 @@ components:
           format: double
           description: Quantity at time of destruction
         originType:
-          $ref: 'item-api.yaml#/components/schemas/ItemOriginType'
+          $ref: '../item-api.yaml#/components/schemas/ItemOriginType'
           description: How this instance was created
         createdAt:
           type: string
@@ -311,7 +311,7 @@ components:
           format: uuid
           description: Character the item is bound to
         bindType:
-          $ref: 'item-api.yaml#/components/schemas/SoulboundType'
+          $ref: '../item-api.yaml#/components/schemas/SoulboundType'
           description: Type of binding
 
     ItemInstanceUnboundEvent:

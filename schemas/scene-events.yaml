@@ -80,24 +80,6 @@ paths: {}
 
 components:
   schemas:
-    # ========== BASE EVENT ==========
-
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      description: Base type for all service events
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
 
     # ========== INSTANTIATION EVENTS ==========
 

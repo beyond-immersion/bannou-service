@@ -377,7 +377,7 @@ public partial class AssetService
                 Timestamp = DateTimeOffset.UtcNow,
                 MetabundleId = request.MetabundleId,
                 Version = request.Version ?? "1.0.0",
-                Realm = (BeyondImmersion.BannouService.Events.RealmEnum)request.Realm,
+                Realm = request.Realm,
                 SourceBundleCount = sourceBundles.Count,
                 SourceBundleIds = sourceBundles.Select(sb => sb.BundleId).ToList(),
                 AssetCount = metabundleAssets.Count,

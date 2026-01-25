@@ -117,7 +117,7 @@ components:
           format: uuid
           description: ID of the character whose personality evolved
         experienceType:
-          $ref: 'character-personality-api.yaml#/components/schemas/ExperienceType'
+          $ref: '../character-personality-api.yaml#/components/schemas/ExperienceType'
           description: Type of experience that caused the evolution
         intensity:
           type: number
@@ -231,7 +231,7 @@ components:
           format: uuid
           description: ID of the character whose combat preferences evolved
         experienceType:
-          $ref: 'character-personality-api.yaml#/components/schemas/CombatExperienceType'
+          $ref: '../character-personality-api.yaml#/components/schemas/CombatExperienceType'
           description: Type of combat experience that caused the evolution
         intensity:
           type: number
