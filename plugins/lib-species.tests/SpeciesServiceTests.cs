@@ -715,7 +715,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var speciesId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
         var model = CreateTestSpeciesModel(speciesId, "ELF", "Elf");
-        model.RealmIds.Add(realmId.ToString());
+        model.RealmIds.Add(realmId);
 
         _mockSpeciesStore
             .Setup(s => s.GetAsync(
@@ -736,12 +736,12 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(
                 $"realm-index:{realmId}",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string> { speciesId.ToString() }, "etag-1"));
+            .ReturnsAsync((new List<Guid> { speciesId }, "etag-1"));
 
         _mockListStore
             .Setup(s => s.SaveAsync(
                 $"realm-index:{realmId}",
-                It.IsAny<List<string>>(),
+                It.IsAny<List<Guid>>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-2");
@@ -915,7 +915,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .Setup(s => s.GetWithETagAsync(
                 "all-species",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<string>(), (string?)null));
+            .ReturnsAsync((new List<Guid>(), (string?)null));
 
         // Setup saves
         _mockSpeciesStore
@@ -937,7 +937,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockListStore
             .Setup(s => s.SaveAsync(
                 "all-species",
-                It.IsAny<List<string>>(),
+                It.IsAny<List<Guid>>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");

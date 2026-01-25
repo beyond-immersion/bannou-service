@@ -12,9 +12,9 @@ public sealed class BundleManifest
     public required string FormatVersion { get; init; }
 
     /// <summary>
-    /// Unique identifier for this bundle.
+    /// Human-readable identifier for this bundle (e.g., "synty/polygon-adventure", "my-bundle-v1").
     /// </summary>
-    public required Guid BundleId { get; init; }
+    public required string BundleId { get; init; }
 
     /// <summary>
     /// Human-readable name for the bundle.
