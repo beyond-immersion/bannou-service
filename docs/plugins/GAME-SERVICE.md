@@ -142,33 +142,11 @@ None. The service is feature-complete for its scope.
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 No bugs identified.
 
-### False Positives Removed
-
-The following items were identified as violations but do not apply:
-
-1. **T6 (Constructor null checks)**: NRT provides compile-time safety. Adding runtime null checks for NRT-protected parameters is unnecessary.
-
-2. **T7 (ApiException catch blocks)**: Service only uses state stores, which don't throw ApiException. T7 applies to inter-service mesh calls via generated clients.
-
-3. **T6 (IStateStore field pattern)**: The factory caches stores internally, so the overhead is negligible. This is a code style preference, not a tenet violation.
-
-4. **T19 (Internal model XML docs)**: T19 explicitly says "PUBLIC" members only. Internal class `GameServiceRegistryModel` doesn't require property documentation.
-
-5. **T21 (Dead configuration injection)**: The `_configuration` field is framework boilerplate for services. The generated configuration class contains `ForceServiceId` which is a standard framework property.
-
-### Previously Fixed
-
-1. **T25 (String ServiceId)**: `GameServiceRegistryModel.ServiceId` is now `Guid` type with explicit comment referencing IMPLEMENTATION TENETS.
-
-2. **T10 (Logging levels)**: Routine operations use `LogDebug`; significant state changes use `LogInformation`; expected outcomes (not found, validation failures) use `LogDebug`.
-
-3. **T9 (List concurrency)**: `AddToServiceListAsync` and `RemoveFromServiceListAsync` now use ETag-based optimistic concurrency with 3-attempt retry loops.
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Stub names are always lowercase**: `ToLowerInvariant()` applied on creation. Input case is lost permanently — responses always return the normalized lowercase version.
 
@@ -176,7 +154,7 @@ The following items were identified as violations but do not apply:
 
 3. **Update cannot set description to null**: Since `null` means "don't change" in the update request, there's no way to explicitly set description back to null once it has a value. However, setting to empty string `""` works — the null check (`body.Description != null`) passes for empty strings.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **T19 (param/returns XML docs)**: Public methods have `<summary>` tags but are missing `<param>` and `<returns>` documentation. This is a code quality improvement that could be added for consistency.
 
