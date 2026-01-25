@@ -30,6 +30,12 @@ x-service-configuration:
       env: INVENTORY_LOCK_TIMEOUT_SECONDS
       description: Timeout for container modification locks
 
+    ListLockTimeoutSeconds:
+      type: integer
+      default: 15
+      env: INVENTORY_LIST_LOCK_TIMEOUT_SECONDS
+      description: Timeout for owner/type index list modification locks (shorter than container locks)
+
     EnableLazyContainerCreation:
       type: boolean
       default: true

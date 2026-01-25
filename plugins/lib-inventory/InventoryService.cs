@@ -9,10 +9,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-inventory.tests")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace BeyondImmersion.BannouService.Inventory;
 
@@ -29,14 +25,12 @@ public partial class InventoryService : IInventoryService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<InventoryService> _logger;
     private readonly InventoryServiceConfiguration _configuration;
+    private readonly WeightContribution _defaultWeightContribution;
 
     // Container store key prefixes
     private const string CONT_PREFIX = "cont:";
     private const string CONT_OWNER_INDEX = "cont-owner:";
     private const string CONT_TYPE_INDEX = "cont-type:";
-
-    // Query page size and lock configuration now use _configuration properties
-    // (QueryPageSize, LockTimeoutSeconds, ContainerCacheTtlSeconds)
 
     /// <summary>
     /// Initializes a new instance of the InventoryService.
@@ -55,6 +49,12 @@ public partial class InventoryService : IInventoryService
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+
+        // Parse default weight contribution once at startup (boundary parsing per T25)
+        if (!Enum.TryParse<WeightContribution>(_configuration.DefaultWeightContribution, true, out _defaultWeightContribution))
+        {
+            _defaultWeightContribution = WeightContribution.Self_plus_contents;
+        }
     }
 
     #region Container Operations
@@ -66,33 +66,33 @@ public partial class InventoryService : IInventoryService
     {
         try
         {
-            _logger.LogInformation("Creating container type {ContainerType} for owner {OwnerId}",
+            _logger.LogDebug("Creating container type {ContainerType} for owner {OwnerId}",
                 body.ContainerType, body.OwnerId);
 
             // Input validation
             if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
             {
-                _logger.LogWarning("MaxSlots must be positive, got {MaxSlots}", body.MaxSlots.Value);
+                _logger.LogDebug("MaxSlots must be positive, got {MaxSlots}", body.MaxSlots.Value);
                 return (StatusCodes.BadRequest, null);
             }
             if (body.MaxWeight.HasValue && body.MaxWeight.Value <= 0)
             {
-                _logger.LogWarning("MaxWeight must be positive, got {MaxWeight}", body.MaxWeight.Value);
+                _logger.LogDebug("MaxWeight must be positive, got {MaxWeight}", body.MaxWeight.Value);
                 return (StatusCodes.BadRequest, null);
             }
             if (body.MaxVolume.HasValue && body.MaxVolume.Value <= 0)
             {
-                _logger.LogWarning("MaxVolume must be positive, got {MaxVolume}", body.MaxVolume.Value);
+                _logger.LogDebug("MaxVolume must be positive, got {MaxVolume}", body.MaxVolume.Value);
                 return (StatusCodes.BadRequest, null);
             }
             if (body.GridWidth.HasValue && body.GridWidth.Value <= 0)
             {
-                _logger.LogWarning("GridWidth must be positive, got {GridWidth}", body.GridWidth.Value);
+                _logger.LogDebug("GridWidth must be positive, got {GridWidth}", body.GridWidth.Value);
                 return (StatusCodes.BadRequest, null);
             }
             if (body.GridHeight.HasValue && body.GridHeight.Value <= 0)
             {
-                _logger.LogWarning("GridHeight must be positive, got {GridHeight}", body.GridHeight.Value);
+                _logger.LogDebug("GridHeight must be positive, got {GridHeight}", body.GridHeight.Value);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -108,7 +108,7 @@ public partial class InventoryService : IInventoryService
                 var parent = await containerStore.GetAsync($"{CONT_PREFIX}{body.ParentContainerId}", cancellationToken);
                 if (parent is null)
                 {
-                    _logger.LogWarning("Parent container not found: {ParentId}", body.ParentContainerId);
+                    _logger.LogDebug("Parent container not found: {ParentId}", body.ParentContainerId);
                     return (StatusCodes.BadRequest, null);
                 }
                 nestingDepth = parent.NestingDepth + 1;
@@ -116,17 +116,16 @@ public partial class InventoryService : IInventoryService
                 var maxNesting = parent.MaxNestingDepth ?? _configuration.DefaultMaxNestingDepth;
                 if (nestingDepth > maxNesting)
                 {
-                    _logger.LogWarning("Max nesting depth exceeded for parent {ParentId}", body.ParentContainerId);
+                    _logger.LogDebug("Max nesting depth exceeded for parent {ParentId}", body.ParentContainerId);
                     return (StatusCodes.BadRequest, null);
                 }
             }
 
             // Resolve weight contribution: use config default if not specified (enum default is None)
             var weightContribution = body.WeightContribution;
-            if (weightContribution == WeightContribution.None
-                && Enum.TryParse<WeightContribution>(_configuration.DefaultWeightContribution, true, out var configDefault))
+            if (weightContribution == WeightContribution.None)
             {
-                weightContribution = configDefault;
+                weightContribution = _defaultWeightContribution;
             }
 
             var model = new ContainerModel
@@ -188,7 +187,7 @@ public partial class InventoryService : IInventoryService
                 IsEquipmentSlot = body.IsEquipmentSlot
             }, cancellationToken);
 
-            _logger.LogInformation("Created container {ContainerId} type={Type}", containerId, body.ContainerType);
+            _logger.LogDebug("Created container {ContainerId} type={Type}", containerId, body.ContainerType);
             return (StatusCodes.OK, MapContainerToResponse(model));
         }
         catch (Exception ex)
@@ -449,7 +448,7 @@ public partial class InventoryService : IInventoryService
                 IsEquipmentSlot = model.IsEquipmentSlot
             }, cancellationToken);
 
-            _logger.LogInformation("Updated container {ContainerId}", body.ContainerId);
+            _logger.LogDebug("Updated container {ContainerId}", body.ContainerId);
             return (StatusCodes.OK, MapContainerToResponse(model));
         }
         catch (Exception ex)
@@ -516,7 +515,7 @@ public partial class InventoryService : IInventoryService
                 switch (body.ItemHandling)
                 {
                     case ItemHandling.Error:
-                        _logger.LogWarning("Container {ContainerId} is not empty", body.ContainerId);
+                        _logger.LogDebug("Container {ContainerId} is not empty", body.ContainerId);
                         return (StatusCodes.BadRequest, null);
 
                     case ItemHandling.Destroy:
@@ -583,7 +582,7 @@ public partial class InventoryService : IInventoryService
                 IsEquipmentSlot = model.IsEquipmentSlot
             }, cancellationToken);
 
-            _logger.LogInformation("Deleted container {ContainerId}", body.ContainerId);
+            _logger.LogDebug("Deleted container {ContainerId}", body.ContainerId);
             return (StatusCodes.OK, new DeleteContainerResponse
             {
                 Deleted = true,
@@ -646,7 +645,7 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Item not found: {InstanceId}", body.InstanceId);
+                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
@@ -680,7 +679,7 @@ public partial class InventoryService : IInventoryService
             {
                 if (container.ForbiddenCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
                 {
-                    _logger.LogWarning("Category {Category} forbidden in container {ContainerId}",
+                    _logger.LogDebug("Category {Category} forbidden in container {ContainerId}",
                         template.Category, body.ContainerId);
                     return (StatusCodes.BadRequest, null);
                 }
@@ -769,7 +768,7 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Item not found: {InstanceId}", body.InstanceId);
+                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
@@ -873,7 +872,7 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Item not found: {InstanceId}", body.InstanceId);
+                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
@@ -994,7 +993,7 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Item not found: {InstanceId}", body.InstanceId);
+                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
@@ -1014,13 +1013,13 @@ public partial class InventoryService : IInventoryService
 
             if (!template.Tradeable)
             {
-                _logger.LogWarning("Item {InstanceId} is not tradeable", body.InstanceId);
+                _logger.LogDebug("Item {InstanceId} is not tradeable", body.InstanceId);
                 return (StatusCodes.BadRequest, null);
             }
 
             if (item.BoundToId.HasValue)
             {
-                _logger.LogWarning("Item {InstanceId} is bound", body.InstanceId);
+                _logger.LogDebug("Item {InstanceId} is bound", body.InstanceId);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1118,13 +1117,13 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Item not found: {InstanceId}", body.InstanceId);
+                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
             if (item.Quantity <= body.Quantity)
             {
-                _logger.LogWarning("Cannot split {Quantity} from stack of {Total}",
+                _logger.LogDebug("Cannot split {Quantity} from stack of {Total}",
                     body.Quantity, item.Quantity);
                 return (StatusCodes.BadRequest, null);
             }
@@ -1145,7 +1144,7 @@ public partial class InventoryService : IInventoryService
 
             if (template.QuantityModel == QuantityModel.Unique)
             {
-                _logger.LogWarning("Cannot split unique items");
+                _logger.LogDebug("Cannot split unique items");
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1279,7 +1278,7 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Source item not found: {InstanceId}", body.SourceInstanceId);
+                _logger.LogDebug(ex, "Source item not found: {InstanceId}", body.SourceInstanceId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
@@ -1291,13 +1290,13 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Target item not found: {InstanceId}", body.TargetInstanceId);
+                _logger.LogDebug(ex, "Target item not found: {InstanceId}", body.TargetInstanceId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
             if (source.TemplateId != target.TemplateId)
             {
-                _logger.LogWarning("Cannot merge different templates");
+                _logger.LogDebug("Cannot merge different templates");
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1670,7 +1669,7 @@ public partial class InventoryService : IInventoryService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Template not found: {TemplateId}", body.TemplateId);
+                _logger.LogDebug(ex, "Template not found: {TemplateId}", body.TemplateId);
                 return (MapHttpStatusCode(ex.StatusCode), null);
             }
 
@@ -1973,7 +1972,7 @@ public partial class InventoryService : IInventoryService
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            storeName, key, Guid.NewGuid().ToString(), 15, ct);
+            storeName, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire list lock for {StoreName}:{Key}", storeName, key);
@@ -1999,7 +1998,7 @@ public partial class InventoryService : IInventoryService
     private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            storeName, key, Guid.NewGuid().ToString(), 15, ct);
+            storeName, key, Guid.NewGuid().ToString(), _configuration.ListLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire list lock for {StoreName}:{Key}", storeName, key);

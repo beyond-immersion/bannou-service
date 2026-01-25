@@ -111,6 +111,32 @@ catch (Exception ex)
 }
 ```
 
+### When ApiException Handling Applies
+
+**IMPORTANT**: The `ApiException` catch block is ONLY required when making **inter-service calls** using:
+- Generated service clients (e.g., `IItemClient`, `IAuthClient`, `IAccountClient`)
+- `IServiceNavigator` to invoke other Bannou plugins
+- `IMeshClient` for direct mesh invocation
+
+These clients throw `ApiException` when the target service returns a non-2xx status code.
+
+**ApiException handling is NOT required for**:
+- State store operations (`IStateStore<T>`) - these throw standard exceptions, not ApiException
+- Message bus operations (`IMessageBus`) - fire-and-forget, uses `TryPublishAsync`
+- Lock provider operations (`IDistributedLockProvider`) - returns success/failure, doesn't throw
+- Local business logic - no cross-service boundary
+
+```csharp
+// REQUIRED: Inter-service call - must catch ApiException
+var (status, items) = await _itemClient.ListItemsByContainerAsync(request, ct);
+
+// NOT REQUIRED: State store operation - ApiException won't be thrown
+var container = await _containerStore.GetAsync(key, ct);
+
+// NOT REQUIRED: Message publishing - uses TryPublish pattern
+await _messageBus.TryPublishAsync("topic", evt, cancellationToken: ct);
+```
+
 ### Error Event Publishing
 
 Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures only. **This method is ALWAYS safe to call** - both implementations (RabbitMQMessageBus and InMemoryMessageBus) have internal try/catch blocks that prevent exceptions from propagating. Returns `false` if publishing fails (prevents cascading failures). Replaces legacy `IErrorEventEmitter`.

@@ -47,6 +47,7 @@ public partial class AccountService : IAccountService
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
         ListAccountsRequest body,
         CancellationToken cancellationToken = default)
@@ -266,6 +267,7 @@ public partial class AccountService : IAccountService
         return (StatusCodes.OK, response);
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> CreateAccountAsync(
         CreateAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -408,6 +410,7 @@ public partial class AccountService : IAccountService
         return false;
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> GetAccountAsync(
         GetAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -464,6 +467,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> UpdateAccountAsync(
         UpdateAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -568,6 +572,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(
         GetAccountByEmailRequest body,
         CancellationToken cancellationToken = default)
@@ -639,6 +644,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(
         GetAuthMethodsRequest body,
         CancellationToken cancellationToken = default)
@@ -680,6 +686,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(
         AddAuthMethodRequest body,
         CancellationToken cancellationToken = default)
@@ -795,6 +802,7 @@ public partial class AccountService : IAccountService
         };
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(
         GetAccountByProviderRequest body,
         CancellationToken cancellationToken = default)
@@ -887,6 +895,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<(StatusCodes, AccountResponse?)> UpdateProfileAsync(
         UpdateProfileRequest body,
         CancellationToken cancellationToken = default)
@@ -993,7 +1002,7 @@ public partial class AccountService : IAccountService
         }
     }
 
-    // Add missing methods from interface
+    /// <inheritdoc/>
     public async Task<StatusCodes> DeleteAccountAsync(
         DeleteAccountRequest body,
         CancellationToken cancellationToken = default)
@@ -1064,6 +1073,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<StatusCodes> RemoveAuthMethodAsync(
         RemoveAuthMethodRequest body,
         CancellationToken cancellationToken = default)
@@ -1132,6 +1142,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<StatusCodes> UpdatePasswordHashAsync(
         UpdatePasswordRequest body,
         CancellationToken cancellationToken = default)
@@ -1182,6 +1193,7 @@ public partial class AccountService : IAccountService
         }
     }
 
+    /// <inheritdoc/>
     public async Task<StatusCodes> UpdateVerificationStatusAsync(
         UpdateVerificationRequest body,
         CancellationToken cancellationToken = default)
@@ -1307,10 +1319,7 @@ public partial class AccountService : IAccountService
     }
 
 
-    /// <summary>
-    /// Retrieves multiple accounts by ID in a single call.
-    /// Uses parallel key lookups for efficiency. Reports not-found and soft-deleted accounts separately.
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<(StatusCodes, BatchGetAccountsResponse?)> BatchGetAccountsAsync(
         BatchGetAccountsRequest body,
         CancellationToken cancellationToken = default)
@@ -1394,10 +1403,7 @@ public partial class AccountService : IAccountService
         }
     }
 
-    /// <summary>
-    /// Counts accounts matching optional filters using server-side SQL COUNT.
-    /// Supports email, displayName, verified, and role filters.
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<(StatusCodes, CountAccountsResponse?)> CountAccountsAsync(
         CountAccountsRequest body,
         CancellationToken cancellationToken = default)
@@ -1443,11 +1449,7 @@ public partial class AccountService : IAccountService
         }
     }
 
-    /// <summary>
-    /// Updates roles for multiple accounts atomically per-account.
-    /// Supports adding and/or removing roles with optimistic concurrency.
-    /// Returns partial success results: succeeded and failed account IDs.
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<(StatusCodes, BulkUpdateRolesResponse?)> BulkUpdateRolesAsync(
         BulkUpdateRolesRequest body,
         CancellationToken cancellationToken = default)
@@ -1579,6 +1581,7 @@ public partial class AccountService : IAccountService
     /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
+    /// <param name="appId">The application ID used to scope permission registrations.</param>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
         _logger.LogInformation("Registering Account service permissions... (starting)");

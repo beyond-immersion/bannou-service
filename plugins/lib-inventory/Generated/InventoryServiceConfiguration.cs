@@ -78,6 +78,12 @@ public class InventoryServiceConfiguration : IServiceConfiguration
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
+    /// Timeout for owner/type index list modification locks (shorter than container locks)
+    /// Environment variable: INVENTORY_LIST_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int ListLockTimeoutSeconds { get; set; } = 15;
+
+    /// <summary>
     /// Whether to enable lazy container creation for characters
     /// Environment variable: INVENTORY_ENABLE_LAZY_CONTAINER_CREATION
     /// </summary>

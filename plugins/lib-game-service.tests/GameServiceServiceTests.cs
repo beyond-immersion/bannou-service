@@ -431,7 +431,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId1}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId1.ToString(),
+                ServiceId = serviceId1,
                 StubName = "service1",
                 DisplayName = "Service 1",
                 IsActive = true,
@@ -443,7 +443,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId2}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId2.ToString(),
+                ServiceId = serviceId2,
                 StubName = "service2",
                 DisplayName = "Service 2",
                 IsActive = false,
@@ -479,7 +479,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId1}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId1.ToString(),
+                ServiceId = serviceId1,
                 StubName = "active-service",
                 DisplayName = "Active Service",
                 IsActive = true,
@@ -491,7 +491,7 @@ public class GameServiceServiceTests
             .Setup(s => s.GetAsync($"game-service:{serviceId2}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameServiceRegistryModel
             {
-                ServiceId = serviceId2.ToString(),
+                ServiceId = serviceId2,
                 StubName = "inactive-service",
                 DisplayName = "Inactive Service",
                 IsActive = false,
