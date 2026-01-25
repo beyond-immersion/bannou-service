@@ -18,8 +18,6 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("lib-music.tests")]
-
 namespace BeyondImmersion.BannouService.Music;
 
 /// <summary>

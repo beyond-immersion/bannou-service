@@ -45,7 +45,12 @@ import sys
 import re
 
 def to_pascal_case(name):
-    return ''.join(word.capitalize() for word in name.replace('-', '_').split('_'))
+    # If name has hyphens or underscores, split and capitalize each part
+    # Otherwise, just ensure first letter is uppercase (preserve existing casing)
+    if '-' in name or '_' in name:
+        return ''.join(word.capitalize() for word in name.replace('-', '_').split('_'))
+    else:
+        return name[0].upper() + name[1:] if name else name
 
 def to_property_name(name):
     # Convert environment variable style to property name
@@ -65,6 +70,9 @@ try:
     service_pascal = '$SERVICE_PASCAL'
     service_name = '$SERVICE_NAME'
 
+    # Track enum types to generate
+    enum_types = []
+
     # Extract configuration from x-service-configuration section
     config_properties = []
     if 'x-service-configuration' in schema:
@@ -79,27 +87,49 @@ try:
             prop_description = prop_info.get('description', f'{prop_name} configuration property')
             prop_env_var = prop_info.get('env', prop_name.upper())
             prop_nullable = prop_info.get('nullable', False)
+            prop_enum = prop_info.get('enum', None)
 
-            # Convert type to C# type
-            csharp_type = {
-                'string': 'string',
-                'integer': 'int',
-                'number': 'double',
-                'boolean': 'bool',
-                'array': 'string[]'
-            }.get(prop_type, 'string')
+            # Check if this is an enum property
+            if prop_enum and prop_type == 'string':
+                # Generate enum type name from property name
+                enum_type_name = to_pascal_case(prop_name)
+                # Store enum for generation
+                enum_types.append({
+                    'name': enum_type_name,
+                    'values': prop_enum,
+                    'description': prop_description
+                })
+                csharp_type = enum_type_name
+            else:
+                # Convert type to C# type
+                csharp_type = {
+                    'string': 'string',
+                    'integer': 'int',
+                    'number': 'double',
+                    'boolean': 'bool',
+                    'array': 'string[]'
+                }.get(prop_type, 'string')
 
             # Handle nullable types and defaults for properties
             # For strings: add ? suffix if explicitly nullable in schema
+            # For enums: no suffix if default provided, ? if no default
             # For other types: add ? suffix if no default provided
+            is_enum = prop_enum is not None
             if csharp_type == 'string':
                 nullable_suffix = '?' if prop_nullable else ''
+            elif is_enum:
+                nullable_suffix = '' if prop_default is not None else '?'
             else:
                 nullable_suffix = '?' if prop_default is None else ''
             default_value = ''
 
             if prop_default is not None:
-                if csharp_type == 'string':
+                if is_enum:
+                    # Enum default: convert value to PascalCase enum member
+                    # Handle hyphenated values like 'pool-per-type' -> 'PoolPerType'
+                    enum_value = to_pascal_case(str(prop_default))
+                    default_value = f' = {csharp_type}.{enum_value};'
+                elif csharp_type == 'string':
                     default_value = f' = \"{prop_default}\";'
                 elif csharp_type == 'bool':
                     default_value = f' = {str(prop_default).lower()};'
@@ -165,8 +195,27 @@ using BeyondImmersion.BannouService.Configuration;
 #nullable enable
 
 namespace BeyondImmersion.BannouService.{service_pascal};
+''')
 
+    # Generate enum types if any
+    for enum_type in enum_types:
+        # Suppress CS1591 for enum members (they don't need individual docs)
+        print(f'''
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 /// <summary>
+/// {enum_type['description']}
+/// </summary>
+public enum {enum_type['name']}
+{{''')
+        for value in enum_type['values']:
+            # Convert value to PascalCase for C# enum member
+            member_name = to_pascal_case(str(value))
+            print(f'    {member_name},')
+        print('''}
+#pragma warning restore CS1591
+''')
+
+    print(f'''/// <summary>
 /// Configuration class for {service_pascal} service.
 /// Properties are automatically bound from environment variables.
 /// </summary>

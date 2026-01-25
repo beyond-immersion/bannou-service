@@ -32,6 +32,20 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Actor;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
+/// </summary>
+public enum DeploymentMode
+{
+    Bannou,
+    PoolPerType,
+    SharedPool,
+    AutoScale,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for Actor service.
 /// Properties are automatically bound from environment variables.
@@ -57,7 +71,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
     /// Environment variable: ACTOR_DEPLOYMENT_MODE
     /// </summary>
-    public string DeploymentMode { get; set; } = "bannou";
+    public DeploymentMode DeploymentMode { get; set; } = DeploymentMode.Bannou;
 
     /// <summary>
     /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.

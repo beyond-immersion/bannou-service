@@ -68,10 +68,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     /// </summary>
     internal const string HttpClientName = "MessagingCallbacks";
 
-    /// <summary>
-    /// Store name for external subscription persistence.
-    /// </summary>
-    internal const string ExternalSubscriptionStoreName = "messaging-external-subs";
 
     private readonly ILogger<MessagingService> _logger;
     private readonly MessagingServiceConfiguration _configuration;
@@ -117,7 +113,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
         _httpClientFactory = httpClientFactory;
-        _subscriptionStore = stateStoreFactory.GetStore<ExternalSubscriptionData>(ExternalSubscriptionStoreName);
+        _subscriptionStore = stateStoreFactory.GetStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs);
         _appId = appConfiguration.EffectiveAppId;
     }
 

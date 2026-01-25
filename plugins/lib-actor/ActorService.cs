@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
@@ -531,14 +532,14 @@ public partial class ActorService : IActorService
                 : $"{template.Category}-{Guid.NewGuid():N}";
 
             // Check for duplicate (local registry - only in bannou mode)
-            if (_configuration.DeploymentMode == "bannou" && _actorRegistry.TryGet(actorId, out _))
+            if (_configuration.DeploymentMode == DeploymentMode.Bannou && _actorRegistry.TryGet(actorId, out _))
             {
                 _logger.LogWarning("Actor {ActorId} already exists", actorId);
                 return (StatusCodes.Conflict, null);
             }
 
             // Check pool assignment for non-bannou modes
-            if (_configuration.DeploymentMode != "bannou")
+            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
             {
                 var existingAssignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
                 if (existingAssignment != null)
@@ -552,7 +553,7 @@ public partial class ActorService : IActorService
             string nodeAppId;
             DateTimeOffset startedAt = DateTimeOffset.UtcNow;
 
-            if (_configuration.DeploymentMode == "bannou")
+            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
             {
                 // Bannou mode: run locally
                 var runner = _actorRunnerFactory.Create(
@@ -630,7 +631,7 @@ public partial class ActorService : IActorService
                 TemplateId = body.TemplateId,
                 CharacterId = body.CharacterId ?? Guid.Empty,
                 NodeId = nodeId,
-                Status = (_configuration.DeploymentMode == "bannou" ? ActorStatus.Running : ActorStatus.Pending).ToString().ToLowerInvariant(),
+                Status = (_configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending).ToString().ToLowerInvariant(),
                 StartedAt = startedAt
             };
             await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
@@ -646,7 +647,7 @@ public partial class ActorService : IActorService
                 CharacterId = body.CharacterId,
                 NodeId = nodeId,
                 NodeAppId = nodeAppId,
-                Status = _configuration.DeploymentMode == "bannou" ? ActorStatus.Running : ActorStatus.Pending,
+                Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
                 StartedAt = startedAt,
                 LoopIterations = 0
             });
@@ -685,12 +686,12 @@ public partial class ActorService : IActorService
             if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
             {
                 return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null));
+                    nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null));
             }
 
             // In pool mode, check if actor is assigned to a pool node
-            if (_configuration.DeploymentMode != "bannou")
+            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
             {
                 var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
                 if (assignment != null)
@@ -852,7 +853,7 @@ public partial class ActorService : IActorService
                 var currentCount = _actorRegistry.GetByTemplateId(template.TemplateId).Count();
 
                 // In pool mode, also count assigned actors
-                if (_configuration.DeploymentMode != "bannou")
+                if (_configuration.DeploymentMode != DeploymentMode.Bannou)
                 {
                     var assignments = await _poolManager.GetAssignmentsByTemplateAsync(
                         template.TemplateId.ToString(), cancellationToken);
@@ -886,7 +887,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            if (_configuration.DeploymentMode == "bannou")
+            if (_configuration.DeploymentMode == DeploymentMode.Bannou)
             {
                 // Bannou mode: stop locally
                 if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
@@ -1008,8 +1009,8 @@ public partial class ActorService : IActorService
                 .Skip(body.Offset)
                 .Take(body.Limit)
                 .Select(r => r.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null))
+                    nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
                 .ToList();
 
             return (StatusCodes.OK, new ListActorsResponse
@@ -1100,7 +1101,7 @@ public partial class ActorService : IActorService
             if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
             {
                 // In pool mode, actor might be on another node
-                if (_configuration.DeploymentMode != "bannou")
+                if (_configuration.DeploymentMode != DeploymentMode.Bannou)
                 {
                     var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
                     if (assignment != null)
@@ -1656,11 +1657,34 @@ public partial class ActorService : IActorService
         where TResponse : class
     {
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId}", endpoint, nodeId);
-        return await _meshClient.InvokeMethodAsync<TRequest, TResponse>(
-            nodeId,
-            endpoint,
-            request,
-            cancellationToken);
+        try
+        {
+            return await _meshClient.InvokeMethodAsync<TRequest, TResponse>(
+                nodeId,
+                endpoint,
+                request,
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Remote service intentionally returned an error - propagate it
+            _logger.LogDebug("Remote call to {NodeId}/{Endpoint} returned status {Status}: {Message}",
+                nodeId, endpoint, ex.StatusCode, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected failure (network, timeout, etc.) - log and publish error event
+            _logger.LogError(ex, "Unexpected error invoking remote {Endpoint} on node {NodeId}",
+                endpoint, nodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InvokeRemote",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { nodeId, endpoint });
+            throw;
+        }
     }
 
     /// <summary>
@@ -1674,11 +1698,34 @@ public partial class ActorService : IActorService
         where TRequest : class
     {
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId} (no response)", endpoint, nodeId);
-        await _meshClient.InvokeMethodAsync(
-            nodeId,
-            endpoint,
-            request,
-            cancellationToken);
+        try
+        {
+            await _meshClient.InvokeMethodAsync(
+                nodeId,
+                endpoint,
+                request,
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            // Remote service intentionally returned an error - propagate it
+            _logger.LogDebug("Remote call to {NodeId}/{Endpoint} returned status {Status}: {Message}",
+                nodeId, endpoint, ex.StatusCode, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected failure (network, timeout, etc.) - log and publish error event
+            _logger.LogError(ex, "Unexpected error invoking remote {Endpoint} on node {NodeId}",
+                endpoint, nodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InvokeRemote",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { nodeId, endpoint });
+            throw;
+        }
     }
 
     #endregion

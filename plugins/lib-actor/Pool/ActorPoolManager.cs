@@ -241,7 +241,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         // Map category to pool type
         // In shared-pool mode, all categories go to "shared" pool
         // In pool-per-type mode, category maps directly to pool type
-        var poolType = _configuration.DeploymentMode == "shared-pool" ? "shared" : category;
+        var poolType = _configuration.DeploymentMode == DeploymentMode.SharedPool ? "shared" : category;
 
         var nodes = await ListNodesByTypeAsync(poolType, ct);
         var healthyNodes = nodes.Where(n => n.HasCapacity).ToList();
