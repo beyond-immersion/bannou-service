@@ -252,86 +252,28 @@ State Store Layout
 
 ## Tenet Violations (Audit)
 
-*Audit Date: 2026-01-24*
-*Audited Files: RelationshipTypeService.cs, RelationshipTypeServicePlugin.cs, AssemblyInfo.cs*
+### Category: IMPLEMENTATION
 
-### Category: QUALITY TENETS
+1. **Multi-Instance Safety (T9)** - Read-modify-write operations without distributed locks
+   - **Locations**: `AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`
+   - **Issue**: Concurrent operations can cause lost updates
+   - **Scope**: Requires `IDistributedLockProvider` integration
 
-1. **Logging Standards (T10)** - RelationshipTypeService.cs:58 - Operation entry logged at Information level instead of Debug
-   - What's wrong: `_logger.LogInformation("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);` uses Information level for operation entry
-   - Fix: Change to `_logger.LogDebug(...)` - Operation entry should be Debug level per T10 ("Operation Entry (Debug): Log input parameters")
-   - Additional occurrences at lines: 87, 126, 198, 255, 329, 380, 477, 594, 648, 806, 851, 896, 1281
+2. **Internal Model Type Safety (T25)** - RelationshipTypeModel uses string for GUID fields
+   - **Locations**: `RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`
+   - **Issue**: Forces `Guid.Parse()` calls throughout, loses compile-time type safety
+   - **Scope**: Requires model refactoring to use `Guid` and `Guid?` types
 
-2. **Logging Standards (T10)** - RelationshipTypeService.cs:834, 879, 1013 - Operation success logged at Information level instead of Debug
-   - What's wrong: `_logger.LogInformation("Deprecated relationship type: {TypeId}", ...)` logs routine success at Information level
-   - Fix: Routine operation success should be Debug level. Only significant state changes or business decisions warrant Information level.
+3. **Configuration-First (T21)** - Hardcoded tunable constants
+   - **Locations**: `MAX_HIERARCHY_DEPTH = 20`, `maxErrorsToTrack = 100`
+   - **Fix**: Move to configuration schema with env vars
 
-### Category: IMPLEMENTATION TENETS
+### False Positives (Not Violations)
 
-3. **Multi-Instance Safety (T9)** - RelationshipTypeService.cs:1091-1101 - Read-modify-write without distributed lock (AddToParentIndexAsync)
-   - What's wrong: `AddToParentIndexAsync` performs read-modify-write on the parent index without a distributed lock. Concurrent operations can cause lost updates.
-   - Fix: Use `IDistributedLockProvider.LockAsync` to acquire a lock on the parent index key before the read-modify-write sequence, or use optimistic concurrency with ETags via `GetWithETagAsync` and `TrySaveAsync`.
+- **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
+- **T7 ApiException handling**: RelationshipType service uses `IRelationshipClient` for merge operations (mesh call), but T7 only applies when ApiException is actually thrown by the client. The current catch pattern is acceptable as it handles all exceptions uniformly.
+- **T9 seed Dictionary**: `codeToId` Dictionary is method-local, single-threaded (request-scoped), not shared state
 
-4. **Multi-Instance Safety (T9)** - RelationshipTypeService.cs:1104-1113 - Read-modify-write without distributed lock (RemoveFromParentIndexAsync)
-   - What's wrong: `RemoveFromParentIndexAsync` performs read-modify-write on the parent index without a distributed lock.
-   - Fix: Same as above - use distributed lock or optimistic concurrency.
+### Documentation Update Needed
 
-5. **Multi-Instance Safety (T9)** - RelationshipTypeService.cs:1116-1125 - Read-modify-write without distributed lock (AddToAllTypesListAsync)
-   - What's wrong: `AddToAllTypesListAsync` performs read-modify-write on the all-types list without a distributed lock.
-   - Fix: Use distributed lock or optimistic concurrency with ETags.
-
-6. **Multi-Instance Safety (T9)** - RelationshipTypeService.cs:1128-1136 - Read-modify-write without distributed lock (RemoveFromAllTypesListAsync)
-   - What's wrong: `RemoveFromAllTypesListAsync` performs read-modify-write on the all-types list without a distributed lock.
-   - Fix: Use distributed lock or optimistic concurrency with ETags.
-
-7. **Multi-Instance Safety (T9)** - RelationshipTypeService.cs:656 - Plain Dictionary used instead of ConcurrentDictionary
-   - What's wrong: `var codeToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);` uses plain Dictionary
-   - Fix: Change to `ConcurrentDictionary<string, string>` for thread safety, or document that this is method-local and single-threaded (seed operation is request-scoped).
-
-8. **Internal Model Type Safety (T25)** - RelationshipTypeService.cs:1293 - String used for GUID field in internal model
-   - What's wrong: `public string RelationshipTypeId { get; set; } = string.Empty;` uses string instead of Guid
-   - Fix: Change to `public Guid RelationshipTypeId { get; set; }` and update all usages (Guid.Parse calls become unnecessary)
-
-9. **Internal Model Type Safety (T25)** - RelationshipTypeService.cs:1298, 1300 - String used for GUID fields (ParentTypeId, InverseTypeId)
-   - What's wrong: `public string? ParentTypeId { get; set; }` and `public string? InverseTypeId { get; set; }` use string instead of Guid?
-   - Fix: Change to `public Guid? ParentTypeId { get; set; }` and `public Guid? InverseTypeId { get; set; }`
-
-10. **Configuration-First (T21)** - RelationshipTypeService.cs:30 - Hardcoded tunable constant
-    - What's wrong: `private const int MAX_HIERARCHY_DEPTH = 20;` is a hardcoded tunable value
-    - Fix: Add `MaxHierarchyDepth` property to relationship-type-configuration.yaml schema with env var `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` and default of 20, then use `_configuration.MaxHierarchyDepth`
-
-11. **Configuration-First (T21)** - RelationshipTypeService.cs:930 - Hardcoded tunable constant
-    - What's wrong: `const int maxErrorsToTrack = 100;` is a hardcoded tunable value for merge error tracking limit
-    - Fix: Add `MaxMergeErrorsToTrack` property to configuration schema with appropriate env var and default of 100, then use `_configuration.MaxMergeErrorsToTrack`
-
-12. **Error Handling (T7)** - RelationshipTypeService.cs:52-78 - Missing ApiException catch
-    - What's wrong: The catch block only catches generic `Exception`, missing the specific `ApiException` catch pattern required by T7
-    - Fix: Add `catch (ApiException ex)` block before the generic catch, log as Warning, and propagate status code. Apply to all endpoint methods.
-    - Additional occurrences at: GetRelationshipTypeByCodeAsync, ListRelationshipTypesAsync, GetChildRelationshipTypesAsync, MatchesHierarchyAsync, GetAncestorsAsync, CreateRelationshipTypeAsync, UpdateRelationshipTypeAsync, DeleteRelationshipTypeAsync, SeedRelationshipTypesAsync, DeprecateRelationshipTypeAsync, UndeprecateRelationshipTypeAsync, MergeRelationshipTypeAsync
-
-### Category: FOUNDATION TENETS
-
-13. **Service Implementation Pattern (T6)** - RelationshipTypeService.cs:32-48 - Missing IDistributedLockProvider dependency
-    - What's wrong: The service performs read-modify-write operations on indexes but does not inject `IDistributedLockProvider` for distributed locking
-    - Fix: Add `IDistributedLockProvider _lockProvider` as a dependency and use it for index modification operations
-
-14. **Event-Driven Architecture (T5)** - RelationshipTypeService.cs:1018 - DeleteAfterMerge check is based on schema field but documentation says "SourceDeleted=false always"
-    - What's wrong: The Stubs section says "The response always returns `SourceDeleted=false`" but the code actually implements delete-after-merge functionality (lines 1017-1040). Documentation and code are inconsistent.
-    - Fix: Update the Stubs section to reflect that delete-after-merge is implemented (not a stub). The feature works correctly when `DeleteAfterMerge=true` and no failures occurred.
-
-### Summary
-
-| Category | Count |
-|----------|-------|
-| QUALITY TENETS (T10) | 2 issues (14 log statements at wrong level) |
-| IMPLEMENTATION TENETS (T7, T9, T21, T25) | 10 issues |
-| FOUNDATION TENETS (T5, T6) | 2 issues |
-| **Total** | **14 unique violations** |
-
-### Priority Fixes
-
-1. **High Priority** - T9 violations: Add distributed locking to read-modify-write index operations (4 methods)
-2. **High Priority** - T7 violations: Add ApiException catch blocks to all endpoint methods (12 methods)
-3. **Medium Priority** - T25 violations: Change RelationshipTypeModel to use Guid types instead of strings
-4. **Medium Priority** - T21 violations: Move hardcoded tunables to configuration schema
-5. **Low Priority** - T10 violations: Change operation entry logs from Information to Debug level
+- **Stubs section says "SourceDeleted=false always"** but delete-after-merge IS implemented (lines 1017-1040). Update docs to reflect actual behavior.

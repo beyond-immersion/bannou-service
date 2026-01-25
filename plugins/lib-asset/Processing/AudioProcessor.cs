@@ -134,7 +134,8 @@ public sealed class AudioProcessor : IAssetProcessor
 
             // Get processing options with configuration defaults
             var normalize = GetProcessingOption(context, "normalize", true);
-            var targetFormat = GetProcessingOption(context, "target_format", _configuration.AudioOutputFormat);
+            var targetFormatEnum = GetProcessingOption(context, "target_format", _configuration.AudioOutputFormat);
+            var targetFormat = targetFormatEnum.ToString().ToLowerInvariant();
             var bitrate = GetProcessingOption(context, "bitrate", _configuration.AudioBitrateKbps);
 
             var bucket = _configuration.StorageBucket;

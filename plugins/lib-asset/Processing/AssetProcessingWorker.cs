@@ -98,11 +98,10 @@ public sealed class AssetProcessingWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Check processing mode from configuration - exit early if "api" mode (HTTP only)
-        var processingMode = _configuration.ProcessingMode;
-        if (processingMode.Equals("api", StringComparison.OrdinalIgnoreCase))
+        if (_configuration.ProcessingMode == ProcessingMode.Api)
         {
             _logger.LogInformation(
-                "Asset processing worker disabled (ProcessingMode={Mode})", processingMode);
+                "Asset processing worker disabled (ProcessingMode={Mode})", _configuration.ProcessingMode);
             return;
         }
 
@@ -111,7 +110,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             // Not running as processor node - just keep alive for local processing
             _logger.LogInformation(
                 "Asset processing worker started in local mode (ProcessingMode={Mode}, no ProcessorNodeId configured)",
-                processingMode);
+                _configuration.ProcessingMode);
 
             await KeepAliveAsync(stoppingToken);
             return;

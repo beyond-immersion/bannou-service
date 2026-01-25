@@ -123,7 +123,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Listing relationship types");
+            _logger.LogDebug("Listing relationship types");
 
             var allTypeIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.RelationshipType)
                 .GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<string>();
@@ -195,7 +195,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting child types for parent: {ParentId}", body.ParentTypeId);
+            _logger.LogDebug("Getting child types for parent: {ParentId}", body.ParentTypeId);
 
             // Verify parent exists
             var parentKey = BuildTypeKey(body.ParentTypeId.ToString());
@@ -252,7 +252,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Checking hierarchy match: {TypeId} -> {AncestorId}",
+            _logger.LogDebug("Checking hierarchy match: {TypeId} -> {AncestorId}",
                 body.TypeId, body.AncestorTypeId);
 
             // If they're the same, it's a match with depth 0
@@ -326,7 +326,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Getting ancestors for type: {TypeId}", body.TypeId);
+            _logger.LogDebug("Getting ancestors for type: {TypeId}", body.TypeId);
 
             var typeKey = BuildTypeKey(body.TypeId.ToString());
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -377,7 +377,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Creating relationship type: {Code}", body.Code);
+            _logger.LogDebug("Creating relationship type: {Code}", body.Code);
 
             var code = body.Code.ToUpperInvariant();
 
@@ -388,7 +388,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (!string.IsNullOrEmpty(existingId))
             {
-                _logger.LogWarning("Relationship type with code already exists: {Code}", code);
+                _logger.LogDebug("Relationship type with code already exists: {Code}", code);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -403,7 +403,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
                 if (parent == null)
                 {
-                    _logger.LogWarning("Parent type not found: {ParentId}", body.ParentTypeId);
+                    _logger.LogDebug("Parent type not found: {ParentId}", body.ParentTypeId);
                     return (StatusCodes.BadRequest, null);
                 }
                 parentTypeCode = parent.Code;
@@ -474,7 +474,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Updating relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Updating relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
             var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -591,7 +591,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
             var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -606,7 +606,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             var childIds = await GetChildTypeIdsAsync(body.RelationshipTypeId.ToString(), false, cancellationToken);
             if (childIds.Count > 0)
             {
-                _logger.LogWarning("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
                 return StatusCodes.Conflict;
             }
 
@@ -645,7 +645,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Seeding {Count} relationship types", body.Types.Count);
+            _logger.LogDebug("Seeding {Count} relationship types", body.Types.Count);
 
             var created = 0;
             var updated = 0;
@@ -803,7 +803,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -811,13 +811,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found for deprecation: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not found for deprecation: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (model.IsDeprecated)
             {
-                _logger.LogWarning("Relationship type already deprecated: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type already deprecated: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -848,7 +848,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
+            _logger.LogDebug("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
             var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
@@ -856,13 +856,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (model == null)
             {
-                _logger.LogWarning("Relationship type not found for undeprecation: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not found for undeprecation: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!model.IsDeprecated)
             {
-                _logger.LogWarning("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
+                _logger.LogDebug("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -893,7 +893,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     {
         try
         {
-            _logger.LogInformation("Merging relationship type {SourceId} into {TargetId}",
+            _logger.LogDebug("Merging relationship type {SourceId} into {TargetId}",
                 body.SourceTypeId, body.TargetTypeId);
 
             // Verify source exists and is deprecated
@@ -903,13 +903,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (sourceModel == null)
             {
-                _logger.LogWarning("Source relationship type not found: {TypeId}", body.SourceTypeId);
+                _logger.LogDebug("Source relationship type not found: {TypeId}", body.SourceTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (!sourceModel.IsDeprecated)
             {
-                _logger.LogWarning("Source relationship type must be deprecated before merging: {TypeId}", body.SourceTypeId);
+                _logger.LogDebug("Source relationship type must be deprecated before merging: {TypeId}", body.SourceTypeId);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -919,7 +919,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (targetModel == null)
             {
-                _logger.LogWarning("Target relationship type not found: {TypeId}", body.TargetTypeId);
+                _logger.LogDebug("Target relationship type not found: {TypeId}", body.TargetTypeId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1278,7 +1278,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering RelationshipType service permissions...");
+        _logger.LogDebug("Registering RelationshipType service permissions...");
         await RelationshipTypePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
