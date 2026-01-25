@@ -177,7 +177,7 @@ public interface IAssetEventEmitter
     Task<bool> EmitMetabundleCreationCompleteAsync(
         string sessionId,
         Guid jobId,
-        string metabundleId,
+        Guid metabundleId,
         bool success,
         MetabundleJobStatus? status = null,
         Uri? downloadUrl = null,

@@ -424,7 +424,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 SizeBytes = job.SizeBytes,
                 Filename = job.Filename,
                 Owner = job.Owner,
-                RealmId = job.RealmId?.ToString(),
+                RealmId = job.RealmId,
                 Tags = job.Tags,
                 ProcessingOptions = job.ProcessingOptions
             };

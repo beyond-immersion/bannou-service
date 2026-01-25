@@ -2198,7 +2198,7 @@ public partial class AssetService : IAssetService
                 await _eventEmitter.EmitMetabundleCreationCompleteAsync(
                     job.RequesterSessionId.Value.ToString(),
                     job.JobId,
-                    job.MetabundleId.ToString(),
+                    job.MetabundleId,
                     success: false,
                     MetabundleJobStatus.Cancelled,
                     downloadUrl: null,
@@ -3839,7 +3839,7 @@ internal sealed class SourceBundleReferenceInternal
 {
     public Guid BundleId { get; set; }
     public string Version { get; set; } = string.Empty;
-    public List<Guid> AssetIds { get; set; } = new();
+    public List<string> AssetIds { get; set; } = new();
     public string ContentHash { get; set; } = string.Empty;
 }
 

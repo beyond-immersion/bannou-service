@@ -171,7 +171,7 @@ public partial class AssetService
         }
 
         // Build list of assets to include with source bundle grouping
-        var assetsBySourceBundle = new Dictionary<string, List<(StoredBundleAssetEntry Entry, BundleMetadata SourceBundle)>>();
+        var assetsBySourceBundle = new Dictionary<Guid, List<(StoredBundleAssetEntry Entry, BundleMetadata SourceBundle)>>();
         foreach (var sourceBundle in sourceBundles)
         {
             if (sourceBundle.Assets != null)
@@ -181,7 +181,7 @@ public partial class AssetService
                 {
                     entries.Add((asset, sourceBundle));
                 }
-                assetsBySourceBundle[sourceBundle.BundleId.ToString()] = entries;
+                assetsBySourceBundle[sourceBundle.BundleId] = entries;
             }
         }
 
@@ -199,7 +199,7 @@ public partial class AssetService
             cancellationToken).ConfigureAwait(false);
 
         long bundleSize;
-        var provenanceByBundle = new Dictionary<string, List<string>>();
+        var provenanceByBundle = new Dictionary<Guid, List<string>>();
         var standaloneAssetIds = new List<string>();
         var metabundleAssets = new List<StoredBundleAssetEntry>();
         var processedCount = 0;
@@ -215,7 +215,7 @@ public partial class AssetService
             // Process assets from source bundles - stream one bundle at a time
             foreach (var (sourceBundleId, assets) in assetsBySourceBundle)
             {
-                var sourceBundle = sourceBundles.First(b => b.BundleId.ToString() == sourceBundleId);
+                var sourceBundle = sourceBundles.First(b => b.BundleId == sourceBundleId);
 
                 // Use streaming download to get bundle data
                 // Note: BannouBundleReader requires seekable stream for random access,
@@ -327,12 +327,12 @@ public partial class AssetService
 
         // Build provenance references
         var sourceBundleRefs = sourceBundles
-            .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId.ToString()))
+            .Where(sb => provenanceByBundle.ContainsKey(sb.BundleId))
             .Select(sb => new StoredSourceBundleReference
             {
                 BundleId = sb.BundleId,
                 Version = sb.Version,
-                AssetIds = provenanceByBundle[sb.BundleId.ToString()],
+                AssetIds = provenanceByBundle[sb.BundleId],
                 ContentHash = sb.StorageKey
             })
             .ToList();
@@ -379,7 +379,7 @@ public partial class AssetService
                 Version = request.Version ?? "1.0.0",
                 Realm = request.Realm,
                 SourceBundleCount = sourceBundles.Count,
-                SourceBundleIds = (ICollection<Guid>)sourceBundles.Select(sb => sb.BundleId.ToString()).ToList(),
+                SourceBundleIds = sourceBundles.Select(sb => sb.BundleId).ToList(),
                 AssetCount = metabundleAssets.Count,
                 StandaloneAssetCount = standaloneAssetIds.Count,
                 Bucket = bucket,
@@ -398,7 +398,7 @@ public partial class AssetService
             {
                 BundleId = sb.BundleId,
                 Version = sb.Version,
-                AssetIds = sb.AssetIds.Select(Guid.Parse).ToList(),
+                AssetIds = sb.AssetIds,
                 ContentHash = sb.ContentHash
             }).ToList()
         };
@@ -470,7 +470,7 @@ public partial class AssetService
         await _eventEmitter.EmitMetabundleCreationCompleteAsync(
             sessionId,
             job.JobId,
-            job.MetabundleId.ToString(),
+            job.MetabundleId,
             success,
             clientStatus,
             downloadUrl,

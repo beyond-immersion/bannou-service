@@ -234,7 +234,7 @@ public class AssetEventEmitter : IAssetEventEmitter
     public async Task<bool> EmitMetabundleCreationCompleteAsync(
         string sessionId,
         Guid jobId,
-        string metabundleId,
+        Guid metabundleId,
         bool success,
         MetabundleJobStatus? status = null,
         Uri? downloadUrl = null,
