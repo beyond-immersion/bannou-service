@@ -153,28 +153,28 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 
 ## Known Quirks & Caveats
 
-1. **Unix epoch timestamp storage (intentional)**: `AccountModel` stores timestamps as `long` Unix epoch values (`CreatedAtUnix`, `UpdatedAtUnix`, `DeletedAtUnix`) with `[JsonIgnore]` computed `DateTimeOffset` properties. This is a deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization across platforms. The computed properties provide ergonomic access in code while the epoch values serialize reliably. Raw state store data shows epoch numbers, not human-readable dates - this is acceptable since the store is never queried directly by operators.
+### Bugs (Fix Immediately)
 
-2. **Password hash in by-email response (intentional, internal-only)**: `GetAccountByEmailAsync` includes `PasswordHash` in its response, unlike other endpoints. This exists specifically for the Auth service's `BCrypt.Verify` call during login. The Account service is internal-only (never internet-facing) and `by-email` requires admin-level permissions, so this is not a security concern within the architecture. The regular `get` endpoint omits the hash.
+No bugs identified.
 
-3. **Soft-delete with immediate index removal (correct behavior)**: Deleting an account sets `DeletedAt` but immediately removes the email index and provider index entries. This is the intended behavior: deleted accounts disappear from lookup paths (can't log in, can't be listed) but remain loadable by ID for audit/recovery. The `DeletedAt` check returns 404 for direct loads, and the `$.DeletedAtUnix notExists` query condition excludes them from listings.
+### Intentional Quirks (Documented Behavior)
 
-4. **Admin auto-assignment is creation-time only**: The `ShouldAssignAdminRole` check runs only during `CreateAccountAsync`. Changing `AdminEmails` or `AdminEmailDomain` configuration does not retroactively promote or demote existing accounts. This is acceptable - operational role changes for existing accounts should use the explicit `update` or `roles/bulk-update` endpoint rather than implicit config-driven mutation.
+1. **Unix epoch timestamp storage**: `AccountModel` stores timestamps as `long` Unix epoch values with `[JsonIgnore]` computed `DateTimeOffset` properties. Deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization.
 
-5. **`BulkUpdateRolesAsync` allows removing all roles**: There is no validation that at least one role remains after removal. Removing the last role (e.g., removing "user" when it's the only role) leaves the account with an empty roles list, potentially locking the user out of all permission-gated APIs. Whether this is a bug or feature depends on operational intent - it may be desirable for disabling accounts without soft-deleting them.
+2. **Password hash in by-email response**: `GetAccountByEmailAsync` includes `PasswordHash` for Auth service's `BCrypt.Verify` call. Account is internal-only and `by-email` requires admin permissions.
 
-6. **`BatchGetAccountsAsync` return order is non-deterministic**: `Task.WhenAll` does not guarantee completion order. The returned `accounts` list may not match the input `accountIds` order. Callers should match by `AccountId` field, not by position.
+3. **Soft-delete with immediate index removal**: Deleted accounts lose email/provider index entries immediately but remain loadable by ID for audit.
 
-7. **`BatchGetAccountsAsync` is all-or-nothing on state store errors**: Unlike `BulkUpdateRolesAsync` which has per-item error handling, if any single `GetAsync` call throws an exception during the parallel fetch, the entire `Task.WhenAll` propagates the exception and the whole batch returns 500. Individual account fetch failures cannot be reported as partial failures.
+4. **Admin auto-assignment is creation-time only**: `ShouldAssignAdminRole` runs only during `CreateAccountAsync`. Config changes don't retroactively affect existing accounts.
 
-8. **`AddAuthMethodAsync` rejects cross-account provider conflicts**: If a provider+externalId combination is already linked to a different account, the endpoint returns Conflict. This prevents orphaned auth method entries. The Auth service's normal flow also guards against this via `by-provider` lookup before calling `add`.
+5. **`BatchGetAccountsAsync` return order is non-deterministic**: `Task.WhenAll` doesn't guarantee order. Match by `AccountId`, not position.
 
-9. **`ListAccountsWithProviderFilterAsync` uses parallel batching**: Auth method lookups are parallelized within each `ListBatchSize` batch via `Task.WhenAll`. The batch size controls concurrency to avoid overwhelming the state store with too many simultaneous requests.
+6. **`AddAuthMethodAsync` rejects cross-account provider conflicts**: Returns Conflict if provider+externalId is linked to a different account.
 
-## Tenet Compliance Notes
+7. **`ListAccountsWithProviderFilterAsync` uses parallel batching**: Auth method lookups parallelized within `ListBatchSize` batches.
 
-This plugin is fully tenet-compliant. Previous audit items have been addressed:
+### Design Considerations (Requires Planning)
 
-- **T7 (Error Handling)**: The try-catch blocks correctly catch generic `Exception` because Account is a leaf service that does NOT make inter-service calls via mesh clients. Per IMPLEMENTATION TENETS, `ApiException` handling is only required for inter-service calls using generated clients, `IServiceNavigator`, or `IMeshClient`. State store operations throw standard exceptions, not `ApiException`.
+1. **`BulkUpdateRolesAsync` allows removing all roles**: No validation that at least one role remains. May lock users out of permission-gated APIs - could be intentional for disabling accounts.
 
-- **T19 (XML Documentation)**: All public interface methods use `<inheritdoc/>` to inherit documentation from the generated `IAccountService` interface. `AccountModel` and its properties have proper `<summary>` XML documentation. Private helper methods do not require XML docs per tenet (only public members require docs).
+2. **`BatchGetAccountsAsync` is all-or-nothing on errors**: If any `GetAsync` throws, entire batch returns 500. Unlike `BulkUpdateRolesAsync` which has per-item error handling.

@@ -233,122 +233,7 @@ Soulbound Types
 
 ---
 
-## Tenet Violations (Fix Immediately)
-
-### 1. IMPLEMENTATION TENETS (T25): String-for-Guid Fields in Internal Models
-
-**File**: `plugins/lib-item/ItemService.cs`, lines 1131-1191
-
-Both `ItemTemplateModel` and `ItemInstanceModel` store all GUID fields as `string` types:
-- `ItemTemplateModel.TemplateId` (line 1131) - should be `Guid`
-- `ItemTemplateModel.AvailableRealms` (line 1156) - `List<string>?` should be `List<Guid>?`
-- `ItemTemplateModel.MigrationTargetId` (line 1165) - `string?` should be `Guid?`
-- `ItemInstanceModel.InstanceId` (line 1175) - should be `Guid`
-- `ItemInstanceModel.TemplateId` (line 1176) - should be `Guid`
-- `ItemInstanceModel.ContainerId` (line 1177) - should be `Guid`
-- `ItemInstanceModel.RealmId` (line 1178) - should be `Guid`
-- `ItemInstanceModel.BoundToId` (line 1185) - `string?` should be `Guid?`
-- `ItemInstanceModel.OriginId` (line 1191) - `string?` should be `Guid?`
-
-**Fix**: Change all string GUID fields to proper `Guid`/`Guid?` types.
-
-### 2. IMPLEMENTATION TENETS (T25): `.ToString()` Populating Internal Models
-
-**File**: `plugins/lib-item/ItemService.cs`, lines 91, 116, 130, 289, 352, 442-445, 456, 617
-
-Enum and Guid values are converted to strings when creating/updating models. Per T25, enums and Guids should be assigned directly.
-
-**Fix**: Remove `.ToString()` calls; assign typed values directly once models use proper types.
-
-### 3. IMPLEMENTATION TENETS (T25): `Guid.Parse()` in Business Logic
-
-**File**: `plugins/lib-item/ItemService.cs`, lines 567-569, 642-644, 703-705, 717, 1055, 1080, 1089, 1099-1101, 1109, 1115
-
-Fragile `Guid.Parse()` calls scattered through mapping and event publishing. Direct consequence of string-typed model fields.
-
-**Fix**: Remove all `Guid.Parse` calls once models use `Guid` types.
-
-### 4. FOUNDATION TENETS (T6): Constructor Missing Null Checks
-
-**File**: `plugins/lib-item/ItemService.cs`, lines 49-61
-
-Constructor assigns all five dependencies directly without null checks. Per T6, must use `?? throw new ArgumentNullException(nameof(...))`.
-
-**Fix**: Add null-check pattern to all constructor parameter assignments.
-
-### 5. IMPLEMENTATION TENETS (T7): Missing ApiException Catch Distinction
-
-**File**: `plugins/lib-item/ItemService.cs`, all 13 try-catch blocks
-
-Every method catches only `Exception` generically. Per T7, must catch `ApiException` specifically first (log as Warning, propagate status code).
-
-**Fix**: Add `catch (ApiException ex)` before each `catch (Exception ex)`.
-
-### 6. IMPLEMENTATION TENETS (T25): Enum.Parse in Business Logic
-
-**File**: `plugins/lib-item/ItemService.cs`, lines 99, 103, 112
-
-- Line 99: `Enum.Parse<ItemRarity>(_configuration.DefaultRarity, ignoreCase: true)`
-- Line 103: `Enum.Parse<WeightPrecision>(_configuration.DefaultWeightPrecision, ignoreCase: true)`
-- Line 112: `Enum.Parse<SoulboundType>(_configuration.DefaultSoulboundType, ignoreCase: true)`
-
-Per T25, parse only at boundaries. These are in core business logic.
-
-**Fix**: Parse config values once in constructor into typed fields, or change schema to use enum types.
-
-### 7. IMPLEMENTATION TENETS (T21): Configuration String Types Force Runtime Parsing
-
-**File**: `schemas/item-configuration.yaml`, lines 19, 44, 49
-
-Properties `defaultRarity`, `defaultWeightPrecision`, and `defaultSoulboundType` are typed as `string` instead of enum types, forcing runtime `Enum.Parse` in business logic.
-
-**Fix**: Change schema types to reference enum definitions, or parse once at startup.
-
-### 8. QUALITY TENETS (T22): Pragma Warning Suppression for Unused Field
-
-**File**: `plugins/lib-item/ItemService.cs`, lines 30-33
-
-```csharp
-#pragma warning disable IDE0052
-private readonly IServiceNavigator _navigator;
-#pragma warning restore IDE0052
-```
-
-Per T22, "retained for future use" is not an allowed suppression exception.
-
-**Fix**: Remove the field, import, and constructor parameter. Add back when needed.
-
-### 9. ~~IMPLEMENTATION TENETS (T9): TOCTOU Race in Template Code Uniqueness~~ FIXED
-
-**File**: `plugins/lib-item/ItemService.cs`
-
-~~`CreateItemTemplateAsync` checks code uniqueness via `GetAsync` then writes. In multi-instance deployment, two instances could simultaneously pass the check and both create templates with the same code.~~
-
-**Fixed**: Code index key is now claimed atomically using `GetWithETagAsync` + `TrySaveAsync` before saving the template. If the claim fails (another instance created between read and write), returns `Conflict`.
-
-### 10. QUALITY TENETS (T10): Missing/Wrong-Level Operation Entry Logging
-
-**File**: `plugins/lib-item/ItemService.cs`
-
-Only 2 of 13 endpoint methods have entry logs, and those are at `Information` level instead of `Debug`. The remaining 11 methods lack entry logs entirely.
-
-**Fix**: Add `_logger.LogDebug(...)` entry logging to all endpoint methods.
-
-### 11. QUALITY TENETS (T16): Duplicate Assembly Attributes
-
-**File**: `plugins/lib-item/ItemService.cs` lines 13-14; `plugins/lib-item/AssemblyInfo.cs` lines 5-6
-
-Duplicate `[assembly: InternalsVisibleTo]` declarations.
-
-**Fix**: Remove duplicates from `ItemService.cs`.
-
----
-
 ## Known Quirks & Caveats
-
-### Bugs (Fix Immediately)
-
-None identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -368,30 +253,32 @@ None identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **List index N+1 loading**: `ListItemsByContainer` and `ListItemsByTemplate` load each instance individually from the state store. With large containers or popular templates, this generates many calls.
+1. **String-for-Guid fields in internal models**: Both `ItemTemplateModel` and `ItemInstanceModel` store GUID fields as `string` types, requiring `Guid.Parse()` in mappings and `.ToString()` when populating. Converting to proper `Guid` types requires updating all model fields, changing serialization behavior, and migrating existing data. Functional but adds runtime parsing overhead and fragility.
 
-2. **No template deletion**: Templates can only be deprecated, never deleted. This preserves instance integrity but means the template store grows monotonically.
+2. **List index N+1 loading**: `ListItemsByContainer` and `ListItemsByTemplate` load each instance individually from the state store. With large containers or popular templates, this generates many calls.
 
-3. **JSON-stored complex fields**: Stats, effects, requirements, display, and metadata are stored as serialized JSON strings. No schema validation is performed on these fields - they're opaque to the item service.
+3. **No template deletion**: Templates can only be deprecated, never deleted. This preserves instance integrity but means the template store grows monotonically.
 
-4. **Container index not validated**: The item service trusts the `containerId` provided during creation. It does not validate that the container exists in the inventory service.
+4. **JSON-stored complex fields**: Stats, effects, requirements, display, and metadata are stored as serialized JSON strings. No schema validation is performed on these fields - they're opaque to the item service.
 
-5. **No event consumption**: The item service is purely a publisher. It doesn't react to external events (e.g., container deletion). The inventory service is responsible for calling `DestroyItemInstance` when needed.
+5. **Container index not validated**: The item service trusts the `containerId` provided during creation. It does not validate that the container exists in the inventory service.
 
-6. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified.
+6. **No event consumption**: The item service is purely a publisher. It doesn't react to external events (e.g., container deletion). The inventory service is responsible for calling `DestroyItemInstance` when needed.
 
-7. **Destroy bypasses destroyable check with "admin" reason**: Line 680 - if `body.Reason == "admin"`, the template's `Destroyable` flag is ignored. This allows admin-level destruction of indestructible items.
+7. **Update doesn't track changedFields**: Unlike other services that track which fields changed, `UpdateItemTemplateAsync` applies all provided changes without changedFields list in the event. Consumers can't tell which fields were actually modified.
 
-8. **BatchGetItemInstances is sequential**: Lines 834-845 fetch each instance one by one in a foreach loop rather than parallel fetching. Could be slow for large batches.
+8. **Destroy bypasses destroyable check with "admin" reason**: If `body.Reason == "admin"`, the template's `Destroyable` flag is ignored, allowing admin-level destruction of indestructible items.
 
-9. **Empty container/template index not cleaned up**: After `RemoveFromListAsync`, if the list becomes empty, it remains as an empty JSON array `[]` in the store rather than being deleted.
+9. **BatchGetItemInstances is sequential**: Each instance is fetched one by one in a foreach loop rather than parallel fetching. Could be slow for large batches.
 
-10. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. Large containers lose items silently.
+10. **Empty container/template index not cleaned up**: After `RemoveFromListAsync`, if the list becomes empty, it remains as an empty JSON array `[]` in the store rather than being deleted.
 
-11. **ListItemsByTemplate filters AFTER fetching all instances**: Lines 793-801 fetch all instances then filter by RealmId in memory. For templates with many instances, this fetches far more data than needed.
+11. **ListItemsByContainer doesn't support pagination**: Unlike `ListItemsByTemplate` which uses Offset/Limit from the request, `ListItemsByContainer` just returns up to `MaxInstancesPerQuery` items with no offset support. Large containers lose items silently.
 
-12. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
+12. **ListItemsByTemplate filters AFTER fetching all instances**: All instances are fetched then filtered by RealmId in memory. For templates with many instances, this fetches far more data than needed.
 
-13. **Deprecate is idempotent (no conflict)**: Unlike other services that return Conflict if already deprecated, `DeprecateItemTemplateAsync` will re-deprecate with a new timestamp, overwriting the original deprecation timestamp.
+13. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
 
-14. **CreateInstance validates IsActive but not IsDeprecated**: Line 413 checks `!template.IsActive` but not `template.IsDeprecated`. A deprecated but still-active template can continue spawning new instances.
+14. **Deprecate is idempotent (no conflict)**: Unlike other services that return Conflict if already deprecated, `DeprecateItemTemplateAsync` will re-deprecate with a new timestamp, overwriting the original deprecation timestamp.
+
+15. **CreateInstance validates IsActive but not IsDeprecated**: Checks `!template.IsActive` but not `template.IsDeprecated`. A deprecated but still-active template can continue spawning new instances.

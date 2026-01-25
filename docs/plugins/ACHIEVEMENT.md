@@ -170,28 +170,20 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
 - **Achievement groups/categories**: Schema already has metadata field - could formalize grouping for UI presentation
 - **Leaderboard integration on unlock**: Publish achievement points to a leaderboard for gamerscore-style rankings
 
-## Tenet Compliance Notes
-
-This plugin is fully tenet-compliant. Previous audit items have been reviewed:
-
-- **T7 (Error Handling)**: The main `AchievementService.cs` correctly catches generic `Exception` because it doesn't make inter-service mesh calls. `SteamAchievementSync.cs` uses `IAccountClient` and properly catches `ApiException` at lines 85 and 140. State store and message bus operations throw standard exceptions, not `ApiException`.
-
-- **T20 (JSON Serialization)**: The `JsonDocument.Parse` usage in `SteamAchievementSync.cs` is for navigating external Steam API responses - this is the correct .NET pattern for unknown JSON structures. T20 targets `JsonSerializer` deserialization to models, not `JsonDocument` DOM navigation. The `JsonElement` type usage in helper methods is for reading pre-parsed values, not performing new deserialization.
-
-- **T21 (Configuration-First)**:
-  - Epsilon tolerance constants (`0.000001`) for floating-point comparisons are mathematical constants, not runtime tunables - this is acceptable.
-  - Xbox/PlayStation configuration properties are documented as scaffolding for unimplemented features in the Stubs section.
-  - `StateOptions.Ttl` is typed as `int?` (seconds) in the generated model, so passing `ProgressTtlSeconds` (int) is correct.
-
-- **T25 (Internal Model Type Safety)**: The `GameServiceId.ToString()` usage in set operations is a boundary constraint - `AddToSetAsync` requires string values. The Guid is properly parsed back with `Guid.TryParse` on read. This is API boundary handling, not internal model type safety.
-
-- **T19 (XML Documentation)**: Internal classes (`AchievementDefinitionData`, `EntityProgressData`, `AchievementProgressData`) don't require XML docs per tenet - T19 specifies "public" members only.
-
 ## Known Quirks & Caveats
 
-- **Event handler loads all definitions (future design work)**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which iterates the full index set and loads every definition individually from Redis. No caching layer exists - high-frequency events could generate significant Redis traffic. A cache with TTL and invalidation on definition CRUD events would improve this, but requires careful design around cache coherency across instances and invalidation timing. This is the primary performance bottleneck for high-frequency event-driven unlocks.
-- **Rarity dual-threshold logic**: An achievement is "rare" if EarnedCount < RarityThresholdEarnedCount (100) OR RarityPercent < RareThresholdPercent (5%). A brand-new achievement with 0 earned is always rare regardless of percentage. This is intentional - low absolute earned counts indicate rarity.
-- **Platform sync is account-only**: Both `SyncPlatformAchievementsAsync` and `GetPlatformSyncStatusAsync` reject non-Account entity types with 400. Character/guild achievements cannot be synced to platforms. This is correct - external platform achievements (Steam, Xbox, PS) are tied to platform user accounts.
-- **Delete preserves progress data**: Deleting a definition removes it from the store and index but leaves EntityProgressData intact. Orphaned progress entries are filtered out at read time by `GetAchievementProgressAsync` and `ListUnlockedAchievementsAsync` (both verify definition existence before returning entries). The raw progress data remains as a historical record.
-- **Unconfigured platforms return Pending**: When a definition lists platforms (e.g., Steam) but the platform provider isn't configured (no API credentials), the unlock flow returns `SyncStatus.Pending` for that platform rather than attempting sync. The bulk sync endpoint (`SyncPlatformAchievementsAsync`) rejects unconfigured platforms with 400.
-- **Mock mode is service-level only**: `MockPlatformSync` is handled exclusively in `ExecutePlatformUnlockWithRetriesAsync` (service level). Provider implementations (Steam, Xbox, PS) do not check mock mode - they are pure platform API integrations. The service short-circuits before providers are called when mock mode is enabled.
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
+### Intentional Quirks (Documented Behavior)
+
+- **Rarity dual-threshold logic**: An achievement is "rare" if EarnedCount < RarityThresholdEarnedCount (100) OR RarityPercent < RareThresholdPercent (5%). A brand-new achievement with 0 earned is always rare regardless of percentage.
+- **Platform sync is account-only**: Both sync endpoints reject non-Account entity types with 400. Character/guild achievements cannot be synced to external platforms.
+- **Delete preserves progress data**: Deleting a definition removes it from store and index but leaves EntityProgressData intact. Orphaned entries filtered at read time.
+- **Unconfigured platforms return Pending**: When a definition lists platforms but the provider isn't configured, unlock returns `SyncStatus.Pending`. Bulk sync rejects unconfigured platforms with 400.
+- **Mock mode is service-level only**: `MockPlatformSync` short-circuits in `ExecutePlatformUnlockWithRetriesAsync` before providers are called.
+
+### Design Considerations (Requires Planning)
+
+- **Event handler loads all definitions**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which loads every definition individually from Redis. No caching layer exists - high-frequency events could generate significant Redis traffic. A cache with invalidation on definition CRUD would improve this but requires careful design around coherency.

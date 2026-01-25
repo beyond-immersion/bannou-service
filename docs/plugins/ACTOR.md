@@ -404,48 +404,18 @@ Actor State Model
 
 ### Bugs (Fix Immediately)
 
-1. **[IMPLEMENTATION] ScheduledEventManager uses in-memory authoritative state (T9 violation)**: `Handlers/ScheduleEventHandler.cs` lines 248-361. The `ScheduledEventManager` class stores pending scheduled events in a `ConcurrentDictionary<Guid, ScheduledEvent>` which is an in-memory-only store. In multi-instance deployments, scheduled events created on one instance would not be visible to other instances, and if the instance crashes, all pending events are lost. This should use distributed state (lib-state) for multi-instance safety.
+1. **Anonymous memory value**: `Runtime/ActorRunner.cs` line 563 stores an anonymous object as a memory value. Should use a typed `PerceptionMemory` model for proper serialization.
 
-2. **[IMPLEMENTATION] ActorRegistry is in-memory authoritative state for bannou mode (T9 concern)**: `Runtime/ActorRegistry.cs`. The entire `ActorRegistry` class stores actors in a `ConcurrentDictionary` which is instance-local. While the pool mode uses Redis-backed `ActorPoolManager` for distributed state, the local bannou mode treats this in-memory dictionary as authoritative. If multiple bannou instances run simultaneously (which the monoservice architecture allows), they would have divergent actor registries. The `ConcurrentDictionary` satisfies thread-safety but not multi-instance safety.
+2. **Hardcoded tunables (T21)**: Multiple values should be configuration properties:
+   - Error retry delay (1s), state persistence retry (50ms base), stop timeout (5s)
+   - Default urgencies (0.7f for scheduled events, 0.8f for Event Brain)
+   - Query options max age (5000ms)
 
-3. **[IMPLEMENTATION] Anonymous objects passed to TryPublishErrorAsync details parameter (T5 violation)**: Multiple locations use anonymous objects for the `details` parameter of `TryPublishErrorAsync`:
-   - `ActorServiceEvents.cs` lines 142, 241, 275, 309, 343, 381
-   - `PoolNode/ActorPoolNodeWorker.cs` lines 241, 308, 373, 453
-   - `Runtime/ActorRunner.cs` lines 512, 608, 992, 1097
-   - `Pool/PoolHealthMonitor.cs` lines 165-171
-   Per FOUNDATION TENETS (T5), all events should use typed objects, not anonymous objects.
+3. **Missing ApiException handling (T7)**: `ActorService.cs` uses `IMeshInvocationClient` but catch blocks don't distinguish `ApiException` from generic `Exception`. Mesh calls should catch `ApiException` specifically.
 
-4. **[IMPLEMENTATION] Anonymous object used as memory value in ProcessPerceptionsAsync (T5 violation)**: `Runtime/ActorRunner.cs` line 563. An anonymous object `new { perception.SourceId, perception.SourceType, perception.Data, perception.Urgency }` is stored as a memory value. This creates an untyped anonymous object that will have serialization issues and violates the typed events requirement.
+4. **Missing error event publishing**: `Pool/PoolHealthMonitor.cs` line 91 logs errors but doesn't call `TryPublishErrorAsync` for unexpected exceptions.
 
-5. **[IMPLEMENTATION] Hardcoded magic numbers for tunables (T21 violation)**: Multiple hardcoded numeric values that should be configuration:
-   - `Runtime/ActorRunner.cs` line 522: `Task.Delay(1000, ct)` - hardcoded 1-second error retry delay
-   - `Runtime/ActorRunner.cs` line 979: `Task.Delay(50 * (attempt + 1), ct)` - hardcoded 50ms base retry delay for state persistence
-   - `Runtime/ActorRunner.cs` line 249: `TimeSpan.FromSeconds(5)` - hardcoded 5-second stop timeout
-   - `Handlers/ScheduleEventHandler.cs` line 335: `Urgency = 0.7f` - hardcoded urgency for scheduled events
-   - `Handlers/EmitPerceptionHandler.cs` line 102: `0.8f` - hardcoded default urgency for Event Brain instructions
-   - `Handlers/QueryOptionsHandler.cs` line 91: `maxAgeMs = 5000` - hardcoded default max age
-
-6. **[IMPLEMENTATION] DeploymentMode compared as string instead of enum (T25 violation)**: Throughout the codebase, `_configuration.DeploymentMode` is a `string` type compared against magic string `"bannou"` in many locations:
-   - `ActorService.cs` lines 527, 534, 548, 626, 642, 681, 686, 838, 872, 993, 1085
-   - `ActorServiceEvents.cs` lines 215, 253, 287, 321, 355
-   - `Pool/PoolHealthMonitor.cs` line 60
-   This should be a proper enum type for internal model type safety per IMPLEMENTATION TENETS (T25). The DeploymentMode has well-known values (bannou, pool-per-type, shared-pool, auto-scale) that should be represented as an enum.
-
-7. **[IMPLEMENTATION] Direct System.Text.Json usage instead of BannouJson (T20 violation)**: `ActorService.cs` lines 1330-1337 and `Runtime/ActorRunner.cs` line 12 (using directive). The `StartEncounterAsync` method directly uses `System.Text.Json.JsonElement` for deserialization/manipulation instead of using `BannouJson` as required by T20.
-
-8. **[QUALITY] Missing ApiException distinction in error handlers (T7 concern)**: Throughout `ActorService.cs`, all catch blocks catch only the generic `Exception` type. There is no distinction between `ApiException` (expected service errors) and unexpected `Exception` as required by T7. For example, the `SpawnActorAsync` method (line 647) catches all exceptions uniformly. Calls to remote services via mesh or pool manager could throw `ApiException` which should be handled distinctly.
-
-9. **[QUALITY] PoolHealthMonitor error handling does not publish error events on general exceptions (T7 concern)**: `Pool/PoolHealthMonitor.cs` line 91. The catch block `catch (Exception ex)` only logs the error but does not publish an error event via `TryPublishErrorAsync`. Per T7, unexpected exceptions should be published as error events for monitoring.
-
-10. **[IMPLEMENTATION] ScheduledEventManager.CheckEvents uses sync Timer callback with async fire-and-forget (T23 violation)**: `Handlers/ScheduleEventHandler.cs` line 303. The `CheckEvents` method is a sync `Timer` callback that calls `_ = FireEventAsync(evt)` discarding the Task. This means exceptions in `FireEventAsync` are silently lost and the async method is not properly awaited. Additionally, the Timer approach could lead to concurrent invocations if `FireEventAsync` takes longer than the check interval.
-
-11. **[IMPLEMENTATION] ScheduledEventManager manual Dispose pattern instead of using statement (T24 consideration)**: `Handlers/ScheduleEventHandler.cs` lines 352-360. The `ScheduledEventManager` class implements `IDisposable` with a manual `_disposed` flag and `_timer.Dispose()`. While this is acceptable for class-owned resources (the Timer is owned by the class), the class is registered as a singleton service and relies on the DI container to dispose it. This is noted but may be acceptable.
-
-12. **[QUALITY] Missing XML param documentation on some internal classes**: `Pool/ActorAssignment.cs` - The `ActorAssignment` class properties have XML summary tags but the class itself has no `<remarks>` explaining its lifecycle or ownership. Similarly `Pool/PoolNodeState.cs` and `Pool/PoolCapacitySummary` lack detailed documentation about when/how they're created.
-
-13. **[IMPLEMENTATION] ActorRunner._encounter field is accessed without synchronization (T9 concern)**: `Runtime/ActorRunner.cs` lines 54, 317-408. The `_encounter` field is read and written from both the behavior loop thread (via `CreateExecutionScopeAsync`, `GetStateSnapshot`) and potentially from external threads calling `StartEncounter`/`SetEncounterPhase`/`EndEncounter` on the runner directly. The `_statusLock` protects only the `_status` field but not `_encounter`. Race conditions could occur if `StartEncounterAsync` is called from the service thread while the behavior loop is executing.
-
-14. **[IMPLEMENTATION] Regex.Match without caching or timeout (potential performance/safety issue)**: `ActorService.cs` line 794. The `FindAutoSpawnTemplateAsync` method calls `Regex.Match(actorId, template.AutoSpawn.IdPattern)` on every GetActor request for non-existent actors, for every template with auto-spawn enabled. This compiles the regex fresh each time with no caching and no timeout, which could be vulnerable to ReDoS attacks if a malicious pattern is stored in a template.
+5. **Regex without caching/timeout**: `ActorService.cs` line 794 compiles regex fresh on every auto-spawn check. Vulnerable to ReDoS if malicious pattern stored in template.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -469,32 +439,32 @@ Actor State Model
 
 ### Design Considerations (Requires Planning)
 
-1. **Single-threaded behavior loop**: Each ActorRunner runs its behavior loop on a single task. CPU-intensive behaviors (complex GOAP planning, large perception sets) can delay tick processing. The `GoapPlanTimeoutMs` (50ms) provides a budget.
+1. **ScheduledEventManager uses in-memory state**: Pending scheduled events stored in `ConcurrentDictionary`. Multi-instance deployments would have divergent event queues. Acceptable for single-instance bannou mode; pool mode distributes actors across nodes.
 
-2. **State persistence is periodic**: Actor state is saved every `AutoSaveIntervalSeconds` (default 60s). A crash loses up to 60 seconds of state changes. Critical state (encounter transitions) publishes events immediately.
+2. **ActorRegistry is instance-local for bannou mode**: Pool mode uses Redis-backed `ActorPoolManager`, but bannou mode uses in-memory `ConcurrentDictionary`. Bannou mode is designed for single-instance operation.
 
-3. **Pool node capacity is self-reported**: Nodes report their own capacity. No external validation prevents a node from claiming higher capacity than it can handle.
+3. **DeploymentMode is string, not enum**: Configuration uses string comparisons against "bannou", "pool-per-type", etc. Schema-first change required to use enum type.
 
-4. **No distributed locks for actor operations**: Unlike game-session or inventory, actor operations don't use distributed locks. The registry (bannou mode) or assignments (pool mode) provide ownership semantics. Concurrent operations on the same actor are serialized by the behavior loop's single-threaded design.
+4. **ScheduledEventManager Timer uses fire-and-forget**: `CheckEvents` callback discards Tasks via `_ = FireEventAsync()`. Exceptions silently lost. Requires scheduler architecture redesign.
 
-5. **Perception subscription per-character**: NPC Brain actors subscribe to character-addressed perception topics. With 100,000+ actors, this creates 100,000+ RabbitMQ subscriptions. Pool mode distributes these across nodes.
+5. **ActorRunner._encounter field lacks synchronization**: Field accessed from behavior loop thread and external callers without lock protection. `_statusLock` only protects `_status`.
 
-6. **Memory cleanup is per-tick**: Expired memories are cleaned each tick (every 100ms default). With many memories, this scan adds per-tick overhead. The working memory is separate and cleared between perceptions.
+6. **Single-threaded behavior loop**: Each ActorRunner runs on single task. CPU-intensive behaviors delay tick processing. `GoapPlanTimeoutMs` (50ms) provides budget.
 
-7. **Template index optimistic concurrency**: Template creation uses optimistic concurrency (GetWithETag + TrySave) for the index. Under high concurrent creation load, retries may be needed. No retry logic is implemented - conflicts return immediately.
+7. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
 
-8. **Encounter phase strings unvalidated**: Encounter phases are arbitrary strings. No state machine validates transitions. "initializing" → "victory" is as valid as "initializing" → "combat" → "victory". Application logic in ABML behaviors enforces meaningful transitions.
+8. **Pool node capacity is self-reported**: No external validation of claimed capacity.
 
-9. **Template index optimistic concurrency failures silently succeed**: Lines 163-167 and 453-457 - if `TrySaveAsync` fails for the template index during create/delete, the operation logs a warning but the template IS saved/deleted. The index may be temporarily inconsistent with actual templates.
+9. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
 
-10. **One category = one template**: Line 127-132 checks if `category:{name}` already exists before creating. A category can only have one template. To change template behavior for a category, you must update or delete the existing template first.
+10. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
 
-11. **ForceStopActors stops actors sequentially**: Lines 424-440 stop each actor in a foreach loop with individual try-catch. If stopping one actor fails, others continue. Partial stop failures are logged but don't prevent template deletion.
+11. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
 
-12. **Fresh options query waits one tick approximately**: Lines 1121-1128 inject a perception then `Task.Delay(DefaultTickIntervalMs)` - this waits roughly one tick duration but doesn't actually synchronize with the behavior loop. The actor may not have processed the perception yet.
+12. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
 
-13. **GetEncounter returns OK with null encounter**: Lines 1558-1565 return `StatusCodes.OK` with `HasActiveEncounter=false` when actor has no encounter, rather than returning NotFound. Callers must check the flag.
+13. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
 
-14. **Auto-spawn failure returns NotFound**: Lines 731-734 - if auto-spawn attempt fails (e.g., max instances exceeded, conflict), `GetActor` returns NotFound rather than the actual failure status. The true failure reason is only logged.
+14. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
 
-15. **ListActors nodeId filter not implemented**: Line 986-987 has a comment "nodeId filtering not applicable in bannou mode" but the filter is never applied even in pool mode. The filter parameter exists but is ignored.
+15. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.

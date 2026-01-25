@@ -654,7 +654,7 @@ public partial class LocationService : ILocationService
             // Publish event
             await PublishLocationCreatedEventAsync(model, cancellationToken);
 
-            _logger.LogInformation("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
+            _logger.LogDebug("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
             return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
@@ -934,7 +934,7 @@ public partial class LocationService : ILocationService
             // Publish event
             await PublishLocationDeletedEventAsync(model, cancellationToken);
 
-            _logger.LogInformation("Deleted location {LocationId}", body.LocationId);
+            _logger.LogDebug("Deleted location {LocationId}", body.LocationId);
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -1433,7 +1433,7 @@ public partial class LocationService : ILocationService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Location service permissions...");
+        _logger.LogDebug("Registering Location service permissions");
         await LocationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 

@@ -2,9 +2,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Leaderboard;
 
@@ -53,23 +50,10 @@ public partial class LeaderboardService
             var entityType = MapToEntityType(evt.EntityType);
             if (definition.EntityTypes != null && !definition.EntityTypes.Contains(entityType))
             {
-                var message = "Analytics score update entity type not allowed by leaderboard definition";
-                _logger.LogError(
-                    "{Message} (LeaderboardId: {LeaderboardId}, EntityType: {EntityType}, EntityId: {EntityId})",
-                    message,
-                    definition.LeaderboardId,
+                _logger.LogWarning(
+                    "Analytics score update entity type {EntityType} not allowed by leaderboard {LeaderboardId}",
                     evt.EntityType,
-                    evt.EntityId);
-                await _messageBus.TryPublishErrorAsync(
-                    "leaderboard",
-                    "HandleScoreUpdated",
-                    "leaderboard_entity_type_mismatch",
-                    message,
-                    dependency: null,
-                    endpoint: "event:analytics.score.updated",
-                    details: $"leaderboardId:{definition.LeaderboardId}",
-                    stack: null,
-                    cancellationToken: CancellationToken.None);
+                    definition.LeaderboardId);
                 return;
             }
 
@@ -147,44 +131,19 @@ public partial class LeaderboardService
             var entityType = MapToEntityType(evt.EntityType);
             if (definition.EntityTypes != null && !definition.EntityTypes.Contains(entityType))
             {
-                var message = "Analytics rating update entity type not allowed by leaderboard definition";
-                _logger.LogError(
-                    "{Message} (LeaderboardId: {LeaderboardId}, EntityType: {EntityType}, EntityId: {EntityId})",
-                    message,
-                    definition.LeaderboardId,
+                _logger.LogWarning(
+                    "Analytics rating update entity type {EntityType} not allowed by leaderboard {LeaderboardId}",
                     evt.EntityType,
-                    evt.EntityId);
-                await _messageBus.TryPublishErrorAsync(
-                    "leaderboard",
-                    "HandleRatingUpdated",
-                    "leaderboard_entity_type_mismatch",
-                    message,
-                    dependency: null,
-                    endpoint: "event:analytics.rating.updated",
-                    details: $"leaderboardId:{definition.LeaderboardId}",
-                    stack: null,
-                    cancellationToken: CancellationToken.None);
+                    definition.LeaderboardId);
                 return;
             }
 
             if (definition.UpdateMode != UpdateMode.Replace)
             {
-                var message = "Rating updates require leaderboards to use replace mode";
-                _logger.LogError(
-                    "{Message} (LeaderboardId: {LeaderboardId}, UpdateMode: {UpdateMode})",
-                    message,
+                _logger.LogWarning(
+                    "Rating updates require Replace mode but leaderboard {LeaderboardId} uses {UpdateMode}",
                     definition.LeaderboardId,
                     definition.UpdateMode);
-                await _messageBus.TryPublishErrorAsync(
-                    "leaderboard",
-                    "HandleRatingUpdated",
-                    "leaderboard_update_mode_invalid",
-                    message,
-                    dependency: null,
-                    endpoint: "event:analytics.rating.updated",
-                    details: $"leaderboardId:{definition.LeaderboardId};updateMode:{definition.UpdateMode}",
-                    stack: null,
-                    cancellationToken: CancellationToken.None);
                 return;
             }
 
@@ -297,22 +256,10 @@ public partial class LeaderboardService
 
             if (matched != null)
             {
-                var message = "Multiple leaderboard definitions match analytics event type";
-                _logger.LogError(
-                    "{Message} (GameServiceId: {GameServiceId}, EventType: {EventType})",
-                    message,
-                    gameServiceId,
-                    eventType);
-                await _messageBus.TryPublishErrorAsync(
-                    "leaderboard",
-                    "GetDefinitionForAnalyticsEvent",
-                    "leaderboard_definition_ambiguous",
-                    message,
-                    dependency: null,
-                    endpoint: eventTopic,
-                    details: $"eventType:{eventType}",
-                    stack: null,
-                    cancellationToken: CancellationToken.None);
+                _logger.LogWarning(
+                    "Multiple leaderboard definitions match analytics event type {EventType} for game service {GameServiceId}",
+                    eventType,
+                    gameServiceId);
                 return null;
             }
 

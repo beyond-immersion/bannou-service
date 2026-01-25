@@ -456,6 +456,27 @@ var json = JsonSerializer.Serialize(model); // NO!
 var model = JsonSerializer.Deserialize<MyModel>(jsonString, options); // NO - even with custom options!
 ```
 
+### JsonDocument Navigation is Allowed
+
+This tenet targets **deserialization to typed models**, not DOM navigation. `JsonDocument.Parse()` and `JsonElement` navigation are acceptable for:
+
+1. **External API responses**: Parsing third-party API responses with unknown/variable structure
+2. **Metadata dictionaries**: Reading pre-parsed `JsonElement` values from metadata fields
+3. **JSON introspection**: Examining JSON structure without deserializing to a model
+
+```csharp
+// ALLOWED: JsonDocument for navigating external API response
+using var doc = JsonDocument.Parse(steamApiResponse);
+var success = doc.RootElement.GetProperty("response").GetProperty("success").GetBoolean();
+
+// ALLOWED: Reading JsonElement from metadata dictionary
+if (metadata.TryGetValue("threshold", out var element) && element.ValueKind == JsonValueKind.Number)
+    return element.GetDouble();
+
+// FORBIDDEN: JsonSerializer for typed model deserialization (use BannouJson)
+var model = JsonSerializer.Deserialize<SteamResponse>(steamApiResponse); // NO!
+```
+
 ### Key Serialization Behaviors
 
 All serialization via `BannouJson` uses these settings:
@@ -507,6 +528,24 @@ var maxResults = Math.Min(body.Limit, _configuration.MaxResultsPerQuery);
 await Task.Delay(TimeSpan.FromSeconds(_configuration.RetryDelaySeconds));
 if (list.Count >= _configuration.MaxItemsPerContainer) return error;
 ```
+
+**Mathematical Constants are Not Tunables**:
+
+Constants used for mathematical correctness (not business logic tuning) are acceptable as hardcoded values:
+
+```csharp
+// ACCEPTABLE: Mathematical constants for floating-point comparison
+private const double Epsilon = 0.000001;  // Standard floating-point tolerance
+if (Math.Abs(a - b) < Epsilon) { ... }
+
+// ACCEPTABLE: Algorithm constants with mathematical meaning
+private const double GoldenRatio = 1.618033988749895;
+private const int BitsPerByte = 8;
+```
+
+**Stub Scaffolding Configuration**:
+
+Configuration properties for unimplemented features (stubs) may exist without being referenced, provided the stub is documented and the config is clearly prepared for future implementation. Document these in the plugin's Stubs section.
 
 **Defined State Stores Must Be Used**:
 
@@ -817,6 +856,23 @@ if (model.Status == "active") { ... }  // NO - use enum equality
 // FORBIDDEN: String for GUID fields
 public string OwnerId { get; set; } = string.Empty;  // NO - use Guid
 ```
+
+### State Store API Boundaries
+
+State store APIs that require string values (e.g., `AddToSetAsync`, `RemoveFromSetAsync`) are acceptable boundaries for `.ToString()` conversion:
+
+```csharp
+// ACCEPTABLE: State store set API requires string values
+await _store.AddToSetAsync(indexKey, gameServiceId.ToString(), ct);
+
+// ACCEPTABLE: Parsing back when reading from set
+foreach (var idStr in await _store.GetSetMembersAsync(indexKey, ct))
+{
+    if (Guid.TryParse(idStr, out var id)) { ... }
+}
+```
+
+This is a state store API constraint, not an internal model type safety issue. The internal model should still use `Guid`.
 
 ### Boundary Conversions
 

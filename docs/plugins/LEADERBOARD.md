@@ -214,107 +214,7 @@ Season Lifecycle
 
 ---
 
-## Tenet Violations (Fix Immediately)
-
-### 1. FOUNDATION TENETS (T6): Constructor Missing Null Checks
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, lines 55-58
-
-Constructor assigns all dependencies directly without null checks. Per T6, must use `?? throw new ArgumentNullException(nameof(...))`.
-
-**Fix**: Add null-check pattern to all constructor parameter assignments.
-
-### 2. IMPLEMENTATION TENETS (T7): Error Events Emitted for Non-Exceptional Conditions
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, lines 250-262
-
-`ListLeaderboardDefinitions` emits error event via `TryPublishErrorAsync` when `IncludeArchived=true` (unimplemented feature). This is a known limitation, not an unexpected failure.
-
-**Fix**: Remove `TryPublishErrorAsync`. `LogWarning` and `StatusCodes.NotImplemented` return are sufficient.
-
-### 3. IMPLEMENTATION TENETS (T7): Error Events for Configuration Mismatches in Event Handlers
-
-**File**: `plugins/lib-leaderboard/LeaderboardServiceEvents.cs`, lines 56-73, 150-167, 170-189
-
-Entity type mismatch and update mode mismatch are configuration/data issues (predictable when analytics events reference types not configured on the leaderboard). Not unexpected exceptions.
-
-**Fix**: Change `LogError` to `LogWarning` and remove `TryPublishErrorAsync` for these conditions.
-
-### 4. IMPLEMENTATION TENETS (T7): Missing ApiException Catch Distinction
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, all 12 try-catch blocks
-
-Every method catches only `Exception` generically. Per T7, must catch `ApiException` first.
-
-**Fix**: Add `catch (ApiException ex)` before each `catch (Exception ex)`.
-
-### 5. QUALITY TENETS (T10): Operation Entry Logging at Wrong Level
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, lines 117, 189, 232, 315, 379, 451, 569, 651, 725, 807, 903, 996
-
-All 12 operation entry points use `LogInformation`. Per T10, operation entry should use `LogDebug`.
-
-**Fix**: Change all operation entry `LogInformation` to `LogDebug`.
-
-### 6. QUALITY TENETS (T10): Unstructured LogError for Feature Limitation
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, line 251
-
-Uses `LogError` for a known feature limitation, and passes a variable as the message template (defeats structured logging).
-
-**Fix**: `_logger.LogWarning("IncludeArchived not supported for game service {GameServiceId}", body.GameServiceId);`
-
-### 7. IMPLEMENTATION TENETS (T25): Internal POCO Uses `object?` for Metadata
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, line 1155
-
-`LeaderboardDefinitionData.Metadata` is typed as `object?` but always accessed as `IReadOnlyDictionary<string, object>`.
-
-**Fix**: Change type to `Dictionary<string, object>?`.
-
-### 8. CLAUDE.md: `?? string.Empty` Without Justification Comment
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, lines 342 and 939
-
-```csharp
-var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
-```
-
-Per CLAUDE.md, `?? string.Empty` requires an explanatory comment.
-
-**Fix**: Add comment explaining the coalesce satisfies compiler nullable analysis.
-
-### 9. QUALITY TENETS (T19): Missing XML param/returns on Public Methods
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, all 12 public API methods
-
-All public methods have `<summary>` but are missing `<param>` and `<returns>` documentation tags.
-
-**Fix**: Add `<param>` and `<returns>` tags.
-
-### 10. QUALITY TENETS (T19): Missing XML Documentation on Internal POCO Properties
-
-**File**: `plugins/lib-leaderboard/LeaderboardService.cs`, lines 1143-1156
-
-`LeaderboardDefinitionData` has class-level summary but no property documentation.
-
-**Fix**: Add `<summary>` to each property.
-
-### 11. QUALITY TENETS: Unused Imports in LeaderboardServiceEvents.cs
-
-**File**: `plugins/lib-leaderboard/LeaderboardServiceEvents.cs`, lines 5-7
-
-`System.Collections.Generic`, `System.Linq`, and `System.Text.Json` are imported but not used.
-
-**Fix**: Remove unused imports.
-
----
-
 ## Known Quirks & Caveats
-
-### Bugs (Fix Immediately)
-
-None identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -322,9 +222,9 @@ None identified.
 
 2. **Percentile calculation**: Uses `(1 - rank/total) * 100` formula. Rank 1 of 100 entries = 99th percentile. Single-entry leaderboards default to 100th percentile.
 
-3. **Analytics event matching is two-phase**: First attempts direct lookup using ScoreType/RatingType as the leaderboard ID. If not found, scans all definitions in the game service checking metadata for a `scoreType`/`ratingType` key match. Reports error if multiple definitions match (ambiguous).
+3. **Analytics event matching is two-phase**: First attempts direct lookup using ScoreType/RatingType as the leaderboard ID. If not found, scans all definitions in the game service checking metadata for a `scoreType`/`ratingType` key match. Logs warning and returns null if multiple definitions match (ambiguous).
 
-4. **Rating updates require Replace mode**: `HandleRatingUpdatedAsync` validates the matched leaderboard uses `UpdateMode.Replace`. Increment/Max/Min modes are rejected with an error event because Glicko-2 ratings are absolute values.
+4. **Rating updates require Replace mode**: `HandleRatingUpdatedAsync` validates the matched leaderboard uses `UpdateMode.Replace`. Increment/Max/Min modes are rejected with a warning because Glicko-2 ratings are absolute values.
 
 5. **Entry count is queried per-response**: `MapToResponse` doesn't cache entry counts. Each definition get/list/update calls `SortedSetCountAsync` to get the current entry count. For `ListDefinitions` with many leaderboards, this is N Redis calls.
 
