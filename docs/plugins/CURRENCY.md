@@ -20,7 +20,6 @@ Multi-currency management service for game economies. Handles the full lifecycle
 | lib-state (`IStateStoreFactory`) | MySQL persistence for definitions, wallets, balances, transactions, holds; Redis caching for balances and holds; Redis idempotency store |
 | lib-state (`IDistributedLockProvider`) | Balance-level locks for atomic credit/debit/transfer/hold-creation; hold-level locks for capture serialization; wallet-level locks for close operations; index-level locks for list operations; autogain locks to prevent concurrent modification |
 | lib-messaging (`IMessageBus`) | Publishing all currency events (balance, wallet lifecycle, autogain, cap, hold, exchange rate); error event publishing via TryPublishErrorAsync |
-| lib-mesh (`IServiceNavigator`) | Injected but not actively used in current implementation (reserved for future cross-service calls) |
 
 ---
 
@@ -102,8 +101,8 @@ This plugin does not consume external events.
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `DefaultAllowNegative` | `CURRENCY_DEFAULT_ALLOW_NEGATIVE` | `false` | Default for currencies that do not specify allowNegative |
-| `DefaultPrecision` | `CURRENCY_DEFAULT_PRECISION` | `decimal_2` | Default precision for currencies without explicit precision |
-| `AutogainProcessingMode` | `CURRENCY_AUTOGAIN_PROCESSING_MODE` | `lazy` | How autogain is calculated: `lazy` (on-demand at query) or `task` (background worker) |
+| `DefaultPrecision` | `CURRENCY_DEFAULT_PRECISION` | `Decimal2` | Default precision for currencies without explicit precision (enum: Integer, Decimal2, Decimal4, Decimal8, DecimalFull, BigInteger) |
+| `AutogainProcessingMode` | `CURRENCY_AUTOGAIN_PROCESSING_MODE` | `Lazy` | How autogain is calculated (enum: Lazy = on-demand at query, Task = background worker) |
 | `AutogainTaskStartupDelaySeconds` | `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | `15` | Delay before first autogain background cycle |
 | `AutogainTaskIntervalMs` | `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | `60000` | Background task processing interval (1 minute) |
 | `AutogainBatchSize` | `CURRENCY_AUTOGAIN_BATCH_SIZE` | `1000` | Wallets processed per batch in task mode |
@@ -112,6 +111,13 @@ This plugin does not consume external events.
 | `HoldMaxDurationDays` | `CURRENCY_HOLD_MAX_DURATION_DAYS` | `7` | Maximum authorization hold duration |
 | `BalanceCacheTtlSeconds` | `CURRENCY_BALANCE_CACHE_TTL_SECONDS` | `60` | Redis balance cache TTL |
 | `HoldCacheTtlSeconds` | `CURRENCY_HOLD_CACHE_TTL_SECONDS` | `120` | Redis hold cache TTL |
+| `BalanceLockTimeoutSeconds` | `CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for balance-level distributed locks |
+| `HoldLockTimeoutSeconds` | `CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for hold-level distributed locks |
+| `WalletLockTimeoutSeconds` | `CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for wallet-level distributed locks |
+| `AutogainLockTimeoutSeconds` | `CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS` | `10` | Timeout for autogain distributed locks |
+| `IndexLockTimeoutSeconds` | `CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS` | `15` | Timeout for index update distributed locks |
+| `ExchangeRateUpdateMaxRetries` | `CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES` | `3` | Max retry attempts for exchange rate update with optimistic concurrency |
+| `ConversionRoundingPrecision` | `CURRENCY_CONVERSION_ROUNDING_PRECISION` | `8` | Number of decimal places for currency conversion rounding |
 
 ---
 
@@ -120,11 +126,10 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CurrencyService>` | Scoped | Structured logging |
-| `CurrencyServiceConfiguration` | Singleton | All 11 config properties |
+| `CurrencyServiceConfiguration` | Singleton | All 18 config properties |
 | `IStateStoreFactory` | Singleton | Access to all 8 state stores |
 | `IDistributedLockProvider` | Singleton | Balance locks (`currency-balance`), hold locks (`currency-hold`), wallet locks (`currency-wallet`), index locks (`currency-index`), autogain locks (`currency-autogain`) |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IServiceNavigator` | Scoped | Cross-service client access (reserved) |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
 
 Service lifetime is **Scoped** (per-request). Background service is a hosted singleton.
@@ -402,7 +407,6 @@ Escrow Integration Flow
 5. **Global supply cap enforcement**: `GlobalSupplyCap` is stored on currency definitions but never checked during credit operations. There is no aggregate tracking of total minted supply.
 6. **Item linkage**: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored on definitions but no logic enforces item-currency linkage (e.g., requiring item ownership for currency access).
 7. **EarnCapResetTime**: The field is stored on definitions but not used in earn cap reset logic. Resets always happen at midnight UTC (daily) and Monday UTC (weekly), ignoring any custom reset time.
-8. **IServiceNavigator usage**: Injected as a dependency but never used. Reserved for potential future cross-service calls (e.g., item service for linked currencies).
 
 ---
 
@@ -421,50 +425,13 @@ Escrow Integration Flow
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T25 (Internal POCO uses string for enum)**: Internal models store enums as strings requiring `Enum.TryParse`:
-   - `CurrencyDefinitionModel.Scope`: string → `CurrencyScope`
-   - `CurrencyDefinitionModel.Precision`: string → `CurrencyPrecision`
-   - `CurrencyDefinitionModel.CapOverflowBehavior`: string → `CapOverflowBehavior`
-   - `CurrencyDefinitionModel.AutogainMode`: string → `AutogainMode`
-   - `CurrencyDefinitionModel.ExpirationPolicy`: string → `ExpirationPolicy`
-   - `CurrencyDefinitionModel.LinkageMode`: string → `ItemLinkageMode`
-   - `WalletModel.OwnerType`: string → `WalletOwnerType`
-   - `TransactionRecordModel.TransactionType`: string → `TransactionType`
+*T25 enum-as-string violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
 
-### Design Considerations (Requires Planning)
+No other bugs identified.
 
-1. **T25 - Internal Model Guid Fields**: All internal models use `string` for Guid fields (DefinitionId, WalletId, etc.). Changing to `Guid` requires updating all mapping methods and storage patterns.
-
-2. **T16 - Event Topic Naming**: Topics use inconsistent patterns (some 2-segment, some 3-segment with underscores). Standardizing requires schema changes and downstream consumer updates.
-
-3. **T8 - Cast to (StatusCodes)422**: 15 instances of `(StatusCodes)422`. Adding `UnprocessableEntity = 422` to StatusCodes enum requires explicit approval.
-
-### False Positives Removed
-
-- **T19 on private/internal members**: Private helper methods and internal model properties do not require XML documentation per T19 (only applies to public API surface)
-- **T10 missing operation entry logging**: T10 only requires logging at decision points and significant state changes. Operation entry logging is recommended but not mandatory.
-
-### Fixed Violations
-
-The following violations have been resolved:
-
-1. **~~T21: Configuration-First (Hardcoded Tunables)~~** - FIXED: Added configuration properties `BalanceLockTimeoutSeconds`, `HoldLockTimeoutSeconds`, `WalletLockTimeoutSeconds`, `AutogainLockTimeoutSeconds`, `IndexLockTimeoutSeconds`, `ExchangeRateUpdateMaxRetries`, `ConversionRoundingPrecision` to `schemas/currency-configuration.yaml` and updated all code to use configuration values.
-
-2. **~~T21: Dead Injected Dependency~~** - FIXED: Removed unused `IServiceNavigator _navigator` from CurrencyService constructor and field declaration.
-
-3. **~~CLAUDE.md: `?? string.Empty` Without Justification Comment~~** - FIXED: Added explanatory comments to all 6 instances of `etag ?? string.Empty` explaining the compiler satisfaction pattern.
-
-4. **~~T25: Unused Parameter in Method~~** - FIXED: Removed unused `definition` parameter from `ResetEarnCapsIfNeeded` method.
-
-5. **~~T6: Missing Constructor Null Checks~~** - NOT A VIOLATION: Per T12, NRT (Nullable Reference Types) provides compile-time safety for constructor parameters. Explicit null checks are not required.
-
-6. **~~T7: Missing ApiException Catch~~** - NOT APPLICABLE: This service does not make external client calls (only state stores and locks). ApiException handling is only required for services that call other services via generated clients.
-
----
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Frozen wallet returns 422**: All balance-modifying operations on frozen wallets return HTTP 422 (Unprocessable Entity), not 403 or 409. This distinguishes it from auth failures and concurrency conflicts.
 
@@ -482,7 +449,7 @@ The following violations have been resolved:
 
 8. **Autogain task shares namespace-level internal models**: CurrencyAutogainTaskService uses the same `CurrencyDefinitionModel`, `BalanceModel`, and `WalletModel` classes defined at namespace level in CurrencyService.cs. Both the scoped service and the background hosted service access the same model definitions, ensuring no field drift during JSON round-trips.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **N+1 transaction history loading**: `GetTransactionHistory` loads all transaction IDs from the wallet index, then loads each transaction individually. For wallets with thousands of transactions, this generates many state store calls. Pre-filtering before loading individual records would reduce load.
 

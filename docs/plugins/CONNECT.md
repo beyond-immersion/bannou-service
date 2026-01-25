@@ -93,23 +93,23 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | `MaxConcurrentConnections` | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | `10000` | Maximum concurrent WebSocket connections |
 | `HeartbeatIntervalSeconds` | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | `30` | Interval between heartbeat messages |
 | `MessageQueueSize` | `CONNECT_MESSAGE_QUEUE_SIZE` | `1000` | Maximum queued messages per connection |
-| `BinaryProtocolVersion` | `CONNECT_BINARY_PROTOCOL_VERSION` | `"2.0"` | Binary protocol version identifier |
 | `BufferSize` | `CONNECT_BUFFER_SIZE` | `65536` | Size of message receive buffers (bytes) |
-| `DefaultServices` | `CONNECT_DEFAULT_SERVICES` | `["auth", "website"]` | Services available to unauthenticated connections |
-| `AuthenticatedServices` | `CONNECT_AUTHENTICATED_SERVICES` | `["account", "behavior", "permission", "gamesession"]` | Additional services for authenticated connections |
 | `EnableClientToClientRouting` | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | `true` | Enable peer-to-peer message routing |
 | `MaxMessagesPerMinute` | `CONNECT_MAX_MESSAGES_PER_MINUTE` | `1000` | Rate limit per client per window |
 | `RateLimitWindowMinutes` | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | `1` | Rate limit window duration |
-| `RabbitMqConnectionString` | `CONNECT_RABBITMQ_CONNECTION_STRING` | `"amqp://guest:guest@rabbitmq:5672"` | RabbitMQ connection for client event subscriptions |
 | `ServerSalt` | `CONNECT_SERVER_SALT` | `"bannou-dev-connect-salt-change-in-production"` | Server salt for GUID generation (REQUIRED, shared across instances) |
-| `ConnectUrl` | `CONNECT_URL` | `null` | WebSocket URL for reconnection (defaults to `wss://{domain}/connect`) |
-| `ConnectionMode` | `CONNECT_CONNECTION_MODE` | `"external"` | Connection mode: external/relayed/internal |
-| `InternalAuthMode` | `CONNECT_INTERNAL_AUTH_MODE` | `"service-token"` | Auth mode for internal: service-token or network-trust |
+| `ConnectionMode` | `CONNECT_CONNECTION_MODE` | `External` | Connection mode enum: External/Relayed/Internal |
+| `InternalAuthMode` | `CONNECT_INTERNAL_AUTH_MODE` | `ServiceToken` | Auth mode enum for internal: ServiceToken or NetworkTrust |
 | `InternalServiceToken` | `CONNECT_INTERNAL_SERVICE_TOKEN` | `null` | Secret for X-Service-Token validation (required for internal+service-token) |
 | `SessionTtlSeconds` | `CONNECT_SESSION_TTL_SECONDS` | `86400` | Session TTL in Redis (24 hours) |
 | `HeartbeatTtlSeconds` | `CONNECT_HEARTBEAT_TTL_SECONDS` | `300` | Heartbeat data TTL (5 minutes) |
 | `ReconnectionWindowSeconds` | `CONNECT_RECONNECTION_WINDOW_SECONDS` | `300` | Reconnection grace period (5 minutes) |
 | `HttpClientTimeoutSeconds` | `CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS` | `120` | HTTP client timeout for backend service calls |
+| `RpcCleanupIntervalSeconds` | `CONNECT_RPC_CLEANUP_INTERVAL_SECONDS` | `30` | Interval between pending RPC cleanup runs |
+| `DefaultRpcTimeoutSeconds` | `CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS` | `30` | Default timeout for RPC calls when not specified |
+| `ConnectionCleanupIntervalSeconds` | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | `30` | Interval between connection cleanup runs |
+| `InactiveConnectionTimeoutMinutes` | `CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES` | `30` | Timeout after which inactive connections are cleaned up |
+| `PendingMessageTimeoutSeconds` | `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | `30` | Timeout for pending messages awaiting acknowledgment |
 | `ConnectionShutdownTimeoutSeconds` | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | `5` | WebSocket close timeout during shutdown |
 | `ReconnectionWindowExtensionMinutes` | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | `1` | Extra minutes added to reconnection window state TTL |
 
@@ -433,6 +433,10 @@ Connection Mode Behavior Matrix
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Singleton lifetime**: Unlike all other Bannou services (which are Scoped), Connect is Singleton because it maintains in-memory WebSocket connection state. This means injected Scoped services (like `IServiceNavigator`) must be resolved via `IServiceScopeFactory.CreateAsyncScope()` per request.
@@ -456,39 +460,6 @@ Connection Mode Behavior Matrix
 10. **Broadcast excludes sender**: `RouteToBroadcastAsync` always excludes the sending session from recipients. There is no option to include self in broadcast.
 
 11. **Anonymous object in HandleServiceErrorAsync**: The admin notification payload is constructed as an anonymous object, which technically violates the typed event pattern from QUALITY TENETS. This is an in-process notification, not a cross-service event.
-
----
-
-## Bugs (Fix Immediately)
-
-None identified.
-
-## Additional Design Considerations
-
-These T23/T9 patterns require architectural planning beyond the Design Considerations section below:
-
-1. **T23 - `await Task.CompletedTask` pattern**: Four occurrences in `GetClientCapabilitiesAsync`, `OnStartAsync`, `ValidateSessionAsync`, `InitializeSessionCapabilitiesAsync`. These satisfy interface async signatures for currently-synchronous operations. Either remove `async` and return `Task.FromResult`, or refactor to perform actual async work (may require architectural decision on sync vs async for these operations).
-
-2. **T23 - `.Wait()` synchronous blocking in Dispose**: `WebSocketConnectionManager.Dispose()` uses `.Wait()` to block on async WebSocket close. Fix requires implementing `IAsyncDisposable` with `DisposeAsync()`.
-
-3. **T9 - Non-thread-safe Dictionary in ConnectionState**: `ChannelSequences` and `PendingMessages` use plain `Dictionary`. ConnectionState is per-connection so thread safety depends on how MessageRouter accesses it. Requires analysis of threading model.
-
-## False Positives Removed
-
-The following items from the original audit were determined to be false positives:
-
-- **T5 Anonymous objects for protocol payloads**: Capability manifests, admin notifications, and internal protocol messages use anonymous objects for WebSocket wire format - these are internal protocol structures, not cross-service events published via IMessageBus. T5 targets events schema, not wire protocol payloads.
-- **T19 on internal classes**: `ConnectionState`, `SessionModels`, `MessagePriority` may be internal implementation details. T19 applies to public API surface.
-- **string.Empty defaults**: Several are intentional for POCO initialization - should be documented if acceptable.
-
-### Previously Fixed
-
-- Removed dead configuration properties
-- Added configuration properties (RpcCleanupIntervalSeconds, etc.) and wired to code
-- Added warning log when ServiceName is null in RPC event handling
-- Fixed empty catch blocks in WebSocketConnectionManager - added optional logger parameter and debug-level logging for cleanup/send failures
-
----
 
 ### Design Considerations (Requires Planning)
 

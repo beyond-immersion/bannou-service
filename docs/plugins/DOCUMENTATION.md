@@ -104,6 +104,12 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `MaxDocumentsPerSync` | `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | `1000` | Max documents processed per sync |
 | `RepositorySyncCheckIntervalSeconds` | `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | `30` | Initial delay before first scheduler check |
 | `BulkOperationBatchSize` | `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | `10` | Documents per batch before yielding in bulk ops |
+| `MaxRelatedDocuments` | `DOCUMENTATION_MAX_RELATED_DOCUMENTS` | `5` | Maximum related documents to return for standard depth |
+| `MaxRelatedDocumentsExtended` | `DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED` | `10` | Maximum related documents to return for extended depth |
+| `SyncLockTtlSeconds` | `DOCUMENTATION_SYNC_LOCK_TTL_SECONDS` | `1800` | TTL in seconds for repository sync distributed lock (30 min) |
+| `MaxFetchLimit` | `DOCUMENTATION_MAX_FETCH_LIMIT` | `1000` | Maximum documents to fetch when filtering/sorting in memory |
+| `StatsSampleSize` | `DOCUMENTATION_STATS_SAMPLE_SIZE` | `10` | Number of documents to sample for namespace statistics |
+| `SearchSnippetLength` | `DOCUMENTATION_SEARCH_SNIPPET_LENGTH` | `200` | Length in characters for search result snippets |
 
 ---
 
@@ -112,7 +118,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<DocumentationService>` | Scoped | Structured logging |
-| `DocumentationServiceConfiguration` | Singleton | All 21 configuration properties |
+| `DocumentationServiceConfiguration` | Singleton | All 27 configuration properties |
 | `IStateStoreFactory` | Singleton | Redis state store access for all data |
 | `IDistributedLockProvider` | Singleton | Sync operation locking |
 | `IMessageBus` | Scoped | Event publishing (lifecycle, analytics, errors) |
@@ -403,39 +409,11 @@ Archive System
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
 No bugs identified.
 
-### False Positives Removed
-
-The following items were identified as violations but do not apply:
-
-1. **T23 (SearchIndexService `await Task.CompletedTask`)**: The `ISearchIndexService` interface is async (for Redis implementation), so the in-memory implementation must implement it async. Using `await Task.CompletedTask` is correct for interface contract compliance when the implementation does synchronous in-memory work.
-
-2. **T5 (Anonymous objects in TryPublishErrorAsync)**: The `details:` parameter in `TryPublishErrorAsync` is diagnostic metadata for error events, not published event schemas. Anonymous objects are acceptable for this infrastructure convenience method per established pattern.
-
-3. **T19 (Internal classes lacking XML docs)**: T19 applies to PUBLIC members only. Internal classes `DocumentationBundle`, `BundledDocument`, `StoredDocument`, and `TrashedDocument` do not require XML documentation.
-
-4. **T10 (DocumentationController logging)**: Service layer logging is sufficient for manual controller partial classes; matches the pattern used by generated controllers.
-
-5. **T24 (RedisSearchIndexService Task.Run disposal)**: The fire-and-forget `Task.Run` in `IndexDocument` is acceptable because `EnsureIndexExistsAsync` is idempotent and the worst case is a missed index creation that will be retried. The discard operator now properly indicates intentional fire-and-forget.
-
-### Previously Fixed
-
-1. **T21: Configuration-First** - Added configuration properties `MaxRelatedDocuments`, `MaxRelatedDocumentsExtended`, `SyncLockTtlSeconds`, `MaxFetchLimit`, `StatsSampleSize`, and `SearchSnippetLength` to `schemas/documentation-configuration.yaml`.
-
-2. **T9: Multi-Instance Safety** - Replaced `HashSet<string>` + `object _initLock` with `ConcurrentDictionary<string, bool>` in `RedisSearchIndexService.cs`.
-
-3. **CLAUDE.md `?? string.Empty`** - Added explanatory comments to all 6 instances of `etag ?? string.Empty`.
-
-4. **T23 (GitSyncService `.GetAwaiter().GetResult()`)** - Changed three blocking calls to fire-and-forget with discard operator and explanatory comments.
-
-5. **T23/T24 (RedisSearchIndexService Task.Run)** - Changed fire-and-forget `Task.Run` to use discard operator and log at Error level (infrastructure failure, not user error).
-
----
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Repository-bound namespaces reject manual mutations**: Any `Create`, `Update`, or `Delete` call on a namespace with an active binding (status not Disabled) returns 403 Forbidden. This enforces git as the single source of truth.
 
@@ -455,7 +433,7 @@ The following items were identified as violations but do not apply:
 
 9. **Sync lock is 30 minutes**: The distributed lock for repository sync operations has a 1800-second (30-minute) TTL. Long-running syncs on large repositories could approach this limit. If the lock expires mid-sync, a concurrent sync could start.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **T16 (ViewDocumentBySlugAsync return type)**: Returns `(StatusCodes, object?)` instead of the standard `(StatusCodes, TResponse?)` pattern. This is a browser-facing endpoint (T15 exception) that returns HTML. Low priority since the endpoint is exceptional by design, but could define a `ViewDocumentResponse` type for consistency.
 

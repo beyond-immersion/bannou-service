@@ -73,8 +73,16 @@ This plugin does not consume external events.
 | `BaseEvolutionProbability` | `CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY` | `0.15` | Base chance for trait shift per evolution event |
 | `MaxTraitShift` | `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | `0.1` | Maximum magnitude of trait change |
 | `MinTraitShift` | `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | `0.02` | Minimum magnitude of trait change |
-
-All three properties are actively referenced in both personality and combat evolution methods.
+| `MaxBatchSize` | `CHARACTER_PERSONALITY_MAX_BATCH_SIZE` | `100` | Maximum characters allowed in batch operations |
+| `MaxConcurrencyRetries` | `CHARACTER_PERSONALITY_MAX_CONCURRENCY_RETRIES` | `3` | Retry attempts for optimistic concurrency conflicts |
+| `CombatStyleTransitionProbability` | `CHARACTER_PERSONALITY_COMBAT_STYLE_TRANSITION_PROBABILITY` | `0.3` | Base probability for combat style transitions |
+| `CombatDefeatStyleTransitionProbability` | `CHARACTER_PERSONALITY_COMBAT_DEFEAT_STYLE_TRANSITION_PROBABILITY` | `0.4` | Probability for style transitions after defeat |
+| `CombatVictoryBalancedTransitionProbability` | `CHARACTER_PERSONALITY_COMBAT_VICTORY_BALANCED_TRANSITION_PROBABILITY` | `0.2` | Probability for balanced->aggressive after victory |
+| `CombatRoleTransitionProbability` | `CHARACTER_PERSONALITY_COMBAT_ROLE_TRANSITION_PROBABILITY` | `0.4` | Base probability for combat role transitions |
+| `CombatDefensiveShiftProbability` | `CHARACTER_PERSONALITY_COMBAT_DEFENSIVE_SHIFT_PROBABILITY` | `0.5` | Probability for defensive shift after injury |
+| `CombatIntenseShiftMultiplier` | `CHARACTER_PERSONALITY_COMBAT_INTENSE_SHIFT_MULTIPLIER` | `1.5` | Multiplier for intense stat shifts (near-death) |
+| `CombatMildShiftMultiplier` | `CHARACTER_PERSONALITY_COMBAT_MILD_SHIFT_MULTIPLIER` | `0.5` | Multiplier for mild stat shifts (standard) |
+| `CombatMildestShiftMultiplier` | `CHARACTER_PERSONALITY_COMBAT_MILDEST_SHIFT_MULTIPLIER` | `0.3` | Multiplier for mildest stat shifts (minor) |
 
 ---
 
@@ -212,43 +220,6 @@ None. The service is feature-complete for its scope.
 
 ---
 
-## Bugs (Fix Immediately)
-
-No bugs identified.
-
-## Design Considerations (Requires Planning - T25 Type Safety)
-
-The following T25 (Internal Model Type Safety) violations require coordinated changes to POCOs, mappers, and storage serialization:
-
-1. **CombatPreferencesData enum fields**: `Style`, `PreferredRange`, and `GroupRole` use `string` instead of `CombatStyle`, `PreferredRange`, `GroupRole` enums. Causes `Enum.Parse` calls and string comparisons in `ApplyCombatEvolution`.
-
-2. **CharacterId fields**: Both `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`.
-
-3. **Cascading impacts**: Fixing these POCOs eliminates `.ToString()` on write, `Enum.Parse`/`Guid.Parse` on read, and string comparisons in evolution logic.
-
-## False Positives Removed
-
-- **T7 ApiException**: Service is a leaf node with no external client calls (only state store operations)
-- **NRT null checks**: NRTs provide compile-time safety
-
-### Previously Fixed
-
-- Removed "(TENET 5)" from source code comments
-- Changed LogInformation to LogDebug for operation entry logs
-- Added MaxBatchSize and MaxConcurrencyRetries configuration properties
-- Added combat evolution configuration properties
-- Removed duplicate InternalsVisibleTo attribute
-
-7. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `PersonalityData.Traits` uses `Dictionary<string, float>` with string keys representing trait axes instead of `Dictionary<TraitAxis, float>`.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Change dictionary key type to `TraitAxis`, update all consumers.
-
-8. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `GetAffectedTraits` returns `Dictionary<string, float>` with string keys instead of `Dictionary<TraitAxis, float>`.
-   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
-   - **Fix**: Change return type and dictionary entries to use `TraitAxis` enum keys.
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -259,6 +230,8 @@ The following T25 (Internal Model Type Safety) violations require coordinated ch
    - `GroupRole`: string → `GroupRole`
 
 2. **T25 (Trait key parsing)**: Personality trait data uses string dictionary keys parsed to `TraitAxis` enum via `Enum.Parse<TraitAxis>(trait)`. Should use `Dictionary<TraitAxis, double>` directly.
+
+3. **T25 (CharacterId fields)**: Both `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`.
 
 ### Intentional Quirks (Documented Behavior)
 

@@ -192,20 +192,6 @@ None. The service is feature-complete for its scope.
    - `ParticipationData.EventId`: string → `Guid`
    - `BackstoryData.CharacterId`: string → `Guid`
 
-## False Positives Removed
-
-The following items from the original audit were determined to be false positives:
-
-- **T7 ApiException catch clauses**: Service is a leaf node (no inter-service mesh calls). T7 ApiException only applies to mesh client calls.
-- **T19 on internal data model properties**: Internal classes don't require XML documentation per T19.
-- **T19 param/returns on interface methods**: Can use `<inheritdoc/>` for interface implementations.
-
-### Previously Fixed
-
-- NRT null checks NOT needed - NRTs provide compile-time safety per T12
-- Unused `_stateStoreFactory` and `_configuration` fields removed
-- Duplicate InternalsVisibleTo attributes removed from CharacterHistoryService.cs
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Backstory returns NotFound; GetLore (realm-history) returns empty list**: Unlike the parallel realm-history service which returns OK with empty elements, character-history returns NotFound for missing backstory. Different design decisions in similar services.

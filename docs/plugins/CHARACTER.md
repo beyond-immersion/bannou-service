@@ -84,12 +84,10 @@ This plugin does not consume external events.
 | `DefaultPageSize` | `CHARACTER_DEFAULT_PAGE_SIZE` | `20` | Default page size when not specified |
 | `RealmIndexUpdateMaxRetries` | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for realm index |
 | `CleanupGracePeriodDays` | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | `30` | Days at zero references before cleanup eligible |
-
-### Unused Configuration Properties
-
-| Property | Env Var | Default | Notes |
-|----------|---------|---------|-------|
-| `CharacterRetentionDays` | `CHARACTER_RETENTION_DAYS` | `90` | Defined but never referenced in service code |
+| `CompressionMaxBackstoryPoints` | `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | `5` | Max backstory points in compression summary |
+| `CompressionMaxLifeEvents` | `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | `10` | Max life events in compression summary |
+| `PersonalityTraitThreshold` | `CHARACTER_PERSONALITY_TRAIT_THRESHOLD` | `0.3` | Threshold for trait classification (>threshold = positive, <-threshold = negative) |
+| `CharacterRetentionDays` | `CHARACTER_RETENTION_DAYS` | `90` | Days to retain deleted characters (stub for unimplemented purge feature) |
 
 ---
 
@@ -210,7 +208,7 @@ Character Key Architecture (Realm-Partitioned)
 ## Stubs & Unimplemented Features
 
 1. **Incomplete reference counting**: `CheckCharacterReferences` only checks relationships. Does not check character encounters, history events, contracts, documents, or AI agent references.
-2. **Dead `CharacterRetentionDays` config**: Defined but never referenced in service code. (See Tenet Violations #2.)
+2. **`CharacterRetentionDays` config placeholder**: Defined for future retention/purge feature but not yet referenced in service code.
 
 ---
 
@@ -229,22 +227,6 @@ Character Key Architecture (Realm-Partitioned)
 
 No bugs identified.
 
-### False Positives Removed
-
-The following items from the original audit were determined to be false positives:
-
-- **T21 on CharacterRetentionDays**: Stub config for unimplemented retention/purge feature - acceptable scaffolding documented in Stubs section
-- **T19 on public endpoint methods**: Implement `ICharacterService` interface - use `<inheritdoc/>` if needed; generated interface has documentation
-- **T19 on helper methods**: Private/internal methods do not require XML documentation per T19
-
-### Informational Notes (Not Violations)
-
-8. **Status field uses .ToString() in event models (T25 boundary acceptable)** -- `Status = character.Status.ToString()` is acceptable as an event boundary conversion per T25.
-
-9. **EventId type inconsistency** -- Some events use `Guid EventId`, others use `string EventId`. This is a schema consistency issue, not a code violation.
-
-10. **Hardcoded "balanced personality" fallback** -- The string `"balanced personality"` in `GeneratePersonalitySummary` is a display string, not a tunable threshold. Acceptable as-is.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Realm-partitioned keys**: Character data keys include realmId (`character:{realmId}:{characterId}`). Enables efficient "list by realm" queries without full table scans. Requires global index for ID-only lookups.
@@ -261,6 +243,12 @@ The following items from the original audit were determined to be false positive
 
 7. **Family tree type codes as strings**: Relationship type categorization uses string equality (`typeCode == "PARENT"`) rather than enum comparison. Enables extensibility but loses compile-time safety.
 
+8. **Status field uses .ToString() in event models**: `Status = character.Status.ToString()` is acceptable as an event boundary conversion per T25.
+
+9. **"balanced personality" fallback is a display string**: The string `"balanced personality"` in `GeneratePersonalitySummary` is a display string, not a tunable threshold.
+
+10. **CharacterRetentionDays is stub config**: Defined but not referenced - acceptable scaffolding for unimplemented retention/purge feature.
+
 ### Design Considerations (Requires Planning)
 
 1. **No distributed lock on character update (T9)**: `UpdateCharacterAsync` reads a character, modifies it, and saves it without concurrency protection. Two simultaneous updates result in last-writer-wins. Fix requires: inject `IDistributedLockProvider`, add locking around read-modify-write, or use `GetWithETagAsync`/`TrySaveAsync` with retry-on-conflict.
@@ -269,26 +257,20 @@ The following items from the original audit were determined to be false positive
 
 3. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 
-2. **Global index double-write**: Both Redis (realm index) and MySQL (global index) are updated on create/delete. Extra write for resilience across restarts but adds complexity.
+4. **Global index double-write**: Both Redis (realm index) and MySQL (global index) are updated on create/delete. Extra write for resilience across restarts but adds complexity.
 
-3. **Reference counting only checks relationships**: `CheckCharacterReferences` queries only the Relationship service. Characters referenced by encounters, history events, contracts, or AI agents are not counted, potentially allowing premature cleanup.
+5. **Reference counting only checks relationships**: `CheckCharacterReferences` queries only the Relationship service. Characters referenced by encounters, history events, contracts, or AI agents are not counted, potentially allowing premature cleanup.
 
-4. **No optimistic concurrency on character update**: Two simultaneous updates to the same character will both succeed. Last-writer-wins with no version checking or conflict detection.
+6. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
 
-5. **Compression personality summary threshold**: The threshold logic for personality summaries (>0.3 = positive label, <-0.3 = negative label) is hardcoded. Values between -0.3 and +0.3 produce no summary text for that trait.
+7. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
 
-6. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` (lines 893-910) looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
+8. **INCARNATION tracking is directional**: Only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
 
-7. **Family tree silently skips unknown relationship types**: Line 926-929 - if a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
+9. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
 
-8. **INCARNATION tracking is directional**: Line 1013 only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
+10. **"orphaned" label ignores parent death status**: Adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died.
 
-9. **Multiple spouses = last one wins**: Line 1001 uses simple assignment `familyTree.Spouse =`. If a character has multiple spouse relationships, only the last one processed appears in the response.
+11. **"single parent household" is literal**: Adds this label when exactly one parent exists. Doesn't consider whether two parents were expected.
 
-10. **"orphaned" label ignores parent death status**: Line 1082-1083 adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died. A character whose parents died is not labeled orphaned.
-
-11. **"single parent household" is literal**: Line 1084-1085 adds this label when exactly one parent exists. Doesn't consider whether two parents were expected. A character intentionally created with one parent still gets this label.
-
-12. **Family tree character lookups are sequential**: Line 932 calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
-
-13. **"balanced personality" fallback**: Lines 1059-1060 - if ALL traits are in neutral zone (-0.3 to +0.3), returns literal string "balanced personality" rather than null or empty.
+12. **Family tree character lookups are sequential**: Calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.

@@ -426,6 +426,10 @@ Memory Relevance Scoring (Keyword-Based)
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **CompilationContext is thread-unsafe**: Each compilation creates a new `CompilationContext` instance. The class explicitly documents "Thread-unsafe: create a new instance for each compilation." Sharing instances across concurrent compilations would corrupt variable tables and bytecode output.
@@ -443,6 +447,16 @@ Memory Relevance Scoring (Keyword-Based)
 7. **Constant pool pre-seeds 0, 1, -1**: `ConstantPoolBuilder.AddCommonConstants()` pre-allocates indices 0-2 for common numeric literals. User constants start at index 3. The pre-seeded constants count against the `CompilerMaxConstants` limit (256 default).
 
 8. **Fallback chain default**: If no fallback chain is set for a `BehaviorModelType`, `GetFallbackChain` returns `["default"]`. This means any model registered with variant "default" serves as the universal fallback for that type.
+
+9. **ValueTask.FromResult() for synchronous hot paths**: `GoapPlanner.PlanAsync`, `ValidatePlanAsync`, cognition handlers (FilterAttention, AssessSignificance, EvaluateGoalImpact), all CoreEmitters, and `BehaviorLayerBase` use `ValueTask.FromResult()` without `async/await`. This is intentional and NOT a T23 violation - T23 covers `Task`, not `ValueTask`. `ValueTask` is designed for performance-critical hot paths to avoid heap allocation when results are available synchronously.
+
+10. **IHttpClientFactory for presigned URLs**: `BehaviorService.cs` uses `IHttpClientFactory` to upload/download bytecode via presigned MinIO/S3 URLs. This is NOT a T4 violation - T4 prohibits direct Redis/RabbitMQ/HTTP for service-to-service calls. Presigned URLs are external storage endpoints.
+
+11. **Static CognitionConstants mutable state**: `CognitionConstants` uses static mutable state with first-call-wins initialization. This is intentional for performance - within a single process, all service instances share the same environment configuration. The thread-unsafe `Reset()` method is test-only.
+
+12. **In-memory runtime state**: `EntityStateRegistry` and `BehaviorModelCache` use in-memory `ConcurrentDictionary` as runtime state stores. This is intentional - these are per-process behavior execution components, not service-level persistent state.
+
+13. **SemaphoreSlim.Wait() in FileLocalizationProvider**: `YamlFileLocalizationSource.EnsureLocaleLoaded` uses synchronous `SemaphoreSlim.Wait()` for hot-path performance. This is NOT a T23 violation - T23 specifically targets `Task`, not semaphores.
 
 ### Design Considerations (Requires Planning)
 
@@ -482,38 +496,3 @@ Memory Relevance Scoring (Keyword-Based)
 
 18. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
 
----
-
-## Tenet Violations (Fix Immediately)
-
-*No violations remaining. Previous violations have been addressed:*
-- *#1-4: Fixed (tenet numbers removed, null-forgiving operators replaced, StateStoreDefinitions used)*
-- *#7-9: Fixed (compiler-satisfaction comments added, XML docs completed)*
-- *#13: Incorrect (XML documentation already exists)*
-- *#5-6, #10-14: Reclassified as design considerations (see Design Considerations section)*
-
-### Design Consideration: ValueTask.FromResult() for Synchronous Hot Paths
-
-The following classes use `ValueTask.FromResult()` without `async/await` in methods with `Async` naming convention:
-- `GoapPlanner.PlanAsync` and `ValidatePlanAsync`
-- `FilterAttentionHandler`, `AssessSignificanceHandler`, `EvaluateGoalImpactHandler`
-- All CoreEmitters (Attention, Movement, Vocalization, Generic, Interaction, Combat, Expression)
-- `BehaviorLayerBase`
-
-**This is intentional and NOT a T23 violation.** T23 states "All methods returning `Task` or `Task<T>` MUST use the `async` keyword" - it does not mention `ValueTask`. `ValueTask` is specifically designed for performance-critical hot paths where you want to avoid heap allocation when the result is available synchronously. The GOAP planner and cognition handlers are CPU-bound synchronous computations that execute frequently during NPC behavior loops. Adding `async/await` would add state machine overhead without any benefit.
-
-### Design Consideration: IHttpClientFactory for Presigned URLs
-
-`BehaviorService.cs` uses `IHttpClientFactory` to upload/download bytecode via presigned MinIO/S3 URLs. This is NOT a T4 violation - T4 prohibits direct Redis/RabbitMQ/HTTP for service-to-service calls. Presigned URLs are external storage endpoints, and the pattern is standard for asset services that want to avoid routing large binary data through the service mesh.
-
-### Design Consideration: Static CognitionConstants
-
-`CognitionConstants` uses static mutable state with first-call-wins initialization. This is intentional for performance - within a single process, all service instances share the same environment configuration. The thread-unsafe `Reset()` method is test-only.
-
-### Design Consideration: In-Memory Runtime State
-
-`EntityStateRegistry` and `BehaviorModelCache` use in-memory `ConcurrentDictionary` as runtime state stores. This is intentional - these are per-process behavior execution components, not service-level persistent state. The behavior system is designed to run co-located with the actor that owns the entities.
-
-### Design Consideration: SemaphoreSlim.Wait() in FileLocalizationProvider
-
-`YamlFileLocalizationSource.EnsureLocaleLoaded` uses synchronous `SemaphoreSlim.Wait()` for hot-path performance. This is NOT a T23 violation - T23 specifically targets `Task`, not semaphores. The synchronous design is documented and intentional for minimizing latency on frequently-accessed locale data.

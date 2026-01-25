@@ -10,3 +10,49 @@
 
 ## Cleanup Items
 
+### lib-asset
+
+- [ ] **T25**: `BundleMetadata.BundleId`, `SourceBundleReferenceInternal.BundleId`, and related bundle model ID fields store GUIDs as strings requiring `Guid.Parse()` at usage sites. **Decision**: Change internal POCOs to use `Guid` type.
+
+- [ ] **T25**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). **Decision**: Define an `AssetProcessingErrorCode` enum in schema.
+
+### lib-auth
+
+- [ ] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type.
+
+### lib-character-encounter
+
+- [ ] **T25**: Multiple internal models store enums as strings requiring `Enum.Parse`: `EncounterData.Outcome`, `PerspectiveData.EmotionalImpact`, `EncounterTypeData.DefaultEmotionalImpact`. **Decision**: Change POCOs to use enum types directly.
+
+- [ ] **T21/T25**: `MemoryDecayMode` configuration property is string representing discrete values ("lazy", "scheduled"). **Decision**: Define `MemoryDecayMode` enum in schema.
+
+### lib-character-history
+
+- [ ] **T25**: Multiple internal POCOs store enums as strings requiring `Enum.Parse`: `EventParticipationData.EventCategory`, `EventParticipationData.Role`, `BackstoryElementData.ElementType`. **Decision**: Change POCOs to use enum types directly.
+
+- [ ] **T25**: Multiple internal POCOs store GUIDs as strings: `ParticipationData.ParticipationId`, `ParticipationData.CharacterId`, `ParticipationData.EventId`, `BackstoryData.CharacterId`. **Decision**: Change to `Guid` type.
+
+### lib-character-personality
+
+- [ ] **T25**: `CombatPreferencesModel` stores enums as strings: `Style`, `PreferredRange`, `GroupRole`. **Decision**: Change POCOs to use enum types directly.
+
+- [ ] **T25**: `PersonalityData.Traits` uses `Dictionary<string, float>` with string keys for trait axes. **Decision**: Change to `Dictionary<TraitAxis, float>`.
+
+- [ ] **T25**: Both `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`. **Decision**: Change to `Guid` type.
+
+### lib-contract
+
+- [ ] **T21/T25**: `DefaultEnforcementMode` config uses string requiring runtime parsing. **Decision**: Define `EnforcementMode` enum in schema.
+
+- [ ] **T25**: `PartyModel.Role`, `MilestoneModel.Role`, `AssetReferenceModel.AssetType` store enums as strings. **Decision**: Change POCOs to use enum types directly.
+
+### lib-currency
+
+- [ ] **T25**: Multiple internal models store enums as strings requiring `Enum.TryParse`: `CurrencyDefinitionModel.Scope`, `CurrencyDefinitionModel.Precision`, `CurrencyDefinitionModel.CapOverflowBehavior`, `CurrencyDefinitionModel.AutogainMode`, `CurrencyDefinitionModel.ExpirationPolicy`, `CurrencyDefinitionModel.LinkageMode`, `WalletModel.OwnerType`, `TransactionRecordModel.TransactionType`. **Decision**: Change POCOs to use enum types directly.
+
+- [ ] **T25**: Internal models use `string` for GUID fields: `CurrencyDefinitionModel.DefinitionId`, `WalletModel.WalletId`, `BalanceModel` ID fields, `TransactionRecordModel.TransactionId`, `HoldModel.HoldId`, etc. **Decision**: Change to `Guid` type.
+
+### lib-escrow
+
+- [ ] **T25**: `AssetFailureData.AssetType` is stored as string requiring `Enum.TryParse<AssetType>()`. **Decision**: Change POCO to use `AssetType` enum directly.
+

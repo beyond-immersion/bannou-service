@@ -109,6 +109,9 @@ This plugin does not consume external events. The events schema explicitly decla
 | `PreboundApiBatchSize` | `CONTRACT_PREBOUND_API_BATCH_SIZE` | `10` | APIs executed concurrently per batch (sequential between batches) |
 | `PreboundApiTimeoutMs` | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | `30000` | Per-API timeout in milliseconds (30s default) |
 | `ClauseValidationCacheStalenessSeconds` | `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | `15` | How old a cached validation result can be before revalidation |
+| `ContractLockTimeoutSeconds` | `CONTRACT_LOCK_TIMEOUT_SECONDS` | `60` | Lock timeout for contract-level distributed locks |
+| `IndexLockTimeoutSeconds` | `CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS` | `15` | Lock timeout for index update distributed locks |
+| `IdempotencyTtlSeconds` | `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | `86400` | TTL for idempotency key storage (24 hours) |
 
 ---
 
@@ -438,28 +441,6 @@ Prebound API Batched Execution
    - `PartyModel.Role`: string → appropriate Role enum
    - `MilestoneModel.Role`: string → appropriate Role enum
    - `AssetReferenceModel.AssetType` (in ContractServiceEscrowIntegration): string → `AssetType`
-
-### Tenet Violations Requiring Planning
-
-1. **T21 - Dead ClauseValidationCacheStalenessSeconds** - Config is referenced but cache is on Scoped service (per-request), providing no cross-request benefit. Either remove config or make cache distributed.
-
-2. **T5 - Manually defined event classes** - Six event classes in ContractServiceEscrowIntegration.cs should be schema-generated.
-
-### False Positives Removed
-
-- **T19 on private helper methods**: Private methods do not require XML documentation per T19
-- **T9 ConcurrentDictionary on Scoped service**: Listed in Design Considerations since it's about architecture, not a code bug
-- **T25/T14 enum-to-string in index keys**: Standard pattern for index construction, not a bug - documented in Design Considerations
-
-### Previously Fixed
-
-- NRT null checks NOT needed - NRTs provide compile-time safety
-- Added ContractLockTimeoutSeconds and IndexLockTimeoutSeconds to configuration
-- Added IdempotencyTtlSeconds to configuration
-- Replaced null-forgiving operators with safe patterns
-- Changed LogInformation to LogDebug for query/read operations
-- Fixed silent catch-all in GetCustomTermBool - now catches specific FormatException and InvalidCastException
-- Fixed T7 ApiException distinction - added ApiException catch before generic Exception in ExecutePreboundApiInternalAsync
 
 ### Intentional Quirks (Documented Behavior)
 

@@ -325,38 +325,36 @@ Client                    Asset Service                     MinIO Storage
 
 2. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define an `AssetProcessingErrorCode` enum for compile-time validation.
 
-### Design Considerations (Requires Planning)
+### Intentional Quirks (Documented Behavior)
 
 1. **AssetId is SHA-256 hash string (intentional)**: `InternalAssetRecord.AssetId` and `AssetProcessingContext.AssetId` are SHA-256 content hashes stored as hex strings. This is NOT a T25 violation - these are legitimately strings (hashes), not GUIDs.
 
-2. **Interface async contract vs sync implementation** - `TextureProcessor`, `ModelProcessor`, and stub paths use `await Task.CompletedTask` to satisfy async interfaces. Consider `ValueTask` or separate sync/async interface paths if this becomes a performance concern.
+2. **Dual S3 clients**: Both `IMinioClient` and `IAmazonS3` are registered because the MinIO .NET SDK has a bug where pre-signed PUT URLs include Content-Type in the signature, causing uploads with different Content-Type headers to fail with 403. The AWS SDK is used exclusively for pre-signed URL generation while MinIO SDK handles bucket operations. See: https://github.com/minio/minio-dotnet/issues/1150
 
-3. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
+3. **`application/octet-stream` as model type**: The content type registry includes `application/octet-stream` in the 3D model list because `.glb` files are commonly served with this generic MIME type. This means any `application/octet-stream` upload will match the model processor pool, even if it's not actually a 3D model.
 
-### Intentional Quirks (Documented Behavior)
+4. **Self-consuming event pattern**: The service publishes `asset.metabundle.job.queued` and subscribes to it in the same service. This is intentional for load distribution: in multi-instance deployments, the instance that queues the job is not necessarily the one that processes it (any instance can pick up the event).
 
-1. **Dual S3 clients**: Both `IMinioClient` and `IAmazonS3` are registered because the MinIO .NET SDK has a bug where pre-signed PUT URLs include Content-Type in the signature, causing uploads with different Content-Type headers to fail with 403. The AWS SDK is used exclusively for pre-signed URL generation while MinIO SDK handles bucket operations. See: https://github.com/minio/minio-dotnet/issues/1150
+5. **Deterministic asset IDs from SHA-256**: Re-uploading identical content (same bytes) produces the same asset ID regardless of filename, content type, or tags. The second upload will overwrite the first asset's metadata but the storage object remains identical.
 
-2. **`application/octet-stream` as model type**: The content type registry includes `application/octet-stream` in the 3D model list because `.glb` files are commonly served with this generic MIME type. This means any `application/octet-stream` upload will match the model processor pool, even if it's not actually a 3D model.
+6. **Webhook validation is optional**: If `MinioWebhookSecret` is not set, all webhook requests are accepted without authentication. This simplifies development but requires network-level isolation in production.
 
-3. **Self-consuming event pattern**: The service publishes `asset.metabundle.job.queued` and subscribes to it in the same service. This is intentional for load distribution: in multi-instance deployments, the instance that queues the job is not necessarily the one that processes it (any instance can pick up the event).
+7. **MinIO startup retry with exponential backoff cap**: The plugin waits up to 30 retries with delays capped at `5 × retryDelayMs` (10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start.
 
-4. **Deterministic asset IDs from SHA-256**: Re-uploading identical content (same bytes) produces the same asset ID regardless of filename, content type, or tags. The second upload will overwrite the first asset's metadata but the storage object remains identical.
-
-5. **Webhook validation is optional**: If `MinioWebhookSecret` is not set, all webhook requests are accepted without authentication. This simplifies development but requires network-level isolation in production.
-
-6. **MinIO startup retry with exponential backoff cap**: The plugin waits up to 30 retries with delays capped at `5 × retryDelayMs` (10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start.
-
-7. **CA2000 pragma suppression**: The MinIO connectivity check in `AssetServicePlugin` suppresses CA2000 (dispose warning) because the MinIO client's fluent builder API returns `this` from `Build()`, making the same object both builder and built client. The `using` on `Build()` result correctly disposes it.
+8. **CA2000 pragma suppression**: The MinIO connectivity check in `AssetServicePlugin` suppresses CA2000 (dispose warning) because the MinIO client's fluent builder API returns `this` from `Build()`, making the same object both builder and built client. The `using` on `Build()` result correctly disposes it.
 
 ### Design Considerations (Requires Planning)
 
-1. **No orphaned index cleanup**: If a bundle is deleted but the per-asset reverse indexes (`{realm}:asset-bundles:{assetId}`) are not updated (e.g., due to crash mid-operation), stale bundle IDs will persist in those indexes. `ResolveBundles` will attempt to include deleted bundles in resolution results until it encounters a 404 on the bundle metadata lookup. A background reconciliation task or transactional index updates would address this.
+1. **Interface async contract vs sync implementation** - `TextureProcessor`, `ModelProcessor`, and stub paths use `await Task.CompletedTask` to satisfy async interfaces. Consider `ValueTask` or separate sync/async interface paths if this becomes a performance concern.
 
-2. **Optimistic concurrency on shared indexes**: Type/realm/tag indexes use ETag-based optimistic retry with configurable attempts. Under high concurrent upload rates targeting the same index key, all retries could exhaust, silently dropping the asset from that index. The failure is logged but not surfaced to the caller (upload still succeeds).
+2. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
 
-3. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
+3. **No orphaned index cleanup**: If a bundle is deleted but the per-asset reverse indexes (`{realm}:asset-bundles:{assetId}`) are not updated (e.g., due to crash mid-operation), stale bundle IDs will persist in those indexes. `ResolveBundles` will attempt to include deleted bundles in resolution results until it encounters a 404 on the bundle metadata lookup. A background reconciliation task or transactional index updates would address this.
 
-4. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
+4. **Optimistic concurrency on shared indexes**: Type/realm/tag indexes use ETag-based optimistic retry with configurable attempts. Under high concurrent upload rates targeting the same index key, all retries could exhaust, silently dropping the asset from that index. The failure is logged but not surfaced to the caller (upload still succeeds).
 
-5. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
+5. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
+
+6. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
+
+7. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.

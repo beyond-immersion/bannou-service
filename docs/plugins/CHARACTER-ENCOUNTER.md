@@ -306,39 +306,6 @@ Index Architecture
 
 ---
 
-## Bugs (Fix Immediately)
-
-1. **T25 (Internal POCO uses string for enum)**: Multiple internal models store enums as strings requiring `Enum.Parse`:
-   - `EncounterData.Outcome`: string → `EncounterOutcome`
-   - `PerspectiveData.EmotionalImpact`: string → `EmotionalImpact`
-   - `EncounterTypeData.DefaultEmotionalImpact`: string → `EmotionalImpact`
-
-2. **T21/T25 (String config should be enum)**: `MemoryDecayMode` configuration property is string representing discrete values ("lazy", "scheduled"). Should be an enum.
-
-## Design Considerations (Requires Planning)
-
-(None remaining after bug identification above.)
-
-## False Positives Removed
-
-The following items from the original audit were determined to be false positives:
-
-- **T7 ApiException catch clauses**: Service is a leaf node (no inter-service mesh calls via `ICharacterClient`, `IRealmClient`, etc.). T7 ApiException only applies to mesh client calls, not state store operations.
-- **T9 method-local Dictionary**: Dictionary at line 893 is purely method-scoped, not a field-level cache. T9 applies to shared caches that need thread safety.
-- **T19 on internal classes**: `EncounterTypeData`, `EncounterData`, `PerspectiveData`, etc. are internal. T19 only applies to public members.
-- **T19 param/returns on interface methods**: Public endpoint methods implement `ICharacterEncounterService` interface. Can use `<inheritdoc/>` if needed.
-- **T5 anonymous objects in TryPublishErrorAsync**: The `details` parameter is diagnostic metadata (`object?`), not a published event schema. This is infrastructure tracing, not service events.
-- **T21 ServerSalt config**: Stub config for future GUID salting feature - acceptable scaffolding documented in Stubs section.
-
-### Previously Fixed
-
-- NRT null checks NOT needed - NRTs provide compile-time safety per T12
-- `etag ?? string.Empty` is intentional optimistic concurrency pattern (empty etag = create new, non-empty = version check)
-- ETag-based concurrency on index operations
-- Duplicate InternalsVisibleTo removed from CharacterEncounterService.cs
-
----
-
 ## Stubs & Unimplemented Features
 
 1. **Scheduled decay mode**: The `MemoryDecayMode` configuration accepts "scheduled" but only "lazy" mode is implemented. No background service exists to periodically process decay. The `DecayMemories` admin endpoint partially fills this gap but must be called externally.
@@ -360,6 +327,15 @@ The following items from the original audit were determined to be false positive
 ---
 
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+1. **T25 (Internal POCO uses string for enum)**: Multiple internal models store enums as strings requiring `Enum.Parse`:
+   - `EncounterData.Outcome`: string → `EncounterOutcome`
+   - `PerspectiveData.EmotionalImpact`: string → `EmotionalImpact`
+   - `EncounterTypeData.DefaultEmotionalImpact`: string → `EmotionalImpact`
+
+2. **T21/T25 (String config should be enum)**: `MemoryDecayMode` configuration property is string representing discrete values ("lazy", "scheduled"). Should be an enum.
 
 ### Intentional Quirks (Documented Behavior)
 

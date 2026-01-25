@@ -82,6 +82,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `MockProviders` | `AUTH_MOCK_PROVIDERS` | false | Enable mock OAuth for testing (bypasses real provider calls) |
 | `MockDiscordId` | `AUTH_MOCK_DISCORD_ID` | - | Mock Discord user ID for testing |
 | `MockGoogleId` | `AUTH_MOCK_GOOGLE_ID` | - | Mock Google user ID for testing |
+| `MockTwitchId` | `AUTH_MOCK_TWITCH_ID` | - | Mock Twitch user ID for testing |
 | `MockSteamId` | `AUTH_MOCK_STEAM_ID` | - | Mock Steam ID for testing |
 | `DiscordClientId` | `AUTH_DISCORD_CLIENT_ID` | null | Discord OAuth application client ID |
 | `DiscordClientSecret` | `AUTH_DISCORD_CLIENT_SECRET` | null | Discord OAuth application secret |
@@ -192,28 +193,13 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
 
-## Bugs (Fix Immediately)
+## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
 
 1. **T25 (Internal POCO uses string for Guid)**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)` to convert it (SessionService.cs:85, 432; AuthService.cs:1287, 1338, 1364, 1390; TokenService.cs:293). Should use `Guid` type directly.
 
-## Design Considerations (Requires Planning)
-
-1. **`SessionDataModel.Email` empty string default** - Email uses `= string.Empty` which hides null-source bugs. OAuth/Steam accounts legitimately have no email. Should be `string?` with explicit null handling in consuming code (session creation, login responses). Requires auditing all email usage patterns in auth flows.
-
-2. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= ""` default. Email is always populated from account (which may be null for OAuth). Should be nullable with validation before storing. Requires updating `RequestPasswordResetAsync` to handle null case.
-
-3. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock). Should be wired through when email integration is added. Low priority until email implementation.
-
-### False Positives Removed
-
-The following items from the original audit were determined to be false positives:
-
-- **T19 on PasswordResetData**: Internal class - T19 only applies to public API members
-- **T19 on AuthServicePlugin properties**: Override base class members - use `<inheritdoc/>` if needed
-- **T19 on AuthController.InitOAuth**: In Generated/ folder - cannot edit generated code
-- **OAuthProviderService DTOs with string.Empty**: Acceptable defensive coding for external service responses with existing post-deserialization validation
-
-## Known Quirks & Caveats
+### Intentional Quirks (Documented Behavior)
 
 1. **JWT config in AppConfiguration, not AuthServiceConfiguration**: JWT settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) live in the app-wide `AppConfiguration` singleton rather than `AuthServiceConfiguration`. This is intentional — nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints. JWT is cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config. `TokenService`, `AuthService`, and `OAuthProviderService` all receive `AppConfiguration` via constructor injection.
 
@@ -228,3 +214,13 @@ The following items from the original audit were determined to be false positive
 6. **`RefreshTokenAsync` accepts but intentionally ignores the JWT parameter**: The `jwt` parameter is generated from the schema's `x-permissions: [{ role: user }]` declaration but is intentionally unused. Refresh tokens are designed to work when the access token has expired - validating the JWT would defeat the purpose of the refresh flow. The refresh token alone is the credential for obtaining a new access token.
 
 7. **Hardcoded device info for all sessions**: `SessionService.GetAccountSessionsAsync` populates `DeviceInfo` with `DeviceType = Desktop`, `Platform = UNKNOWN_PLATFORM`, `Browser = UNKNOWN_BROWSER` for every session. No device information is captured during authentication flows. Future work: capture user agent / platform during login and store in `SessionDataModel`, enabling device-specific JWT binding and accurate session reporting.
+
+8. **False positives from original audit**: T19 on PasswordResetData (internal class), T19 on AuthServicePlugin properties (override base class), T19 on AuthController.InitOAuth (generated code), and OAuthProviderService DTOs with string.Empty (defensive coding for external service responses with existing validation) - all confirmed as non-issues.
+
+### Design Considerations (Requires Planning)
+
+1. **`SessionDataModel.Email` empty string default** - Email uses `= string.Empty` which hides null-source bugs. OAuth/Steam accounts legitimately have no email. Should be `string?` with explicit null handling in consuming code (session creation, login responses). Requires auditing all email usage patterns in auth flows.
+
+2. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= ""` default. Email is always populated from account (which may be null for OAuth). Should be nullable with validation before storing. Requires updating `RequestPasswordResetAsync` to handle null case.
+
+3. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock). Should be wired through when email integration is added. Low priority until email implementation.

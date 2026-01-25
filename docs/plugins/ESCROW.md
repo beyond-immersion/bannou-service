@@ -116,7 +116,7 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<EscrowService>` | Scoped | Structured logging |
-| `EscrowServiceConfiguration` | Singleton | All 12 config properties |
+| `EscrowServiceConfiguration` | Singleton | All 15 config properties |
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access (7 stores) |
 | `IMessageBus` | Scoped | Event publishing and error events |
 
@@ -384,41 +384,13 @@ Dispute Resolution
 
 ## Known Quirks & Caveats
 
-### Bugs (Fix Immediately)
+### Bugs
 
-1. **T25 (Internal POCO uses string for enum)**: `AssetFailureData.AssetType` is stored as string requiring `Enum.TryParse<AssetType>()`. Model should use `AssetType` enum directly.
+*T25 enum-as-string violation has been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
 
-### False Positives Removed
+No other bugs identified.
 
-The following items were identified as violations but do not apply:
-
-1. **T6 (Constructor null checks)**: NRT provides compile-time safety. Per T12, adding runtime null checks for NRT-protected parameters is unnecessary.
-
-2. **T9 (Static ValidTransitions dictionary)**: Compile-time constant, read-only, never modified at runtime. T9 applies to writable caches, not static configuration.
-
-3. **T7 (ApiException catch blocks)**: Service only uses state stores, which don't throw ApiException. T7 applies to inter-service mesh calls.
-
-4. **T10 (Hardcoded "escrow" service ID)**: This is the standard pattern across ALL services - the service ID in `TryPublishErrorAsync` is the service name for error routing, not a configurable value.
-
-5. **T25 (`.ToString()` on enums in event models)**: T25 explicitly allows `.ToString()` at event boundaries for cross-language compatibility. Event schemas intentionally use string types for these fields.
-
-6. **T25 (`Enum.TryParse` in validation)**: Parsing from API model (request body) IS a system boundary. This is acceptable per T25.
-
-### Previously Fixed
-
-1. **T21**: Configuration properties wired up (`DefaultTimeout`, `MaxParties`, `TokenLength`, `IdempotencyTtlHours`, `MaxConcurrencyRetries`, `DefaultListLimit`).
-
-2. **T21**: Hardcoded tunables replaced with configuration properties.
-
-3. **T9**: PartyPendingStore operations use ETag-based optimistic concurrency with retry loops.
-
-4. **CLAUDE.md `?? string.Empty`**: Added explanatory comments for compiler satisfaction pattern.
-
-5. **T3**: Event consumer registration implemented with handlers for `contract.fulfilled` and `contract.terminated`.
-
----
-
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Consent from Funded state transitions to Pending_consent**: The first release consent on a Funded escrow transitions to `Pending_consent` even if consent threshold is not yet met. This is deliberate state-tracking to distinguish "funded but no consents" from "funded with partial consents".
 
@@ -436,7 +408,7 @@ The following items were identified as violations but do not apply:
 
 8. **Arbiter does not need consent to resolve**: The arbiter bypasses the normal consent flow entirely. Resolution is a unilateral action requiring only the arbiter role.
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **POCO string defaults (`= string.Empty`)**: Internal POCO properties use `= string.Empty` as default to satisfy NRT. Consider making these nullable (`string?`) or adding validation at assignment time for fields that should always have values (e.g., `PartyType`, `CreatedByType`).
 
