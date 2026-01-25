@@ -113,10 +113,10 @@ components:
           type: string
           description: MIME content type
         assetType:
-          $ref: '#/components/schemas/AssetTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of asset being uploaded
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/Realm'
           description: Game realm the asset belongs to
         isMultipart:
           type: boolean
@@ -284,10 +284,10 @@ components:
           nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
         assetType:
-          $ref: '#/components/schemas/AssetTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of the asset
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/Realm'
           description: Game realm the asset belongs to
 
     # ==========================================================================
@@ -328,7 +328,7 @@ components:
           type: integer
           description: Number of assets in the bundle
         compression:
-          $ref: '#/components/schemas/CompressionTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/CompressionType'
           description: Compression algorithm used for the bundle
         owner:
           type: string
@@ -360,7 +360,7 @@ components:
           type: string
           description: Metabundle version string
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/Realm'
           description: Game realm for this metabundle
         sourceBundleCount:
           type: integer
@@ -432,7 +432,7 @@ components:
           type: string
           description: Account ID or service name that performed the update
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/Realm'
           description: Game realm of the bundle
 
     BundleDeletedEvent:
@@ -465,7 +465,7 @@ components:
           type: string
           description: Account ID or service name that performed the deletion
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/Realm'
           description: Game realm of the bundle
 
     BundleRestoredEvent:
@@ -493,35 +493,14 @@ components:
           type: string
           description: Account ID or service name that performed the restoration
         realm:
-          $ref: '#/components/schemas/RealmEnum'
+          $ref: 'asset-api.yaml#/components/schemas/Realm'
           description: Game realm of the bundle
 
     # ==========================================================================
     # Supporting Types
+    # NOTE: AssetType, Realm, and CompressionType are defined in asset-api.yaml
+    # and referenced via $ref per IMPLEMENTATION TENETS (T26 schema hierarchy)
     # ==========================================================================
-
-    AssetTypeEnum:
-      type: string
-      description: Category of asset in the system
-      enum:
-        - texture
-        - model
-        - audio
-        - behavior
-        - bundle
-        - prefab
-        - other
-      nullable: true
-
-    RealmEnum:
-      type: string
-      description: Game realm the asset is associated with
-      enum:
-        - omega
-        - arcadia
-        - fantasia
-        - shared
-      nullable: true
 
     ProcessingTypeEnum:
       type: string
@@ -533,15 +512,6 @@ components:
         - validation
         - behavior_compile
       description: Type of processing being performed
-
-    CompressionTypeEnum:
-      type: string
-      description: Compression algorithm used for bundle packaging
-      enum:
-        - lz4
-        - lzma
-        - none
-      nullable: true
 
     ProcessingOutput:
       type: object
