@@ -32,9 +32,10 @@ public partial class RelationshipService : IRelationshipService
     /// Initializes a new instance of the RelationshipService.
     /// </summary>
     /// <param name="stateStoreFactory">Factory for getting state stores.</param>
+    /// <param name="messageBus">Message bus for event publishing.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="configuration">Service configuration.</param>
-    /// <param name="errorEventEmitter">Error event emitter for publishing error events.</param>
+    /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     public RelationshipService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

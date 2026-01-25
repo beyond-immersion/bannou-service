@@ -160,7 +160,7 @@ For each plugin deep dive document:
 | Analytics | DONE | Fixed T10 logging (ingestion → Debug, validation → Debug). Added comment for `?? string.Empty` compiler satisfaction. Removed false positives (T9 local dict protected by lock, T19 private methods). | PHASE2: No actionable bugs, remaining: POCO string.Empty defaults (data modeling convention) |
 | Asset | DONE | Fixed T21 hardcoded constant → config. Added compiler satisfaction comments to `?? string.Empty`. Removed T19 false positives (internal classes, private methods). Moved T25 type improvements to Design Considerations. | PHASE2: No actionable bugs, remaining: T25 types, async patterns, index/queue architecture |
 | Auth | DONE | Fixed T21 (removed DEFAULT_CONNECT_URL, hardcoded 60min fallback, added MockTwitchId to schema, removed dead "000000" fallback, extracted Unknown constants), T7 (ApiException catch), T10 (LogInfo → Debug for routine ops, mock email log). Removed T19 false positives (internal class, Generated/, base class overrides). Moved SessionDataModel type issues to Design Considerations. | PHASE2: No actionable bugs, remaining: T25 SessionDataModel types, email null handling in OAuth flows |
-| Behavior | DONE | Already clean - all violations addressed previously. Design considerations properly documented (ValueTask, IHttpClientFactory, static CognitionConstants, in-memory runtime state). |
+| Behavior | DONE | Already clean - all violations addressed previously. Design considerations properly documented (ValueTask, IHttpClientFactory, static CognitionConstants, in-memory runtime state). | PHASE2: No actionable bugs, remaining: GOAP/compiler design, GC pressure, validation optimization |
 | Character | DONE | Removed false positives (T21 stub config, T19 interface methods, T19 private helpers). Moved T9 concurrency issues to Design Considerations (require architectural planning for distributed locking). |
 | Character-Encounter | DONE | Removed false positives (T7 - leaf node, T9 method-local dict, T19 internal/interface, T5 diagnostic metadata, T21 stub config). Moved T25 POCO type issues to Design Considerations. |
 | Character-History | DONE | Removed false positives (T7 - leaf node, T19 internal classes). Consolidated T25 POCO type issues into Design Considerations section. |
@@ -185,7 +185,7 @@ For each plugin deep dive document:
 | Permission | DONE | Removed false positives (T6, T7, T19, T21 role hierarchy, T16 naming). Moved T9 multi-instance set ops and T25 anonymous type to Design Considerations. |
 | Realm | DONE | Removed false positives (T6, T7, T19, T21, T16). Moved T9 multi-instance and T25 RealmId type to Design Considerations. Leaf node - no mesh calls. |
 | Realm-History | DONE | Removed false positives (T6, T7). Moved T25 POCO types and T9 multi-instance to Design Considerations. Leaf node - no mesh calls. |
-| Relationship | PENDING | |
+| Relationship | DONE | Fixed T19 (XML param name mismatch). Removed false positives (T6, T7). Moved T9, T25, T10 to Design Considerations. Leaf node - no mesh calls. |
 | Relationship-Type | PENDING | |
 | Save-Load | DONE | Fixed T20 (BannouJson), T10 logging levels. Removed T6 false positives. T25 → Design Considerations. |
 | Scene | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Moved T9/T25/T21 to Design Considerations. |

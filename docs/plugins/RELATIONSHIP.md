@@ -186,35 +186,21 @@ None identified.
 
 ---
 
-## Tenet Violations (Audit)
+### Previously Fixed
 
-### Category: IMPLEMENTATION
+1. **T19 (XML Documentation)**: Fixed constructor param name mismatch - XML doc said `errorEventEmitter` but param is `eventConsumer`. Also added missing `messageBus` param doc.
 
-1. **Multi-Instance Safety (T9)** - Read-modify-write operations without distributed locks
-   - **Locations**: Index updates (`AddToEntityIndexAsync`, `AddToTypeIndexAsync`, etc.), composite key uniqueness check
-   - **Issue**: Race conditions could cause lost updates or duplicate relationships
-   - **Scope**: Requires `IDistributedLockProvider` integration
-
-2. **Internal Model Type Safety (T25)** - RelationshipModel uses string for GUIDs and Enums
-   - **Locations**: `RelationshipId`, `Entity1Id`, `Entity2Id`, `RelationshipTypeId`, `Entity1Type`, `Entity2Type`
-   - **Issue**: Forces `Guid.Parse()` and `Enum.Parse()` in business logic, string comparisons for enum values
-   - **Scope**: Requires model refactoring to use proper types
-
-3. **Unused CancellationToken Parameter** - Event publishing methods accept but don't use cancellation token
-   - **Locations**: `PublishRelationshipCreatedEventAsync`, `PublishRelationshipUpdatedEventAsync`, `PublishRelationshipDeletedEventAsync`
-   - **Fix**: Pass to `TryPublishAsync` or remove parameter
-
-### Category: QUALITY
-
-4. **Logging Standards (T10)** - Data inconsistency logged as Error without error event
-   - **Locations**: Lines 126, 225, 307 - index contains ID but model not found
-   - **Fix**: Add `TryPublishErrorAsync` call alongside Error log
-
-5. **XML Documentation (T19)** - Constructor param name mismatch
-   - **Location**: XML doc says `errorEventEmitter` but actual param is `eventConsumer`
-   - **Fix**: Update XML param name
-
-### False Positives (Not Violations)
+### False Positives Removed
 
 - **T6 constructor null checks**: NRTs enabled - compile-time null safety eliminates need for runtime guards
 - **T7 ApiException handling**: Relationship service only calls state store (infrastructure lib), not external services via mesh
+
+### Additional Design Considerations
+
+6. **T9 (Multi-Instance Safety)**: Read-modify-write operations without distributed locks on index updates and composite key checks. Requires IDistributedLockProvider integration.
+
+7. **T25 (POCO Type Safety)**: RelationshipModel uses string for GUIDs and Enums (`RelationshipId`, `Entity1Id`, etc.). Forces `Guid.Parse()` and `Enum.Parse()` in business logic.
+
+8. **T10 (Data inconsistency logging)**: Lines 126, 225, 307 log Error when index contains ID but model not found, without publishing error event. Could add TryPublishErrorAsync for monitoring.
+
+9. **Unused CancellationToken**: Event publishing methods accept but don't pass CancellationToken to TryPublishAsync. Minor cleanup item.
