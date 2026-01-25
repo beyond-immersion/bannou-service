@@ -585,9 +585,10 @@ public partial class AuthService : IAuthService
                         await sessionStore.DeleteAsync($"session:{key}", cancellationToken);
 
                         // Clean up reverse index if session data was still available
-                        if (sessionData != null && !string.IsNullOrEmpty(sessionData.SessionId))
+                        if (sessionData != null && sessionData.SessionId != Guid.Empty)
                         {
-                            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionData.SessionId, cancellationToken);
+                            // sessionId.ToString() at boundary for Redis key
+                            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionData.SessionId.ToString(), cancellationToken);
                         }
                     }
 
@@ -1350,7 +1351,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthOAuthLoginSuccessfulEvent for OAuth provider analytics.
     /// </summary>
-    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, string provider, string providerUserId, string sessionId, bool isNewAccount)
+    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, string provider, string providerUserId, Guid sessionId, bool isNewAccount)
     {
         try
         {
@@ -1361,7 +1362,7 @@ public partial class AuthService : IAuthService
                 AccountId = accountId,
                 Provider = provider,
                 ProviderUserId = providerUserId,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 IsNewAccount = isNewAccount
             };
 
@@ -1377,7 +1378,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthSteamLoginSuccessfulEvent for platform login analytics.
     /// </summary>
-    private async Task PublishSteamLoginSuccessfulEventAsync(Guid accountId, string steamId, string sessionId, bool isNewAccount)
+    private async Task PublishSteamLoginSuccessfulEventAsync(Guid accountId, string steamId, Guid sessionId, bool isNewAccount)
     {
         try
         {
@@ -1387,7 +1388,7 @@ public partial class AuthService : IAuthService
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SteamId = steamId,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 IsNewAccount = isNewAccount
             };
 

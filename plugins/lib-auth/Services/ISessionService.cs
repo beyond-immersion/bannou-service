@@ -122,7 +122,7 @@ public interface ISessionService
     /// <param name="authorizations">Updated authorizations.</param>
     /// <param name="reason">The reason for the update.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task PublishSessionUpdatedEventAsync(Guid accountId, string sessionId, List<string> roles, List<string> authorizations, SessionUpdatedEventReason reason, CancellationToken cancellationToken = default);
+    Task PublishSessionUpdatedEventAsync(Guid accountId, Guid sessionId, List<string> roles, List<string> authorizations, SessionUpdatedEventReason reason, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -420,7 +420,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task PublishSessionUpdatedEventAsync(Guid accountId, string sessionId, List<string> roles, List<string> authorizations, SessionUpdatedEventReason reason, CancellationToken cancellationToken = default)
+    public async Task PublishSessionUpdatedEventAsync(Guid accountId, Guid sessionId, List<string> roles, List<string> authorizations, SessionUpdatedEventReason reason, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -429,7 +429,7 @@ public class SessionService : ISessionService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                SessionId = Guid.Parse(sessionId),
+                SessionId = sessionId,
                 Roles = roles,
                 Authorizations = authorizations,
                 Reason = reason
