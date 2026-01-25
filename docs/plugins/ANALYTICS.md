@@ -22,7 +22,6 @@ The Analytics plugin is the central event aggregation point for all game-related
 | lib-character (ICharacterClient) | Resolving character IDs to realm IDs for character history events |
 
 > **Refactoring Consideration**: This plugin injects 4 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
-| AppConfiguration (DI singleton) | Not directly used (no cross-cutting config needed) |
 
 ## Dependents (What Relies On This Plugin)
 
@@ -80,21 +79,26 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------
+|----------|---------|---------|---------|
 | `EventBufferSize` | `ANALYTICS_EVENT_BUFFER_SIZE` | 1000 | Max events to buffer before flush |
 | `EventBufferFlushIntervalSeconds` | `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | 5 | Time-based flush trigger for oldest buffered event |
 | `Glicko2DefaultRating` | `ANALYTICS_GLICKO2_DEFAULT_RATING` | 1500.0 | Starting Glicko-2 rating for new entities |
 | `Glicko2DefaultDeviation` | `ANALYTICS_GLICKO2_DEFAULT_DEVIATION` | 350.0 | Starting rating deviation (max uncertainty) |
 | `Glicko2DefaultVolatility` | `ANALYTICS_GLICKO2_DEFAULT_VOLATILITY` | 0.06 | Starting volatility (standard value) |
 | `Glicko2SystemConstant` | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | 0.5 | Tau - controls how quickly volatility changes |
+| `Glicko2MinRating` | `ANALYTICS_GLICKO2_MIN_RATING` | 100.0 | Minimum allowed rating (floor clamp) |
+| `Glicko2MaxRating` | `ANALYTICS_GLICKO2_MAX_RATING` | 4000.0 | Maximum allowed rating (ceiling clamp) |
+| `Glicko2MinDeviation` | `ANALYTICS_GLICKO2_MIN_DEVIATION` | 30.0 | Minimum rating deviation (prevents overconfidence) |
+| `Glicko2MaxVolatilityIterations` | `ANALYTICS_GLICKO2_MAX_VOLATILITY_ITERATIONS` | 100 | Max iterations for volatility convergence |
+| `Glicko2VolatilityConvergenceTolerance` | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | 1e-06 | Convergence tolerance for volatility iteration |
 | `ResolutionCacheTtlSeconds` | `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | 300 | TTL for resolution caches (game service, realm, character lookups) |
 | `SessionMappingTtlSeconds` | `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | 3600 | TTL for game session mappings (should exceed typical session duration) |
 | `MilestoneThresholds` | `ANALYTICS_MILESTONE_THRESHOLDS` | 10,25,50,... | Comma-separated score thresholds that trigger milestone events |
 | `EventBufferLockExpiryBaseSeconds` | `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | 10 | Base distributed lock expiry (actual = max(this, 2x flush interval)) |
 | `RatingUpdateLockExpirySeconds` | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | 30 | Distributed lock expiry for skill rating update operations |
-| `Glicko2VolatilityConvergenceTolerance` | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | 1e-06 | Convergence tolerance for volatility iteration |
 | `ControllerHistoryRetentionDays` | `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | 90 | Days to retain controller history records (0 = indefinite) |
 | `ControllerHistoryCleanupBatchSize` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | 5000 | Maximum records to delete per cleanup invocation |
+| `ControllerHistoryCleanupSubBatchSize` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE` | 100 | Records to delete per iteration within a cleanup batch |
 
 ## DI Services & Helpers
 
@@ -191,7 +195,11 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ## Known Quirks & Caveats
 
-### Intentional Behavior
+### Bugs (Fix Immediately)
+
+No bugs identified.
+
+### Intentional Quirks (Documented Behavior)
 
 1. **Event ingestion requires Redis backend for buffer operations**: `EnsureSummaryStoreRedisAsync()` validates the `analytics-summary` store is Redis before buffer operations. The sorted set operations used for event buffering are Redis-specific. Summary data itself is persisted to MySQL (`analytics-summary-data`) during flush for queryability, while the buffer remains in Redis for high-throughput ingestion.
 
@@ -206,10 +214,6 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 6. **History event resolution drops events on failure**: If the realm or character lookup fails when handling character-history or realm-history events, the event is silently dropped (not retried). An error event is published via `TryPublishErrorAsync` for monitoring, but the analytics data is permanently lost for that event. This follows the principle that incorrect data (wrong GameServiceId) is worse than missing data.
 
 7. **Resolution caches are event-invalidated**: The character-to-realm and realm-to-gameService resolution caches subscribe to `character.updated` and `realm.updated` lifecycle events. When a character's realm or a realm's game service changes, the cached entry is immediately deleted. This ensures cache staleness is bounded to in-flight lookups only, not the full TTL window.
-
-### Bugs (Fix Immediately)
-
-No bugs identified.
 
 ### Design Considerations (Requires Planning)
 

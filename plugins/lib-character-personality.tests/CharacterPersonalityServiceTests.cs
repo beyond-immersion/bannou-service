@@ -583,8 +583,11 @@ public class CharacterPersonalityServiceTests
         var existingData = CreateTestPersonalityData(characterId);
 
         _mockPersonalityStore
-            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingData);
+            .Setup(s => s.GetWithETagAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingData, "etag-1"));
+        _mockPersonalityStore
+            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         var service = CreateService();
         var request = new RecordExperienceRequest
@@ -613,8 +616,11 @@ public class CharacterPersonalityServiceTests
         var existingData = CreateTestPersonalityData(characterId, version: 1);
 
         _mockPersonalityStore
-            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingData);
+            .Setup(s => s.GetWithETagAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingData, "etag-1"));
+        _mockPersonalityStore
+            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         var service = CreateService();
 
@@ -669,8 +675,11 @@ public class CharacterPersonalityServiceTests
         var existingData = CreateTestPersonalityData(characterId);
 
         _mockPersonalityStore
-            .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingData);
+            .Setup(s => s.GetWithETagAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingData, "etag-1"));
+        _mockPersonalityStore
+            .Setup(s => s.TrySaveAsync($"personality-{characterId}", It.IsAny<PersonalityData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         var service = CreateService();
         var request = new RecordExperienceRequest
@@ -916,8 +925,11 @@ public class CharacterPersonalityServiceTests
         var existingData = CreateTestCombatData(characterId);
 
         _mockCombatStore
-            .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingData);
+            .Setup(s => s.GetWithETagAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingData, "etag-1"));
+        _mockCombatStore
+            .Setup(s => s.TrySaveAsync($"combat-{characterId}", It.IsAny<CombatPreferencesData>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         var service = CreateService();
         var request = new EvolveCombatRequest

@@ -121,6 +121,13 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `MaxPoolNodes` | `ACTOR_MAX_POOL_NODES` | `10` | Maximum pool size |
 | `DefaultActorsPerNode` | `ACTOR_DEFAULT_ACTORS_PER_NODE` | `100` | Default capacity per node |
 
+### Local Mode
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `LocalModeNodeId` | `ACTOR_LOCAL_MODE_NODE_ID` | `bannou-local` | Node ID for local/bannou deployment mode |
+| `LocalModeAppId` | `ACTOR_LOCAL_MODE_APP_ID` | `bannou` | App ID for local/bannou deployment mode |
+
 ### Behavior Loop
 
 | Property | Env Var | Default | Purpose |
@@ -128,6 +135,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `DefaultTickIntervalMs` | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | `100` | Behavior loop tick frequency |
 | `DefaultAutoSaveIntervalSeconds` | `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | `60` | State persistence interval |
 | `PerceptionQueueSize` | `ACTOR_PERCEPTION_QUEUE_SIZE` | `100` | Bounded perception channel capacity |
+| `ErrorRetryDelayMs` | `ACTOR_ERROR_RETRY_DELAY_MS` | `1000` | Delay before retry after behavior loop error |
 
 ### GOAP Planning
 
@@ -145,6 +153,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `PerceptionMemoryThreshold` | `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | `0.7` | Minimum urgency to store as memory |
 | `ShortTermMemoryMinutes` | `ACTOR_SHORT_TERM_MEMORY_MINUTES` | `5` | High-urgency memory TTL |
 | `DefaultMemoryExpirationMinutes` | `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | `60` | General memory TTL |
+| `MemoryStoreMaxRetries` | `ACTOR_MEMORY_STORE_MAX_RETRIES` | `3` | Max retries for memory store operations |
 
 ### Pool Health Monitoring
 
@@ -155,6 +164,22 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `PoolHealthMonitorStartupDelaySeconds` | `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | `5` | Delay before monitoring starts |
 | `PoolHealthCheckIntervalSeconds` | `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | `15` | Health check cycle interval |
 
+### Timeouts & Retries
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `ActorOperationTimeoutSeconds` | `ACTOR_OPERATION_TIMEOUT_SECONDS` | `5` | Timeout for individual actor operations |
+| `ActorStopTimeoutSeconds` | `ACTOR_STOP_TIMEOUT_SECONDS` | `5` | Timeout for graceful actor stop |
+| `StatePersistenceRetryDelayMs` | `ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS` | `50` | Base delay between state persistence retries (multiplied by attempt) |
+
+### Scheduled Events
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `ScheduledEventCheckIntervalMilliseconds` | `ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS` | `100` | Interval for checking scheduled events |
+| `ScheduledEventDefaultUrgency` | `ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY` | `0.7` | Default urgency for scheduled event perceptions |
+| `EventBrainDefaultUrgency` | `ACTOR_EVENT_BRAIN_DEFAULT_URGENCY` | `0.8` | Default urgency for Event Brain instruction perceptions |
+
 ### Caching
 
 | Property | Env Var | Default | Purpose |
@@ -162,6 +187,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `PersonalityCacheTtlMinutes` | `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` | `5` | Personality data cache lifetime |
 | `EncounterCacheTtlMinutes` | `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` | `5` | Encounter data cache lifetime |
 | `MaxEncounterResultsPerQuery` | `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` | `50` | Query result limit |
+| `QueryOptionsDefaultMaxAgeMs` | `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | `5000` | Max age for cached query options |
 
 ---
 

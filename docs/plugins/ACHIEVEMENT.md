@@ -14,7 +14,7 @@ The Achievement plugin provides a multi-entity achievement and trophy system wit
 | Dependency | Usage |
 |------------|-------|
 | lib-state (IStateStoreFactory) | All persistence - definitions, progress records, index sets. Uses ETag-based optimistic concurrency for definition updates |
-| lib-state (IDistributedLockProvider) | 30-second distributed locks for compound progress/unlock operations |
+| lib-state (IDistributedLockProvider) | Distributed locks (configurable via LockExpirySeconds, default 30s) for compound progress/unlock operations |
 | lib-messaging (IMessageBus) | Publishing lifecycle events (unlocked, progress, sync, definition CRUD) and error events |
 | lib-messaging (IEventConsumer) | Subscribing to analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed for auto-unlock |
 | Account service (IAccountClient) | SteamAchievementSync queries account auth methods to find Steam external IDs |
@@ -75,6 +75,8 @@ The Achievement plugin is currently a leaf consumer - it reacts to external even
 | AutoSyncOnUnlock | `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | true | Automatically sync to external platforms when an achievement is unlocked |
 | SyncRetryAttempts | `ACHIEVEMENT_SYNC_RETRY_ATTEMPTS` | 3 | Number of retry attempts for failed platform API calls |
 | SyncRetryDelaySeconds | `ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS` | 60 | Delay between retry attempts |
+| LockExpirySeconds | `ACHIEVEMENT_LOCK_EXPIRY_SECONDS` | 30 | Expiry time for distributed locks on progress/unlock operations |
+| EarnedCountRetryAttempts | `ACHIEVEMENT_EARNED_COUNT_RETRY_ATTEMPTS` | 3 | Retry attempts for ETag conflicts when incrementing earned count |
 | ProgressTtlSeconds | `ACHIEVEMENT_PROGRESS_TTL_SECONDS` | 0 | TTL on progress records in Redis (0 = no expiry, progress persists indefinitely; positive value enables cache-like expiry) |
 | RarityCalculationStartupDelaySeconds | `ACHIEVEMENT_RARITY_CALCULATION_STARTUP_DELAY_SECONDS` | 30 | Delay before first rarity recalculation after startup |
 | RarityCalculationIntervalMinutes | `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | 60 | Interval between periodic rarity recalculations |
