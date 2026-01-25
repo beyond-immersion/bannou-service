@@ -387,7 +387,6 @@ components:
           description: Point value of this achievement
         iconUrl:
           type: string
-          format: uri
           nullable: true
           description: URL to achievement icon
         platforms:
@@ -574,7 +573,6 @@ components:
           description: Point value
         iconUrl:
           type: string
-          format: uri
           nullable: true
           description: Achievement icon URL
         platforms:
@@ -895,7 +893,6 @@ components:
           description: Point value
         iconUrl:
           type: string
-          format: uri
           nullable: true
           description: Achievement icon
         unlockedAt:

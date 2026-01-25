@@ -147,6 +147,11 @@ for schema_file in "${SCHEMA_FILES[@]}"; do
         continue
     fi
 
+    # Skip common-api.yaml - it's shared types, not a service (handled by generate-common-api.sh)
+    if [ "$service_name" = "common" ]; then
+        continue
+    fi
+
     TOTAL_SERVICES=$((TOTAL_SERVICES + 1))
 
     echo -e "${YELLOW}🔧 Processing service: $service_name${NC}"

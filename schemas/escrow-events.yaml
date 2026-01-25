@@ -358,6 +358,7 @@ components:
           description: Recipients and what they received
         resolution:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          description: How the escrow was resolved
         completedAt:
           type: string
           format: date-time
@@ -398,6 +399,7 @@ components:
           description: Reason for refund
         resolution:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          description: How the escrow was resolved
         completedAt:
           type: string
           format: date-time
@@ -481,6 +483,7 @@ components:
           description: Arbiter type
         resolution:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
+          description: Resolution decision by arbiter
         notes:
           type: string
           nullable: true
@@ -672,6 +675,7 @@ components:
           description: Party type
         role:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowPartyRole'
+          description: Role of the party in the escrow
 
     RecipientInfo:
       type: object

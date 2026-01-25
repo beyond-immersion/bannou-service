@@ -15733,7 +15733,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionCreatedEvent.Scope">
             <summary>
-            Currency scope (global, realm_specific, multi_realm)
+            Currency scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionCreatedEvent.Precision">
@@ -15783,7 +15783,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionUpdatedEvent.Scope">
             <summary>
-            Currency scope (global, realm_specific, multi_realm)
+            Currency scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionUpdatedEvent.Precision">
@@ -15838,7 +15838,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionDeletedEvent.Scope">
             <summary>
-            Currency scope (global, realm_specific, multi_realm)
+            Currency scope
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyDefinitionDeletedEvent.Precision">
@@ -15898,7 +15898,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletCreatedEvent.Status">
             <summary>
-            Wallet status (active, frozen, closed)
+            Wallet status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletCreatedEvent.CreatedAt">
@@ -15938,7 +15938,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletUpdatedEvent.Status">
             <summary>
-            Wallet status (active, frozen, closed)
+            Wallet status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletUpdatedEvent.CreatedAt">
@@ -15983,7 +15983,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletDeletedEvent.Status">
             <summary>
-            Wallet status (active, frozen, closed)
+            Wallet status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CurrencyWalletDeletedEvent.CreatedAt">
@@ -17288,7 +17288,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.Status">
             <summary>
-            Current status of the game session (e.g., waiting, active, completed)
+            Current status of the game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.MaxPlayers">
@@ -17343,7 +17343,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.Status">
             <summary>
-            Current status of the game session (e.g., waiting, active, completed)
+            Current status of the game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.MaxPlayers">
@@ -17403,7 +17403,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.Status">
             <summary>
-            Current status of the game session (e.g., waiting, active, completed)
+            Current status of the game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.MaxPlayers">
@@ -18298,7 +18298,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.QuantityModel">
             <summary>
-            How quantities are tracked (discrete, continuous, unique)
+            How quantities are tracked
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateCreatedEvent.Scope">
@@ -18363,7 +18363,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.QuantityModel">
             <summary>
-            How quantities are tracked (discrete, continuous, unique)
+            How quantities are tracked
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateUpdatedEvent.Scope">
@@ -18433,7 +18433,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.QuantityModel">
             <summary>
-            How quantities are tracked (discrete, continuous, unique)
+            How quantities are tracked
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ItemTemplateDeletedEvent.Scope">
@@ -18808,7 +18808,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.LocationType">
             <summary>
-            Type classification of the location (e.g., room, area, zone)
+            Type classification of the location
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.ParentLocationId">
@@ -18888,7 +18888,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.LocationType">
             <summary>
-            Type classification of the location (e.g., room, area, zone)
+            Type classification of the location
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.ParentLocationId">
@@ -18973,7 +18973,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.LocationType">
             <summary>
-            Type classification of the location (e.g., room, area, zone)
+            Type classification of the location
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.ParentLocationId">
@@ -20914,7 +20914,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Entity1Type">
             <summary>
-            Type classification of the first entity (e.g., character, account, npc)
+            Type classification of the first entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Entity2Id">
@@ -20924,7 +20924,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Entity2Type">
             <summary>
-            Type classification of the second entity (e.g., character, account, npc)
+            Type classification of the second entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.RelationshipTypeId">
@@ -20979,7 +20979,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Entity1Type">
             <summary>
-            Type classification of the first entity (e.g., character, account, npc)
+            Type classification of the first entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Entity2Id">
@@ -20989,7 +20989,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Entity2Type">
             <summary>
-            Type classification of the second entity (e.g., character, account, npc)
+            Type classification of the second entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.RelationshipTypeId">
@@ -21049,7 +21049,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Entity1Type">
             <summary>
-            Type classification of the first entity (e.g., character, account, npc)
+            Type classification of the first entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Entity2Id">
@@ -21059,7 +21059,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Entity2Type">
             <summary>
-            Type classification of the second entity (e.g., character, account, npc)
+            Type classification of the second entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.RelationshipTypeId">

@@ -179,7 +179,7 @@ public partial class CreateAchievementDefinitionRequest
     /// URL to achievement icon
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
-    public System.Uri? IconUrl { get; set; } = default!;
+    public string? IconUrl { get; set; } = default!;
 
     /// <summary>
     /// Platforms where this achievement exists
@@ -452,7 +452,7 @@ public partial class AchievementDefinitionResponse
     /// Achievement icon URL
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
-    public System.Uri? IconUrl { get; set; } = default!;
+    public string? IconUrl { get; set; } = default!;
 
     /// <summary>
     /// Available platforms
@@ -941,7 +941,7 @@ public partial class UnlockedAchievement
     /// Achievement icon
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
-    public System.Uri? IconUrl { get; set; } = default!;
+    public string? IconUrl { get; set; } = default!;
 
     /// <summary>
     /// When it was unlocked
