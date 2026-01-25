@@ -557,10 +557,11 @@ public sealed class ActorRunner : IActorRunner
             // Assess significance and potentially store as memory
             if (perception.Urgency >= (float)_config.PerceptionMemoryThreshold)
             {
-                // High urgency perceptions become memories
+                // High urgency perceptions become memories - store the full perception
+                // for proper serialization (anonymous objects don't serialize correctly)
                 _state.AddMemory(
                     $"recent:{perception.PerceptionType}",
-                    new { perception.SourceId, perception.SourceType, perception.Data, perception.Urgency },
+                    perception,
                     DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes)); // Short-term memory
             }
 

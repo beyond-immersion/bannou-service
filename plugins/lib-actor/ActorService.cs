@@ -1116,7 +1116,7 @@ public partial class ActorService : IActorService
             }
 
             var freshness = body.Freshness;
-            var maxAgeMs = body.MaxAgeMs ?? 5000;
+            var maxAgeMs = body.MaxAgeMs ?? _configuration.QueryOptionsDefaultMaxAgeMs;
             var optionsKey = $"{body.QueryType.ToString().ToLowerInvariant()}_options";
 
             // Get actor state snapshot

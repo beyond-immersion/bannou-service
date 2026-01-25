@@ -108,7 +108,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Scene service permissions");
+        _logger.LogDebug("Registering Scene service permissions");
         await ScenePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 
@@ -117,7 +117,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, SceneResponse?)> CreateSceneAsync(CreateSceneRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("CreateScene: sceneId={SceneId}, name={Name}", body.Scene.SceneId, body.Scene.Name);
+        _logger.LogDebug("CreateScene: sceneId={SceneId}, name={Name}", body.Scene.SceneId, body.Scene.Name);
 
         try
         {
@@ -128,7 +128,7 @@ public partial class SceneService : ISceneService
             var validationResult = _validationService.ValidateStructure(scene, _configuration.MaxNodeCount);
             if (!validationResult.Valid)
             {
-                _logger.LogWarning("CreateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
+                _logger.LogDebug("CreateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -136,7 +136,7 @@ public partial class SceneService : ISceneService
             var tagError = ValidateTagCounts(scene);
             if (tagError != null)
             {
-                _logger.LogWarning("CreateScene failed tag validation: {Error}", tagError);
+                _logger.LogDebug("CreateScene failed tag validation: {Error}", tagError);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -145,7 +145,7 @@ public partial class SceneService : ISceneService
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
             if (existingIndex != null)
             {
-                _logger.LogWarning("CreateScene failed: Scene {SceneId} already exists", scene.SceneId);
+                _logger.LogDebug("CreateScene failed: Scene {SceneId} already exists", scene.SceneId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -377,7 +377,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, SceneResponse?)> UpdateSceneAsync(UpdateSceneRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("UpdateScene: sceneId={SceneId}", body.Scene.SceneId);
+        _logger.LogDebug("UpdateScene: sceneId={SceneId}", body.Scene.SceneId);
 
         try
         {
@@ -389,7 +389,7 @@ public partial class SceneService : ISceneService
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
             if (existingIndex == null)
             {
-                _logger.LogWarning("UpdateScene: Scene {SceneId} not found", scene.SceneId);
+                _logger.LogDebug("UpdateScene: Scene {SceneId} not found", scene.SceneId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -400,7 +400,7 @@ public partial class SceneService : ISceneService
                 // If we have a checkout token, validate it
                 if (string.IsNullOrEmpty(body.CheckoutToken))
                 {
-                    _logger.LogWarning("UpdateScene: Scene {SceneId} is checked out", scene.SceneId);
+                    _logger.LogDebug("UpdateScene: Scene {SceneId} is checked out", scene.SceneId);
                     return (StatusCodes.Conflict, null);
                 }
 
@@ -408,7 +408,7 @@ public partial class SceneService : ISceneService
                 var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
                 if (checkout == null || checkout.Token != body.CheckoutToken)
                 {
-                    _logger.LogWarning("UpdateScene: Invalid checkout token for scene {SceneId}", scene.SceneId);
+                    _logger.LogDebug("UpdateScene: Invalid checkout token for scene {SceneId}", scene.SceneId);
                     return (StatusCodes.Forbidden, null);
                 }
                 // Get editor ID from checkout state for version history
@@ -419,7 +419,7 @@ public partial class SceneService : ISceneService
             var validationResult = _validationService.ValidateStructure(scene, _configuration.MaxNodeCount);
             if (!validationResult.Valid)
             {
-                _logger.LogWarning("UpdateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
+                _logger.LogDebug("UpdateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -427,7 +427,7 @@ public partial class SceneService : ISceneService
             var tagError = ValidateTagCounts(scene);
             if (tagError != null)
             {
-                _logger.LogWarning("UpdateScene failed tag validation: {Error}", tagError);
+                _logger.LogDebug("UpdateScene failed tag validation: {Error}", tagError);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -480,7 +480,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, DeleteSceneResponse?)> DeleteSceneAsync(DeleteSceneRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("DeleteScene: sceneId={SceneId}", body.SceneId);
+        _logger.LogDebug("DeleteScene: sceneId={SceneId}", body.SceneId);
 
         try
         {
@@ -492,7 +492,7 @@ public partial class SceneService : ISceneService
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
             if (existingIndex == null)
             {
-                _logger.LogWarning("DeleteScene: Scene {SceneId} not found", body.SceneId);
+                _logger.LogDebug("DeleteScene: Scene {SceneId} not found", body.SceneId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -500,7 +500,7 @@ public partial class SceneService : ISceneService
             var referencingScenes = await stringSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
             if (referencingScenes != null && referencingScenes.Count > 0)
             {
-                _logger.LogWarning("DeleteScene: Scene {SceneId} is referenced by {Count} other scenes: {ReferencingScenes}",
+                _logger.LogDebug("DeleteScene: Scene {SceneId} is referenced by {Count} other scenes: {ReferencingScenes}",
                     body.SceneId, referencingScenes.Count, string.Join(", ", referencingScenes));
                 return (StatusCodes.Conflict, null);
             }
@@ -586,7 +586,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, InstantiateSceneResponse?)> InstantiateSceneAsync(InstantiateSceneRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("InstantiateScene: sceneAssetId={SceneAssetId}, instanceId={InstanceId}, regionId={RegionId}",
+        _logger.LogDebug("InstantiateScene: sceneAssetId={SceneAssetId}, instanceId={InstanceId}, regionId={RegionId}",
             body.SceneAssetId, body.InstanceId, body.RegionId);
 
         try
@@ -598,7 +598,7 @@ public partial class SceneService : ISceneService
             var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneAssetIdStr}", cancellationToken);
             if (indexEntry == null)
             {
-                _logger.LogWarning("InstantiateScene: Scene {SceneAssetId} not found", body.SceneAssetId);
+                _logger.LogDebug("InstantiateScene: Scene {SceneAssetId} not found", body.SceneAssetId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -662,7 +662,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, DestroyInstanceResponse?)> DestroyInstanceAsync(DestroyInstanceRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("DestroyInstance: instanceId={InstanceId}", body.InstanceId);
+        _logger.LogDebug("DestroyInstance: instanceId={InstanceId}", body.InstanceId);
 
         try
         {
@@ -705,7 +705,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, CheckoutResponse?)> CheckoutSceneAsync(CheckoutRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("CheckoutScene: sceneId={SceneId}", body.SceneId);
+        _logger.LogDebug("CheckoutScene: sceneId={SceneId}", body.SceneId);
 
         try
         {
@@ -718,7 +718,7 @@ public partial class SceneService : ISceneService
             var (indexEntry, indexEtag) = await indexStore.GetWithETagAsync(indexKey, cancellationToken);
             if (indexEntry == null)
             {
-                _logger.LogWarning("CheckoutScene: Scene {SceneId} not found", body.SceneId);
+                _logger.LogDebug("CheckoutScene: Scene {SceneId} not found", body.SceneId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -728,7 +728,7 @@ public partial class SceneService : ISceneService
                 var existingCheckout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
                 if (existingCheckout != null && existingCheckout.ExpiresAt > DateTimeOffset.UtcNow)
                 {
-                    _logger.LogWarning("CheckoutScene: Scene {SceneId} already checked out by {Editor}", body.SceneId, existingCheckout.EditorId);
+                    _logger.LogDebug("CheckoutScene: Scene {SceneId} already checked out by {Editor}", body.SceneId, existingCheckout.EditorId);
                     return (StatusCodes.Conflict, null);
                 }
                 // Expired checkout - can take over
@@ -769,7 +769,7 @@ public partial class SceneService : ISceneService
             var newIndexEtag = await indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
             if (newIndexEtag == null)
             {
-                _logger.LogWarning("CheckoutScene: Concurrent modification on scene index {SceneId}", body.SceneId);
+                _logger.LogDebug("CheckoutScene: Concurrent modification on scene index {SceneId}", body.SceneId);
                 await checkoutStore.DeleteAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
                 return (StatusCodes.Conflict, null);
             }
@@ -808,7 +808,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, CommitResponse?)> CommitSceneAsync(CommitRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("CommitScene: sceneId={SceneId}", body.SceneId);
+        _logger.LogDebug("CommitScene: sceneId={SceneId}", body.SceneId);
 
         try
         {
@@ -820,13 +820,13 @@ public partial class SceneService : ISceneService
             var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
             if (checkout == null || checkout.Token != body.CheckoutToken)
             {
-                _logger.LogWarning("CommitScene: Invalid checkout token for scene {SceneId}", body.SceneId);
+                _logger.LogDebug("CommitScene: Invalid checkout token for scene {SceneId}", body.SceneId);
                 return (StatusCodes.Forbidden, null);
             }
 
             if (checkout.ExpiresAt < DateTimeOffset.UtcNow)
             {
-                _logger.LogWarning("CommitScene: Checkout expired for scene {SceneId}", body.SceneId);
+                _logger.LogDebug("CommitScene: Checkout expired for scene {SceneId}", body.SceneId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -857,7 +857,7 @@ public partial class SceneService : ISceneService
             var newIndexEtag = await indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
             if (newIndexEtag == null)
             {
-                _logger.LogWarning("CommitScene: Concurrent modification on scene index {SceneId}", body.SceneId);
+                _logger.LogDebug("CommitScene: Concurrent modification on scene index {SceneId}", body.SceneId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -898,7 +898,7 @@ public partial class SceneService : ISceneService
     /// <inheritdoc />
     public async Task<(StatusCodes, DiscardResponse?)> DiscardCheckoutAsync(DiscardRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("DiscardCheckout: sceneId={SceneId}", body.SceneId);
+        _logger.LogDebug("DiscardCheckout: sceneId={SceneId}", body.SceneId);
 
         try
         {
@@ -910,7 +910,7 @@ public partial class SceneService : ISceneService
             var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
             if (checkout == null || checkout.Token != body.CheckoutToken)
             {
-                _logger.LogWarning("DiscardCheckout: Invalid checkout token for scene {SceneId}", body.SceneId);
+                _logger.LogDebug("DiscardCheckout: Invalid checkout token for scene {SceneId}", body.SceneId);
                 return (StatusCodes.Forbidden, null);
             }
 
@@ -927,7 +927,7 @@ public partial class SceneService : ISceneService
                 var newIndexEtag = await indexStore.TrySaveAsync(indexKey, indexEntry, indexEtag ?? string.Empty, cancellationToken);
                 if (newIndexEtag == null)
                 {
-                    _logger.LogWarning("DiscardCheckout: Concurrent modification on scene index {SceneId}", body.SceneId);
+                    _logger.LogDebug("DiscardCheckout: Concurrent modification on scene index {SceneId}", body.SceneId);
                     return (StatusCodes.Conflict, null);
                 }
             }
