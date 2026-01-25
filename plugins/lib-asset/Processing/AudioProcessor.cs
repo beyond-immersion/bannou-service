@@ -134,8 +134,7 @@ public sealed class AudioProcessor : IAssetProcessor
 
             // Get processing options with configuration defaults
             var normalize = GetProcessingOption(context, "normalize", true);
-            var targetFormatEnum = GetProcessingOption(context, "target_format", _configuration.AudioOutputFormat);
-            var targetFormat = targetFormatEnum.ToString().ToLowerInvariant();
+            var targetFormat = GetProcessingOption(context, "target_format", _configuration.AudioOutputFormat);
             var bitrate = GetProcessingOption(context, "bitrate", _configuration.AudioBitrateKbps);
 
             var bucket = _configuration.StorageBucket;
@@ -186,15 +185,16 @@ public sealed class AudioProcessor : IAssetProcessor
                 inputStream.Position = 0;
             }
 
-            // Transcode to target format
+            // Transcode to target format - convert enum to lowercase string for FFmpeg
+            var targetFormatStr = targetFormat.ToString().ToLowerInvariant();
             _logger.LogDebug(
                 "Transcoding {InputFormat} -> {OutputFormat} at {Bitrate}kbps",
-                inputFormat, targetFormat, bitrate);
+                inputFormat, targetFormatStr, bitrate);
 
             var ffmpegResult = await _ffmpegService.ConvertAudioAsync(
                 inputStream,
                 inputFormat,
-                targetFormat,
+                targetFormatStr,
                 bitrate,
                 normalize,
                 cancellationToken);
@@ -208,9 +208,9 @@ public sealed class AudioProcessor : IAssetProcessor
             }
 
             // Upload transcoded file
-            var transcodedFilename = Path.ChangeExtension(context.Filename, $".{targetFormat}");
-            var transcodedKey = $"processed/{context.AssetId}/transcoded.{targetFormat}";
-            var transcodedContentType = GetContentTypeForFormat(targetFormat);
+            var transcodedFilename = Path.ChangeExtension(context.Filename, $".{targetFormatStr}");
+            var transcodedKey = $"processed/{context.AssetId}/transcoded.{targetFormatStr}";
+            var transcodedContentType = GetContentTypeForFormat(targetFormatStr);
 
             _logger.LogDebug("Uploading transcoded audio to {TranscodedKey}", transcodedKey);
 
@@ -305,6 +305,16 @@ public sealed class AudioProcessor : IAssetProcessor
 
         try
         {
+            // Handle enum types - parse from string
+            if (typeof(T).IsEnum && value is string stringValue)
+            {
+                if (Enum.TryParse(typeof(T), stringValue, ignoreCase: true, out var enumValue))
+                {
+                    return (T)enumValue;
+                }
+                return defaultValue;
+            }
+
             return (T)Convert.ChangeType(value, typeof(T));
         }
         catch

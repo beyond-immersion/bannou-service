@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using Json.Patch;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -91,7 +92,7 @@ public sealed class DeltaProcessor
                 return null;
             }
 
-            var patchJson = JsonSerializer.Serialize(patch);
+            var patchJson = BannouJson.Serialize(patch);
             return Encoding.UTF8.GetBytes(patchJson);
         }
         catch (JsonException ex)
@@ -123,7 +124,7 @@ public sealed class DeltaProcessor
                 return null;
             }
 
-            var patch = JsonSerializer.Deserialize<JsonPatch>(patchJson);
+            var patch = BannouJson.Deserialize<JsonPatch>(patchJson);
             if (patch == null)
             {
                 _logger.LogError("Failed to parse JSON Patch");
@@ -176,7 +177,7 @@ public sealed class DeltaProcessor
         try
         {
             var patchJson = Encoding.UTF8.GetString(deltaData);
-            var patch = JsonSerializer.Deserialize<JsonPatch>(patchJson);
+            var patch = BannouJson.Deserialize<JsonPatch>(patchJson);
 
             if (patch == null)
             {
@@ -218,7 +219,7 @@ public sealed class DeltaProcessor
         try
         {
             var patchJson = Encoding.UTF8.GetString(deltaData);
-            var patch = JsonSerializer.Deserialize<JsonPatch>(patchJson);
+            var patch = BannouJson.Deserialize<JsonPatch>(patchJson);
             return patch?.Operations.Count ?? -1;
         }
         catch

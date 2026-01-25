@@ -83,7 +83,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> CreateSlotAsync(CreateSlotRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Creating save slot for game {GameId}, owner {OwnerType}:{OwnerId}, slot {SlotName}",
             body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
 
@@ -98,7 +98,7 @@ public partial class SaveLoadService : ISaveLoadService
             var existingSlot = await slotStore.GetAsync(slotKey, cancellationToken);
             if (existingSlot != null)
             {
-                _logger.LogWarning("Slot already exists: {SlotKey}", slotKey);
+                _logger.LogDebug("Slot already exists: {SlotKey}", slotKey);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -109,7 +109,7 @@ public partial class SaveLoadService : ISaveLoadService
                 cancellationToken);
             if (ownerSlots.Count() >= _configuration.MaxSlotsPerOwner)
             {
-                _logger.LogWarning(
+                _logger.LogDebug(
                     "Owner {OwnerId} has reached maximum slot limit of {MaxSlots}",
                     ownerId, _configuration.MaxSlotsPerOwner);
                 return (StatusCodes.BadRequest, null);
@@ -146,7 +146,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Created slot {SlotId} for {OwnerType}:{OwnerId}", slotId, ownerType, ownerId);
+            _logger.LogDebug("Created slot {SlotId} for {OwnerType}:{OwnerId}", slotId, ownerType, ownerId);
 
             return (StatusCodes.OK, ToSlotResponse(slot));
         }
@@ -286,7 +286,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Delete the slot
             await slotStore.DeleteAsync(slotKey, cancellationToken);
 
-            _logger.LogInformation("Deleted slot {SlotId} with {VersionCount} versions", slot.SlotId, deletedVersions);
+            _logger.LogDebug("Deleted slot {SlotId} with {VersionCount} versions", slot.SlotId, deletedVersions);
 
             var response = new DeleteSlotResponse
             {
@@ -339,7 +339,7 @@ public partial class SaveLoadService : ISaveLoadService
                 "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 30, cancellationToken);
             if (!slotLock.Success)
             {
-                _logger.LogWarning("Could not acquire slot lock for {SlotId} during rename", slot.SlotId);
+                _logger.LogDebug("Could not acquire slot lock for {SlotId} during rename", slot.SlotId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -358,7 +358,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (existingNewSlot != null)
             {
-                _logger.LogWarning("Cannot rename - target slot already exists: {NewSlotName}", body.NewSlotName);
+                _logger.LogDebug("Cannot rename - target slot already exists: {NewSlotName}", body.NewSlotName);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -370,7 +370,7 @@ public partial class SaveLoadService : ISaveLoadService
             await slotStore.SaveAsync(newSlotKey, slot, cancellationToken: cancellationToken);
             await slotStore.DeleteAsync(oldSlotKey, cancellationToken);
 
-            _logger.LogInformation("Renamed slot from {OldName} to {NewName}", body.SlotName, body.NewSlotName);
+            _logger.LogDebug("Renamed slot from {OldName} to {NewName}", body.SlotName, body.NewSlotName);
 
             return (StatusCodes.OK, ToSlotResponse(slot));
         }
@@ -418,7 +418,7 @@ public partial class SaveLoadService : ISaveLoadService
 
                     if (slot == null)
                     {
-                        _logger.LogWarning("Slot {SlotId} not found for bulk delete", slotId);
+                        _logger.LogDebug("Slot {SlotId} not found for bulk delete", slotId);
                         continue;
                     }
 
@@ -438,7 +438,7 @@ public partial class SaveLoadService : ISaveLoadService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to delete slot {SlotId}", slotId);
+                    _logger.LogDebug(ex, "Failed to delete slot {SlotId}", slotId);
                 }
             }
 
@@ -448,7 +448,7 @@ public partial class SaveLoadService : ISaveLoadService
                 BytesFreed = totalBytesFreed
             };
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Bulk delete completed: {DeletedCount} slots deleted, {BytesFreed} bytes freed",
                 deletedCount, totalBytesFreed);
 
@@ -477,7 +477,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> SaveAsync(SaveRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Saving to slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
 
@@ -494,7 +494,7 @@ public partial class SaveLoadService : ISaveLoadService
 
                 if (saveCount >= _configuration.MaxSavesPerMinute)
                 {
-                    _logger.LogWarning(
+                    _logger.LogDebug(
                         "Rate limit exceeded for {OwnerType}:{OwnerId} in game {GameId}: {Count} saves in current minute (max {Max})",
                         body.OwnerType, body.OwnerId, body.GameId, saveCount, _configuration.MaxSavesPerMinute);
                     return (StatusCodes.BadRequest, null);
@@ -507,7 +507,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Validate save data size against configured maximum
             if (body.Data.Length > _configuration.MaxSaveSizeBytes)
             {
-                _logger.LogWarning(
+                _logger.LogDebug(
                     "Save data size {Size} bytes exceeds maximum {MaxSize} bytes",
                     body.Data.Length, _configuration.MaxSaveSizeBytes);
                 return (StatusCodes.BadRequest, null);
@@ -518,7 +518,7 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 if (body.Thumbnail.Length > _configuration.ThumbnailMaxSizeBytes)
                 {
-                    _logger.LogWarning(
+                    _logger.LogDebug(
                         "Thumbnail size {Size} bytes exceeds maximum {MaxSize} bytes",
                         body.Thumbnail.Length, _configuration.ThumbnailMaxSizeBytes);
                     return (StatusCodes.BadRequest, null);
@@ -540,7 +540,7 @@ public partial class SaveLoadService : ISaveLoadService
                 "save-load-slot", slotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
             if (!slotLock.Success)
             {
-                _logger.LogWarning("Could not acquire slot lock for {SlotKey}", slotKey);
+                _logger.LogDebug("Could not acquire slot lock for {SlotKey}", slotKey);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -571,13 +571,13 @@ public partial class SaveLoadService : ISaveLoadService
                     ETag = Guid.NewGuid().ToString()
                 };
                 await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
-                _logger.LogInformation("Auto-created slot {SlotId} for {SlotName}", slot.SlotId, body.SlotName);
+                _logger.LogDebug("Auto-created slot {SlotId} for {SlotName}", slot.SlotId, body.SlotName);
             }
 
             // Check total storage quota per owner
             if (slot.TotalSizeBytes + body.Data.Length > _configuration.MaxTotalSizeBytesPerOwner)
             {
-                _logger.LogWarning(
+                _logger.LogDebug(
                     "Owner {OwnerId} would exceed storage quota: current {CurrentBytes} + new {NewBytes} > max {MaxBytes}",
                     ownerId, slot.TotalSizeBytes, body.Data.Length, _configuration.MaxTotalSizeBytesPerOwner);
                 return (StatusCodes.BadRequest, null);
@@ -595,7 +595,7 @@ public partial class SaveLoadService : ISaveLoadService
                     var timeSinceLastSave = now - latestVersion.CreatedAt;
                     if (timeSinceLastSave < TimeSpan.FromMinutes(_configuration.ConflictDetectionWindowMinutes))
                     {
-                        _logger.LogWarning(
+                        _logger.LogDebug(
                             "Potential save conflict detected: device {NewDevice} saving within {Minutes} minutes of device {OldDevice}",
                             body.DeviceId, _configuration.ConflictDetectionWindowMinutes, latestVersion.DeviceId);
                     }
@@ -725,7 +725,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Rolling cleanup if needed
             var versionsCleanedUp = await _versionCleanupManager.PerformRollingCleanupAsync(slot, versionStore, hotCacheStore, cancellationToken);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Saved version {Version} to slot {SlotId}, size {Size} bytes (compressed {CompressedSize}), upload pending: {Pending}",
                 nextVersion, slot.SlotId, originalSize, compressedSize, uploadPending);
 
@@ -784,7 +784,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, LoadResponse?)> LoadAsync(LoadRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Loading from slot {SlotName} for {OwnerType}:{OwnerId} in game {GameId}",
             body.SlotName, body.OwnerType, body.OwnerId, body.GameId);
 
@@ -803,7 +803,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (slot == null)
             {
-                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                _logger.LogDebug("Slot not found: {SlotKey}", slotKey);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -816,7 +816,7 @@ public partial class SaveLoadService : ISaveLoadService
                 targetVersion = await _versionDataLoader.FindVersionByCheckpointAsync(slot, body.CheckpointName, versionStore, cancellationToken);
                 if (targetVersion == 0)
                 {
-                    _logger.LogWarning("Checkpoint {CheckpointName} not found in slot {SlotId}", body.CheckpointName, slot.SlotId);
+                    _logger.LogDebug("Checkpoint {CheckpointName} not found in slot {SlotId}", body.CheckpointName, slot.SlotId);
                     return (StatusCodes.NotFound, null);
                 }
             }
@@ -830,7 +830,7 @@ public partial class SaveLoadService : ISaveLoadService
                 targetVersion = slot.LatestVersion ?? 0;
                 if (targetVersion == 0)
                 {
-                    _logger.LogWarning("No versions exist in slot {SlotId}", slot.SlotId);
+                    _logger.LogDebug("No versions exist in slot {SlotId}", slot.SlotId);
                     return (StatusCodes.NotFound, null);
                 }
             }
@@ -874,7 +874,7 @@ public partial class SaveLoadService : ISaveLoadService
 
                 if (manifest == null)
                 {
-                    _logger.LogWarning("Version {Version} not found in slot {SlotId}", targetVersion, slot.SlotId);
+                    _logger.LogDebug("Version {Version} not found in slot {SlotId}", targetVersion, slot.SlotId);
                     return (StatusCodes.NotFound, null);
                 }
 
@@ -903,7 +903,7 @@ public partial class SaveLoadService : ISaveLoadService
                 {
                     // Asset not yet uploaded - version should be in pending upload queue
                     // or the upload failed. Return not found.
-                    _logger.LogWarning("Version {Version} has no asset ID and is not in hot cache", targetVersion);
+                    _logger.LogDebug("Version {Version} has no asset ID and is not in hot cache", targetVersion);
                     return (StatusCodes.NotFound, null);
                 }
 
@@ -938,7 +938,7 @@ public partial class SaveLoadService : ISaveLoadService
                 CreatedAt = manifest?.CreatedAt ?? DateTimeOffset.MinValue
             };
 
-            _logger.LogInformation("Loaded version {Version} from slot {SlotId}, {Size} bytes",
+            _logger.LogDebug("Loaded version {Version} from slot {SlotId}, {Size} bytes",
                 targetVersion, slot.SlotId, decompressedData.Length);
 
             return (StatusCodes.OK, response);
@@ -975,7 +975,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Check if delta saves are enabled
             if (!_configuration.DeltaSavesEnabled)
             {
-                _logger.LogWarning("Delta saves are disabled");
+                _logger.LogDebug("Delta saves are disabled");
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -988,7 +988,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (slot == null)
             {
-                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                _logger.LogDebug("Slot not found: {SlotKey}", slotKey);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -997,7 +997,7 @@ public partial class SaveLoadService : ISaveLoadService
                 "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 60, cancellationToken);
             if (!slotLock.Success)
             {
-                _logger.LogWarning("Could not acquire slot lock for {SlotId}", slot.SlotId);
+                _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -1011,7 +1011,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (baseVersion == null)
             {
-                _logger.LogWarning("Base version {Version} not found", body.BaseVersion);
+                _logger.LogDebug("Base version {Version} not found", body.BaseVersion);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1022,7 +1022,7 @@ public partial class SaveLoadService : ISaveLoadService
             var algorithm = (body.Algorithm ?? DeltaAlgorithm.JSON_PATCH).ToString();
             if (!deltaProcessor.ValidateDelta(body.Delta, algorithm))
             {
-                _logger.LogWarning("Invalid delta provided");
+                _logger.LogDebug("Invalid delta provided");
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1049,7 +1049,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Check if chain is too long
             if (chainLength >= _configuration.MaxDeltaChainLength)
             {
-                _logger.LogWarning(
+                _logger.LogDebug(
                     "Delta chain too long ({Length} >= {Max}), consider collapsing",
                     chainLength, _configuration.MaxDeltaChainLength);
             }
@@ -1062,7 +1062,7 @@ public partial class SaveLoadService : ISaveLoadService
                 var deltaPercent = (double)deltaSize / estimatedFullSize * 100;
                 if (deltaPercent > _configuration.DeltaSizeThresholdPercent)
                 {
-                    _logger.LogWarning(
+                    _logger.LogDebug(
                         "Delta size ({DeltaSize}) is {Percent:F1}% of full save, exceeds threshold of {Threshold}%",
                         deltaSize, deltaPercent, _configuration.DeltaSizeThresholdPercent);
                     return (StatusCodes.BadRequest, null);
@@ -1241,7 +1241,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (slot == null)
             {
-                _logger.LogWarning("Slot not found: {SlotName}", body.SlotName);
+                _logger.LogDebug("Slot not found: {SlotName}", body.SlotName);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1252,7 +1252,7 @@ public partial class SaveLoadService : ISaveLoadService
                 : body.VersionNumber.Value;
             if (versionNumber == 0)
             {
-                _logger.LogWarning("Slot {SlotName} has no versions", body.SlotName);
+                _logger.LogDebug("Slot {SlotName} has no versions", body.SlotName);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1261,7 +1261,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (version == null)
             {
-                _logger.LogWarning("Version {Version} not found", versionNumber);
+                _logger.LogDebug("Version {Version} not found", versionNumber);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1358,7 +1358,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (slot == null)
             {
-                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                _logger.LogDebug("Slot not found: {SlotKey}", slotKey);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -1367,7 +1367,7 @@ public partial class SaveLoadService : ISaveLoadService
             var versionToFetch = body.VersionNumber ?? slot.LatestVersion;
             if (!versionToFetch.HasValue)
             {
-                _logger.LogWarning("No version specified and slot has no latest version");
+                _logger.LogDebug("No version specified and slot has no latest version");
                 return (StatusCodes.NotFound, null);
             }
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionToFetch.Value);
@@ -1375,14 +1375,14 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (targetVersion == null)
             {
-                _logger.LogWarning("Target version {Version} not found", versionToFetch.Value);
+                _logger.LogDebug("Target version {Version} not found", versionToFetch.Value);
                 return (StatusCodes.NotFound, null);
             }
 
             // If it's not a delta, nothing to collapse
             if (!targetVersion.IsDelta)
             {
-                _logger.LogInformation("Version {Version} is already a full snapshot", targetVersion.VersionNumber);
+                _logger.LogDebug("Version {Version} is already a full snapshot", targetVersion.VersionNumber);
                 return (StatusCodes.OK, new SaveResponse
                 {
                     SlotId = Guid.Parse(slot.SlotId),
@@ -1446,7 +1446,7 @@ public partial class SaveLoadService : ISaveLoadService
             var newEtag = await versionStore.TrySaveAsync(targetVersion.GetStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
-                _logger.LogWarning("Concurrent modification detected for version {Version} in slot {SlotId}",
+                _logger.LogDebug("Concurrent modification detected for version {Version} in slot {SlotId}",
                     targetVersion.VersionNumber, slot.SlotId);
                 return (StatusCodes.Conflict, null);
             }
@@ -1523,7 +1523,7 @@ public partial class SaveLoadService : ISaveLoadService
                 }
             }
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Collapsed delta chain for version {Version}, new size {Size} bytes",
                 resolvedVersionNumber, reconstructedData.Length);
 
@@ -1661,12 +1661,12 @@ public partial class SaveLoadService : ISaveLoadService
             var newEtag = await versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
-                _logger.LogWarning("Concurrent modification detected for version {Version} in slot {SlotId}",
+                _logger.LogDebug("Concurrent modification detected for version {Version} in slot {SlotId}",
                     body.VersionNumber, slot.SlotId);
                 return (StatusCodes.Conflict, null);
             }
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Pinned version {Version} in slot {SlotId} with checkpoint name {CheckpointName}",
                 body.VersionNumber, slot.SlotId, body.CheckpointName);
 
@@ -1740,12 +1740,12 @@ public partial class SaveLoadService : ISaveLoadService
             var newEtag = await versionStore.TrySaveAsync(versionKey, version, versionEtag ?? string.Empty, cancellationToken);
             if (newEtag == null)
             {
-                _logger.LogWarning("Concurrent modification detected for version {Version} in slot {SlotId}",
+                _logger.LogDebug("Concurrent modification detected for version {Version} in slot {SlotId}",
                     body.VersionNumber, slot.SlotId);
                 return (StatusCodes.Conflict, null);
             }
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Unpinned version {Version} in slot {SlotId}",
                 body.VersionNumber, slot.SlotId);
 
@@ -1807,7 +1807,7 @@ public partial class SaveLoadService : ISaveLoadService
                 "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 30, cancellationToken);
             if (!slotLock.Success)
             {
-                _logger.LogWarning("Could not acquire slot lock for {SlotId}", slot.SlotId);
+                _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -1824,7 +1824,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Check if version is pinned
             if (version.IsPinned)
             {
-                _logger.LogWarning(
+                _logger.LogDebug(
                     "Cannot delete pinned version {Version} in slot {SlotId}",
                     body.VersionNumber, slot.SlotId);
                 return (StatusCodes.Conflict, null);
@@ -1873,7 +1873,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Deleted version {Version} in slot {SlotId}, freed {BytesFreed} bytes",
                 body.VersionNumber, slot.SlotId, bytesFreed);
 
@@ -2045,7 +2045,7 @@ public partial class SaveLoadService : ISaveLoadService
             var totalCount = results.Count;
             results = results.Skip(body.Offset).Take(body.Limit).ToList();
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Query returned {Count} results out of {Total} total",
                 results.Count, totalCount);
 
@@ -2095,7 +2095,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (sourceSlot == null)
             {
-                _logger.LogWarning("Source slot not found: {SlotKey}", sourceSlotKey);
+                _logger.LogDebug("Source slot not found: {SlotKey}", sourceSlotKey);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -2103,7 +2103,7 @@ public partial class SaveLoadService : ISaveLoadService
             var sourceVersionNumber = body.SourceVersion ?? sourceSlot.LatestVersion;
             if (!sourceVersionNumber.HasValue)
             {
-                _logger.LogWarning("Source slot has no versions");
+                _logger.LogDebug("Source slot has no versions");
                 return (StatusCodes.NotFound, null);
             }
             var sourceVersionKey = SaveVersionManifest.GetStateKey(sourceSlot.SlotId, sourceVersionNumber.Value);
@@ -2111,7 +2111,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (sourceVersion == null)
             {
-                _logger.LogWarning("Source version {Version} not found", sourceVersionNumber);
+                _logger.LogDebug("Source version {Version} not found", sourceVersionNumber);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -2138,7 +2138,7 @@ public partial class SaveLoadService : ISaveLoadService
                 "save-load-slot", targetSlotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
             if (!targetSlotLock.Success)
             {
-                _logger.LogWarning("Could not acquire target slot lock for {SlotKey}", targetSlotKey);
+                _logger.LogDebug("Could not acquire target slot lock for {SlotKey}", targetSlotKey);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -2247,7 +2247,7 @@ public partial class SaveLoadService : ISaveLoadService
                 await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
             }
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Copied save from {SourceSlot} version {SourceVersion} to {TargetSlot} version {TargetVersion}",
                 body.SourceSlotName, sourceVersionNumber, body.TargetSlotName, newVersionNumber);
 
@@ -2317,7 +2317,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (slot == null)
             {
-                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                _logger.LogDebug("Slot not found: {SlotKey}", slotKey);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -2326,7 +2326,7 @@ public partial class SaveLoadService : ISaveLoadService
             var versionNumber = body.VersionNumber ?? slot.LatestVersion;
             if (!versionNumber.HasValue)
             {
-                _logger.LogWarning("No version to verify");
+                _logger.LogDebug("No version to verify");
                 return (StatusCodes.NotFound, null);
             }
 
@@ -2335,7 +2335,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (version == null)
             {
-                _logger.LogWarning("Version {Version} not found", versionNumber);
+                _logger.LogDebug("Version {Version} not found", versionNumber);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -2360,7 +2360,7 @@ public partial class SaveLoadService : ISaveLoadService
             var actualHash = Hashing.ContentHasher.ComputeHash(data);
             var hashesMatch = string.Equals(expectedHash, actualHash, StringComparison.OrdinalIgnoreCase);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Integrity verification for version {Version}: {Result} (expected {Expected}, actual {Actual})",
                 versionNumber, hashesMatch ? "VALID" : "INVALID", expectedHash, actualHash);
 
@@ -2417,7 +2417,7 @@ public partial class SaveLoadService : ISaveLoadService
                 "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 60, cancellationToken);
             if (!slotLock.Success)
             {
-                _logger.LogWarning("Could not acquire slot lock for {SlotId}", slot.SlotId);
+                _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -2546,7 +2546,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Run rolling cleanup
             await _versionCleanupManager.CleanupOldVersionsAsync(slot, cancellationToken);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Promoted version {SourceVersion} to version {NewVersion} in slot {SlotId}",
                 body.VersionNumber, newVersionNumber, slot.SlotId);
 
@@ -2600,7 +2600,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, AdminCleanupResponse?)> AdminCleanupAsync(AdminCleanupRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Executing AdminCleanup: dryRun={DryRun}, olderThanDays={Days}, category={Category}",
             body.DryRun, body.OlderThanDays, body.Category);
 
@@ -2685,7 +2685,7 @@ public partial class SaveLoadService : ISaveLoadService
                 }
             }
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "AdminCleanup {Mode}: deleted {Versions} versions, {Slots} slots, freed {Bytes} bytes",
                 body.DryRun ? "preview" : "executed",
                 versionsDeleted, slotsDeleted, bytesFreed);
@@ -2721,7 +2721,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, AdminStatsResponse?)> AdminStatsAsync(AdminStatsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing AdminStats with groupBy={GroupBy}", body.GroupBy);
+        _logger.LogDebug("Executing AdminStats with groupBy={GroupBy}", body.GroupBy);
 
         try
         {
@@ -2990,7 +2990,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering SaveLoad service permissions...");
+        _logger.LogDebug("Registering SaveLoad service permissions...");
         await SaveLoadPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 

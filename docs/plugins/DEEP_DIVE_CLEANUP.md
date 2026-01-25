@@ -197,18 +197,4 @@ For each plugin deep dive document:
 
 ---
 
-## Summary of TENET Clarifications Made
-
-The following clarifications were added to `docs/reference/tenets/IMPLEMENTATION.md`:
-
-1. **T20 - JsonDocument Navigation is Allowed**: Added section explicitly permitting `JsonDocument.Parse()` and `JsonElement` for DOM navigation, external API parsing, and metadata reading.
-
-2. **T21 - Mathematical Constants are Not Tunables**: Added section clarifying epsilon values and algorithm constants are acceptable as hardcoded values. Also noted stub scaffolding config is acceptable.
-
-3. **T25 - State Store API Boundaries**: Added section clarifying that `ToString()` for state store set APIs and `Guid.TryParse` on read is acceptable boundary handling.
-
-T7 already had the inter-service call clarification from a previous update.
-
----
-
 *This document guides the cleanup effort. Update the progress tracker as each plugin is completed.*
