@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -82,7 +81,6 @@ public static class EscrowTopics
 public partial class EscrowService : IEscrowService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IServiceNavigator _navigator;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<EscrowService> _logger;
     private readonly EscrowServiceConfiguration _configuration;
@@ -191,20 +189,18 @@ public partial class EscrowService : IEscrowService
     /// Initializes a new instance of the <see cref="EscrowService"/> class.
     /// </summary>
     /// <param name="messageBus">Message bus for event publishing.</param>
-    /// <param name="navigator">Service navigator for cross-service calls.</param>
     /// <param name="stateStoreFactory">State store factory for persistence.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
+    /// <param name="eventConsumer">Event consumer for subscription registration.</param>
     public EscrowService(
         IMessageBus messageBus,
-        IServiceNavigator navigator,
         IStateStoreFactory stateStoreFactory,
         ILogger<EscrowService> logger,
         EscrowServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
-        _navigator = navigator;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;

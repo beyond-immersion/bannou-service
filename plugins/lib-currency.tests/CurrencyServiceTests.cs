@@ -415,9 +415,9 @@ public class CurrencyConversionConcurrencyTests
     {
         return new WalletModel
         {
-            WalletId = _walletId.ToString(),
-            OwnerId = _ownerId.ToString(),
-            OwnerType = "Account",
+            WalletId = _walletId,
+            OwnerId = _ownerId,
+            OwnerType = WalletOwnerType.Account,
             Status = WalletStatus.Active,
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
         };
@@ -427,11 +427,11 @@ public class CurrencyConversionConcurrencyTests
     {
         return new CurrencyDefinitionModel
         {
-            DefinitionId = _fromCurrencyId.ToString(),
+            DefinitionId = _fromCurrencyId,
             Code = "GOLD",
             Name = "Gold",
-            Scope = "Global",
-            Precision = "Decimal_2",
+            Scope = CurrencyScope.Global,
+            Precision = CurrencyPrecision.Decimal_2,
             IsBaseCurrency = false,
             ExchangeRateToBase = exchangeRate,
             IsActive = true,
@@ -442,16 +442,16 @@ public class CurrencyConversionConcurrencyTests
     private CurrencyDefinitionModel CreateToDefinition(
         double exchangeRate = 1.0,
         double? perWalletCap = null,
-        string? capOverflowBehavior = null,
+        CapOverflowBehavior? capOverflowBehavior = null,
         double? dailyEarnCap = null)
     {
         return new CurrencyDefinitionModel
         {
-            DefinitionId = _toCurrencyId.ToString(),
+            DefinitionId = _toCurrencyId,
             Code = "GEMS",
             Name = "Gems",
-            Scope = "Global",
-            Precision = "Integer",
+            Scope = CurrencyScope.Global,
+            Precision = CurrencyPrecision.Integer,
             IsBaseCurrency = true,
             ExchangeRateToBase = exchangeRate,
             PerWalletCap = perWalletCap,
@@ -462,7 +462,7 @@ public class CurrencyConversionConcurrencyTests
         };
     }
 
-    private BalanceModel CreateBalance(string walletId, string currencyDefId, double amount)
+    private BalanceModel CreateBalance(Guid walletId, Guid currencyDefId, double amount)
     {
         return new BalanceModel
         {
@@ -513,7 +513,7 @@ public class CurrencyConversionConcurrencyTests
 
         // Target balance is at 80; conversion of 50 from (rate 2.0/1.0) = 100 to-amount
         // 80 + 100 = 180 > 100 cap → should reject
-        var targetBalance = CreateBalance(_walletId.ToString(), _toCurrencyId.ToString(), 80);
+        var targetBalance = CreateBalance(_walletId, _toCurrencyId, 80);
         _mockBalanceCacheStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(_toCurrencyId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync((BalanceModel?)null);
@@ -563,7 +563,7 @@ public class CurrencyConversionConcurrencyTests
         SetupWalletAndDefinitions(fromDef, toDef);
 
         // Source balance has 1000 units
-        var sourceBalance = CreateBalance(_walletId.ToString(), _fromCurrencyId.ToString(), 1000);
+        var sourceBalance = CreateBalance(_walletId, _fromCurrencyId, 1000);
         _mockBalanceCacheStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(_fromCurrencyId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync((BalanceModel?)null);
@@ -648,7 +648,7 @@ public class CurrencyConversionConcurrencyTests
         SetupWalletAndDefinitions(fromDef, toDef);
 
         // Source balance: 1000
-        var sourceBalance = CreateBalance(_walletId.ToString(), _fromCurrencyId.ToString(), 1000);
+        var sourceBalance = CreateBalance(_walletId, _fromCurrencyId, 1000);
         _mockBalanceCacheStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(_fromCurrencyId.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync((BalanceModel?)null);
@@ -657,7 +657,7 @@ public class CurrencyConversionConcurrencyTests
             .ReturnsAsync(sourceBalance);
 
         // Target balance: already earned 9 of 10 daily cap
-        var targetBalance = CreateBalance(_walletId.ToString(), _toCurrencyId.ToString(), 50);
+        var targetBalance = CreateBalance(_walletId, _toCurrencyId, 50);
         targetBalance.DailyEarned = 9; // Almost at daily cap of 10
         _mockBalanceCacheStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(_toCurrencyId.ToString())), It.IsAny<CancellationToken>()))

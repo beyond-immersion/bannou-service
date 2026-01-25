@@ -4,7 +4,6 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +19,7 @@ namespace BeyondImmersion.BannouService.Inventory;
 public partial class InventoryService : IInventoryService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IServiceNavigator _navigator;
+    private readonly IItemClient _itemClient;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<InventoryService> _logger;
@@ -37,14 +36,14 @@ public partial class InventoryService : IInventoryService
     /// </summary>
     public InventoryService(
         IMessageBus messageBus,
-        IServiceNavigator navigator,
+        IItemClient itemClient,
         IStateStoreFactory stateStoreFactory,
         IDistributedLockProvider lockProvider,
         ILogger<InventoryService> logger,
         InventoryServiceConfiguration configuration)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
+        _itemClient = itemClient ?? throw new ArgumentNullException(nameof(itemClient));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -226,7 +225,7 @@ public partial class InventoryService : IInventoryService
             {
                 try
                 {
-                    var itemsResponse = await _navigator.Item.ListItemsByContainerAsync(
+                    var itemsResponse = await _itemClient.ListItemsByContainerAsync(
                         new ListItemsByContainerRequest { ContainerId = body.ContainerId },
                         cancellationToken);
 
@@ -496,7 +495,7 @@ public partial class InventoryService : IInventoryService
             List<ItemInstanceResponse> items;
             try
             {
-                var itemsResponse = await _navigator.Item.ListItemsByContainerAsync(
+                var itemsResponse = await _itemClient.ListItemsByContainerAsync(
                     new ListItemsByContainerRequest { ContainerId = body.ContainerId },
                     cancellationToken);
                 items = itemsResponse.Items.ToList();
@@ -523,7 +522,7 @@ public partial class InventoryService : IInventoryService
                         {
                             try
                             {
-                                await _navigator.Item.DestroyItemInstanceAsync(
+                                await _itemClient.DestroyItemInstanceAsync(
                                     new DestroyItemInstanceRequest
                                     {
                                         InstanceId = item.InstanceId,
@@ -639,7 +638,7 @@ public partial class InventoryService : IInventoryService
             ItemInstanceResponse item;
             try
             {
-                item = await _navigator.Item.GetItemInstanceAsync(
+                item = await _itemClient.GetItemInstanceAsync(
                     new GetItemInstanceRequest { InstanceId = body.InstanceId },
                     cancellationToken);
             }
@@ -653,7 +652,7 @@ public partial class InventoryService : IInventoryService
             ItemTemplateResponse template;
             try
             {
-                template = await _navigator.Item.GetItemTemplateAsync(
+                template = await _itemClient.GetItemTemplateAsync(
                     new GetItemTemplateRequest { TemplateId = item.TemplateId },
                     cancellationToken);
             }
@@ -762,7 +761,7 @@ public partial class InventoryService : IInventoryService
             ItemInstanceResponse item;
             try
             {
-                item = await _navigator.Item.GetItemInstanceAsync(
+                item = await _itemClient.GetItemInstanceAsync(
                     new GetItemInstanceRequest { InstanceId = body.InstanceId },
                     cancellationToken);
             }
@@ -803,7 +802,7 @@ public partial class InventoryService : IInventoryService
             // Get template for weight/volume
             try
             {
-                var template = await _navigator.Item.GetItemTemplateAsync(
+                var template = await _itemClient.GetItemTemplateAsync(
                     new GetItemTemplateRequest { TemplateId = item.TemplateId },
                     cancellationToken);
 
@@ -866,7 +865,7 @@ public partial class InventoryService : IInventoryService
             ItemInstanceResponse item;
             try
             {
-                item = await _navigator.Item.GetItemInstanceAsync(
+                item = await _itemClient.GetItemInstanceAsync(
                     new GetItemInstanceRequest { InstanceId = body.InstanceId },
                     cancellationToken);
             }
@@ -906,7 +905,7 @@ public partial class InventoryService : IInventoryService
             ItemTemplateResponse template;
             try
             {
-                template = await _navigator.Item.GetItemTemplateAsync(
+                template = await _itemClient.GetItemTemplateAsync(
                     new GetItemTemplateRequest { TemplateId = item.TemplateId },
                     cancellationToken);
             }
@@ -987,7 +986,7 @@ public partial class InventoryService : IInventoryService
             ItemInstanceResponse item;
             try
             {
-                item = await _navigator.Item.GetItemInstanceAsync(
+                item = await _itemClient.GetItemInstanceAsync(
                     new GetItemInstanceRequest { InstanceId = body.InstanceId },
                     cancellationToken);
             }
@@ -1001,7 +1000,7 @@ public partial class InventoryService : IInventoryService
             ItemTemplateResponse template;
             try
             {
-                template = await _navigator.Item.GetItemTemplateAsync(
+                template = await _itemClient.GetItemTemplateAsync(
                     new GetItemTemplateRequest { TemplateId = item.TemplateId },
                     cancellationToken);
             }
@@ -1111,7 +1110,7 @@ public partial class InventoryService : IInventoryService
             ItemInstanceResponse item;
             try
             {
-                item = await _navigator.Item.GetItemInstanceAsync(
+                item = await _itemClient.GetItemInstanceAsync(
                     new GetItemInstanceRequest { InstanceId = body.InstanceId },
                     cancellationToken);
             }
@@ -1132,7 +1131,7 @@ public partial class InventoryService : IInventoryService
             ItemTemplateResponse template;
             try
             {
-                template = await _navigator.Item.GetItemTemplateAsync(
+                template = await _itemClient.GetItemTemplateAsync(
                     new GetItemTemplateRequest { TemplateId = item.TemplateId },
                     cancellationToken);
             }
@@ -1169,7 +1168,7 @@ public partial class InventoryService : IInventoryService
             // Update original instance quantity
             try
             {
-                await _navigator.Item.ModifyItemInstanceAsync(
+                await _itemClient.ModifyItemInstanceAsync(
                     new ModifyItemInstanceRequest
                     {
                         InstanceId = body.InstanceId,
@@ -1186,7 +1185,7 @@ public partial class InventoryService : IInventoryService
             ItemInstanceResponse newItem;
             try
             {
-                newItem = await _navigator.Item.CreateItemInstanceAsync(
+                newItem = await _itemClient.CreateItemInstanceAsync(
                     new CreateItemInstanceRequest
                     {
                         TemplateId = item.TemplateId,
@@ -1205,7 +1204,7 @@ public partial class InventoryService : IInventoryService
                 // Attempt to restore original quantity
                 try
                 {
-                    await _navigator.Item.ModifyItemInstanceAsync(
+                    await _itemClient.ModifyItemInstanceAsync(
                         new ModifyItemInstanceRequest
                         {
                             InstanceId = body.InstanceId,
@@ -1272,7 +1271,7 @@ public partial class InventoryService : IInventoryService
             ItemInstanceResponse target;
             try
             {
-                source = await _navigator.Item.GetItemInstanceAsync(
+                source = await _itemClient.GetItemInstanceAsync(
                     new GetItemInstanceRequest { InstanceId = body.SourceInstanceId },
                     cancellationToken);
             }
@@ -1284,7 +1283,7 @@ public partial class InventoryService : IInventoryService
 
             try
             {
-                target = await _navigator.Item.GetItemInstanceAsync(
+                target = await _itemClient.GetItemInstanceAsync(
                     new GetItemInstanceRequest { InstanceId = body.TargetInstanceId },
                     cancellationToken);
             }
@@ -1304,7 +1303,7 @@ public partial class InventoryService : IInventoryService
             ItemTemplateResponse template;
             try
             {
-                template = await _navigator.Item.GetItemTemplateAsync(
+                template = await _itemClient.GetItemTemplateAsync(
                     new GetItemTemplateRequest { TemplateId = source.TemplateId },
                     cancellationToken);
             }
@@ -1345,7 +1344,7 @@ public partial class InventoryService : IInventoryService
             // Update target quantity first (safer: if this fails, source is unaffected)
             try
             {
-                await _navigator.Item.ModifyItemInstanceAsync(
+                await _itemClient.ModifyItemInstanceAsync(
                     new ModifyItemInstanceRequest
                     {
                         InstanceId = body.TargetInstanceId,
@@ -1364,7 +1363,7 @@ public partial class InventoryService : IInventoryService
                 // Partial merge - reduce source quantity
                 try
                 {
-                    await _navigator.Item.ModifyItemInstanceAsync(
+                    await _itemClient.ModifyItemInstanceAsync(
                         new ModifyItemInstanceRequest
                         {
                             InstanceId = body.SourceInstanceId,
@@ -1381,7 +1380,7 @@ public partial class InventoryService : IInventoryService
                 // Full merge - destroy source
                 try
                 {
-                    await _navigator.Item.DestroyItemInstanceAsync(
+                    await _itemClient.DestroyItemInstanceAsync(
                         new DestroyItemInstanceRequest
                         {
                             InstanceId = body.SourceInstanceId,
@@ -1468,7 +1467,7 @@ public partial class InventoryService : IInventoryService
                 List<ItemInstanceResponse> items;
                 try
                 {
-                    var itemsResponse = await _navigator.Item.ListItemsByContainerAsync(
+                    var itemsResponse = await _itemClient.ListItemsByContainerAsync(
                         new ListItemsByContainerRequest { ContainerId = container.ContainerId },
                         cancellationToken);
                     items = itemsResponse.Items.ToList();
@@ -1488,7 +1487,7 @@ public partial class InventoryService : IInventoryService
                     {
                         try
                         {
-                            var template = await _navigator.Item.GetItemTemplateAsync(
+                            var template = await _itemClient.GetItemTemplateAsync(
                                 new GetItemTemplateRequest { TemplateId = item.TemplateId },
                                 cancellationToken);
 
@@ -1663,7 +1662,7 @@ public partial class InventoryService : IInventoryService
             ItemTemplateResponse template;
             try
             {
-                template = await _navigator.Item.GetItemTemplateAsync(
+                template = await _itemClient.GetItemTemplateAsync(
                     new GetItemTemplateRequest { TemplateId = body.TemplateId },
                     cancellationToken);
             }
@@ -1723,7 +1722,7 @@ public partial class InventoryService : IInventoryService
                 {
                     try
                     {
-                        var itemsResponse = await _navigator.Item.ListItemsByContainerAsync(
+                        var itemsResponse = await _itemClient.ListItemsByContainerAsync(
                             new ListItemsByContainerRequest { ContainerId = container.ContainerId },
                             cancellationToken);
 
