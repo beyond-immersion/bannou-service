@@ -29,6 +29,7 @@ public class OrchestratorServiceTests
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly AppConfiguration _appConfiguration;
 
@@ -53,7 +54,13 @@ public class OrchestratorServiceTests
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup HTTP client factory to return a mock client
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
 
         // Setup lock provider to always succeed
         var mockLockResponse = new Mock<ILockResponse>();
@@ -82,6 +89,7 @@ public class OrchestratorServiceTests
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
             _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1354,6 +1362,7 @@ public class OrchestratorResetToDefaultTests
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
@@ -1369,6 +1378,7 @@ public class OrchestratorResetToDefaultTests
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _configuration = new OrchestratorServiceConfiguration
         {
@@ -1381,6 +1391,11 @@ public class OrchestratorResetToDefaultTests
         _mockLoggerFactory
             .Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
+
+        // Setup HTTP client factory to return a mock client
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
 
         // Setup lock provider to always succeed
         var mockLockResponse = new Mock<ILockResponse>();
@@ -1409,6 +1424,7 @@ public class OrchestratorResetToDefaultTests
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
             _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1745,6 +1761,7 @@ public class OrchestratorProcessingPoolTests
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public OrchestratorProcessingPoolTests()
@@ -1768,7 +1785,13 @@ public class OrchestratorProcessingPoolTests
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup HTTP client factory to return a mock client
+        _mockHttpClientFactory
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient());
 
         // Setup lock provider to always succeed
         var mockLockResponse = new Mock<ILockResponse>();
@@ -1797,6 +1820,7 @@ public class OrchestratorProcessingPoolTests
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
             _mockLockProvider.Object,
+            _mockHttpClientFactory.Object,
             _mockEventConsumer.Object);
     }
 

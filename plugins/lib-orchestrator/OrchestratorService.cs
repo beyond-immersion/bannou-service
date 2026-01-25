@@ -32,6 +32,7 @@ public partial class OrchestratorService : IOrchestratorService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly PresetLoader _presetLoader;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     /// <summary>
     /// Cached orchestrator instance for container operations.
@@ -101,6 +102,7 @@ public partial class OrchestratorService : IOrchestratorService
         ISmartRestartManager restartManager,
         IBackendDetector backendDetector,
         IDistributedLockProvider lockProvider,
+        IHttpClientFactory httpClientFactory,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
@@ -114,6 +116,7 @@ public partial class OrchestratorService : IOrchestratorService
         _restartManager = restartManager;
         _backendDetector = backendDetector;
         _lockProvider = lockProvider;
+        _httpClientFactory = httpClientFactory;
 
         // Create preset loader with configured presets directory
         var presetsPath = configuration.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
@@ -3274,7 +3277,8 @@ public partial class OrchestratorService : IOrchestratorService
             var openRestyPort = _configuration.OpenRestyPort;
             var invalidateUrl = $"http://{openRestyHost}:{openRestyPort}/internal/cache/invalidate";
 
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(_configuration.OpenRestyRequestTimeoutSeconds) };
+            using var httpClient = _httpClientFactory.CreateClient("OpenResty");
+            httpClient.Timeout = TimeSpan.FromSeconds(_configuration.OpenRestyRequestTimeoutSeconds);
             var response = await httpClient.PostAsync(invalidateUrl, null);
 
             if (response.IsSuccessStatusCode)

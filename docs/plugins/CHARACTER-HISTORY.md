@@ -186,15 +186,11 @@ None. The service is feature-complete for its scope.
    - `EventParticipationData.Role`: string → `ParticipationRole`
    - `BackstoryElementData.ElementType`: string → `BackstoryElementType`
 
-## Design Considerations (Requires Planning - T25 Guid Fields)
-
-The following T25 violations involve Guid fields and require coordinated storage changes:
-
-1. **ParticipationData Guid fields**: `ParticipationId`, `CharacterId`, `EventId` should be `Guid` instead of string with `Guid.Parse`/`.ToString()`.
-
-2. **BackstoryData.CharacterId**: Uses `string` instead of `Guid`.
-
-3. **GenerateParticipationSummary string comparisons**: Uses string comparison for enum values. Will be resolved by fixing POCO enum types above.
+2. **T25 (Internal POCO uses string for Guid)**: Multiple internal models store GUIDs as strings requiring `Guid.Parse`/`.ToString()`:
+   - `ParticipationData.ParticipationId`: string → `Guid`
+   - `ParticipationData.CharacterId`: string → `Guid`
+   - `ParticipationData.EventId`: string → `Guid`
+   - `BackstoryData.CharacterId`: string → `Guid`
 
 ## False Positives Removed
 

@@ -904,8 +904,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 /// </summary>
 internal class PersonalityData
 {
-    public string CharacterId { get; set; } = string.Empty;
-    public Dictionary<string, float> Traits { get; set; } = new();
+    public Guid CharacterId { get; set; }
+    public Dictionary<TraitAxis, float> Traits { get; set; } = new();
     public int Version { get; set; }
     public long CreatedAtUnix { get; set; }
     public long UpdatedAtUnix { get; set; }
@@ -916,10 +916,10 @@ internal class PersonalityData
 /// </summary>
 internal class CombatPreferencesData
 {
-    public string CharacterId { get; set; } = string.Empty;
-    public string Style { get; set; } = "BALANCED";
-    public string PreferredRange { get; set; } = "MEDIUM";
-    public string GroupRole { get; set; } = "FRONTLINE";
+    public Guid CharacterId { get; set; }
+    public CombatStyle Style { get; set; } = CombatStyle.BALANCED;
+    public PreferredRange PreferredRange { get; set; } = PreferredRange.MEDIUM;
+    public GroupRole GroupRole { get; set; } = GroupRole.FRONTLINE;
     public float RiskTolerance { get; set; } = 0.5f;
     public float RetreatThreshold { get; set; } = 0.3f;
     public bool ProtectAllies { get; set; } = true;

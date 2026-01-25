@@ -292,10 +292,12 @@ The following T25 (Internal Model Type Safety) violations require coordinated ch
 
 ### Design Considerations (Requires Planning)
 
-1. **Hardcoded combat RNG probabilities**: Style/role transition probabilities (0.2, 0.3, 0.4, 0.5) are hardcoded in switch cases. Not configurable. Would require schema extension to make tunable.
+1. **Combat style transitions are limited**: Only specific transitions exist (DEFENSIVE->BALANCED->AGGRESSIVE->BERSERKER). TACTICAL is only reachable via ambush success. No general transition matrix.
 
-2. **Combat style transitions are limited**: Only specific transitions exist (DEFENSIVE->BALANCED->AGGRESSIVE->BERSERKER). TACTICAL is only reachable via ambush success. No general transition matrix.
+2. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
 
-3. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
+3. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires.
 
-4. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires.
+### Previously Fixed
+
+- **Combat RNG probabilities**: Now configurable via `CombatStyleTransitionProbability`, `CombatDefeatStyleTransitionProbability`, `CombatVictoryBalancedTransitionProbability`, `CombatRoleTransitionProbability`, `CombatDefensiveShiftProbability` configuration properties.

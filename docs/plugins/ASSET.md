@@ -321,17 +321,17 @@ Client                    Asset Service                     MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T25 (Internal POCO uses string for Guid)**: `BundleMetadata.BundleId`, `SourceBundleReferenceInternal.BundleId`, and related bundle model ID fields store GUIDs as strings requiring `Guid.Parse()` at usage sites. Should use `Guid` type directly.
+
+2. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define an `AssetProcessingErrorCode` enum for compile-time validation.
 
 ### Design Considerations (Requires Planning)
 
-1. **T25: String IDs instead of Guid types** - Multiple internal models use `string` for ID fields that are always GUIDs: `AssetProcessingContext.AssetId`, `InternalAssetRecord.AssetId`, `BundleMetadata.BundleId`, and related bundle models. Converting to Guid types would improve type safety but requires coordinated changes across state store key generation, serialization, and all consumers.
+1. **AssetId is SHA-256 hash string (intentional)**: `InternalAssetRecord.AssetId` and `AssetProcessingContext.AssetId` are SHA-256 content hashes stored as hex strings. This is NOT a T25 violation - these are legitimately strings (hashes), not GUIDs.
 
-2. **T25: ErrorCode strings instead of enum** - `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`). A dedicated enum would provide compile-time validation.
+2. **Interface async contract vs sync implementation** - `TextureProcessor`, `ModelProcessor`, and stub paths use `await Task.CompletedTask` to satisfy async interfaces. Consider `ValueTask` or separate sync/async interface paths if this becomes a performance concern.
 
-3. **Interface async contract vs sync implementation** - `TextureProcessor`, `ModelProcessor`, and stub paths use `await Task.CompletedTask` to satisfy async interfaces. Consider `ValueTask` or separate sync/async interface paths if this becomes a performance concern.
-
-4. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
+3. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
 
 ### Intentional Quirks (Documented Behavior)
 

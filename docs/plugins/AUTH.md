@@ -194,17 +194,15 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ## Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T25 (Internal POCO uses string for Guid)**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)` to convert it (SessionService.cs:85, 432; AuthService.cs:1287, 1338, 1364, 1390; TokenService.cs:293). Should use `Guid` type directly.
 
 ## Design Considerations (Requires Planning)
 
-1. **`SessionDataModel.SessionId` as string instead of Guid** - `SessionDataModel.SessionId` is stored as a string with `= string.Empty` default. Per IMPLEMENTATION TENETS (T25), internal POCOs should use proper types. Changing to `Guid` requires updating all consuming code (TokenService, SessionService, AuthService) to use `Guid.ToString()` at API boundaries only. This affects session creation, validation, and event publishing paths.
+1. **`SessionDataModel.Email` empty string default** - Email uses `= string.Empty` which hides null-source bugs. OAuth/Steam accounts legitimately have no email. Should be `string?` with explicit null handling in consuming code (session creation, login responses). Requires auditing all email usage patterns in auth flows.
 
-2. **`SessionDataModel.Email` empty string default** - Email uses `= string.Empty` which hides null-source bugs. OAuth/Steam accounts legitimately have no email. Should be `string?` with explicit null handling in consuming code (session creation, login responses). Requires auditing all email usage patterns in auth flows.
+2. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= ""` default. Email is always populated from account (which may be null for OAuth). Should be nullable with validation before storing. Requires updating `RequestPasswordResetAsync` to handle null case.
 
-3. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= ""` default. Email is always populated from account (which may be null for OAuth). Should be nullable with validation before storing. Requires updating `RequestPasswordResetAsync` to handle null case.
-
-4. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock). Should be wired through when email integration is added. Low priority until email implementation.
+3. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock). Should be wired through when email integration is added. Low priority until email implementation.
 
 ### False Positives Removed
 

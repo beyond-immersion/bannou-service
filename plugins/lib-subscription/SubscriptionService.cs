@@ -153,7 +153,18 @@ public partial class SubscriptionService : ISubscriptionService
             else if (!string.IsNullOrEmpty(body.StubName))
             {
                 // Query by stubName - need to look up serviceId first, then get subscriptions for that service
-                var serviceResponse = await _serviceClient.GetServiceAsync(new GetServiceRequest { StubName = body.StubName });
+                ServiceInfo? serviceResponse;
+                try
+                {
+                    serviceResponse = await _serviceClient.GetServiceAsync(new GetServiceRequest { StubName = body.StubName }, cancellationToken);
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    // Service not found - return empty result (this is a query, not a specific lookup)
+                    _logger.LogWarning("Service not found for stubName {StubName}", body.StubName);
+                    serviceResponse = null;
+                }
+
                 if (serviceResponse?.ServiceId != null)
                 {
                     var serviceSubIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceResponse.ServiceId}", cancellationToken);
@@ -161,10 +172,6 @@ public partial class SubscriptionService : ISubscriptionService
                     {
                         subscriptionIds.AddRange(serviceSubIds);
                     }
-                }
-                else
-                {
-                    _logger.LogWarning("Service not found for stubName {StubName}", body.StubName);
                 }
             }
 
