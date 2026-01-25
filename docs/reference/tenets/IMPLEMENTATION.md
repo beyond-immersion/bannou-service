@@ -2,7 +2,7 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26
 
 These tenets define the patterns you follow while implementing services. Reference them during active development.
 
@@ -961,6 +961,91 @@ The type system catches mistakes at compile time. String-based tests would compi
 
 ---
 
+## Tenet 26: Schema Reference Hierarchy (MANDATORY)
+
+**Rule**: Shared types within a plugin MUST be defined in the `-api.yaml` schema. Other schema files (`-events.yaml`, `-lifecycle-events.yaml`, `-configuration.yaml`) MAY reference types from the API schema via `$ref`, but NOT vice versa.
+
+### Why This Matters
+
+NSwag processes each schema file independently. When multiple schemas define the same type, duplicate C# classes are generated, causing compilation errors. The solution is a clear hierarchy:
+
+1. **API schema is the source of truth** for shared types (enums, complex models)
+2. **Other schemas reference** the API schema via `$ref`
+3. **Code generation** detects cross-schema `$ref`s and excludes already-generated types
+
+### Reference Hierarchy
+
+```
+                    ┌─────────────────┐
+                    │  {service}-api  │  ← Defines shared types (enums, models)
+                    │     .yaml       │
+                    └────────┬────────┘
+                             │ $ref allowed
+        ┌────────────────────┼────────────────────┐
+        ▼                    ▼                    ▼
+┌───────────────┐   ┌────────────────┐   ┌──────────────────┐
+│ {service}-    │   │ {service}-     │   │ {service}-       │
+│ events.yaml   │   │ configuration  │   │ lifecycle-events │
+│               │   │ .yaml          │   │ .yaml (generated)│
+└───────────────┘   └────────────────┘   └──────────────────┘
+```
+
+### Valid Patterns
+
+```yaml
+# In actor-events.yaml - referencing enum from API schema
+components:
+  schemas:
+    ActorStatusChangedEvent:
+      properties:
+        previousStatus:
+          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
+        newStatus:
+          $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
+
+# In x-lifecycle section of actor-events.yaml
+x-lifecycle:
+  ActorInstance:
+    model:
+      status:
+        $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+```
+
+### Invalid Patterns
+
+```yaml
+# FORBIDDEN: API schema referencing events schema
+# In actor-api.yaml
+components:
+  schemas:
+    SomeModel:
+      properties:
+        eventType:
+          $ref: 'actor-events.yaml#/components/schemas/EventType'  # NO!
+
+# FORBIDDEN: Events schema referencing another service's API
+# In actor-events.yaml
+properties:
+  characterStatus:
+    $ref: 'character-api.yaml#/components/schemas/CharacterStatus'  # NO!
+```
+
+### How Code Generation Handles This
+
+The generation scripts automatically:
+1. Parse event/lifecycle/config schemas for `$ref` patterns pointing to `*-api.yaml`
+2. Extract referenced type names
+3. Add them to `excludedTypeNames` (prevents duplicate generation)
+4. Add the service namespace to `additionalNamespaceUsages` (allows referencing existing types)
+
+This is transparent to developers - just use `$ref` correctly and generation handles the rest.
+
+### Cross-Service Type Sharing
+
+If multiple services need the same type, define it in `common-events.yaml` or create a dedicated common schema. Do NOT have service A reference service B's API schema.
+
+---
+
 ## Quick Reference: Implementation Violations
 
 | Violation | Tenet | Fix |
@@ -992,7 +1077,10 @@ The type system catches mistakes at compile time. String-based tests would compi
 | Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
 | String in request/response/event model | T25 | Schema should define enum type |
 | String in configuration class | T25 | Config schema should define enum type |
+| Shared type defined in events schema | T26 | Move type to `-api.yaml`, use `$ref` in events |
+| API schema `$ref` to events schema | T26 | Reverse the dependency - API is source of truth |
+| Events `$ref` to different service's API | T26 | Use common schema or duplicate the type |
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25. See [TENETS.md](../TENETS.md) for the complete index.*
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26. See [TENETS.md](../TENETS.md) for the complete index.*

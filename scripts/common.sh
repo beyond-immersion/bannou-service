@@ -185,6 +185,33 @@ get_repo_root() {
 }
 
 # -----------------------------------------------------------------------------
+# Schema Reference Detection Functions (T26: Schema Reference Hierarchy)
+# -----------------------------------------------------------------------------
+
+# Extract $refs pointing to API schema types
+# Per T26: events/lifecycle/config can $ref types from their service's -api.yaml
+# These types are already generated in *Models.cs, so we exclude them
+# Usage: API_REFS=$(extract_api_refs "$schema_file" "$service_name")
+# Returns: Comma-separated list of type names, or empty string if none found
+extract_api_refs() {
+    local schema_file="$1"
+    local service_name="$2"
+
+    # Find all $refs pointing to {service}-api.yaml and extract type names
+    # Matches patterns like:
+    #   $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
+    #   $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+    #   $ref: "actor-api.yaml#/components/schemas/ActorStatus"
+    local api_refs=$(grep -oE "\\\$ref: ['\"]\.{0,3}/?${service_name}-api\.yaml#/components/schemas/[^'\"]+['\"]" "$schema_file" 2>/dev/null | \
+        sed -E "s/.*\/schemas\/([^'\"]+)['\"].*/\1/" | \
+        sort -u | \
+        tr '\n' ',' | \
+        sed 's/,$//')
+
+    echo "$api_refs"
+}
+
+# -----------------------------------------------------------------------------
 # Post-Processing Functions
 # -----------------------------------------------------------------------------
 

@@ -631,7 +631,7 @@ public partial class ActorService : IActorService
                 TemplateId = body.TemplateId,
                 CharacterId = body.CharacterId ?? Guid.Empty,
                 NodeId = nodeId,
-                Status = (_configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending).ToString().ToLowerInvariant(),
+                Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
                 StartedAt = startedAt
             };
             await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
@@ -909,7 +909,7 @@ public partial class ActorService : IActorService
                     TemplateId = runner.TemplateId,
                     CharacterId = runner.CharacterId ?? Guid.Empty,
                     NodeId = _configuration.LocalModeNodeId,
-                    Status = runner.Status.ToString().ToLowerInvariant(),
+                    Status = runner.Status,
                     StartedAt = runner.StartedAt,
                     DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
                 };

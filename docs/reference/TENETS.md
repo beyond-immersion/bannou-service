@@ -16,7 +16,7 @@ When documenting tenet compliance in source code comments, **NEVER use specific 
 
 **Instead, use category names:**
 - `FOUNDATION TENETS` - for T1, T2, T4, T5, T6, T13, T15, T18
-- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 
 **Examples:**
@@ -41,7 +41,7 @@ Tenets are organized into three categories based on when they're needed:
 | Category | Tenets | When to Reference |
 |----------|--------|-------------------|
 | [**Foundation**](tenets/FOUNDATION.md) | T1, T2, T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25 | While actively writing service code |
+| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 ---
@@ -80,6 +80,7 @@ Tenets are organized into three categories based on when they're needed:
 | **T23** | Async Method Pattern | Task-returning methods must be async with await |
 | **T24** | Using Statement Pattern | Use `using` for disposables; manual Dispose only for class-owned resources |
 | **T25** | Type Safety Across All Models | ALL models use proper types (enums, Guids); "JSON requires strings" is FALSE |
+| **T26** | Schema Reference Hierarchy | Shared types in `-api.yaml`; events/config/lifecycle can `$ref` to API, not vice versa |
 
 ---
 
@@ -142,6 +143,9 @@ Tenets are organized into three categories based on when they're needed:
 | Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
 | String in request/response/event model | T25 | Schema should define enum type |
 | String in configuration class | T25 | Config schema should define enum type |
+| Shared type defined in events schema | T26 | Move type to `-api.yaml`, use `$ref` in events |
+| API schema `$ref` to events schema | T26 | Reverse the dependency - API is source of truth |
+| Events `$ref` to different service's API | T26 | Use common schema or duplicate the type |
 | `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |

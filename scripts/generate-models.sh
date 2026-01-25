@@ -121,6 +121,22 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     # Ensure lifecycle events output directory exists
     mkdir -p "$LIFECYCLE_OUTPUT_DIR"
 
+    # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
+    LIFECYCLE_API_REFS=$(extract_api_refs "$LIFECYCLE_EVENTS_FILE" "$SERVICE_NAME")
+
+    # Build exclusion list: base exclusions + any API-referenced types
+    LIFECYCLE_EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseServiceEvent"
+    if [ -n "$LIFECYCLE_API_REFS" ]; then
+        LIFECYCLE_EXCLUSIONS="${LIFECYCLE_EXCLUSIONS},${LIFECYCLE_API_REFS}"
+        echo -e "  ${BLUE}Excluding API types: ${LIFECYCLE_API_REFS}${NC}"
+    fi
+
+    # Build namespace usages: base + service namespace if we have API refs
+    LIFECYCLE_NAMESPACE_USAGES="BeyondImmersion.Bannou.Core"
+    if [ -n "$LIFECYCLE_API_REFS" ]; then
+        LIFECYCLE_NAMESPACE_USAGES="${LIFECYCLE_NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
+    fi
+
     "$NSWAG_EXE" openapi2csclient \
         "/input:$LIFECYCLE_EVENTS_FILE" \
         "/output:$LIFECYCLE_OUTPUT_FILE" \
@@ -128,8 +144,8 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
-        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core" \
+        "/excludedTypeNames:${LIFECYCLE_EXCLUSIONS}" \
+        "/additionalNamespaceUsages:${LIFECYCLE_NAMESPACE_USAGES}" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \

@@ -23,11 +23,6 @@ ensure_dotnet_root
 TARGET_DIR="../bannou-service/Generated/Events"
 mkdir -p "$TARGET_DIR"
 
-# NOTE: No exclusions needed - service-events.yaml files contain ONLY canonical definitions
-# for events the service PUBLISHES. All $refs have been removed to prevent NSwag duplication.
-# If you find duplicate types being generated, fix the source schema by removing $refs,
-# not by adding exclusions here.
-
 # Track generated files
 GENERATED_COUNT=0
 FAILED_COUNT=0
@@ -58,6 +53,22 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
 
     echo -e "${YELLOW}Generating ${SERVICE_PASCAL} events from ${FILENAME}...${NC}"
 
+    # Extract $refs to API schema types (T26: Schema Reference Hierarchy)
+    API_REFS=$(extract_api_refs "$EVENTS_SCHEMA" "$SERVICE_NAME" "$SERVICE_PASCAL")
+
+    # Build exclusion list: base exclusions + any API-referenced types
+    EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseServiceEvent"
+    if [ -n "$API_REFS" ]; then
+        EXCLUSIONS="${EXCLUSIONS},${API_REFS}"
+        echo -e "  ${BLUE}Excluding API types: ${API_REFS}${NC}"
+    fi
+
+    # Build namespace usages: base + service namespace if we have API refs
+    NAMESPACE_USAGES="BeyondImmersion.Bannou.Core"
+    if [ -n "$API_REFS" ]; then
+        NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
+    fi
+
     # Generate models using NSwag
     "$NSWAG_EXE" openapi2csclient \
         "/input:$EVENTS_SCHEMA" \
@@ -66,8 +77,8 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
-        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core" \
+        "/excludedTypeNames:${EXCLUSIONS}" \
+        "/additionalNamespaceUsages:${NAMESPACE_USAGES}" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
