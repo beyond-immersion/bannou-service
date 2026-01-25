@@ -508,7 +508,7 @@ public class CurrencyConversionConcurrencyTests
         var toDef = CreateToDefinition(
             exchangeRate: 1.0,
             perWalletCap: 100,
-            capOverflowBehavior: CapOverflowBehavior.Reject.ToString());
+            capOverflowBehavior: CapOverflowBehavior.Reject);
         SetupWalletAndDefinitions(fromDef, toDef);
 
         // Target balance is at 80; conversion of 50 from (rate 2.0/1.0) = 100 to-amount

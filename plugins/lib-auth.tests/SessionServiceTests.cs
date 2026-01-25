@@ -554,8 +554,7 @@ public class SessionServiceTests
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var sessionIdGuid = Guid.NewGuid();
-        var sessionId = sessionIdGuid.ToString();
+        var sessionId = Guid.NewGuid();
         var roles = new List<string> { "user", "admin" };
         var authorizations = new List<string> { "auth1" };
         var reason = SessionUpdatedEventReason.Role_changed;
@@ -576,7 +575,7 @@ public class SessionServiceTests
             "session.updated",
             It.Is<SessionUpdatedEvent>(e =>
                 e.AccountId == accountId &&
-                e.SessionId == sessionIdGuid &&
+                e.SessionId == sessionId &&
                 e.Roles.SequenceEqual(roles) &&
                 e.Authorizations.SequenceEqual(authorizations) &&
                 e.Reason == reason),
@@ -625,7 +624,7 @@ public class SessionServiceTests
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(Guid.Parse(sessionData.SessionId), result[0].SessionId);
+        Assert.Equal(sessionData.SessionId, result[0].SessionId);
     }
 
     [Fact]
@@ -667,7 +666,7 @@ public class SessionServiceTests
             DisplayName = "Test User",
             Roles = new List<string> { "user" },
             Authorizations = new List<string> { "auth1" },
-            SessionId = Guid.NewGuid().ToString(),
+            SessionId = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
         };

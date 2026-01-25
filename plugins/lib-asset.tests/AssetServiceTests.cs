@@ -172,7 +172,7 @@ public class AssetServiceTests
             Metadata = new AssetMetadataInput
             {
                 AssetType = AssetType.Texture,
-                Realm = Realm.Arcadia,
+                Realm = GameRealm.Arcadia,
                 Tags = new List<string> { "test" }
             }
         };
@@ -466,7 +466,7 @@ public class AssetServiceTests
             Metadata = new AssetMetadataInput
             {
                 AssetType = AssetType.Texture,
-                Realm = Realm.Arcadia,
+                Realm = GameRealm.Arcadia,
                 Tags = new List<string> { "test" }
             },
             CreatedAt = DateTimeOffset.UtcNow,
@@ -664,7 +664,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -756,7 +756,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -805,7 +805,7 @@ public class AssetServiceTests
         var request = new AssetSearchRequest
         {
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Limit = 10,
             Offset = 0
         };
@@ -836,7 +836,7 @@ public class AssetServiceTests
         var request = new AssetSearchRequest
         {
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             ContentType = "image/png",
             Limit = 10,
             Offset = 0
@@ -848,7 +848,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-1",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             ContentType = "image/png",
             ContentHash = "hash1",
             Filename = "asset1.png",
@@ -863,7 +863,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-2",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             ContentType = "image/jpeg", // Different content type
             ContentHash = "hash2",
             Filename = "asset2.jpg",
@@ -878,7 +878,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-3",
             AssetType = AssetType.Texture,
-            Realm = Realm.Omega, // Different realm
+            Realm = GameRealm.Omega, // Different realm
             ContentType = "image/png",
             ContentHash = "hash3",
             Filename = "asset3.png",
@@ -934,7 +934,7 @@ public class AssetServiceTests
         var request = new AssetSearchRequest
         {
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Tags = new List<string> { "character", "sword" },
             Limit = 10,
             Offset = 0
@@ -946,7 +946,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-1",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Tags = new List<string> { "character", "sword", "warrior" }, // Has both required tags
             ContentType = "image/png",
             ContentHash = "hash1",
@@ -962,7 +962,7 @@ public class AssetServiceTests
         {
             AssetId = "asset-2",
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Tags = new List<string> { "character" }, // Missing "sword" tag
             ContentType = "image/png",
             ContentHash = "hash2",
@@ -1063,7 +1063,7 @@ public class AssetServiceTests
             BundleId = "existing-bundle",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared,
+            Realm = GameRealm.Shared,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
@@ -1139,7 +1139,7 @@ public class AssetServiceTests
             ContentHash = "iconhash",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             StorageKey = "assets/texture/small-asset.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -1237,7 +1237,7 @@ public class AssetServiceTests
             BundleId = "pending-bundle",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared,
+            Realm = GameRealm.Shared,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
@@ -1327,7 +1327,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -1387,7 +1387,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 1024,
             AssetType = AssetType.Texture,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             StorageKey = $"assets/texture/{assetId}.png",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Complete,
@@ -1539,7 +1539,7 @@ public class AssetServiceTests
             BundleId = "existing-bundle",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared,
+            Realm = GameRealm.Shared,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
@@ -1576,7 +1576,7 @@ public class AssetServiceTests
             MetabundleId = "",
             SourceBundleIds = new List<string> { "bundle-1" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Act
@@ -1598,7 +1598,7 @@ public class AssetServiceTests
             SourceBundleIds = null,
             StandaloneAssetIds = null,
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Act
@@ -1620,7 +1620,7 @@ public class AssetServiceTests
             SourceBundleIds = new List<string>(),
             StandaloneAssetIds = new List<string>(),
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Act
@@ -1641,7 +1641,7 @@ public class AssetServiceTests
             MetabundleId = "existing-metabundle",
             SourceBundleIds = new List<string> { "bundle-1" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         var existingMetabundle = new BundleMetadata
@@ -1649,7 +1649,7 @@ public class AssetServiceTests
             BundleId = "existing-metabundle",
             Version = "1.0.0",
             BundleType = BundleType.Metabundle,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-metabundle.bundle",
             SizeBytes = 1024,
@@ -1679,7 +1679,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "nonexistent-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Metabundle doesn't exist
@@ -1710,7 +1710,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "nonexistent-asset" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Metabundle doesn't exist
@@ -1741,7 +1741,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "pending-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Metabundle doesn't exist
@@ -1754,7 +1754,7 @@ public class AssetServiceTests
             BundleId = "pending-bundle",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
@@ -1784,7 +1784,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "pending-asset" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Metabundle doesn't exist
@@ -1800,7 +1800,7 @@ public class AssetServiceTests
             ContentHash = "abc123",
             Size = 512,
             AssetType = AssetType.Behavior,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             StorageKey = "assets/behavior/pending-asset.yaml",
             Bucket = "test-bucket",
             ProcessingStatus = ProcessingStatus.Processing, // Not complete
@@ -1830,7 +1830,7 @@ public class AssetServiceTests
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "wrong-realm-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia // Request is for Arcadia
+            Realm = GameRealm.Arcadia // Request is for Arcadia
         };
 
         // Metabundle doesn't exist
@@ -1843,7 +1843,7 @@ public class AssetServiceTests
             BundleId = "wrong-realm-bundle",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Fantasia, // Different realm
+            Realm = GameRealm.Fantasia, // Different realm
             AssetIds = new List<string> { "asset-1" },
             Assets = new List<StoredBundleAssetEntry>(),
             StorageKey = "bundles/current/wrong-realm-bundle.bundle",
@@ -1876,7 +1876,7 @@ public class AssetServiceTests
             MetabundleId = "cross-realm-metabundle",
             SourceBundleIds = new List<string> { "shared-bundle" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia // Request is for Arcadia
+            Realm = GameRealm.Arcadia // Request is for Arcadia
         };
 
         // Metabundle doesn't exist
@@ -1889,7 +1889,7 @@ public class AssetServiceTests
             BundleId = "shared-bundle",
             Version = "1.0.0",
             BundleType = BundleType.Source,
-            Realm = Realm.Shared, // Shared realm should work with any target realm
+            Realm = GameRealm.Shared, // Shared realm should work with any target realm
             AssetIds = new List<string> { "shared-asset" },
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -1959,7 +1959,7 @@ public class AssetServiceTests
             MetabundleId = "conflict-test-metabundle",
             SourceBundleIds = new List<string> { "bundle-1", "bundle-2" },
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Bundle 1 has asset "shared-asset" with hash "hash-a"
@@ -1973,7 +1973,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry
@@ -1999,7 +1999,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 150,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry
@@ -2045,7 +2045,7 @@ public class AssetServiceTests
             SourceBundleIds = new List<string> { "multi-asset-bundle" },
             AssetFilter = new List<string> { "asset-1", "asset-3" }, // Only include these
             Owner = "test-owner",
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         var sourceBundle = new BundleMetadata
@@ -2058,7 +2058,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
             SizeBytes = 300,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 },
@@ -2107,7 +2107,7 @@ public class AssetServiceTests
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string>(),
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Act
@@ -2127,7 +2127,7 @@ public class AssetServiceTests
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string> { "asset-1" },
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Asset-to-bundle index shows asset is in both bundles
@@ -2148,7 +2148,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
@@ -2166,7 +2166,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
@@ -2218,7 +2218,7 @@ public class AssetServiceTests
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
-            Realm = Realm.Arcadia
+            Realm = GameRealm.Arcadia
         };
 
         // Asset indices
@@ -2237,7 +2237,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
             SizeBytes = 300,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 100 },
@@ -2258,7 +2258,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
@@ -2276,7 +2276,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "asset-3" },
             SizeBytes = 100,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
                 new StoredBundleAssetEntry { AssetId = "asset-3", ContentHash = "h3", Filename = "a3.json", ContentType = "application/json", Size = 100 }
@@ -2376,7 +2376,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 500,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -2390,7 +2390,7 @@ public class AssetServiceTests
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 300,
             Status = Models.BundleStatus.Ready,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -2454,7 +2454,7 @@ public class AssetServiceTests
             Bucket = "test-bucket",
             StorageKey = "assets/test.json",
             AssetType = AssetType.Model,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Tags = new List<string> { "test" },
             ProcessingStatus = ProcessingStatus.Complete,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -2506,7 +2506,7 @@ public class AssetServiceTests
             Bucket = "test-bucket",
             StorageKey = "assets/test.json",
             AssetType = AssetType.Model,
-            Realm = Realm.Arcadia,
+            Realm = GameRealm.Arcadia,
             Tags = new List<string> { "test" },
             ProcessingStatus = ProcessingStatus.Complete,
             CreatedAt = DateTimeOffset.UtcNow,

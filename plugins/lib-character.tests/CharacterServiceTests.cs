@@ -310,7 +310,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal("Updated Name", capturedEvent.Name);
         Assert.Equal(realmId, capturedEvent.RealmId);
         Assert.NotEqual(Guid.Empty, capturedEvent.SpeciesId);
-        Assert.Equal("Dead", capturedEvent.Status);
+        Assert.Equal(CharacterStatus.Dead, capturedEvent.Status);
     }
 
     [Fact]

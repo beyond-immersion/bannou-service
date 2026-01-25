@@ -324,7 +324,7 @@ public class TokenServiceTests
         // Assert
         Assert.NotNull(result.accessToken);
         Assert.NotEmpty(result.accessToken);
-        Assert.NotNull(result.sessionId);
+        Assert.NotEqual(Guid.Empty, result.sessionId);
 
         // Cleanup - restore valid config for other tests
         TestConfigurationHelper.ConfigureJwt();
@@ -352,7 +352,7 @@ public class TokenServiceTests
         // Assert
         Assert.NotNull(result.accessToken);
         Assert.NotEmpty(result.accessToken);
-        Assert.NotNull(result.sessionId);
+        Assert.NotEqual(Guid.Empty, result.sessionId);
 
         // Cleanup - restore valid config for other tests
         TestConfigurationHelper.ConfigureJwt();
