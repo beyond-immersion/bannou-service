@@ -66,7 +66,7 @@ components:
           format: uuid
           description: ID of the participation record
         role:
-          type: string
+          $ref: '../character-history-api.yaml#/components/schemas/ParticipationRole'
           description: Role the character played in the event
 
     CharacterParticipationDeletedEvent:

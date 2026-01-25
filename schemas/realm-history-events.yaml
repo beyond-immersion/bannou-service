@@ -66,7 +66,7 @@ components:
           format: uuid
           description: ID of the participation record
         role:
-          type: string
+          $ref: '../realm-history-api.yaml#/components/schemas/RealmEventRole'
           description: Role the realm played in the event
 
     RealmParticipationDeletedEvent:
