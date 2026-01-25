@@ -51,9 +51,10 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         var targetCleanup = slot.VersionCount - slot.MaxVersions;
 
         // Start from oldest version (1) and clean up non-pinned versions
+        // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
         for (var v = 1; v <= (slot.LatestVersion ?? 0) && cleanedUp < targetCleanup; v++)
         {
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, v);
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
             var manifest = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (manifest == null)
@@ -69,20 +70,21 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
 
             // Delete version, hot cache entry, and asset
             await versionStore.DeleteAsync(versionKey, cancellationToken);
-            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId, v);
+            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), v);
             await hotCacheStore.DeleteAsync(hotKey, cancellationToken);
 
-            if (!string.IsNullOrEmpty(manifest.AssetId))
+            // SaveVersionManifest.AssetId is now Guid? - check for non-null and non-empty
+            if (manifest.AssetId.HasValue && manifest.AssetId.Value != Guid.Empty)
             {
                 try
                 {
                     await _assetClient.DeleteAssetAsync(
-                        new DeleteAssetRequest { AssetId = manifest.AssetId },
+                        new DeleteAssetRequest { AssetId = manifest.AssetId.Value.ToString() },
                         cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to delete asset {AssetId} during rolling cleanup", manifest.AssetId);
+                    _logger.LogWarning(ex, "Failed to delete asset {AssetId} during rolling cleanup", manifest.AssetId.Value);
                 }
             }
 
@@ -107,6 +109,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         }
 
         var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+        // SaveSlotMetadata.SlotId and SaveVersionManifest.SlotId are both Guid - compare directly
         var versions = await versionQueryStore.QueryAsync(
             v => v.SlotId == slot.SlotId,
             cancellationToken);
@@ -135,24 +138,25 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             try
             {
                 // Delete asset if exists
-                if (!string.IsNullOrEmpty(version.AssetId) && Guid.TryParse(version.AssetId, out var assetGuid))
+                // SaveVersionManifest.AssetId is now Guid?
+                if (version.AssetId.HasValue && version.AssetId.Value != Guid.Empty)
                 {
                     try
                     {
-                        await _assetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = assetGuid.ToString() }, cancellationToken);
+                        await _assetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = version.AssetId.Value.ToString() }, cancellationToken);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to delete asset {AssetId} during cleanup", version.AssetId);
+                        _logger.LogWarning(ex, "Failed to delete asset {AssetId} during cleanup", version.AssetId.Value);
                     }
                 }
 
                 // Delete version manifest
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, version.VersionNumber);
+                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
                 await versionStore.DeleteAsync(versionKey, cancellationToken);
 
                 // Delete from hot cache
-                var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId, version.VersionNumber);
+                var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), version.VersionNumber);
                 await hotStore.DeleteAsync(hotCacheKey, cancellationToken);
 
                 bytesFreed += version.CompressedSizeBytes ?? version.SizeBytes;

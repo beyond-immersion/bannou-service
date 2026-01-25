@@ -233,22 +233,21 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(StateStoreDefinitions.SaveLoadSchemas);
 
             // Find source slot by querying by owner and slot name
-            var ownerType = body.OwnerType.ToString();
-            var ownerId = body.OwnerId.ToString();
+            // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum - compare properly
 
             // Query slots for this owner and slot name
             var slots = await slotStore.QueryAsync(
-                s => s.OwnerId == ownerId && s.OwnerType == ownerType && s.SlotName == body.SlotName,
+                s => s.OwnerId == body.OwnerId && s.OwnerType == body.OwnerType && s.SlotName == body.SlotName,
                 cancellationToken);
             var slot = slots.FirstOrDefault();
 
             if (slot == null)
             {
-                _logger.LogWarning("Slot not found for owner {OwnerId}, slot {SlotName}", ownerId, body.SlotName);
+                _logger.LogWarning("Slot not found for owner {OwnerId}, slot {SlotName}", body.OwnerId, body.SlotName);
                 return (StatusCodes.NotFound, null);
             }
 
-            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, ownerType, ownerId, body.SlotName);
+            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString(), body.OwnerId.ToString(), body.SlotName);
 
             // Get source version
             var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);
@@ -258,7 +257,8 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
                 return (StatusCodes.NotFound, null);
             }
 
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionNumber);
+            // SlotId is Guid - convert to string for state key
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (version == null)
@@ -387,6 +387,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             }
 
             // Create new version manifest
+            // SaveVersionManifest fields are now proper types
             var contentHash = Hashing.ContentHasher.ComputeHash(migrationResult.Data);
             var newVersion = new SaveVersionManifest
             {
@@ -395,15 +396,15 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
                 ContentHash = contentHash,
                 SizeBytes = migrationResult.Data.Length,
                 CompressedSizeBytes = compressedData.Length,
-                CompressionType = compressionType.ToString(),
+                CompressionType = compressionType,
                 SchemaVersion = body.TargetSchemaVersion,
                 CheckpointName = $"Migrated from {currentSchemaVersion}",
-                AssetId = assetMetadata.AssetId,
+                AssetId = Guid.Parse(assetMetadata.AssetId),
                 CreatedAt = DateTimeOffset.UtcNow,
                 Metadata = version.Metadata != null ? new Dictionary<string, object>(version.Metadata) : new Dictionary<string, object>()
             };
 
-            var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, newVersionNumber);
+            var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), newVersionNumber);
             await versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
 
             // Update slot's latest version
@@ -411,12 +412,12 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             slot.UpdatedAt = DateTimeOffset.UtcNow;
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
-            // Publish event (parse internal string to typed enum)
+            // Publish event - SaveSlotMetadata.SlotId is now Guid
             await _messageBus.TryPublishAsync("save.migrated", new SaveMigratedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SlotId = Guid.Parse(slot.SlotId),
+                SlotId = slot.SlotId,
                 SlotName = slot.SlotName,
                 OriginalVersionNumber = versionNumber,
                 NewVersionNumber = newVersionNumber,

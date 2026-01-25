@@ -214,16 +214,15 @@ public partial class SaveLoadService : ISaveLoadService
         {
             var queryableStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var gameId = body.GameId;
-            var ownerId = body.OwnerId.ToString();
-            var ownerType = body.OwnerType.ToString();
-            var category = body.Category.ToString();
+            // SaveSlotMetadata.OwnerId/OwnerType/Category are now Guid/enum types - compare properly
+            var bodyCategory = body.Category;
 
-            // Query with LINQ expression
+            // Query with LINQ expression - use proper type comparisons
             var slots = await queryableStore.QueryAsync(
                 s => s.GameId == gameId &&
-                    s.OwnerId == ownerId &&
-                    s.OwnerType == ownerType &&
-                    (string.IsNullOrEmpty(category) || s.Category == category),
+                    s.OwnerId == body.OwnerId &&
+                    s.OwnerType == body.OwnerType &&
+                    (bodyCategory == default || s.Category == bodyCategory),
                 cancellationToken);
 
             // Sort by UpdatedAt descending (most recent first)
@@ -274,11 +273,11 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Delete all versions for this slot
+            // Delete all versions for this slot - SlotId is Guid, convert to string for state key
             var deletedVersions = 0;
             for (var v = 1; v <= (slot.LatestVersion ?? 0); v++)
             {
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, v);
+                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
                 await versionStore.DeleteAsync(versionKey, cancellationToken);
                 deletedVersions++;
             }
@@ -335,8 +334,9 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Acquire distributed lock to prevent concurrent rename/modification
+            // SlotId is Guid - convert to string for lock
             await using var slotLock = await _lockProvider.LockAsync(
-                "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 30, cancellationToken);
+                "save-load-slot", slot.SlotId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
             if (!slotLock.Success)
             {
                 _logger.LogDebug("Could not acquire slot lock for {SlotId} during rename", slot.SlotId);
@@ -410,9 +410,9 @@ public partial class SaveLoadService : ISaveLoadService
                 try
                 {
                     // Find slot by ID using queryable store
-                    var slotIdStr = slotId.ToString();
+                    // SaveSlotMetadata.SlotId is now Guid - compare properly
                     var slots = await queryableStore.QueryAsync(
-                        s => s.SlotId == slotIdStr && s.GameId == body.GameId,
+                        s => s.SlotId == slotId && s.GameId == body.GameId,
                         cancellationToken);
                     var slot = slots.FirstOrDefault();
 
@@ -422,10 +422,10 @@ public partial class SaveLoadService : ISaveLoadService
                         continue;
                     }
 
-                    // Delete all versions for this slot
+                    // Delete all versions for this slot - SlotId is Guid, convert to string for state key
                     for (var v = 1; v <= (slot.LatestVersion ?? 0); v++)
                     {
-                        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, v);
+                        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), v);
                         await versionStore.DeleteAsync(versionKey, cancellationToken);
                     }
 
@@ -530,12 +530,13 @@ public partial class SaveLoadService : ISaveLoadService
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
 
-            var ownerType = body.OwnerType.ToString();
-            var ownerId = body.OwnerId.ToString();
+            // Convert request types to strings for state key construction
+            var ownerTypeStr = body.OwnerType.ToString();
+            var ownerIdStr = body.OwnerId.ToString();
             var now = DateTimeOffset.UtcNow;
 
             // Lock the slot to prevent concurrent version number allocation
-            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
             await using var slotLock = await _lockProvider.LockAsync(
                 "save-load-slot", slotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
             if (!slotLock.Success)
@@ -550,17 +551,18 @@ public partial class SaveLoadService : ISaveLoadService
             if (slot == null)
             {
                 // Auto-create slot with defaults
+                // SaveSlotMetadata fields are now proper types (Guid, enums)
                 var category = body.Category ?? SaveCategory.MANUAL_SAVE;
                 slot = new SaveSlotMetadata
                 {
-                    SlotId = Guid.NewGuid().ToString(),
+                    SlotId = Guid.NewGuid(),
                     GameId = body.GameId,
-                    OwnerId = ownerId,
-                    OwnerType = ownerType,
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
                     SlotName = body.SlotName,
-                    Category = category.ToString(),
+                    Category = category,
                     MaxVersions = GetDefaultMaxVersions(category),
-                    CompressionType = GetDefaultCompressionType(category).ToString(),
+                    CompressionType = GetDefaultCompressionType(category),
                     VersionCount = 0,
                     LatestVersion = null,
                     TotalSizeBytes = 0,
@@ -579,14 +581,15 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 _logger.LogDebug(
                     "Owner {OwnerId} would exceed storage quota: current {CurrentBytes} + new {NewBytes} > max {MaxBytes}",
-                    ownerId, slot.TotalSizeBytes, body.Data.Length, _configuration.MaxTotalSizeBytesPerOwner);
+                    ownerIdStr, slot.TotalSizeBytes, body.Data.Length, _configuration.MaxTotalSizeBytesPerOwner);
                 return (StatusCodes.BadRequest, null);
             }
 
             // Conflict detection: check if another device saved within the detection window
+            // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
             if (_configuration.ConflictDetectionEnabled && !string.IsNullOrEmpty(body.DeviceId) && slot.LatestVersion.HasValue)
             {
-                var latestVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, slot.LatestVersion.Value);
+                var latestVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), slot.LatestVersion.Value);
                 var latestVersion = await versionStore.GetAsync(latestVersionKey, cancellationToken);
                 if (latestVersion != null &&
                     !string.IsNullOrEmpty(latestVersion.DeviceId) &&
@@ -609,8 +612,8 @@ public partial class SaveLoadService : ISaveLoadService
             // Compute hash of original data
             var contentHash = Hashing.ContentHasher.ComputeHash(rawData);
 
-            // Determine compression
-            var compressionType = Enum.TryParse<CompressionType>(slot.CompressionType, out var ct) ? ct : CompressionType.GZIP;
+            // Determine compression - SaveSlotMetadata.CompressionType is now an enum
+            var compressionType = slot.CompressionType;
             var compressedData = rawData;
             var compressedSize = originalSize;
 
@@ -634,7 +637,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Determine next version number
             var nextVersion = (slot.LatestVersion ?? 0) + 1;
 
-            // Create version manifest
+            // Create version manifest - SaveVersionManifest fields are now proper types
             var shouldPin = !string.IsNullOrEmpty(body.PinAsCheckpoint);
             var manifest = new SaveVersionManifest
             {
@@ -643,23 +646,23 @@ public partial class SaveLoadService : ISaveLoadService
                 ContentHash = contentHash,
                 SizeBytes = originalSize,
                 CompressedSizeBytes = compressedSize,
-                CompressionType = compressionType.ToString(),
+                CompressionType = compressionType,
                 IsPinned = shouldPin,
                 CheckpointName = shouldPin ? body.PinAsCheckpoint : null,
                 IsDelta = false,
                 DeviceId = body.DeviceId,
                 SchemaVersion = body.SchemaVersion,
                 Metadata = new Dictionary<string, object>(),
-                UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE",
+                UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE,
                 CreatedAt = now,
                 ETag = Guid.NewGuid().ToString()
             };
 
-            // Store version manifest
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, nextVersion);
+            // Store version manifest - SlotId is Guid, convert to string for state key
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), nextVersion);
             await versionStore.SaveAsync(versionKey, manifest, cancellationToken: cancellationToken);
 
-            // Store in hot cache for immediate load availability
+            // Store in hot cache for immediate load availability - HotSaveEntry fields are now proper types
             var hotEntry = new HotSaveEntry
             {
                 SlotId = slot.SlotId,
@@ -667,47 +670,47 @@ public partial class SaveLoadService : ISaveLoadService
                 Data = Convert.ToBase64String(compressedData),
                 ContentHash = contentHash,
                 IsCompressed = compressionType != CompressionType.NONE,
-                CompressionType = compressionType.ToString(),
+                CompressionType = compressionType,
                 SizeBytes = compressedSize,
                 CachedAt = now,
                 IsDelta = false
             };
-            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId, nextVersion);
+            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), nextVersion);
             await hotCacheStore.SaveAsync(hotKey, hotEntry, cancellationToken: cancellationToken);
 
-            // Also update the "latest" hot cache pointer
-            var latestHotKey = HotSaveEntry.GetLatestKey(slot.SlotId);
+            // Also update the "latest" hot cache pointer - SlotId is Guid, convert to string
+            var latestHotKey = HotSaveEntry.GetLatestKey(slot.SlotId.ToString());
             await hotCacheStore.SaveAsync(latestHotKey, hotEntry, cancellationToken: cancellationToken);
 
             var uploadPending = false;
 
             if (_configuration.AsyncUploadEnabled)
             {
-                // Queue for async upload
-                var uploadId = Guid.NewGuid().ToString();
+                // Queue for async upload - PendingUploadEntry fields are now proper types
+                var uploadId = Guid.NewGuid();
                 var pendingEntry = new PendingUploadEntry
                 {
                     UploadId = uploadId,
                     SlotId = slot.SlotId,
                     VersionNumber = nextVersion,
                     GameId = body.GameId,
-                    OwnerId = ownerId,
-                    OwnerType = ownerType,
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
                     Data = Convert.ToBase64String(compressedData),
                     ContentHash = contentHash,
-                    CompressionType = compressionType.ToString(),
+                    CompressionType = compressionType,
                     SizeBytes = originalSize,
                     CompressedSizeBytes = compressedSize,
                     IsDelta = false,
                     ThumbnailData = body.Thumbnail != null ? Convert.ToBase64String(body.Thumbnail) : null,
                     AttemptCount = 0,
                     QueuedAt = now,
-                    Priority = GetUploadPriority(Enum.TryParse<SaveCategory>(slot.Category, out var cat) ? cat : SaveCategory.MANUAL_SAVE)
+                    Priority = GetUploadPriority(slot.Category)
                 };
-                var pendingKey = PendingUploadEntry.GetStateKey(uploadId);
+                var pendingKey = PendingUploadEntry.GetStateKey(uploadId.ToString());
                 await pendingStore.SaveAsync(pendingKey, pendingEntry, cancellationToken: cancellationToken);
                 // Add to tracking set for Redis-based queue processing
-                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
                 uploadPending = true;
 
                 _logger.LogDebug("Queued async upload {UploadId} for slot {SlotId} version {Version}",
@@ -729,9 +732,10 @@ public partial class SaveLoadService : ISaveLoadService
                 "Saved version {Version} to slot {SlotId}, size {Size} bytes (compressed {CompressedSize}), upload pending: {Pending}",
                 nextVersion, slot.SlotId, originalSize, compressedSize, uploadPending);
 
+            // SaveSlotMetadata.SlotId is now Guid - use directly
             var response = new SaveResponse
             {
-                SlotId = Guid.Parse(slot.SlotId),
+                SlotId = slot.SlotId,
                 VersionNumber = nextVersion,
                 ContentHash = contentHash,
                 SizeBytes = originalSize,
@@ -794,11 +798,12 @@ public partial class SaveLoadService : ISaveLoadService
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
 
-            var ownerType = body.OwnerType.ToString();
-            var ownerId = body.OwnerId.ToString();
+            // Convert request types to strings for state key construction
+            var ownerTypeStr = body.OwnerType.ToString();
+            var ownerIdStr = body.OwnerId.ToString();
 
             // Get the slot
-            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
             var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
             if (slot == null)
@@ -835,8 +840,8 @@ public partial class SaveLoadService : ISaveLoadService
                 }
             }
 
-            // Try hot cache first
-            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId, targetVersion);
+            // Try hot cache first - SlotId is Guid, convert to string for state key
+            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId.ToString(), targetVersion);
             var hotEntry = await hotCacheStore.GetAsync(hotKey, cancellationToken);
 
             byte[] decompressedData;
@@ -847,9 +852,9 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 _logger.LogDebug("Hot cache hit for slot {SlotId} version {Version}", slot.SlotId, targetVersion);
 
-                // Decompress if needed
+                // Decompress if needed - HotSaveEntry.CompressionType is now a nullable enum
                 var compressedData = Convert.FromBase64String(hotEntry.Data);
-                var compressionType = Enum.TryParse<CompressionType>(hotEntry.CompressionType, out var ct) ? ct : CompressionType.NONE;
+                var compressionType = hotEntry.CompressionType ?? CompressionType.NONE;
 
                 decompressedData = hotEntry.IsCompressed
                     ? Compression.CompressionHelper.Decompress(compressedData, compressionType)
@@ -860,7 +865,7 @@ public partial class SaveLoadService : ISaveLoadService
                 // Get manifest for additional metadata if requested
                 if (body.IncludeMetadata)
                 {
-                    var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, targetVersion);
+                    var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), targetVersion);
                     manifest = await versionStore.GetAsync(versionKey, cancellationToken);
                 }
             }
@@ -868,8 +873,8 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 _logger.LogDebug("Hot cache miss for slot {SlotId} version {Version}, fetching from storage", slot.SlotId, targetVersion);
 
-                // Get version manifest
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, targetVersion);
+                // Get version manifest - SlotId is Guid, convert to string for state key
+                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), targetVersion);
                 manifest = await versionStore.GetAsync(versionKey, cancellationToken);
 
                 if (manifest == null)
@@ -878,10 +883,10 @@ public partial class SaveLoadService : ISaveLoadService
                     return (StatusCodes.NotFound, null);
                 }
 
-                // Load from Asset service if available
-                if (!string.IsNullOrEmpty(manifest.AssetId))
+                // Load from Asset service if available - AssetId is now Guid?
+                if (manifest.AssetId.HasValue && manifest.AssetId.Value != Guid.Empty)
                 {
-                    var assetResponse = await _versionDataLoader.LoadFromAssetServiceAsync(manifest.AssetId, cancellationToken);
+                    var assetResponse = await _versionDataLoader.LoadFromAssetServiceAsync(manifest.AssetId.Value.ToString(), cancellationToken);
                     if (assetResponse == null)
                     {
                         _logger.LogError("Failed to load asset {AssetId} for slot {SlotId} version {Version}",
@@ -894,9 +899,9 @@ public partial class SaveLoadService : ISaveLoadService
                         return (StatusCodes.InternalServerError, null);
                     }
 
-                    var compressionType = Enum.TryParse<CompressionType>(manifest.CompressionType, out var ct) ? ct : CompressionType.NONE;
-                    decompressedData = compressionType != CompressionType.NONE
-                        ? Compression.CompressionHelper.Decompress(assetResponse, compressionType)
+                    // SaveVersionManifest.CompressionType is now an enum - use directly
+                    decompressedData = manifest.CompressionType != CompressionType.NONE
+                        ? Compression.CompressionHelper.Decompress(assetResponse, manifest.CompressionType)
                         : assetResponse;
                 }
                 else
@@ -909,8 +914,8 @@ public partial class SaveLoadService : ISaveLoadService
 
                 contentHash = manifest.ContentHash;
 
-                // Re-cache in hot store
-                await _versionDataLoader.CacheInHotStoreAsync(slot.SlotId, targetVersion, decompressedData, contentHash, manifest, hotCacheStore, cancellationToken);
+                // Re-cache in hot store - SlotId is Guid, convert to string
+                await _versionDataLoader.CacheInHotStoreAsync(slot.SlotId.ToString(), targetVersion, decompressedData, contentHash, manifest, hotCacheStore, cancellationToken);
             }
 
             // Verify integrity
@@ -925,9 +930,10 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.InternalServerError, null);
             }
 
+            // SaveSlotMetadata.SlotId is now Guid - use directly
             var response = new LoadResponse
             {
-                SlotId = Guid.Parse(slot.SlotId),
+                SlotId = slot.SlotId,
                 VersionNumber = targetVersion,
                 Data = decompressedData,
                 ContentHash = contentHash,
@@ -979,11 +985,11 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Find the slot
+            // Find the slot - convert types to strings for state key
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-            var ownerType = body.OwnerType.ToString();
-            var ownerId = body.OwnerId.ToString();
-            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+            var ownerTypeStr = body.OwnerType.ToString();
+            var ownerIdStr = body.OwnerId.ToString();
+            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
             var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
             if (slot == null)
@@ -993,8 +999,9 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Lock the slot to prevent concurrent version number allocation
+            // SlotId is Guid, convert to string for lock
             await using var slotLock = await _lockProvider.LockAsync(
-                "save-load-slot", slot.SlotId, Guid.NewGuid().ToString(), 60, cancellationToken);
+                "save-load-slot", slot.SlotId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
             if (!slotLock.Success)
             {
                 _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
@@ -1004,9 +1011,9 @@ public partial class SaveLoadService : ISaveLoadService
             // Re-read slot under lock for accurate version number
             slot = await slotStore.GetAsync(slotKey, cancellationToken) ?? slot;
 
-            // Get the base version
+            // Get the base version - SlotId is Guid, convert to string for state key
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
-            var baseVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, body.BaseVersion);
+            var baseVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), body.BaseVersion);
             var baseVersion = await versionStore.GetAsync(baseVersionKey, cancellationToken);
 
             if (baseVersion == null)
@@ -1019,7 +1026,8 @@ public partial class SaveLoadService : ISaveLoadService
             var deltaProcessor = new DeltaProcessor(
                 _logger as ILogger<DeltaProcessor> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<DeltaProcessor>.Instance,
                 _configuration.MigrationMaxPatchOperations);
-            var algorithm = (body.Algorithm ?? DeltaAlgorithm.JSON_PATCH).ToString();
+            var algorithmEnum = body.Algorithm ?? DeltaAlgorithm.JSON_PATCH;
+            var algorithm = algorithmEnum.ToString();
             if (!deltaProcessor.ValidateDelta(body.Delta, algorithm))
             {
                 _logger.LogDebug("Invalid delta provided");
@@ -1032,7 +1040,7 @@ public partial class SaveLoadService : ISaveLoadService
             while (currentVersion.IsDelta && currentVersion.BaseVersionNumber.HasValue)
             {
                 chainLength++;
-                var prevKey = SaveVersionManifest.GetStateKey(slot.SlotId, currentVersion.BaseVersionNumber.Value);
+                var prevKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), currentVersion.BaseVersionNumber.Value);
                 currentVersion = await versionStore.GetAsync(prevKey, cancellationToken);
                 if (currentVersion == null)
                 {
@@ -1091,7 +1099,7 @@ public partial class SaveLoadService : ISaveLoadService
                 compressedDelta = Compression.CompressionHelper.Compress(body.Delta, compressionTypeEnum, deltaCompressionLevel);
             }
 
-            // Store in hot cache
+            // Store in hot cache - HotSaveEntry fields are now proper types
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var hotEntry = new HotSaveEntry
             {
@@ -1100,7 +1108,7 @@ public partial class SaveLoadService : ISaveLoadService
                 Data = Convert.ToBase64String(compressedDelta),
                 ContentHash = contentHash,
                 IsCompressed = compressionTypeEnum != CompressionType.NONE,
-                CompressionType = compressionTypeEnum.ToString(),
+                CompressionType = compressionTypeEnum,
                 SizeBytes = deltaSize,
                 CachedAt = DateTimeOffset.UtcNow,
                 IsDelta = true
@@ -1112,7 +1120,7 @@ public partial class SaveLoadService : ISaveLoadService
                 new StateOptions { Ttl = hotCacheTtlSeconds },
                 cancellationToken);
 
-            // Create version manifest
+            // Create version manifest - SaveVersionManifest fields are now proper types
             var manifest = new SaveVersionManifest
             {
                 SlotId = slot.SlotId,
@@ -1120,42 +1128,42 @@ public partial class SaveLoadService : ISaveLoadService
                 ContentHash = contentHash,
                 SizeBytes = deltaSize,
                 CompressedSizeBytes = compressedDelta.Length,
-                CompressionType = compressionTypeEnum.ToString(),
+                CompressionType = compressionTypeEnum,
                 IsDelta = true,
                 BaseVersionNumber = body.BaseVersion,
-                DeltaAlgorithm = algorithm,
+                DeltaAlgorithm = algorithmEnum,
                 DeviceId = body.DeviceId,
                 SchemaVersion = body.SchemaVersion,
                 Metadata = body.Metadata?.ToDictionary(kv => kv.Key, kv => (object)kv.Value) ?? new Dictionary<string, object>(),
                 CreatedAt = DateTimeOffset.UtcNow,
-                UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE"
+                UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE
             };
 
             // Save manifest and update slot
             await versionStore.SaveAsync(manifest.GetStateKey(), manifest, cancellationToken: cancellationToken);
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
-            // Queue for async upload if enabled
+            // Queue for async upload if enabled - PendingUploadEntry fields are now proper types
             if (_configuration.AsyncUploadEnabled)
             {
                 var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
-                var uploadId = Guid.NewGuid().ToString();
+                var uploadId = Guid.NewGuid();
                 var pendingEntry = new PendingUploadEntry
                 {
                     UploadId = uploadId,
                     SlotId = slot.SlotId,
                     VersionNumber = newVersionNumber,
                     GameId = slot.GameId,
-                    OwnerId = ownerId,
-                    OwnerType = ownerType,
+                    OwnerId = slot.OwnerId,
+                    OwnerType = slot.OwnerType,
                     Data = Convert.ToBase64String(compressedDelta),
                     ContentHash = contentHash,
-                    CompressionType = compressionTypeEnum.ToString(),
+                    CompressionType = compressionTypeEnum,
                     SizeBytes = deltaSize,
                     CompressedSizeBytes = compressedDelta.Length,
                     IsDelta = true,
                     BaseVersionNumber = body.BaseVersion,
-                    DeltaAlgorithm = algorithm,
+                    DeltaAlgorithm = algorithmEnum,
                     Priority = 1,
                     QueuedAt = DateTimeOffset.UtcNow
                 };
@@ -1166,20 +1174,20 @@ public partial class SaveLoadService : ISaveLoadService
                     new StateOptions { Ttl = pendingTtlSeconds },
                     cancellationToken);
                 // Add to tracking set for Redis-based queue processing
-                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
             }
 
-            // Publish event (parse internal string representations to typed enums)
+            // Publish event - SaveSlotMetadata fields are now proper types
             var createdEvent = new SaveCreatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SlotId = Guid.Parse(slot.SlotId),
+                SlotId = slot.SlotId,
                 SlotName = slot.SlotName,
                 VersionNumber = newVersionNumber,
-                OwnerId = Guid.Parse(ownerId),
-                OwnerType = Enum.Parse<OwnerType>(ownerType, ignoreCase: true),
-                Category = Enum.Parse<SaveCategory>(slot.Category, ignoreCase: true),
+                OwnerId = slot.OwnerId,
+                OwnerType = slot.OwnerType,
+                Category = slot.Category,
                 SizeBytes = deltaSize,
                 SchemaVersion = body.SchemaVersion,
                 Pinned = false
@@ -1189,9 +1197,10 @@ public partial class SaveLoadService : ISaveLoadService
             // Calculate compression savings
             var compressionSavings = estimatedFullSize > 0 ? 1.0 - ((double)deltaSize / estimatedFullSize) : 0;
 
+            // SaveSlotMetadata.SlotId is now Guid - use directly
             return (StatusCodes.OK, new SaveDeltaResponse
             {
-                SlotId = Guid.Parse(slot.SlotId),
+                SlotId = slot.SlotId,
                 VersionNumber = newVersionNumber,
                 BaseVersion = body.BaseVersion,
                 DeltaSizeBytes = deltaSize,
@@ -1256,7 +1265,8 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionNumber);
+            // SlotId is Guid - convert to string for state key
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (version == null)
@@ -1269,13 +1279,13 @@ public partial class SaveLoadService : ISaveLoadService
 
             if (!version.IsDelta)
             {
-                // Not a delta, load directly
-                data = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId, version, cancellationToken);
+                // Not a delta, load directly - SlotId is Guid, convert to string
+                data = await _versionDataLoader.LoadVersionDataAsync(slot.SlotId.ToString(), version, cancellationToken);
             }
             else
             {
-                // Delta version - need to reconstruct
-                data = await _versionDataLoader.ReconstructFromDeltaChainAsync(slot.SlotId, version, versionStore, cancellationToken);
+                // Delta version - need to reconstruct - SlotId is Guid, convert to string
+                data = await _versionDataLoader.ReconstructFromDeltaChainAsync(slot.SlotId.ToString(), version, versionStore, cancellationToken);
             }
 
             if (data == null)
@@ -1289,12 +1299,12 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // Publish load event
+            // Publish load event - SaveSlotMetadata.SlotId is now Guid
             var loadEvent = new SaveLoadedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                SlotId = Guid.Parse(slot.SlotId),
+                SlotId = slot.SlotId,
                 SlotName = slot.SlotName,
                 VersionNumber = (int)versionNumber,
                 OwnerId = body.OwnerId,
@@ -1304,7 +1314,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             return (StatusCodes.OK, new LoadResponse
             {
-                SlotId = Guid.Parse(slot.SlotId),
+                SlotId = slot.SlotId,
                 VersionNumber = (int)versionNumber,
                 Data = data,
                 ContentHash = version.ContentHash,
@@ -1370,7 +1380,8 @@ public partial class SaveLoadService : ISaveLoadService
                 _logger.LogDebug("No version specified and slot has no latest version");
                 return (StatusCodes.NotFound, null);
             }
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionToFetch.Value);
+            // SlotId is Guid - convert to string for state key
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionToFetch.Value);
             var (targetVersion, versionEtag) = await versionStore.GetWithETagAsync(versionKey, cancellationToken);
 
             if (targetVersion == null)
@@ -1385,17 +1396,17 @@ public partial class SaveLoadService : ISaveLoadService
                 _logger.LogDebug("Version {Version} is already a full snapshot", targetVersion.VersionNumber);
                 return (StatusCodes.OK, new SaveResponse
                 {
-                    SlotId = Guid.Parse(slot.SlotId),
+                    SlotId = slot.SlotId,
                     VersionNumber = targetVersion.VersionNumber,
                     SizeBytes = targetVersion.SizeBytes,
                     CreatedAt = targetVersion.CreatedAt,
-                    UploadPending = targetVersion.UploadStatus == "PENDING"
+                    UploadPending = targetVersion.UploadStatus == UploadStatus.PENDING
                 });
             }
 
-            // Reconstruct full data from delta chain
+            // Reconstruct full data from delta chain - SlotId is Guid, convert to string
             var reconstructedData = await _versionDataLoader.ReconstructFromDeltaChainAsync(
-                slot.SlotId, targetVersion, versionStore, cancellationToken);
+                slot.SlotId.ToString(), targetVersion, versionStore, cancellationToken);
 
             if (reconstructedData == null)
             {
@@ -1414,7 +1425,7 @@ public partial class SaveLoadService : ISaveLoadService
             while (currentVersion.IsDelta && currentVersion.BaseVersionNumber.HasValue)
             {
                 intermediateVersions.Add(currentVersion);
-                var prevKey = SaveVersionManifest.GetStateKey(slot.SlotId, currentVersion.BaseVersionNumber.Value);
+                var prevKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), currentVersion.BaseVersionNumber.Value);
                 currentVersion = await versionStore.GetAsync(prevKey, cancellationToken);
                 if (currentVersion == null)
                 {
@@ -1438,9 +1449,9 @@ public partial class SaveLoadService : ISaveLoadService
             targetVersion.DeltaAlgorithm = null;
             targetVersion.SizeBytes = reconstructedData.Length;
             targetVersion.CompressedSizeBytes = compressedData.Length;
-            targetVersion.CompressionType = compressionTypeEnum.ToString();
+            targetVersion.CompressionType = compressionTypeEnum;
             targetVersion.ContentHash = contentHash;
-            targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE";
+            targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE;
 
             // Save updated manifest with optimistic concurrency
             var newEtag = await versionStore.TrySaveAsync(targetVersion.GetStateKey(), targetVersion, versionEtag ?? string.Empty, cancellationToken);
@@ -1451,7 +1462,7 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.Conflict, null);
             }
 
-            // Store in hot cache
+            // Store in hot cache - HotSaveEntry fields are now proper types
             var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
             var resolvedVersionNumber = targetVersion.VersionNumber;
             var hotEntry = new HotSaveEntry
@@ -1461,7 +1472,7 @@ public partial class SaveLoadService : ISaveLoadService
                 Data = Convert.ToBase64String(compressedData),
                 ContentHash = contentHash,
                 IsCompressed = compressionTypeEnum != CompressionType.NONE,
-                CompressionType = compressionTypeEnum.ToString(),
+                CompressionType = compressionTypeEnum,
                 SizeBytes = reconstructedData.Length,
                 CachedAt = DateTimeOffset.UtcNow
             };
@@ -1472,21 +1483,22 @@ public partial class SaveLoadService : ISaveLoadService
                 new StateOptions { Ttl = hotCacheTtlSeconds },
                 cancellationToken);
 
-            // Queue for upload if enabled
+            // Queue for upload if enabled - PendingUploadEntry fields are now proper types
             if (_configuration.AsyncUploadEnabled)
             {
                 var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
-                var uploadId = Guid.NewGuid().ToString();
+                var uploadId = Guid.NewGuid();
                 var pendingEntry = new PendingUploadEntry
                 {
                     UploadId = uploadId,
                     SlotId = slot.SlotId,
                     VersionNumber = resolvedVersionNumber,
                     GameId = slot.GameId,
-                    OwnerId = ownerId,
-                    OwnerType = ownerType,
+                    OwnerId = slot.OwnerId,
+                    OwnerType = slot.OwnerType,
                     Data = Convert.ToBase64String(compressedData),
                     ContentHash = contentHash,
+                    CompressionType = compressionTypeEnum,
                     CompressedSizeBytes = compressedData.Length,
                     Priority = 1,
                     QueuedAt = DateTimeOffset.UtcNow
@@ -1498,7 +1510,7 @@ public partial class SaveLoadService : ISaveLoadService
                     new StateOptions { Ttl = pendingTtlSeconds },
                     cancellationToken);
                 // Add to tracking set for Redis-based queue processing
-                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
             }
 
             // Delete intermediate versions if requested
