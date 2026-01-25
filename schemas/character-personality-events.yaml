@@ -117,8 +117,8 @@ components:
           format: uuid
           description: ID of the character whose personality evolved
         experienceType:
-          type: string
-          description: Type of experience that caused the evolution (e.g., TRAUMA, BETRAYAL, VICTORY)
+          $ref: 'character-personality-api.yaml#/components/schemas/ExperienceType'
+          description: Type of experience that caused the evolution
         intensity:
           type: number
           format: float
@@ -231,8 +231,8 @@ components:
           format: uuid
           description: ID of the character whose combat preferences evolved
         experienceType:
-          type: string
-          description: Type of combat experience that caused the evolution (e.g., DECISIVE_VICTORY, NEAR_DEATH)
+          $ref: 'character-personality-api.yaml#/components/schemas/CombatExperienceType'
+          description: Type of combat experience that caused the evolution
         intensity:
           type: number
           format: float

@@ -164,7 +164,7 @@ components:
           format: uuid
           description: Unique identifier for the action
         actionType:
-          type: string
+          $ref: 'game-session-api.yaml#/components/schemas/GameActionType'
           description: Type of action performed
         targetId:
           type: string

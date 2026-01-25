@@ -39,7 +39,7 @@ public sealed class InternalAssetRecord
     /// <summary>
     /// Realm the asset belongs to.
     /// </summary>
-    public Realm? Realm { get; init; }
+    public GameRealm? Realm { get; init; }
 
     /// <summary>
     /// Storage key (path) in the object store.
@@ -89,7 +89,7 @@ public sealed class InternalAssetRecord
             ContentType = ContentType,
             Size = Size,
             AssetType = AssetType,
-            Realm = Realm ?? Asset.Realm.Omega,
+            Realm = Realm ?? GameRealm.Omega,
             Tags = Tags ?? new List<string>(),
             ProcessingStatus = ProcessingStatus,
             CreatedAt = CreatedAt,

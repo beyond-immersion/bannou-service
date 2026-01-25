@@ -30,7 +30,7 @@ public sealed class BundleMetadata
     /// <summary>
     /// Game realm this bundle belongs to.
     /// </summary>
-    public required Realm Realm { get; init; }
+    public required GameRealm Realm { get; init; }
 
     /// <summary>
     /// Human-readable bundle name.

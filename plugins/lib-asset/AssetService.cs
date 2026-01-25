@@ -394,7 +394,7 @@ public partial class AssetService : IAssetService
                 ContentType = session.ContentType,
                 Size = assetRef.Size,
                 AssetType = session.Metadata?.AssetType ?? AssetType.Other,
-                Realm = session.Metadata?.Realm ?? Asset.Realm.Shared,
+                Realm = session.Metadata?.Realm ?? GameRealm.Shared,
                 Tags = session.Metadata?.Tags ?? new List<string>(),
                 ProcessingStatus = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
                 StorageKey = finalKey,
@@ -1017,7 +1017,7 @@ public partial class AssetService : IAssetService
                 BundleId = body.BundleId,
                 Version = body.Version ?? "1.0.0",
                 BundleType = BundleType.Source,
-                Realm = body.Realm ?? Asset.Realm.Shared,
+                Realm = body.Realm ?? GameRealm.Shared,
                 AssetIds = body.AssetIds.ToList(),
                 Assets = bundleAssetEntries,
                 StorageKey = bundlePath,
@@ -1434,7 +1434,7 @@ public partial class AssetService : IAssetService
                     }
 
                     // Validate realm consistency (all must be same realm or 'shared')
-                    if (sourceBundle.Realm != body.Realm && sourceBundle.Realm != Asset.Realm.Shared)
+                    if (sourceBundle.Realm != body.Realm && sourceBundle.Realm != GameRealm.Shared)
                     {
                         _logger.LogWarning("CreateMetabundle: Realm mismatch - bundle {BundleId} is {BundleRealm}, expected {ExpectedRealm}",
                             sourceBundleId, sourceBundle.Realm, body.Realm);
@@ -1469,8 +1469,8 @@ public partial class AssetService : IAssetService
                     }
 
                     // Validate realm consistency
-                    var assetRealm = asset.Realm ?? Asset.Realm.Omega;
-                    if (assetRealm != body.Realm && assetRealm != Asset.Realm.Shared)
+                    var assetRealm = asset.Realm ?? GameRealm.Omega;
+                    if (assetRealm != body.Realm && assetRealm != GameRealm.Shared)
                     {
                         _logger.LogWarning("CreateMetabundle: Realm mismatch - asset {AssetId} is {AssetRealm}, expected {ExpectedRealm}",
                             assetId, assetRealm, body.Realm);
@@ -2972,7 +2972,7 @@ public partial class AssetService : IAssetService
                 Changes = changes,
                 Reason = body.Reason,
                 UpdatedBy = bundle.Owner ?? "system",
-                Realm = MapRealmToEventEnum(bundle.Realm)
+                Realm = bundle.Realm
             });
 
             _logger.LogInformation("UpdateBundle: Updated bundle {BundleId} from version {PreviousVersion} to {NewVersion}",
@@ -3111,7 +3111,7 @@ public partial class AssetService : IAssetService
                 RetentionUntil = retentionUntil,
                 Reason = body.Reason,
                 DeletedBy = bundle.Owner ?? "system",
-                Realm = MapRealmToEventEnum(bundle.Realm)
+                Realm = bundle.Realm
             });
 
             return (StatusCodes.OK, new DeleteBundleResponse
@@ -3217,7 +3217,7 @@ public partial class AssetService : IAssetService
                 RestoredFromVersion = restoredFromVersion,
                 Reason = body.Reason,
                 RestoredBy = bundle.Owner ?? "system",
-                Realm = MapRealmToEventEnum(bundle.Realm)
+                Realm = bundle.Realm
             });
 
             _logger.LogInformation("RestoreBundle: Restored bundle {BundleId} from version {RestoredFromVersion}",
@@ -3534,21 +3534,6 @@ public partial class AssetService : IAssetService
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// Helper to map Realm enum to event RealmEnum.
-    /// </summary>
-    private static BeyondImmersion.BannouService.Events.RealmEnum? MapRealmToEventEnum(Realm realm)
-    {
-        return realm switch
-        {
-            Realm.Omega => BeyondImmersion.BannouService.Events.RealmEnum.Omega,
-            Realm.Arcadia => BeyondImmersion.BannouService.Events.RealmEnum.Arcadia,
-            Realm.Fantasia => BeyondImmersion.BannouService.Events.RealmEnum.Fantasia,
-            Realm.Shared => BeyondImmersion.BannouService.Events.RealmEnum.Shared,
-            _ => null
-        };
     }
 
     #endregion
