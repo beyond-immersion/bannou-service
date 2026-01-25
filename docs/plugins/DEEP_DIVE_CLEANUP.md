@@ -159,9 +159,9 @@ For each plugin deep dive document:
 | Actor | DONE | Fixed all 5 bugs: (1) anonymous memory value → PerceptionData, (2) hardcoded tunables → config properties + wired, (3) ApiException handling → added, (4) error event publishing → added, (5) regex caching → added with timeout. DeploymentMode now enum. Bugs section cleared. |
 | Analytics | DONE | Fixed T10 logging (ingestion → Debug, validation → Debug). Added comment for `?? string.Empty` compiler satisfaction. Removed false positives (T9 local dict protected by lock, T19 private methods). |
 | Asset | DONE | Fixed T21 hardcoded constant → config. Added compiler satisfaction comments to `?? string.Empty`. Removed T19 false positives (internal classes, private methods). Moved T25 type improvements to Design Considerations. |
-| Auth | PENDING | |
-| Behavior | PENDING | |
-| Character | PENDING | |
+| Auth | DONE | Fixed T21 (removed DEFAULT_CONNECT_URL, hardcoded 60min fallback, added MockTwitchId to schema, removed dead "000000" fallback, extracted Unknown constants), T7 (ApiException catch), T10 (LogInfo → Debug for routine ops, mock email log). Removed T19 false positives (internal class, Generated/, base class overrides). Moved SessionDataModel type issues to Design Considerations. |
+| Behavior | DONE | Already clean - all violations addressed previously. Design considerations properly documented (ValueTask, IHttpClientFactory, static CognitionConstants, in-memory runtime state). |
+| Character | DONE | Removed false positives (T21 stub config, T19 interface methods, T19 private helpers). Moved T9 concurrency issues to Design Considerations (require architectural planning for distributed locking). |
 | Character-Encounter | PENDING | |
 | Character-History | PENDING | |
 | Character-Personality | PENDING | |
@@ -191,9 +191,9 @@ For each plugin deep dive document:
 | Scene | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Moved T9/T25/T21 to Design Considerations. |
 | Species | DONE | Fixed T10 logging (operation entry → Debug, expected outcomes → Debug). Moved T25/T9/T7/T21/T5 to Design Considerations. |
 | State | DONE | Fixed T10 logging (operation entry → Debug) and T7 (Warning → Error for index failure). Moved T21 config issues to Design Considerations. |
-| Subscription | PENDING | |
-| Voice | PENDING | |
-| Website | PENDING | |
+| Subscription | DONE | Fixed T10 logging (operation entry → Debug) and T23 (empty catch → Debug log). Removed T6 false positives. Moved T25/T9/T21/T7 to Design Considerations. |
+| Voice | DONE | Fixed T10 logging (operation entry → Debug). Removed T6 false positives, T23 borderline compliant patterns. Moved T25/T21 to Design Considerations. |
+| Website | DONE | Fixed T10 logging (Warning → Debug for stub calls). Removed T6 false positive. Moved T21/T19 (stub-acceptable) to Design Considerations. |
 
 ---
 

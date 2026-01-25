@@ -84,6 +84,12 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string MockGoogleId { get; set; } = "mock-google-123456";
 
     /// <summary>
+    /// Mock Twitch user ID for testing
+    /// Environment variable: AUTH_MOCK_TWITCH_ID
+    /// </summary>
+    public string MockTwitchId { get; set; } = "mock-twitch-123456";
+
+    /// <summary>
     /// Mock Steam user ID for testing
     /// Environment variable: AUTH_MOCK_STEAM_ID
     /// </summary>

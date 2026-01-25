@@ -18,6 +18,10 @@ public class SessionService : ISessionService
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
 
+    // Device info placeholders - device capture is unimplemented
+    private const string UNKNOWN_PLATFORM = "Unknown";
+    private const string UNKNOWN_BROWSER = "Unknown";
+
     /// <summary>
     /// Initializes a new instance of SessionService.
     /// </summary>
@@ -84,8 +88,8 @@ public class SessionService : ISessionService
                             DeviceInfo = new DeviceInfo
                             {
                                 DeviceType = DeviceInfoDeviceType.Desktop,
-                                Platform = "Unknown",
-                                Browser = "Unknown"
+                                Platform = UNKNOWN_PLATFORM,
+                                Browser = UNKNOWN_BROWSER
                             }
                         });
                     }

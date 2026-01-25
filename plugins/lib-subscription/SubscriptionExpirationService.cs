@@ -85,9 +85,10 @@ public class SubscriptionExpirationService : BackgroundService
                         ex.Message,
                         severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
                 }
-                catch
+                catch (Exception pubEx)
                 {
                     // Don't let error publishing failures affect the loop
+                    _logger.LogDebug(pubEx, "Failed to publish error event - continuing expiration loop");
                 }
             }
 

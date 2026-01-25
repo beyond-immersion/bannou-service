@@ -59,7 +59,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionListResponse?)> GetAccountSubscriptionsAsync(
         GetAccountSubscriptionsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting subscriptions for account {AccountId} (includeInactive={IncludeInactive}, includeExpired={IncludeExpired})",
+        _logger.LogDebug("Getting subscriptions for account {AccountId} (includeInactive={IncludeInactive}, includeExpired={IncludeExpired})",
             body.AccountId, body.IncludeInactive, body.IncludeExpired);
 
         try
@@ -127,7 +127,7 @@ public partial class SubscriptionService : ISubscriptionService
             return (StatusCodes.BadRequest, null);
         }
 
-        _logger.LogInformation("Querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
+        _logger.LogDebug("Querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
             body.AccountId, body.StubName);
 
         try
@@ -224,7 +224,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> GetSubscriptionAsync(
         GetSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Getting subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -253,7 +253,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> CreateSubscriptionAsync(
         CreateSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating subscription for account {AccountId} to service {ServiceId}",
+        _logger.LogDebug("Creating subscription for account {AccountId} to service {ServiceId}",
             body.AccountId, body.ServiceId);
 
         try
@@ -363,7 +363,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> UpdateSubscriptionAsync(
         UpdateSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Updating subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Updating subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -414,7 +414,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> CancelSubscriptionAsync(
         CancelSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Cancelling subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Cancelling subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -459,7 +459,7 @@ public partial class SubscriptionService : ISubscriptionService
     public async Task<(StatusCodes, SubscriptionInfo?)> RenewSubscriptionAsync(
         RenewSubscriptionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Renewing subscription {SubscriptionId}", body.SubscriptionId);
+        _logger.LogDebug("Renewing subscription {SubscriptionId}", body.SubscriptionId);
 
         try
         {
@@ -527,7 +527,7 @@ public partial class SubscriptionService : ISubscriptionService
     /// </summary>
     public async Task<bool> ExpireSubscriptionAsync(string subscriptionId, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Expiring subscription {SubscriptionId}", subscriptionId);
+        _logger.LogDebug("Expiring subscription {SubscriptionId}", subscriptionId);
 
         try
         {
@@ -672,7 +672,7 @@ public partial class SubscriptionService : ISubscriptionService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Subscription service permissions...");
+        _logger.LogDebug("Registering Subscription service permissions...");
         await SubscriptionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 

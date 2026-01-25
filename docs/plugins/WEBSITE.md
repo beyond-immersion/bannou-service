@@ -345,110 +345,16 @@ Generated Model Hierarchy
 
 8. **GetSubscription overlaps with Subscription service**: The website's `GetSubscription` endpoint essentially duplicates what the dedicated Subscription service provides (`/subscription/get`). The intent is to aggregate subscription data with a web-friendly response shape, but care must be taken to avoid divergence.
 
-9. **Non-nullable collection fields default to null**: Multiple `ICollection<T>` fields like `Keywords`, `SupportedLanguages`, `SocialLinks`, `Navigation`, `Tags`, `Benefits`, and `Children` are typed as non-nullable but assigned `= default!` in the generated models (lines 222, 354, 378, 467, 599, 1006, 511 of WebsiteModels.cs). Accessing these without initialization throws `NullReferenceException`.
+9. **Non-nullable collection fields default to null**: Multiple `ICollection<T>` fields like `Keywords`, `SupportedLanguages`, `SocialLinks`, `Navigation`, `Tags`, `Benefits`, and `Children` are typed as non-nullable but assigned `= default!` in the generated models. Accessing these without initialization throws `NullReferenceException`.
 
-10. **Non-nullable nested objects default to null**: Fields like `Seo` (line 152), `Logo` (line 455), `Analytics` (line 384), and `CustomScripts` (line 390) in WebsiteModels.cs are typed as non-nullable references but assigned `= default!`. Since they're not in the schema's `required` array, they'll be null if not provided in JSON.
+10. **Non-nullable nested objects default to null**: Fields like `Seo`, `Logo`, `Analytics`, and `CustomScripts` in WebsiteModels.cs are typed as non-nullable references but assigned `= default!`. Since they're not in the schema's `required` array, they'll be null if not provided in JSON.
 
-11. **`Size` field is `int` limiting downloads to ~2GB**: The `DownloadInfo.Size` property (line 743 of WebsiteModels.cs) is `int`, not `long`. This limits represented file sizes to 2,147,483,647 bytes (~2GB), which may be insufficient for large game clients with bundled assets.
+11. **`Size` field is `int` limiting downloads to ~2GB**: The `DownloadInfo.Size` property is `int`, not `long`. This limits represented file sizes to ~2GB, which may be insufficient for large game clients.
 
-12. **Multiple overlapping status enums with "maintenance"**: Three different enums define "maintenance" with different ordinal values: `StatusResponseStatus.Maintenance = 2` (service health), `ServerStatusResponseGlobalStatus.Maintenance = 3` (global status), `RealmStatusStatus.Maintenance = 2` (realm status). Code comparing these across contexts could have subtle bugs.
+12. **Multiple overlapping status enums with "maintenance"**: Three different enums define "maintenance" with different ordinal values. Code comparing these across contexts could have subtle bugs.
 
-13. **Metadata stored as untyped `object`**: Both `PageContent.Metadata` (line 146) and `Analytics.OtherTrackers` (line 261) are typed as `object`, meaning they accept any JSON but provide no type safety. Deserializing these returns `JsonElement` which requires manual parsing.
+13. **Metadata stored as untyped `object`**: Both `PageContent.Metadata` and `Analytics.OtherTrackers` are typed as `object`, meaning they accept any JSON but provide no type safety.
 
----
+14. **Dead configuration reference**: The `_configuration` field is assigned but never used. Acceptable for a stub service, but should be wired up when implementing.
 
-## Tenet Violations (Audit)
-
-**Audit Date**: 2026-01-24
-**Audited Files**:
-- `/home/lysander/repos/bannou/plugins/lib-website/WebsiteService.cs`
-- `/home/lysander/repos/bannou/plugins/lib-website/WebsiteServicePlugin.cs`
-- `/home/lysander/repos/bannou/plugins/lib-website/AssemblyInfo.cs`
-
----
-
-### Category: FOUNDATION
-
-1. **Service Implementation Pattern (T6)** - WebsiteService.cs:25-37 - Missing `ArgumentNullException.ThrowIfNull` for constructor parameters
-   - What's wrong: The constructor does not validate that injected dependencies are non-null before assigning them. While NRT provides compile-time safety, the TENETS specify that constructor dependencies should have explicit null checks per the service implementation pattern shown in T6.
-   - Fix: The TENETS T6 example shows dependencies are assigned directly (NRT-protected), and the comment states "NRT-protected parameters: no null checks needed - compiler enforces non-null at call sites." This is actually **NOT a violation** upon closer review - the T6 example explicitly says no null checks are needed for NRT-protected parameters.
-
----
-
-### Category: IMPLEMENTATION
-
-1. **Error Handling (T7)** - WebsiteService.cs:49-60, 73-85, etc. (all 17 methods) - Unreachable catch blocks
-   - What's wrong: Every method has a try-catch structure where the try block contains only `LogWarning` + `return`, which cannot throw exceptions. The catch blocks with `TryPublishErrorAsync` are dead code and can never execute.
-   - Fix: This is documented as a known bug in the "Bugs (Fix When Implementing)" section. When real business logic is added, the error handling structure will become functional. For now, the code is misleading but not technically violating T7 (the pattern is correct, just unreachable).
-
-2. **Configuration-First (T21)** - WebsiteService.cs:22 - Dead configuration reference
-   - What's wrong: The `_configuration` field is assigned in the constructor (line 27) but never used anywhere in the service implementation. This is dead configuration per T21: "Every defined config property MUST be referenced in service code. Unused config properties indicate either dead schema (remove from configuration YAML) or missing functionality."
-   - Fix: Either remove the `_configuration` field and constructor parameter since the stub doesn't need it, or when implementing the service, use configuration properties for tunable values (pagination limits, rate limits, etc.).
-
-3. **Logging Standards (T10)** - WebsiteService.cs:46, 70, 95, 119, 144, 169, etc. (all 17 methods) - Wrong log level for operation entry
-   - What's wrong: Per T10, "Operation Entry" logging should be at **Debug** level, not Warning. The stub methods use `LogWarning` for what is effectively operation entry logging ("Method X called but not implemented").
-   - Fix: Change `LogWarning` to `LogDebug` for operation entry, or if the intent is to alert that stub methods are being called in production, add a separate mechanism (like a startup warning) rather than logging warnings on every call.
-
-4. **Async Method Pattern (T23)** - WebsiteService.cs:42-60, 66-85, etc. (all 17 methods) - Methods marked async but may not need to be
-   - What's wrong: All stub methods are marked `async` but the try blocks never await anything. The `async` keyword is present but the happy path does synchronous work only. The catch blocks have `await` but are unreachable.
-   - Fix: This is a borderline case. The methods correctly return `Task<...>` as required by the interface, and using `async` is acceptable even if the current implementation is synchronous. Per T23, "When implementing an interface that requires async methods but your implementation is synchronous, use `await Task.CompletedTask`." The current pattern of having unreachable awaits in catch blocks is unconventional but technically the methods ARE async. **No strict violation** - but when implementing, ensure actual async operations use proper await.
-
----
-
-### Category: QUALITY
-
-1. **XML Documentation (T19)** - WebsiteService.cs - Method documentation lacks `<param>` and `<returns>` tags
-   - What's wrong: Several methods have `<summary>` tags but are missing `<param>` documentation for their parameters and `<returns>` documentation for return values. For example:
-     - `GetPageContentAsync` (line 66): Missing `<param name="slug">` and `<returns>`
-     - `GetNewsAsync` (line 91): Missing `<param name="limit">`, `<param name="offset">`, and `<returns>`
-     - `GetDownloadsAsync` (line 140): Missing `<param name="platform">` and `<returns>`
-     - `SubmitContactAsync` (line 165): Missing `<param name="body">` and `<returns>`
-     - `CreatePageAsync` (line 237): Missing `<param name="body">` and `<returns>`
-     - `UpdatePageAsync` (line 261): Missing `<param name="slug">`, `<param name="body">`, and `<returns>`
-     - `UpdateSiteSettingsAsync` (line 310): Missing `<param name="body">` and `<returns>`
-     - `UpdateThemeAsync` (line 358): Missing `<param name="body">` and `<returns>`
-     - `DeletePageAsync` (line 406): Missing `<param name="slug">` and `<returns>`
-     - `ListPagesAsync` (line 431): Missing `<param name="includeUnpublished">` and `<returns>`
-     - `RegisterServicePermissionsAsync` (line 459): Missing `<param name="appId">`
-   - Fix: Add complete XML documentation to all public methods including `<param>` for each parameter and `<returns>` describing the return value.
-
-2. **Naming Conventions (T16)** - WebsiteService.cs:459 - Method name does not follow naming convention
-   - What's wrong: The method `RegisterServicePermissionsAsync` is an async method and correctly has the `Async` suffix. **No violation** - this is correct.
-
----
-
-### Summary of Actual Violations
-
-After careful analysis, the following are confirmed tenet violations:
-
-| # | Category | Tenet | File:Line | Description |
-|---|----------|-------|-----------|-------------|
-| 1 | IMPLEMENTATION | T21 (Configuration-First) | WebsiteService.cs:22,27 | `_configuration` field assigned but never used (dead config) |
-| 2 | IMPLEMENTATION | T10 (Logging Standards) | WebsiteService.cs:46,70,95,119,144,169,193,217,241,265,290,314,338,362,386,410,435 | `LogWarning` used for operation entry; should be `LogDebug` per T10 |
-| 3 | QUALITY | T19 (XML Documentation) | WebsiteService.cs:66,91,140,165,237,261,310,358,406,431,459 | Missing `<param>` and `<returns>` tags on public methods |
-
----
-
-### Notes
-
-1. **Unreachable catch blocks** are documented in the "Bugs (Fix When Implementing)" section and are not a tenet violation per se - the error handling pattern is correct, it's just that the current stub implementation makes the blocks unreachable.
-
-2. **No T0 violations**: No tenet numbers are referenced in source code comments.
-
-3. **No T4 violations**: The service correctly uses `IMessageBus` from lib-messaging rather than direct RabbitMQ access.
-
-4. **No T5 violations**: No events are published (service is a stub), so no anonymous event objects.
-
-5. **No T9 violations**: The service has no in-memory state or caching.
-
-6. **No T20 violations**: No JSON serialization is performed in the service implementation.
-
-7. **No T22 violations**: No warning suppressions are present in the source files.
-
-8. **No T23 violations**: All async methods are properly marked as `async` and the interface requirements are met.
-
-9. **No T24 violations**: No disposable objects are created in the service.
-
-10. **No T25 violations**: No internal POCOs with type safety issues (service uses generated models only).
-
-11. **T15 (Browser-Facing Endpoints)**: The service's use of GET/PUT/DELETE with path parameters is an explicitly documented exception per FOUNDATION TENETS.
+15. **Missing XML documentation**: Several public methods lack `<param>` and `<returns>` tags. Acceptable for a stub service, but should be completed when implementing.

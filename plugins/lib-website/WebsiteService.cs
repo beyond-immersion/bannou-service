@@ -43,7 +43,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetStatusAsync called but not implemented");
+            _logger.LogDebug("MethodGetStatusAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -67,7 +67,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetPageContentAsync called but not implemented for slug: {Slug}", slug);
+            _logger.LogDebug("MethodGetPageContentAsync called but not implemented for slug: {Slug}", slug);
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -92,7 +92,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetNewsAsync called but not implemented");
+            _logger.LogDebug("MethodGetNewsAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -117,7 +117,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetServerStatusAsync called but not implemented");
+            _logger.LogDebug("MethodGetServerStatusAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -141,7 +141,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetDownloadsAsync called but not implemented");
+            _logger.LogDebug("MethodGetDownloadsAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -166,7 +166,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method SubmitContactAsync called but not implemented");
+            _logger.LogDebug("MethodSubmitContactAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -190,7 +190,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetAccountProfileAsync called but not implemented");
+            _logger.LogDebug("MethodGetAccountProfileAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -214,7 +214,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetAccountCharactersAsync called but not implemented");
+            _logger.LogDebug("MethodGetAccountCharactersAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -238,7 +238,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method CreatePageAsync called but not implemented");
+            _logger.LogDebug("MethodCreatePageAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -262,7 +262,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method UpdatePageAsync called but not implemented for slug: {Slug}", slug);
+            _logger.LogDebug("MethodUpdatePageAsync called but not implemented for slug: {Slug}", slug);
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -287,7 +287,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetSiteSettingsAsync called but not implemented");
+            _logger.LogDebug("MethodGetSiteSettingsAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -311,7 +311,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method UpdateSiteSettingsAsync called but not implemented");
+            _logger.LogDebug("MethodUpdateSiteSettingsAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -335,7 +335,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetThemeAsync called but not implemented");
+            _logger.LogDebug("MethodGetThemeAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -359,7 +359,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method UpdateThemeAsync called but not implemented");
+            _logger.LogDebug("MethodUpdateThemeAsync called but not implemented");
             return StatusCodes.NotImplemented;
         }
         catch (Exception ex)
@@ -383,7 +383,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method GetSubscriptionAsync called but not implemented");
+            _logger.LogDebug("MethodGetSubscriptionAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -407,7 +407,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method DeletePageAsync called but not implemented for slug: {Slug}", slug);
+            _logger.LogDebug("MethodDeletePageAsync called but not implemented for slug: {Slug}", slug);
             return StatusCodes.NotImplemented;
         }
         catch (Exception ex)
@@ -432,7 +432,7 @@ public partial class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogWarning("Method ListPagesAsync called but not implemented");
+            _logger.LogDebug("MethodListPagesAsync called but not implemented");
             return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
@@ -458,7 +458,7 @@ public partial class WebsiteService : IWebsiteService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Website service permissions...");
+        _logger.LogDebug("Registering Website service permissions...");
         await WebsitePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 

@@ -93,7 +93,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing login request for email: {Email}", body.Email);
+            _logger.LogDebug("Processing login request for email: {Email}", body.Email);
 
             if (string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
             {
@@ -101,13 +101,13 @@ public partial class AuthService : IAuthService
             }
 
             // Lookup account by email via AccountClient
-            _logger.LogInformation("Looking up account by email via AccountClient: {Email}", body.Email);
+            _logger.LogDebug("Looking up account by email via AccountClient: {Email}", body.Email);
 
             AccountResponse account;
             try
             {
                 account = await _accountClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = body.Email }, cancellationToken);
-                _logger.LogInformation("Account found via service call: {AccountId}", account?.AccountId);
+                _logger.LogDebug("Account found via service call: {AccountId}", account?.AccountId);
 
                 if (account == null)
                 {
@@ -145,7 +145,7 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.Unauthorized, null);
             }
 
-            _logger.LogInformation("Password verification successful for email: {Email}", body.Email);
+            _logger.LogDebug("Password verification successful for email: {Email}", body.Email);
 
             // Generate tokens (returns both accessToken and sessionId for event publishing)
             var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
@@ -185,7 +185,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing registration request for username: {Username}", body.Username);
+            _logger.LogDebug("Processing registration request for username: {Username}", body.Username);
 
             if (string.IsNullOrWhiteSpace(body.Username) || string.IsNullOrWhiteSpace(body.Password))
             {
@@ -194,10 +194,10 @@ public partial class AuthService : IAuthService
 
             // Hash password before storing
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: _configuration.BcryptWorkFactor);
-            _logger.LogInformation("Password hashed successfully for registration");
+            _logger.LogDebug("Password hashed successfully for registration");
 
             // Create account via AccountClient service call
-            _logger.LogInformation("Creating account via AccountClient for registration: {Email}", body.Email);
+            _logger.LogDebug("Creating account via AccountClient for registration: {Email}", body.Email);
 
             var createRequest = new CreateAccountRequest
             {
@@ -211,7 +211,7 @@ public partial class AuthService : IAuthService
             try
             {
                 accountResult = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
-                _logger.LogInformation("Account created successfully via service call: {AccountId}", accountResult?.AccountId);
+                _logger.LogDebug("Account created successfully via service call: {AccountId}", accountResult?.AccountId);
 
                 if (accountResult == null)
                 {
@@ -434,7 +434,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing token refresh request");
+            _logger.LogDebug("Processing token refresh request");
 
             if (string.IsNullOrWhiteSpace(body.RefreshToken))
             {
@@ -778,7 +778,8 @@ public partial class AuthService : IAuthService
         }
         var resetUrl = $"{_configuration.PasswordResetBaseUrl}?token={resetToken}";
 
-        _logger.LogInformation(
+        // LogDebug for mock email output to prevent token leakage in production log aggregation
+        _logger.LogDebug(
             "=== PASSWORD RESET EMAIL (MOCK) ===\n" +
             "To: {Email}\n" +
             "Subject: Password Reset Request\n" +
@@ -871,7 +872,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Sessions requested");
+            _logger.LogDebug("Sessions requested");
 
             if (string.IsNullOrWhiteSpace(jwt))
             {
@@ -887,12 +888,12 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.Unauthorized, null);
             }
 
-            _logger.LogInformation("Getting sessions for account: {AccountId}", validateResponse.AccountId);
+            _logger.LogDebug("Getting sessions for account: {AccountId}", validateResponse.AccountId);
 
             // Use efficient account-to-sessions index with bulk state operations
             var sessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
 
-            _logger.LogInformation("Returning {SessionCount} session(s) for account: {AccountId}",
+            _logger.LogDebug("Returning {SessionCount} session(s) for account: {AccountId}",
                 sessions.Count, validateResponse.AccountId);
 
             return (StatusCodes.OK, new SessionsResponse

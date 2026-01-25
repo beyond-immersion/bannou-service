@@ -192,92 +192,28 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 - **Multi-factor authentication**: The schema and service have no MFA concept. A TOTP or WebAuthn flow could be added as a second factor after password verification.
 - **OAuth token refresh**: The service exchanges OAuth codes for access tokens but doesn't store or refresh them. For ongoing provider API access (e.g., Discord presence), OAuth refresh tokens would need to be persisted.
 
-## Tenet Violations (Fix Immediately)
+## Bugs (Fix Immediately)
 
-1. **[IMPLEMENTATION]** Hardcoded constant `DEFAULT_CONNECT_URL = "ws://localhost:5014/connect"` used as comparison baseline.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, line 38
-   - **Violation**: T21 (Configuration-First). The hardcoded URL is used to detect whether the user has customized the config (line 81: `_configuration.ConnectUrl != DEFAULT_CONNECT_URL`), but this duplicates the default already in the generated config class. If the schema default changes, this constant goes stale.
-   - **Fix**: Remove the `DEFAULT_CONNECT_URL` constant and adjust the `EffectiveConnectUrl` logic to only check `!string.IsNullOrWhiteSpace(_configuration.ConnectUrl)` and ServiceDomain, since the generated config already provides the default.
+No bugs identified.
 
-2. **[IMPLEMENTATION]** Hardcoded fallback `60` minutes for password reset TTL.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, lines 734-736
-   - **Violation**: T21 (Configuration-First). `var resetTokenTtlMinutes = _configuration.PasswordResetTokenTtlMinutes > 0 ? _configuration.PasswordResetTokenTtlMinutes : 60;` -- the fallback `60` is a hardcoded tunable. The generated config already has a default of `30`, so if the value is somehow `0`, the service should fail fast rather than silently use a different default.
-   - **Fix**: Remove the fallback and use `_configuration.PasswordResetTokenTtlMinutes` directly. If zero is invalid, throw at startup or validate at the start of the method.
+## Design Considerations (Requires Planning)
 
-3. **[IMPLEMENTATION]** Hardcoded string `"mock-twitch-user-id-12345"` for Twitch mock provider ID.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/Services/OAuthProviderService.cs`, line 586
-   - **Violation**: T21 (Configuration-First). Discord and Google mock IDs use configuration (`MockDiscordId`, `MockGoogleId`), but Twitch uses a hardcoded string. A `MockTwitchId` config property should exist.
-   - **Fix**: Add `MockTwitchId` to the auth configuration schema, use it in the switch expression instead of the hardcoded literal.
+1. **`SessionDataModel.SessionId` as string instead of Guid** - `SessionDataModel.SessionId` is stored as a string with `= string.Empty` default. Per IMPLEMENTATION TENETS (T25), internal POCOs should use proper types. Changing to `Guid` requires updating all consuming code (TokenService, SessionService, AuthService) to use `Guid.ToString()` at API boundaries only. This affects session creation, validation, and event publishing paths.
 
-4. **[IMPLEMENTATION]** Hardcoded string `"000000"` as Steam mock ID fallback.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/Services/OAuthProviderService.cs`, line 604
-   - **Violation**: T21 (Configuration-First). `var mockId = _configuration.MockSteamId ?? "000000";` -- the config property `MockSteamId` is non-nullable with a default of `"76561198000000000"`, so this null-coalesce is dead code AND the fallback is a hardcoded magic string.
-   - **Fix**: Remove the `?? "000000"` since `MockSteamId` always has a value.
+2. **`SessionDataModel.Email` empty string default** - Email uses `= string.Empty` which hides null-source bugs. OAuth/Steam accounts legitimately have no email. Should be `string?` with explicit null handling in consuming code (session creation, login responses). Requires auditing all email usage patterns in auth flows.
 
-5. **[IMPLEMENTATION]** Missing `ApiException` catch in `RefreshTokenAsync` account lookup.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, lines 480-485
-   - **Violation**: T7 (Error Handling). The account lookup catch block uses only `catch (Exception ex)` without a preceding `catch (ApiException ex)` to distinguish expected API failures (e.g., 404 account not found) from unexpected infrastructure failures.
-   - **Fix**: Add `catch (ApiException ex) when (ex.StatusCode == 404)` to handle account not found explicitly before the generic `catch (Exception ex)`.
+3. **`PasswordResetData.Email` empty string default** - Internal POCO uses `= ""` default. Email is always populated from account (which may be null for OAuth). Should be nullable with validation before storing. Requires updating `RequestPasswordResetAsync` to handle null case.
 
-6. **[IMPLEMENTATION]** Missing `CancellationToken` parameter on `InvalidateAccountSessionsAsync`.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, line 1072
-    - **Violation**: T16 (Naming Conventions) / consistency. The method signature is `Task InvalidateAccountSessionsAsync(Guid accountId)` but does not accept a `CancellationToken`, unlike all other async methods in the service. The underlying `InvalidateAllSessionsForAccountAsync` accepts one with a default.
-    - **Fix**: Add `CancellationToken cancellationToken = default` parameter and pass it through.
+4. **`SendPasswordResetEmailAsync` unused cancellation token** - The `cancellationToken` parameter is accepted but unused (method is synchronous mock). Should be wired through when email integration is added. Low priority until email implementation.
 
-7. **[QUALITY]** Logging sensitive information -- password reset token in mock email log.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, lines 786-797
-    - **Violation**: T10 (Logging Standards). The mock email log includes the full password reset URL with the security token (`{ResetUrl}` which contains the token as a query parameter). While acceptable for development mocks, this should use LogDebug rather than LogInformation to prevent token leakage in production log aggregation.
-    - **Fix**: Change `_logger.LogInformation` to `_logger.LogDebug` for the mock email output, or redact the token from the URL in the log.
+### False Positives Removed
 
-8. **[QUALITY]** Excessive `LogInformation` usage for routine operations.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, multiple lines (105, 113, 119, 157, 167, 197, 206, 209, 223, 255, 466)
-    - **Violation**: T10 (Logging Standards). Operations like "Looking up account by email", "Account found via service call", "Password hashed successfully", and "Processing login request" are routine debug-level operations, not significant state changes or business decisions. They should use `LogDebug`.
-    - **Fix**: Change routine operation entry/progress logs from `LogInformation` to `LogDebug`. Reserve `LogInformation` for significant state changes (successful authentication, new account created, session invalidated).
+The following items from the original audit were determined to be false positives:
 
-9. **[QUALITY]** Missing XML documentation on `PasswordResetData` class members.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, lines 865-870
-    - **Violation**: T19 (XML Documentation). The class has a `<summary>` but the `Email` property at line 868 (`public string Email { get; set; } = "";`) lacks `<summary>` documentation. Actually -- re-checking, `AccountId` (line 867) and `ExpiresAt` (line 869) also lack documentation. Only the class itself has a summary.
-    - **Fix**: Add `<summary>` XML comments to all three properties of `PasswordResetData`.
-
-10. **[QUALITY]** Missing XML documentation on `AuthServicePlugin.PluginName` and `DisplayName` properties.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthServicePlugin.cs`, lines 13-14
-    - **Violation**: T19 (XML Documentation). Public properties `PluginName` and `DisplayName` lack `<summary>` tags. The `ConfigureServices` method also lacks `<param>` documentation.
-    - **Fix**: Add `<summary>` to the properties, and `<param name="services">` to the method, or use `<inheritdoc/>` if base class documentation is sufficient.
-
-11. **[QUALITY]** Missing XML documentation on `AuthController.InitOAuth` method parameters.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthController.cs`, lines 16-20
-    - **Violation**: T19 (XML Documentation). The `InitOAuth` method has a `<summary>` but lacks `<param>` tags for `provider`, `redirectUri`, `state`, and `cancellationToken`, and lacks a `<returns>` tag.
-    - **Fix**: Add `<param>` and `<returns>` XML documentation.
-
-12. **[IMPLEMENTATION]** `SendPasswordResetEmailAsync` has unused `cancellationToken` parameter.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, line 775
-    - **Violation**: T21 (Configuration-First) / code quality. The `cancellationToken` parameter is accepted but never used in the method body (the method is synchronous with `await Task.CompletedTask`). This is a dead parameter.
-    - **Fix**: When email integration is added, wire the cancellation token through. For now, suppress or remove (since the method signature is internal and can be changed).
-
-13. **[IMPLEMENTATION]** Hardcoded strings `"Unknown"` for device info in `SessionService.GetAccountSessionsAsync`.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/Services/SessionService.cs`, lines 87-88
-    - **Violation**: T21 (Configuration-First). `Platform = "Unknown"` and `Browser = "Unknown"` are hardcoded magic strings. While device capture is unimplemented, these should at minimum be class-level constants for discoverability.
-    - **Fix**: Extract to named constants (e.g., `private const string UNKNOWN_PLATFORM = "Unknown";`) or use a configuration property if these are intended to be configurable defaults.
-
-14. **[IMPLEMENTATION]** `SessionDataModel.Email` property uses empty string default with no validation.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/Services/ISessionService.cs`, line 141
-    - **Violation**: CLAUDE.md rule (no `= ""` / empty string defaults without justification). `public string Email { get; set; } = string.Empty;` -- if email is required for a session, this should throw on missing values; if optional, it should be `string?`. The empty string hides potential null-source bugs.
-    - **Fix**: Make the property nullable (`string?`) since OAuth/Steam accounts may not have emails, and handle null explicitly in consuming code.
-
-15. **[IMPLEMENTATION]** `SessionDataModel.SessionId` property uses empty string default with no validation.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/Services/ISessionService.cs`, line 161
-    - **Violation**: CLAUDE.md rule (no empty string defaults without justification). `public string SessionId { get; set; } = string.Empty;` -- SessionId is always set during token generation and is a GUID string. Should be typed as `Guid` per T25, or at minimum should be nullable to surface missing-value bugs rather than hiding them as empty strings.
-    - **Fix**: Change to `public Guid SessionId { get; set; }` to use proper GUID type per T25 (Internal Model Type Safety), and adjust all consuming code that uses `string` SessionId to use `Guid.ToString()` at boundaries only.
-
-16. **[IMPLEMENTATION]** `PasswordResetData.Email` property uses empty string literal default.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/AuthService.cs`, line 868
-    - **Violation**: CLAUDE.md rule (no empty string defaults without justification). `public string Email { get; set; } = "";` -- Email is always populated from `account.Email` (which could itself be null for OAuth accounts). Should be nullable to surface bugs.
-    - **Fix**: Change to `public string? Email { get; set; }` and handle null in consuming code, or validate non-null before storing.
-
-17. **[IMPLEMENTATION]** Multiple `OAuthProviderService` response model properties use `= string.Empty` defaults.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-auth/Services/OAuthProviderService.cs`, lines 763, 766, 781, 799, 805, 830, 835, 850, 852, 883, 886, 889, 903
-    - **Violation**: CLAUDE.md rule. Private DTO classes like `DiscordTokenResponse`, `DiscordUserResponse`, etc. use `= string.Empty` on required fields (e.g., `AccessToken`, `Id`, `Username`). However, these are external service response DTOs where the properties may legitimately come back as null from the JSON deserialization -- this is the "External Service Defensive Coding" acceptable pattern from CLAUDE.md, but it lacks the required error log when unexpected null is encountered.
-    - **Fix**: These are acceptable as defensive coding for external services, but each should have validation after deserialization (which exists via the `if (tokenData == null || string.IsNullOrEmpty(tokenData.AccessToken))` checks). No fix needed -- these follow the acceptable pattern with post-deserialization validation.
+- **T19 on PasswordResetData**: Internal class - T19 only applies to public API members
+- **T19 on AuthServicePlugin properties**: Override base class members - use `<inheritdoc/>` if needed
+- **T19 on AuthController.InitOAuth**: In Generated/ folder - cannot edit generated code
+- **OAuthProviderService DTOs with string.Empty**: Acceptable defensive coding for external service responses with existing post-deserialization validation
 
 ## Known Quirks & Caveats
 
@@ -293,4 +229,4 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 6. **`RefreshTokenAsync` accepts but intentionally ignores the JWT parameter**: The `jwt` parameter is generated from the schema's `x-permissions: [{ role: user }]` declaration but is intentionally unused. Refresh tokens are designed to work when the access token has expired - validating the JWT would defeat the purpose of the refresh flow. The refresh token alone is the credential for obtaining a new access token.
 
-3. **Hardcoded device info for all sessions**: `SessionService.GetAccountSessionsAsync` populates `DeviceInfo` with `DeviceType = Desktop`, `Platform = "Unknown"`, `Browser = "Unknown"` for every session. No device information is captured during authentication flows. Future work: capture user agent / platform during login and store in `SessionDataModel`, enabling device-specific JWT binding and accurate session reporting.
+7. **Hardcoded device info for all sessions**: `SessionService.GetAccountSessionsAsync` populates `DeviceInfo` with `DeviceType = Desktop`, `Platform = UNKNOWN_PLATFORM`, `Browser = UNKNOWN_BROWSER` for every session. No device information is captured during authentication flows. Future work: capture user agent / platform during login and store in `SessionDataModel`, enabling device-specific JWT binding and accurate session reporting.

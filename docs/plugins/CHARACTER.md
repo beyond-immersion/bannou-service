@@ -223,30 +223,17 @@ Character Key Architecture (Realm-Partitioned)
 
 ## Known Quirks & Caveats
 
-### Tenet Violations (Fix Immediately)
+### Bugs (Fix Immediately)
 
-*Fixed violations (removed from list):*
-- *#1, #12: NRT null checks NOT needed - NRTs provide compile-time safety (T12)*
-- *#3: CompressionMaxBackstoryPoints/CompressionMaxLifeEvents added to configuration*
-- *#4: PersonalityTraitThreshold added to configuration*
-- *#5: Entry logs changed from LogInformation to LogDebug*
-- *#15: "RELATIONSHIP" string made into REFERENCE_TYPE_RELATIONSHIP const*
-- *#16: ApiException catch blocks added to all endpoint methods*
-- *#18: ApiException swallowing now uses `when (ex.StatusCode == 404)` filter*
+No bugs identified.
 
-1. [IMPLEMENTATION] **Dead configuration property: CharacterRetentionDays (T21)** -- File: `plugins/lib-character/Generated/CharacterServiceConfiguration.cs`. The property `CharacterRetentionDays` (env: `CHARACTER_RETENTION_DAYS`, default 90) is defined in the configuration schema but never referenced anywhere in `CharacterService.cs`. Per T21, every configuration property must be referenced in service code. Fix: either implement the feature that uses it or remove it from the schema.
+### False Positives Removed
 
-2. [IMPLEMENTATION] **No distributed lock on character update (T9)** -- File: `plugins/lib-character/CharacterService.cs`. `UpdateCharacterAsync` reads a character, modifies it, and saves it without any concurrency protection. Two simultaneous updates to the same character will both succeed with last-writer-wins semantics. Fix: use `GetWithETagAsync` and `TrySaveAsync` with retry-on-conflict, or use `IDistributedLockProvider`.
+The following items from the original audit were determined to be false positives:
 
-3. [IMPLEMENTATION] **No distributed lock on character compression (T9)** -- File: `plugins/lib-character/CharacterService.cs`. `CompressCharacterAsync` reads a character, generates summaries, stores an archive, and optionally deletes source data without any concurrency protection. Fix: use `IDistributedLockProvider` around the compression operation.
-
-4. [IMPLEMENTATION] **No IDistributedLockProvider injected for multi-instance safety (T9)** -- File: `plugins/lib-character/CharacterService.cs`. The service does not inject `IDistributedLockProvider` despite having multiple operations that need cross-instance coordination. Fix: inject and use `IDistributedLockProvider`.
-
-5. [IMPLEMENTATION] **RefCount update without optimistic concurrency (T9)** -- File: `plugins/lib-character/CharacterService.cs`. The `CheckCharacterReferencesAsync` method reads `RefCountData`, modifies it, and saves it back without ETag-based concurrency control. Fix: use `GetWithETagAsync` and `TrySaveAsync` with retry.
-
-6. [QUALITY] **Missing XML documentation on public endpoint methods (T19)** -- File: `plugins/lib-character/CharacterService.cs`. Public endpoint methods (`CreateCharacterAsync`, `GetCharacterAsync`, `UpdateCharacterAsync`, etc.) lack `<summary>`, `<param>`, and `<returns>` XML documentation tags.
-
-7. [QUALITY] **Missing XML documentation on helper methods (T19)** -- File: `plugins/lib-character/CharacterService.cs`. Helper methods (`FindCharacterByIdAsync`, `GetCharactersByRealmInternalAsync`, `MapToCharacterResponse`, etc.) lack XML documentation.
+- **T21 on CharacterRetentionDays**: Stub config for unimplemented retention/purge feature - acceptable scaffolding documented in Stubs section
+- **T19 on public endpoint methods**: Implement `ICharacterService` interface - use `<inheritdoc/>` if needed; generated interface has documentation
+- **T19 on helper methods**: Private/internal methods do not require XML documentation per T19
 
 ### Informational Notes (Not Violations)
 
@@ -274,7 +261,13 @@ Character Key Architecture (Realm-Partitioned)
 
 ### Design Considerations (Requires Planning)
 
-1. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
+1. **No distributed lock on character update (T9)**: `UpdateCharacterAsync` reads a character, modifies it, and saves it without concurrency protection. Two simultaneous updates result in last-writer-wins. Fix requires: inject `IDistributedLockProvider`, add locking around read-modify-write, or use `GetWithETagAsync`/`TrySaveAsync` with retry-on-conflict.
+
+2. **No distributed lock on character compression (T9)**: `CompressCharacterAsync` reads a character, generates summaries, stores archive, and optionally deletes source data without concurrency protection. Fix requires: inject `IDistributedLockProvider`, wrap compression in lock scope.
+
+3. **RefCount update without optimistic concurrency (T9)**: `CheckCharacterReferencesAsync` reads `RefCountData`, modifies it, and saves without ETag-based concurrency. Fix requires: use `GetWithETagAsync` and `TrySaveAsync` with retry loop.
+
+4. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
 
 2. **Global index double-write**: Both Redis (realm index) and MySQL (global index) are updated on create/delete. Extra write for resilience across restarts but adds complexity.
 

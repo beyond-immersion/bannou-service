@@ -79,7 +79,7 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     public async Task<(StatusCodes, VoiceRoomResponse?)> CreateVoiceRoomAsync(CreateVoiceRoomRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating voice room for session {SessionId}", body.SessionId);
+        _logger.LogDebug("Creating voice room for session {SessionId}", body.SessionId);
 
         try
         {
@@ -202,7 +202,7 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     public async Task<(StatusCodes, JoinVoiceRoomResponse?)> JoinVoiceRoomAsync(JoinVoiceRoomRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Session {SessionId} joining voice room {RoomId}", body.SessionId, body.RoomId);
+        _logger.LogDebug("Session {SessionId} joining voice room {RoomId}", body.SessionId, body.RoomId);
 
         try
         {
@@ -395,7 +395,7 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     public async Task<StatusCodes> LeaveVoiceRoomAsync(LeaveVoiceRoomRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Session {SessionId} leaving voice room {RoomId}", body.SessionId, body.RoomId);
+        _logger.LogDebug("Session {SessionId} leaving voice room {RoomId}", body.SessionId, body.RoomId);
 
         try
         {
@@ -440,7 +440,7 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     public async Task<StatusCodes> DeleteVoiceRoomAsync(DeleteVoiceRoomRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting voice room {RoomId}", body.RoomId);
+        _logger.LogDebug("Deleting voice room {RoomId}", body.RoomId);
 
         try
         {
@@ -852,7 +852,7 @@ public partial class VoiceService : IVoiceService
 
         try
         {
-            _logger.LogInformation("Starting tier upgrade for room {RoomId} from P2P to scaled", roomId);
+            _logger.LogDebug("Starting tier upgrade for room {RoomId} from P2P to scaled", roomId);
 
             // Allocate an RTP server for this room
             var rtpServerUri = await _scaledTierCoordinator.AllocateRtpServerAsync(roomId, cancellationToken);
@@ -933,7 +933,7 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {
-        _logger.LogInformation("Registering Voice service permissions...");
+        _logger.LogDebug("Registering Voice service permissions...");
         await VoicePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
     }
 

@@ -583,7 +583,7 @@ public class OAuthProviderService : IOAuthProviderService
         {
             Provider.Discord => _configuration.MockDiscordId,
             Provider.Google => _configuration.MockGoogleId,
-            Provider.Twitch => "mock-twitch-user-id-12345",
+            Provider.Twitch => _configuration.MockTwitchId,
             Provider.Steam => _configuration.MockSteamId,
             _ => Guid.NewGuid().ToString()
         };
@@ -601,7 +601,8 @@ public class OAuthProviderService : IOAuthProviderService
     public async Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        var mockId = _configuration.MockSteamId ?? "000000";
+        // MockSteamId has a default value in schema - no fallback needed
+        var mockId = _configuration.MockSteamId;
         var suffix = mockId.Length >= 6 ? mockId.Substring(mockId.Length - 6) : mockId;
         return new OAuthUserInfo
         {
