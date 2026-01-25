@@ -171,7 +171,7 @@ public partial class AssetService
         }
 
         // Build list of assets to include with source bundle grouping
-        var assetsBySourceBundle = new Dictionary<Guid, List<(StoredBundleAssetEntry Entry, BundleMetadata SourceBundle)>>();
+        var assetsBySourceBundle = new Dictionary<string, List<(StoredBundleAssetEntry Entry, BundleMetadata SourceBundle)>>();
         foreach (var sourceBundle in sourceBundles)
         {
             if (sourceBundle.Assets != null)
@@ -199,7 +199,7 @@ public partial class AssetService
             cancellationToken).ConfigureAwait(false);
 
         long bundleSize;
-        var provenanceByBundle = new Dictionary<Guid, List<string>>();
+        var provenanceByBundle = new Dictionary<string, List<string>>();
         var standaloneAssetIds = new List<string>();
         var metabundleAssets = new List<StoredBundleAssetEntry>();
         var processedCount = 0;

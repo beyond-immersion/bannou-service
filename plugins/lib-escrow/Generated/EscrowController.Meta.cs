@@ -153,8 +153,7 @@ public partial class EscrowController
                     "description": "Party entity ID"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party entity type"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -210,8 +209,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -620,8 +618,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -720,8 +717,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -896,8 +892,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -1006,8 +1001,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -1042,7 +1036,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -1143,8 +1137,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "token": {
                     "type": "string",
@@ -1467,8 +1460,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -1567,8 +1559,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -1743,8 +1734,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -1853,8 +1843,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -1889,7 +1878,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -2051,7 +2040,11 @@ public partial class EscrowController
                     "description": "Filter by party"
                 },
                 "partyType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Party type filter"
                 },
@@ -2362,8 +2355,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -2462,8 +2454,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -2638,8 +2629,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -2748,8 +2738,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -2784,7 +2773,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -3093,8 +3082,7 @@ public partial class EscrowController
                     "description": "Party depositing"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundleInput",
@@ -3232,7 +3220,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -3495,8 +3483,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -3595,8 +3582,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -3771,8 +3757,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -3881,8 +3866,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -3917,7 +3901,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -4018,8 +4002,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "token": {
                     "type": "string",
@@ -4113,8 +4096,7 @@ public partial class EscrowController
                     "description": "Party to validate"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundleInput",
@@ -4243,7 +4225,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -4375,8 +4357,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 }
             }
         }
@@ -4637,8 +4618,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -4921,8 +4901,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -5021,8 +5000,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -5197,8 +5175,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -5307,8 +5284,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -5343,7 +5319,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -5568,8 +5544,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -5949,8 +5924,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -6049,8 +6023,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -6225,8 +6198,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -6335,8 +6307,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -6371,7 +6342,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -6847,8 +6818,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -6947,8 +6917,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -7123,8 +7092,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -7233,8 +7201,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -7269,7 +7236,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -7717,8 +7684,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -7817,8 +7783,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -7993,8 +7958,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -8103,8 +8067,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -8139,7 +8102,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -8341,8 +8304,7 @@ public partial class EscrowController
                     "description": "Party raising dispute"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "reason": {
                     "type": "string",
@@ -8595,8 +8557,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -8695,8 +8656,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -8871,8 +8831,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -8981,8 +8940,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -9017,7 +8975,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -9243,8 +9201,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "assets": {
                     "type": "array",
@@ -9350,7 +9307,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -9603,8 +9560,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -9703,8 +9659,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -9879,8 +9834,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -9989,8 +9943,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -10025,7 +9978,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -10487,8 +10440,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -10587,8 +10539,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -10763,8 +10714,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -10873,8 +10823,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -10909,7 +10858,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -11379,8 +11328,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -11479,8 +11427,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -11655,8 +11602,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -11765,8 +11711,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -11801,7 +11746,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -11821,7 +11766,7 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\ n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "released",
                 "refunded",
@@ -11917,8 +11862,7 @@ public partial class EscrowController
                     "description": "Party reaffirming"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Party type"
+                    "type": "object"
                 },
                 "releaseToken": {
                     "type": "string",
@@ -12172,8 +12116,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party entity (account, character, npc, guild, system)"
+                    "type": "object"
                 },
                 "displayName": {
                     "type": "string",
@@ -12272,8 +12215,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "expectedAssets": {
                     "type": "array",
@@ -12448,8 +12390,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the depositing party"
+                    "type": "object"
                 },
                 "assets": {
                     "$ref": "#/$defs/EscrowAssetBundle",
@@ -12558,8 +12499,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
-                    "type": "string",
-                    "description": "Type of the party"
+                    "type": "object"
                 },
                 "consentType": {
                     "$ref": "#/$defs/EscrowConsentType",
@@ -12594,7 +12534,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\ n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",

@@ -167,10 +167,10 @@ public partial class SceneService : ISceneService
             var nodeCount = CountNodes(scene.Root);
             var indexEntry = new SceneIndexEntry
             {
-                SceneId = sceneIdStr,
+                SceneId = scene.SceneId,
                 AssetId = assetId,
                 GameId = scene.GameId,
-                SceneType = scene.SceneType.ToString(),
+                SceneType = scene.SceneType,
                 Name = scene.Name,
                 Description = scene.Description,
                 Version = scene.Version,
@@ -1082,7 +1082,7 @@ public partial class SceneService : ISceneService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 GameId = body.GameId,
-                SceneType = body.SceneType.ToString(),
+                SceneType = body.SceneType,
                 RuleCount = body.Rules.Count
             };
             await _messageBus.TryPublishAsync(VALIDATION_RULES_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
@@ -1386,17 +1386,17 @@ public partial class SceneService : ISceneService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <param name="existingAssetId">Existing asset ID for updates (not used in state store approach).</param>
     /// <returns>The asset ID (scene ID) for the stored content.</returns>
-    private async Task<string> StoreSceneAssetAsync(Scene scene, CancellationToken cancellationToken, string? existingAssetId = null)
+    private async Task<Guid> StoreSceneAssetAsync(Scene scene, CancellationToken cancellationToken, Guid? existingAssetId = null)
     {
         var yaml = YamlSerializer.Serialize(scene);
-        var sceneIdStr = scene.SceneId.ToString();
-        var contentKey = $"{SCENE_CONTENT_PREFIX}{sceneIdStr}";
+        var sceneId = scene.SceneId;
+        var contentKey = $"{SCENE_CONTENT_PREFIX}{sceneId}";
 
         // Store the YAML content directly in state store
         var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(StateStoreDefinitions.Scene);
         var contentEntry = new SceneContentEntry
         {
-            SceneId = sceneIdStr,
+            SceneId = sceneId,
             Version = scene.Version,
             Content = yaml,
             UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -1404,7 +1404,7 @@ public partial class SceneService : ISceneService
 
         await contentStore.SaveAsync(contentKey, contentEntry, null, cancellationToken);
 
-        return sceneIdStr;
+        return sceneId;
     }
 
     /// <summary>
@@ -1414,7 +1414,7 @@ public partial class SceneService : ISceneService
     /// <param name="version">Optional version (not currently supported for state store).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The deserialized scene, or null if not found.</returns>
-    private async Task<Scene?> LoadSceneAssetAsync(string assetId, string? version, CancellationToken cancellationToken)
+    private async Task<Scene?> LoadSceneAssetAsync(Guid assetId, string? version, CancellationToken cancellationToken)
     {
         var contentKey = $"{SCENE_CONTENT_PREFIX}{assetId}";
         var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(StateStoreDefinitions.Scene);
@@ -1436,7 +1436,7 @@ public partial class SceneService : ISceneService
     /// <param name="limit">Maximum number of versions to return.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of version info entries, newest first.</returns>
-    private async Task<List<VersionInfo>> GetAssetVersionHistoryAsync(string sceneId, int limit, CancellationToken cancellationToken)
+    private async Task<List<VersionInfo>> GetAssetVersionHistoryAsync(Guid sceneId, int limit, CancellationToken cancellationToken)
     {
         var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(StateStoreDefinitions.Scene);
         var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
@@ -2085,10 +2085,10 @@ public partial class SceneService : ISceneService
 /// </summary>
 internal class SceneIndexEntry
 {
-    public string SceneId { get; set; } = string.Empty;
-    public string AssetId { get; set; } = string.Empty;
+    public Guid SceneId { get; set; }
+    public Guid AssetId { get; set; }
     public string GameId { get; set; } = string.Empty;
-    public string SceneType { get; set; } = string.Empty;
+    public SceneType SceneType { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Version { get; set; } = string.Empty;
@@ -2097,7 +2097,7 @@ internal class SceneIndexEntry
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public bool IsCheckedOut { get; set; }
-    public string? CheckedOutBy { get; set; }
+    public Guid? CheckedOutBy { get; set; }
 }
 
 /// <summary>
@@ -2105,9 +2105,9 @@ internal class SceneIndexEntry
 /// </summary>
 internal class CheckoutState
 {
-    public string SceneId { get; set; } = string.Empty;
+    public Guid SceneId { get; set; }
     public string Token { get; set; } = string.Empty;
-    public string EditorId { get; set; } = string.Empty;
+    public Guid EditorId { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public int ExtensionCount { get; set; }
 }
@@ -2117,7 +2117,7 @@ internal class CheckoutState
 /// </summary>
 internal class SceneContentEntry
 {
-    public string SceneId { get; set; } = string.Empty;
+    public Guid SceneId { get; set; }
     public string Version { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public long UpdatedAt { get; set; }

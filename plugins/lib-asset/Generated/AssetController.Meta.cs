@@ -1293,8 +1293,7 @@ public partial class AssetController
                 },
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "version": {
                     "type": "string",
@@ -1363,8 +1362,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "status": {
                     "type": "string",
@@ -1458,8 +1456,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier to retrieve"
+                    "description": "Human-readable bundle identifier to retrieve"
                 },
                 "format": {
                     "$ref": "#/$defs/BundleFormat",
@@ -1501,8 +1498,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "version": {
                     "type": "string",
@@ -1656,8 +1652,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier from the manifest"
+                    "description": "Human-readable bundle identifier from the manifest"
                 },
                 "version": {
                     "type": "string",
@@ -1850,17 +1845,15 @@ public partial class AssetController
             "properties": {
                 "metabundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Unique identifier for the new metabundle"
+                    "description": "Human-readable identifier for the new metabundle (e.g., \"game-assets-v1\")"
                 },
                 "sourceBundleIds": {
                     "type": "array",
                     "items": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "string"
                     },
                     "nullable": true,
-                    "description": "Source bundle IDs to pull assets from. Can cherry-pick specific\nassets using assetFilter, or include all if assetFilter is null.\n"
+                    "description": "Human-readable source bundle IDs (e.g., \"synty/polygon-adventure\") to pull assets from.\nCan cherry-pick specific assets using assetFilter, or include all if assetFilter is null.\n"
                 },
                 "standaloneAssetIds": {
                     "type": "array",
@@ -1930,14 +1923,13 @@ public partial class AssetController
             "properties": {
                 "metabundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Metabundle identifier"
+                    "description": "Human-readable metabundle identifier"
                 },
                 "jobId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Job ID for async processing. Only present when status is 'queued' or 'processing'.\ nUse /bundles/job/status to poll for completion, or wait for\nMetabundleCreationCompleteEvent via WebSocket.\n"
+                    "description": "Job ID for async processing. Only present when status is 'queued' or 'processing'.\nUse /bundles/job/status to poll for completion, or wait for\nMetabundleCreationCompleteEvent via WebSocket.\n"
                 },
                 "status": {
                     "type": "string",
@@ -1999,7 +1991,6 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
                     "description": "Source bundle identifier"
                 },
                 "version": {
@@ -2052,7 +2043,6 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
                     "description": "Bundle containing this version"
                 },
                 "contentHash": {
@@ -2167,8 +2157,7 @@ public partial class AssetController
                 },
                 "metabundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Metabundle identifier being created"
+                    "description": "Human-readable metabundle identifier being created"
                 },
                 "status": {
                     "type": "string",
@@ -2179,7 +2168,7 @@ public partial class AssetController
                         "failed",
                         "cancelled"
                     ],
-                    "description": "Current job status.\n- queued: Waiting for processing resources\n- processing: Actively being processed\n- ready: Completed successfully\n- failed: Creation failed\n- cancelled: Job was cancelled\n"
+                    "description": "Current job status.\n- queued: Waiting for processing resources\n- processing: Actively being processed\n- ready: Completed successfully\n- failed: Creation failed\ n- cancelled: Job was cancelled\n"
                 },
                 "progress": {
                     "type": "integer",
@@ -2261,7 +2250,6 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
                     "description": "Source bundle identifier"
                 },
                 "version": {
@@ -2575,8 +2563,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
+                    "description": "Human-readable bundle identifier"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -2866,8 +2853,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
+                    "description": "Human-readable bundle identifier"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -2986,8 +2972,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier to update"
+                    "description": "Human-readable bundle identifier to update"
                 },
                 "name": {
                     "type": "string",
@@ -3052,8 +3037,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Updated bundle identifier"
+                    "description": "Human-readable bundle identifier that was updated"
                 },
                 "version": {
                     "type": "integer",
@@ -3152,8 +3136,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier to delete"
+                    "description": "Human-readable bundle identifier to delete"
                 },
                 "permanent": {
                     "type": "boolean",
@@ -3188,8 +3171,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Deleted bundle identifier"
+                    "description": "Human-readable bundle identifier that was deleted"
                 },
                 "status": {
                     "type": "string",
@@ -3287,8 +3269,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier to restore"
+                    "description": "Human-readable bundle identifier to restore"
                 },
                 "reason": {
                     "type": "string",
@@ -3319,8 +3300,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Restored bundle identifier"
+                    "description": "Human-readable bundle identifier that was restored"
                 },
                 "status": {
                     "type": "string",
@@ -3596,8 +3576,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -3767,8 +3746,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier to get history for"
+                    "description": "Human-readable bundle identifier to get history for"
                 },
                 "limit": {
                     "type": "integer",
@@ -3804,8 +3782,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Bundle identifier"
+                    "description": "Human-readable bundle identifier"
                 },
                 "currentVersion": {
                     "type": "integer",
@@ -3888,8 +3865,7 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Unique bundle identifier"
+                    "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "bundleType": {
                     "$ref": "#/$defs/BundleType",
@@ -3969,7 +3945,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
         "GameRealm": {
             "type": "string",
@@ -3982,7 +3958,7 @@ public partial class AssetController
                 "deleted",
                 "processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }

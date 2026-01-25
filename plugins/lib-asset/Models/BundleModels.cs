@@ -8,9 +8,9 @@ namespace BeyondImmersion.BannouService.Asset.Models;
 public sealed class BundleMetadata
 {
     /// <summary>
-    /// Unique bundle identifier.
+    /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1").
     /// </summary>
-    public required Guid BundleId { get; init; }
+    public required string BundleId { get; init; }
 
     /// <summary>
     /// Bundle content version string.
@@ -240,7 +240,7 @@ public sealed class StoredSourceBundleReference
     /// <summary>
     /// Source bundle identifier.
     /// </summary>
-    public required Guid BundleId { get; init; }
+    public required string BundleId { get; init; }
 
     /// <summary>
     /// Version of source bundle at composition time.
@@ -311,7 +311,7 @@ public sealed class BundleCreationJob
     /// <summary>
     /// Target bundle identifier.
     /// </summary>
-    public required Guid BundleId { get; init; }
+    public required string BundleId { get; init; }
 
     /// <summary>
     /// Bundle version.
@@ -398,7 +398,7 @@ public sealed class BundleUploadSession
     /// <summary>
     /// Expected bundle ID.
     /// </summary>
-    public required Guid BundleId { get; init; }
+    public required string BundleId { get; init; }
 
     /// <summary>
     /// Filename being uploaded.
@@ -451,7 +451,7 @@ public sealed class StoredBundleVersionRecord
     /// <summary>
     /// Bundle identifier.
     /// </summary>
-    public required Guid BundleId { get; init; }
+    public required string BundleId { get; init; }
 
     /// <summary>
     /// Metadata version number.

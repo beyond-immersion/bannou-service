@@ -293,8 +293,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         version:
           type: string
           description: Bundle version string
@@ -340,8 +339,7 @@ components:
       properties:
         metabundleId:
           type: string
-          format: uuid
-          description: Metabundle identifier
+          description: Human-readable metabundle identifier
         version:
           type: string
           description: Metabundle version string
@@ -356,8 +354,7 @@ components:
           nullable: true
           items:
             type: string
-            format: uuid
-          description: List of source bundle IDs that were composed
+          description: List of human-readable source bundle IDs that were composed
         assetCount:
           type: integer
           description: Number of unique assets in the metabundle
@@ -399,8 +396,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         version:
           type: integer
           description: New metadata version number after update
@@ -436,8 +432,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         permanent:
           type: boolean
           description: True if permanently deleted, false for soft-delete
@@ -470,8 +465,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         restoredFromVersion:
           type: integer
           description: Metadata version the bundle was restored from

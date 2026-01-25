@@ -194,9 +194,8 @@ components:
           description: Whether validation passed
         bundleId:
           type: string
-          format: uuid
           nullable: true
-          description: Assigned bundle ID on success
+          description: Assigned human-readable bundle ID on success
         assetsRegistered:
           type: integer
           nullable: true
@@ -262,8 +261,7 @@ components:
           description: Fixed event type identifier
         bundleId:
           type: string
-          format: uuid
-          description: ID of the created bundle
+          description: Human-readable ID of the created bundle
         success:
           type: boolean
           description: Whether creation completed successfully
@@ -318,8 +316,7 @@ components:
           description: Job ID from the original async creation request
         metabundleId:
           type: string
-          format: uuid
-          description: ID of the metabundle
+          description: Human-readable ID of the metabundle
         success:
           type: boolean
           description: Whether creation completed successfully

@@ -209,7 +209,7 @@ public sealed class BannouBundleWriter : IDisposable
     /// Finalizes the bundle asynchronously.
     /// </summary>
     public async Task FinalizeAsync(
-        Guid bundleId,
+        string bundleId,
         string name,
         string version,
         string createdBy,
