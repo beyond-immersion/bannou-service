@@ -423,9 +423,7 @@ Authoring Workflow
 
 7. **MaxAffordanceCandidates applies per-kind, not total**: In `QueryAffordanceAsync` (lines 1052-1058), `MaxAffordanceCandidates` is passed to each kind query individually, then results are combined with `AddRange`. With 3 kinds and a limit of 1000, you could evaluate up to 3000 candidates total, not 1000.
 
-8. **Cached affordance metadata is overwritten**: When returning a cached affordance result (lines 1033-1040), the `QueryMetadata` is replaced with placeholder values (`KindsSearched = []`, `ObjectsEvaluated = 0`, `CandidatesGenerated = 0`). The original search statistics from the cached response are lost—only `CacheHit = true` is accurate.
-
-9. **Objects without position get origin coordinates**: In `QueryAffordanceAsync` (line 1086), when a candidate object has `null` Position but passes the score threshold, the response uses `new Position3D { X = 0, Y = 0, Z = 0 }` as a default. This could place affordance locations at the world origin unexpectedly.
+8. **Objects without position get origin coordinates**: In `QueryAffordanceAsync` (line 1086), when a candidate object has `null` Position but passes the score threshold, the response uses `new Position3D { X = 0, Y = 0, Z = 0 }` as a default. This could place affordance locations at the world origin unexpectedly.
 
 10. **Custom affordance exclusions check property existence, not value**: In `AffordanceScorer.ScoreCustomAffordance` (lines 206-212), the exclusions logic checks if a property EXISTS on the object data, regardless of its value. Configuring `excludes: { is_occupied: true }` will exclude objects with `is_occupied: false` too. This is intentional (simple implementation) but could be surprising.
 
@@ -435,6 +433,4 @@ Authoring Workflow
 
 13. **Hardcoded affordance scoring magic numbers**: AffordanceScorer contains ~15 hardcoded scoring weights (base score 0.5, cover weight 0.3, elevation divisor 100.0, size modifiers 0.8-1.2, etc.). Should be configuration properties for game-specific tuning.
 
-14. **Hardcoded position exclusion tolerance**: Affordance exclusion check uses hardcoded `1.0` unit tolerance for position matching. Should be configurable.
-
-15. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Documented as intentional but exceptions are silently lost.
+14. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Documented as intentional but exceptions are silently lost.

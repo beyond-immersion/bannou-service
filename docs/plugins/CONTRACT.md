@@ -436,13 +436,11 @@ None identified.
 
 ### Tenet Violations Requiring Planning
 
-1. **T7 - No ApiException distinction** - Service makes mesh calls via IServiceNavigator but doesn't catch ApiException separately. Add `catch (ApiException)` before `catch (Exception)` blocks.
+1. **T21 - Dead ClauseValidationCacheStalenessSeconds** - Config is referenced but cache is on Scoped service (per-request), providing no cross-request benefit. Either remove config or make cache distributed.
 
-2. **T21 - Dead ClauseValidationCacheStalenessSeconds** - Config is referenced but cache is on Scoped service (per-request), providing no cross-request benefit. Either remove config or make cache distributed.
+2. **T21 - DefaultEnforcementMode as string** - Configuration uses string requiring runtime parsing. Should change schema to use enum type.
 
-3. **T21 - DefaultEnforcementMode as string** - Configuration uses string requiring runtime parsing. Should change schema to use enum type.
-
-4. **T5 - Manually defined event classes** - Six event classes in ContractServiceEscrowIntegration.cs should be schema-generated.
+3. **T5 - Manually defined event classes** - Six event classes in ContractServiceEscrowIntegration.cs should be schema-generated.
 
 ### False Positives Removed
 
@@ -458,6 +456,7 @@ None identified.
 - Replaced null-forgiving operators with safe patterns
 - Changed LogInformation to LogDebug for query/read operations
 - Fixed silent catch-all in GetCustomTermBool - now catches specific FormatException and InvalidCastException
+- Fixed T7 ApiException distinction - added ApiException catch before generic Exception in ExecutePreboundApiInternalAsync
 
 ### Intentional Quirks (Documented Behavior)
 

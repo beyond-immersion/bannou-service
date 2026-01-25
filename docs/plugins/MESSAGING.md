@@ -223,7 +223,7 @@ None identified.
 
 6. **Recovery startup delay**: External subscription recovery waits `SubscriptionRecoveryStartupDelaySeconds` (default 2s) before attempting recovery. Prevents race conditions with RabbitMQ connection establishment.
 
-7. **Exchange caching**: Both `RabbitMQMessageBus` and `MessageRetryBuffer` cache declared exchanges in HashSets to avoid redundant `ExchangeDeclareAsync` calls. Thread-safe via locks.
+7. **Exchange caching**: Both `RabbitMQMessageBus` and `MessageRetryBuffer` cache declared exchanges in ConcurrentDictionaries to avoid redundant `ExchangeDeclareAsync` calls. Lock-free thread-safe access.
 
 ### Design Considerations (Requires Planning)
 
@@ -237,9 +237,7 @@ None identified.
 
 5. **Six unused config properties**: `EnablePublisherConfirms`, `RetryMaxAttempts`, `RetryDelayMs`, `UseMassTransit`, `EnableMetrics`, `EnableTracing` are all defined but never evaluated. Should be wired up or removed.
 
-6. **HashSet + lock pattern for exchange caching**: `RabbitMQMessageBus` and `MessageRetryBuffer` use `HashSet<string>` with explicit locks for `_declaredExchanges`. Functionally thread-safe but pattern prefers `ConcurrentDictionary<string, byte>` to avoid lock contention.
-
-7. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
+6. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
 
 8. **GetAwaiter().GetResult() in ReturnChannel**: `RabbitMQConnectionManager.ReturnChannel()` uses synchronous blocking on async disposal. Could cause deadlocks in certain synchronization contexts. Requires method signature change to fix properly.
 

@@ -266,8 +266,4 @@ None identified.
 
 8. **DefaultLoadBalancer parsed at runtime**: Configuration defines `DefaultLoadBalancer` as string with enum constraint. The service parses it with `Enum.TryParse` at runtime. This is a boundary conversion (config loading is a system boundary).
 
-9. **Hardcoded MaxConnections fallback**: Auto-registration uses `1000` as fallback when heartbeat doesn't provide MaxConnections. Would require schema change to make configurable.
-
-10. **MeshStateManager._initialized lacks synchronization**: The `_initialized` bool could allow double initialization if two threads call `InitializeAsync()` concurrently. Low-risk since initialization is typically called once at startup.
-
-11. **MeshService doesn't call external services**: ApiException catches would be dead code since the service uses IMeshStateManager directly (no service-to-service calls). Pattern conformance deferred.
+9. **MeshService doesn't call external services**: ApiException catches would be dead code since the service uses IMeshStateManager directly (no service-to-service calls). Pattern conformance deferred.
