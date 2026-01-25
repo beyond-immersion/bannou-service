@@ -5,9 +5,8 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("lib-character-encounter.tests")]
+// Note: InternalsVisibleTo attribute is in AssemblyInfo.cs
 
 namespace BeyondImmersion.BannouService.CharacterEncounter;
 

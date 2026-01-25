@@ -269,7 +269,7 @@ public partial class ContractService : IContractService
     {
         try
         {
-            _logger.LogInformation("Listing contract templates");
+            _logger.LogDebug("Listing contract templates");
 
             // Get all template IDs
             var allTemplateIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
@@ -626,7 +626,7 @@ public partial class ContractService : IContractService
 
             // Acquire contract lock for state transition
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -692,7 +692,7 @@ public partial class ContractService : IContractService
 
             // Acquire contract lock for state transition
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -863,7 +863,7 @@ public partial class ContractService : IContractService
     {
         try
         {
-            _logger.LogInformation("Querying contract instances");
+            _logger.LogDebug("Querying contract instances");
 
             List<string> contractIds;
 
@@ -916,7 +916,8 @@ public partial class ContractService : IContractService
             var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
                 .GetBulkAsync(keys, cancellationToken);
 
-            var contracts = bulkResults.Where(r => r.Value != null).Select(r => r.Value!).ToList();
+            // Filter null results and extract values - OfType safely handles the null filtering
+            var contracts = bulkResults.Select(r => r.Value).OfType<ContractInstanceModel>().ToList();
 
             // Apply additional filters
             var filtered = contracts.AsEnumerable();
@@ -972,7 +973,7 @@ public partial class ContractService : IContractService
 
             // Acquire contract lock for state transition
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -1132,7 +1133,7 @@ public partial class ContractService : IContractService
 
             // Acquire contract lock for state transition
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -1165,11 +1166,15 @@ public partial class ContractService : IContractService
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Activate next milestone if any
-            var currentIndex = model.Milestones?.FindIndex(m => m.Code == body.MilestoneCode) ?? -1;
-            if (currentIndex >= 0 && currentIndex + 1 < (model.Milestones?.Count ?? 0))
+            var milestones = model.Milestones;
+            if (milestones != null)
             {
-                model.Milestones![currentIndex + 1].Status = MilestoneStatus.Active;
-                model.CurrentMilestoneIndex = currentIndex + 1;
+                var currentIndex = milestones.FindIndex(m => m.Code == body.MilestoneCode);
+                if (currentIndex >= 0 && currentIndex + 1 < milestones.Count)
+                {
+                    milestones[currentIndex + 1].Status = MilestoneStatus.Active;
+                    model.CurrentMilestoneIndex = currentIndex + 1;
+                }
             }
 
             // Check if all required milestones are complete
@@ -1238,7 +1243,7 @@ public partial class ContractService : IContractService
 
             // Acquire contract lock for state transition
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -1365,7 +1370,7 @@ public partial class ContractService : IContractService
 
             // Acquire contract lock for state transition
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -1461,7 +1466,7 @@ public partial class ContractService : IContractService
 
             // Acquire contract lock to serialize breach state changes
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", breachModel.ContractId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", breachModel.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", breachModel.ContractId);
@@ -1622,7 +1627,7 @@ public partial class ContractService : IContractService
     {
         try
         {
-            _logger.LogInformation("Checking constraint for entity: {EntityId}", body.EntityId);
+            _logger.LogDebug("Checking constraint for entity: {EntityId}", body.EntityId);
 
             // Get active contracts for entity
             var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
@@ -1644,9 +1649,11 @@ public partial class ContractService : IContractService
             var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
                 .GetBulkAsync(keys, cancellationToken);
 
+            // Filter null results and extract active contracts - OfType safely handles the null filtering
             var activeContracts = bulkResults
-                .Where(r => r.Value != null && r.Value.Status == ContractStatus.Active)
-                .Select(r => r.Value!)
+                .Select(r => r.Value)
+                .OfType<ContractInstanceModel>()
+                .Where(c => c.Status == ContractStatus.Active)
                 .ToList();
 
             // Check for constraint violations based on type
@@ -1731,7 +1738,7 @@ public partial class ContractService : IContractService
     {
         try
         {
-            _logger.LogInformation("Querying active contracts for entity: {EntityId}", body.EntityId);
+            _logger.LogDebug("Querying active contracts for entity: {EntityId}", body.EntityId);
 
             var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
             var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
@@ -1749,9 +1756,11 @@ public partial class ContractService : IContractService
             var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
                 .GetBulkAsync(keys, cancellationToken);
 
+            // Filter null results and extract active contracts - OfType safely handles the null filtering
             var activeContracts = bulkResults
-                .Where(r => r.Value != null && r.Value.Status == ContractStatus.Active)
-                .Select(r => r.Value!)
+                .Select(r => r.Value)
+                .OfType<ContractInstanceModel>()
+                .Where(c => c.Status == ContractStatus.Active)
                 .ToList();
 
             // Filter by template codes if specified
@@ -1814,7 +1823,7 @@ public partial class ContractService : IContractService
     private async Task AddToListAsync(string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "contract-index", key, Guid.NewGuid().ToString(), 15, ct);
+            "contract-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire index lock for key {Key}", key);
@@ -1833,7 +1842,7 @@ public partial class ContractService : IContractService
     private async Task RemoveFromListAsync(string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "contract-index", key, Guid.NewGuid().ToString(), 15, ct);
+            "contract-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire index lock for key {Key}", key);

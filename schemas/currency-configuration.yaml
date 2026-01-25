@@ -70,3 +70,42 @@ x-service-configuration:
       env: CURRENCY_HOLD_CACHE_TTL_SECONDS
       default: 120
       description: TTL in seconds for hold cache entries
+
+    # Lock Timeout Configuration
+    balanceLockTimeoutSeconds:
+      type: integer
+      env: CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS
+      default: 30
+      description: Timeout in seconds for balance-level distributed locks
+    holdLockTimeoutSeconds:
+      type: integer
+      env: CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS
+      default: 30
+      description: Timeout in seconds for hold-level distributed locks
+    walletLockTimeoutSeconds:
+      type: integer
+      env: CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS
+      default: 30
+      description: Timeout in seconds for wallet-level distributed locks
+    autogainLockTimeoutSeconds:
+      type: integer
+      env: CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS
+      default: 10
+      description: Timeout in seconds for autogain distributed locks
+    indexLockTimeoutSeconds:
+      type: integer
+      env: CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS
+      default: 15
+      description: Timeout in seconds for index update distributed locks
+
+    # Operation Configuration
+    exchangeRateUpdateMaxRetries:
+      type: integer
+      env: CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES
+      default: 3
+      description: Maximum retry attempts for exchange rate update with optimistic concurrency
+    conversionRoundingPrecision:
+      type: integer
+      env: CURRENCY_CONVERSION_ROUNDING_PRECISION
+      default: 8
+      description: Number of decimal places for currency conversion rounding

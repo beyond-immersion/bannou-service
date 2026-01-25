@@ -71,4 +71,64 @@ public class CharacterPersonalityServiceConfiguration : IServiceConfiguration
     /// </summary>
     public double MinTraitShift { get; set; } = 0.02;
 
+    /// <summary>
+    /// Maximum number of characters allowed in batch operations
+    /// Environment variable: CHARACTER_PERSONALITY_MAX_BATCH_SIZE
+    /// </summary>
+    public int MaxBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum retry attempts for optimistic concurrency conflicts
+    /// Environment variable: CHARACTER_PERSONALITY_MAX_CONCURRENCY_RETRIES
+    /// </summary>
+    public int MaxConcurrencyRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Base probability for combat style transitions (0.0-1.0)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_STYLE_TRANSITION_PROBABILITY
+    /// </summary>
+    public double CombatStyleTransitionProbability { get; set; } = 0.3;
+
+    /// <summary>
+    /// Probability for combat style transitions after defeat (0.0-1.0)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_DEFEAT_STYLE_TRANSITION_PROBABILITY
+    /// </summary>
+    public double CombatDefeatStyleTransitionProbability { get; set; } = 0.4;
+
+    /// <summary>
+    /// Probability for balanced style to become aggressive after victory (0.0-1.0)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_VICTORY_BALANCED_TRANSITION_PROBABILITY
+    /// </summary>
+    public double CombatVictoryBalancedTransitionProbability { get; set; } = 0.2;
+
+    /// <summary>
+    /// Base probability for combat role transitions (0.0-1.0)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_ROLE_TRANSITION_PROBABILITY
+    /// </summary>
+    public double CombatRoleTransitionProbability { get; set; } = 0.4;
+
+    /// <summary>
+    /// Probability for defensive shift after injury (0.0-1.0)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_DEFENSIVE_SHIFT_PROBABILITY
+    /// </summary>
+    public double CombatDefensiveShiftProbability { get; set; } = 0.5;
+
+    /// <summary>
+    /// Multiplier for intense stat shifts (near-death, heavy defeat)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_INTENSE_SHIFT_MULTIPLIER
+    /// </summary>
+    public double CombatIntenseShiftMultiplier { get; set; } = 1.5;
+
+    /// <summary>
+    /// Multiplier for mild stat shifts (standard victories/defeats)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_MILD_SHIFT_MULTIPLIER
+    /// </summary>
+    public double CombatMildShiftMultiplier { get; set; } = 0.5;
+
+    /// <summary>
+    /// Multiplier for mildest stat shifts (minor injuries)
+    /// Environment variable: CHARACTER_PERSONALITY_COMBAT_MILDEST_SHIFT_MULTIPLIER
+    /// </summary>
+    public double CombatMildestShiftMultiplier { get; set; } = 0.3;
+
 }

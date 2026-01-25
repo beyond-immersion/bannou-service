@@ -51,7 +51,6 @@ public class ConnectServiceTests
             .Returns(Mock.Of<ILogger>());
         _configuration = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
         _mockAuthClient = new Mock<IAuthClient>();
@@ -91,7 +90,7 @@ public class ConnectServiceTests
     public void Constructor_WithEmptyServerSalt_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var configWithoutSalt = new ConnectServiceConfiguration { BinaryProtocolVersion = "2.0", ServerSalt = "" };
+        var configWithoutSalt = new ConnectServiceConfiguration { ServerSalt = "" };
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
@@ -593,7 +592,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
 
@@ -610,7 +608,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
 
@@ -627,7 +624,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt
         };
 
@@ -644,7 +640,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
             ConnectionMode = "internal",
             InternalAuthMode = "service-token",
@@ -679,7 +674,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
             ConnectionMode = "internal",
             InternalAuthMode = "service-token",
@@ -714,7 +708,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
             ConnectionMode = "internal",
             InternalAuthMode = "network-trust",
@@ -749,7 +742,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
             ConnectionMode = "external",
             InternalServiceToken = null
@@ -783,7 +775,6 @@ public class ConnectServiceTests
         // Arrange
         var config = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0",
             ServerSalt = _testServerSalt,
             ConnectionMode = "relayed",
             InternalServiceToken = null

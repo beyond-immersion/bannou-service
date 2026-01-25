@@ -432,100 +432,67 @@ Prebound API Batched Execution
 
 ### Tenet Violations (Fix Immediately)
 
-1. **IMPLEMENTATION TENETS (T6: Service Implementation Pattern) - Missing constructor null checks**
-   - **File**: `plugins/lib-contract/ContractService.cs`, lines 86-104
-   - **Issue**: Constructor assigns all injected dependencies without null validation. Per T6, constructors must validate dependencies with `ArgumentNullException.ThrowIfNull()`.
-   - **Fix**: Add `ArgumentNullException.ThrowIfNull()` for `messageBus`, `navigator`, `stateStoreFactory`, `lockProvider`, `logger`, `configuration`, and `eventConsumer` before assignment.
+*Fixed/Removed Violations:*
+- *#1: NRT null checks NOT needed - NRTs provide compile-time safety per T12*
+- *#3: FIXED - Added ContractLockTimeoutSeconds and IndexLockTimeoutSeconds to configuration, updated code to use them*
+- *#4: FIXED - Added IdempotencyTtlSeconds to configuration, updated code to use it*
+- *#7: FIXED - Replaced null-forgiving operators (`!`) with safe patterns (OfType, null checks)*
+- *#12: FIXED - Changed LogInformation to LogDebug for query/read operations*
 
-2. **IMPLEMENTATION TENETS (T7: Error Handling) - No ApiException distinction in any catch block**
-   - **File**: `plugins/lib-contract/ContractService.cs`, all endpoint methods (lines 214, 257, 341, 405, 463, 607, 672, 825, 953, 1032, 1108, 1218, 1306, 1436, 1492, 1575, 1606, 1719, 1789)
-   - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`, all endpoint methods (lines 131, 219, 329, 399, 463, 629, 687, 1093)
-   - **Issue**: Every endpoint catches only `Exception` and returns 500. T7 requires catching `ApiException` first (returning the upstream status) and only falling through to generic `Exception` for truly unexpected failures. The prebound API executor (`ExecutePreboundApiAsync` line 2032) and clause executor also use bare `catch (Exception)`.
-   - **Fix**: Add `catch (ApiException apiEx)` before each `catch (Exception ex)` block, returning the appropriate status from the upstream failure.
+1. **[IMPLEMENTATION TENETS - T7 Error Handling] No ApiException distinction in any catch block**
+   - **Files**: `plugins/lib-contract/ContractService.cs`, `plugins/lib-contract/ContractServiceEscrowIntegration.cs`
+   - **Issue**: Every endpoint catches only `Exception` and returns 500. T7 requires catching `ApiException` first.
+   - **Fix**: Add `catch (ApiException apiEx)` before each `catch (Exception ex)` block.
 
-3. **IMPLEMENTATION TENETS (T21: Configuration-First) - Hardcoded lock timeouts**
-   - **File**: `plugins/lib-contract/ContractService.cs`, lines 629, 695, 975, 1135, 1241, 1368, 1464 (60 seconds), lines 1817, 1836 (15 seconds)
-   - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`, line 973 (60 seconds)
-   - **Issue**: Lock TTLs are hardcoded as `60` and `15`. Per T21, all tunables must be in the configuration schema.
-   - **Fix**: Add `ContractLockTimeoutSeconds` (default 60) and `IndexLockTimeoutSeconds` (default 15) to `schemas/contract-configuration.yaml`, regenerate, and reference `_configuration.ContractLockTimeoutSeconds` / `_configuration.IndexLockTimeoutSeconds`.
+2. **[IMPLEMENTATION TENETS - T21 Configuration-First] Dead configuration property (ClauseValidationCacheStalenessSeconds)**
+   - **File**: `plugins/lib-contract/ContractServiceClauseValidation.cs`
+   - **Issue**: The configuration is referenced but cache is on a Scoped service, providing no cross-request benefit.
+   - **Fix**: Either remove the config property OR make the cache distributed (Redis-backed).
 
-4. **IMPLEMENTATION TENETS (T21: Configuration-First) - Hardcoded idempotency TTL**
-   - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`, line 34
-   - **Issue**: `IDEMPOTENCY_TTL_SECONDS = 86400` is a hardcoded constant (24 hours). This is a tunable that should be configurable.
-   - **Fix**: Add `IdempotencyTtlSeconds` (default 86400) to `schemas/contract-configuration.yaml`, regenerate, and reference `_configuration.IdempotencyTtlSeconds`.
+3. **[IMPLEMENTATION TENETS - T9 Multi-Instance Safety] ConcurrentDictionary on Scoped service**
+   - **File**: `plugins/lib-contract/ContractServiceClauseValidation.cs`
+   - **Issue**: `_validationCache` is per-instance and per-request, providing no multi-instance benefit.
+   - **Fix**: Move to distributed cache if cross-request caching intended.
 
-5. **IMPLEMENTATION TENETS (T21: Configuration-First) - Dead configuration property (ClauseValidationCacheStalenessSeconds)**
-   - **File**: `plugins/lib-contract/Generated/ContractServiceConfiguration.cs`, line 108
-   - **File**: `plugins/lib-contract/ContractServiceClauseValidation.cs`, line 54
-   - **Issue**: The `ClauseValidationCacheStalenessSeconds` configuration is referenced, but as documented in Design Consideration #3, the cache is on a Scoped service instance. Each request gets a fresh `ConcurrentDictionary`, so the staleness threshold provides no cross-request benefit. The configuration exists but is functionally dead. Per T21, unused/dead configuration must be removed or the implementation fixed to make it meaningful (e.g., move to a Singleton cache or distributed cache).
-   - **Fix**: Either remove `ClauseValidationCacheStalenessSeconds` from the configuration schema OR make the validation cache distributed (Redis-backed) so the staleness threshold is meaningful.
+4. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety] Enum serialized as string in events and index keys**
+   - **File**: `plugins/lib-contract/ContractService.cs`
+   - **Issue**: Multiple places use `.ToString()` for enums in index key construction.
+   - **Fix**: Use stable helper method for enum-to-key-string conversion.
 
-6. **IMPLEMENTATION TENETS (T9: Multi-Instance Safety) - ConcurrentDictionary on Scoped service used as authoritative state**
-   - **File**: `plugins/lib-contract/ContractServiceClauseValidation.cs`, line 31
-   - **Issue**: `_validationCache` is a `ConcurrentDictionary` on a Scoped service. While `ConcurrentDictionary` is the correct type per T9, the real issue is that this cache is per-instance and per-request. If the intent is to cache validation results across requests, this is effectively useless. If clause validation is called from a multi-instance deployment, each instance has its own cache with no sharing. The `ConcurrentDictionary` protects against concurrent access within a single request but provides no multi-instance benefit.
-   - **Fix**: If caching across requests is intended, move to a distributed cache (Redis via lib-state with TTL). If caching is only meaningful within a single `ValidateAllClausesAsync` call, replace with a regular `Dictionary` and document that it is request-scoped intentionally.
+5. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety] String used for GuardianType in internal POCO**
+   - **File**: `plugins/lib-contract/ContractService.cs`
+   - **Issue**: `GuardianType` stored as `string?` instead of enum.
+   - **Fix**: Define internal enum if types are finite.
 
-7. **CLAUDE.md (Null-forgiving operator prohibition) - Multiple uses of `!` operator**
-   - **File**: `plugins/lib-contract/ContractService.cs`, line 919: `r.Value!`
-   - **File**: `plugins/lib-contract/ContractService.cs`, line 1171: `model.Milestones!`
-   - **File**: `plugins/lib-contract/ContractService.cs`, line 1649: `r.Value!`
-   - **File**: `plugins/lib-contract/ContractService.cs`, line 1754: `r.Value!`
-   - **Issue**: The null-forgiving operator is forbidden per CLAUDE.md as it causes segmentation faults and hides null reference exceptions.
-   - **Fix**:
-     - Lines 919, 1649, 1754: Replace `.Select(r => r.Value!)` with `.Select(r => r.Value ?? throw new InvalidOperationException("Unexpected null after null filter"))` or use a non-null pattern match.
-     - Line 1171: Replace `model.Milestones![currentIndex + 1]` with a null check: `var milestones = model.Milestones ?? throw new InvalidOperationException("Milestones unexpectedly null");` then `milestones[currentIndex + 1].Status = ...`.
+6. **[QUALITY TENETS - T7 Error Handling] Silent catch-all in GetCustomTermBool**
+   - **File**: `plugins/lib-contract/ContractService.cs`
+   - **Issue**: Bare `catch` block silently swallows exceptions.
+   - **Fix**: Add logging or remove the try-catch if not needed.
 
-8. **IMPLEMENTATION TENETS (T25: Internal Model Type Safety) - Enum serialized as string in events**
-   - **File**: `plugins/lib-contract/ContractService.cs`, lines 2314, 2335, 2357, 2375, 2385, 2409, 2419, 2439, 2498, 2499, 2063
-   - **Issue**: Multiple event properties convert enums to strings via `.ToString()` (e.g., `model.DefaultEnforcementMode.ToString()`, `model.Status.ToString()`, `p.EntityType.ToString()`, `breach.BreachType.ToString()`). While events cross service boundaries (making string acceptable at the boundary), the `BuildContractContext` method at line 2063 also does `contract.Status.ToString().ToLowerInvariant()` for internal template substitution context.
-   - **File**: `plugins/lib-contract/ContractService.cs`, line 1008: `model.Status.ToString().ToLowerInvariant()` used for index key construction.
-   - **Fix**: For index key construction, use a helper method that maps enum to string consistently without runtime `.ToString()`. For event properties, verify the generated event model uses string type (if so, `.ToString()` is acceptable at the boundary). For `BuildContractContext`, the conversion is at a serialization boundary for template substitution which is acceptable.
+7. **[IMPLEMENTATION TENETS - T21 Configuration-First] Hardcoded default values (currency/item codes)**
+   - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`
+   - **Issue**: Default currency code `"gold"` and item code `"all"` are hardcoded.
+   - **Fix**: Add to configuration or require in clause definitions.
 
-9. **IMPLEMENTATION TENETS (T25: Internal Model Type Safety) - String used for GuardianType in internal POCO**
-   - **File**: `plugins/lib-contract/ContractService.cs`, line 2661: `public string? GuardianType { get; set; }`
-   - **Issue**: `GuardianType` is stored as a `string?` in the internal `ContractInstanceModel` POCO. If the schema defines GuardianType as a string (which it does in the generated models), this is acceptable at the boundary. However, if there is a finite set of guardian types, this should use an enum in the internal model.
-   - **Fix**: If guardian types are limited (e.g., "escrow", "arbiter"), define an internal enum and parse at the boundary. If truly free-form, document why string is appropriate.
+8. **[QUALITY TENETS - T19 XML Documentation] Missing XML docs on helper methods**
+   - **File**: `plugins/lib-contract/ContractService.cs`
+   - **Issue**: Multiple private helper and mapping methods lack documentation.
+   - **Fix**: Add `/// <summary>` tags.
 
-10. **QUALITY TENETS (T7: Error Handling) - Silent catch-all in GetCustomTermBool**
-    - **File**: `plugins/lib-contract/ContractService.cs`, lines 72-80
-    - **Issue**: The bare `catch` block silently swallows all exceptions from `Convert.ToBoolean()`. Per T7, exceptions should not be silently swallowed. Even for a utility method, unexpected conversion failures should at minimum be logged.
-    - **Fix**: Either remove the try-catch fallback (the method already handles JsonElement and bool cases), or add `catch (Exception ex) { _logger.LogDebug(...) }` if the fallback is genuinely needed.
+9. **[IMPLEMENTATION TENETS - T5 Event-Driven Architecture] Manually defined event classes**
+    - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`
+    - **Issue**: Six event classes are manually defined instead of schema-generated.
+    - **Fix**: Add to `schemas/contract-events.yaml` and regenerate.
 
-11. **IMPLEMENTATION TENETS (T21: Configuration-First) - Hardcoded default values in ParseEnforcementMode and ParseClauseAmount**
-    - **File**: `plugins/lib-contract/ContractService.cs`, line 2142: Default fallback to `EnforcementMode.Event_only` when string is unrecognized
-    - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`, line 1240: Default currency code `"gold"` in fee clause
-    - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`, line 1244, 1267, 1293, 1297: Default `"gold"` and `"all"` hardcoded
-    - **Issue**: The default currency code `"gold"` and item code `"all"` are hardcoded magic strings. While the enforcement mode fallback is a parse fallback (acceptable), the currency/item defaults are game-specific tunables that should be configurable.
-    - **Fix**: Add `DefaultCurrencyCode` and `DefaultItemCode` to the configuration schema, or require these values in clause definitions (fail if missing rather than defaulting).
+10. **[IMPLEMENTATION TENETS - T21 Configuration-First] DefaultEnforcementMode stored as string**
+    - **File**: `plugins/lib-contract/ContractService.cs`
+    - **Issue**: Configuration uses string requiring runtime parsing instead of enum type.
+    - **Fix**: Change schema to use enum type and remove `ParseEnforcementMode()`.
 
-12. **QUALITY TENETS (T10: Logging Standards) - Information-level logs for routine read operations**
-    - **File**: `plugins/lib-contract/ContractService.cs`, line 272: `LogInformation("Listing contract templates")` in ListContractTemplatesAsync
-    - **File**: `plugins/lib-contract/ContractService.cs`, line 866: `LogInformation("Querying contract instances")` in QueryContractInstancesAsync
-    - **File**: `plugins/lib-contract/ContractService.cs`, line 1625: `LogInformation("Checking constraint for entity...")` in CheckContractConstraintAsync
-    - **File**: `plugins/lib-contract/ContractService.cs`, line 1734: `LogInformation("Querying active contracts for entity...")` in QueryActiveContractsAsync
-    - **Issue**: Read/query operations should use `LogDebug` level, not `LogInformation`. Information level is for significant state changes, not routine queries. T10 requires appropriate log levels.
-    - **Fix**: Change these to `_logger.LogDebug(...)`.
-
-13. **QUALITY TENETS (T19: XML Documentation) - Missing XML docs on private/internal helper methods**
-    - **File**: `plugins/lib-contract/ContractService.cs`: Missing XML docs on `AddToListAsync` (line 1814), `RemoveFromListAsync` (line 1833), `MapTermsToModel` (line 1851), `MergeTerms` (line 1871), `MergeDictionaries` (line 1889), `MapPreboundApiToModel` (line 1904), all event publishing methods (lines 2301-2551), all mapping methods (lines 2163-2295)
-    - **Issue**: While T19 primarily targets public APIs, the project standard requires `<summary>` on all methods for maintainability. Several private helper methods and all mapping/event-publishing methods lack XML documentation.
-    - **Fix**: Add `/// <summary>` tags to all undocumented methods.
-
-14. **IMPLEMENTATION TENETS (T5: Event-Driven Architecture) - Manually defined event classes instead of schema-first**
-    - **File**: `plugins/lib-contract/ContractServiceEscrowIntegration.cs`, lines 1660-1770
-    - **Issue**: Six event classes (`ContractLockedEvent`, `ContractUnlockedEvent`, `ContractPartyTransferredEvent`, `ClauseTypeRegisteredEvent`, `ContractTemplateValuesSetEvent`, `ContractExecutedEvent`) are manually defined in the service file rather than being generated from the events schema. The main contract events (ContractProposedEvent, etc.) are properly generated in `bannou-service/Generated/Events/ContractEventsModels.cs`. These escrow-integration events should follow the same pattern.
-    - **Fix**: Add these event definitions to `schemas/contract-events.yaml` and regenerate. Remove the manual class definitions.
-
-15. **IMPLEMENTATION TENETS (T21: Configuration-First) - DefaultEnforcementMode stored as string in configuration**
-    - **File**: `plugins/lib-contract/Generated/ContractServiceConfiguration.cs`, line 60: `public string DefaultEnforcementMode { get; set; } = "event_only";`
-    - **File**: `plugins/lib-contract/ContractService.cs`, line 2134-2144: `ParseEnforcementMode(string mode)` manually parses at runtime
-    - **Issue**: The configuration schema defines `DefaultEnforcementMode` as a string that requires runtime parsing. The configuration schema should use an enum type so the generated configuration class uses the proper `EnforcementMode` enum, eliminating the need for `ParseEnforcementMode()`.
-    - **Fix**: Change the configuration schema to use the `EnforcementMode` enum type, regenerate, and remove `ParseEnforcementMode()`.
-
-16. **IMPLEMENTATION TENETS (T14: Polymorphic Associations) - EntityType.ToString() used in index keys**
-    - **File**: `plugins/lib-contract/ContractService.cs`, line 522, 598, 873: `$"{PARTY_INDEX_PREFIX}{party.EntityType}:{party.EntityId}"`
-    - **Issue**: The party index key construction uses `EntityType` enum's `.ToString()` implicitly in string interpolation. While this works, if the enum value names ever change, all existing indexes become orphaned. The key construction should use a stable string representation.
-    - **Fix**: Use a dedicated helper method for enum-to-key-string conversion that documents the stability requirement, or ensure the enum values are treated as stable identifiers.
+11. **[IMPLEMENTATION TENETS - T14 Polymorphic Associations] EntityType.ToString() in index keys**
+    - **File**: `plugins/lib-contract/ContractService.cs`
+    - **Issue**: Enum names used in keys could cause orphaned data if names change.
+    - **Fix**: Use stable helper method for enum-to-key conversion.
 
 ### Intentional Quirks (Documented Behavior)
 

@@ -308,10 +308,11 @@ Index Architecture
 
 ## Tenet Violations (Fix Immediately)
 
-1. **[FOUNDATION]** Missing `ArgumentNullException` null checks in constructor. The constructor at `CharacterEncounterService.cs:64-77` assigns dependencies directly without null guards. Per T6 (Service Implementation Pattern), all constructor dependencies must use `?? throw new ArgumentNullException(nameof(...))` or `ArgumentNullException.ThrowIfNull(...)`. The fields `_messageBus`, `_stateStoreFactory`, `_logger`, and `_configuration` are all assigned without validation.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 71-74
-   - **Wrong**: `_messageBus = messageBus;`
-   - **Should be**: `_messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));`
+*Fixed/Removed Violations:*
+- *#1: NRT null checks NOT needed - NRTs provide compile-time safety per T12*
+- *#10: `etag ?? string.Empty` is intentional optimistic concurrency pattern (empty etag = create new, non-empty = version check)*
+- *#17: Already marked as FIXED (ETag-based concurrency)*
+- *#18: FIXED - Duplicate InternalsVisibleTo removed from CharacterEncounterService.cs*
 
 2. **[IMPLEMENTATION]** Missing `ApiException` catch clause in all public methods. Per T7 (Error Handling), all external calls (state store, service client) must be wrapped with a catch block that distinguishes `ApiException` from generic `Exception`. Every public endpoint method only catches `Exception` generically. The service should catch `ApiException` first (log as Warning, propagate status code), then catch `Exception` (log as Error, emit error event).
    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-encounter/CharacterEncounterService.cs`, lines 90-146, 156-195, 204-251, 260-307, 316-358, 367-426, 440-590, 603-683, 693-760, 769-832, 841-866, 875-945, 955-1001, 1015-1048, 1058-1128, 1138-1203, 1216-1279, 1288-1376, 1386-1488

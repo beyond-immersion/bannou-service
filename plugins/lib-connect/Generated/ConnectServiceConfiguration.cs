@@ -72,28 +72,10 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int MessageQueueSize { get; set; } = 1000;
 
     /// <summary>
-    /// Binary protocol version identifier
-    /// Environment variable: CONNECT_BINARY_PROTOCOL_VERSION
-    /// </summary>
-    public string BinaryProtocolVersion { get; set; } = "2.0";
-
-    /// <summary>
     /// Size of message buffers in bytes
     /// Environment variable: CONNECT_BUFFER_SIZE
     /// </summary>
     public int BufferSize { get; set; } = 65536;
-
-    /// <summary>
-    /// Services available to unauthenticated connections
-    /// Environment variable: CONNECT_DEFAULT_SERVICES
-    /// </summary>
-    public string[] DefaultServices { get; set; } = ["auth", "website"];
-
-    /// <summary>
-    /// Additional services available to authenticated connections
-    /// Environment variable: CONNECT_AUTHENTICATED_SERVICES
-    /// </summary>
-    public string[] AuthenticatedServices { get; set; } = ["account", "behavior", "permission", "gamesession"];
 
     /// <summary>
     /// Enable routing messages between WebSocket clients
@@ -114,22 +96,10 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int RateLimitWindowMinutes { get; set; } = 1;
 
     /// <summary>
-    /// RabbitMQ connection string for client event subscriptions
-    /// Environment variable: CONNECT_RABBITMQ_CONNECTION_STRING
-    /// </summary>
-    public string RabbitMqConnectionString { get; set; } = "amqp://guest:guest@rabbitmq:5672";
-
-    /// <summary>
     /// Server salt for client GUID generation. Must be shared across all Connect instances for session shortcuts to work correctly. Change in production.
     /// Environment variable: CONNECT_SERVER_SALT
     /// </summary>
     public string ServerSalt { get; set; } = "bannou-dev-connect-salt-change-in-production";
-
-    /// <summary>
-    /// WebSocket URL for client reconnection. Defaults to wss://{BANNOU_SERVICE_DOMAIN}/connect if domain set.
-    /// Environment variable: CONNECT_URL
-    /// </summary>
-    public string? ConnectUrl { get; set; }
 
     /// <summary>
     /// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)
@@ -172,6 +142,36 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Environment variable: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
     /// </summary>
     public int HttpClientTimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Interval in seconds between pending RPC cleanup runs
+    /// Environment variable: CONNECT_RPC_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    public int RpcCleanupIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Default timeout in seconds for RPC calls when not specified
+    /// Environment variable: CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS
+    /// </summary>
+    public int DefaultRpcTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Interval in seconds between connection cleanup runs
+    /// Environment variable: CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    public int ConnectionCleanupIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Timeout in minutes after which inactive connections are cleaned up
+    /// Environment variable: CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES
+    /// </summary>
+    public int InactiveConnectionTimeoutMinutes { get; set; } = 30;
+
+    /// <summary>
+    /// Timeout in seconds for pending messages awaiting acknowledgment
+    /// Environment variable: CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS
+    /// </summary>
+    public int PendingMessageTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout in seconds when waiting for connection closure during shutdown

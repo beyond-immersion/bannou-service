@@ -114,7 +114,10 @@ public partial class ConnectService : IConnectService
         _manifestBuilder = manifestBuilder;
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
-        _connectionManager = new WebSocketConnectionManager(configuration.ConnectionShutdownTimeoutSeconds);
+        _connectionManager = new WebSocketConnectionManager(
+            configuration.ConnectionShutdownTimeoutSeconds,
+            configuration.ConnectionCleanupIntervalSeconds,
+            configuration.InactiveConnectionTimeoutMinutes);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly
@@ -1165,7 +1168,7 @@ public partial class ConnectService : IConnectService
             // Add to pending messages for response correlation
             if (routeInfo.RequiresResponse)
             {
-                connectionState.AddPendingMessage(message.MessageId, endpointKey, DateTimeOffset.UtcNow);
+                connectionState.AddPendingMessage(message.MessageId, endpointKey, DateTimeOffset.UtcNow, _configuration.PendingMessageTimeoutSeconds);
             }
 
             // Parse endpoint key to extract service name, HTTP method, and path
@@ -1633,7 +1636,9 @@ public partial class ConnectService : IConnectService
         _logger.LogInformation("Client event subscriptions will be created per-session via lib-messaging");
 
         // Start periodic cleanup of expired pending RPCs to prevent memory leaks
-        _pendingRPCCleanupTimer = new Timer(CleanupExpiredPendingRPCs, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        _pendingRPCCleanupTimer = new Timer(CleanupExpiredPendingRPCs, null,
+            TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds),
+            TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds));
     }
 
     #endregion
@@ -1822,6 +1827,13 @@ public partial class ConnectService : IConnectService
                 {
                     // Register pending RPC for response forwarding
                     var now = DateTimeOffset.UtcNow;
+
+                    // Warn if ServiceName is missing - indicates publisher failed to set required metadata
+                    if (string.IsNullOrEmpty(eventData.ServiceName))
+                    {
+                        _logger.LogWarning("RPC event {MessageId} missing ServiceName - publisher should include service metadata", eventData.MessageId);
+                    }
+
                     var pendingRPC = new PendingRPCInfo
                     {
                         ClientSessionId = Guid.Parse(eventData.ClientId),
@@ -1829,7 +1841,7 @@ public partial class ConnectService : IConnectService
                         ResponseChannel = eventData.ResponseChannel,
                         ServiceGuid = eventData.ServiceGuid,
                         SentAt = now,
-                        TimeoutAt = now.AddSeconds(eventData.TimeoutSeconds > 0 ? eventData.TimeoutSeconds : 30)
+                        TimeoutAt = now.AddSeconds(eventData.TimeoutSeconds > 0 ? eventData.TimeoutSeconds : _configuration.DefaultRpcTimeoutSeconds)
                     };
 
                     _pendingRPCs[(ulong)eventData.MessageId] = pendingRPC;

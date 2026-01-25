@@ -214,95 +214,47 @@ None. The service is feature-complete for its scope.
 
 ## Tenet Violations (Fix Immediately)
 
-1. **[IMPLEMENTATION TENETS - T25]** `CombatPreferencesData` internal model uses `string` for `Style`, `PreferredRange`, and `GroupRole` fields instead of the generated enum types (`CombatStyle`, `PreferredRange`, `GroupRole`). This causes `Enum.Parse` calls throughout business logic and string comparisons in `ApplyCombatEvolution`.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 919-921
-   - **What's wrong**: `public string Style { get; set; } = "BALANCED";`, `public string PreferredRange { get; set; } = "MEDIUM";`, `public string GroupRole { get; set; } = "FRONTLINE";`
-   - **Should be**: `public CombatStyle Style { get; set; } = CombatStyle.BALANCED;`, `public PreferredRange PreferredRange { get; set; } = PreferredRange.MEDIUM;`, `public GroupRole GroupRole { get; set; } = GroupRole.FRONTLINE;`
+*Fixed/Removed Violations:*
+- *#7: FIXED - Removed "(TENET 5)" from source code comments*
+- *#8: FIXED - Changed LogInformation to LogDebug for all operation entry logs*
+- *#9: FIXED - Added MaxBatchSize configuration property, used in BatchGetPersonalitiesAsync*
+- *#10: FIXED - Added MaxConcurrencyRetries configuration property, used in optimistic concurrency loops*
+- *#11: FIXED - Added combat evolution configuration properties (CombatStyleTransitionProbability, CombatDefeatStyleTransitionProbability, CombatVictoryBalancedTransitionProbability, CombatRoleTransitionProbability, CombatDefensiveShiftProbability, CombatIntenseShiftMultiplier, CombatMildShiftMultiplier, CombatMildestShiftMultiplier)*
+- *#15: NRT null checks NOT needed - NRTs provide compile-time safety per T12*
+- *#16: Not applicable - service has no external client calls, only state store operations (no ApiException possible)*
+- *#17: FIXED - Removed duplicate InternalsVisibleTo attribute from CharacterPersonalityService.cs*
 
-2. **[IMPLEMENTATION TENETS - T25]** `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 907, 919
-   - **What's wrong**: `public string CharacterId { get; set; } = string.Empty;`
-   - **Should be**: `public Guid CharacterId { get; set; }`
+1. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `CombatPreferencesData` internal model uses `string` for `Style`, `PreferredRange`, and `GroupRole` fields instead of the generated enum types (`CombatStyle`, `PreferredRange`, `GroupRole`). This causes `Enum.Parse` calls throughout business logic and string comparisons in `ApplyCombatEvolution`.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Change POCO types from string to proper enum types, update switch statements and comparisons.
 
-3. **[IMPLEMENTATION TENETS - T25]** `.ToString()` used to populate internal model fields from enums. `SetCombatPreferencesAsync` converts enum values to strings when creating `CombatPreferencesData`.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 453-456
-   - **What's wrong**: `CharacterId = body.CharacterId.ToString()`, `Style = body.Preferences.Style.ToString()`, `PreferredRange = body.Preferences.PreferredRange.ToString()`, `GroupRole = body.Preferences.GroupRole.ToString()`
-   - **Should be**: Direct enum assignment once internal model uses proper types: `CharacterId = body.CharacterId`, `Style = body.Preferences.Style`, etc.
+2. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Change `CharacterId` to `Guid` type in both POCOs.
 
-4. **[IMPLEMENTATION TENETS - T25]** `Enum.Parse` used in business logic (`MapToCombatPreferences`, `MapToPersonalityResponse`). These are not system boundary conversions - they convert internal model strings back to enums on every read.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 828-831, 860-862
-   - **What's wrong**: `Guid.Parse(data.CharacterId)`, `Enum.Parse<TraitAxis>(t.Key)`, `Enum.Parse<CombatStyle>(data.Style)`, `Enum.Parse<PreferredRange>(data.PreferredRange)`, `Enum.Parse<GroupRole>(data.GroupRole)`
-   - **Should be**: Once internal models use proper types, no parsing is needed - direct field access
+3. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `.ToString()` used to populate internal model fields from enums and Guids in `SetCombatPreferencesAsync` and `SetPersonalityAsync`.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Once internal models use proper types, assign directly without `.ToString()`.
 
-5. **[IMPLEMENTATION TENETS - T25]** String comparisons for enum values throughout `ApplyCombatEvolution`. The method compares `data.Style` and `data.GroupRole` as strings instead of using enum equality.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 742-744, 757-760, 767-768, 773, 796-799, 808-810
-   - **What's wrong**: `data.Style == "DEFENSIVE"`, `data.Style == "BALANCED"`, `data.Style == "AGGRESSIVE"`, `data.Style == "BERSERKER"`, `data.GroupRole == "SOLO"`, `data.GroupRole != "LEADER"`, etc.
-   - **Should be**: `data.Style == CombatStyle.DEFENSIVE`, `data.GroupRole == GroupRole.SOLO`, etc.
+4. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `Enum.Parse` and `Guid.Parse` used in business logic (`MapToCombatPreferences`, `MapToPersonalityResponse`). These are not system boundary conversions.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Once internal models use proper types, no parsing is needed - direct field access.
 
-6. **[IMPLEMENTATION TENETS - T25]** String assignment to enum fields in `ApplyCombatEvolution`. Style and GroupRole are assigned string literals instead of enum values.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 743-744, 758-760, 768, 774, 799, 809-810
-   - **What's wrong**: `data.Style = "BALANCED"`, `data.Style = "AGGRESSIVE"`, `data.Style = "DEFENSIVE"`, `data.GroupRole = "SUPPORT"`, `data.GroupRole = "FLANKER"`, `data.Style = "TACTICAL"`
-   - **Should be**: `data.Style = CombatStyle.BALANCED`, `data.GroupRole = GroupRole.SUPPORT`, etc.
+5. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** String comparisons for enum values throughout `ApplyCombatEvolution`.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Once POCOs use proper enum types, use enum equality instead of string comparison.
 
-7. **[QUALITY TENETS - T0]** Source code comments reference specific tenet numbers. Three comments use "(TENET 5)" which violates the rule against referencing tenet numbers in source code.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 125, 368, 469
-   - **What's wrong**: `// Publish event using typed events per IMPLEMENTATION TENETS (TENET 5)`
-   - **Should be**: `// Publish event using typed events per IMPLEMENTATION TENETS` (remove the parenthetical tenet number)
+6. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** String assignment to enum fields in `ApplyCombatEvolution`.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Once POCOs use proper enum types, assign enum values directly.
 
-8. **[QUALITY TENETS - T10]** Operation entry logging uses `LogInformation` instead of `LogDebug`. Per T10, "Operation Entry" should be at Debug level, not Information. All CRUD entry points log at Information level.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 66, 103, 175, 293, 353, 405, 442, 518, 566
-   - **What's wrong**: `_logger.LogInformation("Getting personality for character {CharacterId}", ...)` etc.
-   - **Should be**: `_logger.LogDebug("Getting personality for character {CharacterId}", ...)` - use Debug for entry, Information only for significant state changes (the creation/update/delete confirmations after successful operations are correctly at Information)
+7. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `PersonalityData.Traits` uses `Dictionary<string, float>` with string keys representing trait axes instead of `Dictionary<TraitAxis, float>`.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Change dictionary key type to `TraitAxis`, update all consumers.
 
-9. **[IMPLEMENTATION TENETS - T21]** Hardcoded magic number `100` for batch limit. The batch size limit should be a configuration property.
-   - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, line 297
-   - **What's wrong**: `if (body.CharacterIds.Count > 100)`
-   - **Should be**: `if (body.CharacterIds.Count > _configuration.MaxBatchSize)` with `MaxBatchSize` defined in configuration schema
-
-10. **[IMPLEMENTATION TENETS - T21]** Hardcoded magic number `3` for optimistic concurrency retry count. The retry limit should be a configuration property.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 208, 596
-    - **What's wrong**: `for (var attempt = 0; attempt < 3; attempt++)`
-    - **Should be**: `for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)` with the property defined in configuration schema
-
-11. **[IMPLEMENTATION TENETS - T21]** Hardcoded combat evolution probability thresholds (0.3, 0.2, 0.4, 0.5, 1.5, 0.5, 0.3) for style/role transition probabilities and shift multipliers. All of these are tunable values that should be configuration properties.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 742, 744, 750, 755, 757, 759, 764-765, 767, 773, 779, 791, 796, 808
-    - **What's wrong**: Magic numbers like `Random.Shared.NextDouble() < 0.3`, `shift * 0.5f`, `shift * 1.5f`, `shift * 0.3f`
-    - **Should be**: Configuration properties for style transition probabilities and shift multipliers
-
-12. **[IMPLEMENTATION TENETS - T25]** `PersonalityData.Traits` uses `Dictionary<string, float>` with string keys representing trait axes. The keys are TraitAxis enum values stored as strings, requiring `Enum.Parse<TraitAxis>` on read and `.ToString()` on write.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, line 908
-    - **What's wrong**: `public Dictionary<string, float> Traits { get; set; } = new();`
-    - **Should be**: `public Dictionary<TraitAxis, float> Traits { get; set; } = new();`
-
-13. **[IMPLEMENTATION TENETS - T25]** `SetPersonalityAsync` converts `TraitAxis` enum to string when populating traits dictionary.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, line 115
-    - **What's wrong**: `Traits = body.Traits.ToDictionary(t => t.Axis.ToString(), t => t.Value)`
-    - **Should be**: `Traits = body.Traits.ToDictionary(t => t.Axis, t => t.Value)` (once dictionary uses TraitAxis keys)
-
-14. **[IMPLEMENTATION TENETS - T25]** `GetAffectedTraits` returns `Dictionary<string, float>` with string keys for trait names instead of using `TraitAxis` enum keys.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 669-728
-    - **What's wrong**: `private static Dictionary<string, float> GetAffectedTraits(...)` with entries like `{ "NEUROTICISM", 0.5f }`
-    - **Should be**: `private static Dictionary<TraitAxis, float> GetAffectedTraits(...)` with entries like `{ TraitAxis.NEUROTICISM, 0.5f }`
-
-15. **[FOUNDATION TENETS - T6]** Constructor does not perform null checks on injected dependencies. Per the standardized service pattern, each dependency should be validated with `?? throw new ArgumentNullException(nameof(...))`.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 49-52
-    - **What's wrong**: `_logger = logger;` (no null check), `_configuration = configuration;`, `_stateStoreFactory = stateStoreFactory;`, `_messageBus = messageBus;`
-    - **Should be**: `_logger = logger ?? throw new ArgumentNullException(nameof(logger));` etc.
-
-16. **[IMPLEMENTATION TENETS - T7]** All catch blocks catch only `Exception` without distinguishing `ApiException`. Per T7, external calls should catch `ApiException` specifically to propagate status codes, then catch generic `Exception` for unexpected errors.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, lines 81, 152, 270, 331, 379, 420, 496, 545, 644
-    - **What's wrong**: Only `catch (Exception ex)` is used
-    - **Should be**: Add `catch (ApiException ex)` before generic Exception catch, log as warning, and return `(StatusCodes)ex.StatusCode`
-
-17. **[QUALITY TENETS - Duplicate Assembly Attribute]** `InternalsVisibleTo("lib-character-personality.tests")` is declared twice - once in `AssemblyInfo.cs` and once at the top of `CharacterPersonalityService.cs`.
-    - **Files**: `/home/lysander/repos/bannou/plugins/lib-character-personality/AssemblyInfo.cs` line 5, `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs` line 9
-    - **What's wrong**: Duplicate `[assembly: InternalsVisibleTo("lib-character-personality.tests")]`
-    - **Should be**: Remove the duplicate from `CharacterPersonalityService.cs` line 9 (keep it only in `AssemblyInfo.cs`)
-
-18. **[IMPLEMENTATION TENETS - T25]** `SetPersonalityAsync` converts `body.CharacterId` (a Guid) to string using `.ToString()` to store in `PersonalityData.CharacterId`.
-    - **File**: `/home/lysander/repos/bannou/plugins/lib-character-personality/CharacterPersonalityService.cs`, line 114
-    - **What's wrong**: `CharacterId = body.CharacterId.ToString()`
-    - **Should be**: `CharacterId = body.CharacterId` (once internal model uses `Guid`)
+8. **[IMPLEMENTATION TENETS - T25 Internal Model Type Safety]** `GetAffectedTraits` returns `Dictionary<string, float>` with string keys instead of `Dictionary<TraitAxis, float>`.
+   - **File**: `plugins/lib-character-personality/CharacterPersonalityService.cs`
+   - **Fix**: Change return type and dictionary entries to use `TraitAxis` enum keys.
 
 ---
 

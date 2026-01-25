@@ -15,16 +15,22 @@ public class WebSocketConnectionManager
     private readonly Timer _cleanupTimer;
     private readonly object _lockObject = new();
     private readonly int _connectionShutdownTimeoutSeconds;
+    private readonly int _inactiveConnectionTimeoutMinutes;
 
-    public WebSocketConnectionManager(int connectionShutdownTimeoutSeconds = 5)
+    public WebSocketConnectionManager(
+        int connectionShutdownTimeoutSeconds = 5,
+        int connectionCleanupIntervalSeconds = 30,
+        int inactiveConnectionTimeoutMinutes = 30)
     {
         _connections = new ConcurrentDictionary<string, WebSocketConnection>();
         _peerGuidToSessionId = new ConcurrentDictionary<Guid, string>();
         _connectionShutdownTimeoutSeconds = connectionShutdownTimeoutSeconds;
+        _inactiveConnectionTimeoutMinutes = inactiveConnectionTimeoutMinutes;
 
-        // Start cleanup timer (runs every 30 seconds)
+        // Start cleanup timer
         _cleanupTimer = new Timer(CleanupExpiredConnections, null,
-            TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+            TimeSpan.FromSeconds(connectionCleanupIntervalSeconds),
+            TimeSpan.FromSeconds(connectionCleanupIntervalSeconds));
     }
 
     /// <summary>
@@ -276,7 +282,7 @@ public class WebSocketConnectionManager
 
             // Check if connection is closed or inactive
             if (connection.WebSocket.State != WebSocketState.Open ||
-                (now - connection.ConnectionState.LastActivity).TotalMinutes > 30)
+                (now - connection.ConnectionState.LastActivity).TotalMinutes > _inactiveConnectionTimeoutMinutes)
             {
                 expiredSessions.Add(sessionId);
             }

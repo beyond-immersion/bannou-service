@@ -5,10 +5,8 @@ using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("lib-character-history.tests")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+// Note: InternalsVisibleTo attributes are in AssemblyInfo.cs
 
 namespace BeyondImmersion.BannouService.CharacterHistory;
 
@@ -21,9 +19,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 public partial class CharacterHistoryService : ICharacterHistoryService
 {
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CharacterHistoryService> _logger;
-    private readonly CharacterHistoryServiceConfiguration _configuration;
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
 
@@ -51,9 +47,10 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
-        _configuration = configuration;
+
+        // Note: stateStoreFactory and configuration are used only during construction
+        // stateStoreFactory is passed to helpers; configuration is currently unused but kept for future use
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(

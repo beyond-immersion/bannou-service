@@ -107,4 +107,22 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ClauseValidationCacheStalenessSeconds { get; set; } = 15;
 
+    /// <summary>
+    /// Lock timeout in seconds for contract-level distributed locks
+    /// Environment variable: CONTRACT_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int ContractLockTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Lock timeout in seconds for index update distributed locks
+    /// Environment variable: CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int IndexLockTimeoutSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// TTL in seconds for idempotency key storage (default 24 hours)
+    /// Environment variable: CONTRACT_IDEMPOTENCY_TTL_SECONDS
+    /// </summary>
+    public int IdempotencyTtlSeconds { get; set; } = 86400;
+
 }

@@ -30,8 +30,7 @@ public partial class ContractService
     private const string ALL_CLAUSE_TYPES_KEY = "all-clause-types";
     private const string IDEMPOTENCY_PREFIX = "idempotency:";
 
-    // TTL for idempotency cache entries (24 hours in seconds)
-    private const int IDEMPOTENCY_TTL_SECONDS = 86400;
+    // TTL for idempotency cache entries configured in contract-configuration.yaml
 
     // Regex for validating template value key format (alphanumeric + underscore)
     private static readonly Regex TemplateKeyPattern = new(@"^[A-Za-z0-9_]+$", RegexOptions.Compiled);
@@ -118,7 +117,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}lock:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<LockContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
             }
 
             // Publish event
@@ -207,7 +206,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}unlock:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<UnlockContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
             }
 
             // Publish event
@@ -315,7 +314,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}transfer:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<TransferContractPartyResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
             }
 
             // Publish event
@@ -970,7 +969,7 @@ public partial class ContractService
 
             // Acquire contract lock for execution
             await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractInstanceId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+                "contract-instance", body.ContractInstanceId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
             if (!contractLock.Success)
             {
                 _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractInstanceId);
@@ -1079,7 +1078,7 @@ public partial class ContractService
             {
                 var idempotencyKey = $"{IDEMPOTENCY_PREFIX}execute:{body.IdempotencyKey}";
                 await _stateStoreFactory.GetStore<ExecuteContractResponse>(StateStoreDefinitions.Contract)
-                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = IDEMPOTENCY_TTL_SECONDS }, cancellationToken);
+                    .SaveAsync(idempotencyKey, response, new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds }, cancellationToken);
             }
 
             // Publish event
