@@ -1243,8 +1243,8 @@ public partial class SaveLoadService : ISaveLoadService
         {
             // Find the slot
             var slot = await FindSlotByOwnerAndNameAsync(
-                body.OwnerId.ToString(),
-                body.OwnerType.ToString(),
+                body.OwnerId,
+                body.OwnerType,
                 body.SlotName,
                 cancellationToken);
 
@@ -1265,7 +1265,6 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            // SlotId is Guid - convert to string for state key
             var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId.ToString(), versionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
@@ -1649,7 +1648,7 @@ public partial class SaveLoadService : ISaveLoadService
         try
         {
             // Find the slot
-            var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId.ToString(), body.OwnerType.ToString(), body.SlotName, cancellationToken);
+            var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId, body.OwnerType, body.SlotName, cancellationToken);
             if (slot == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -1727,7 +1726,7 @@ public partial class SaveLoadService : ISaveLoadService
         try
         {
             // Find the slot
-            var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId.ToString(), body.OwnerType.ToString(), body.SlotName, cancellationToken);
+            var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId, body.OwnerType, body.SlotName, cancellationToken);
             if (slot == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -1806,7 +1805,7 @@ public partial class SaveLoadService : ISaveLoadService
         try
         {
             // Find the slot
-            var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId.ToString(), body.OwnerType.ToString(), body.SlotName, cancellationToken);
+            var slot = await FindSlotByOwnerAndNameAsync(body.OwnerId, body.OwnerType, body.SlotName, cancellationToken);
             if (slot == null)
             {
                 return (StatusCodes.NotFound, null);
@@ -2913,9 +2912,7 @@ public partial class SaveLoadService : ISaveLoadService
         return new VersionResponse
         {
             VersionNumber = version.VersionNumber,
-            AssetId = !string.IsNullOrEmpty(version.AssetId) && Guid.TryParse(version.AssetId, out var assetGuid)
-                ? assetGuid
-                : Guid.Empty,
+            AssetId = version.AssetId ?? Guid.Empty,
             ContentHash = version.ContentHash,
             SizeBytes = version.SizeBytes,
             CompressedSizeBytes = version.CompressedSizeBytes ?? version.SizeBytes,
@@ -2938,8 +2935,8 @@ public partial class SaveLoadService : ISaveLoadService
     /// Used by version operations that don't include gameId in request.
     /// </summary>
     private async Task<SaveSlotMetadata?> FindSlotByOwnerAndNameAsync(
-        string ownerId,
-        string ownerType,
+        Guid ownerId,
+        OwnerType ownerType,
         string slotName,
         CancellationToken cancellationToken)
     {

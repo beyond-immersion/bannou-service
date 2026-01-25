@@ -54,7 +54,7 @@ x-lifecycle:
     model:
       containerId: { type: string, format: uuid, primary: true, required: true, description: "Container unique identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
-      ownerType: { type: string, required: true, description: "Owner type (character, account, location, etc.)" }
+      ownerType: { $ref: '../inventory-api.yaml#/components/schemas/ContainerOwnerType', required: true, description: "Owner type (character, account, location, etc.)" }
       containerType: { type: string, required: true, description: "Game-defined container type" }
       constraintModel: { type: string, required: true, description: "Capacity constraint model" }
       isEquipmentSlot: { type: boolean, required: true, description: "Whether this is an equipment slot" }
