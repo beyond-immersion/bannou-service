@@ -965,8 +965,7 @@ components:
           format: uuid
           description: Party entity identifier
         partyType:
-          type: string
-          description: Type of the party entity (account, character, npc, guild, system)
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -1156,8 +1155,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
-          type: string
-          description: Type of the party
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         expectedAssets:
           type: array
           items:
@@ -1200,8 +1198,7 @@ components:
           format: uuid
           description: Party who deposited
         partyType:
-          type: string
-          description: Type of the depositing party
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundle'
           description: Assets deposited
@@ -1262,8 +1259,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
-          type: string
-          description: Type of the party
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
           description: Type of consent given
@@ -1445,8 +1441,7 @@ components:
           format: uuid
           description: Party entity ID
         partyType:
-          type: string
-          description: Party entity type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -1482,8 +1477,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
-          type: string
-          description: Type of the party
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         expectedAssets:
           type: array
           items:
@@ -1634,8 +1628,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         token:
           type: string
           description: The token
@@ -1671,7 +1664,8 @@ components:
           nullable: true
           description: Filter by party
         partyType:
-          type: string
+          allOf:
+            - $ref: './common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Party type filter
         status:
@@ -1790,8 +1784,7 @@ components:
           format: uuid
           description: Party depositing
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
           description: Assets to deposit
@@ -1865,8 +1858,7 @@ components:
           format: uuid
           description: Party to validate
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
           description: Assets to validate
@@ -1910,8 +1902,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
 
     GetDepositStatusResponse:
       type: object
@@ -1967,8 +1958,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
           description: Type of consent being given
@@ -2058,8 +2048,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -2283,8 +2272,7 @@ components:
           format: uuid
           description: Party raising dispute
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         reason:
           type: string
           description: Reason for dispute
@@ -2361,8 +2349,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         assets:
           type: array
           items:
@@ -2512,8 +2499,7 @@ components:
           format: uuid
           description: Party reaffirming
         partyType:
-          type: string
-          description: Party type
+          $ref: './common-api.yaml#/components/schemas/EntityType'
         releaseToken:
           type: string
           nullable: true
