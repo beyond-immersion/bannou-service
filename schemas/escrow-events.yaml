@@ -181,7 +181,7 @@ components:
           format: uuid
           description: Party who deposited
         partyType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of the depositing party
         depositId:
           type: string
@@ -271,7 +271,7 @@ components:
           format: uuid
           description: Party who consented
         partyType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of the consenting party
         consentType:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowConsentType'
@@ -439,7 +439,7 @@ components:
           format: uuid
           description: Party who raised the dispute
         disputedByType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of the disputing party
         reason:
           type: string
@@ -479,7 +479,7 @@ components:
           format: uuid
           description: Arbiter ID
         arbiterType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Arbiter type
         resolution:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
@@ -522,7 +522,7 @@ components:
           format: uuid
           description: Escrow agreement ID
         status:
-          type: string
+          $ref: '../escrow-api.yaml#/components/schemas/EscrowStatus'
           description: Status when expiration occurred
         autoRefunded:
           type: boolean
@@ -561,7 +561,7 @@ components:
           nullable: true
           description: Entity that cancelled
         cancelledByType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of cancelling entity
         reason:
@@ -643,7 +643,7 @@ components:
           format: uuid
           description: Party who reaffirmed
         reaffirmedByType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Type of reaffirming party
         allReaffirmed:
           type: boolean
@@ -671,7 +671,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Party type
         role:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowPartyRole'
@@ -691,7 +691,7 @@ components:
           format: uuid
           description: Recipient party ID
         partyType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Recipient party type
         assetSummary:
           type: string
@@ -711,7 +711,7 @@ components:
           format: uuid
           description: Depositor party ID
         partyType:
-          type: string
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           description: Depositor party type
         assetSummary:
           type: string

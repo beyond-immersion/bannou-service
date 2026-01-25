@@ -301,6 +301,7 @@ components:
           description: Human-readable error summary
         correlationId:
           type: string
+          format: uuid
           nullable: true
           description: Correlation ID / request ID, if available
         severity:

@@ -57,15 +57,15 @@ public static class Program
     /// </summary>
     internal static void ResetConfiguration() => _configuration = null;
 
-    private static string? _serviceGUID;
+    private static Guid? _serviceGUID;
 
     /// <summary>
     /// Internal service GUID- largely used for administrative network commands.
     /// Randomly generated on service startup.
     /// </summary>
-    public static string ServiceGUID
+    public static Guid ServiceGUID
     {
-        get => _serviceGUID ??= Configuration.ForceServiceId ?? Guid.NewGuid().ToString().ToLower();
+        get => _serviceGUID ??= Configuration.ForceServiceId ?? Guid.NewGuid();
         internal set => _serviceGUID = value;
     }
 

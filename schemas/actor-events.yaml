@@ -642,7 +642,7 @@ components:
           type: string
           description: ID of the entity causing this perception
         sourceType:
-          type: string
+          $ref: '../actor-api.yaml#/components/schemas/PerceptionSourceType'
           nullable: true
           description: Type of source (character, npc, object, environment)
         data:

@@ -74,6 +74,7 @@ components:
           type: array
           items:
             type: string
+            format: uuid
           description: List of session IDs that were invalidated
         reason:
           $ref: '#/components/schemas/SessionInvalidatedEventReason'
@@ -248,8 +249,8 @@ components:
           format: uuid
           description: ID of the account that logged in
         provider:
-          type: string
-          description: OAuth provider name (e.g., discord, google)
+          $ref: '../auth-api.yaml#/components/schemas/Provider'
+          description: OAuth provider name
         providerUserId:
           type: string
           description: User ID from the OAuth provider

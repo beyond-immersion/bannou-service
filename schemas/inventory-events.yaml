@@ -424,5 +424,5 @@ components:
           type: string
           description: Container type
         constraintType:
-          type: string
+          $ref: '../inventory-api.yaml#/components/schemas/ConstraintLimitType'
           description: Which constraint was reached (slots, weight, volume)

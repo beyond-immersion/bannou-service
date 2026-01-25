@@ -397,7 +397,7 @@ components:
           format: double
           description: Balance after autogain
         autogainMode:
-          type: string
+          $ref: '../currency-api.yaml#/components/schemas/AutogainMode'
           description: Autogain mode (simple or compound)
         calculatedAt:
           type: string
@@ -456,7 +456,7 @@ components:
           type: string
           description: Currency code
         capType:
-          type: string
+          $ref: '../currency-api.yaml#/components/schemas/EarnCapType'
           description: Cap type (daily or weekly)
         capAmount:
           type: number
@@ -514,7 +514,7 @@ components:
           format: double
           description: The wallet cap
         overflowBehavior:
-          type: string
+          $ref: '../currency-api.yaml#/components/schemas/CapOverflowBehavior'
           description: How overflow was handled (reject, cap_and_lose, cap_and_return)
         amountLost:
           type: number
@@ -572,7 +572,7 @@ components:
           format: double
           description: Amount that expired
         expirationPolicy:
-          type: string
+          $ref: '../currency-api.yaml#/components/schemas/ExpirationPolicy'
           description: Expiration policy type
 
     # =========================================================================

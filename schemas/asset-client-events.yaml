@@ -194,6 +194,7 @@ components:
           description: Whether validation passed
         bundleId:
           type: string
+          format: uuid
           nullable: true
           description: Assigned bundle ID on success
         assetsRegistered:
@@ -261,6 +262,7 @@ components:
           description: Fixed event type identifier
         bundleId:
           type: string
+          format: uuid
           description: ID of the created bundle
         success:
           type: boolean

@@ -1102,6 +1102,13 @@ components:
       - released
       - expired
 
+    EarnCapType:
+      type: string
+      description: Type of earn cap that was applied
+      enum:
+      - daily
+      - weekly
+
     # =========================================================================
     # Currency Definition Models
     # =========================================================================

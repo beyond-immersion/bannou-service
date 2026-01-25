@@ -215,11 +215,11 @@ components:
           format: uuid
           description: ID of the updated perspective
         previousEmotionalImpact:
-          type: string
+          $ref: '../character-encounter-api.yaml#/components/schemas/EmotionalImpact'
           nullable: true
           description: Previous emotional impact (if changed)
         newEmotionalImpact:
-          type: string
+          $ref: '../character-encounter-api.yaml#/components/schemas/EmotionalImpact'
           nullable: true
           description: New emotional impact (if changed)
         previousSentimentShift:
