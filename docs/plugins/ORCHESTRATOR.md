@@ -439,8 +439,6 @@ None identified.
 
 - **GetOrchestratorAsync TTL check is ineffective for scoped service**: Since `OrchestratorService` is scoped (per-request), the `_orchestrator` field starts null every request and is populated on first access within the request. The TTL-based cache invalidation logic (lines 174-203) checks if cache age exceeds `CacheTtlMinutes` (default 5 min), but since the service instance lives only for the duration of one request (seconds at most), this check can never trigger. The caching only provides within-request reuse when multiple endpoint methods call `GetOrchestratorAsync`.
 
-- **HttpClient created per-call in OpenResty invalidation**: `InvalidateOpenRestryRoutingCacheAsync` creates `new HttpClient()` with `using` on every invocation. This is the classic socket exhaustion anti-pattern in .NET - each disposal closes the socket immediately, but DNS entries remain cached, and under high deployment frequency could exhaust ephemeral ports. Should use `IHttpClientFactory`.
-
 ---
 
 ### Additional Design Considerations

@@ -188,5 +188,3 @@ None identified.
 6. **Update operations without distributed locks**: `UpdateSubscriptionAsync`, `CancelSubscriptionAsync`, `RenewSubscriptionAsync`, and `ExpireSubscriptionAsync` perform read-modify-write operations without distributed locks or optimistic concurrency.
 
 7. **AuthorizationSuffix config property is dead**: `AuthorizationSuffix` property is accessed but the resulting value is never used in any business logic. Should be wired up or removed from schema.
-
-8. **Missing ApiException catch in QueryCurrentSubscriptionsAsync**: The method calls `_serviceClient.GetServiceAsync()` (mesh client) but catches all exceptions generically. Should distinguish `ApiException` from unexpected exceptions per error handling tenets.

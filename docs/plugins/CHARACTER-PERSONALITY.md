@@ -297,7 +297,3 @@ The following T25 (Internal Model Type Safety) violations require coordinated ch
 2. **Trait direction weights embedded in code**: The experience-type-to-trait mapping table is hardcoded in a switch statement. Adding new experience types or changing weights requires code changes, not configuration.
 
 3. **Actor service caches personalities**: `PersonalityCache` in lib-actor returns stale data if the personality client fails. If personality evolves while cached, the actor uses outdated traits until cache TTL expires.
-
-### Previously Fixed
-
-- **Combat RNG probabilities**: Now configurable via `CombatStyleTransitionProbability`, `CombatDefeatStyleTransitionProbability`, `CombatVictoryBalancedTransitionProbability`, `CombatRoleTransitionProbability`, `CombatDefensiveShiftProbability` configuration properties.
