@@ -117,8 +117,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -163,8 +163,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = activeSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -178,8 +178,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = inactiveSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "fantasia",
-                DisplayName = "Fantasia",
+                StubName = "test-game-2",
+                DisplayName = "Test Game 2",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 IsActive = false,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -192,7 +192,7 @@ public class SubscriptionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalCount);
-        Assert.Equal("arcadia", response.Subscriptions.First().StubName);
+        Assert.Equal("test-game", response.Subscriptions.First().StubName);
     }
 
     [Fact]
@@ -224,8 +224,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = activeSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(),
                 IsActive = true,
@@ -240,8 +240,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = expiredSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "fantasia",
-                DisplayName = "Fantasia",
+                StubName = "test-game-2",
+                DisplayName = "Test Game 2",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-60).ToUnixTimeSeconds(),
                 ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(), // Expired
                 IsActive = true,
@@ -255,7 +255,7 @@ public class SubscriptionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal(1, response.TotalCount);
-        Assert.Equal("arcadia", response.Subscriptions.First().StubName);
+        Assert.Equal("test-game", response.Subscriptions.First().StubName);
     }
 
     [Fact]
@@ -308,8 +308,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = activeSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(),
                 IsActive = true,
@@ -323,7 +323,7 @@ public class SubscriptionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Single(response.Subscriptions);
-        Assert.Equal("arcadia", response.Subscriptions.First().StubName);
+        Assert.Equal("test-game", response.Subscriptions.First().StubName);
         Assert.Equal(1, response.TotalCount);
     }
 
@@ -350,8 +350,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = expiredSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-60).ToUnixTimeSeconds(),
                 ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(), // Expired
                 IsActive = true,
@@ -391,8 +391,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = inactiveSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 IsActive = false, // Inactive
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -445,8 +445,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -459,7 +459,7 @@ public class SubscriptionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal(subscriptionId, response.SubscriptionId);
-        Assert.Equal("arcadia", response.StubName);
+        Assert.Equal("test-game", response.StubName);
     }
 
     [Fact]
@@ -508,8 +508,8 @@ public class SubscriptionServiceTests
             .ReturnsAsync(new ServiceInfo
             {
                 ServiceId = serviceId,
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 IsActive = true
             });
 
@@ -529,7 +529,7 @@ public class SubscriptionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal("arcadia", response.StubName);
+        Assert.Equal("test-game", response.StubName);
         Assert.True(response.IsActive);
         Assert.NotNull(response.ExpirationDate);
     }
@@ -583,8 +583,8 @@ public class SubscriptionServiceTests
             .ReturnsAsync(new ServiceInfo
             {
                 ServiceId = serviceId,
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 IsActive = true
             });
 
@@ -601,7 +601,7 @@ public class SubscriptionServiceTests
                 SubscriptionId = existingSubId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
+                StubName = "test-game",
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
@@ -635,8 +635,8 @@ public class SubscriptionServiceTests
             .ReturnsAsync(new ServiceInfo
             {
                 ServiceId = serviceId,
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 IsActive = true
             });
 
@@ -694,8 +694,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(),
                 IsActive = true,
@@ -773,8 +773,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -827,8 +827,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -898,8 +898,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-25).ToUnixTimeSeconds(),
                 ExpirationDateUnix = originalExpiration,
                 IsActive = true,
@@ -953,8 +953,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
                 IsActive = false,
                 CancelledAtUnix = DateTimeOffset.UtcNow.AddDays(-5).ToUnixTimeSeconds(),
@@ -1030,8 +1030,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 StartDateUnix = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds(),
                 ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(), // Expired
                 IsActive = true,
@@ -1095,8 +1095,8 @@ public class SubscriptionServiceTests
                 SubscriptionId = subscriptionId.ToString(),
                 AccountId = accountId.ToString(),
                 ServiceId = serviceId.ToString(),
-                StubName = "arcadia",
-                DisplayName = "Arcadia",
+                StubName = "test-game",
+                DisplayName = "Test Game",
                 IsActive = false, // Already inactive
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });

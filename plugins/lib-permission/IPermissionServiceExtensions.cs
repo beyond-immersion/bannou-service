@@ -14,7 +14,7 @@ public partial interface IPermissionService
     /// <param name="sessionId">The session ID that connected.</param>
     /// <param name="accountId">The account ID owning the session.</param>
     /// <param name="roles">User roles from JWT (e.g., ["user", "admin"]).</param>
-    /// <param name="authorizations">Authorization states from JWT (e.g., ["arcadia:authorized"]).</param>
+    /// <param name="authorizations">Authorization states from JWT (e.g., ["my-game:authorized"]).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Status code indicating success or failure.</returns>
     Task<(StatusCodes, SessionUpdateResponse?)> HandleSessionConnectedAsync(

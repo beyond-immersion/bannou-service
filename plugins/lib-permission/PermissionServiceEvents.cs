@@ -242,7 +242,7 @@ public partial class PermissionService
             }
 
             // Update authorization states
-            // Authorization strings are in format "{stubName}:{state}" (e.g., "arcadia:authorized")
+            // Authorization strings are in format "{stubName}:{state}" (e.g., "my-game:authorized")
             foreach (var auth in evt.Authorizations ?? new List<string>())
             {
                 var parts = auth.Split(':');

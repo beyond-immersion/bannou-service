@@ -12,49 +12,6 @@ public static class AssetApiHelpers
     #region Enum Parsing
 
     /// <summary>
-    /// Parses a realm string to the Realm enum.
-    /// </summary>
-    /// <param name="realm">Realm string (case-insensitive).</param>
-    /// <param name="defaultValue">Value to return if realm is null/empty (default: null).</param>
-    /// <returns>Parsed realm or default value.</returns>
-    public static Realm? ParseRealm(string? realm, Realm? defaultValue = null)
-    {
-        if (string.IsNullOrEmpty(realm))
-            return defaultValue;
-
-        return realm.ToLowerInvariant() switch
-        {
-            "omega" => Realm.Omega,
-            "arcadia" => Realm.Arcadia,
-            "fantasia" => Realm.Fantasia,
-            "shared" => Realm.Shared,
-            _ => defaultValue
-        };
-    }
-
-    /// <summary>
-    /// Parses a realm string to the Realm enum, throwing on unknown values.
-    /// </summary>
-    /// <param name="realm">Realm string (case-insensitive).</param>
-    /// <param name="defaultValue">Value to return if realm is null/empty.</param>
-    /// <returns>Parsed realm.</returns>
-    /// <exception cref="ArgumentException">Thrown if realm string is unrecognized.</exception>
-    public static Realm ParseRealmRequired(string? realm, Realm defaultValue = Realm.Omega)
-    {
-        if (string.IsNullOrEmpty(realm))
-            return defaultValue;
-
-        return realm.ToLowerInvariant() switch
-        {
-            "omega" => Realm.Omega,
-            "arcadia" => Realm.Arcadia,
-            "fantasia" => Realm.Fantasia,
-            "shared" => Realm.Shared,
-            _ => throw new ArgumentException($"Unknown realm: {realm}", nameof(realm))
-        };
-    }
-
-    /// <summary>
     /// Parses a bundle type string to the BundleType enum.
     /// </summary>
     /// <param name="bundleType">Bundle type string (case-insensitive).</param>

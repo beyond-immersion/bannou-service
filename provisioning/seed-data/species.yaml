@@ -1,4 +1,4 @@
-# Default Species for Arcadia Game World
+# Default Species for Game Worlds
 # Use the /species/seed endpoint to load this data
 #
 # SPECIAL ENTRIES:
@@ -7,7 +7,7 @@
 #
 # REALM CODES:
 # Species can be associated with realms via realmCodes array.
-# Common realms: OMEGA, ARCADIA, FANTASIA
+# Update realm codes below to match your deployment's realm configuration.
 
 species:
   # =============================================================================

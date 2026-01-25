@@ -128,7 +128,7 @@ public sealed class BundleMetadata
     {
         return new BundleSummary
         {
-            BundleId = BundleId.ToString(),
+            BundleId = BundleId,
             BundleType = BundleType,
             Version = Version,
             AssetCount = AssetIds.Count,
@@ -145,7 +145,7 @@ public sealed class BundleMetadata
     {
         return new Asset.BundleInfo
         {
-            BundleId = BundleId.ToString(),
+            BundleId = BundleId,
             BundleType = BundleType,
             Version = Version,
             MetadataVersion = MetadataVersion,
@@ -264,7 +264,7 @@ public sealed class StoredSourceBundleReference
     {
         return new SourceBundleReference
         {
-            BundleId = BundleId.ToString(),
+            BundleId = BundleId,
             Version = Version,
             AssetIds = AssetIds,
             ContentHash = ContentHash

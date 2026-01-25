@@ -40,7 +40,7 @@ If you find yourself adding conversions, you haven't fixed everything - go back 
 
 ### lib-auth
 
-- [x] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type. **FIXED** - `SessionDataModel.SessionId` was already `Guid`. Changed `ISessionService` method signatures from `string sessionId/accountId` to `Guid`. Removed all `.ToString()` calls at call sites.
+- [x] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type. **FIXED** - `SessionDataModel.SessionId` was already `Guid`. Changed `ISessionService` and `ITokenService` method signatures from `string sessionId/accountId` to `Guid`. Conversions occur only at storage boundaries (state store requires reference types). Updated tests.
 
 ### lib-character-encounter
 

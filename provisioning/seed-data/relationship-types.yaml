@@ -1,4 +1,4 @@
-# Default Relationship Types for Arcadia Game World
+# Default Relationship Types for Game Worlds
 # Hierarchy: Root types at depth 0, children inherit from parents
 # Use the /relationship-type/seed endpoint to load this data
 #

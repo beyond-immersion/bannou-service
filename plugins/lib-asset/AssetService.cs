@@ -874,7 +874,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Validate request
-            if (string.IsNullOrWhiteSpace(body.BundleId))
+            if (body.BundleId == Guid.Empty)
             {
                 _logger.LogWarning("CreateBundle: Empty bundle_id");
                 return (StatusCodes.BadRequest, null);
@@ -929,7 +929,7 @@ public partial class AssetService : IAssetService
                 var job = new BundleCreationJob
                 {
                     JobId = jobId,
-                    BundleId = Guid.Parse(body.BundleId),
+                    BundleId = body.BundleId,
                     Version = body.Version ?? "1.0.0",
                     AssetIds = body.AssetIds.ToList(),
                     Compression = body.Compression,
@@ -1014,7 +1014,7 @@ public partial class AssetService : IAssetService
             // Store bundle metadata
             var bundleMetadata = new BundleMetadata
             {
-                BundleId = Guid.Parse(body.BundleId),
+                BundleId = body.BundleId,
                 Version = body.Version ?? "1.0.0",
                 BundleType = BundleType.Source,
                 Realm = body.Realm ?? "shared",
@@ -1094,7 +1094,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Validate input
-            if (string.IsNullOrWhiteSpace(body.BundleId))
+            if (body.BundleId == Guid.Empty)
             {
                 return (StatusCodes.BadRequest, null);
             }
@@ -1190,7 +1190,7 @@ public partial class AssetService : IAssetService
                 $"bundle-download:{downloadToken}",
                 new BundleDownloadToken
                 {
-                    BundleId = Guid.Parse(body.BundleId),
+                    BundleId = body.BundleId,
                     Format = body.Format,
                     Path = downloadPath,
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -1384,7 +1384,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Validate request
-            if (string.IsNullOrWhiteSpace(body.MetabundleId))
+            if (body.MetabundleId == Guid.Empty)
             {
                 _logger.LogWarning("CreateMetabundle: Empty metabundle_id");
                 return (StatusCodes.BadRequest, null);
@@ -1729,7 +1729,7 @@ public partial class AssetService : IAssetService
             // Store metabundle metadata
             var metabundleMetadata = new BundleMetadata
             {
-                BundleId = Guid.Parse(body.MetabundleId),
+                BundleId = body.MetabundleId,
                 Version = body.Version ?? "1.0.0",
                 BundleType = BundleType.Metabundle,
                 Realm = body.Realm,
@@ -2841,7 +2841,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (string.IsNullOrWhiteSpace(body.BundleId))
+            if (body.BundleId == Guid.Empty)
             {
                 _logger.LogWarning("UpdateBundle: Empty bundleId");
                 return (StatusCodes.BadRequest, null);
@@ -2935,7 +2935,7 @@ public partial class AssetService : IAssetService
             // Save version history record
             var versionRecord = new Models.StoredBundleVersionRecord
             {
-                BundleId = Guid.Parse(body.BundleId),
+                BundleId = body.BundleId,
                 Version = bundle.MetadataVersion,
                 CreatedAt = bundle.UpdatedAt.Value,
                 CreatedBy = bundle.Owner ?? "system",
@@ -3011,7 +3011,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (string.IsNullOrWhiteSpace(body.BundleId))
+            if (body.BundleId == Guid.Empty)
             {
                 _logger.LogWarning("DeleteBundle: Empty bundleId");
                 return (StatusCodes.BadRequest, null);
@@ -3072,7 +3072,7 @@ public partial class AssetService : IAssetService
                 // Save version history
                 var versionRecord = new Models.StoredBundleVersionRecord
                 {
-                    BundleId = Guid.Parse(body.BundleId),
+                    BundleId = body.BundleId,
                     Version = bundle.MetadataVersion,
                     CreatedAt = deletedAt,
                     CreatedBy = bundle.Owner ?? "system",
@@ -3148,7 +3148,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (string.IsNullOrWhiteSpace(body.BundleId))
+            if (body.BundleId == Guid.Empty)
             {
                 _logger.LogWarning("RestoreBundle: Empty bundleId");
                 return (StatusCodes.BadRequest, null);
@@ -3184,7 +3184,7 @@ public partial class AssetService : IAssetService
             // Save version history
             var versionRecord = new Models.StoredBundleVersionRecord
             {
-                BundleId = Guid.Parse(body.BundleId),
+                BundleId = body.BundleId,
                 Version = bundle.MetadataVersion,
                 CreatedAt = restoredAt,
                 CreatedBy = bundle.Owner ?? "system",
@@ -3426,7 +3426,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (string.IsNullOrWhiteSpace(body.BundleId))
+            if (body.BundleId == Guid.Empty)
             {
                 _logger.LogWarning("ListBundleVersions: Empty bundleId");
                 return (StatusCodes.BadRequest, null);
