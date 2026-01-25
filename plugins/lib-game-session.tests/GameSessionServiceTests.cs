@@ -164,7 +164,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var request = new CreateGameSessionRequest
         {
             SessionName = "Test Session",
-            GameType = GameType.Arcadia,
+            GameType = "test-game",
             MaxPlayers = 4,
             IsPrivate = false
         };
@@ -216,7 +216,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var request = new CreateGameSessionRequest
         {
             SessionName = "Private Game",
-            GameType = GameType.Arcadia,
+            GameType = "test-game",
             MaxPlayers = 2,
             IsPrivate = true
         };
@@ -242,7 +242,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var request = new CreateGameSessionRequest
         {
             SessionName = "Test",
-            GameType = GameType.Arcadia,
+            GameType = "test-game",
             MaxPlayers = 4
         };
 
@@ -274,7 +274,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         {
             SessionId = sessionId.ToString(),
             SessionName = "Existing Session",
-            GameType = GameType.Arcadia,
+            GameType = "test-game",
             MaxPlayers = 4,
             CurrentPlayers = 2,
             Status = SessionStatus.Active,

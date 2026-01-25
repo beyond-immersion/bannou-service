@@ -1083,11 +1083,8 @@ public partial class MatchmakingService : IMatchmakingService
 
         try
         {
-            var gameType = queue?.SessionGameType switch
-            {
-                SessionGameType.Arcadia => GameType.Arcadia,
-                _ => GameType.Generic
-            };
+            // SessionGameType is now a string (game service stub name)
+            var gameType = queue?.SessionGameType ?? "generic";
 
             var sessionResponse = await _gameSessionClient.CreateGameSessionAsync(new CreateGameSessionRequest
             {

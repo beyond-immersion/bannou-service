@@ -372,7 +372,7 @@ public class SessionServiceTests
     public async Task FindSessionKeyBySessionIdAsync_WithNonExistentIndex_ShouldReturnNull()
     {
         // Arrange
-        var sessionId = "non-existent-session-id";
+        var sessionId = Guid.NewGuid();
         var indexKey = $"session-id-index:{sessionId}";
 
         _mockStringStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))

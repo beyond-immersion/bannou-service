@@ -160,13 +160,13 @@ public class TokenServiceTests
     public async Task StoreRefreshTokenAsync_ShouldCallStateStoreWithCorrectKey()
     {
         // Arrange
-        var accountId = "test-account-id";
+        var accountId = Guid.NewGuid();
         var refreshToken = "test-refresh-token";
         var expectedKey = $"refresh_token:{refreshToken}";
 
         _mockStringStore.Setup(s => s.SaveAsync(
             expectedKey,
-            accountId,
+            accountId.ToString(),
             It.IsAny<StateOptions>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
@@ -177,7 +177,7 @@ public class TokenServiceTests
         // Assert - TTL is in seconds: 7 days = 604800 seconds
         _mockStringStore.Verify(s => s.SaveAsync(
             expectedKey,
-            accountId,
+            accountId.ToString(),
             It.Is<StateOptions>(o => o.Ttl == (int)TimeSpan.FromDays(7).TotalSeconds),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -191,11 +191,12 @@ public class TokenServiceTests
     {
         // Arrange
         var refreshToken = "valid-refresh-token";
-        var expectedAccountId = "test-account-id";
+        var expectedAccountId = Guid.NewGuid();
         var expectedKey = $"refresh_token:{refreshToken}";
 
+        // Storage returns string; service parses to Guid at read boundary
         _mockStringStore.Setup(s => s.GetAsync(expectedKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedAccountId);
+            .ReturnsAsync(expectedAccountId.ToString());
 
         // Act
         var result = await _service.ValidateRefreshTokenAsync(refreshToken);

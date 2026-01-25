@@ -149,7 +149,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         {
             QueueId = queueId,
             GameId = TEST_GAME_ID,
-            SessionGameType = SessionGameType.Arcadia,
+            SessionGameType = "test-game",
             DisplayName = "Test Queue",
             Description = "A test queue",
             Enabled = true,
@@ -305,7 +305,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         {
             QueueId = TEST_QUEUE_ID,
             GameId = TEST_GAME_ID,
-            SessionGameType = SessionGameType.Arcadia,
+            SessionGameType = "test-game",
             DisplayName = "New Queue",
             MinCount = 2,
             MaxCount = 8,

@@ -672,7 +672,7 @@ public class MatchmakingAlgorithmTests
         {
             QueueId = "test-queue",
             GameId = "test-game",
-            SessionGameType = SessionGameType.Arcadia,
+            SessionGameType = "test-game",
             DisplayName = "Test Queue",
             Enabled = true,
             MinCount = minCount,
