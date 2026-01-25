@@ -38,9 +38,8 @@ public sealed class RabbitMQMessageBus : IMessageBus
     private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
 
-    // Track declared exchanges to avoid redeclaring
-    private readonly HashSet<string> _declaredExchanges = new();
-    private readonly object _exchangeLock = new();
+    // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
+    private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
 
     /// <summary>
     /// Topic for service error events.
@@ -321,12 +320,9 @@ public sealed class RabbitMQMessageBus : IMessageBus
     {
         // Check if already declared (optimization to avoid redeclaring)
         var key = $"{exchange}:{exchangeType}";
-        lock (_exchangeLock)
+        if (_declaredExchanges.ContainsKey(key))
         {
-            if (_declaredExchanges.Contains(key))
-            {
-                return;
-            }
+            return;
         }
 
         var type = exchangeType switch
@@ -344,10 +340,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             arguments: null,
             cancellationToken: cancellationToken);
 
-        lock (_exchangeLock)
-        {
-            _declaredExchanges.Add(key);
-        }
+        _declaredExchanges.TryAdd(key, 0);
 
         _logger.LogDebug("Declared exchange '{Exchange}' of type {Type}", exchange, type);
     }

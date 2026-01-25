@@ -432,8 +432,7 @@ Prebound API Batched Execution
 
 ### Bugs (Fix Immediately)
 
-1. **Silent catch-all in GetCustomTermBool (T7)** - Bare `catch` block silently swallows exceptions. Should add logging or remove the try-catch.
-   - **File**: `plugins/lib-contract/ContractService.cs`
+None identified.
 
 ### Tenet Violations Requiring Planning
 
@@ -458,6 +457,7 @@ Prebound API Batched Execution
 - Added IdempotencyTtlSeconds to configuration
 - Replaced null-forgiving operators with safe patterns
 - Changed LogInformation to LogDebug for query/read operations
+- Fixed silent catch-all in GetCustomTermBool - now catches specific FormatException and InvalidCastException
 
 ### Intentional Quirks (Documented Behavior)
 

@@ -96,6 +96,12 @@ public class MappingServiceConfiguration : IServiceConfiguration
     public int MaxAffordanceCandidates { get; set; } = 1000;
 
     /// <summary>
+    /// Distance tolerance in world units for position exclusion matching in affordance queries
+    /// Environment variable: MAPPING_AFFORDANCE_EXCLUSION_TOLERANCE_UNITS
+    /// </summary>
+    public double AffordanceExclusionToleranceUnits { get; set; } = 1.0;
+
+    /// <summary>
     /// Payloads larger than this are stored via lib-asset reference
     /// Environment variable: MAPPING_INLINE_PAYLOAD_MAX_BYTES
     /// </summary>

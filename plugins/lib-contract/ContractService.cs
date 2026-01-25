@@ -69,13 +69,19 @@ public partial class ContractService : IContractService
         if (value is bool boolValue)
             return boolValue;
 
-        // Fallback for other types
+        // Fallback for other types - catch expected conversion failures
         try
         {
             return Convert.ToBoolean(value);
         }
-        catch
+        catch (FormatException)
         {
+            // Value was a string that couldn't be parsed as boolean
+            return false;
+        }
+        catch (InvalidCastException)
+        {
+            // Value type doesn't support IConvertible
             return false;
         }
     }

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Connect.Protocol;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
@@ -16,16 +17,19 @@ public class WebSocketConnectionManager
     private readonly object _lockObject = new();
     private readonly int _connectionShutdownTimeoutSeconds;
     private readonly int _inactiveConnectionTimeoutMinutes;
+    private readonly ILogger? _logger;
 
     public WebSocketConnectionManager(
         int connectionShutdownTimeoutSeconds = 5,
         int connectionCleanupIntervalSeconds = 30,
-        int inactiveConnectionTimeoutMinutes = 30)
+        int inactiveConnectionTimeoutMinutes = 30,
+        ILogger? logger = null)
     {
         _connections = new ConcurrentDictionary<string, WebSocketConnection>();
         _peerGuidToSessionId = new ConcurrentDictionary<Guid, string>();
         _connectionShutdownTimeoutSeconds = connectionShutdownTimeoutSeconds;
         _inactiveConnectionTimeoutMinutes = inactiveConnectionTimeoutMinutes;
+        _logger = logger;
 
         // Start cleanup timer
         _cleanupTimer = new Timer(CleanupExpiredConnections, null,
@@ -57,9 +61,10 @@ public class WebSocketConnectionManager
                             CancellationToken.None);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore cleanup errors
+                    // Log cleanup errors at debug level - expected during connection replacement
+                    _logger?.LogDebug(ex, "Error closing existing WebSocket connection during replacement");
                 }
             });
 
@@ -212,9 +217,10 @@ public class WebSocketConnectionManager
             connection.ConnectionState.UpdateActivity();
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            // Remove failed connection
+            // Log send failure and remove the broken connection
+            _logger?.LogDebug(ex, "WebSocket send failed for session {SessionId}, removing connection", sessionId);
             RemoveConnection(sessionId);
             return false;
         }
@@ -319,9 +325,10 @@ public class WebSocketConnectionManager
                         "Server shutdown", CancellationToken.None).Wait(TimeSpan.FromSeconds(_connectionShutdownTimeoutSeconds));
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore cleanup errors
+                // Log cleanup errors during shutdown - expected during connection teardown
+                _logger?.LogDebug(ex, "Error closing WebSocket connection during shutdown");
             }
         });
 

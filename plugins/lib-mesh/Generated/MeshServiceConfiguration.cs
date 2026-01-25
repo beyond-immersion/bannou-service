@@ -86,6 +86,12 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int EndpointPort { get; set; } = 80;
 
     /// <summary>
+    /// Default max connections for auto-registered endpoints when heartbeat does not provide capacity info.
+    /// Environment variable: MESH_DEFAULT_MAX_CONNECTIONS
+    /// </summary>
+    public int DefaultMaxConnections { get; set; } = 1000;
+
+    /// <summary>
     /// Recommended interval between heartbeats
     /// Environment variable: MESH_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
