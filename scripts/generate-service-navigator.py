@@ -3,7 +3,7 @@
 Generate IServiceNavigator interface extensions and ServiceNavigator implementation.
 
 This script scans Generated/Clients/ for service client interfaces and generates:
-1. IServiceNavigator.Generated.cs - partial interface with service client properties
+1. IServiceNavigator.cs - partial interface with service client properties
 2. ServiceNavigator.cs - concrete implementation
 
 Architecture:
@@ -16,7 +16,7 @@ Usage:
     python3 scripts/generate-service-navigator.py
 
 Output:
-    bannou-service/Generated/IServiceNavigator.Generated.cs
+    bannou-service/Generated/IServiceNavigator.cs
     bannou-service/Generated/ServiceNavigator.cs
 """
 
@@ -306,9 +306,15 @@ def main():
 
     # Generate interface extension
     interface_code = generate_interface_extension(clients)
-    interface_file = output_dir / 'IServiceNavigator.Generated.cs'
+    interface_file = output_dir / 'IServiceNavigator.cs'
     interface_file.write_text(interface_code)
-    print(f"\n  Generated IServiceNavigator.Generated.cs ({len(clients)} properties)")
+    print(f"\n  Generated IServiceNavigator.cs ({len(clients)} properties)")
+
+    # Clean up old .Generated.cs file if it exists (legacy naming)
+    old_file = output_dir / 'IServiceNavigator.Generated.cs'
+    if old_file.exists():
+        old_file.unlink()
+        print(f"  Removed legacy file: IServiceNavigator.Generated.cs")
 
     # Generate implementation
     impl_code = generate_implementation(clients)

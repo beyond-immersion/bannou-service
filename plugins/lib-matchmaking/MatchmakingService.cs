@@ -1331,7 +1331,7 @@ public partial class MatchmakingService : IMatchmakingService
         // Clean up ticket
         await CleanupTicketAsync(ticketId, ticket.AccountId, ticket.QueueId, cancellationToken);
 
-        // Publish service event (cast enum - both enums have identical values)
+        // Publish service event (cast from client events enum to API enum - identical values)
         await _messageBus.TryPublishAsync(TICKET_CANCELLED_TOPIC, new MatchmakingTicketCancelledEvent
         {
             EventId = Guid.NewGuid(),
@@ -1340,7 +1340,7 @@ public partial class MatchmakingService : IMatchmakingService
             QueueId = ticket.QueueId,
             AccountId = ticket.AccountId,
             PartyId = ticket.PartyId,
-            Reason = (EventCancelReason)reason,
+            Reason = (CancelReason)reason,
             WaitTimeSeconds = waitTime
         }, cancellationToken: cancellationToken);
     }

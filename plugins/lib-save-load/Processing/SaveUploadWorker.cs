@@ -282,7 +282,7 @@ public class SaveUploadWorker : BackgroundService
                 "Upload failed permanently for slot {SlotId} version {Version} after {Attempts} attempts: {Error}",
                 entry.SlotId, entry.VersionNumber, entry.AttemptCount, errorMessage);
 
-            // Publish failure event
+            // Publish failure event (parse internal string to typed enum)
             var failedEvent = new SaveUploadFailedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -291,7 +291,7 @@ public class SaveUploadWorker : BackgroundService
                 SlotName = entry.SlotId,
                 VersionNumber = entry.VersionNumber,
                 OwnerId = Guid.Parse(entry.OwnerId),
-                OwnerType = entry.OwnerType,
+                OwnerType = Enum.Parse<OwnerType>(entry.OwnerType, ignoreCase: true),
                 ErrorMessage = errorMessage,
                 RetryCount = entry.AttemptCount,
                 WillRetry = false

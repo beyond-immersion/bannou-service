@@ -54,7 +54,7 @@ components:
     # Species merge event (not auto-generated from lifecycle)
     SpeciesMergedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when two species are merged, with the source species being deprecated

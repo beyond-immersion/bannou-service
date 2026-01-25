@@ -1169,7 +1169,7 @@ public partial class SaveLoadService : ISaveLoadService
                 await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
             }
 
-            // Publish event
+            // Publish event (parse internal string representations to typed enums)
             var createdEvent = new SaveCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1178,8 +1178,8 @@ public partial class SaveLoadService : ISaveLoadService
                 SlotName = slot.SlotName,
                 VersionNumber = newVersionNumber,
                 OwnerId = Guid.Parse(ownerId),
-                OwnerType = ownerType,
-                Category = slot.Category,
+                OwnerType = Enum.Parse<OwnerType>(ownerType, ignoreCase: true),
+                Category = Enum.Parse<SaveCategory>(slot.Category, ignoreCase: true),
                 SizeBytes = deltaSize,
                 SchemaVersion = body.SchemaVersion,
                 Pinned = false
@@ -1298,7 +1298,7 @@ public partial class SaveLoadService : ISaveLoadService
                 SlotName = slot.SlotName,
                 VersionNumber = (int)versionNumber,
                 OwnerId = body.OwnerId,
-                OwnerType = body.OwnerType.ToString()
+                OwnerType = body.OwnerType
             };
             await _messageBus.TryPublishAsync("save-load.save.loaded", loadEvent, cancellationToken: cancellationToken);
 
@@ -2550,7 +2550,7 @@ public partial class SaveLoadService : ISaveLoadService
                 "Promoted version {SourceVersion} to version {NewVersion} in slot {SlotId}",
                 body.VersionNumber, newVersionNumber, slot.SlotId);
 
-            // Publish event
+            // Publish event (parse internal string to typed enum)
             var createdEvent = new SaveCreatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2559,7 +2559,7 @@ public partial class SaveLoadService : ISaveLoadService
                 SlotName = slot.SlotName,
                 VersionNumber = newVersionNumber,
                 OwnerId = Guid.Parse(slot.OwnerId),
-                OwnerType = slot.OwnerType,
+                OwnerType = Enum.Parse<OwnerType>(slot.OwnerType, ignoreCase: true),
                 SizeBytes = sourceVersion.SizeBytes
             };
             await _messageBus.TryPublishAsync(

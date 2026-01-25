@@ -411,7 +411,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             slot.UpdatedAt = DateTimeOffset.UtcNow;
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
-            // Publish event
+            // Publish event (parse internal string to typed enum)
             await _messageBus.TryPublishAsync("save.migrated", new SaveMigratedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -421,7 +421,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
                 OriginalVersionNumber = versionNumber,
                 NewVersionNumber = newVersionNumber,
                 OwnerId = Guid.Parse(slot.OwnerId),
-                OwnerType = slot.OwnerType,
+                OwnerType = Enum.Parse<OwnerType>(slot.OwnerType, ignoreCase: true),
                 FromSchemaVersion = currentSchemaVersion,
                 ToSchemaVersion = body.TargetSchemaVersion
             }, cancellationToken: cancellationToken);

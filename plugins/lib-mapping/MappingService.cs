@@ -724,13 +724,7 @@ public partial class MappingService : IMappingService
             Kind = channel.Kind.ToString(),
             AttemptedPublisher = "unknown",
             CurrentAuthority = null,
-            HandlingMode = channel.NonAuthorityHandling switch
-            {
-                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
-                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
-                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
-                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
-            },
+            HandlingMode = channel.NonAuthorityHandling,
             PublishAccepted = accepted,
             PayloadSummary = payloadSummary
         };
@@ -2008,7 +2002,7 @@ public partial class MappingService : IMappingService
                 {
                     AssetType = AssetType.Other,
                     Tags = new List<string> { "mapping", "snapshot", regionId.ToString() },
-                    Realm = BeyondImmersion.BannouService.Asset.Realm.Shared
+                    Realm = BeyondImmersion.BannouService.Asset.GameRealm.Shared
                 }
             };
 
@@ -2304,7 +2298,7 @@ public partial class MappingService : IMappingService
                 Max = new EventPosition3D { X = bounds.Max.X, Y = bounds.Max.Y, Z = bounds.Max.Z }
             } : null,
             Version = version,
-            DeltaType = deltaType == DeltaType.Snapshot ? MapUpdatedEventDeltaType.Snapshot : MapUpdatedEventDeltaType.Delta,
+            DeltaType = deltaType,
             SourceAppId = sourceAppId,
             Payload = payload.Data
         };
@@ -2381,13 +2375,7 @@ public partial class MappingService : IMappingService
             Kind = channel.Kind.ToString(),
             AttemptedPublisher = attemptedPublisher ?? "unknown",
             CurrentAuthority = null,
-            HandlingMode = channel.NonAuthorityHandling switch
-            {
-                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
-                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
-                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
-                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
-            },
+            HandlingMode = channel.NonAuthorityHandling,
             PublishAccepted = accepted,
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? payload.ObjectType : null
         };
@@ -2623,13 +2611,7 @@ public partial class MappingService : IMappingService
             Kind = channel.Kind.ToString(),
             AttemptedPublisher = "unknown",
             CurrentAuthority = null,
-            HandlingMode = channel.NonAuthorityHandling switch
-            {
-                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
-                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
-                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
-                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
-            },
+            HandlingMode = channel.NonAuthorityHandling,
             PublishAccepted = accepted,
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? $"ingest:{evt.Payloads.Count} payloads" : null
         };

@@ -116,6 +116,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -158,6 +159,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -193,6 +195,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -225,6 +228,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -257,6 +261,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -294,6 +299,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string
@@ -355,6 +361,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance
         timestamp:
           type: string

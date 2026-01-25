@@ -52,29 +52,12 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    # Base event schema - inherited by all service events
-    # Duplicated here for $ref resolution; actual implementation in common-events.yaml
-    BaseServiceEvent:
-      type: object
-      additionalProperties: false
-      required:
-        - eventId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event was created (UTC)
-
     # Auth-specific events (published by Auth service)
     # NOTE: Events Auth subscribes to (AccountDeletedEvent, etc.) are defined in their
     # canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
     SessionInvalidatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when sessions are invalidated (logout, account deletion, etc.)
@@ -107,7 +90,7 @@ components:
 
     SessionUpdatedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
@@ -153,7 +136,7 @@ components:
 
     AuthLoginSuccessfulEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a user successfully authenticates with username/password
@@ -184,7 +167,7 @@ components:
 
     AuthLoginFailedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a login attempt fails (for brute force detection)
@@ -219,7 +202,7 @@ components:
 
     AuthRegistrationSuccessfulEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a new user successfully registers
@@ -250,7 +233,7 @@ components:
 
     AuthOAuthLoginSuccessfulEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a user authenticates via OAuth provider
@@ -285,7 +268,7 @@ components:
 
     AuthSteamLoginSuccessfulEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a user authenticates via Steam
@@ -316,7 +299,7 @@ components:
 
     AuthPasswordResetSuccessfulEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a password reset is successfully completed
