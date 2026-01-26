@@ -312,7 +312,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 AccountId = testAccountId,
                 GameType = "test-game",
                 Message = "Hello, World!",
-                MessageType = ChatMessageRequestMessageType.Public
+                MessageType = ChatMessageType.Public
             };
 
             await gameSessionClient.SendChatMessageAsync(chatRequest);
@@ -359,7 +359,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 SessionId = sessionIdGuid,
                 AccountId = testAccountId,
                 GameType = "test-game",
-                ActionType = GameActionRequestActionType.Move,
+                ActionType = GameActionType.Move,
                 ActionData = new { x = 10, y = 20 }
             };
 
@@ -424,7 +424,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 SessionId = sessionIdGuid,
                 AccountId = testAccountId,
                 GameType = "test-game",
-                ActionType = GameActionRequestActionType.Move,
+                ActionType = GameActionType.Move,
                 ActionData = new { testData = "lifecycle_test" }
             });
             Console.WriteLine($"  Step 3: Performed action {actionResponse.ActionId}");
@@ -436,7 +436,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 AccountId = testAccountId,
                 GameType = "test-game",
                 Message = "Lifecycle test message",
-                MessageType = ChatMessageRequestMessageType.Public
+                MessageType = ChatMessageType.Public
             });
             Console.WriteLine($"  Step 4: Sent chat message");
 

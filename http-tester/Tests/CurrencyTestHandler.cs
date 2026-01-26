@@ -76,7 +76,7 @@ public class CurrencyTestHandler : BaseHttpTestHandler
         ICurrencyClient currencyClient,
         string suffix,
         CurrencyScope scope = CurrencyScope.Global,
-        CurrencyPrecision precision = CurrencyPrecision.Decimal_2,
+        CurrencyPrecision precision = CurrencyPrecision.Decimal2,
         bool allowNegative = false)
     {
         // Code must match regex ^[a-z][a-z0-9_]{1,31}$

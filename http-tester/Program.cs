@@ -202,8 +202,7 @@ public class Program
             {
                 UseInMemory = false,
                 RedisConnectionString = stateRedisConnectionString,
-                ConnectionTimeoutSeconds = 60,
-                ConnectRetryCount = 10
+                ConnectionTimeoutSeconds = 60
             };
             serviceCollection.AddSingleton(stateConfig);
 
@@ -213,7 +212,7 @@ public class Program
             {
                 UseInMemory = stateConfig.UseInMemory,
                 RedisConnectionString = stateRedisConnectionString,
-                ConnectionRetryCount = stateConfig.ConnectRetryCount,
+                ConnectionRetryCount = 10,
                 ConnectionTimeoutSeconds = stateConfig.ConnectionTimeoutSeconds
             };
 
@@ -245,8 +244,9 @@ public class Program
             serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
             {
                 var stateManager = sp.GetRequiredService<IMeshStateManager>();
+                var config = sp.GetRequiredService<MeshServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-                return new MeshInvocationClient(stateManager, logger);
+                return new MeshInvocationClient(stateManager, config, logger);
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)

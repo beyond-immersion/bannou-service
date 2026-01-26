@@ -1,4 +1,5 @@
 using System.Linq;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Contract;
@@ -7,8 +8,6 @@ using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Testing;
-using AchEntityType = BeyondImmersion.BannouService.Achievement.EntityType;
-using ContractEntityType = BeyondImmersion.BannouService.Contract.EntityType;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -140,14 +139,14 @@ public class ContractTestHandler : BaseHttpTestHandler
                     Role = "employer",
                     MinCount = 1,
                     MaxCount = 1,
-                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                    AllowedEntityTypes = new List<EntityType> { EntityType.Character }
                 },
                 new PartyRoleDefinition
                 {
                     Role = "worker",
                     MinCount = 1,
                     MaxCount = 1,
-                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                    AllowedEntityTypes = new List<EntityType> { EntityType.Character }
                 }
             },
             DefaultTerms = new ContractTerms
@@ -157,7 +156,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 GracePeriodForCure = "P7D"
             },
             Milestones = milestones,
-            DefaultEnforcementMode = EnforcementMode.Event_only,
+            DefaultEnforcementMode = EnforcementMode.EventOnly,
             Transferable = false
         });
     }
@@ -182,13 +181,13 @@ public class ContractTestHandler : BaseHttpTestHandler
                 new ContractPartyInput
                 {
                     EntityId = employerId,
-                    EntityType = ContractEntityType.Character,
+                    EntityType = EntityType.Character,
                     Role = "employer"
                 },
                 new ContractPartyInput
                 {
                     EntityId = workerId,
-                    EntityType = ContractEntityType.Character,
+                    EntityType = EntityType.Character,
                     Role = "worker"
                 }
             },
@@ -208,7 +207,7 @@ public class ContractTestHandler : BaseHttpTestHandler
         {
             ContractId = instance.ContractId,
             PartyEntityId = employerId,
-            PartyEntityType = ContractEntityType.Character
+            PartyEntityType = EntityType.Character
         });
 
         // Consent from worker (this activates the contract)
@@ -216,7 +215,7 @@ public class ContractTestHandler : BaseHttpTestHandler
         {
             ContractId = instance.ContractId,
             PartyEntityId = workerId,
-            PartyEntityType = ContractEntityType.Character
+            PartyEntityType = EntityType.Character
         });
 
         return activeContract;
@@ -259,13 +258,13 @@ public class ContractTestHandler : BaseHttpTestHandler
                     new ContractPartyInput
                     {
                         EntityId = charA.CharacterId,
-                        EntityType = ContractEntityType.Character,
+                        EntityType = EntityType.Character,
                         Role = "employer"
                     },
                     new ContractPartyInput
                     {
                         EntityId = charB.CharacterId,
-                        EntityType = ContractEntityType.Character,
+                        EntityType = EntityType.Character,
                         Role = "worker"
                     }
                 }
@@ -297,13 +296,13 @@ public class ContractTestHandler : BaseHttpTestHandler
                     new ContractPartyInput
                     {
                         EntityId = charA.CharacterId,
-                        EntityType = ContractEntityType.Character,
+                        EntityType = EntityType.Character,
                         Role = "employer"
                     },
                     new ContractPartyInput
                     {
                         EntityId = charB.CharacterId,
-                        EntityType = ContractEntityType.Character,
+                        EntityType = EntityType.Character,
                         Role = "worker"
                     }
                 }
@@ -350,7 +349,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 {
                     ContractId = activeContract.ContractId,
                     RequestingEntityId = charA.CharacterId,
-                    RequestingEntityType = ContractEntityType.Character,
+                    RequestingEntityType = EntityType.Character,
                     Reason = "Test lifecycle complete"
                 });
 
@@ -455,7 +454,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 AchievementId = workerAchievementId,
                 DisplayName = "Contract Fulfilled",
                 Description = "Complete an employment contract successfully",
-                EntityTypes = new List<AchEntityType> { AchEntityType.Character },
+                EntityTypes = new List<EntityType> { EntityType.Character },
                 AchievementType = AchievementType.Progressive,
                 ProgressTarget = 1,
                 Points = 50,
@@ -469,7 +468,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 AchievementId = employerAchievementId,
                 DisplayName = "First Employer",
                 Description = "Successfully complete a contract as employer",
-                EntityTypes = new List<AchEntityType> { AchEntityType.Character },
+                EntityTypes = new List<EntityType> { EntityType.Character },
                 AchievementType = AchievementType.Progressive,
                 ProgressTarget = 1,
                 Points = 25,
@@ -555,7 +554,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                     GameServiceId = TestGameServiceId,
                     AchievementId = workerAchievementId,
                     EntityId = worker.CharacterId,
-                    EntityType = AchEntityType.Character
+                    EntityType = EntityType.Character
                 });
 
             var employerProgress = await achievementClient.GetAchievementProgressAsync(
@@ -564,7 +563,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                     GameServiceId = TestGameServiceId,
                     AchievementId = employerAchievementId,
                     EntityId = employer.CharacterId,
-                    EntityType = AchEntityType.Character
+                    EntityType = EntityType.Character
                 });
 
             var workerAchProgress = workerProgress.Progress
@@ -712,7 +711,7 @@ public class ContractTestHandler : BaseHttpTestHandler
             {
                 ContractId = activeContract.ContractId,
                 BreachingEntityId = charB.CharacterId,
-                BreachingEntityType = ContractEntityType.Character,
+                BreachingEntityType = EntityType.Character,
                 BreachType = BreachType.Term_violation,
                 Description = "Worker failed to deliver on time"
             });
@@ -774,7 +773,7 @@ public class ContractTestHandler : BaseHttpTestHandler
             var constraintCheck = await contractClient.CheckContractConstraintAsync(new CheckConstraintRequest
             {
                 EntityId = charB.CharacterId,
-                EntityType = ContractEntityType.Character,
+                EntityType = EntityType.Character,
                 ConstraintType = ConstraintType.Exclusivity
             });
 
@@ -818,14 +817,14 @@ public class ContractTestHandler : BaseHttpTestHandler
                     Role = "employer",
                     MinCount = 1,
                     MaxCount = 1,
-                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                    AllowedEntityTypes = new List<EntityType> { EntityType.Character }
                 },
                 new PartyRoleDefinition
                 {
                     Role = "worker",
                     MinCount = 1,
                     MaxCount = 1,
-                    AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                    AllowedEntityTypes = new List<EntityType> { EntityType.Character }
                 }
             },
             DefaultTerms = defaultTerms ?? new ContractTerms
@@ -835,7 +834,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 GracePeriodForCure = "P7D"
             },
             Milestones = milestones,
-            DefaultEnforcementMode = EnforcementMode.Event_only,
+            DefaultEnforcementMode = EnforcementMode.EventOnly,
             Transferable = true
         });
     }
@@ -946,9 +945,9 @@ public class ContractTestHandler : BaseHttpTestHandler
             {
                 ContractInstanceId = activeContract.ContractId,
                 FromEntityId = charB.CharacterId,
-                FromEntityType = ContractEntityType.Character,
+                FromEntityType = EntityType.Character,
                 ToEntityId = newWorker.CharacterId,
-                ToEntityType = ContractEntityType.Character,
+                ToEntityType = EntityType.Character,
                 GuardianId = guardianId,
                 GuardianType = "escrow"
             });
@@ -1004,7 +1003,7 @@ public class ContractTestHandler : BaseHttpTestHandler
             {
                 ContractId = activeContract.ContractId,
                 RequestingEntityId = charA.CharacterId,
-                RequestingEntityType = ContractEntityType.Character,
+                RequestingEntityType = EntityType.Character,
                 Reason = "Should be blocked by guardian"
             });
         }, 403, "Guardian enforcement on terminate");
@@ -1213,14 +1212,14 @@ public class ContractTestHandler : BaseHttpTestHandler
                         Role = "employer",
                         MinCount = 1,
                         MaxCount = 1,
-                        AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                        AllowedEntityTypes = new List<EntityType> { EntityType.Character }
                     },
                     new PartyRoleDefinition
                     {
                         Role = "worker",
                         MinCount = 1,
                         MaxCount = 1,
-                        AllowedEntityTypes = new List<ContractEntityType> { ContractEntityType.Character }
+                        AllowedEntityTypes = new List<EntityType> { EntityType.Character }
                     }
                 },
                 DefaultTerms = new ContractTerms
@@ -1231,7 +1230,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                         ["clauses"] = clausesJson
                     }
                 },
-                DefaultEnforcementMode = EnforcementMode.Event_only,
+                DefaultEnforcementMode = EnforcementMode.EventOnly,
                 Transferable = false
             });
 

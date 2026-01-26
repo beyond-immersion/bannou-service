@@ -860,7 +860,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             var createdResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
             {
                 Namespace = testNamespace,
-                SortBy = ListSortField.Created_at,
+                SortBy = ListSortField.CreatedAt,
                 SortOrder = ListDocumentsRequestSortOrder.Desc
             });
 

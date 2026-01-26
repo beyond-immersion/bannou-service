@@ -52,7 +52,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             {
                 RegionId = regionId,
                 Kind = MapKind.Terrain,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
 
             var response = await mappingClient.CreateChannelAsync(request);
@@ -82,8 +82,8 @@ public class MappingTestHandler : BaseHttpTestHandler
             var request = new CreateChannelRequest
             {
                 RegionId = regionId,
-                Kind = MapKind.Static_geometry,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                Kind = MapKind.StaticGeometry,
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
 
             var firstResponse = await mappingClient.CreateChannelAsync(request);
@@ -113,7 +113,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             {
                 RegionId = regionId,
                 Kind = MapKind.Navigation,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
@@ -142,7 +142,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             {
                 RegionId = regionId,
                 Kind = MapKind.Resources,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
             var originalExpiration = createResponse.ExpiresAt;
@@ -181,8 +181,8 @@ public class MappingTestHandler : BaseHttpTestHandler
             var createRequest = new CreateChannelRequest
             {
                 RegionId = regionId,
-                Kind = MapKind.Dynamic_objects,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                Kind = MapKind.DynamicObjects,
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
@@ -224,8 +224,8 @@ public class MappingTestHandler : BaseHttpTestHandler
             var createRequest = new CreateChannelRequest
             {
                 RegionId = regionId,
-                Kind = MapKind.Points_of_interest,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                Kind = MapKind.PointsOfInterest,
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
@@ -290,8 +290,8 @@ public class MappingTestHandler : BaseHttpTestHandler
             var createRequest = new CreateChannelRequest
             {
                 RegionId = regionId,
-                Kind = MapKind.Spawn_points,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                Kind = MapKind.SpawnPoints,
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
@@ -340,7 +340,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             {
                 RegionId = regionId,
                 Kind = MapKind.Hazards,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
@@ -412,7 +412,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             {
                 RegionId = regionId,
                 Kind = MapKind.Resources,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
@@ -532,7 +532,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             var checkoutRequest = new AuthoringCheckoutRequest
             {
                 RegionId = regionId,
-                Kind = MapKind.Static_geometry,
+                Kind = MapKind.StaticGeometry,
                 EditorId = GenerateTestId("editor")
             };
             var checkoutResponse = await mappingClient.CheckoutForAuthoringAsync(checkoutRequest);
@@ -631,7 +631,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             var checkoutRequest = new AuthoringCheckoutRequest
             {
                 RegionId = regionId,
-                Kind = MapKind.Points_of_interest,
+                Kind = MapKind.PointsOfInterest,
                 EditorId = GenerateTestId("editor")
             };
             var checkoutResponse = await mappingClient.CheckoutForAuthoringAsync(checkoutRequest);
@@ -643,7 +643,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             var releaseRequest = new AuthoringReleaseRequest
             {
                 RegionId = regionId,
-                Kind = MapKind.Points_of_interest,
+                Kind = MapKind.PointsOfInterest,
                 AuthorityToken = checkoutResponse.AuthorityToken
             };
             var releaseResponse = await mappingClient.ReleaseAuthoringAsync(releaseRequest);

@@ -121,7 +121,7 @@ public class InventoryTestHandler : BaseHttpTestHandler
         var inventoryClient = GetServiceClient<IInventoryClient>();
         var constraintModel = maxWeight.HasValue
             ? ContainerConstraintModel.Slot_and_weight
-            : ContainerConstraintModel.Slot_only;
+            : ContainerConstraintModel.SlotOnly;
 
         return await inventoryClient.CreateContainerAsync(new CreateContainerRequest
         {
@@ -179,7 +179,7 @@ public class InventoryTestHandler : BaseHttpTestHandler
                 OwnerId = characterId,
                 OwnerType = ContainerOwnerType.Character,
                 ContainerType = "inventory",
-                ConstraintModel = ContainerConstraintModel.Slot_only,
+                ConstraintModel = ContainerConstraintModel.SlotOnly,
                 MaxSlots = 20
             });
 
@@ -254,7 +254,7 @@ public class InventoryTestHandler : BaseHttpTestHandler
                 OwnerId = characterId,
                 OwnerType = ContainerOwnerType.Character,
                 ContainerType = "inventory",
-                ConstraintModel = ContainerConstraintModel.Slot_only,
+                ConstraintModel = ContainerConstraintModel.SlotOnly,
                 MaxSlots = 20
             });
             await inventoryClient.CreateContainerAsync(new CreateContainerRequest
@@ -262,7 +262,7 @@ public class InventoryTestHandler : BaseHttpTestHandler
                 OwnerId = characterId,
                 OwnerType = ContainerOwnerType.Character,
                 ContainerType = "bank",
-                ConstraintModel = ContainerConstraintModel.Slot_only,
+                ConstraintModel = ContainerConstraintModel.SlotOnly,
                 MaxSlots = 100
             });
 
