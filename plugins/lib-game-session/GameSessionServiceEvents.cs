@@ -74,7 +74,7 @@ public partial class GameSessionService
         await HandleSubscriptionUpdatedInternalAsync(
             evt.AccountId,
             evt.StubName,
-            evt.Action.ToString().ToLowerInvariant(),
+            evt.Action,
             evt.IsActive);
     }
 }

@@ -223,7 +223,7 @@ public class ReservationCleanupService : BackgroundService
 /// </summary>
 internal class CleanupSessionModel
 {
-    public string SessionId { get; set; } = string.Empty;
+    public Guid SessionId { get; set; }
     public SessionType SessionType { get; set; } = SessionType.Lobby;
     public List<CleanupReservationModel> Reservations { get; set; } = new();
     public DateTimeOffset? ReservationExpiresAt { get; set; }

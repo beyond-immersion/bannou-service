@@ -23,9 +23,10 @@ x-service-configuration:
       default: true
     MemoryDecayMode:
       type: string
+      enum: [lazy, scheduled]
       description: Memory decay mode - 'lazy' applies decay on access, 'scheduled' uses background processing
       env: CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE
-      default: "lazy"
+      default: lazy
     MemoryDecayIntervalHours:
       type: integer
       description: Hours between decay checks (used for calculating decay amount)

@@ -155,7 +155,7 @@ public partial class GameSessionService : IGameSessionService
 
         // Initialize supported game services from configuration
         var configuredServices = configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        _supportedGameServices = new HashSet<string>(configuredServices ?? new[] { generic }, StringComparer.OrdinalIgnoreCase);
+        _supportedGameServices = new HashSet<string>(configuredServices ?? new[] { "system" }, StringComparer.OrdinalIgnoreCase);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -259,7 +259,7 @@ public partial class GameSessionService : IGameSessionService
             // Create the session model
             var session = new GameSessionModel
             {
-                SessionId = sessionId.ToString(),
+                SessionId = sessionId,
                 GameType = body.GameType,
                 SessionName = body.SessionName,
                 MaxPlayers = maxPlayers,
@@ -337,7 +337,7 @@ public partial class GameSessionService : IGameSessionService
             var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
             var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
-            sessionIds.Add(session.SessionId);
+            sessionIds.Add(session.SessionId.ToString());
 
             await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
 
@@ -348,7 +348,7 @@ public partial class GameSessionService : IGameSessionService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = Guid.Parse(session.SessionId),
+                    SessionId = session.SessionId,
                     GameType = session.GameType,
                     SessionName = session.SessionName,
                     Status = session.Status,
@@ -1717,15 +1717,15 @@ public partial class GameSessionService : IGameSessionService
     /// </summary>
     /// <param name="accountId">Account whose subscription changed.</param>
     /// <param name="stubName">Stub name of the service (e.g., "my-game").</param>
-    /// <param name="action">Action that triggered the event (created, updated, cancelled, expired, renewed).</param>
+    /// <param name="action">Action that triggered the event.</param>
     /// <param name="isActive">Whether the subscription is currently active.</param>
-    internal async Task HandleSubscriptionUpdatedInternalAsync(Guid accountId, string stubName, string action, bool isActive)
+    internal async Task HandleSubscriptionUpdatedInternalAsync(Guid accountId, string stubName, SubscriptionUpdatedEventAction action, bool isActive)
     {
         _logger.LogInformation("Subscription update for account {AccountId}: stubName={StubName}, action={Action}, isActive={IsActive}",
             accountId, stubName, action, isActive);
 
         // Update the cache
-        if (isActive && (action == "created" || action == "renewed" || action == "updated"))
+        if (isActive && (action == SubscriptionUpdatedEventAction.Created || action == SubscriptionUpdatedEventAction.Renewed || action == SubscriptionUpdatedEventAction.Updated))
         {
             _accountSubscriptions.AddOrUpdate(
                 accountId,
@@ -1740,7 +1740,7 @@ public partial class GameSessionService : IGameSessionService
                 });
             _logger.LogDebug("Added {StubName} to subscription cache for account {AccountId}", stubName, accountId);
         }
-        else if (!isActive || action == "cancelled" || action == "expired")
+        else if (!isActive || action == SubscriptionUpdatedEventAction.Cancelled || action == SubscriptionUpdatedEventAction.Expired)
         {
             if (_accountSubscriptions.TryGetValue(accountId, out var existingSet))
             {
@@ -2093,7 +2093,7 @@ public partial class GameSessionService : IGameSessionService
             if (existingLobby != null && existingLobby.Status != SessionStatus.Finished)
             {
                 _logger.LogDebug("Found existing lobby {LobbyId} for {StubName}", existingLobby.SessionId, stubName);
-                return Guid.Parse(existingLobby.SessionId);
+                return existingLobby.SessionId;
             }
 
             // Create new lobby
@@ -2101,7 +2101,7 @@ public partial class GameSessionService : IGameSessionService
 
             var lobby = new GameSessionModel
             {
-                SessionId = lobbyId.ToString(),
+                SessionId = lobbyId,
                 SessionName = $"{stubName} Lobby",
                 GameType = stubName,
                 MaxPlayers = _configuration.DefaultLobbyMaxPlayers,
@@ -2151,7 +2151,7 @@ public partial class GameSessionService : IGameSessionService
             {
                 _logger.LogDebug("Found lobby {LobbyId} for {GameType} with status {Status}",
                     existingLobby.SessionId, gameType, existingLobby.Status);
-                return Guid.Parse(existingLobby.SessionId);
+                return existingLobby.SessionId;
             }
 
             _logger.LogDebug("No lobby found for {GameType}", gameType);
@@ -2188,7 +2188,7 @@ public partial class GameSessionService : IGameSessionService
     {
         return new GameSessionResponse
         {
-            SessionId = Guid.Parse(model.SessionId),
+            SessionId = model.SessionId,
             GameType = model.GameType,
             SessionType = model.SessionType,
             SessionName = model.SessionName,

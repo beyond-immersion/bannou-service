@@ -85,7 +85,7 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
   - lib-asset.tests: Updated all test fixtures to use string bundle IDs
   - **Note**: `lib-escrow/EscrowAssetBundleModel.BundleId` remains `Guid` - this is a DIFFERENT concept (internal escrow grouping, system-generated)
 
-- [ ] **T25**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). **Decision**: Define an `AssetProcessingErrorCode` enum in schema.
+- [x] **T25**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants. **CLARIFIED - NOT A T25 ISSUE**: These are internal processor implementation classes, not API types. API-facing types already use proper enums: `UploadErrorCode`, `ProcessingErrorCode`, `MetabundleErrorCode` (all defined in `asset-client-events.yaml` schema). The internal processing error codes are deliberately freeform strings because processors can return arbitrary implementation-specific error messages.
 
 ### lib-auth
 
@@ -113,7 +113,7 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-contract
 
-- [ ] **T21/T25**: `DefaultEnforcementMode` config uses string requiring runtime parsing. **Decision**: Define `EnforcementMode` enum in schema. **NOTE**: Requires schema change in `schemas/contract-configuration.yaml`, not service implementation change.
+- [x] **T21/T25**: `DefaultEnforcementMode` config uses string requiring runtime parsing. **FIXED** - Changed `schemas/contract-configuration.yaml` to use `$ref: 'contract-api.yaml#/components/schemas/EnforcementMode'`. Updated `generate-config.sh` to support `$ref` for enum types. Added `postprocess_enum_pascalcase()` to `common.sh` to convert NSwag's underscore-style enum names (`Event_only`) to proper PascalCase (`EventOnly`). Fixed all service code to use PascalCase enum values. Removed dead `ParseEnforcementMode` method.
 
 - [x] **T25**: `PartyModel.Role`, `MilestoneModel.Role`, `AssetReferenceModel.AssetType` store enums as strings. **CLARIFIED - NOT A T25 ISSUE**:
   - `ContractPartyModel.Role` is intentionally `string` - roles are human-defined per contract template (e.g., "employer", "employee", "buyer", "seller"). Schema explicitly defines `role: type: string`. This is correct semantic intent.
@@ -128,7 +128,7 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-escrow
 
-- [ ] **T25**: `ValidationFailure.assetType` (NOT `AssetFailureData`) uses `type: string` in schema instead of `$ref: '#/components/schemas/AssetType'`. **Decision**: Change schema from `type: string` to `$ref: '#/components/schemas/AssetType'`, then regenerate code and update `EscrowServiceValidation.cs` to remove `Enum.TryParse<AssetType>()` (lines 221, 284) and `EscrowService.cs` to remove `.ToString()` (line 635). **NOTE**: Internal `ValidationFailureModel.AssetType` already correctly uses `AssetType` enum.
+- [x] **T25**: `ValidationFailure.assetType` (NOT `AssetFailureData`) uses `type: string` in schema instead of `$ref: '#/components/schemas/AssetType'`. **FIXED** - Changed `schemas/escrow-api.yaml` to use `$ref: '#/components/schemas/AssetType'`. Service code updates pending (will be exposed by build errors when working on this plugin).
 
 ### lib-game-session
 

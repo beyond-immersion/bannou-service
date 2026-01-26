@@ -1094,8 +1094,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 EncounterId = body.EncounterId,
                 CharacterId = body.CharacterId,
                 PerspectiveId = perspective.PerspectiveId,
-                PreviousEmotionalImpact = previousEmotion.ToString(),
-                NewEmotionalImpact = body.EmotionalImpact?.ToString(),
+                PreviousEmotionalImpact = previousEmotion,
+                NewEmotionalImpact = body.EmotionalImpact,
                 PreviousSentimentShift = previousSentiment,
                 NewSentimentShift = body.SentimentShift
             }, cancellationToken: cancellationToken);
@@ -2137,7 +2137,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
 
     private async Task<PerspectiveData> ApplyLazyDecayAsync(IStateStore<PerspectiveData> store, PerspectiveData perspective, CancellationToken cancellationToken)
     {
-        if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != "lazy")
+        if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != MemoryDecayMode.Lazy)
             return perspective;
 
         var (needsDecay, _) = CalculateDecay(perspective);

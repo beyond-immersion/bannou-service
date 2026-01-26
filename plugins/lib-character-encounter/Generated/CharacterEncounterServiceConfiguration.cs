@@ -32,6 +32,18 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// Memory decay mode - 'lazy' applies decay on access, 'scheduled' uses background processing
+/// </summary>
+public enum MemoryDecayMode
+{
+    Lazy,
+    Scheduled,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for CharacterEncounter service.
 /// Properties are automatically bound from environment variables.
@@ -69,7 +81,7 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     /// Memory decay mode - 'lazy' applies decay on access, 'scheduled' uses background processing
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE
     /// </summary>
-    public string MemoryDecayMode { get; set; } = "lazy";
+    public MemoryDecayMode MemoryDecayMode { get; set; } = MemoryDecayMode.Lazy;
 
     /// <summary>
     /// Hours between decay checks (used for calculating decay amount)
