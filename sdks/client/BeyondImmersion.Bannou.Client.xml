@@ -10527,7 +10527,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.BundleId">
             <summary>
-            Assigned bundle ID on success
+            Assigned human-readable bundle ID on success
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.AssetsRegistered">
@@ -10579,7 +10579,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.BundleId">
             <summary>
-            ID of the created bundle
+            Human-readable ID of the created bundle
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.Success">
@@ -10632,7 +10632,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.MetabundleId">
             <summary>
-            ID of the metabundle
+            Human-readable ID of the metabundle
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.Success">
@@ -13389,7 +13389,7 @@
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Name">
             <summary>
             Machine-readable identifier for this shortcut.
-            <br/>Examples: "join_game_arcadia", "get_my_stats"
+            <br/>Examples: "join_game_{service}", "get_my_stats"
             <br/>
             </summary>
         </member>
@@ -15040,6 +15040,11 @@
             Current actor lifecycle state
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.PerceptionSourceType">
+            <summary>
+            Type of source generating a perception event
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Actor.StopActorRequest">
             <summary>
             Request to stop a running actor
@@ -15162,7 +15167,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.SourceType">
             <summary>
-            Type of source (character, npc, object, environment)
+            Type of source (character, npc, object, environment, coordinator, scheduled, message)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.Data">
@@ -16927,7 +16932,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.BundleId">
             <summary>
-            Unique bundle identifier
+            Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Version">
@@ -16964,7 +16969,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.BundleId">
             <summary>
-            Unique bundle identifier
+            Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.Status">
@@ -16984,7 +16989,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.BundleId">
             <summary>
-            Bundle identifier to retrieve
+            Human-readable bundle identifier to retrieve
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.Format">
@@ -16999,7 +17004,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.BundleId">
             <summary>
-            Unique bundle identifier
+            Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.Version">
@@ -17072,7 +17077,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.BundleId">
             <summary>
-            Bundle identifier from the manifest
+            Human-readable bundle identifier from the manifest
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.Version">
@@ -17150,13 +17155,13 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.MetabundleId">
             <summary>
-            Unique identifier for the new metabundle
+            Human-readable identifier for the new metabundle (e.g., "game-assets-v1")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.SourceBundleIds">
             <summary>
-            Source bundle IDs to pull assets from. Can cherry-pick specific
-            <br/>assets using assetFilter, or include all if assetFilter is null.
+            Human-readable source bundle IDs (e.g., "synty/polygon-adventure") to pull assets from.
+            <br/>Can cherry-pick specific assets using assetFilter, or include all if assetFilter is null.
             <br/>
             </summary>
         </member>
@@ -17214,7 +17219,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.MetabundleId">
             <summary>
-            Metabundle identifier
+            Human-readable metabundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.JobId">
@@ -17289,7 +17294,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.MetabundleId">
             <summary>
-            Metabundle identifier being created
+            Human-readable metabundle identifier being created
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Status">
@@ -17455,7 +17460,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.BundleId">
             <summary>
-            Bundle identifier
+            Human-readable bundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.BundleType">
@@ -17615,7 +17620,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.BundleId">
             <summary>
-            Bundle identifier
+            Human-readable bundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.BundleType">
@@ -17704,7 +17709,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.BundleId">
             <summary>
-            Unique bundle identifier
+            Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.BundleType">
@@ -17784,7 +17789,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.BundleId">
             <summary>
-            Bundle identifier to update
+            Human-readable bundle identifier to update
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.Name">
@@ -17824,7 +17829,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleResponse.BundleId">
             <summary>
-            Updated bundle identifier
+            Human-readable bundle identifier that was updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleResponse.Version">
@@ -17854,7 +17859,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleRequest.BundleId">
             <summary>
-            Bundle identifier to delete
+            Human-readable bundle identifier to delete
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleRequest.Permanent">
@@ -17874,7 +17879,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleResponse.BundleId">
             <summary>
-            Deleted bundle identifier
+            Human-readable bundle identifier that was deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleResponse.Status">
@@ -17899,7 +17904,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleRequest.BundleId">
             <summary>
-            Bundle identifier to restore
+            Human-readable bundle identifier to restore
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleRequest.Reason">
@@ -17914,7 +17919,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleResponse.BundleId">
             <summary>
-            Restored bundle identifier
+            Human-readable bundle identifier that was restored
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleResponse.Status">
@@ -18044,7 +18049,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsRequest.BundleId">
             <summary>
-            Bundle identifier to get history for
+            Human-readable bundle identifier to get history for
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsRequest.Limit">
@@ -18064,7 +18069,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsResponse.BundleId">
             <summary>
-            Bundle identifier
+            Human-readable bundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsResponse.CurrentVersion">
@@ -18330,7 +18335,7 @@
         <member name="P:BeyondImmersion.BannouService.Auth.ValidateTokenResponse.Authorizations">
             <summary>
             Authorization strings from active subscriptions.
-            <br/>Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            <br/>Format: "{stubName}:{state}" (e.g., "my-game:authorized")
             <br/>
             </summary>
         </member>
@@ -23408,6 +23413,11 @@
             Current status of an authorization hold
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Currency.EarnCapType">
+            <summary>
+            Type of earn cap that was applied
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Currency.CreateCurrencyDefinitionRequest">
             <summary>
             Request to create a new currency definition
@@ -27580,7 +27590,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.PartyType">
             <summary>
-            Type of the party entity (account, character, npc, guild, system)
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowParty.DisplayName">
@@ -27800,7 +27810,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.PartyType">
             <summary>
-            Type of the party
+            Type of depositing party
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDeposit.ExpectedAssets">
@@ -27850,7 +27860,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.PartyType">
             <summary>
-            Type of the depositing party
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowDeposit.Assets">
@@ -27925,7 +27935,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.PartyType">
             <summary>
-            Type of the party
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.EscrowConsent.ConsentType">
@@ -28140,7 +28150,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.PartyType">
             <summary>
-            Party entity type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.CreateEscrowPartyInput.DisplayName">
@@ -28185,7 +28195,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.PartyType">
             <summary>
-            Type of the party
+            Type of depositing party
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ExpectedDepositInput.ExpectedAssets">
@@ -28365,7 +28375,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyToken.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyToken.Token">
@@ -28555,7 +28565,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DepositRequest.Assets">
@@ -28650,7 +28660,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ValidateDepositRequest.Assets">
@@ -28705,7 +28715,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.GetDepositStatusRequest.AdditionalProperties">
@@ -28765,7 +28775,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ConsentRequest.ConsentType">
@@ -28885,7 +28895,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.PartyConsentStatus.DisplayName">
@@ -29165,7 +29175,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.DisputeRequest.Reason">
@@ -29260,7 +29270,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.SplitAllocation.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.SplitAllocation.Assets">
@@ -29440,7 +29450,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.PartyType">
             <summary>
-            Party type
+            Type of entity (Account, Character, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Escrow.ReaffirmRequest.ReleaseToken">
@@ -29645,12 +29655,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.StubName">
             <summary>
-            URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+            URL-safe identifier for the service (e.g., "my-game", "my-other-game")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.DisplayName">
             <summary>
-            Human-readable name for the service (e.g., "Arcadia Online")
+            Human-readable name for the service (e.g., "My Game Online")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.Description">
@@ -29715,12 +29725,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.StubName">
             <summary>
-            URL-safe identifier (e.g., "arcadia")
+            URL-safe identifier (e.g., "my-game")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.DisplayName">
             <summary>
-            Human-readable name (e.g., "Arcadia Online")
+            Human-readable name (e.g., "My Game Online")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.Description">
@@ -29810,7 +29820,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.GameType">
             <summary>
-            Type of game for this session (arcadia or generic)
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.MaxPlayers">
@@ -29960,7 +29970,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.GameType">
             <summary>
-            Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system.
+            Game service stub name to join. Determines which lobby to join. Provided by shortcut system.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.Password">
@@ -30213,11 +30223,6 @@
             Type of game session - determines join behavior
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.GameSession.GameType">
-            <summary>
-            Type of game for this session
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.SessionStatus">
             <summary>
             Current status of the game session
@@ -30369,6 +30374,11 @@
         <member name="T:BeyondImmersion.BannouService.Inventory.ContainerConstraintModel">
             <summary>
             Container capacity constraint type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Inventory.ConstraintLimitType">
+            <summary>
+            Which specific capacity constraint was reached
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Inventory.WeightContribution">
@@ -35579,11 +35589,6 @@
             Method for aggregating party member skills
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Matchmaking.SessionGameType">
-            <summary>
-            Game type for created sessions (maps to game-session service GameType)
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest">
             <summary>
             Request to join a matchmaking queue
@@ -37588,7 +37593,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.AppName">
             <summary>
-            Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
+            Container's app-id for mesh routing (e.g., "bannou", "npc-pool-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.Reason">
@@ -37765,7 +37770,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.AppId">
             <summary>
-            App-id for mesh routing (e.g., "bannou", "npc-omega-01")
+            App-id for mesh routing (e.g., "bannou", "npc-pool-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Status">
@@ -40163,7 +40168,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.GetRealmByCodeRequest.Code">
             <summary>
-            Unique code for the realm (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+            Unique code for the realm (e.g., "REALM_1", "REALM_2")
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Realm.ListRealmsRequest">
@@ -40203,7 +40208,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.Code">
             <summary>
-            Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+            Unique code for the realm (e.g., "REALM_1", "REALM_2")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.Name">
@@ -40408,7 +40413,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Code">
             <summary>
-            Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+            Unique code for the realm (e.g., "REALM_1", "REALM_2")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.Name">
@@ -41371,7 +41376,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.GameId">
             <summary>
-            Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
+            Game identifier for namespace isolation (e.g., "game-1", "game-2")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.OwnerId">
@@ -43514,7 +43519,7 @@
         <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Annotations">
             <summary>
             Consumer-specific data stored without interpretation.
-            <br/>Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+            <br/>Use namespaced keys (e.g., render.castShadows, game.interactionType).
             <br/>
             </summary>
         </member>
@@ -45769,7 +45774,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Subscription.QueryCurrentSubscriptionsRequest.StubName">
             <summary>
-            Stub name of the service to filter by (e.g., "arcadia"). Returns all accounts subscribed to this service.
+            Stub name of the service to filter by (e.g., "my-game"). Returns all accounts subscribed to this service.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.GetSubscriptionRequest">
@@ -47959,191 +47964,6 @@
             The perception data to deliver to the actor
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.PerceptionData">
-            <summary>
-            Data representing a perception event for an actor.
-            <br/>
-            <br/>Spatial context can be provided in two ways (hybrid approach):
-            <br/>1. Typed: Use the optional spatialContext field for structured spatial data
-            <br/>2. Schema-less: Use perceptionType="spatial" with data containing spatial info
-            <br/>
-            <br/>The typed approach is recommended when game server has structured spatial data.
-            <br/>The schema-less approach allows flexibility for game-specific spatial formats.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.PerceptionType">
-            <summary>
-            Perception type. Common values: visual, auditory, tactile, olfactory,
-            <br/>proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SourceId">
-            <summary>
-            ID of the entity causing this perception
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SourceType">
-            <summary>
-            Type of source (character, npc, object, environment)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Data">
-            <summary>
-            Perception-specific data. For perceptionType="spatial", this can contain
-            <br/>game-specific spatial context in any format the game server defines.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Urgency">
-            <summary>
-            How urgent this perception is (0-1)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SpatialContext">
-            <summary>
-            Optional typed spatial context from game server's local spatial state.
-            <br/>Provides structured information about terrain, nearby objects, hazards, etc.
-            <br/>Alternative to using perceptionType="spatial" with schema-less data.
-            <br/>
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.SpatialContext">
-            <summary>
-            Spatial context derived from game server's authoritative spatial state.
-            <br/>Included in perception events to give NPC actors awareness of their environment
-            <br/>without requiring direct map subscriptions.
-            <br/>
-            <br/>Note: additionalProperties=true allows game-specific extensions.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.TerrainType">
-            <summary>
-            Terrain type at character position (grass, stone, water, etc.)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.Elevation">
-            <summary>
-            Elevation at character position
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.NearbyObjects">
-            <summary>
-            Objects within perception radius
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.HazardsInRange">
-            <summary>
-            Active hazards within detection range
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.PathableDirections">
-            <summary>
-            Directions the character can move (for navigation awareness)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.CoverNearby">
-            <summary>
-            Whether cover is available within close range
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.Indoors">
-            <summary>
-            Whether character is currently indoors/under roof
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.NearbyObject">
-            <summary>
-            Information about a nearby object perceived by the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.ObjectId">
-            <summary>
-            Unique identifier of the object
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.ObjectType">
-            <summary>
-            Type of object (boulder_cluster, tree, building, etc.)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.Distance">
-            <summary>
-            Distance from character in game units
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.Direction">
-            <summary>
-            Relative direction (north, south, east, west, above, below, etc.)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.Position">
-            <summary>
-            Optional absolute position
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.HazardInfo">
-            <summary>
-            Information about a hazard in range
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.HazardType">
-            <summary>
-            Type of hazard (fire, poison, radiation, deep_water, etc.)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.Distance">
-            <summary>
-            Distance to hazard edge
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.Severity">
-            <summary>
-            Hazard severity (0-1)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.Direction">
-            <summary>
-            Direction to hazard center
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Events.Position3D">
-            <summary>
-            3D position in world coordinates
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.Position3D.X">
-            <summary>
-            X coordinate
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.Position3D.Y">
-            <summary>
-            Y coordinate (typically vertical)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.Position3D.Z">
-            <summary>
-            Z coordinate
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateCreatedEvent">
             <summary>
             Published to actor-template.created when a actortemplate is created
@@ -48762,7 +48582,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleCreatedEvent.BundleId">
             <summary>
-            Bundle identifier
+            Human-readable bundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleCreatedEvent.Version">
@@ -48810,7 +48630,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.MetabundleId">
             <summary>
-            Metabundle identifier
+            Human-readable metabundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.Version">
@@ -48830,7 +48650,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.SourceBundleIds">
             <summary>
-            List of source bundle IDs that were composed
+            List of human-readable source bundle IDs that were composed
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.AssetCount">
@@ -48873,7 +48693,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.BundleId">
             <summary>
-            Bundle identifier
+            Human-readable bundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.Version">
@@ -48913,7 +48733,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.BundleId">
             <summary>
-            Bundle identifier
+            Human-readable bundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.Permanent">
@@ -48948,7 +48768,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleRestoredEvent.BundleId">
             <summary>
-            Bundle identifier
+            Human-readable bundle identifier
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleRestoredEvent.RestoredFromVersion">
@@ -49050,7 +48870,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Authorizations">
             <summary>
-            Current authorization strings (e.g., ["arcadia:authorized"])
+            Current authorization strings (e.g., ["my-game:authorized"])
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Reason">
@@ -49170,7 +48990,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.Provider">
             <summary>
-            OAuth provider name (e.g., discord, google)
+            OAuth provider name
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.ProviderUserId">
@@ -53850,7 +53670,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.GameType">
             <summary>
-            Type of game being played in this session
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.SessionName">
@@ -53905,7 +53725,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.GameType">
             <summary>
-            Type of game being played in this session
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.SessionName">
@@ -53965,7 +53785,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.GameType">
             <summary>
-            Type of game being played in this session
+            Game service stub name for this session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.SessionName">
@@ -59421,7 +59241,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.StubName">
             <summary>
-            Stub name of the service (e.g., "arcadia")
+            Stub name of the service (e.g., "my-game")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.DisplayName">
@@ -59810,7 +59630,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.Authorizations">
             <summary>
-            Authorization states from JWT (e.g., ["arcadia:authorized"]). Format is "serviceId:state".
+            Authorization states from JWT (e.g., ["my-game:authorized"]). Format is "serviceId:state".
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.ConnectInstanceId">

@@ -9,6 +9,33 @@ namespace BeyondImmersion.Bannou.AssetBundler.Helpers;
 /// </summary>
 public static class AssetApiHelpers
 {
+    #region Realm Helpers
+
+    /// <summary>
+    /// Passes through a realm string, returning null if empty.
+    /// </summary>
+    /// <param name="realm">Realm stub name or ID (nullable).</param>
+    /// <returns>The realm string, or null if empty.</returns>
+    public static string? ParseRealm(string? realm)
+    {
+        return string.IsNullOrEmpty(realm) ? null : realm;
+    }
+
+    /// <summary>
+    /// Validates and returns a required realm string.
+    /// </summary>
+    /// <param name="realm">Realm stub name or ID.</param>
+    /// <returns>The realm string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if realm is null or empty.</exception>
+    public static string ParseRealmRequired(string? realm)
+    {
+        if (string.IsNullOrEmpty(realm))
+            throw new ArgumentNullException(nameof(realm), "Realm is required");
+        return realm;
+    }
+
+    #endregion
+
     #region Enum Parsing
 
     /// <summary>

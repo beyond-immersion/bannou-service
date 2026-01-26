@@ -13,7 +13,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
 {
     private readonly IBannouClient _client;
     private readonly ILogger<BannouWebSocketAssetSource>? _logger;
-    private readonly Realm _defaultRealm;
+    private readonly string _defaultRealm;
     private bool _ownsClient;
 
     /// <inheritdoc />
@@ -26,11 +26,11 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
     /// Creates an asset source using an existing client connection.
     /// </summary>
     /// <param name="client">Connected BannouClient instance.</param>
-    /// <param name="defaultRealm">Default realm for bundle resolution.</param>
+    /// <param name="defaultRealm">Default realm stub name or ID for bundle resolution.</param>
     /// <param name="logger">Optional logger.</param>
     public BannouWebSocketAssetSource(
         IBannouClient client,
-        Realm defaultRealm = Realm.Shared,
+        string defaultRealm = "shared",
         ILogger<BannouWebSocketAssetSource>? logger = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
@@ -45,7 +45,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
     /// <param name="serverUrl">WebSocket server URL.</param>
     /// <param name="email">Account email.</param>
     /// <param name="password">Account password.</param>
-    /// <param name="defaultRealm">Default realm for bundle resolution.</param>
+    /// <param name="defaultRealm">Default realm stub name or ID for bundle resolution.</param>
     /// <param name="logger">Optional logger.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Connected asset source.</returns>
@@ -53,7 +53,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         string serverUrl,
         string email,
         string password,
-        Realm defaultRealm = Realm.Shared,
+        string defaultRealm = "shared",
         ILogger<BannouWebSocketAssetSource>? logger = null,
         CancellationToken ct = default)
     {
@@ -81,14 +81,14 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
     /// </summary>
     /// <param name="serverUrl">WebSocket server URL.</param>
     /// <param name="serviceToken">Service authentication token.</param>
-    /// <param name="defaultRealm">Default realm for bundle resolution.</param>
+    /// <param name="defaultRealm">Default realm stub name or ID for bundle resolution.</param>
     /// <param name="logger">Optional logger.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Connected asset source.</returns>
     public static async Task<BannouWebSocketAssetSource> ConnectWithTokenAsync(
         string serverUrl,
         string serviceToken,
-        Realm defaultRealm = Realm.Shared,
+        string defaultRealm = "shared",
         ILogger<BannouWebSocketAssetSource>? logger = null,
         CancellationToken ct = default)
     {

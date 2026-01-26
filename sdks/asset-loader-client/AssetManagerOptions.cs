@@ -1,5 +1,3 @@
-using Realm = BeyondImmersion.BannouService.Asset.Realm;
-
 namespace BeyondImmersion.Bannou.AssetLoader.Client;
 
 /// <summary>
@@ -14,10 +12,10 @@ public sealed class AssetManagerOptions
     public string CacheDirectory { get; init; } = "./asset-cache";
 
     /// <summary>
-    /// Default realm for bundle resolution.
-    /// Default: Realm.Shared
+    /// Default realm stub name or ID for bundle resolution.
+    /// Default: "shared"
     /// </summary>
-    public Realm Realm { get; init; } = Realm.Shared;
+    public string Realm { get; init; } = "shared";
 
     /// <summary>
     /// Maximum number of concurrent bundle downloads.

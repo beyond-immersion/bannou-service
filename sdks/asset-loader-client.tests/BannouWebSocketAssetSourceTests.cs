@@ -532,7 +532,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
                     Filename = "asset-456.bin",
                     ContentType = "model/gltf-binary",
                     AssetType = AssetType.Model,
-                    Realm = Realm.Shared,
+                    Realm = "shared",
                     ProcessingStatus = ProcessingStatus.Complete,
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow

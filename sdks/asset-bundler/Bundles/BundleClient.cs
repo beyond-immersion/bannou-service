@@ -333,7 +333,7 @@ public sealed class BundleClient
             Name = info.Name,
             Description = info.Description,
             Owner = info.Owner,
-            Realm = info.Realm.ToString(),
+            Realm = info.Realm,
             Tags = info.Tags,
             Status = info.Status.ToString(),
             AssetCount = info.AssetCount,
