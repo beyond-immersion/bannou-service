@@ -10,14 +10,14 @@ WORKDIR /app
 COPY . .
 
 # Build the http-tester application in Release configuration
-RUN dotnet build http-tester --configuration Release
+RUN dotnet build tools/http-tester --configuration Release
 
 # Runtime image based on ASP.NET Core runtime (needed for bannou-service dependencies)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 
 # Copy the built http-tester application
 WORKDIR /app
-COPY --from=build /app/http-tester/bin/Release/net9.0/ .
+COPY --from=build /app/tools/http-tester/bin/Release/net9.0/ .
 
 # Copy any service libraries that http-tester might need from the bannou base image
 COPY --from=bannou-base /app/plugins/ ./plugins/

@@ -16,7 +16,7 @@ COPY . .
 
 # Build the edge-tester application in Release configuration
 # UsePublishedSDK=true uses NuGet package, false uses project reference
-RUN dotnet build edge-tester --configuration Release -p:UsePublishedSDK=${UsePublishedSDK}
+RUN dotnet build tools/edge-tester --configuration Release -p:UsePublishedSDK=${UsePublishedSDK}
 
 # Build TypeScript test harness
 FROM node:22-slim AS ts-build
@@ -28,12 +28,12 @@ WORKDIR /app
 COPY sdks/typescript ./sdks/typescript
 
 # Copy harness source
-COPY edge-tester/TypeScript ./edge-tester/TypeScript
+COPY tools/edge-tester/TypeScript ./tools/edge-tester/TypeScript
 
 # Install dependencies and build the harness
 # Use --install-links to copy file: dependencies instead of symlinking them
 # This ensures the packages are self-contained after Docker COPY
-WORKDIR /app/edge-tester/TypeScript
+WORKDIR /app/tools/edge-tester/TypeScript
 RUN npm install --install-links && npm run build
 
 # Runtime image based on ASP.NET Core runtime (needed for bannou-service dependencies)
@@ -45,7 +45,7 @@ COPY --from=ts-build /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 # Copy the built edge-tester application
 WORKDIR /app
-COPY --from=build /app/edge-tester/bin/Release/net9.0/ .
+COPY --from=build /app/tools/edge-tester/bin/Release/net9.0/ .
 
 # Copy any service libraries that edge-tester might need from the bannou base image
 COPY --from=bannou-base /app/plugins/ ./plugins/
@@ -53,7 +53,7 @@ COPY --from=bannou-base /app/plugins/ ./plugins/
 # Copy the built TypeScript harness (includes node_modules with bundled dependencies)
 # Copy to ./TypeScript which is the first path FindHarnessPath() checks: {currentDir}/TypeScript
 # Docker COPY dereferences symlinks, so the SDK files are embedded in node_modules
-COPY --from=ts-build /app/edge-tester/TypeScript ./TypeScript
+COPY --from=ts-build /app/tools/edge-tester/TypeScript ./TypeScript
 
 # Set the entrypoint to run edge-tester in daemon mode
 ENTRYPOINT ["dotnet", "edge-tester.dll"]

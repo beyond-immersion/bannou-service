@@ -545,6 +545,10 @@ public partial class ItemService : IItemService
             {
                 model.CurrentDurability = Math.Max(0, model.CurrentDurability.Value + body.DurabilityDelta.Value);
             }
+            if (body.QuantityDelta.HasValue)
+            {
+                model.Quantity = Math.Max(0, model.Quantity + body.QuantityDelta.Value);
+            }
             if (body.CustomStats is not null)
             {
                 model.CustomStats = BannouJson.Serialize(body.CustomStats);
