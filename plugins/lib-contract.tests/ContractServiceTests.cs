@@ -1106,7 +1106,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             ContractId = contractId,
             BreachingEntityId = breachingEntityId,
             BreachingEntityType = EntityType.Character,
-            BreachType = BreachType.Term_violation,
+            BreachType = BreachType.TermViolation,
             Description = "Failed to deliver goods"
         };
 
@@ -1135,7 +1135,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             ContractId = contractId,
             BreachingEntityId = Guid.NewGuid(),
             BreachingEntityType = EntityType.Character,
-            BreachType = BreachType.Term_violation,
+            BreachType = BreachType.TermViolation,
             BreachedTermOrMilestone = "payment_term"
         };
 
@@ -1164,7 +1164,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             ContractId = contractId,
             BreachingEntityId = Guid.NewGuid(),
             BreachingEntityType = EntityType.Character,
-            BreachType = BreachType.Term_violation,
+            BreachType = BreachType.TermViolation,
             Status = BreachStatus.Detected,
             DetectedAt = DateTimeOffset.UtcNow
         };
@@ -1230,7 +1230,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             ContractId = contractId,
             BreachingEntityId = Guid.NewGuid(),
             BreachingEntityType = EntityType.Character,
-            BreachType = BreachType.Term_violation,
+            BreachType = BreachType.TermViolation,
             Status = BreachStatus.Detected,
             DetectedAt = DateTimeOffset.UtcNow
         };
@@ -1297,7 +1297,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new UpdateContractMetadataRequest
         {
             ContractId = contractId,
-            MetadataType = MetadataType.Instance_data,
+            MetadataType = MetadataType.InstanceData,
             Data = new Dictionary<string, object> { ["quest_id"] = "quest_123" }
         };
 
@@ -1323,7 +1323,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new UpdateContractMetadataRequest
         {
             ContractId = contractId,
-            MetadataType = MetadataType.Instance_data,
+            MetadataType = MetadataType.InstanceData,
             Data = new Dictionary<string, object> { ["key"] = "value" }
         };
 
@@ -1522,7 +1522,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                 new() { Role = "employer", MinCount = 1, MaxCount = 1 },
                 new() { Role = "employee", MinCount = 1, MaxCount = 1 }
             },
-            DefaultEnforcementMode = EnforcementMode.Event_only,
+            DefaultEnforcementMode = EnforcementMode.EventOnly,
             Transferable = false,
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow
@@ -1851,7 +1851,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "notification",
                         Endpoint = "/notification/send",
                         PayloadTemplate = """{"message": "Milestone completed"}""",
-                        ExecutionMode = PreboundApiExecutionMode.Fire_and_forget
+                        ExecutionMode = PreboundApiExecutionMode.FireAndForget
                     }
                 }
             }
@@ -1935,7 +1935,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
                         ServiceName = "notification",
                         Endpoint = "/notification/send",
                         PayloadTemplate = """{"type": "milestone_failed", "contractId": "{{contract.id}}"}""",
-                        ExecutionMode = PreboundApiExecutionMode.Fire_and_forget
+                        ExecutionMode = PreboundApiExecutionMode.FireAndForget
                     }
                 }
             }

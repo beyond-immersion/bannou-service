@@ -1725,7 +1725,7 @@ public partial class ConnectService : IConnectService
                 {
                     EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    Reason = PermissionRecompileEventReason.Service_registered,
+                    Reason = PermissionRecompileEventReason.ServiceRegistered,
                     ServiceId = eventData.ServiceName,
                     Metadata = new Dictionary<string, object>
                     {

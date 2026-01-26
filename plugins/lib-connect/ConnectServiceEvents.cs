@@ -42,7 +42,7 @@ public partial class ConnectService
     /// <param name="evt">The session invalidated event.</param>
     public async Task HandleSessionInvalidatedAsync(SessionInvalidatedEvent evt)
     {
-        var sessionIds = evt.SessionIds?.ToList() ?? new List<string>();
+        var sessionIds = evt.SessionIds?.Select(id => id.ToString()).ToList() ?? new List<string>();
         var reason = evt.Reason.ToString();
         var disconnectClients = evt.DisconnectClients;
 

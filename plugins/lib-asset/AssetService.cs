@@ -3124,7 +3124,7 @@ public partial class AssetService : IAssetService
             {
                 BundleId = body.BundleId,
                 Status = body.Permanent == true
-                    ? DeleteBundleResponseStatus.Permanently_deleted
+                    ? DeleteBundleResponseStatus.PermanentlyDeleted
                     : DeleteBundleResponseStatus.Deleted,
                 DeletedAt = deletedAt,
                 RetentionUntil = retentionUntil
@@ -3368,7 +3368,7 @@ public partial class AssetService : IAssetService
             var totalCount = bundleList.Count;
 
             // Apply sorting
-            var sortField = body.SortField ?? QueryBundlesRequestSortField.Created_at;
+            var sortField = body.SortField ?? QueryBundlesRequestSortField.CreatedAt;
             var sortDesc = body.SortOrder != QueryBundlesRequestSortOrder.Asc;
 
             bundleList = sortField switch
@@ -3376,7 +3376,7 @@ public partial class AssetService : IAssetService
                 QueryBundlesRequestSortField.Name => sortDesc
                     ? bundleList.OrderByDescending(b => b.Name).ToList()
                     : bundleList.OrderBy(b => b.Name).ToList(),
-                QueryBundlesRequestSortField.Updated_at => sortDesc
+                QueryBundlesRequestSortField.UpdatedAt => sortDesc
                     ? bundleList.OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt).ToList()
                     : bundleList.OrderBy(b => b.UpdatedAt ?? b.CreatedAt).ToList(),
                 QueryBundlesRequestSortField.Size => sortDesc
