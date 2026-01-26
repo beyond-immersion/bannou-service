@@ -1171,6 +1171,30 @@ public partial class ModifyItemInstanceRequest
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]
     public object? InstanceMetadata { get; set; } = default!;
 
+    /// <summary>
+    /// Move item to a different container. Used by inventory service for item movement.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newContainerId")]
+    public System.Guid? NewContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// New slot index within the container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newSlotIndex")]
+    public int? NewSlotIndex { get; set; } = default!;
+
+    /// <summary>
+    /// New X position for grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newSlotX")]
+    public int? NewSlotX { get; set; } = default!;
+
+    /// <summary>
+    /// New Y position for grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newSlotY")]
+    public int? NewSlotY { get; set; } = default!;
+
 }
 
 /// <summary>

@@ -561,6 +561,22 @@ public partial class ItemService : IItemService
             {
                 model.InstanceMetadata = BannouJson.Serialize(body.InstanceMetadata);
             }
+            if (body.NewContainerId.HasValue)
+            {
+                model.ContainerId = body.NewContainerId.Value;
+            }
+            if (body.NewSlotIndex.HasValue)
+            {
+                model.SlotIndex = body.NewSlotIndex.Value;
+            }
+            if (body.NewSlotX.HasValue)
+            {
+                model.SlotX = body.NewSlotX.Value;
+            }
+            if (body.NewSlotY.HasValue)
+            {
+                model.SlotY = body.NewSlotY.Value;
+            }
             model.ModifiedAt = now;
 
             await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);

@@ -707,6 +707,25 @@ public partial class InventoryService : IInventoryService
             // Save with cache write-through
             await SaveContainerWithCacheAsync(container, cancellationToken);
 
+            // Update item's container reference in item service
+            try
+            {
+                await _itemClient.ModifyItemInstanceAsync(
+                    new ModifyItemInstanceRequest
+                    {
+                        InstanceId = body.InstanceId,
+                        NewContainerId = body.ContainerId,
+                        NewSlotIndex = body.SlotIndex,
+                        NewSlotX = body.SlotX,
+                        NewSlotY = body.SlotY
+                    }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Failed to update item container reference for {InstanceId}", body.InstanceId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
             // Check if container is now full and emit event
             await EmitContainerFullEventIfNeededAsync(container, now, cancellationToken);
 

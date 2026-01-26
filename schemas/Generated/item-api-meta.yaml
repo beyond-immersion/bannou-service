@@ -1104,7 +1104,16 @@ paths:
         nullable\": true,\n                    \"description\": \"Change to quantity (positive to add, negative to subtract).
         Only valid for stackable items.\"\n                },\n                \"instanceMetadata\": {\n                 \
         \   \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"New instance
-        metadata (merges with existing)\"\n                }\n            }\n        }\n    }\n}"
+        metadata (merges with existing)\"\n                },\n                \"newContainerId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Move item to a different container. Used by inventory service for item movement.\"\
+        \n                },\n                \"newSlotIndex\": {\n                    \"type\": \"integer\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"New slot index within the container\"\n   \
+        \             },\n                \"newSlotX\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"New X position for grid-based containers\"\n      \
+        \          },\n                \"newSlotY\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"New Y position for grid-based containers\"\n           \
+        \     }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -2270,6 +2279,23 @@ components:
           type: object
           nullable: true
           description: New instance metadata (merges with existing)
+        newContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Move item to a different container. Used by inventory service for item movement.
+        newSlotIndex:
+          type: integer
+          nullable: true
+          description: New slot index within the container
+        newSlotX:
+          type: integer
+          nullable: true
+          description: New X position for grid-based containers
+        newSlotY:
+          type: integer
+          nullable: true
+          description: New Y position for grid-based containers
     BindItemInstanceRequest:
       type: object
       description: Request to bind an item to a character
