@@ -632,7 +632,7 @@ public partial class EscrowService : IEscrowService
         return new ValidationFailure
         {
             DetectedAt = model.DetectedAt,
-            AssetType = model.AssetType.ToString(),
+            AssetType = model.AssetType,
             AssetDescription = model.AssetDescription,
             FailureType = model.FailureType,
             AffectedPartyId = model.AffectedPartyId,
@@ -705,7 +705,7 @@ internal class EscrowAgreementModel
     public EscrowType EscrowType { get; set; }
     public EscrowTrustMode TrustMode { get; set; }
     public Guid? TrustedPartyId { get; set; }
-    public string? TrustedPartyType { get; set; }
+    public EntityType? TrustedPartyType { get; set; }
     public string? InitiatorServiceId { get; set; }
     public List<EscrowPartyModel>? Parties { get; set; }
     public List<ExpectedDepositModel>? ExpectedDeposits { get; set; }
@@ -719,7 +719,7 @@ internal class EscrowAgreementModel
     public List<ValidationFailureModel>? ValidationFailures { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public Guid CreatedBy { get; set; }
-    public string CreatedByType { get; set; } = string.Empty;
+    public EntityType CreatedByType { get; set; }
     public DateTimeOffset? FundedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
@@ -815,7 +815,7 @@ internal class EscrowAssetModel
     public string? CustomAssetId { get; set; }
     public object? CustomAssetData { get; set; }
     public Guid SourceOwnerId { get; set; }
-    public string SourceOwnerType { get; set; } = string.Empty;
+    public EntityType SourceOwnerType { get; set; }
     public Guid? SourceContainerId { get; set; }
 }
 
@@ -825,7 +825,7 @@ internal class EscrowAssetModel
 internal class ReleaseAllocationModel
 {
     public Guid RecipientPartyId { get; set; }
-    public string RecipientPartyType { get; set; } = string.Empty;
+    public EntityType RecipientPartyType { get; set; }
     public List<EscrowAssetModel>? Assets { get; set; }
     public Guid? DestinationWalletId { get; set; }
     public Guid? DestinationContainerId { get; set; }
@@ -855,7 +855,7 @@ internal class ValidationFailureModel
     public string AssetDescription { get; set; } = string.Empty;
     public ValidationFailureType FailureType { get; set; }
     public Guid AffectedPartyId { get; set; }
-    public string AffectedPartyType { get; set; } = string.Empty;
+    public EntityType AffectedPartyType { get; set; }
     public object? Details { get; set; }
 }
 

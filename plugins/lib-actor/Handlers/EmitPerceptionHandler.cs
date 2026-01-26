@@ -99,8 +99,9 @@ public sealed class EmitPerceptionHandler : IActionHandler
         // Get source_id (who/what is sending this perception)
         var sourceId = evaluatedParams.GetValueOrDefault("source_id")?.ToString() ?? "event-brain";
 
-        // Get optional source_type
-        var sourceType = evaluatedParams.GetValueOrDefault("source_type")?.ToString() ?? "coordinator";
+        // Get optional source_type - parse from string to enum for type safety
+        var sourceTypeStr = evaluatedParams.GetValueOrDefault("source_type")?.ToString() ?? "environment";
+        var sourceType = Enum.TryParse<PerceptionSourceType>(sourceTypeStr, ignoreCase: true, out var st) ? st : PerceptionSourceType.Environment;
 
         // Get urgency (default from configuration for Event Brain instructions)
         var urgency = (float)_config.EventBrainDefaultUrgency;

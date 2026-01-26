@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Events;
+
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
@@ -71,7 +73,7 @@ public interface IActorRunner : IAsyncDisposable
     /// </summary>
     /// <param name="perception">The perception data to inject.</param>
     /// <returns>True if the perception was queued, false if the queue is full (oldest will be dropped).</returns>
-    bool InjectPerception(PerceptionData perception);
+    bool InjectPerception(Events.PerceptionData perception);
 
     /// <summary>
     /// Gets the current state snapshot of this actor.

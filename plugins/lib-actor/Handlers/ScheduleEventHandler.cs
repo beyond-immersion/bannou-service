@@ -336,7 +336,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
                 {
                     PerceptionType = evt.EventType,
                     SourceId = evt.SourceId,
-                    SourceType = "scheduled",
+                    SourceType = PerceptionSourceType.Environment, // Scheduled events are system-driven
                     Data = evt.Data,
                     Urgency = (float)_config.ScheduledEventDefaultUrgency
                 }

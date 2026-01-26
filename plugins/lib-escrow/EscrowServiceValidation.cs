@@ -218,7 +218,7 @@ public partial class EscrowService
                         .Select(f => new ValidationFailureModel
                         {
                             DetectedAt = f.DetectedAt,
-                            AssetType = Enum.TryParse<AssetType>(f.AssetType, out var at) ? at : AssetType.Custom,
+                            AssetType = f.AssetType,
                             AssetDescription = f.AssetDescription,
                             FailureType = f.FailureType,
                             AffectedPartyId = f.AffectedPartyId,
@@ -281,7 +281,7 @@ public partial class EscrowService
                         EscrowId = body.EscrowId,
                         Failures = failures.Select(f => new ValidationFailureInfo
                         {
-                            AssetType = Enum.TryParse<AssetType>(f.AssetType, out var at) ? at : AssetType.Custom,
+                            AssetType = f.AssetType,
                             FailureType = f.FailureType,
                             AffectedPartyId = f.AffectedPartyId,
                             Details = null

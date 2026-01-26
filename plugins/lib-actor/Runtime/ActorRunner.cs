@@ -26,7 +26,7 @@ public sealed class ActorRunner : IActorRunner
     private readonly IMeshInvocationClient _meshClient;
     private readonly ActorTemplateData _template;
     private readonly ActorServiceConfiguration _config;
-    private readonly Channel<PerceptionData> _perceptionQueue;
+    private readonly Channel<Events.PerceptionData> _perceptionQueue;
     private readonly ActorState _state;
     private readonly IStateStore<ActorStateSnapshot> _stateStore;
     private readonly IBehaviorDocumentCache _behaviorCache;
@@ -159,7 +159,7 @@ public sealed class ActorRunner : IActorRunner
         _logger = logger;
 
         // Create bounded perception queue with DropOldest behavior
-        _perceptionQueue = Channel.CreateBounded<PerceptionData>(
+        _perceptionQueue = Channel.CreateBounded<Events.PerceptionData>(
             new BoundedChannelOptions(_config.PerceptionQueueSize)
             {
                 FullMode = BoundedChannelFullMode.DropOldest,
@@ -281,7 +281,7 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <inheritdoc/>
-    public bool InjectPerception(PerceptionData perception)
+    public bool InjectPerception(Events.PerceptionData perception)
     {
 
         if (_disposed || Status != ActorStatus.Running)
@@ -778,7 +778,7 @@ public sealed class ActorRunner : IActorRunner
 
         foreach (var (key, value) in workingMemory)
         {
-            if (key.StartsWith("perception:", StringComparison.Ordinal) && value is PerceptionData pd)
+            if (key.StartsWith("perception:", StringComparison.Ordinal) && value is Events.PerceptionData pd)
             {
                 perceptions.Add(new Dictionary<string, object?>
                 {
@@ -1110,7 +1110,8 @@ public sealed class ActorRunner : IActorRunner
         _lastSourceAppId = evt.SourceAppId;
 
         // Convert to PerceptionData and inject into the queue
-        var perception = new PerceptionData
+        // Use Events.PerceptionData which has proper enum types per IMPLEMENTATION TENETS (Type Safety)
+        var perception = new Events.PerceptionData
         {
             PerceptionType = evt.Perception.PerceptionType,
             SourceId = evt.Perception.SourceId,
