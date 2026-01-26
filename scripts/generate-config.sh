@@ -52,6 +52,15 @@ def to_pascal_case(name):
     else:
         return name[0].upper() + name[1:] if name else name
 
+def to_nswag_enum_value(name):
+    # NSwag's enum naming: capitalize first letter and each segment after underscore,
+    # but PRESERVE underscores (unlike PascalCase which removes them)
+    # e.g., 'event_only' -> 'Event_only', 'consequence_based' -> 'Consequence_based'
+    # For hyphens, convert to underscore first: 'pool-per-type' -> 'Pool_per_type'
+    name = name.replace('-', '_')
+    parts = name.split('_')
+    return '_'.join(p.capitalize() for p in parts)
+
 def to_property_name(name):
     # Convert environment variable style to property name
     # e.g., 'MAX_CONNECTIONS' -> 'MaxConnections', 'JwtSecret' -> 'JwtSecret'
@@ -103,9 +112,18 @@ try:
             prop_env_var = prop_info.get('env', prop_name.upper())
             prop_nullable = prop_info.get('nullable', False)
             prop_enum = prop_info.get('enum', None)
+            prop_ref = prop_info.get('\$ref', None)
 
-            # Check if this is an enum property
-            if prop_enum and prop_type == 'string':
+            # Check if this is a $ref to an external enum type
+            if prop_ref:
+                # Extract type name from $ref path (e.g., 'contract-api.yaml#/components/schemas/EnforcementMode' -> 'EnforcementMode')
+                ref_type_name = prop_ref.split('/')[-1]
+                csharp_type = ref_type_name
+                # Mark as enum for default value handling
+                prop_enum = True  # Signal that this is an enum type
+                print(f'# NOTE: Using \$ref enum {ref_type_name} from {prop_ref}', file=sys.stderr)
+            # Check if this is an inline enum property
+            elif prop_enum and prop_type == 'string':
                 # Generate enum type name from property name
                 enum_type_name = to_pascal_case(prop_name)
                 # Check if this enum already exists in API schema (avoid duplicates)
@@ -146,9 +164,9 @@ try:
 
             if prop_default is not None:
                 if is_enum:
-                    # Enum default: convert value to PascalCase enum member
-                    # Handle hyphenated values like 'pool-per-type' -> 'PoolPerType'
-                    enum_value = to_pascal_case(str(prop_default))
+                    # Enum default: convert value to NSwag enum member naming
+                    # NSwag preserves underscores: 'event_only' -> 'Event_only'
+                    enum_value = to_nswag_enum_value(str(prop_default))
                     default_value = f' = {csharp_type}.{enum_value};'
                 elif csharp_type == 'string':
                     default_value = f' = \"{prop_default}\";'

@@ -57,7 +57,7 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// Default enforcement mode for contracts
     /// Environment variable: CONTRACT_DEFAULT_ENFORCEMENT_MODE
     /// </summary>
-    public string DefaultEnforcementMode { get; set; } = "event_only";
+    public EnforcementMode DefaultEnforcementMode { get; set; } = EnforcementMode.Event_Only;
 
     /// <summary>
     /// Default number of days for parties to consent before proposal expires
