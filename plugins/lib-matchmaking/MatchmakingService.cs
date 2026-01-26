@@ -211,7 +211,7 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 QueueId = body.QueueId,
                 GameId = body.GameId,
-                SessionGameType = body.SessionGameType,
+                SessionGameType = body.SessionGameType ?? "generic",
                 DisplayName = body.DisplayName,
                 Description = body.Description,
                 Enabled = true,

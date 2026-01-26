@@ -347,10 +347,10 @@ public partial class CreateQueueRequest
     public string GameId { get; set; } = default!;
 
     /// <summary>
-    /// Game type for created sessions (maps to game-session service)
+    /// Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionGameType")]
-    public string SessionGameType { get; set; } = default!;
+    public string? SessionGameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable queue name

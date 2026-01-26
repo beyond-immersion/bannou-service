@@ -80,9 +80,11 @@ public class ContractTestHandler : BaseHttpTestHandler
         var realm = await CreateTestRealmAsync("CONTRACT_TEST", "Contract", testSuffix);
 
         var speciesClient = GetServiceClient<ISpeciesClient>();
+        // Species code max is 50 chars - use short unique ID to stay under limit
+        var shortId = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
         {
-            Code = $"CONTRACT_SPECIES_{DateTime.Now.Ticks}_{testSuffix}",
+            Code = $"SP_{shortId}",
             Name = $"Contract Test Species {testSuffix}",
             Description = "Test species for contract integration tests"
         });

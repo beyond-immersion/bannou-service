@@ -472,7 +472,8 @@ public partial class MatchmakingController
                 },
                 "sessionGameType": {
                     "$ref": "#/$defs/SessionGameType",
-                    "description": "Game type for created sessions (maps to game-session service)"
+                    "nullable": true,
+                    "description": "Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided."
                 },
                 "displayName": {
                     "type": "string",

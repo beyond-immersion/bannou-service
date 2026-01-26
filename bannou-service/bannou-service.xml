@@ -56475,7 +56475,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.SessionGameType">
             <summary>
-            Game type for created sessions (maps to game-session service)
+            Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.DisplayName">

@@ -547,7 +547,8 @@ components:
           description: Game this queue is for
         sessionGameType:
           $ref: '#/components/schemas/SessionGameType'
-          description: Game type for created sessions (maps to game-session service)
+          nullable: true
+          description: Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided.
         displayName:
           type: string
           maxLength: 100
