@@ -18980,7 +18980,11 @@
             "description": "For single_party_trusted mode"
           },
           "trustedPartyType": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityType"
+              }
+            ],
             "nullable": true,
             "description": "Type of the trusted party"
           },
@@ -21937,7 +21941,11 @@
             "description": "For single_party_trusted - which party has authority"
           },
           "trustedPartyType": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityType"
+              }
+            ],
             "nullable": true,
             "description": "Type of the trusted party"
           },
@@ -22021,7 +22029,7 @@
             "description": "Who created the escrow"
           },
           "createdByType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of the creator entity"
           },
           "fundedAt": {
@@ -22174,7 +22182,7 @@
             "description": "Where this asset came from (for refunds)"
           },
           "sourceOwnerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of the source owner"
           },
           "sourceContainerId": {
@@ -31548,9 +31556,13 @@
             "description": "ID of the entity causing this perception"
           },
           "sourceType": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PerceptionSourceType"
+              }
+            ],
             "nullable": true,
-            "description": "Type of source (character, npc, object, environment)"
+            "description": "Type of source (character, npc, object, environment, coordinator, scheduled, message)"
           },
           "data": {
             "type": "object",
@@ -31576,6 +31588,21 @@
             "description": "Optional typed spatial context from game server's local spatial state.\nProvides structured information about terrain, nearby objects, hazards, etc.\nAlternative to using perceptionType=\"spatial\" with schema-less data.\n"
           }
         }
+      },
+      "PerceptionSourceType": {
+        "type": "string",
+        "description": "Type of source generating a perception event",
+        "enum": [
+          "character",
+          "npc",
+          "object",
+          "environment",
+          "coordinator",
+          "scheduled",
+          "message",
+          "service",
+          "system"
+        ]
       },
       "PersonalityResponse": {
         "type": "object",
@@ -34312,7 +34339,7 @@
             "description": "Party receiving assets"
           },
           "recipientPartyType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of the recipient party"
           },
           "assets": {
@@ -34351,7 +34378,7 @@
             "description": "Recipient party ID"
           },
           "recipientPartyType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Recipient party type"
           },
           "assets": {
@@ -34866,7 +34893,7 @@
             "description": "Arbiter ID"
           },
           "arbiterType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Arbiter type"
           },
           "resolution": {
@@ -39474,7 +39501,7 @@
             "description": "Which party deposit is affected"
           },
           "affectedPartyType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of the affected party"
           },
           "details": {
@@ -39664,7 +39691,7 @@
             "description": "Verifier entity ID"
           },
           "verifierType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Verifier entity type"
           },
           "verificationData": {

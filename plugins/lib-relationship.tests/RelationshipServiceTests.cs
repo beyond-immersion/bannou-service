@@ -560,8 +560,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var service = CreateService();
         var entityId = Guid.NewGuid();
 
+        // Entity index key uses EntityType.ToString() which returns PascalCase (e.g., "Character")
         _mockListStore
-            .Setup(s => s.GetAsync($"entity-idx:CHARACTER:{entityId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<Guid>?)null);
 
         var request = new ListRelationshipsByEntityRequest
@@ -588,8 +589,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var entityId = Guid.NewGuid();
         var relationshipIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
+        // Entity index key uses EntityType.ToString() which returns PascalCase (e.g., "Character")
         _mockListStore
-            .Setup(s => s.GetAsync($"entity-idx:CHARACTER:{entityId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"entity-idx:{EntityType.Character}:{entityId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(relationshipIds);
 
         // Setup bulk retrieval

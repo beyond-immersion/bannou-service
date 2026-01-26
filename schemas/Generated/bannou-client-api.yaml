@@ -13376,7 +13376,8 @@ components:
           nullable: true
           description: For single_party_trusted mode
         trustedPartyType:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Type of the trusted party
         parties:
@@ -15759,7 +15760,8 @@ components:
           nullable: true
           description: For single_party_trusted - which party has authority
         trustedPartyType:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Type of the trusted party
         initiatorServiceId:
@@ -15824,7 +15826,7 @@ components:
           format: uuid
           description: Who created the escrow
         createdByType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of the creator entity
         fundedAt:
           type: string
@@ -15947,7 +15949,7 @@ components:
           format: uuid
           description: Where this asset came from (for refunds)
         sourceOwnerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of the source owner
         sourceContainerId:
           type: string
@@ -23358,9 +23360,11 @@ components:
           type: string
           description: ID of the entity causing this perception
         sourceType:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/PerceptionSourceType'
           nullable: true
-          description: Type of source (character, npc, object, environment)
+          description: Type of source (character, npc, object, environment, 
+            coordinator, scheduled, message)
         data:
           type: object
           additionalProperties: true
@@ -23383,6 +23387,19 @@ components:
             Optional typed spatial context from game server's local spatial state.
             Provides structured information about terrain, nearby objects, hazards, etc.
             Alternative to using perceptionType="spatial" with schema-less data.
+    PerceptionSourceType:
+      type: string
+      description: Type of source generating a perception event
+      enum:
+      - character
+      - npc
+      - object
+      - environment
+      - coordinator
+      - scheduled
+      - message
+      - service
+      - system
     PersonalityResponse:
       type: object
       description: Complete personality profile for behavior system consumption
@@ -25551,7 +25568,7 @@ components:
           format: uuid
           description: Party receiving assets
         recipientPartyType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of the recipient party
         assets:
           type: array
@@ -25582,7 +25599,7 @@ components:
           format: uuid
           description: Recipient party ID
         recipientPartyType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Recipient party type
         assets:
           type: array
@@ -25980,7 +25997,7 @@ components:
           format: uuid
           description: Arbiter ID
         arbiterType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Arbiter type
         resolution:
           $ref: '#/components/schemas/EscrowResolution'
@@ -29663,7 +29680,7 @@ components:
           format: uuid
           description: Which party deposit is affected
         affectedPartyType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of the affected party
         details:
           type: object
@@ -29815,7 +29832,7 @@ components:
           format: uuid
           description: Verifier entity ID
         verifierType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Verifier entity type
         verificationData:
           type: object

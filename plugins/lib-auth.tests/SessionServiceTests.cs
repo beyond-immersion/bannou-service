@@ -469,7 +469,11 @@ public class SessionServiceTests
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var sessionKeys = new List<string> { "session1", "session2" };
+        // Session keys must be valid GUID strings because PublishSessionInvalidatedEventAsync
+        // parses them back to Guids using Guid.TryParse
+        var sessionKey1 = Guid.NewGuid().ToString("N");
+        var sessionKey2 = Guid.NewGuid().ToString("N");
+        var sessionKeys = new List<string> { sessionKey1, sessionKey2 };
 
         _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionKeys);
@@ -492,8 +496,8 @@ public class SessionServiceTests
         await _service.InvalidateAllSessionsForAccountAsync(accountId);
 
         // Assert - Should delete both sessions
-        _mockSessionStore.Verify(s => s.DeleteAsync("session:session1", It.IsAny<CancellationToken>()), Times.Once);
-        _mockSessionStore.Verify(s => s.DeleteAsync("session:session2", It.IsAny<CancellationToken>()), Times.Once);
+        _mockSessionStore.Verify(s => s.DeleteAsync($"session:{sessionKey1}", It.IsAny<CancellationToken>()), Times.Once);
+        _mockSessionStore.Verify(s => s.DeleteAsync($"session:{sessionKey2}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Should delete the index
         _mockListStore.Verify(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()), Times.Once);
