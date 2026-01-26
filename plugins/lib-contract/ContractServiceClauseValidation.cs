@@ -231,7 +231,7 @@ public partial class ContractService
         {
             PreboundApiExecutionMode.Sync => ExecutionMode.Sync,
             PreboundApiExecutionMode.Async => ExecutionMode.Async,
-            PreboundApiExecutionMode.Fire_and_forget => ExecutionMode.FireAndForget,
+            PreboundApiExecutionMode.FireAndForget => ExecutionMode.FireAndForget,
             _ => ExecutionMode.Sync
         };
     }

@@ -191,7 +191,7 @@ public partial class ContractService : IContractService
                 }).ToList(),
                 DefaultEnforcementMode = body.DefaultEnforcementMode != default
                     ? body.DefaultEnforcementMode
-                    : ParseEnforcementMode(_configuration.DefaultEnforcementMode),
+                    : _configuration.DefaultEnforcementMode,
                 Transferable = body.Transferable,
                 GameMetadata = body.GameMetadata,
                 IsActive = true,
@@ -1083,7 +1083,7 @@ public partial class ContractService : IContractService
                 var breaches = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
                     .GetBulkAsync(breachKeys, cancellationToken);
 
-                var activeStatuses = new[] { BreachStatus.Detected, BreachStatus.Cure_period };
+                var activeStatuses = new[] { BreachStatus.Detected, BreachStatus.CurePeriod };
                 activeBreaches = breaches
                     .Select(b => b.Value)
                     .Where(breach => breach != null && activeStatuses.Contains(breach.Status))
@@ -1417,7 +1417,7 @@ public partial class ContractService : IContractService
                 BreachType = body.BreachType,
                 BreachedTermOrMilestone = body.BreachedTermOrMilestone,
                 Description = body.Description,
-                Status = cureDeadline.HasValue ? BreachStatus.Cure_period : BreachStatus.Detected,
+                Status = cureDeadline.HasValue ? BreachStatus.CurePeriod : BreachStatus.Detected,
                 DetectedAt = now,
                 CureDeadline = cureDeadline
             };
@@ -1479,7 +1479,7 @@ public partial class ContractService : IContractService
                 return (StatusCodes.Conflict, null);
             }
 
-            if (breachModel.Status != BreachStatus.Detected && breachModel.Status != BreachStatus.Cure_period)
+            if (breachModel.Status != BreachStatus.Detected && breachModel.Status != BreachStatus.CurePeriod)
             {
                 _logger.LogWarning("Breach not in curable state: {Status}", breachModel.Status);
                 return (StatusCodes.BadRequest, null);
@@ -1558,7 +1558,7 @@ public partial class ContractService : IContractService
 
             model.GameMetadata ??= new GameMetadataModel();
 
-            if (body.MetadataType == MetadataType.Instance_data)
+            if (body.MetadataType == MetadataType.InstanceData)
             {
                 model.GameMetadata.InstanceData = body.Data;
             }
@@ -1690,7 +1690,7 @@ public partial class ContractService : IContractService
                             }
                             break;
 
-                        case ConstraintType.Non_compete:
+                        case ConstraintType.NonCompete:
                             if (GetCustomTermBool(customTerms, "nonCompete"))
                             {
                                 hasViolation = true;
@@ -1702,7 +1702,7 @@ public partial class ContractService : IContractService
                             // Would need to check territory overlap with proposed action
                             break;
 
-                        case ConstraintType.Time_commitment:
+                        case ConstraintType.TimeCommitment:
                             // Would need to check time commitment overlap
                             break;
                     }
@@ -2156,24 +2156,8 @@ public partial class ContractService : IContractService
         {
             PreboundApiExecutionMode.Sync => ServiceClients.ExecutionMode.Sync,
             PreboundApiExecutionMode.Async => ServiceClients.ExecutionMode.Async,
-            PreboundApiExecutionMode.Fire_and_forget => ServiceClients.ExecutionMode.FireAndForget,
+            PreboundApiExecutionMode.FireAndForget => ServiceClients.ExecutionMode.FireAndForget,
             _ => ServiceClients.ExecutionMode.Sync
-        };
-    }
-
-    /// <summary>
-    /// Parses the configured enforcement mode string to the enum.
-    /// Falls back to Event_only if the string is unrecognized.
-    /// </summary>
-    private static EnforcementMode ParseEnforcementMode(string mode)
-    {
-        return mode switch
-        {
-            "advisory" => EnforcementMode.Advisory,
-            "event_only" => EnforcementMode.Event_only,
-            "consequence_based" => EnforcementMode.Consequence_based,
-            "community" => EnforcementMode.Community,
-            _ => EnforcementMode.Event_only
         };
     }
 
@@ -2604,7 +2588,7 @@ internal class ContractTemplateModel
     public List<PartyRoleModel>? PartyRoles { get; set; }
     public ContractTermsModel? DefaultTerms { get; set; }
     public List<MilestoneDefinitionModel>? Milestones { get; set; }
-    public EnforcementMode DefaultEnforcementMode { get; set; } = EnforcementMode.Event_only;
+    public EnforcementMode DefaultEnforcementMode { get; set; } = EnforcementMode.EventOnly;
     public bool Transferable { get; set; }
     public object? GameMetadata { get; set; }
     public bool IsActive { get; set; } = true;

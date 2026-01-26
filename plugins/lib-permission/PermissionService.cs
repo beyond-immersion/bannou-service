@@ -352,13 +352,13 @@ public partial class PermissionService : IPermissionService
             // Track this service using individual key pattern (race-condition safe)
             // Each service has its own key, eliminating the need to modify a shared list
             var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, body.ServiceId);
-            var registrationInfo = new
+            var registrationInfo = new ServiceRegistrationInfo
             {
                 ServiceId = body.ServiceId,
                 Version = body.Version,
-                RegisteredAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds() // Store as Unix timestamp to avoid serialization bugs
+                RegisteredAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
-            await _stateStoreFactory.GetStore<object>(StateStoreDefinitions.Permission)
+            await _stateStoreFactory.GetStore<ServiceRegistrationInfo>(StateStoreDefinitions.Permission)
                 .SaveAsync(serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
@@ -1089,13 +1089,13 @@ public partial class PermissionService : IPermissionService
                 registeredServiceIds.Count, string.Join(", ", registeredServiceIds));
 
             var services = new List<RegisteredServiceInfo>();
-            var dictStore = _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission);
+            var registrationStore = _stateStoreFactory.GetStore<ServiceRegistrationInfo>(StateStoreDefinitions.Permission);
 
             foreach (var serviceId in registeredServiceIds)
             {
                 // Get individual registration info for this service
                 var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, serviceId);
-                var registrationData = await dictStore.GetAsync(serviceRegisteredKey, cancellationToken);
+                var registrationData = await registrationStore.GetAsync(serviceRegisteredKey, cancellationToken);
 
                 // Count endpoints for this service by scanning permission matrix keys
                 // We look for all state/role combinations and sum unique endpoints
@@ -1124,46 +1124,11 @@ public partial class PermissionService : IPermissionService
                 }
                 endpointCount = uniqueEndpoints.Count;
 
-                // Parse registration data
-                var version = "";
-                var registeredAt = DateTimeOffset.UtcNow;
-
-                if (registrationData != null)
-                {
-                    if (registrationData.TryGetValue("Version", out var versionObj) && versionObj != null)
-                    {
-                        version = versionObj.ToString() ?? "";
-                    }
-                    // Read Unix timestamp (new format)
-                    if (registrationData.TryGetValue("RegisteredAtUnix", out var registeredAtUnixObj) && registeredAtUnixObj != null)
-                    {
-                        long registeredAtUnix = 0;
-                        if (registeredAtUnixObj is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Number)
-                        {
-                            registeredAtUnix = jsonElement.GetInt64();
-                        }
-                        else if (long.TryParse(registeredAtUnixObj.ToString(), out var parsedLong))
-                        {
-                            registeredAtUnix = parsedLong;
-                        }
-                        if (registeredAtUnix > 0)
-                        {
-                            registeredAt = DateTimeOffset.FromUnixTimeSeconds(registeredAtUnix);
-                        }
-                    }
-                    // Fallback to old DateTimeOffset format for backward compatibility
-                    else if (registrationData.TryGetValue("RegisteredAt", out var registeredAtObj) && registeredAtObj != null)
-                    {
-                        if (registeredAtObj is JsonElement jsonElement)
-                        {
-                            DateTimeOffset.TryParse(jsonElement.GetString(), out registeredAt);
-                        }
-                        else
-                        {
-                            DateTimeOffset.TryParse(registeredAtObj.ToString(), out registeredAt);
-                        }
-                    }
-                }
+                // Extract registration data from typed model
+                var version = registrationData?.Version ?? "";
+                var registeredAt = registrationData?.RegisteredAtUnix > 0
+                    ? DateTimeOffset.FromUnixTimeSeconds(registrationData.RegisteredAtUnix)
+                    : DateTimeOffset.UtcNow;
 
                 services.Add(new RegisteredServiceInfo
                 {
@@ -1413,4 +1378,19 @@ public partial class PermissionService : IPermissionService
     }
 
     #endregion
+}
+
+// ============================================================================
+// Internal Data Models
+// ============================================================================
+
+/// <summary>
+/// Internal storage model for service registration information.
+/// Replaces anonymous type to ensure reliable serialization/deserialization.
+/// </summary>
+internal class ServiceRegistrationInfo
+{
+    public string ServiceId { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+    public long RegisteredAtUnix { get; set; }
 }
