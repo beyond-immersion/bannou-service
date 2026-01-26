@@ -984,7 +984,7 @@ public class DocumentationServiceTests
         var request = new ListDocumentsRequest
         {
             Namespace = TEST_NAMESPACE,
-            SortBy = ListSortField.Created_at,
+            SortBy = ListSortField.CreatedAt,
             SortOrder = ListDocumentsRequestSortOrder.Asc
         };
 

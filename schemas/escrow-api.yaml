@@ -842,7 +842,8 @@ components:
           nullable: true
           description: For single_party_trusted - which party has authority
         trustedPartyType:
-          type: string
+          allOf:
+            - $ref: './common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of the trusted party
         initiatorServiceId:
@@ -906,7 +907,7 @@ components:
           format: uuid
           description: Who created the escrow
         createdByType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the creator entity
         fundedAt:
           type: string
@@ -1108,7 +1109,7 @@ components:
           format: uuid
           description: Where this asset came from (for refunds)
         sourceOwnerType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the source owner
         sourceContainerId:
           type: string
@@ -1230,7 +1231,7 @@ components:
           format: uuid
           description: Party receiving assets
         recipientPartyType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the recipient party
         assets:
           type: array
@@ -1309,7 +1310,7 @@ components:
           format: uuid
           description: Which party deposit is affected
         affectedPartyType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the affected party
         details:
           type: object
@@ -1377,7 +1378,8 @@ components:
           nullable: true
           description: For single_party_trusted mode
         trustedPartyType:
-          type: string
+          allOf:
+            - $ref: './common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of the trusted party
         parties:
@@ -1587,7 +1589,7 @@ components:
           format: uuid
           description: Recipient party ID
         recipientPartyType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Recipient party type
         assets:
           type: array
@@ -1743,7 +1745,7 @@ components:
           format: uuid
           description: Party ID
         ownerType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Party type
         tokenType:
           $ref: '#/components/schemas/TokenType'
@@ -2330,7 +2332,7 @@ components:
           format: uuid
           description: Arbiter ID
         arbiterType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Arbiter type
         resolution:
           $ref: '#/components/schemas/EscrowResolution'
@@ -2435,7 +2437,7 @@ components:
           format: uuid
           description: Verifier entity ID
         verifierType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Verifier entity type
         verificationData:
           type: object

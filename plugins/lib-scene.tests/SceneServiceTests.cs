@@ -570,13 +570,13 @@ public class SceneServiceTests
     public void MarkerType_ContainsExpectedValues()
     {
         Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Generic));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Spawn_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Npc_spawn));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.SpawnPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.NpcSpawn));
         Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Waypoint));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Camera_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Light_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Audio_point));
-        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Trigger_point));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.CameraPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.LightPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.AudioPoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.TriggerPoint));
     }
 
     #endregion
@@ -631,10 +631,10 @@ public class SceneServiceTests
         var node = new SceneNode
         {
             NodeType = NodeType.Marker,
-            MarkerType = MarkerType.Spawn_point
+            MarkerType = MarkerType.SpawnPoint
         };
 
-        Assert.Equal(MarkerType.Spawn_point, node.MarkerType);
+        Assert.Equal(MarkerType.SpawnPoint, node.MarkerType);
     }
 
     #endregion

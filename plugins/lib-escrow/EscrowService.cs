@@ -346,7 +346,7 @@ public partial class EscrowService : IEscrowService
     /// <param name="partyId">Party ID.</param>
     /// <param name="partyType">Party type.</param>
     /// <returns>State store key.</returns>
-    internal static string GetPartyPendingKey(Guid partyId, string partyType)
+    internal static string GetPartyPendingKey(Guid partyId, EntityType partyType)
     {
         return $"{PARTY_PENDING_PREFIX}{partyType}:{partyId}";
     }
@@ -377,7 +377,7 @@ public partial class EscrowService : IEscrowService
     /// <param name="partyId">The party ID.</param>
     /// <param name="partyType">The party type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    internal async Task IncrementPartyPendingCountAsync(Guid partyId, string partyType, CancellationToken cancellationToken = default)
+    internal async Task IncrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
     {
         var partyKey = GetPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
@@ -414,7 +414,7 @@ public partial class EscrowService : IEscrowService
     /// <param name="partyId">The party ID.</param>
     /// <param name="partyType">The party type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    internal async Task DecrementPartyPendingCountAsync(Guid partyId, string partyType, CancellationToken cancellationToken = default)
+    internal async Task DecrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
     {
         var partyKey = GetPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;

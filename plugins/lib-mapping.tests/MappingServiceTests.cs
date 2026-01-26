@@ -54,8 +54,8 @@ public class MappingServiceTests
         _mockAffordanceScorer.Setup(s => s.GetKindsForAffordanceType(It.IsAny<AffordanceType>()))
             .Returns((AffordanceType type) => type switch
             {
-                AffordanceType.Shelter => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects },
-                AffordanceType.Ambush => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects, MapKind.Navigation },
+                AffordanceType.Shelter => new List<MapKind> { MapKind.StaticGeometry, MapKind.DynamicObjects },
+                AffordanceType.Ambush => new List<MapKind> { MapKind.StaticGeometry, MapKind.DynamicObjects, MapKind.Navigation },
                 _ => Enum.GetValues<MapKind>().ToList()
             });
         _mockAffordanceScorer.Setup(s => s.ScoreAffordance(It.IsAny<MapObject>(), It.IsAny<AffordanceType>(), It.IsAny<CustomAffordance?>(), It.IsAny<ActorCapabilities?>()))
@@ -252,7 +252,7 @@ public class MappingServiceTests
         {
             RegionId = regionId,
             Kind = MapKind.Terrain,
-            NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+            NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
         };
 
         // Act
@@ -279,7 +279,7 @@ public class MappingServiceTests
         {
             RegionId = regionId,
             Kind = MapKind.Terrain,
-            NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+            NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
         };
 
         // Setup existing channel
@@ -289,7 +289,7 @@ public class MappingServiceTests
                 ChannelId = Guid.NewGuid(),
                 RegionId = regionId,
                 Kind = MapKind.Terrain,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert,
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             });
@@ -321,8 +321,8 @@ public class MappingServiceTests
         var request = new CreateChannelRequest
         {
             RegionId = regionId,
-            Kind = MapKind.Static_geometry,
-            NonAuthorityHandling = NonAuthorityHandlingMode.Accept_and_alert
+            Kind = MapKind.StaticGeometry,
+            NonAuthorityHandling = NonAuthorityHandlingMode.AcceptAndAlert
         };
 
         // Act
@@ -351,7 +351,7 @@ public class MappingServiceTests
         {
             RegionId = Guid.NewGuid(),
             Kind = MapKind.Navigation,
-            NonAuthorityHandling = NonAuthorityHandlingMode.Reject_silent
+            NonAuthorityHandling = NonAuthorityHandlingMode.RejectSilent
         };
 
         // Act
@@ -373,7 +373,7 @@ public class MappingServiceTests
         {
             RegionId = Guid.NewGuid(),
             Kind = MapKind.Resources,
-            NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+            NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
         };
 
         // Act
@@ -444,7 +444,7 @@ public class MappingServiceTests
                 ChannelId = Guid.NewGuid(),
                 RegionId = Guid.NewGuid(),
                 Kind = MapKind.Terrain,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_silent,
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectSilent,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             });
@@ -487,7 +487,7 @@ public class MappingServiceTests
             {
                 ObjectId = objectId,
                 RegionId = regionId,
-                Kind = MapKind.Points_of_interest,
+                Kind = MapKind.PointsOfInterest,
                 ObjectType = "landmark",
                 Position = new Position3D { X = 100, Y = 0, Z = 100 },
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -733,7 +733,7 @@ public class MappingServiceTests
         var checkoutRequest = new AuthoringCheckoutRequest
         {
             RegionId = regionId,
-            Kind = MapKind.Static_geometry,
+            Kind = MapKind.StaticGeometry,
             EditorId = "editor-123"
         };
         var (_, checkoutResponse) = await service.CheckoutForAuthoringAsync(checkoutRequest, CancellationToken.None);
@@ -744,7 +744,7 @@ public class MappingServiceTests
             .ReturnsAsync(new MappingService.CheckoutRecord
             {
                 RegionId = regionId,
-                Kind = MapKind.Static_geometry,
+                Kind = MapKind.StaticGeometry,
                 EditorId = "editor-123",
                 AuthorityToken = checkoutResponse.AuthorityToken ?? "",
                 ExpiresAt = checkoutResponse.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
@@ -754,7 +754,7 @@ public class MappingServiceTests
         var commitRequest = new AuthoringCommitRequest
         {
             RegionId = regionId,
-            Kind = MapKind.Static_geometry,
+            Kind = MapKind.StaticGeometry,
             AuthorityToken = checkoutResponse.AuthorityToken ?? ""
         };
 
@@ -826,8 +826,8 @@ public class MappingServiceTests
         var createRequest = new CreateChannelRequest
         {
             RegionId = Guid.NewGuid(),
-            Kind = MapKind.Dynamic_objects,
-            NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert
+            Kind = MapKind.DynamicObjects,
+            NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
         };
         var (_, createResponse) = await service.CreateChannelAsync(createRequest, CancellationToken.None);
         Assert.NotNull(createResponse);
@@ -849,7 +849,7 @@ public class MappingServiceTests
                 ChannelId = createResponse.ChannelId,
                 RegionId = createResponse.RegionId,
                 Kind = createResponse.Kind,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert,
+                NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             });

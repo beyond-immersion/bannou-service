@@ -391,12 +391,19 @@ public class SessionService : ISessionService
     {
         try
         {
+            // Session keys are stored as Guid.ToString("N") format - parse back to Guids
+            var sessionIdGuids = sessionIds
+                .Select(s => Guid.TryParse(s, out var g) ? g : (Guid?)null)
+                .Where(g => g.HasValue)
+                .Select(g => g!.Value)
+                .ToList();
+
             var eventModel = new SessionInvalidatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                SessionIds = (ICollection<Guid>)sessionIds,
+                SessionIds = sessionIdGuids,
                 Reason = reason,
                 DisconnectClients = true
             };

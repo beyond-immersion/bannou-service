@@ -87,7 +87,7 @@ public class AchievementServiceTests
                 It.IsAny<ServiceErrorEventSeverity>(),
                 It.IsAny<object?>(),
                 It.IsAny<string?>(),
-                It.IsAny<string?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
     }

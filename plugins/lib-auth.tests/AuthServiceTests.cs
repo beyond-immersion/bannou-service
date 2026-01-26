@@ -1010,7 +1010,7 @@ public class AuthServiceTests
             It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(),
             It.IsAny<string?>(),
-            It.IsAny<string?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
     }

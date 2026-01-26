@@ -695,6 +695,9 @@ components:
       - environment
       - coordinator
       - scheduled
+      - message
+      - service
+      - system
 
     StopActorRequest:
       type: object
@@ -816,9 +819,10 @@ components:
           type: string
           description: ID of the entity causing this perception
         sourceType:
-          type: string
+          allOf:
+            - $ref: '#/components/schemas/PerceptionSourceType'
           nullable: true
-          description: Type of source (character, npc, object, environment)
+          description: Type of source (character, npc, object, environment, coordinator, scheduled, message)
         data:
           type: object
           additionalProperties: true

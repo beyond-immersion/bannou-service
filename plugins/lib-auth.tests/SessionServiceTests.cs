@@ -518,7 +518,11 @@ public class SessionServiceTests
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var sessionIds = new List<string> { "session1", "session2" };
+        var sessionId1 = Guid.NewGuid();
+        var sessionId2 = Guid.NewGuid();
+        // Session keys are stored as Guid.ToString("N") format
+        var sessionIds = new List<string> { sessionId1.ToString("N"), sessionId2.ToString("N") };
+        var expectedSessionGuids = new List<Guid> { sessionId1, sessionId2 };
         var reason = SessionInvalidatedEventReason.Account_deleted;
 
         _mockMessageBus.Setup(m => m.TryPublishAsync(
@@ -537,7 +541,7 @@ public class SessionServiceTests
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
-                e.SessionIds.SequenceEqual(sessionIds) &&
+                e.SessionIds.SequenceEqual(expectedSessionGuids) &&
                 e.Reason == reason &&
                 e.DisconnectClients == true),
             It.IsAny<PublishOptions?>(),

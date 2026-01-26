@@ -111,7 +111,7 @@ public partial class EscrowService
                     {
                         PartyId = r.RecipientPartyId,
                         PartyType = agreementModel.ReleaseAllocations?
-                            .FirstOrDefault(a => a.RecipientPartyId == r.RecipientPartyId)?.RecipientPartyType ?? string.Empty,
+                            .FirstOrDefault(a => a.RecipientPartyId == r.RecipientPartyId)?.RecipientPartyType ?? default,
                         AssetSummary = GenerateAssetSummary(
                             agreementModel.ReleaseAllocations?
                                 .FirstOrDefault(a => a.RecipientPartyId == r.RecipientPartyId)?.Assets)
@@ -239,7 +239,7 @@ public partial class EscrowService
                     {
                         PartyId = r.DepositorPartyId,
                         PartyType = agreementModel.Deposits?
-                            .FirstOrDefault(d => d.PartyId == r.DepositorPartyId)?.PartyType ?? string.Empty,
+                            .FirstOrDefault(d => d.PartyId == r.DepositorPartyId)?.PartyType ?? default,
                         AssetSummary = GenerateAssetSummary(
                             agreementModel.Deposits?
                                 .FirstOrDefault(d => d.PartyId == r.DepositorPartyId)?.Assets?.Assets)

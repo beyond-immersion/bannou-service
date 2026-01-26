@@ -164,8 +164,8 @@ public class CurrencyServiceTests
     {
         // Assert - verify enum values exist
         Assert.True(Enum.IsDefined(typeof(CurrencyScope), CurrencyScope.Global));
-        Assert.True(Enum.IsDefined(typeof(CurrencyScope), CurrencyScope.Realm_specific));
-        Assert.True(Enum.IsDefined(typeof(CurrencyScope), CurrencyScope.Multi_realm));
+        Assert.True(Enum.IsDefined(typeof(CurrencyScope), CurrencyScope.RealmSpecific));
+        Assert.True(Enum.IsDefined(typeof(CurrencyScope), CurrencyScope.MultiRealm));
     }
 
     [Fact]
@@ -192,7 +192,7 @@ public class CurrencyServiceTests
     {
         // Assert - verify enum values exist
         Assert.True(Enum.IsDefined(typeof(CurrencyPrecision), CurrencyPrecision.Integer));
-        Assert.True(Enum.IsDefined(typeof(CurrencyPrecision), CurrencyPrecision.Decimal_2));
+        Assert.True(Enum.IsDefined(typeof(CurrencyPrecision), CurrencyPrecision.Decimal2));
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public class CurrencyServiceTests
             Name = "Gold Currency",
             Description = "Test currency",
             Scope = CurrencyScope.Global,
-            Precision = CurrencyPrecision.Decimal_2
+            Precision = CurrencyPrecision.Decimal2
         };
 
         // Assert
@@ -431,7 +431,7 @@ public class CurrencyConversionConcurrencyTests
             Code = "GOLD",
             Name = "Gold",
             Scope = CurrencyScope.Global,
-            Precision = CurrencyPrecision.Decimal_2,
+            Precision = CurrencyPrecision.Decimal2,
             IsBaseCurrency = false,
             ExchangeRateToBase = exchangeRate,
             IsActive = true,

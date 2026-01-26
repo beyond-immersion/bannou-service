@@ -299,7 +299,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-require-tag",
-                RuleType = ValidationRuleType.Require_tag,
+                RuleType = ValidationRuleType.RequireTag,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
@@ -328,7 +328,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-require-tag",
-                RuleType = ValidationRuleType.Require_tag,
+                RuleType = ValidationRuleType.RequireTag,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
@@ -358,7 +358,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-forbid-tag",
-                RuleType = ValidationRuleType.Forbid_tag,
+                RuleType = ValidationRuleType.ForbidTag,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
@@ -385,7 +385,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-forbid-tag",
-                RuleType = ValidationRuleType.Forbid_tag,
+                RuleType = ValidationRuleType.ForbidTag,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
@@ -414,7 +414,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-require-node-type",
-                RuleType = ValidationRuleType.Require_node_type,
+                RuleType = ValidationRuleType.RequireNodeType,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
@@ -441,7 +441,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-require-node-type",
-                RuleType = ValidationRuleType.Require_node_type,
+                RuleType = ValidationRuleType.RequireNodeType,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
@@ -470,7 +470,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-warning",
-                RuleType = ValidationRuleType.Forbid_tag,
+                RuleType = ValidationRuleType.ForbidTag,
                 Severity = ValidationSeverity.Warning,
                 Config = new ValidationRuleConfig
                 {
@@ -510,7 +510,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-min-count",
-                RuleType = ValidationRuleType.Require_tag,
+                RuleType = ValidationRuleType.RequireTag,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {
@@ -557,7 +557,7 @@ public class SceneValidationServiceTests
             new ValidationRule
             {
                 RuleId = "test-max-count",
-                RuleType = ValidationRuleType.Require_tag,
+                RuleType = ValidationRuleType.RequireTag,
                 Severity = ValidationSeverity.Error,
                 Config = new ValidationRuleConfig
                 {

@@ -1130,7 +1130,7 @@ public partial class ActorService : IActorService
                 {
                     PerceptionType = "options_query",
                     SourceId = "query-options-endpoint",
-                    SourceType = "system",
+                    SourceType = PerceptionSourceType.System,
                     Data = new Dictionary<string, object?>
                     {
                         ["queryType"] = body.QueryType.ToString(),
