@@ -42,7 +42,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockMessageBus = new Mock<IMessageBus>();
         _mockRealmStore = new Mock<IStateStore<RealmModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockLogger = new Mock<ILogger<RealmService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -54,7 +54,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
 
         // Setup 3-param TryPublishAsync (the convenience overload services actually call)
@@ -495,7 +495,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
         _mockListStore
             .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { realmId.ToString() });
+            .ReturnsAsync(new List<Guid> { realmId });
 
         // Act
         var status = await service.DeleteRealmAsync(request);

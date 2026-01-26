@@ -26,7 +26,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<LocationService.LocationModel>> _mockLocationStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<LocationService>> _mockLogger;
     private readonly Mock<IRealmClient> _mockRealmClient;
@@ -45,7 +45,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockLocationStore = new Mock<IStateStore<LocationService.LocationModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<LocationService>>();
         _mockRealmClient = new Mock<IRealmClient>();
@@ -59,7 +59,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
 
         // Default message bus behavior - 3-param convenience overload (what services actually call)
@@ -295,7 +295,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var location2Id = Guid.NewGuid();
         var request = new ListLocationsByRealmRequest { RealmId = realmId };
 
-        var locationIds = new List<string> { location1Id.ToString(), location2Id.ToString() };
+        var locationIds = new List<Guid> { location1Id, location2Id };
         var model1 = CreateTestLocationModel(location1Id, realmId, "LOC1", "Location 1");
         var model2 = CreateTestLocationModel(location2Id, realmId, "LOC2", "Location 2");
 
@@ -331,7 +331,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         _mockListStore
             .Setup(s => s.GetAsync($"{REALM_INDEX_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (status, response) = await service.ListLocationsByRealmAsync(request);
@@ -665,7 +665,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var loc2Id = Guid.NewGuid();
         var request = new ListRootLocationsRequest { RealmId = realmId };
 
-        var rootLocationIds = new List<string> { loc1Id.ToString(), loc2Id.ToString() };
+        var rootLocationIds = new List<Guid> { loc1Id, loc2Id };
         var model1 = CreateTestLocationModel(loc1Id, realmId, "ROOT1", "Root 1", depth: 0);
         var model2 = CreateTestLocationModel(loc2Id, realmId, "ROOT2", "Root 2", depth: 0);
 
@@ -699,7 +699,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         _mockListStore
             .Setup(s => s.GetAsync($"{ROOT_LOCATIONS_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (status, response) = await service.ListRootLocationsAsync(request);
@@ -726,7 +726,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new ListLocationsByParentRequest { ParentLocationId = parentId };
 
         var parentModel = CreateTestLocationModel(parentId, realmId, "PARENT", "Parent Location");
-        var childIds = new List<string> { child1Id.ToString(), child2Id.ToString() };
+        var childIds = new List<Guid> { child1Id, child2Id };
         var model1 = CreateTestLocationModel(child1Id, realmId, "CHILD1", "Child 1", parentLocationId: parentId, depth: 1);
         var model2 = CreateTestLocationModel(child2Id, realmId, "CHILD2", "Child 2", parentLocationId: parentId, depth: 1);
 
@@ -774,7 +774,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         _mockListStore
             .Setup(s => s.GetAsync($"{PARENT_INDEX_PREFIX}{realmId}:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (status, response) = await service.ListLocationsByParentAsync(request);

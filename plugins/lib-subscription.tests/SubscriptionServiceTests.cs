@@ -23,7 +23,7 @@ public class SubscriptionServiceTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<SubscriptionDataModel>> _mockSubscriptionStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<SubscriptionService>> _mockLogger;
     private readonly SubscriptionServiceConfiguration _configuration;
@@ -35,7 +35,7 @@ public class SubscriptionServiceTests
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockSubscriptionStore = new Mock<IStateStore<SubscriptionDataModel>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<SubscriptionService>>();
         _configuration = new SubscriptionServiceConfiguration();
@@ -45,13 +45,13 @@ public class SubscriptionServiceTests
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<SubscriptionDataModel>(STATE_STORE))
             .Returns(_mockSubscriptionStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockListStore.Object);
 
         // Setup default behavior for stores
         _mockSubscriptionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SubscriptionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
@@ -107,7 +107,7 @@ public class SubscriptionServiceTests
         // Mock: Account subscription index
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { subscriptionId.ToString() });
+            .ReturnsAsync(new List<Guid> { subscriptionId });
 
         // Mock: Subscription data
         _mockSubscriptionStore
@@ -153,7 +153,7 @@ public class SubscriptionServiceTests
         // Mock: Account subscription index
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { activeSubId.ToString(), inactiveSubId.ToString() });
+            .ReturnsAsync(new List<Guid> { activeSubId, inactiveSubId });
 
         // Mock: Active subscription
         _mockSubscriptionStore
@@ -214,7 +214,7 @@ public class SubscriptionServiceTests
         // Mock: Account subscription index
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { activeSubId.ToString(), expiredSubId.ToString() });
+            .ReturnsAsync(new List<Guid> { activeSubId, expiredSubId });
 
         // Mock: Active subscription (future expiration)
         _mockSubscriptionStore
@@ -269,7 +269,7 @@ public class SubscriptionServiceTests
         // Mock: No subscriptions
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, CancellationToken.None);
@@ -298,7 +298,7 @@ public class SubscriptionServiceTests
         // Mock: Account subscription index
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { activeSubId.ToString() });
+            .ReturnsAsync(new List<Guid> { activeSubId });
 
         // Mock: Active subscription
         _mockSubscriptionStore
@@ -340,7 +340,7 @@ public class SubscriptionServiceTests
         // Mock: Account subscription index
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { expiredSubId.ToString() });
+            .ReturnsAsync(new List<Guid> { expiredSubId });
 
         // Mock: Expired subscription
         _mockSubscriptionStore
@@ -381,7 +381,7 @@ public class SubscriptionServiceTests
         // Mock: Account subscription index
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { inactiveSubId.ToString() });
+            .ReturnsAsync(new List<Guid> { inactiveSubId });
 
         // Mock: Inactive subscription
         _mockSubscriptionStore
@@ -516,12 +516,12 @@ public class SubscriptionServiceTests
         // Mock: No existing subscriptions
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Mock: Service subscriptions index
         _mockListStore
             .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Act
         var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
@@ -591,7 +591,7 @@ public class SubscriptionServiceTests
         // Mock: Existing subscriptions
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { existingSubId.ToString() });
+            .ReturnsAsync(new List<Guid> { existingSubId });
 
         // Mock: Existing active subscription for same service
         _mockSubscriptionStore
@@ -643,12 +643,12 @@ public class SubscriptionServiceTests
         // Mock: No existing subscriptions
         _mockListStore
             .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Mock: Service subscriptions index
         _mockListStore
             .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Act
         var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
