@@ -94,6 +94,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockTemplateStringStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
+        _mockTemplateStringStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
 
         _mockInstanceStringStore
             .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -1001,7 +1004,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var model = CreateStoredInstanceModel(instanceId);
         model.BoundToId = null;
 
-        var template = CreateStoredTemplateModel(Guid.Parse(model.TemplateId));
+        var template = CreateStoredTemplateModel(model.TemplateId);
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
@@ -1038,7 +1041,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var instanceId = Guid.NewGuid();
         var model = CreateStoredInstanceModel(instanceId);
-        model.BoundToId = Guid.NewGuid().ToString();
+        model.BoundToId = Guid.NewGuid();
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
@@ -1068,9 +1071,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var instanceId = Guid.NewGuid();
         var newCharacterId = Guid.NewGuid();
         var model = CreateStoredInstanceModel(instanceId);
-        model.BoundToId = Guid.NewGuid().ToString();
+        model.BoundToId = Guid.NewGuid();
 
-        var template = CreateStoredTemplateModel(Guid.Parse(model.TemplateId));
+        var template = CreateStoredTemplateModel(model.TemplateId);
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
@@ -1133,7 +1136,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var instanceId = Guid.NewGuid();
         var model = CreateStoredInstanceModel(instanceId);
-        var template = CreateStoredTemplateModel(Guid.Parse(model.TemplateId));
+        var template = CreateStoredTemplateModel(model.TemplateId);
         template.Destroyable = true;
 
         _mockInstanceStore
@@ -1169,7 +1172,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var instanceId = Guid.NewGuid();
         var model = CreateStoredInstanceModel(instanceId);
-        var template = CreateStoredTemplateModel(Guid.Parse(model.TemplateId));
+        var template = CreateStoredTemplateModel(model.TemplateId);
         template.Destroyable = false;
 
         _mockInstanceStore
@@ -1200,7 +1203,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var instanceId = Guid.NewGuid();
         var model = CreateStoredInstanceModel(instanceId);
-        var template = CreateStoredTemplateModel(Guid.Parse(model.TemplateId));
+        var template = CreateStoredTemplateModel(model.TemplateId);
         template.Destroyable = false;
 
         _mockInstanceStore
@@ -1570,7 +1573,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     {
         return new ItemTemplateModel
         {
-            TemplateId = templateId.ToString(),
+            TemplateId = templateId,
             Code = "test_sword",
             GameId = "game1",
             Name = "Test Sword",
@@ -1598,10 +1601,10 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     {
         return new ItemInstanceModel
         {
-            InstanceId = instanceId.ToString(),
-            TemplateId = Guid.NewGuid().ToString(),
-            ContainerId = Guid.NewGuid().ToString(),
-            RealmId = Guid.NewGuid().ToString(),
+            InstanceId = instanceId,
+            TemplateId = Guid.NewGuid(),
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
             Quantity = 1,
             CurrentDurability = 100,
             OriginType = ItemOriginType.Loot,

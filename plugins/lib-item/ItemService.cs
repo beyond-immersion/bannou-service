@@ -638,7 +638,7 @@ public partial class ItemService : IItemService
             await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
             // Get template for event enrichment (uses cache)
-            var template = await GetTemplateWithCacheAsync(model.TemplateId, cancellationToken);
+            var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
 
             if (template is null)
             {
@@ -690,7 +690,7 @@ public partial class ItemService : IItemService
             }
 
             // Get template to check destroyable (uses cache)
-            var template = await GetTemplateWithCacheAsync(model.TemplateId, cancellationToken);
+            var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
             if (template is not null && !template.Destroyable && body.Reason != "admin")
             {
                 _logger.LogWarning("Item {InstanceId} is not destroyable", body.InstanceId);
