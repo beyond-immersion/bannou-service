@@ -31,7 +31,7 @@ public sealed class BundleValidator
     /// <returns>Validation result with details.</returns>
     public async Task<BundleValidationResult> ValidateAsync(
         Stream bundleStream,
-        Guid expectedBundleId,
+        string expectedBundleId,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Validating bundle: expectedId={BundleId}", expectedBundleId);
@@ -179,7 +179,7 @@ public sealed class BundleValidator
 
     private async Task<ManifestValidationResult> ValidateManifestAsync(
         Stream bundleStream,
-        Guid expectedBundleId,
+        string expectedBundleId,
         CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
@@ -484,9 +484,9 @@ public sealed class BundleValidatorOptions
 public sealed class BundleValidationResult
 {
     /// <summary>
-    /// Bundle ID that was validated.
+    /// Bundle ID that was validated (human-readable identifier).
     /// </summary>
-    public Guid BundleId { get; set; }
+    public required string BundleId { get; set; }
 
     /// <summary>
     /// Whether validation passed.

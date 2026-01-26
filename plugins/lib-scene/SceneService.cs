@@ -268,24 +268,24 @@ public partial class SceneService : ISceneService
         try
         {
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+            var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
 
             // Get candidate scene IDs based on filters
-            HashSet<string>? candidateIds = null;
+            HashSet<Guid>? candidateIds = null;
 
             if (!string.IsNullOrEmpty(body.GameId))
             {
-                var gameIndex = await stringSetStore.GetAsync($"{SCENE_BY_GAME_PREFIX}{body.GameId}", cancellationToken);
-                candidateIds = gameIndex ?? new HashSet<string>();
+                var gameIndex = await guidSetStore.GetAsync($"{SCENE_BY_GAME_PREFIX}{body.GameId}", cancellationToken);
+                candidateIds = gameIndex ?? new HashSet<Guid>();
             }
 
             if (body.SceneType != null)
             {
                 var typeKey = $"{SCENE_BY_TYPE_PREFIX}{body.GameId ?? "all"}:{body.SceneType}";
-                var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken);
+                var typeIndex = await guidSetStore.GetAsync(typeKey, cancellationToken);
                 if (candidateIds == null)
                 {
-                    candidateIds = typeIndex ?? new HashSet<string>();
+                    candidateIds = typeIndex ?? new HashSet<Guid>();
                 }
                 else if (typeIndex != null)
                 {
@@ -295,11 +295,11 @@ public partial class SceneService : ISceneService
 
             if (body.SceneTypes != null && body.SceneTypes.Count > 0)
             {
-                var typeUnion = new HashSet<string>();
+                var typeUnion = new HashSet<Guid>();
                 foreach (var sceneType in body.SceneTypes)
                 {
                     var typeKey = $"{SCENE_BY_TYPE_PREFIX}{body.GameId ?? "all"}:{sceneType}";
-                    var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken);
+                    var typeIndex = await guidSetStore.GetAsync(typeKey, cancellationToken);
                     if (typeIndex != null)
                     {
                         typeUnion.UnionWith(typeIndex);
@@ -486,7 +486,7 @@ public partial class SceneService : ISceneService
         {
             var sceneIdStr = body.SceneId.ToString();
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+            var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
 
             // Get existing index entry
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
@@ -497,7 +497,7 @@ public partial class SceneService : ISceneService
             }
 
             // Check if other scenes reference this one
-            var referencingScenes = await stringSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
+            var referencingScenes = await guidSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
             if (referencingScenes != null && referencingScenes.Count > 0)
             {
                 _logger.LogDebug("DeleteScene: Scene {SceneId} is referenced by {Count} other scenes: {ReferencingScenes}",
@@ -513,7 +513,7 @@ public partial class SceneService : ISceneService
             await RemoveFromIndexesAsync(existingIndex, cancellationToken);
 
             // Remove from global scene index
-            await RemoveFromGlobalSceneIndexAsync(sceneIdStr, cancellationToken);
+            await RemoveFromGlobalSceneIndexAsync(body.SceneId, cancellationToken);
 
             // Delete scene content
             var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(StateStoreDefinitions.Scene);
@@ -1225,11 +1225,10 @@ public partial class SceneService : ISceneService
 
         try
         {
-            var sceneIdStr = body.SceneId.ToString();
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+            var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
-            var referencingSceneIds = await stringSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
+            var referencingSceneIds = await guidSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{body.SceneId}", cancellationToken);
             var references = new List<ReferenceInfo>();
 
             if (referencingSceneIds != null)
@@ -1243,12 +1242,12 @@ public partial class SceneService : ISceneService
                     var scene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
                     if (scene == null) continue;
 
-                    var refNodes = FindReferenceNodes(scene.Root, sceneIdStr);
+                    var refNodes = FindReferenceNodes(scene.Root, body.SceneId);
                     foreach (var node in refNodes)
                     {
                         references.Add(new ReferenceInfo
                         {
-                            SceneId = Guid.Parse(refSceneId),
+                            SceneId = refSceneId,
                             SceneName = indexEntry.Name,
                             NodeId = node.NodeId,
                             NodeRefId = node.RefId,
@@ -1281,10 +1280,10 @@ public partial class SceneService : ISceneService
         try
         {
             var assetIdStr = body.AssetId.ToString();
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+            var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
             var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
-            var usingSceneIds = await stringSetStore.GetAsync($"{SCENE_ASSETS_PREFIX}{assetIdStr}", cancellationToken);
+            var usingSceneIds = await guidSetStore.GetAsync($"{SCENE_ASSETS_PREFIX}{assetIdStr}", cancellationToken);
             var usages = new List<AssetUsageInfo>();
 
             if (usingSceneIds != null)
@@ -1306,7 +1305,7 @@ public partial class SceneService : ISceneService
                     {
                         usages.Add(new AssetUsageInfo
                         {
-                            SceneId = Guid.Parse(sceneId),
+                            SceneId = sceneId,
                             SceneName = indexEntry.Name,
                             NodeId = node.NodeId,
                             NodeRefId = node.RefId,
@@ -1590,24 +1589,24 @@ public partial class SceneService : ISceneService
 
     private async Task RemoveFromIndexesAsync(SceneIndexEntry indexEntry, CancellationToken cancellationToken)
     {
-        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
 
         // Remove from game index
         var gameKey = $"{SCENE_BY_GAME_PREFIX}{indexEntry.GameId}";
-        var gameIndex = await stringSetStore.GetAsync(gameKey, cancellationToken);
+        var gameIndex = await guidSetStore.GetAsync(gameKey, cancellationToken);
         if (gameIndex != null)
         {
             gameIndex.Remove(indexEntry.SceneId);
-            await stringSetStore.SaveAsync(gameKey, gameIndex, cancellationToken: cancellationToken);
+            await guidSetStore.SaveAsync(gameKey, gameIndex, cancellationToken: cancellationToken);
         }
 
         // Remove from type index
         var typeKey = $"{SCENE_BY_TYPE_PREFIX}{indexEntry.GameId}:{indexEntry.SceneType}";
-        var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken);
+        var typeIndex = await guidSetStore.GetAsync(typeKey, cancellationToken);
         if (typeIndex != null)
         {
             typeIndex.Remove(indexEntry.SceneId);
-            await stringSetStore.SaveAsync(typeKey, typeIndex, cancellationToken: cancellationToken);
+            await guidSetStore.SaveAsync(typeKey, typeIndex, cancellationToken: cancellationToken);
         }
     }
 
@@ -1616,20 +1615,20 @@ public partial class SceneService : ISceneService
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Set of all scene IDs.</returns>
-    private async Task<HashSet<string>> GetAllSceneIdsAsync(CancellationToken cancellationToken)
+    private async Task<HashSet<Guid>> GetAllSceneIdsAsync(CancellationToken cancellationToken)
     {
-        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
-        return globalIndex ?? new HashSet<string>();
+        return globalIndex ?? new HashSet<Guid>();
     }
 
     /// <summary>
     /// Adds a scene ID to the global index.
     /// </summary>
-    private async Task AddToGlobalSceneIndexAsync(string sceneId, CancellationToken cancellationToken)
+    private async Task AddToGlobalSceneIndexAsync(Guid sceneId, CancellationToken cancellationToken)
     {
-        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
-        var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken) ?? new HashSet<string>();
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
+        var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken) ?? new HashSet<Guid>();
         globalIndex.Add(sceneId);
         await globalIndexStore.SaveAsync(SCENE_GLOBAL_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
     }
@@ -1637,9 +1636,9 @@ public partial class SceneService : ISceneService
     /// <summary>
     /// Removes a scene ID from the global index.
     /// </summary>
-    private async Task RemoveFromGlobalSceneIndexAsync(string sceneId, CancellationToken cancellationToken)
+    private async Task RemoveFromGlobalSceneIndexAsync(Guid sceneId, CancellationToken cancellationToken)
     {
-        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
         if (globalIndex != null)
         {
@@ -1748,41 +1747,42 @@ public partial class SceneService : ISceneService
     /// Extracts the referenced scene ID from a reference node.
     /// Checks the typed ReferenceSceneId field first, falls back to annotations for backward compatibility.
     /// </summary>
-    private static string? GetReferenceSceneId(SceneNode node)
+    private static Guid? GetReferenceSceneId(SceneNode node)
     {
         // Primary: use the typed schema field
         if (node.ReferenceSceneId.HasValue)
         {
-            return node.ReferenceSceneId.Value.ToString();
+            return node.ReferenceSceneId.Value;
         }
 
         // Fallback: annotations-based lookup for backward compatibility with legacy scene data
         if (node.Annotations is IDictionary<string, object> annotationsDict &&
             annotationsDict.TryGetValue("reference", out var refObj) &&
             refObj is IDictionary<string, object> refDict &&
-            refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+            refDict.TryGetValue("sceneAssetId", out var sceneIdObj) &&
+            Guid.TryParse(sceneIdObj?.ToString(), out var parsedGuid))
         {
-            return sceneIdObj?.ToString();
+            return parsedGuid;
         }
 
         return null;
     }
 
-    private HashSet<string> ExtractSceneReferences(SceneNode root)
+    private HashSet<Guid> ExtractSceneReferences(SceneNode root)
     {
-        var references = new HashSet<string>();
+        var references = new HashSet<Guid>();
         ExtractSceneReferencesRecursive(root, references);
         return references;
     }
 
-    private void ExtractSceneReferencesRecursive(SceneNode node, HashSet<string> references)
+    private void ExtractSceneReferencesRecursive(SceneNode node, HashSet<Guid> references)
     {
         if (node.NodeType == NodeType.Reference)
         {
             var sceneId = GetReferenceSceneId(node);
-            if (!string.IsNullOrEmpty(sceneId))
+            if (sceneId.HasValue)
             {
-                references.Add(sceneId);
+                references.Add(sceneId.Value);
             }
         }
 
@@ -1795,18 +1795,18 @@ public partial class SceneService : ISceneService
         }
     }
 
-    private HashSet<string> ExtractAssetReferences(SceneNode root)
+    private HashSet<Guid> ExtractAssetReferences(SceneNode root)
     {
-        var assets = new HashSet<string>();
+        var assets = new HashSet<Guid>();
         ExtractAssetReferencesRecursive(root, assets);
         return assets;
     }
 
-    private void ExtractAssetReferencesRecursive(SceneNode node, HashSet<string> assets)
+    private void ExtractAssetReferencesRecursive(SceneNode node, HashSet<Guid> assets)
     {
         if (node.Asset != null && node.Asset.AssetId != Guid.Empty)
         {
-            assets.Add(node.Asset.AssetId.ToString());
+            assets.Add(node.Asset.AssetId);
         }
 
         if (node.Children != null)
@@ -1818,14 +1818,14 @@ public partial class SceneService : ISceneService
         }
     }
 
-    private List<SceneNode> FindReferenceNodes(SceneNode root, string targetSceneId)
+    private List<SceneNode> FindReferenceNodes(SceneNode root, Guid targetSceneId)
     {
         var nodes = new List<SceneNode>();
         FindReferenceNodesRecursive(root, targetSceneId, nodes);
         return nodes;
     }
 
-    private void FindReferenceNodesRecursive(SceneNode node, string targetSceneId, List<SceneNode> nodes)
+    private void FindReferenceNodesRecursive(SceneNode node, Guid targetSceneId, List<SceneNode> nodes)
     {
         if (node.NodeType == NodeType.Reference)
         {
@@ -1949,9 +1949,9 @@ public partial class SceneService : ISceneService
     {
         return new SceneSummary
         {
-            SceneId = Guid.Parse(indexEntry.SceneId),
+            SceneId = indexEntry.SceneId,
             GameId = indexEntry.GameId,
-            SceneType = Enum.TryParse<SceneType>(indexEntry.SceneType, out var type) ? type : SceneType.Unknown,
+            SceneType = indexEntry.SceneType,
             Name = indexEntry.Name,
             Description = indexEntry.Description,
             Version = indexEntry.Version,
@@ -2019,7 +2019,7 @@ public partial class SceneService : ISceneService
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = scene.SceneId,
             GameId = scene.GameId,
-            SceneType = scene.SceneType.ToString(),
+            SceneType = scene.SceneType,
             Name = scene.Name,
             Description = scene.Description,
             Version = scene.Version,
@@ -2040,7 +2040,7 @@ public partial class SceneService : ISceneService
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = scene.SceneId,
             GameId = scene.GameId,
-            SceneType = scene.SceneType.ToString(),
+            SceneType = scene.SceneType,
             Name = scene.Name,
             Description = scene.Description,
             Version = scene.Version,
@@ -2061,7 +2061,7 @@ public partial class SceneService : ISceneService
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = scene.SceneId,
             GameId = scene.GameId,
-            SceneType = scene.SceneType.ToString(),
+            SceneType = scene.SceneType,
             Name = scene.Name,
             Description = scene.Description,
             Version = scene.Version,

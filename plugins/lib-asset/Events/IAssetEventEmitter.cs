@@ -90,7 +90,7 @@ public interface IAssetEventEmitter
         string sessionId,
         Guid uploadId,
         bool success,
-        Guid? bundleId = null,
+        string? bundleId = null,
         int? assetsRegistered = null,
         int? duplicatesSkipped = null,
         ICollection<ValidationWarning>? warnings = null,
@@ -125,7 +125,7 @@ public interface IAssetEventEmitter
     /// <returns>True if the event was published successfully.</returns>
     Task<bool> EmitBundleCreationCompleteAsync(
         string sessionId,
-        Guid bundleId,
+        string bundleId,
         bool success,
         Uri? downloadUrl = null,
         long? size = null,
@@ -177,7 +177,7 @@ public interface IAssetEventEmitter
     Task<bool> EmitMetabundleCreationCompleteAsync(
         string sessionId,
         Guid jobId,
-        Guid metabundleId,
+        string metabundleId,
         bool success,
         MetabundleJobStatus? status = null,
         Uri? downloadUrl = null,

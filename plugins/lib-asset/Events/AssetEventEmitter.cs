@@ -121,7 +121,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         string sessionId,
         Guid uploadId,
         bool success,
-        Guid? bundleId = null,
+        string? bundleId = null,
         int? assetsRegistered = null,
         int? duplicatesSkipped = null,
         ICollection<ValidationWarning>? warnings = null,
@@ -171,7 +171,7 @@ public class AssetEventEmitter : IAssetEventEmitter
     /// <inheritdoc />
     public async Task<bool> EmitBundleCreationCompleteAsync(
         string sessionId,
-        Guid bundleId,
+        string bundleId,
         bool success,
         Uri? downloadUrl = null,
         long? size = null,
@@ -234,7 +234,7 @@ public class AssetEventEmitter : IAssetEventEmitter
     public async Task<bool> EmitMetabundleCreationCompleteAsync(
         string sessionId,
         Guid jobId,
-        Guid metabundleId,
+        string metabundleId,
         bool success,
         MetabundleJobStatus? status = null,
         Uri? downloadUrl = null,

@@ -312,7 +312,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total size of the finalized bundle in bytes.</returns>
     public async Task<long> FinalizeAsync(
-        Guid bundleId,
+        string bundleId,
         string name,
         string version,
         string createdBy,

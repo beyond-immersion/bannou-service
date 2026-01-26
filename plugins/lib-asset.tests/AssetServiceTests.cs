@@ -2131,16 +2131,16 @@ public class AssetServiceTests
         };
 
         // Asset-to-bundle index shows asset is in both bundles
-        var regularBundleId = Guid.NewGuid();
-        var metabundleBundleId = Guid.NewGuid();
+        var regularBundleId = "regular-bundle-v1";
+        var metabundleBundleId = "metabundle-v1";
         var assetIndex = new AssetBundleIndex
         {
-            BundleIds = new List<Guid> { regularBundleId, metabundleBundleId }
+            BundleIds = new List<string> { regularBundleId, metabundleBundleId }
         };
 
         var regularBundle = new BundleMetadata
         {
-            BundleId = regularBundleId.ToString(),
+            BundleId = regularBundleId,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/regular.bundle",
@@ -2158,7 +2158,7 @@ public class AssetServiceTests
 
         var metabundle = new BundleMetadata
         {
-            BundleId = metabundleBundleId.ToString(),
+            BundleId = metabundleBundleId,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/metabundle.bundle",
@@ -2203,7 +2203,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Single(result.Bundles);
-        Assert.Equal(metabundleBundleId.ToString(), result.Bundles.First().BundleId);
+        Assert.Equal(metabundleBundleId, result.Bundles.First().BundleId);
     }
 
     [Fact]
@@ -2212,9 +2212,9 @@ public class AssetServiceTests
         // Arrange: Multiple assets, one bundle covers most of them
         _configuration.StorageBucket = "test-bucket";
         var service = CreateService();
-        var bigBundleId = Guid.NewGuid();
-        var smallBundle1Id = Guid.NewGuid();
-        var smallBundle2Id = Guid.NewGuid();
+        var bigBundleId = "big-bundle-v1";
+        var smallBundle1Id = "small-bundle-1-v1";
+        var smallBundle2Id = "small-bundle-2-v1";
         var request = new ResolveBundlesRequest
         {
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
@@ -2222,14 +2222,14 @@ public class AssetServiceTests
         };
 
         // Asset indices
-        var asset1Index = new AssetBundleIndex { BundleIds = new List<Guid> { bigBundleId, smallBundle1Id } };
-        var asset2Index = new AssetBundleIndex { BundleIds = new List<Guid> { bigBundleId } };
-        var asset3Index = new AssetBundleIndex { BundleIds = new List<Guid> { bigBundleId, smallBundle2Id } };
+        var asset1Index = new AssetBundleIndex { BundleIds = new List<string> { bigBundleId, smallBundle1Id } };
+        var asset2Index = new AssetBundleIndex { BundleIds = new List<string> { bigBundleId } };
+        var asset3Index = new AssetBundleIndex { BundleIds = new List<string> { bigBundleId, smallBundle2Id } };
 
         // Big bundle contains all 3 assets
         var bigBundle = new BundleMetadata
         {
-            BundleId = bigBundleId.ToString(),
+            BundleId = bigBundleId,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/big.bundle",
@@ -2250,7 +2250,7 @@ public class AssetServiceTests
         // Small bundles contain only 1 asset each
         var smallBundle1 = new BundleMetadata
         {
-            BundleId = smallBundle1Id.ToString(),
+            BundleId = smallBundle1Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/small1.bundle",
@@ -2268,7 +2268,7 @@ public class AssetServiceTests
 
         var smallBundle2 = new BundleMetadata
         {
-            BundleId = smallBundle2Id.ToString(),
+            BundleId = smallBundle2Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/small2.bundle",
@@ -2297,13 +2297,13 @@ public class AssetServiceTests
 
         // Setup bundle lookups
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bigBundleId.ToString())), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bigBundleId)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bigBundle);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle1Id.ToString())), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle1Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(smallBundle1);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle2Id.ToString())), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(smallBundle2Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(smallBundle2);
 
         _mockStorageProvider

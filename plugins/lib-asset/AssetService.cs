@@ -1894,7 +1894,7 @@ public partial class AssetService : IAssetService
             while (remainingAssets.Count > 0 && selectedBundles.Count < maxBundles)
             {
                 // Find bundle with best coverage
-                Guid? bestBundleId = null;
+                string? bestBundleId = null;
                 int bestCoverage = 0;
                 bool bestIsMetabundle = false;
 
@@ -2544,7 +2544,7 @@ public partial class AssetService : IAssetService
     private async Task AddBundleToAssetIndexAsync(
         IStateStore<AssetBundleIndex> indexStore,
         string indexKey,
-        Guid bundleId,
+        string bundleId,
         CancellationToken cancellationToken)
     {
         var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
@@ -3516,7 +3516,7 @@ public partial class AssetService : IAssetService
     /// <summary>
     /// Helper to remove bundle from asset-bundle reverse index.
     /// </summary>
-    private async Task RemoveFromBundleIndexAsync(Guid bundleId, List<string> assetIds, CancellationToken cancellationToken)
+    private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, CancellationToken cancellationToken)
     {
         var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
 

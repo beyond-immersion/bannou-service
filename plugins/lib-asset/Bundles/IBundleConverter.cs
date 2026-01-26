@@ -21,7 +21,7 @@ public interface IBundleConverter
     Task ConvertZipToBundleAsync(
         Stream zipStream,
         Stream outputStream,
-        Guid bundleId,
+        string bundleId,
         string name,
         string version,
         string createdBy,
@@ -41,7 +41,7 @@ public interface IBundleConverter
     Task<bool> ConvertBundleToZipAsync(
         Stream bundleStream,
         Stream outputStream,
-        Guid bundleId,
+        string bundleId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -49,14 +49,14 @@ public interface IBundleConverter
     /// </summary>
     /// <param name="bundleId">The bundle identifier.</param>
     /// <returns>True if a valid cached ZIP exists.</returns>
-    bool HasCachedZip(Guid bundleId);
+    bool HasCachedZip(string bundleId);
 
     /// <summary>
     /// Gets a cached ZIP stream if available.
     /// </summary>
     /// <param name="bundleId">The bundle identifier.</param>
     /// <returns>A stream to the cached ZIP, or null if not cached.</returns>
-    Stream? GetCachedZipStream(Guid bundleId);
+    Stream? GetCachedZipStream(string bundleId);
 
     /// <summary>
     /// Clears expired entries from the ZIP cache.
@@ -68,5 +68,5 @@ public interface IBundleConverter
     /// Invalidates a specific bundle's cached ZIP.
     /// </summary>
     /// <param name="bundleId">The bundle identifier.</param>
-    void InvalidateCache(Guid bundleId);
+    void InvalidateCache(string bundleId);
 }
