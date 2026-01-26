@@ -274,6 +274,12 @@ make test                      # Run unit tests (dotnet test)
 make test-infrastructure       # Infrastructure validation (Docker health)
 make test-http                 # Service-to-service HTTP testing
 make test-edge                 # WebSocket protocol testing
+
+# Assembly Inspection (for understanding external APIs)
+make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
+make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
+make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
+make inspect-list PKG="RabbitMQ.Client"
 ```
 
 ### Code Quality Requirements

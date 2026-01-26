@@ -60,6 +60,30 @@ build-sdks: ## Build all SDK projects (separate from server)
 	dotnet build sdks/bannou-sdks.sln
 	@echo "✅ SDK build completed"
 
+build-tools: ## Build all development tools (http-tester, edge-tester, bannou-inspect)
+	@echo "🔧 Building development tools..."
+	dotnet build tools/tools.sln
+	@echo "✅ Development tools built"
+
+# =============================================================================
+# ASSEMBLY INSPECTOR
+# =============================================================================
+# IntelliSense-like type/method inspection from the command line.
+# Useful for understanding external APIs without leaving the terminal.
+# =============================================================================
+
+inspect-type: ## Inspect a type. Usage: make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- type "$(TYPE)" --package "$(PKG)"
+
+inspect-method: ## Inspect a method. Usage: make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- method "$(METHOD)" --package "$(PKG)"
+
+inspect-search: ## Search for types. Usage: make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- search "$(PATTERN)" --package "$(PKG)"
+
+inspect-list: ## List all types in a package. Usage: make inspect-list PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- list-types --package "$(PKG)"
+
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \
