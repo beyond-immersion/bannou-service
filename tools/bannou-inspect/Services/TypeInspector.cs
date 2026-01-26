@@ -166,7 +166,7 @@ public sealed class TypeInspector : IDisposable
             GenericParameters = method.GetGenericArguments().Select(t => t.Name).ToList(),
             IsStatic = method.IsStatic,
             IsAsync = method.ReturnType.Name.StartsWith("Task") ||
-                      method.ReturnType.Name.StartsWith("ValueTask")
+                    method.ReturnType.Name.StartsWith("ValueTask")
         };
     }
 

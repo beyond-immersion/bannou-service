@@ -22672,6 +22672,24 @@ components:
           type: object
           nullable: true
           description: New instance metadata (merges with existing)
+        newContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Move item to a different container. Used by inventory 
+            service for item movement.
+        newSlotIndex:
+          type: integer
+          nullable: true
+          description: New slot index within the container
+        newSlotX:
+          type: integer
+          nullable: true
+          description: New X position for grid-based containers
+        newSlotY:
+          type: integer
+          nullable: true
+          description: New Y position for grid-based containers
     MoveItemRequest:
       type: object
       description: Request to move item

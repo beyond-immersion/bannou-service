@@ -30833,6 +30833,26 @@
             New instance metadata (merges with existing)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.NewContainerId">
+            <summary>
+            Move item to a different container. Used by inventory service for item movement.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.NewSlotIndex">
+            <summary>
+            New slot index within the container
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.NewSlotX">
+            <summary>
+            New X position for grid-based containers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Item.ModifyItemInstanceRequest.NewSlotY">
+            <summary>
+            New Y position for grid-based containers
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Item.BindItemInstanceRequest">
             <summary>
             Request to bind an item to a character
@@ -35890,7 +35910,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.SessionGameType">
             <summary>
-            Game type for created sessions (maps to game-session service)
+            Game type for created sessions (maps to game-session service). Defaults to 'generic' if not provided.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.DisplayName">

@@ -15993,6 +15993,17 @@ export interface components {
       quantityDelta?: number | null;
       /** @description New instance metadata (merges with existing) */
       instanceMetadata?: Record<string, never> | null;
+      /**
+       * Format: uuid
+       * @description Move item to a different container. Used by inventory service for item movement.
+       */
+      newContainerId?: string | null;
+      /** @description New slot index within the container */
+      newSlotIndex?: number | null;
+      /** @description New X position for grid-based containers */
+      newSlotX?: number | null;
+      /** @description New Y position for grid-based containers */
+      newSlotY?: number | null;
     };
     /** @description Request to move item */
     MoveItemRequest: {
