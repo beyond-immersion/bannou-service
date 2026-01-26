@@ -26,21 +26,6 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -373,12 +358,12 @@ public partial class BundleCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BundleId { get; set; } = default!;
+    public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version string
@@ -442,12 +427,12 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Metabundle identifier
+    /// Human-readable metabundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid MetabundleId { get; set; } = default!;
+    public string MetabundleId { get; set; } = default!;
 
     /// <summary>
     /// Metabundle version string
@@ -472,10 +457,10 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
     public int SourceBundleCount { get; set; } = default!;
 
     /// <summary>
-    /// List of source bundle IDs that were composed
+    /// List of human-readable source bundle IDs that were composed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
-    public System.Collections.Generic.ICollection<System.Guid>? SourceBundleIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? SourceBundleIds { get; set; } = default!;
 
     /// <summary>
     /// Number of unique assets in the metabundle
@@ -530,12 +515,12 @@ public partial class BundleUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BundleId { get; set; } = default!;
+    public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// New metadata version number after update
@@ -587,12 +572,12 @@ public partial class BundleDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BundleId { get; set; } = default!;
+    public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// True if permanently deleted, false for soft-delete
@@ -636,12 +621,12 @@ public partial class BundleRestoredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Bundle identifier
+    /// Human-readable bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BundleId { get; set; } = default!;
+    public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Metadata version the bundle was restored from

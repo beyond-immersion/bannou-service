@@ -10418,8 +10418,8 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., 
+            "synty/polygon-adventure", "my-bundle-v1")
         bundleType:
           $ref: '#/components/schemas/BundleType'
           description: Whether source or metabundle
@@ -10498,8 +10498,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier from the manifest
+          description: Human-readable bundle identifier from the manifest
         version:
           type: string
           description: Bundle version from the manifest
@@ -10519,8 +10518,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
           description: Source or metabundle
@@ -10630,8 +10628,8 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., 
+            "synty/polygon-adventure", "my-bundle-v1")
         version:
           type: string
           description: Bundle version string
@@ -11977,7 +11975,6 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
           description: Bundle containing this version
         contentHash:
           type: string
@@ -12001,8 +11998,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
           description: Type of consent being given
@@ -13071,8 +13067,8 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
-          format: uuid
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., 
+            "synty/polygon-adventure", "my-bundle-v1")
         version:
           type: string
           default: 1.0.0
@@ -13108,8 +13104,8 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Unique bundle identifier
+          description: Human-readable bundle identifier (e.g., 
+            "synty/polygon-adventure", "my-bundle-v1")
         status:
           type: string
           enum:
@@ -13334,8 +13330,7 @@ components:
           format: uuid
           description: Party entity ID
         partyType:
-          type: string
-          description: Party entity type
+          $ref: './#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -13776,17 +13771,16 @@ components:
       properties:
         metabundleId:
           type: string
-          format: uuid
-          description: Unique identifier for the new metabundle
+          description: Human-readable identifier for the new metabundle (e.g., 
+            "game-assets-v1")
         sourceBundleIds:
           type: array
           items:
             type: string
-            format: uuid
           nullable: true
           description: |
-            Source bundle IDs to pull assets from. Can cherry-pick specific
-            assets using assetFilter, or include all if assetFilter is null.
+            Human-readable source bundle IDs (e.g., "synty/polygon-adventure") to pull assets from.
+            Can cherry-pick specific assets using assetFilter, or include all if assetFilter is null.
         standaloneAssetIds:
           type: array
           items:
@@ -13842,8 +13836,7 @@ components:
       properties:
         metabundleId:
           type: string
-          format: uuid
-          description: Metabundle identifier
+          description: Human-readable metabundle identifier
         jobId:
           type: string
           format: uuid
@@ -14560,8 +14553,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier to delete
+          description: Human-readable bundle identifier to delete
         permanent:
           type: boolean
           default: false
@@ -14583,8 +14575,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Deleted bundle identifier
+          description: Human-readable bundle identifier that was deleted
         status:
           type: string
           enum:
@@ -14761,8 +14752,7 @@ components:
           format: uuid
           description: Party depositing
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
           description: Assets to deposit
@@ -14901,8 +14891,7 @@ components:
           format: uuid
           description: Party raising dispute
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         reason:
           type: string
           description: Reason for dispute
@@ -16092,8 +16081,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
-          type: string
-          description: Type of the party
+          $ref: './#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
           description: Type of consent given
@@ -16147,8 +16135,7 @@ components:
           format: uuid
           description: Party who deposited
         partyType:
-          type: string
-          description: Type of the depositing party
+          $ref: './#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundle'
           description: Assets deposited
@@ -16225,9 +16212,7 @@ components:
           format: uuid
           description: Party entity identifier
         partyType:
-          type: string
-          description: Type of the party entity (account, character, npc, guild,
-            system)
+          $ref: './#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -16617,8 +16602,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
-          type: string
-          description: Type of the party
+          $ref: './#/components/schemas/EntityType'
         expectedAssets:
           type: array
           items:
@@ -16648,8 +16632,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
-          type: string
-          description: Type of the party
+          $ref: './#/components/schemas/EntityType'
         expectedAssets:
           type: array
           items:
@@ -17495,8 +17478,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier to retrieve
+          description: Human-readable bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
           description: Desired download format (bannou or zip)
@@ -17753,8 +17735,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
     GetDepositStatusResponse:
       type: object
       description: Response containing party deposit status
@@ -18138,8 +18119,7 @@ components:
           description: Job identifier
         metabundleId:
           type: string
-          format: uuid
-          description: Metabundle identifier being created
+          description: Human-readable metabundle identifier being created
         status:
           type: string
           enum:
@@ -20401,8 +20381,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier to get history for
+          description: Human-readable bundle identifier to get history for
         limit:
           type: integer
           default: 50
@@ -20423,8 +20402,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         currentVersion:
           type: integer
           description: Current version number
@@ -20787,7 +20765,8 @@ components:
           nullable: true
           description: Filter by party
         partyType:
-          type: string
+          allOf:
+          - $ref: './#/components/schemas/EntityType'
           nullable: true
           description: Party type filter
         status:
@@ -23178,8 +23157,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -23264,8 +23242,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         token:
           type: string
           description: The token
@@ -24770,8 +24747,7 @@ components:
           format: uuid
           description: Party reaffirming
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         releaseToken:
           type: string
           nullable: true
@@ -26067,8 +26043,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier
+          description: Human-readable bundle identifier
         bundleType:
           $ref: '#/components/schemas/BundleType'
           description: Whether source or metabundle
@@ -26161,8 +26136,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier to restore
+          description: Human-readable bundle identifier to restore
         reason:
           type: string
           nullable: true
@@ -26180,8 +26154,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Restored bundle identifier
+          description: Human-readable bundle identifier that was restored
         status:
           type: string
           description: Current bundle status (should be "active")
@@ -27290,7 +27263,6 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
           description: Source bundle identifier
         version:
           type: string
@@ -27537,8 +27509,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         assets:
           type: array
           items:
@@ -28796,8 +28767,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Bundle identifier to update
+          description: Human-readable bundle identifier to update
         name:
           type: string
           nullable: true
@@ -28841,8 +28811,7 @@ components:
       properties:
         bundleId:
           type: string
-          format: uuid
-          description: Updated bundle identifier
+          description: Human-readable bundle identifier that was updated
         version:
           type: integer
           description: New version number after update
@@ -29393,8 +29362,7 @@ components:
           format: uuid
           description: Party to validate
         partyType:
-          type: string
-          description: Party type
+          $ref: './#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
           description: Assets to validate

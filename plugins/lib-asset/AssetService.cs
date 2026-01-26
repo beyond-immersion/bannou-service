@@ -38,6 +38,11 @@ public partial class AssetService : IAssetService
     private readonly IAssetProcessorPoolManager _processorPoolManager;
     private readonly IBundleConverter _bundleConverter;
 
+    /// <summary>
+    /// Marker used to identify standalone assets (not from any bundle) in conflict reports.
+    /// </summary>
+    private const string StandaloneAssetBundleMarker = "system";
+
     // State store name and key prefixes now come from configuration
     // See AssetServiceConfiguration for defaults: StateStoreName, UploadSessionKeyPrefix, etc.
 
@@ -1484,7 +1489,7 @@ public partial class AssetService : IAssetService
 
             // Collect all assets from source bundles and standalone assets, checking for conflicts
             var assetsByHash = new Dictionary<string, (StoredBundleAssetEntry Entry, string SourceBundleId)>();
-            var assetsByPlatformId = new Dictionary<string, List<(string BundleId, string ContentHash)>>();
+            var assetsByPlatformId = new Dictionary<string, List<(string? BundleId, string ContentHash)>>();
             var standaloneByHash = new Dictionary<string, InternalAssetRecord>(); // Standalone assets tracked separately
             var conflicts = new List<AssetConflict>();
 
@@ -1501,7 +1506,7 @@ public partial class AssetService : IAssetService
                     // Track by platform ID to detect conflicts
                     if (!assetsByPlatformId.TryGetValue(asset.AssetId, out var versions))
                     {
-                        versions = new List<(string BundleId, string ContentHash)>();
+                        versions = new List<(string? BundleId, string ContentHash)>();
                         assetsByPlatformId[asset.AssetId] = versions;
                     }
                     versions.Add((sourceBundle.BundleId, asset.ContentHash));
@@ -1515,7 +1520,7 @@ public partial class AssetService : IAssetService
             }
 
             // Process standalone assets (track conflicts with bundle assets)
-            // Use empty string as marker for standalone assets (not from any bundle)
+            // Use null for standalone assets (not from any bundle)
             foreach (var standalone in standaloneAssets)
             {
                 var contentHash = standalone.ContentHash ?? standalone.AssetId; // Use asset ID if no hash
@@ -1523,10 +1528,10 @@ public partial class AssetService : IAssetService
                 // Track by platform ID to detect conflicts
                 if (!assetsByPlatformId.TryGetValue(standalone.AssetId, out var versions))
                 {
-                    versions = new List<(string BundleId, string ContentHash)>();
+                    versions = new List<(string? BundleId, string ContentHash)>();
                     assetsByPlatformId[standalone.AssetId] = versions;
                 }
-                versions.Add((string.Empty, contentHash));
+                versions.Add((null, contentHash));
 
                 // Track standalone assets by hash for deduplication
                 if (!standaloneByHash.ContainsKey(contentHash) && !assetsByHash.ContainsKey(contentHash))
@@ -1546,7 +1551,8 @@ public partial class AssetService : IAssetService
                         AssetId = platformId,
                         ConflictingBundles = versions.Select(v => new ConflictingBundleEntry
                         {
-                            BundleId = v.BundleId,
+                            // Use marker for standalone assets not from any bundle
+                            BundleId = v.BundleId ?? StandaloneAssetBundleMarker,
                             ContentHash = v.ContentHash
                         }).ToList()
                     });
@@ -3717,9 +3723,9 @@ public sealed class AssetProcessingRetryEvent
 /// </summary>
 internal sealed class BundleDownloadToken
 {
-    public string BundleId { get; set; } = string.Empty;
+    public required string BundleId { get; set; }
     public BundleFormat Format { get; set; }
-    public string Path { get; set; } = string.Empty;
+    public required string Path { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
 }
@@ -3749,7 +3755,7 @@ internal sealed class MetabundleJob
     /// <summary>
     /// Target metabundle identifier (human-readable, e.g., "game-assets-v1").
     /// </summary>
-    public string MetabundleId { get; set; } = string.Empty;
+    public required string MetabundleId { get; set; }
 
     /// <summary>
     /// Current job status.
@@ -3837,10 +3843,10 @@ internal sealed class MetabundleJobResult
 /// </summary>
 internal sealed class SourceBundleReferenceInternal
 {
-    public string BundleId { get; set; } = string.Empty;
-    public string Version { get; set; } = string.Empty;
-    public List<string> AssetIds { get; set; } = new();
-    public string ContentHash { get; set; } = string.Empty;
+    public required string BundleId { get; set; }
+    public required string Version { get; set; }
+    public required List<string> AssetIds { get; set; }
+    public required string ContentHash { get; set; }
 }
 
 /// <summary>
@@ -3857,7 +3863,7 @@ internal sealed class MetabundleJobQueuedEvent
     /// <summary>
     /// The metabundle ID being created (human-readable, e.g., "game-assets-v1").
     /// </summary>
-    public string MetabundleId { get; set; } = string.Empty;
+    public required string MetabundleId { get; set; }
 
     /// <summary>
     /// Number of source bundles to merge.
