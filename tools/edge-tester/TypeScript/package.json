@@ -10,8 +10,8 @@
     "start": "node harness.js"
   },
   "dependencies": {
-    "@beyondimmersion/bannou-client": "file:../../sdks/typescript/client",
-    "@beyondimmersion/bannou-core": "file:../../sdks/typescript/core",
+    "@beyondimmersion/bannou-client": "file:../../../sdks/typescript/client",
+    "@beyondimmersion/bannou-core": "file:../../../sdks/typescript/core",
     "ws": "^8.18.0"
   },
   "devDependencies": {
