@@ -72,23 +72,18 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 - BundleId = human-readable identifier → `string` ✓
 - **NEITHER should be Guid**
 
-#### Status: REVERT REQUIRED
+#### Status: ✅ COMPLETE
 
-- [ ] **REVERT BundleId to string**: The previous "fix" that changed BundleId from `string` to `Guid` was **WRONG**. The SDK documentation clearly shows BundleId is meant to be a human-readable string like `"synty/polygon-adventure"`, not a UUID. This needs to be reverted:
+- [x] **REVERTED BundleId to string**: Fixed. BundleId/MetabundleId are human-readable identifiers (`"synty/polygon-adventure"`, `"my-bundle-v1"`), not UUIDs.
 
-  **Schema changes required**:
-  - `schemas/asset-api.yaml`: Remove `format: uuid` from all bundleId/metabundleId fields
-
-  **Internal model changes required**:
-  - `BundleMetadata.BundleId`: Change back to `string`
-  - `StoredSourceBundleReference.BundleId`: Change back to `string`
-  - `StoredBundleAssetEntry` related fields: Change back to `string`
-  - All internal dictionaries/tuples: Change back to `string` keys
-
-  **SDK changes required**:
-  - `sdks/bundle-format/BannouBundleWriter.cs`: `Finalize()` bundleId parameter should be `string`
-  - `sdks/bundle-format/BundleManifest.cs`: `BundleId` should be `string`
-  - Verify all SDK usages expect human-readable strings
+  **Changes made**:
+  - Schemas: Removed `format: uuid` from bundleId/metabundleId in `asset-api.yaml`, `asset-events.yaml`, `asset-client-events.yaml`
+  - SDK bundle-format: `BundleManifest.BundleId`, `BannouBundleWriter.Finalize()`, `BundleValidator.ValidateAsync()` all use `string`
+  - lib-asset models: `BundleMetadata.BundleId`, `StoredSourceBundleReference.BundleId`, all internal dictionaries/tuples use `string`
+  - lib-asset service: Fixed all `== Guid.Empty` checks to `string.IsNullOrWhiteSpace()`
+  - lib-asset event emitters: All bundleId/metabundleId parameters use `string`
+  - lib-asset.tests: Updated all test fixtures to use string bundle IDs
+  - **Note**: `lib-escrow/EscrowAssetBundleModel.BundleId` remains `Guid` - this is a DIFFERENT concept (internal escrow grouping, system-generated)
 
 - [ ] **T25**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). **Decision**: Define an `AssetProcessingErrorCode` enum in schema.
 
