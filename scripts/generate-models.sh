@@ -109,6 +109,10 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     echo -e "${YELLOW}🔄 Post-processing: Adding AdditionalProperties XML docs...${NC}"
     postprocess_additional_properties_docs "$OUTPUT_FILE"
 
+    # Post-process: Convert enum member names to proper PascalCase
+    echo -e "${YELLOW}🔄 Post-processing: Converting enum names to PascalCase...${NC}"
+    postprocess_enum_pascalcase "$OUTPUT_FILE"
+
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
 else
@@ -185,6 +189,10 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         # Post-process: Add XML docs to AdditionalProperties
         echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding AdditionalProperties XML docs...${NC}"
         postprocess_additional_properties_docs "$LIFECYCLE_OUTPUT_FILE"
+
+        # Post-process: Convert enum member names to proper PascalCase
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Converting enum names to PascalCase...${NC}"
+        postprocess_enum_pascalcase "$LIFECYCLE_OUTPUT_FILE"
 
         LIFECYCLE_FILE_SIZE=$(wc -l < "$LIFECYCLE_OUTPUT_FILE" 2>/dev/null || echo "0")
         echo -e "${GREEN}✅ Generated lifecycle event models ($LIFECYCLE_FILE_SIZE lines)${NC}"

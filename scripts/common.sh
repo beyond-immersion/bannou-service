@@ -339,3 +339,29 @@ postprocess_additional_properties_docs() {
     }
     ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
 }
+
+# Convert NSwag underscore-style enum member names to proper PascalCase
+# NSwag generates enum values like "Event_only" instead of "EventOnly"
+# This function converts all underscore-style enum members to PascalCase
+# Usage: postprocess_enum_pascalcase "$OUTPUT_FILE"
+postprocess_enum_pascalcase() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        log_error "File not found for enum PascalCase post-processing: $file"
+        return 1
+    fi
+
+    # Use perl for easier regex replacement with proper case conversion
+    # Pattern matches enum member declarations like "    Event_only = 1,"
+    # Converts to "    EventOnly = 1," while preserving EnumMember attribute values
+    perl -i -pe '
+        # Only process lines that look like enum member declarations (not attributes)
+        # Pattern: leading whitespace, PascalWord_lowercase, optional more _segments, = number
+        if (/^(\s+)([A-Z][a-z]+(?:_[a-z]+)+)(\s*=\s*\d+)/) {
+            my ($indent, $name, $suffix) = ($1, $2, $3);
+            # Convert underscore name to PascalCase
+            $name =~ s/_(.)/\U$1/g;
+            $_ = "$indent$name$suffix,\n";
+        }
+    ' "$file"
+}

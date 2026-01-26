@@ -52,15 +52,6 @@ def to_pascal_case(name):
     else:
         return name[0].upper() + name[1:] if name else name
 
-def to_nswag_enum_value(name):
-    # NSwag's enum naming: capitalize first letter and each segment after underscore,
-    # but PRESERVE underscores (unlike PascalCase which removes them)
-    # e.g., 'event_only' -> 'Event_only', 'consequence_based' -> 'Consequence_based'
-    # For hyphens, convert to underscore first: 'pool-per-type' -> 'Pool_per_type'
-    name = name.replace('-', '_')
-    parts = name.split('_')
-    return '_'.join(p.capitalize() for p in parts)
-
 def to_property_name(name):
     # Convert environment variable style to property name
     # e.g., 'MAX_CONNECTIONS' -> 'MaxConnections', 'JwtSecret' -> 'JwtSecret'
@@ -164,9 +155,9 @@ try:
 
             if prop_default is not None:
                 if is_enum:
-                    # Enum default: convert value to NSwag enum member naming
-                    # NSwag preserves underscores: 'event_only' -> 'Event_only'
-                    enum_value = to_nswag_enum_value(str(prop_default))
+                    # Enum default: convert value to PascalCase enum member name
+                    # e.g., 'event_only' -> 'EventOnly'
+                    enum_value = to_pascal_case(str(prop_default))
                     default_value = f' = {csharp_type}.{enum_value};'
                 elif csharp_type == 'string':
                     default_value = f' = \"{prop_default}\";'

@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Contract;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Contract;
 
@@ -109,16 +124,16 @@ public enum BreachType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"term_violation")]
-    Term_violation = 0,
+    TermViolation = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"milestone_missed")]
-    Milestone_missed = 1,
+    MilestoneMissed = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"unauthorized_action")]
-    Unauthorized_action = 2,
+    UnauthorizedAction = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"non_payment")]
-    Non_payment = 3,
+    NonPayment = 3,
 
 }
 #pragma warning restore CS1591
@@ -135,13 +150,13 @@ public enum BreachStatus
     Detected = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cure_period")]
-    Cure_period = 1,
+    CurePeriod = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cured")]
     Cured = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"consequences_applied")]
-    Consequences_applied = 3,
+    ConsequencesApplied = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"disputed")]
     Disputed = 4,
@@ -187,10 +202,10 @@ public enum EnforcementMode
     Advisory = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"event_only")]
-    Event_only = 1,
+    EventOnly = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"consequence_based")]
-    Consequence_based = 2,
+    ConsequenceBased = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"community")]
     Community = 3,
@@ -207,16 +222,16 @@ public enum TerminationPolicy
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"mutual_consent")]
-    Mutual_consent = 0,
+    MutualConsent = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"unilateral_with_notice")]
-    Unilateral_with_notice = 1,
+    UnilateralWithNotice = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"unilateral_immediate")]
-    Unilateral_immediate = 2,
+    UnilateralImmediate = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"non_terminable")]
-    Non_terminable = 3,
+    NonTerminable = 3,
 
 }
 #pragma warning restore CS1591
@@ -230,13 +245,13 @@ public enum PaymentSchedule
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"one_time")]
-    One_time = 0,
+    OneTime = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"recurring")]
     Recurring = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"milestone_based")]
-    Milestone_based = 2,
+    MilestoneBased = 2,
 
 }
 #pragma warning restore CS1591
@@ -253,13 +268,13 @@ public enum ConstraintType
     Exclusivity = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"non_compete")]
-    Non_compete = 1,
+    NonCompete = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"territory")]
     Territory = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"time_commitment")]
-    Time_commitment = 3,
+    TimeCommitment = 3,
 
 }
 #pragma warning restore CS1591
@@ -273,10 +288,10 @@ public enum MetadataType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"instance_data")]
-    Instance_data = 0,
+    InstanceData = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"runtime_state")]
-    Runtime_state = 1,
+    RuntimeState = 1,
 
 }
 #pragma warning restore CS1591
@@ -3083,7 +3098,7 @@ public enum PreboundApiExecutionMode
     Async = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"fire_and_forget")]
-    Fire_and_forget = 2,
+    FireAndForget = 2,
 
 }
 #pragma warning restore CS1591
