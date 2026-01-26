@@ -394,7 +394,7 @@ public partial class SceneService : ISceneService
             }
 
             // Check checkout status and get editor ID if available
-            Guid? editorId = null;
+            string? editorId = null;
             if (existingIndex.IsCheckedOut)
             {
                 // If we have a checkout token, validate it
@@ -751,7 +751,7 @@ public partial class SceneService : ISceneService
             {
                 SceneId = body.SceneId,
                 Token = checkoutToken,
-                EditorId = body.EditorId ?? Guid.Empty,
+                EditorId = body.EditorId ?? "unknown",
                 ExpiresAt = expiresAt,
                 ExtensionCount = 0
             };
@@ -782,7 +782,7 @@ public partial class SceneService : ISceneService
                 SceneId = body.SceneId,
                 SceneName = indexEntry.Name,
                 GameId = indexEntry.GameId,
-                CheckedOutBy = checkoutState.EditorId.ToString(),
+                CheckedOutBy = checkoutState.EditorId,
                 ExpiresAt = expiresAt
             };
             await _messageBus.TryPublishAsync(SCENE_CHECKED_OUT_TOPIC, eventModel, cancellationToken: cancellationToken);
@@ -871,7 +871,7 @@ public partial class SceneService : ISceneService
                 GameId = indexEntry.GameId,
                 Version = updateResponse.Scene.Version,
                 PreviousVersion = body.Scene.Version,
-                CommittedBy = checkout.EditorId.ToString(),
+                CommittedBy = checkout.EditorId,
                 ChangesSummary = body.ChangesSummary,
                 NodeCount = CountNodes(body.Scene.Root)
             };
@@ -940,7 +940,7 @@ public partial class SceneService : ISceneService
                 SceneId = body.SceneId,
                 SceneName = indexEntry?.Name,
                 GameId = indexEntry?.GameId,
-                DiscardedBy = checkout.EditorId.ToString()
+                DiscardedBy = checkout.EditorId
             };
             await _messageBus.TryPublishAsync(SCENE_CHECKOUT_DISCARDED_TOPIC, eventModel, cancellationToken: cancellationToken);
 
@@ -2096,7 +2096,7 @@ internal class SceneIndexEntry
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public bool IsCheckedOut { get; set; }
-    public Guid? CheckedOutBy { get; set; }
+    public string? CheckedOutBy { get; set; }
 }
 
 /// <summary>
@@ -2106,7 +2106,7 @@ internal class CheckoutState
 {
     public Guid SceneId { get; set; }
     public string Token { get; set; } = string.Empty;
-    public Guid EditorId { get; set; }
+    public string EditorId { get; set; } = string.Empty;
     public DateTimeOffset ExpiresAt { get; set; }
     public int ExtensionCount { get; set; }
 }
