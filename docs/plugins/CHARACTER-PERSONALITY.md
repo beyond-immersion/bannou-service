@@ -224,14 +224,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (Internal POCO uses string for enum)**: `CombatPreferencesModel` stores enums as strings requiring `Enum.Parse`:
-   - `Style`: string → `CombatStyle`
-   - `PreferredRange`: string → `PreferredRange`
-   - `GroupRole`: string → `GroupRole`
-
-2. **T25 (Trait key parsing)**: Personality trait data uses string dictionary keys parsed to `TraitAxis` enum via `Enum.Parse<TraitAxis>(trait)`. Should use `Dictionary<TraitAxis, double>` directly.
-
-3. **T25 (CharacterId fields)**: Both `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`.
+No bugs identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -245,7 +238,7 @@ None. The service is feature-complete for its scope.
 
 5. **Batch get is sequential**: `BatchGetPersonalitiesAsync` iterates character IDs sequentially (not `Task.WhenAll`). Acceptable with 100-character limit but O(n) latency.
 
-6. **Enum string storage in internal models**: `CombatPreferencesData` stores Style, PreferredRange, GroupRole as strings. Requires `Enum.Parse<T>()` on every read. Enables schema evolution but loses compile-time type safety.
+6. **Proper enum typing in internal models**: `CombatPreferencesData` uses proper enum types for Style, PreferredRange, and GroupRole, enabling compile-time type safety.
 
 7. **ALLY_LOST 50/50 random outcome**: When an ally is lost in combat, `ProtectAllies` is set to true OR false with equal probability. Models conflicting emotional responses (determination vs. self-preservation). Not influenced by current trait values or intensity.
 

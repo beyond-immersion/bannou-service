@@ -1009,16 +1009,16 @@ public enum PermissionRecompileEventReason
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
-    Service_registered = 0,
+    ServiceRegistered = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"permission_rules_changed")]
-    Permission_rules_changed = 1,
+    PermissionRulesChanged = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"role_definitions_updated")]
-    Role_definitions_updated = 2,
+    RoleDefinitionsUpdated = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"manual_trigger")]
-    Manual_trigger = 3,
+    ManualTrigger = 3,
 
 }
 #pragma warning restore CS1591

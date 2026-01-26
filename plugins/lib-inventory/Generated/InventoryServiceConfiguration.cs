@@ -63,7 +63,7 @@ public class InventoryServiceConfiguration : IServiceConfiguration
     /// Default weight contribution mode for containers
     /// Environment variable: INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION
     /// </summary>
-    public string DefaultWeightContribution { get; set; } = "self_plus_contents";
+    public WeightContribution DefaultWeightContribution { get; set; } = WeightContribution.SelfPlusContents;
 
     /// <summary>
     /// TTL for container cache entries

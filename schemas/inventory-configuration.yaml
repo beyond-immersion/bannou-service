@@ -13,7 +13,7 @@ x-service-configuration:
       description: Default maximum nesting depth for containers
 
     DefaultWeightContribution:
-      type: string
+      $ref: 'inventory-api.yaml#/components/schemas/WeightContribution'
       default: self_plus_contents
       env: INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION
       description: Default weight contribution mode for containers

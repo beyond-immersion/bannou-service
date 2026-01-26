@@ -3116,13 +3116,13 @@ public enum QuerySavesRequestSortBy
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
-    Created_at = 0,
+    CreatedAt = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"size")]
     Size = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"version_number")]
-    Version_number = 2,
+    VersionNumber = 2,
 
 }
 #pragma warning restore CS1591
@@ -3147,13 +3147,13 @@ public enum AdminStatsRequestGroupBy
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"owner_type")]
-    Owner_type = 0,
+    OwnerType = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"category")]
     Category = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"schema_version")]
-    Schema_version = 2,
+    SchemaVersion = 2,
 
 }
 #pragma warning restore CS1591

@@ -192,25 +192,25 @@ public enum MarkerType
     Generic = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"spawn_point")]
-    Spawn_point = 1,
+    SpawnPoint = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"npc_spawn")]
-    Npc_spawn = 2,
+    NpcSpawn = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"waypoint")]
     Waypoint = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"camera_point")]
-    Camera_point = 4,
+    CameraPoint = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"light_point")]
-    Light_point = 5,
+    LightPoint = 5,
 
     [System.Runtime.Serialization.EnumMember(Value = @"audio_point")]
-    Audio_point = 6,
+    AudioPoint = 6,
 
     [System.Runtime.Serialization.EnumMember(Value = @"trigger_point")]
-    Trigger_point = 7,
+    TriggerPoint = 7,
 
 }
 #pragma warning restore CS1591
@@ -385,16 +385,16 @@ public enum UnresolvedReferenceReason
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"not_found")]
-    Not_found = 0,
+    NotFound = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"circular_reference")]
-    Circular_reference = 1,
+    CircularReference = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"depth_exceeded")]
-    Depth_exceeded = 2,
+    DepthExceeded = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"access_denied")]
-    Access_denied = 3,
+    AccessDenied = 3,
 
 }
 #pragma warning restore CS1591
@@ -425,19 +425,19 @@ public enum ValidationRuleType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"require_tag")]
-    Require_tag = 0,
+    RequireTag = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"require_node_type")]
-    Require_node_type = 1,
+    RequireNodeType = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"forbid_tag")]
-    Forbid_tag = 2,
+    ForbidTag = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"require_annotation")]
-    Require_annotation = 3,
+    RequireAnnotation = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"custom_expression")]
-    Custom_expression = 4,
+    CustomExpression = 4,
 
 }
 #pragma warning restore CS1591
@@ -460,7 +460,7 @@ public enum SearchMatchType
     Tag = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"node_name")]
-    Node_name = 3,
+    NodeName = 3,
 
 }
 #pragma warning restore CS1591

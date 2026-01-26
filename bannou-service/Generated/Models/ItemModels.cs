@@ -60,7 +60,7 @@ public enum ItemCategory
     Quest = 6,
 
     [System.Runtime.Serialization.EnumMember(Value = @"currency_like")]
-    Currency_like = 7,
+    CurrencyLike = 7,
 
     [System.Runtime.Serialization.EnumMember(Value = @"misc")]
     Misc = 8,
@@ -132,13 +132,13 @@ public enum SoulboundType
     None = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"on_pickup")]
-    On_pickup = 1,
+    OnPickup = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"on_equip")]
-    On_equip = 2,
+    OnEquip = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"on_use")]
-    On_use = 3,
+    OnUse = 3,
 
 }
 #pragma warning restore CS1591
@@ -155,10 +155,10 @@ public enum ItemScope
     Global = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"realm_specific")]
-    Realm_specific = 1,
+    RealmSpecific = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"multi_realm")]
-    Multi_realm = 2,
+    MultiRealm = 2,
 
 }
 #pragma warning restore CS1591

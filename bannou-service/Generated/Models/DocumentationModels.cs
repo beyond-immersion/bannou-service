@@ -127,10 +127,10 @@ public enum ListSortField
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
-    Created_at = 0,
+    CreatedAt = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
-    Updated_at = 1,
+    UpdatedAt = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"title")]
     Title = 2,
@@ -147,7 +147,7 @@ public enum SuggestionSource
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"document_id")]
-    Document_id = 0,
+    DocumentId = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"slug")]
     Slug = 1,

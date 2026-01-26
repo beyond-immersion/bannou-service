@@ -44,7 +44,7 @@ public enum MapKind
     Terrain = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"static_geometry")]
-    Static_geometry = 1,
+    StaticGeometry = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"navigation")]
     Navigation = 2,
@@ -53,28 +53,28 @@ public enum MapKind
     Resources = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"spawn_points")]
-    Spawn_points = 4,
+    SpawnPoints = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"points_of_interest")]
-    Points_of_interest = 5,
+    PointsOfInterest = 5,
 
     [System.Runtime.Serialization.EnumMember(Value = @"dynamic_objects")]
-    Dynamic_objects = 6,
+    DynamicObjects = 6,
 
     [System.Runtime.Serialization.EnumMember(Value = @"hazards")]
     Hazards = 7,
 
     [System.Runtime.Serialization.EnumMember(Value = @"weather_effects")]
-    Weather_effects = 8,
+    WeatherEffects = 8,
 
     [System.Runtime.Serialization.EnumMember(Value = @"ownership")]
     Ownership = 9,
 
     [System.Runtime.Serialization.EnumMember(Value = @"combat_effects")]
-    Combat_effects = 10,
+    CombatEffects = 10,
 
     [System.Runtime.Serialization.EnumMember(Value = @"visual_effects")]
-    Visual_effects = 11,
+    VisualEffects = 11,
 
 }
 #pragma warning restore CS1591
@@ -88,13 +88,13 @@ public enum NonAuthorityHandlingMode
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"reject_and_alert")]
-    Reject_and_alert = 0,
+    RejectAndAlert = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"accept_and_alert")]
-    Accept_and_alert = 1,
+    AcceptAndAlert = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"reject_silent")]
-    Reject_silent = 2,
+    RejectSilent = 2,
 
 }
 #pragma warning restore CS1591
@@ -110,13 +110,13 @@ public enum AuthorityTakeoverMode
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"preserve_and_diff")]
-    Preserve_and_diff = 0,
+    PreserveAndDiff = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"reset")]
     Reset = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"require_consume")]
-    Require_consume = 2,
+    RequireConsume = 2,
 
 }
 #pragma warning restore CS1591
@@ -141,19 +141,19 @@ public enum AffordanceType
     Vista = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"choke_point")]
-    Choke_point = 3,
+    ChokePoint = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"gathering_spot")]
-    Gathering_spot = 4,
+    GatheringSpot = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"dramatic_reveal")]
-    Dramatic_reveal = 5,
+    DramaticReveal = 5,
 
     [System.Runtime.Serialization.EnumMember(Value = @"hidden_path")]
-    Hidden_path = 6,
+    HiddenPath = 6,
 
     [System.Runtime.Serialization.EnumMember(Value = @"defensible_position")]
-    Defensible_position = 7,
+    DefensiblePosition = 7,
 
     [System.Runtime.Serialization.EnumMember(Value = @"custom")]
     Custom = 8,
@@ -176,7 +176,7 @@ public enum AffordanceFreshness
     Cached = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"aggressive_cache")]
-    Aggressive_cache = 2,
+    AggressiveCache = 2,
 
 }
 #pragma warning restore CS1591

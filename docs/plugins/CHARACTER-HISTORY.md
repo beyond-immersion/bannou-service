@@ -181,16 +181,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (Internal POCO uses string for enum)**: Multiple internal models store enums as strings requiring `Enum.Parse`:
-   - `EventParticipationData.EventCategory`: string → `EventCategory`
-   - `EventParticipationData.Role`: string → `ParticipationRole`
-   - `BackstoryElementData.ElementType`: string → `BackstoryElementType`
-
-2. **T25 (Internal POCO uses string for Guid)**: Multiple internal models store GUIDs as strings requiring `Guid.Parse`/`.ToString()`:
-   - `ParticipationData.ParticipationId`: string → `Guid`
-   - `ParticipationData.CharacterId`: string → `Guid`
-   - `ParticipationData.EventId`: string → `Guid`
-   - `BackstoryData.CharacterId`: string → `Guid`
+No bugs identified.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -207,7 +198,7 @@ None. The service is feature-complete for its scope.
 
 4. **No external service dependencies**: Unlike character service, character-history is fully self-contained. It doesn't validate that the character exists before recording history.
 
-5. **Enum string storage**: `EventCategory` and `ParticipationRole` enums stored as strings in internal models. Parsed via `Enum.Parse<T>()` on every read. Enables schema evolution.
+5. **Proper enum typing in internal models**: `EventCategory` and `ParticipationRole` use proper enum types in internal models, enabling compile-time type safety.
 
 6. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
 

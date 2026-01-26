@@ -49,11 +49,8 @@ public partial class InventoryService : IInventoryService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-        // Parse default weight contribution once at startup (boundary parsing per T25)
-        if (!Enum.TryParse<WeightContribution>(_configuration.DefaultWeightContribution, true, out _defaultWeightContribution))
-        {
-            _defaultWeightContribution = WeightContribution.Self_plus_contents;
-        }
+        // Configuration already provides typed enum (T25 compliant)
+        _defaultWeightContribution = _configuration.DefaultWeightContribution;
     }
 
     #region Container Operations

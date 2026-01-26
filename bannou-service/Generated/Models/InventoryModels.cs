@@ -39,13 +39,13 @@ public enum ContainerConstraintModel
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"slot_only")]
-    Slot_only = 0,
+    SlotOnly = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"weight_only")]
-    Weight_only = 1,
+    WeightOnly = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"slot_and_weight")]
-    Slot_and_weight = 2,
+    SlotAndWeight = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"grid")]
     Grid = 3,
@@ -94,10 +94,10 @@ public enum WeightContribution
     None = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"self_only")]
-    Self_only = 1,
+    SelfOnly = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"self_plus_contents")]
-    Self_plus_contents = 2,
+    SelfPlusContents = 2,
 
 }
 #pragma warning restore CS1591

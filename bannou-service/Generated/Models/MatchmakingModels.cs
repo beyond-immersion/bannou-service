@@ -922,10 +922,10 @@ public enum TicketStatus
     Searching = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"match_found")]
-    Match_found = 1,
+    MatchFound = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"match_accepted")]
-    Match_accepted = 2,
+    MatchAccepted = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
     Cancelled = 3,
@@ -1151,22 +1151,22 @@ public enum CancelReason
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"cancelled_by_user")]
-    Cancelled_by_user = 0,
+    CancelledByUser = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
     Timeout = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"session_disconnected")]
-    Session_disconnected = 2,
+    SessionDisconnected = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"party_disbanded")]
-    Party_disbanded = 3,
+    PartyDisbanded = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"match_declined")]
-    Match_declined = 4,
+    MatchDeclined = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"queue_disabled")]
-    Queue_disabled = 5,
+    QueueDisabled = 5,
 
 }
 #pragma warning restore CS1591

@@ -42,10 +42,10 @@ public enum CurrencyScope
     Global = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"realm_specific")]
-    Realm_specific = 1,
+    RealmSpecific = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"multi_realm")]
-    Multi_realm = 2,
+    MultiRealm = 2,
 
 }
 #pragma warning restore CS1591
@@ -71,10 +71,10 @@ public enum CurrencyPrecision
     Decimal_8 = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"decimal_full")]
-    Decimal_full = 4,
+    DecimalFull = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"big_integer")]
-    Big_integer = 5,
+    BigInteger = 5,
 
 }
 #pragma warning restore CS1591
@@ -143,10 +143,10 @@ public enum CapOverflowBehavior
     Reject = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cap_and_lose")]
-    Cap_and_lose = 1,
+    CapAndLose = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cap_and_return")]
-    Cap_and_return = 2,
+    CapAndReturn = 2,
 
 }
 #pragma warning restore CS1591
@@ -177,13 +177,13 @@ public enum ExpirationPolicy
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"fixed_date")]
-    Fixed_date = 0,
+    FixedDate = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"duration_from_earn")]
-    Duration_from_earn = 1,
+    DurationFromEarn = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"end_of_season")]
-    End_of_season = 2,
+    EndOfSeason = 2,
 
 }
 #pragma warning restore CS1591
@@ -200,10 +200,10 @@ public enum ItemLinkageMode
     None = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"visual_only")]
-    Visual_only = 1,
+    VisualOnly = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"reference_only")]
-    Reference_only = 2,
+    ReferenceOnly = 2,
 
 }
 #pragma warning restore CS1591
@@ -220,13 +220,13 @@ public enum TransactionType
     Mint = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"quest_reward")]
-    Quest_reward = 1,
+    QuestReward = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"loot_drop")]
-    Loot_drop = 2,
+    LootDrop = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"vendor_sale")]
-    Vendor_sale = 3,
+    VendorSale = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"autogain")]
     Autogain = 4,
@@ -235,13 +235,13 @@ public enum TransactionType
     Refund = 5,
 
     [System.Runtime.Serialization.EnumMember(Value = @"conversion_credit")]
-    Conversion_credit = 6,
+    ConversionCredit = 6,
 
     [System.Runtime.Serialization.EnumMember(Value = @"burn")]
     Burn = 7,
 
     [System.Runtime.Serialization.EnumMember(Value = @"vendor_purchase")]
-    Vendor_purchase = 8,
+    VendorPurchase = 8,
 
     [System.Runtime.Serialization.EnumMember(Value = @"fee")]
     Fee = 9,
@@ -250,10 +250,10 @@ public enum TransactionType
     Expiration = 10,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cap_overflow")]
-    Cap_overflow = 11,
+    CapOverflow = 11,
 
     [System.Runtime.Serialization.EnumMember(Value = @"conversion_debit")]
-    Conversion_debit = 12,
+    ConversionDebit = 12,
 
     [System.Runtime.Serialization.EnumMember(Value = @"transfer")]
     Transfer = 13,
@@ -265,13 +265,13 @@ public enum TransactionType
     Gift = 15,
 
     [System.Runtime.Serialization.EnumMember(Value = @"escrow_deposit")]
-    Escrow_deposit = 16,
+    EscrowDeposit = 16,
 
     [System.Runtime.Serialization.EnumMember(Value = @"escrow_release")]
-    Escrow_release = 17,
+    EscrowRelease = 17,
 
     [System.Runtime.Serialization.EnumMember(Value = @"escrow_refund")]
-    Escrow_refund = 18,
+    EscrowRefund = 18,
 
 }
 #pragma warning restore CS1591

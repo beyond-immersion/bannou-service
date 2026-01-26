@@ -197,7 +197,7 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (Internal POCO uses string for Guid)**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)` to convert it (SessionService.cs:85, 432; AuthService.cs:1287, 1338, 1364, 1390; TokenService.cs:293). Should use `Guid` type directly.
+No bugs identified.
 
 ### Intentional Quirks (Documented Behavior)
 

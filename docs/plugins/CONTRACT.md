@@ -435,12 +435,9 @@ Prebound API Batched Execution
 
 ### Bugs (Fix Immediately)
 
-1. **T21/T25 (String config should be enum)**: `DefaultEnforcementMode` in configuration uses string requiring runtime parsing. Schema should define as enum.
+1. **T25 (Internal POCO uses string for enum)**: `DistributionRecordModel.AssetType` in ContractServiceEscrowIntegration uses string instead of the `AssetType` enum from escrow-api.yaml.
 
-2. **T25 (Internal POCO uses string for enum)**: Multiple internal models store Role/AssetType as strings:
-   - `PartyModel.Role`: string → appropriate Role enum
-   - `MilestoneModel.Role`: string → appropriate Role enum
-   - `AssetReferenceModel.AssetType` (in ContractServiceEscrowIntegration): string → `AssetType`
+Note: `PartyModel.Role` and similar Role properties are intentionally strings - they represent user-defined template roles (e.g., "buyer", "seller", "guarantor") not a fixed enum.
 
 ### Intentional Quirks (Documented Behavior)
 

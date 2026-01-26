@@ -791,10 +791,10 @@ public enum GameActionType
     Attack = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cast_spell")]
-    Cast_spell = 3,
+    CastSpell = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"use_item")]
-    Use_item = 4,
+    UseItem = 4,
 
 }
 #pragma warning restore CS1591

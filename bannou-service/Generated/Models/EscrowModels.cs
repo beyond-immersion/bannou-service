@@ -44,10 +44,10 @@ public enum EscrowType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"two_party")]
-    Two_party = 0,
+    TwoParty = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"multi_party")]
-    Multi_party = 1,
+    MultiParty = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"conditional")]
     Conditional = 2,
@@ -82,19 +82,19 @@ public enum EscrowStatus
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"pending_deposits")]
-    Pending_deposits = 0,
+    PendingDeposits = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"partially_funded")]
-    Partially_funded = 1,
+    PartiallyFunded = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"funded")]
     Funded = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"pending_consent")]
-    Pending_consent = 3,
+    PendingConsent = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"pending_condition")]
-    Pending_condition = 4,
+    PendingCondition = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"finalizing")]
     Finalizing = 5,
@@ -121,7 +121,7 @@ public enum EscrowStatus
     Cancelled = 12,
 
     [System.Runtime.Serialization.EnumMember(Value = @"validation_failed")]
-    Validation_failed = 13,
+    ValidationFailed = 13,
 
 }
 #pragma warning restore CS1591
@@ -139,13 +139,13 @@ public enum EscrowTrustMode
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"full_consent")]
-    Full_consent = 0,
+    FullConsent = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"initiator_trusted")]
-    Initiator_trusted = 1,
+    InitiatorTrusted = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"single_party_trusted")]
-    Single_party_trusted = 2,
+    SinglePartyTrusted = 2,
 
 }
 #pragma warning restore CS1591
@@ -171,7 +171,7 @@ public enum EscrowPartyRole
     Recipient = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"depositor_recipient")]
-    Depositor_recipient = 2,
+    DepositorRecipient = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"arbiter")]
     Arbiter = 3,
@@ -235,13 +235,13 @@ public enum EscrowResolution
     Split = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"expired_refunded")]
-    Expired_refunded = 3,
+    ExpiredRefunded = 3,
 
     [System.Runtime.Serialization.EnumMember(Value = @"cancelled_refunded")]
-    Cancelled_refunded = 4,
+    CancelledRefunded = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"violation_refunded")]
-    Violation_refunded = 5,
+    ViolationRefunded = 5,
 
 }
 #pragma warning restore CS1591
@@ -267,7 +267,7 @@ public enum AssetType
     Item = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"item_stack")]
-    Item_stack = 2,
+    ItemStack = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"contract")]
     Contract = 3,
@@ -292,16 +292,16 @@ public enum ValidationFailureType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset_missing")]
-    Asset_missing = 0,
+    AssetMissing = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset_mutated")]
-    Asset_mutated = 1,
+    AssetMutated = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset_expired")]
-    Asset_expired = 2,
+    AssetExpired = 2,
 
     [System.Runtime.Serialization.EnumMember(Value = @"balance_mismatch")]
-    Balance_mismatch = 3,
+    BalanceMismatch = 3,
 
 }
 #pragma warning restore CS1591
@@ -321,7 +321,7 @@ public enum TokenAlgorithm
     Hmac_sha256 = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"random_bytes")]
-    Random_bytes = 1,
+    RandomBytes = 1,
 
 }
 #pragma warning restore CS1591
