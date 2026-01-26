@@ -2358,7 +2358,8 @@ public class AssetServiceTests
         var bundle2Id = "test-bundle-2";
         var request = new QueryBundlesByAssetRequest
         {
-            AssetId = "test-asset"
+            AssetId = "test-asset",
+            Realm = "test-realm"
         };
 
         var assetIndex = new AssetBundleIndex

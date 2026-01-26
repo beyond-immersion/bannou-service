@@ -65,7 +65,10 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .Setup(f => f.GetStore<ValidationTrackingEntry>(StateStoreDefinitions.EscrowActiveValidation))
             .Returns(_mockValidationStore.Object);
 
-        // Default message bus setup
+        // Default message bus setup - both overloads
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -81,6 +84,10 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         _mockAgreementStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<EscrowAgreementModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
+        // TrySaveAsync for optimistic concurrency - returns new etag on success
+        _mockAgreementStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<EscrowAgreementModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
         _mockTokenStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<TokenHashModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
@@ -483,15 +490,16 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var service = CreateService();
         var request = CreateValidEscrowRequest();
 
+        // The service uses GetWithETagAsync and TrySaveAsync for optimistic concurrency
         _mockPartyPendingStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PartyPendingCount { PendingCount = 3 });
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new PartyPendingCount { PendingCount = 3 }, "etag"));
 
         PartyPendingCount? savedCount = null;
         _mockPartyPendingStore
-            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PartyPendingCount>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, PartyPendingCount, StateOptions?, CancellationToken>((_, c, _, _) => savedCount = c)
-            .ReturnsAsync("etag");
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<PartyPendingCount>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, PartyPendingCount, string, CancellationToken>((_, c, _, _) => savedCount = c)
+            .ReturnsAsync("new-etag");
 
         // Act
         await service.CreateEscrowAsync(request);

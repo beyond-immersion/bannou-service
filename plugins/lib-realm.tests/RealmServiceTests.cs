@@ -26,7 +26,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IStateStore<RealmModel>> _mockRealmStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<ILogger<RealmService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -56,6 +56,12 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockStateStoreFactory
             .Setup(f => f.GetStore<List<string>>(STATE_STORE))
             .Returns(_mockListStore.Object);
+
+        // Setup 3-param TryPublishAsync (the convenience overload services actually call)
+        // Moq doesn't call through default interface implementations, so we must mock both overloads
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
     }
 
     private RealmService CreateService()
@@ -370,9 +376,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockRealmStore.Verify(s => s.SaveAsync(
             $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<RealmModel>(), null, It.IsAny<CancellationToken>()), Times.Once);
 
-        // Verify event was published via IMessageBus
+        // Verify event was published via IMessageBus (3-param convenience overload)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -422,9 +428,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
-        // Verify no event was published (no changes)
+        // Verify no event was published (no changes) - 3-param convenience overload
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -503,9 +509,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockStringStore.Verify(s => s.DeleteAsync(
             $"{CODE_INDEX_PREFIX}DELETED", It.IsAny<CancellationToken>()), Times.Once);
 
-        // Verify event was published via IMessageBus
+        // Verify event was published via IMessageBus (3-param convenience overload)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm.deleted", It.IsAny<RealmDeletedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+            "realm.deleted", It.IsAny<RealmDeletedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -574,9 +580,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal("No longer needed", response.DeprecationReason);
         Assert.NotNull(response.DeprecatedAt);
 
-        // Verify event was published via IMessageBus
+        // Verify event was published via IMessageBus (3-param convenience overload)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -645,9 +651,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Null(response.DeprecationReason);
         Assert.Null(response.DeprecatedAt);
 
-        // Verify event was published via IMessageBus
+        // Verify event was published via IMessageBus (3-param convenience overload)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
