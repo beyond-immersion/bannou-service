@@ -958,15 +958,15 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         var typeLabel = element.ElementType switch
         {
-            "ORIGIN_MYTH" => "Origin",
-            "CULTURAL_PRACTICE" => "Cultural practice",
-            "POLITICAL_SYSTEM" => "Political system",
-            "ECONOMIC_BASE" => "Economic base",
-            "RELIGIOUS_TRADITION" => "Religious tradition",
-            "GEOGRAPHIC_FEATURE" => "Geographic feature",
-            "FAMOUS_FIGURE" => "Famous figure",
-            "TECHNOLOGICAL_LEVEL" => "Technology level",
-            _ => element.ElementType
+            RealmLoreElementType.ORIGIN_MYTH => "Origin",
+            RealmLoreElementType.CULTURAL_PRACTICE => "Cultural practice",
+            RealmLoreElementType.POLITICAL_SYSTEM => "Political system",
+            RealmLoreElementType.ECONOMIC_BASE => "Economic base",
+            RealmLoreElementType.RELIGIOUS_TRADITION => "Religious tradition",
+            RealmLoreElementType.GEOGRAPHIC_FEATURE => "Geographic feature",
+            RealmLoreElementType.FAMOUS_FIGURE => "Famous figure",
+            RealmLoreElementType.TECHNOLOGICAL_LEVEL => "Technology level",
+            _ => element.ElementType.ToString()
         };
 
         return $"{typeLabel}: {element.Key} - {element.Value}";
@@ -976,14 +976,14 @@ public partial class RealmHistoryService : IRealmHistoryService
     {
         var roleVerb = participation.Role switch
         {
-            "ORIGIN" => "originated",
-            "AGGRESSOR" => "instigated",
-            "DEFENDER" => "defended against",
-            "MEDIATOR" => "mediated",
-            "AFFECTED" => "was affected by",
-            "BENEFICIARY" => "benefited from",
-            "INSTIGATOR" => "instigated",
-            "NEUTRAL_PARTY" => "observed",
+            RealmEventRole.ORIGIN => "originated",
+            RealmEventRole.AGGRESSOR => "instigated",
+            RealmEventRole.DEFENDER => "defended against",
+            RealmEventRole.MEDIATOR => "mediated",
+            RealmEventRole.AFFECTED => "was affected by",
+            RealmEventRole.BENEFICIARY => "benefited from",
+            RealmEventRole.INSTIGATOR => "instigated",
+            RealmEventRole.NEUTRAL_PARTY => "observed",
             _ => "participated in"
         };
 

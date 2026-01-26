@@ -144,8 +144,8 @@ public class RealmHistoryServiceTests
         var realmId = Guid.NewGuid();
         var existingIndex = new RealmParticipationIndexData
         {
-            RealmId = realmId.ToString(),
-            ParticipationIds = new List<string> { "existing-id" }
+            RealmId = realmId,
+            ParticipationIds = new List<Guid> { Guid.NewGuid() }
         };
 
         var request = new RecordRealmParticipationRequest
@@ -220,18 +220,18 @@ public class RealmHistoryServiceTests
 
         var index = new RealmParticipationIndexData
         {
-            RealmId = realmId.ToString(),
-            ParticipationIds = new List<string> { warParticipationId.ToString(), treatyParticipationId.ToString() }
+            RealmId = realmId,
+            ParticipationIds = new List<Guid> { warParticipationId, treatyParticipationId }
         };
 
         var warParticipation = new RealmParticipationData
         {
-            ParticipationId = warParticipationId.ToString(),
-            RealmId = realmId.ToString(),
-            EventId = Guid.NewGuid().ToString(),
+            ParticipationId = warParticipationId,
+            RealmId = realmId,
+            EventId = Guid.NewGuid(),
             EventName = "War Event",
-            EventCategory = "WAR",
-            Role = "DEFENDER",
+            EventCategory = RealmEventCategory.WAR,
+            Role = RealmEventRole.DEFENDER,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Impact = 0.8f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -239,12 +239,12 @@ public class RealmHistoryServiceTests
 
         var treatyParticipation = new RealmParticipationData
         {
-            ParticipationId = treatyParticipationId.ToString(),
-            RealmId = realmId.ToString(),
-            EventId = Guid.NewGuid().ToString(),
+            ParticipationId = treatyParticipationId,
+            RealmId = realmId,
+            EventId = Guid.NewGuid(),
             EventName = "Treaty Event",
-            EventCategory = "TREATY",
-            Role = "MEDIATOR",
+            EventCategory = RealmEventCategory.TREATY,
+            Role = RealmEventRole.MEDIATOR,
             EventDateUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Impact = 0.5f,
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
@@ -252,10 +252,15 @@ public class RealmHistoryServiceTests
 
         _mockIndexStore.Setup(s => s.GetAsync($"realm-participation-index-{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(index);
-        _mockParticipationStore.Setup(s => s.GetAsync($"realm-participation-{warParticipationId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(warParticipation);
-        _mockParticipationStore.Setup(s => s.GetAsync($"realm-participation-{treatyParticipationId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(treatyParticipation);
+
+        // Service uses GetBulkAsync for fetching participations
+        var bulkResult = new Dictionary<string, RealmParticipationData>
+        {
+            { $"realm-participation-{warParticipationId}", warParticipation },
+            { $"realm-participation-{treatyParticipationId}", treatyParticipation }
+        };
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResult);
 
         var request = new GetRealmParticipationRequest
         {
@@ -351,12 +356,12 @@ public class RealmHistoryServiceTests
 
         var existingLore = new RealmLoreData
         {
-            RealmId = realmId.ToString(),
+            RealmId = realmId,
             Elements = new List<RealmLoreElementData>
             {
                 new RealmLoreElementData
                 {
-                    ElementType = "ORIGIN_MYTH",
+                    ElementType = RealmLoreElementType.ORIGIN_MYTH,
                     Key = "creation",
                     Value = "Old value",
                     Strength = 0.5f
@@ -428,16 +433,16 @@ public class RealmHistoryServiceTests
         var service = CreateService();
         var realmId = Guid.NewGuid();
 
-        var existingLore = new RealmLoreData
+        var existingLoreForDelete = new RealmLoreData
         {
-            RealmId = realmId.ToString(),
+            RealmId = realmId,
             Elements = new List<RealmLoreElementData>(),
             CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };
 
         _mockLoreStore.Setup(s => s.GetAsync($"realm-lore-{realmId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingLore);
+            .ReturnsAsync(existingLoreForDelete);
 
         var request = new DeleteRealmLoreRequest { RealmId = realmId };
 

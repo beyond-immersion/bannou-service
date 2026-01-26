@@ -128,7 +128,7 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-escrow
 
-- [ ] **T25**: `AssetFailureData.AssetType` is stored as string requiring `Enum.TryParse<AssetType>()`. **Decision**: Change POCO to use `AssetType` enum directly.
+- [ ] **T25**: `ValidationFailure.assetType` (NOT `AssetFailureData`) uses `type: string` in schema instead of `$ref: '#/components/schemas/AssetType'`. **Decision**: Change schema from `type: string` to `$ref: '#/components/schemas/AssetType'`, then regenerate code and update `EscrowServiceValidation.cs` to remove `Enum.TryParse<AssetType>()` (lines 221, 284) and `EscrowService.cs` to remove `.ToString()` (line 635). **NOTE**: Internal `ValidationFailureModel.AssetType` already correctly uses `AssetType` enum.
 
 ### lib-game-session
 
@@ -148,21 +148,21 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-location
 
-- [ ] **T25**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()`. **Decision**: Change POCO to use `LocationType` enum directly.
+- [x] **T25**: `LocationModel.LocationType` is stored as string requiring `Enum.Parse<LocationType>()`. **ALREADY FIXED** - `LocationModel.LocationType` uses `LocationType` enum directly. All ID fields (`LocationId`, `RealmId`, `ParentLocationId`) are `Guid`.
 
 ### lib-permission
 
-- [ ] **T25**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. **Decision**: Define a typed `ServiceRegistrationInfo` POCO class.
+- [ ] **T25**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. **Decision**: Define a typed `ServiceRegistrationInfo` POCO class. See `PermissionService.cs:355-360`.
 
 ### lib-realm
 
-- [ ] **T25**: `RealmModel.RealmId` stored as string instead of Guid. **Decision**: Change POCO to use `Guid` type.
+- [x] **T25**: `RealmModel.RealmId` stored as string instead of Guid. **ALREADY FIXED** - `RealmModel.RealmId` is `Guid`. All ID fields are `Guid` type.
 
 ### lib-realm-history
 
-- [ ] **T25**: Multiple internal models store enums as strings requiring `Enum.TryParse`: `RealmEventDataModel.EventCategory`, `RealmEventDataModel.Role`, `RealmLoreDataModel.ElementType`. **Decision**: Change POCOs to use enum types directly.
+- [x] **T25**: Multiple internal models store enums as strings requiring `Enum.TryParse`: `RealmEventDataModel.EventCategory`, `RealmEventDataModel.Role`, `RealmLoreDataModel.ElementType`. **ALREADY FIXED** - All POCOs use proper enum types: `RealmParticipationData.EventCategory` is `RealmEventCategory`, `Role` is `RealmEventRole`, `RealmLoreElementData.ElementType` is `RealmLoreElementType`.
 
-- [ ] **T25**: Multiple internal models store GUIDs as strings: `ParticipationId`, `RealmId`, `EventId`. **Decision**: Change to `Guid` type.
+- [x] **T25**: Multiple internal models store GUIDs as strings: `ParticipationId`, `RealmId`, `EventId`. **ALREADY FIXED** - All POCOs use `Guid` type: `RealmParticipationData.ParticipationId`, `RealmId`, `EventId`, `RealmLoreData.RealmId`, `RealmLoreElementData.RelatedEntityId`.
 
 ### lib-relationship
 
