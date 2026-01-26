@@ -394,7 +394,7 @@ public partial class SceneService : ISceneService
             }
 
             // Check checkout status and get editor ID if available
-            string? editorId = null;
+            Guid? editorId = null;
             if (existingIndex.IsCheckedOut)
             {
                 // If we have a checkout token, validate it
@@ -749,9 +749,9 @@ public partial class SceneService : ISceneService
 
             var checkoutState = new CheckoutState
             {
-                SceneId = sceneIdStr,
+                SceneId = body.SceneId,
                 Token = checkoutToken,
-                EditorId = body.EditorId ?? "unknown",
+                EditorId = body.EditorId ?? Guid.Empty,
                 ExpiresAt = expiresAt,
                 ExtensionCount = 0
             };
@@ -782,7 +782,7 @@ public partial class SceneService : ISceneService
                 SceneId = body.SceneId,
                 SceneName = indexEntry.Name,
                 GameId = indexEntry.GameId,
-                CheckedOutBy = checkoutState.EditorId,
+                CheckedOutBy = checkoutState.EditorId.ToString(),
                 ExpiresAt = expiresAt
             };
             await _messageBus.TryPublishAsync(SCENE_CHECKED_OUT_TOPIC, eventModel, cancellationToken: cancellationToken);
@@ -871,7 +871,7 @@ public partial class SceneService : ISceneService
                 GameId = indexEntry.GameId,
                 Version = updateResponse.Scene.Version,
                 PreviousVersion = body.Scene.Version,
-                CommittedBy = checkout.EditorId,
+                CommittedBy = checkout.EditorId.ToString(),
                 ChangesSummary = body.ChangesSummary,
                 NodeCount = CountNodes(body.Scene.Root)
             };
@@ -940,7 +940,7 @@ public partial class SceneService : ISceneService
                 SceneId = body.SceneId,
                 SceneName = indexEntry?.Name,
                 GameId = indexEntry?.GameId,
-                DiscardedBy = checkout.EditorId
+                DiscardedBy = checkout.EditorId.ToString()
             };
             await _messageBus.TryPublishAsync(SCENE_CHECKOUT_DISCARDED_TOPIC, eventModel, cancellationToken: cancellationToken);
 
@@ -1159,8 +1159,7 @@ public partial class SceneService : ISceneService
                 if (!string.IsNullOrEmpty(body.GameId) && indexEntry.GameId != body.GameId) continue;
                 if (body.SceneTypes != null && body.SceneTypes.Count > 0)
                 {
-                    if (!Enum.TryParse<SceneType>(indexEntry.SceneType, out var sceneType) ||
-                        !body.SceneTypes.Contains(sceneType))
+                    if (!body.SceneTypes.Contains(indexEntry.SceneType))
                     {
                         continue;
                     }

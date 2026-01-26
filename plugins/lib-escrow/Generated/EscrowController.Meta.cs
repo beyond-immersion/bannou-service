@@ -153,6 +153,7 @@ public partial class EscrowController
                     "description": "Party entity ID"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -185,7 +186,7 @@ public partial class EscrowController
         },
         "EscrowPartyRole": {
             "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\ n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
                 "depositor",
                 "recipient",
@@ -209,6 +210,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -326,7 +328,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -618,6 +620,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -717,6 +720,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -892,6 +896,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -1001,6 +1006,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -1137,6 +1143,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "token": {
@@ -1460,6 +1467,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -1559,6 +1567,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -1734,6 +1743,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -1843,6 +1853,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -2355,6 +2366,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -2454,6 +2466,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -2629,6 +2642,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -2738,6 +2752,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -3082,6 +3097,7 @@ public partial class EscrowController
                     "description": "Party depositing"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -3220,7 +3236,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -3483,6 +3499,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -3582,6 +3599,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -3757,6 +3775,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -3866,6 +3885,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -4002,6 +4022,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "token": {
@@ -4096,6 +4117,7 @@ public partial class EscrowController
                     "description": "Party to validate"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -4225,7 +4247,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -4357,6 +4379,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 }
             }
@@ -4618,6 +4641,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -4642,7 +4666,7 @@ public partial class EscrowController
         },
         "EscrowConsentType": {
             "type": "string",
-            "description": "Type of consent being given.\ n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\ n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
                 "release",
                 "refund",
@@ -4901,6 +4925,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -5000,6 +5025,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -5175,6 +5201,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -5284,6 +5311,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -5544,6 +5572,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -5570,7 +5599,7 @@ public partial class EscrowController
         },
         "EscrowConsentType": {
             "type": "string",
-            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
+            "description": "Type of consent being given.\n- release: Agrees to release assets to recipients\n- refund: Agrees to refund assets to depositors\ n- dispute: Raises a dispute\n- reaffirm: Re-affirms after validation failure\n",
             "enum": [
                 "release",
                 "refund",
@@ -5924,6 +5953,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -6023,6 +6053,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -6198,6 +6229,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -6307,6 +6339,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -6818,6 +6851,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -6917,6 +6951,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -7092,6 +7127,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -7201,6 +7237,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -7684,6 +7721,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -7783,6 +7821,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -7958,6 +7997,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -8067,6 +8107,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -8304,6 +8345,7 @@ public partial class EscrowController
                     "description": "Party raising dispute"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "reason": {
@@ -8557,6 +8599,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -8656,6 +8699,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -8831,6 +8875,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -8940,6 +8985,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -9201,6 +9247,7 @@ public partial class EscrowController
                     "description": "Party ID"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -9307,7 +9354,7 @@ public partial class EscrowController
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -9560,6 +9607,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -9659,6 +9707,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -9834,6 +9883,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -9943,6 +9993,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -10440,6 +10491,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -10539,6 +10591,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -10714,6 +10767,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -10823,6 +10877,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -11328,6 +11383,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -11427,6 +11483,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -11602,6 +11659,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -11711,6 +11769,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {
@@ -11862,6 +11921,7 @@ public partial class EscrowController
                     "description": "Party reaffirming"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "releaseToken": {
@@ -12116,6 +12176,7 @@ public partial class EscrowController
                     "description": "Party entity identifier"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "displayName": {
@@ -12215,6 +12276,7 @@ public partial class EscrowController
                     "description": "Party who should deposit"
                 },
                 "partyType": {
+                    "description": "Type of depositing party",
                     "type": "object"
                 },
                 "expectedAssets": {
@@ -12390,6 +12452,7 @@ public partial class EscrowController
                     "description": "Party who deposited"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "assets": {
@@ -12499,6 +12562,7 @@ public partial class EscrowController
                     "description": "Party giving consent"
                 },
                 "partyType": {
+                    "description": "Type of entity (Account, Character, etc.)",
                     "type": "object"
                 },
                 "consentType": {

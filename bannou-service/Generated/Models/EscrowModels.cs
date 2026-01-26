@@ -578,6 +578,9 @@ public partial class EscrowParty
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -885,6 +888,9 @@ public partial class ExpectedDeposit
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of depositing party
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -962,6 +968,9 @@ public partial class EscrowDeposit
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1084,6 +1093,9 @@ public partial class EscrowConsent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1422,6 +1434,9 @@ public partial class CreateEscrowPartyInput
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1490,6 +1505,9 @@ public partial class ExpectedDepositInput
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of depositing party
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1759,6 +1777,9 @@ public partial class PartyToken
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2073,6 +2094,9 @@ public partial class DepositRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2230,6 +2254,9 @@ public partial class ValidateDepositRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2324,6 +2351,9 @@ public partial class GetDepositStatusRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2422,6 +2452,9 @@ public partial class ConsentRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2618,6 +2651,9 @@ public partial class PartyConsentStatus
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3081,6 +3117,9 @@ public partial class DisputeRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3241,6 +3280,9 @@ public partial class SplitAllocation
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -3548,6 +3590,9 @@ public partial class ReaffirmRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid PartyId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity (Account, Character, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
