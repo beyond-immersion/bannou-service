@@ -654,43 +654,49 @@ paths:
         visual, auditory, tactile, olfactory,\\nproprioceptive, spatial. Use \\\"spatial\\\" for schema-less spatial data
         in 'data' field.\\n\"\n                },\n                \"sourceId\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"ID of the entity causing this perception\"\n                },\n       \
-        \         \"sourceType\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Type of source (character, npc, object, environment)\"\n                },\n\
-        \                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Perception-specific data.
-        For perceptionType=\\\"spatial\\\", this can contain\\ngame-specific spatial context in any format the game server
-        defines.\\n\"\n                },\n                \"urgency\": {\n                    \"type\": \"number\",\n   \
-        \                 \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n\
-        \                    \"default\": 0.5,\n                    \"description\": \"How urgent this perception is (0-1)\"\
-        \n                },\n                \"spatialContext\": {\n                    \"allOf\": [\n                  \
-        \      {\n                            \"$ref\": \"#/$defs/SpatialContext\"\n                        }\n          \
-        \          ],\n                    \"nullable\": true,\n                    \"description\": \"Optional typed spatial
-        context from game server's local spatial state.\\nProvides structured information about terrain, nearby objects, hazards,
-        etc.\\nAlternative to using perceptionType=\\\"spatial\\\" with schema-less data.\\n\"\n                }\n      \
-        \      }\n        },\n        \"SpatialContext\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : true,\n            \"description\": \"Spatial context derived from game server's authoritative spatial state.\\\
-        nIncluded in perception events to give NPC actors awareness of their environment\\nwithout requiring direct map subscriptions.\\
-        n\\nNote: additionalProperties=true allows game-specific extensions.\\n\",\n            \"properties\": {\n      \
-        \          \"terrainType\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Terrain type at character position (grass, stone, water, etc.)\"\n       \
-        \         },\n                \"elevation\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"Elevation at
-        character position\"\n                },\n                \"nearbyObjects\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Objects within perception radius\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NearbyObject\"\n                \
-        \    }\n                },\n                \"hazardsInRange\": {\n                    \"type\": \"array\",\n    \
-        \                \"nullable\": true,\n                    \"description\": \"Active hazards within detection range\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/HazardInfo\"\n                  \
-        \  }\n                },\n                \"pathableDirections\": {\n                    \"type\": \"array\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Directions the character can move (for
-        navigation awareness)\",\n                    \"items\": {\n                        \"type\": \"string\",\n      \
-        \                  \"description\": \"Cardinal or relative direction (north, south, east, west, forward, etc.)\"\n\
-        \                    }\n                },\n                \"coverNearby\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether cover is available within
-        close range\"\n                },\n                \"indoors\": {\n                    \"type\": \"boolean\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Whether character is currently indoors/under
-        roof\"\n                }\n            }\n        },\n        \"NearbyObject\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": true,\n            \"description\": \"Information about a nearby object perceived
+        \         \"sourceType\": {\n                    \"allOf\": [\n                        {\n                       \
+        \     \"$ref\": \"#/$defs/PerceptionSourceType\"\n                        }\n                    ],\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Type of source (character, npc, object, environment,
+        coordinator, scheduled, message)\"\n                },\n                \"data\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Perception-specific data. For perceptionType=\\\"spatial\\\", this can contain\\
+        ngame-specific spatial context in any format the game server defines.\\n\"\n                },\n                \"\
+        urgency\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n            \
+        \        \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"default\": 0.5,\n           \
+        \         \"description\": \"How urgent this perception is (0-1)\"\n                },\n                \"spatialContext\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/SpatialContext\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Optional typed spatial context from game server's local spatial state.\\nProvides structured
+        information about terrain, nearby objects, hazards, etc.\\nAlternative to using perceptionType=\\\"spatial\\\" with
+        schema-less data.\\n\"\n                }\n            }\n        },\n        \"PerceptionSourceType\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"Type of source generating a perception event\",\n   \
+        \         \"enum\": [\n                \"character\",\n                \"npc\",\n                \"object\",\n   \
+        \             \"environment\",\n                \"coordinator\",\n                \"scheduled\",\n               \
+        \ \"message\",\n                \"service\",\n                \"system\"\n            ]\n        },\n        \"SpatialContext\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": true,\n            \"description\":
+        \"Spatial context derived from game server's authoritative spatial state.\\nIncluded in perception events to give
+        NPC actors awareness of their environment\\nwithout requiring direct map subscriptions.\\n\\nNote: additionalProperties=true
+        allows game-specific extensions.\\n\",\n            \"properties\": {\n                \"terrainType\": {\n      \
+        \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Terrain type at character position (grass, stone, water, etc.)\"\n                },\n                \"elevation\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Elevation at character position\"\n                },\n\
+        \                \"nearbyObjects\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Objects within perception radius\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/NearbyObject\"\n                    }\n                },\n     \
+        \           \"hazardsInRange\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Active hazards within detection range\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/HazardInfo\"\n                    }\n                },\n           \
+        \     \"pathableDirections\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Directions the character can move (for navigation awareness)\",\n        \
+        \            \"items\": {\n                        \"type\": \"string\",\n                        \"description\"\
+        : \"Cardinal or relative direction (north, south, east, west, forward, etc.)\"\n                    }\n          \
+        \      },\n                \"coverNearby\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Whether cover is available within close range\"\n      \
+        \          },\n                \"indoors\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Whether character is currently indoors/under roof\"\n  \
+        \              }\n            }\n        },\n        \"NearbyObject\": {\n            \"type\": \"object\",\n    \
+        \        \"additionalProperties\": true,\n            \"description\": \"Information about a nearby object perceived
         by the character\",\n            \"properties\": {\n                \"objectId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
         of the object\"\n                },\n                \"objectType\": {\n                    \"type\": \"string\",\n\
@@ -1384,6 +1390,9 @@ components:
       - environment
       - coordinator
       - scheduled
+      - message
+      - service
+      - system
     StopActorRequest:
       type: object
       additionalProperties: false
@@ -1496,9 +1505,10 @@ components:
           type: string
           description: ID of the entity causing this perception
         sourceType:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/PerceptionSourceType'
           nullable: true
-          description: Type of source (character, npc, object, environment)
+          description: Type of source (character, npc, object, environment, coordinator, scheduled, message)
         data:
           type: object
           additionalProperties: true

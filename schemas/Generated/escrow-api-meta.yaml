@@ -69,7 +69,8 @@ paths:
         ,\n                    \"description\": \"Trust mode for the escrow\"\n                },\n                \"trustedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         nullable\": true,\n                    \"description\": \"For single_party_trusted mode\"\n                },\n  \
-        \              \"trustedPartyType\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        \              \"trustedPartyType\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Type of the trusted party\"\n                },\n                \"\
         parties\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                       \
         \ \"$ref\": \"#/$defs/CreateEscrowPartyInput\"\n                    },\n                    \"description\": \"Parties
@@ -182,7 +183,7 @@ paths:
         : [\n                \"recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n\
         \            ],\n            \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Recipient party ID\"\
-        \n                },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n     \
+        \n                },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n     \
         \               \"description\": \"Recipient party type\"\n                },\n                \"assets\": {\n   \
         \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAssetInput\"\
         \n                    },\n                    \"description\": \"Assets to allocate\"\n                },\n      \
@@ -212,58 +213,59 @@ paths:
         \  \"description\": \"Trust mode for the escrow\"\n                },\n                \"trustedPartyId\": {\n   \
         \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"For single_party_trusted - which party has authority\"\n         \
-        \       },\n                \"trustedPartyType\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Type of the trusted party\"\n                },\n\
-        \                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"For initiator_trusted - which service created this\"\n           \
-        \     },\n                \"parties\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n                    \"description\"\
-        : \"All parties involved in the escrow\"\n                },\n                \"expectedDeposits\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\
-        \n                    },\n                    \"description\": \"What deposits are expected from each party\"\n  \
-        \              },\n                \"deposits\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n            \
-        \        \"description\": \"Actual deposits received\"\n                },\n                \"releaseAllocations\"\
+        \       },\n                \"trustedPartyType\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Type of the trusted party\"\n              \
+        \  },\n                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"For initiator_trusted - which service created this\"\n \
+        \               },\n                \"parties\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n              \
+        \      \"description\": \"All parties involved in the escrow\"\n                },\n                \"expectedDeposits\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"description\": \"What deposits are expected
+        from each party\"\n                },\n                \"deposits\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowDeposit\"\n                 \
+        \   },\n                    \"description\": \"Actual deposits received\"\n                },\n                \"\
+        releaseAllocations\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\n                  \
+        \  },\n                    \"description\": \"How assets should be distributed on release\"\n                },\n\
+        \                \"boundContractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Contract governing conditions
+        for this escrow\"\n                },\n                \"consents\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\n                 \
+        \   },\n                    \"description\": \"Consent decisions from parties\"\n                },\n            \
+        \    \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                    \"description\":
+        \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"How many parties must consent for release (-1
+        = all required)\"\n                },\n                \"lastValidatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When the escrow was last validated\"\n                },\n                \"validationFailures\"\
         : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\n                    },\n                   \
-        \ \"description\": \"How assets should be distributed on release\"\n                },\n                \"boundContractId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Contract governing conditions for this escrow\"\n      \
-        \          },\n                \"consents\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\n                    },\n                    \"description\"\
-        : \"Consent decisions from parties\"\n                },\n                \"status\": {\n                    \"$ref\"\
-        : \"#/$defs/EscrowStatus\",\n                    \"description\": \"Current escrow status\"\n                },\n\
-        \                \"requiredConsentsForRelease\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"description\": \"How many parties must consent for release (-1 = all required)\"\n                },\n     \
-        \           \"lastValidatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the escrow was
-        last validated\"\n                },\n                \"validationFailures\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ValidationFailure\"\n                    },\n                    \"description\": \"Any validation failures
-        detected\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"date-time\",\n                    \"description\": \"When the escrow was created\"\n\
-        \                },\n                \"createdBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"description\": \"Who created the escrow\"\n                },\n\
-        \                \"createdByType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Type of the creator entity\"\n                },\n                \"fundedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When all expected deposits were received\"\n                },\n                \"\
-        expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"Auto-refund if not completed by this time\"\n                },\n              \
-        \  \"completedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"When the escrow reached terminal
-        state\"\n                },\n                \"referenceType\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"What this escrow is for (e.g., trade,
-        auction, contract)\"\n                },\n                \"referenceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"ID of the referenced entity\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable
-        description\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
-        \                  \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"\
-        description\": \"Game/application specific metadata\"\n                },\n                \"resolution\": {\n   \
-        \                 \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow was
-        resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                        \"$ref\": \"#/$defs/ValidationFailure\"\n                    },\n                   \
+        \ \"description\": \"Any validation failures detected\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the escrow was created\"\n                },\n                \"createdBy\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Who created the escrow\"\
+        \n                },\n                \"createdByType\": {\n                    \"type\": \"object\",\n          \
+        \          \"description\": \"Type of the creator entity\"\n                },\n                \"fundedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When all expected deposits were received\"\n           \
+        \     },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"Auto-refund if not completed by this time\"\n           \
+        \     },\n                \"completedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the escrow
+        reached terminal state\"\n                },\n                \"referenceType\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"What this escrow is for
+        (e.g., trade, auction, contract)\"\n                },\n                \"referenceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"ID of the referenced entity\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n    \
+        \                \"description\": \"Game/application specific metadata\"\n                },\n                \"resolution\"\
+        : {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow
+        was resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Notes about the resolution\"\n                }\n            }\n        },\n        \"EscrowType\": {\n      \
         \      \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple trade
         escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
@@ -366,7 +368,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -408,7 +410,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -459,7 +461,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -540,24 +542,25 @@ paths:
         for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -572,7 +575,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -693,7 +696,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -735,7 +738,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -786,7 +789,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -883,58 +886,59 @@ paths:
         \  \"description\": \"Trust mode for the escrow\"\n                },\n                \"trustedPartyId\": {\n   \
         \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"For single_party_trusted - which party has authority\"\n         \
-        \       },\n                \"trustedPartyType\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Type of the trusted party\"\n                },\n\
-        \                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"For initiator_trusted - which service created this\"\n           \
-        \     },\n                \"parties\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n                    \"description\"\
-        : \"All parties involved in the escrow\"\n                },\n                \"expectedDeposits\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\
-        \n                    },\n                    \"description\": \"What deposits are expected from each party\"\n  \
-        \              },\n                \"deposits\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n            \
-        \        \"description\": \"Actual deposits received\"\n                },\n                \"releaseAllocations\"\
+        \       },\n                \"trustedPartyType\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Type of the trusted party\"\n              \
+        \  },\n                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"For initiator_trusted - which service created this\"\n \
+        \               },\n                \"parties\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n              \
+        \      \"description\": \"All parties involved in the escrow\"\n                },\n                \"expectedDeposits\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"description\": \"What deposits are expected
+        from each party\"\n                },\n                \"deposits\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowDeposit\"\n                 \
+        \   },\n                    \"description\": \"Actual deposits received\"\n                },\n                \"\
+        releaseAllocations\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\n                  \
+        \  },\n                    \"description\": \"How assets should be distributed on release\"\n                },\n\
+        \                \"boundContractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Contract governing conditions
+        for this escrow\"\n                },\n                \"consents\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\n                 \
+        \   },\n                    \"description\": \"Consent decisions from parties\"\n                },\n            \
+        \    \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                    \"description\":
+        \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"How many parties must consent for release (-1
+        = all required)\"\n                },\n                \"lastValidatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When the escrow was last validated\"\n                },\n                \"validationFailures\"\
         : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\n                    },\n                   \
-        \ \"description\": \"How assets should be distributed on release\"\n                },\n                \"boundContractId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Contract governing conditions for this escrow\"\n      \
-        \          },\n                \"consents\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\n                    },\n                    \"description\"\
-        : \"Consent decisions from parties\"\n                },\n                \"status\": {\n                    \"$ref\"\
-        : \"#/$defs/EscrowStatus\",\n                    \"description\": \"Current escrow status\"\n                },\n\
-        \                \"requiredConsentsForRelease\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"description\": \"How many parties must consent for release (-1 = all required)\"\n                },\n     \
-        \           \"lastValidatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the escrow was
-        last validated\"\n                },\n                \"validationFailures\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ValidationFailure\"\n                    },\n                    \"description\": \"Any validation failures
-        detected\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"date-time\",\n                    \"description\": \"When the escrow was created\"\n\
-        \                },\n                \"createdBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"description\": \"Who created the escrow\"\n                },\n\
-        \                \"createdByType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Type of the creator entity\"\n                },\n                \"fundedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When all expected deposits were received\"\n                },\n                \"\
-        expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"Auto-refund if not completed by this time\"\n                },\n              \
-        \  \"completedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"When the escrow reached terminal
-        state\"\n                },\n                \"referenceType\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"What this escrow is for (e.g., trade,
-        auction, contract)\"\n                },\n                \"referenceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"ID of the referenced entity\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable
-        description\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
-        \                  \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"\
-        description\": \"Game/application specific metadata\"\n                },\n                \"resolution\": {\n   \
-        \                 \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow was
-        resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                        \"$ref\": \"#/$defs/ValidationFailure\"\n                    },\n                   \
+        \ \"description\": \"Any validation failures detected\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the escrow was created\"\n                },\n                \"createdBy\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Who created the escrow\"\
+        \n                },\n                \"createdByType\": {\n                    \"type\": \"object\",\n          \
+        \          \"description\": \"Type of the creator entity\"\n                },\n                \"fundedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When all expected deposits were received\"\n           \
+        \     },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"Auto-refund if not completed by this time\"\n           \
+        \     },\n                \"completedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the escrow
+        reached terminal state\"\n                },\n                \"referenceType\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"What this escrow is for
+        (e.g., trade, auction, contract)\"\n                },\n                \"referenceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"ID of the referenced entity\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n    \
+        \                \"description\": \"Game/application specific metadata\"\n                },\n                \"resolution\"\
+        : {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow
+        was resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Notes about the resolution\"\n                }\n            }\n        },\n        \"EscrowType\": {\n      \
         \      \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple trade
         escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
@@ -1037,7 +1041,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -1079,7 +1083,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -1130,7 +1134,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -1187,7 +1191,7 @@ paths:
         \              \"format\": \"uuid\",\n                    \"description\": \"Escrow ID\"\n                },\n   \
         \             \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Party ID\"\n                },\n                \"ownerType\": {\n     \
-        \               \"type\": \"string\",\n                    \"description\": \"Party type\"\n                },\n \
+        \               \"type\": \"object\",\n                    \"description\": \"Party type\"\n                },\n \
         \               \"tokenType\": {\n                    \"$ref\": \"#/$defs/TokenType\",\n                    \"description\"\
         : \"Type of token to retrieve\"\n                }\n            }\n        },\n        \"TokenType\": {\n        \
         \    \"type\": \"string\",\n            \"description\": \"Type of token being requested.\\n- deposit: Token for depositing
@@ -1328,24 +1332,25 @@ paths:
         escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\",\n \
         \                   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -1360,7 +1365,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -1481,7 +1486,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -1523,7 +1528,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -1574,7 +1579,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -1783,7 +1788,7 @@ paths:
         : \"Handler-specific data\"\n                },\n                \"sourceOwnerId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Where this asset
         came from (for refunds)\"\n                },\n                \"sourceOwnerType\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Type of the source owner\"\n                },\n           \
+        : \"object\",\n                    \"description\": \"Type of the source owner\"\n                },\n           \
         \     \"sourceContainerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Source wallet/container ID\"\n\
         \                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n     \
@@ -1869,24 +1874,25 @@ paths:
         escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\",\n \
         \                   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -1901,7 +1907,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -2022,7 +2028,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -2064,7 +2070,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -2115,7 +2121,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -2264,24 +2270,25 @@ paths:
         for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -2296,7 +2303,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -2417,7 +2424,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -2459,7 +2466,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -2510,7 +2517,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -2607,24 +2614,25 @@ paths:
         for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -2639,7 +2647,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -2760,7 +2768,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -2802,7 +2810,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -2853,7 +2861,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -2940,24 +2948,25 @@ paths:
         for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -2972,7 +2981,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -3093,7 +3102,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -3135,7 +3144,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -3186,7 +3195,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -3276,24 +3285,25 @@ paths:
         for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -3308,7 +3318,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -3429,7 +3439,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -3471,7 +3481,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -3522,7 +3532,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -3577,7 +3587,7 @@ paths:
         \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Escrow ID\"\n                },\n                \"arbiterId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Arbiter ID\"\n                },\n\
-        \                \"arbiterType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \                \"arbiterType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Arbiter type\"\n                },\n                \"resolution\": {\n                    \"$ref\": \"#/$defs/EscrowResolution\"\
         ,\n                    \"description\": \"Resolution decision for the dispute\"\n                },\n            \
         \    \"splitAllocations\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
@@ -3660,24 +3670,25 @@ paths:
         for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -3692,7 +3703,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -3813,7 +3824,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -3855,7 +3866,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -3906,7 +3917,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -3975,7 +3986,7 @@ paths:
         ,\n                    \"description\": \"Whether the condition was met\"\n                },\n                \"\
         verifierId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n          \
         \          \"description\": \"Verifier entity ID\"\n                },\n                \"verifierType\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"Verifier entity type\"\n          \
+        \                \"type\": \"object\",\n                    \"description\": \"Verifier entity type\"\n          \
         \      },\n                \"verificationData\": {\n                    \"type\": \"object\",\n                  \
         \  \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\":
         \"Proof/evidence data\"\n                },\n                \"idempotencyKey\": {\n                    \"type\":
@@ -4001,24 +4012,25 @@ paths:
         for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For initiator_trusted - which service created this\"\n                },\n                \"parties\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\
+        \n                    },\n                    \"description\": \"All parties involved in the escrow\"\n          \
+        \      },\n                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n          \
+        \          \"description\": \"What deposits are expected from each party\"\n                },\n                \"\
+        deposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
+        \  \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits
+        received\"\n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ReleaseAllocation\"\n                    },\n                    \"description\": \"How assets should be distributed
+        on release\"\n                },\n                \"boundContractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
         \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
         \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
         \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
@@ -4033,7 +4045,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -4154,7 +4166,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -4196,7 +4208,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -4247,7 +4259,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -4317,7 +4329,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -4345,9 +4357,10 @@ paths:
         \   },\n                \"trustedPartyId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"For single_party_trusted
         - which party has authority\"\n                },\n                \"trustedPartyType\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Type of the trusted
-        party\"\n                },\n                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted - which service
+        allOf\": [\n                        {\n                            \"type\": \"object\"\n                        }\n\
+        \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Type of the
+        trusted party\"\n                },\n                \"initiatorServiceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted - which service
         created this\"\n                },\n                \"parties\": {\n                    \"type\": \"array\",\n   \
         \                 \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n\
         \                    \"description\": \"All parties involved in the escrow\"\n                },\n               \
@@ -4377,7 +4390,7 @@ paths:
         ,\n                    \"description\": \"When the escrow was created\"\n                },\n                \"createdBy\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Who created the escrow\"\n                },\n                \"createdByType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Type of the creator entity\"\n            \
+        \        \"type\": \"object\",\n                    \"description\": \"Type of the creator entity\"\n            \
         \    },\n                \"fundedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When all expected
         deposits were received\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
@@ -4498,7 +4511,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"EscrowDeposit\": {\n   \
@@ -4534,7 +4547,7 @@ paths:
         \               \"recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n     \
         \       ],\n            \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\":
         \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\
-        \n                },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n     \
+        \n                },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n     \
         \               \"description\": \"Type of the recipient party\"\n                },\n                \"assets\":
         {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
         #/$defs/EscrowAsset\"\n                    },\n                    \"description\": \"Assets this recipient should
@@ -4645,58 +4658,59 @@ paths:
         \  \"description\": \"Trust mode for the escrow\"\n                },\n                \"trustedPartyId\": {\n   \
         \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"For single_party_trusted - which party has authority\"\n         \
-        \       },\n                \"trustedPartyType\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Type of the trusted party\"\n                },\n\
-        \                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"For initiator_trusted - which service created this\"\n           \
-        \     },\n                \"parties\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n                    \"description\"\
-        : \"All parties involved in the escrow\"\n                },\n                \"expectedDeposits\": {\n          \
-        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\
-        \n                    },\n                    \"description\": \"What deposits are expected from each party\"\n  \
-        \              },\n                \"deposits\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/EscrowDeposit\"\n                    },\n            \
-        \        \"description\": \"Actual deposits received\"\n                },\n                \"releaseAllocations\"\
+        \       },\n                \"trustedPartyType\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Type of the trusted party\"\n              \
+        \  },\n                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"For initiator_trusted - which service created this\"\n \
+        \               },\n                \"parties\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n              \
+        \      \"description\": \"All parties involved in the escrow\"\n                },\n                \"expectedDeposits\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"description\": \"What deposits are expected
+        from each party\"\n                },\n                \"deposits\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowDeposit\"\n                 \
+        \   },\n                    \"description\": \"Actual deposits received\"\n                },\n                \"\
+        releaseAllocations\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\n                  \
+        \  },\n                    \"description\": \"How assets should be distributed on release\"\n                },\n\
+        \                \"boundContractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Contract governing conditions
+        for this escrow\"\n                },\n                \"consents\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\n                 \
+        \   },\n                    \"description\": \"Consent decisions from parties\"\n                },\n            \
+        \    \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                    \"description\":
+        \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"How many parties must consent for release (-1
+        = all required)\"\n                },\n                \"lastValidatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When the escrow was last validated\"\n                },\n                \"validationFailures\"\
         : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\n                    },\n                   \
-        \ \"description\": \"How assets should be distributed on release\"\n                },\n                \"boundContractId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Contract governing conditions for this escrow\"\n      \
-        \          },\n                \"consents\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\n                    },\n                    \"description\"\
-        : \"Consent decisions from parties\"\n                },\n                \"status\": {\n                    \"$ref\"\
-        : \"#/$defs/EscrowStatus\",\n                    \"description\": \"Current escrow status\"\n                },\n\
-        \                \"requiredConsentsForRelease\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"description\": \"How many parties must consent for release (-1 = all required)\"\n                },\n     \
-        \           \"lastValidatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the escrow was
-        last validated\"\n                },\n                \"validationFailures\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ValidationFailure\"\n                    },\n                    \"description\": \"Any validation failures
-        detected\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"date-time\",\n                    \"description\": \"When the escrow was created\"\n\
-        \                },\n                \"createdBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"description\": \"Who created the escrow\"\n                },\n\
-        \                \"createdByType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Type of the creator entity\"\n                },\n                \"fundedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When all expected deposits were received\"\n                },\n                \"\
-        expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"Auto-refund if not completed by this time\"\n                },\n              \
-        \  \"completedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"When the escrow reached terminal
-        state\"\n                },\n                \"referenceType\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"What this escrow is for (e.g., trade,
-        auction, contract)\"\n                },\n                \"referenceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"ID of the referenced entity\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable
-        description\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
-        \                  \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"\
-        description\": \"Game/application specific metadata\"\n                },\n                \"resolution\": {\n   \
-        \                 \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow was
-        resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                        \"$ref\": \"#/$defs/ValidationFailure\"\n                    },\n                   \
+        \ \"description\": \"Any validation failures detected\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the escrow was created\"\n                },\n                \"createdBy\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Who created the escrow\"\
+        \n                },\n                \"createdByType\": {\n                    \"type\": \"object\",\n          \
+        \          \"description\": \"Type of the creator entity\"\n                },\n                \"fundedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When all expected deposits were received\"\n           \
+        \     },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"Auto-refund if not completed by this time\"\n           \
+        \     },\n                \"completedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the escrow
+        reached terminal state\"\n                },\n                \"referenceType\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"What this escrow is for
+        (e.g., trade, auction, contract)\"\n                },\n                \"referenceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"ID of the referenced entity\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n    \
+        \                \"description\": \"Game/application specific metadata\"\n                },\n                \"resolution\"\
+        : {\n                    \"$ref\": \"#/$defs/EscrowResolution\",\n                    \"description\": \"How the escrow
+        was resolved\",\n                    \"nullable\": true\n                },\n                \"resolutionNotes\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Notes about the resolution\"\n                }\n            }\n        },\n        \"EscrowType\": {\n      \
         \      \"type\": \"string\",\n            \"description\": \"Type of escrow agreement.\\n- two_party: Simple trade
         escrow between Party A and Party B\\n- multi_party: N parties with complex deposit/receive rules\\n- conditional:
@@ -4799,7 +4813,7 @@ paths:
         \                    \"description\": \"Handler-specific data\"\n                },\n                \"sourceOwnerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Where this asset came from (for refunds)\"\n                },\n                \"sourceOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
@@ -4841,7 +4855,7 @@ paths:
         recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
         \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
+        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
         \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
         \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
@@ -4892,7 +4906,7 @@ paths:
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Which party deposit is affected\"\n                },\n                \"affectedPartyType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
         : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
@@ -5241,7 +5255,8 @@ components:
           nullable: true
           description: For single_party_trusted - which party has authority
         trustedPartyType:
-          type: string
+          allOf:
+          - $ref: './common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of the trusted party
         initiatorServiceId:
@@ -5305,7 +5320,7 @@ components:
           format: uuid
           description: Who created the escrow
         createdByType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the creator entity
         fundedAt:
           type: string
@@ -5500,7 +5515,7 @@ components:
           format: uuid
           description: Where this asset came from (for refunds)
         sourceOwnerType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the source owner
         sourceContainerId:
           type: string
@@ -5618,7 +5633,7 @@ components:
           format: uuid
           description: Party receiving assets
         recipientPartyType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the recipient party
         assets:
           type: array
@@ -5695,7 +5710,7 @@ components:
           format: uuid
           description: Which party deposit is affected
         affectedPartyType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Type of the affected party
         details:
           type: object
@@ -5757,7 +5772,8 @@ components:
           nullable: true
           description: For single_party_trusted mode
         trustedPartyType:
-          type: string
+          allOf:
+          - $ref: './common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of the trusted party
         parties:
@@ -5963,7 +5979,7 @@ components:
           format: uuid
           description: Recipient party ID
         recipientPartyType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Recipient party type
         assets:
           type: array
@@ -6112,7 +6128,7 @@ components:
           format: uuid
           description: Party ID
         ownerType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Party type
         tokenType:
           $ref: '#/components/schemas/TokenType'
@@ -6658,7 +6674,7 @@ components:
           format: uuid
           description: Arbiter ID
         arbiterType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Arbiter type
         resolution:
           $ref: '#/components/schemas/EscrowResolution'
@@ -6755,7 +6771,7 @@ components:
           format: uuid
           description: Verifier entity ID
         verifierType:
-          type: string
+          $ref: './common-api.yaml#/components/schemas/EntityType'
           description: Verifier entity type
         verificationData:
           type: object

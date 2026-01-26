@@ -820,7 +820,7 @@ components:
           description: ID of the entity causing this perception
         sourceType:
           allOf:
-            - $ref: './#/components/schemas/PerceptionSourceType'
+            - $ref: '#/components/schemas/PerceptionSourceType'
           nullable: true
           description: Type of source (character, npc, object, environment, coordinator, scheduled, message)
         data:
@@ -839,7 +839,7 @@ components:
           description: How urgent this perception is (0-1)
         spatialContext:
           allOf:
-          - $ref: 'actor-api.yaml#/components/schemas/SpatialContext'
+          - $ref: '#/components/schemas/SpatialContext'
           nullable: true
           description: |
             Optional typed spatial context from game server's local spatial state.
@@ -870,13 +870,13 @@ components:
           nullable: true
           description: Objects within perception radius
           items:
-            $ref: 'actor-api.yaml#/components/schemas/NearbyObject'
+            $ref: '#/components/schemas/NearbyObject'
         hazardsInRange:
           type: array
           nullable: true
           description: Active hazards within detection range
           items:
-            $ref: 'actor-api.yaml#/components/schemas/HazardInfo'
+            $ref: '#/components/schemas/HazardInfo'
         pathableDirections:
           type: array
           nullable: true
@@ -914,7 +914,7 @@ components:
           description: Relative direction (north, south, east, west, above, below, etc.)
         position:
           allOf:
-          - $ref: 'actor-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Optional absolute position
 
