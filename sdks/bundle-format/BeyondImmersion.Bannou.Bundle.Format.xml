@@ -130,18 +130,18 @@
             <param name="metadata">Optional asset metadata.</param>
             <param name="cancellationToken">Cancellation token.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.Finalize(System.Guid,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.Finalize(System.String,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
             <summary>
             Finalizes the bundle and writes it to the output stream.
             </summary>
-            <param name="bundleId">Unique bundle identifier.</param>
-            <param name="name">Bundle name.</param>
+            <param name="bundleId">Human-readable bundle identifier (e.g., "synty/polygon-adventure").</param>
+            <param name="name">Bundle display name.</param>
             <param name="version">Bundle version.</param>
             <param name="createdBy">Account ID of creator.</param>
             <param name="description">Optional description.</param>
             <param name="tags">Optional metadata tags.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.FinalizeAsync(System.Guid,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.FinalizeAsync(System.String,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Threading.CancellationToken)">
             <summary>
             Finalizes the bundle asynchronously.
             </summary>
@@ -263,7 +263,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.BundleId">
             <summary>
-            Unique identifier for this bundle.
+            Human-readable identifier for this bundle (e.g., "synty/polygon-adventure", "my-bundle-v1").
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.Name">
@@ -392,7 +392,7 @@
             Creates a new bundle validator.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleValidator.ValidateAsync(System.IO.Stream,System.Guid,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleValidator.ValidateAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)">
             <summary>
             Validates a bundle stream and returns the validation result.
             </summary>
@@ -428,7 +428,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.BundleId">
             <summary>
-            Bundle ID that was validated.
+            Bundle ID that was validated (human-readable identifier).
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.IsValid">

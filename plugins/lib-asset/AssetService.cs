@@ -879,7 +879,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Validate request
-            if (body.BundleId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("CreateBundle: Empty bundle_id");
                 return (StatusCodes.BadRequest, null);
@@ -1927,19 +1927,19 @@ public partial class AssetService : IAssetService
                 }
 
                 // Add selected bundle
-                var selectedMeta = bundleMetadataCache[bestBundleId.Value];
+                var selectedMeta = bundleMetadataCache[bestBundleId];
                 var downloadUrl = await _storageProvider.GenerateDownloadUrlAsync(
                     selectedMeta.Bucket ?? bucket,
                     selectedMeta.StorageKey,
                     expiration: tokenTtl).ConfigureAwait(false);
 
-                var providedAssets = bundleCoverage[bestBundleId.Value]
+                var providedAssets = bundleCoverage[bestBundleId]
                     .Where(a => remainingAssets.Contains(a))
                     .ToList();
 
                 selectedBundles.Add(new ResolvedBundle
                 {
-                    BundleId = bestBundleId.Value,
+                    BundleId = bestBundleId,
                     BundleType = selectedMeta.BundleType,
                     Version = selectedMeta.Version,
                     DownloadUrl = new Uri(downloadUrl.DownloadUrl),

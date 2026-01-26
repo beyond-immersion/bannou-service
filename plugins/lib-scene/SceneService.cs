@@ -184,7 +184,7 @@ public partial class SceneService : ISceneService
             await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
 
             // Add to global scene index
-            await AddToGlobalSceneIndexAsync(sceneIdStr, cancellationToken);
+            await AddToGlobalSceneIndexAsync(scene.SceneId, cancellationToken);
 
             // Update indexes
             await UpdateSceneIndexesAsync(scene, null, cancellationToken);
@@ -1500,89 +1500,88 @@ public partial class SceneService : ISceneService
 
     private async Task UpdateSceneIndexesAsync(Scene newScene, Scene? oldScene, CancellationToken cancellationToken)
     {
-        var sceneIdStr = newScene.SceneId.ToString();
-        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
 
         // Remove from old game/type indexes if changed
         if (oldScene != null && oldScene.GameId != newScene.GameId)
         {
             var oldGameKey = $"{SCENE_BY_GAME_PREFIX}{oldScene.GameId}";
-            var oldGameIndex = await stringSetStore.GetAsync(oldGameKey, cancellationToken);
+            var oldGameIndex = await guidSetStore.GetAsync(oldGameKey, cancellationToken);
             if (oldGameIndex != null)
             {
-                oldGameIndex.Remove(sceneIdStr);
-                await stringSetStore.SaveAsync(oldGameKey, oldGameIndex, cancellationToken: cancellationToken);
+                oldGameIndex.Remove(newScene.SceneId);
+                await guidSetStore.SaveAsync(oldGameKey, oldGameIndex, cancellationToken: cancellationToken);
             }
         }
 
         if (oldScene != null && (oldScene.GameId != newScene.GameId || oldScene.SceneType != newScene.SceneType))
         {
             var oldTypeKey = $"{SCENE_BY_TYPE_PREFIX}{oldScene.GameId}:{oldScene.SceneType}";
-            var oldTypeIndex = await stringSetStore.GetAsync(oldTypeKey, cancellationToken);
+            var oldTypeIndex = await guidSetStore.GetAsync(oldTypeKey, cancellationToken);
             if (oldTypeIndex != null)
             {
-                oldTypeIndex.Remove(sceneIdStr);
-                await stringSetStore.SaveAsync(oldTypeKey, oldTypeIndex, cancellationToken: cancellationToken);
+                oldTypeIndex.Remove(newScene.SceneId);
+                await guidSetStore.SaveAsync(oldTypeKey, oldTypeIndex, cancellationToken: cancellationToken);
             }
         }
 
         // Update game index
         var gameKey = $"{SCENE_BY_GAME_PREFIX}{newScene.GameId}";
-        var gameIndex = await stringSetStore.GetAsync(gameKey, cancellationToken) ?? new HashSet<string>();
-        gameIndex.Add(sceneIdStr);
-        await stringSetStore.SaveAsync(gameKey, gameIndex, cancellationToken: cancellationToken);
+        var gameIndex = await guidSetStore.GetAsync(gameKey, cancellationToken) ?? new HashSet<Guid>();
+        gameIndex.Add(newScene.SceneId);
+        await guidSetStore.SaveAsync(gameKey, gameIndex, cancellationToken: cancellationToken);
 
         // Update type index
         var typeKey = $"{SCENE_BY_TYPE_PREFIX}{newScene.GameId}:{newScene.SceneType}";
-        var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken) ?? new HashSet<string>();
-        typeIndex.Add(sceneIdStr);
-        await stringSetStore.SaveAsync(typeKey, typeIndex, cancellationToken: cancellationToken);
+        var typeIndex = await guidSetStore.GetAsync(typeKey, cancellationToken) ?? new HashSet<Guid>();
+        typeIndex.Add(newScene.SceneId);
+        await guidSetStore.SaveAsync(typeKey, typeIndex, cancellationToken: cancellationToken);
 
         // Update reference tracking
         var newReferences = ExtractSceneReferences(newScene.Root);
-        var oldReferences = oldScene != null ? ExtractSceneReferences(oldScene.Root) : new HashSet<string>();
+        var oldReferences = oldScene != null ? ExtractSceneReferences(oldScene.Root) : new HashSet<Guid>();
 
         // Add new references
         foreach (var refSceneId in newReferences.Except(oldReferences))
         {
             var refKey = $"{SCENE_REFERENCES_PREFIX}{refSceneId}";
-            var refSet = await stringSetStore.GetAsync(refKey, cancellationToken) ?? new HashSet<string>();
-            refSet.Add(sceneIdStr);
-            await stringSetStore.SaveAsync(refKey, refSet, cancellationToken: cancellationToken);
+            var refSet = await guidSetStore.GetAsync(refKey, cancellationToken) ?? new HashSet<Guid>();
+            refSet.Add(newScene.SceneId);
+            await guidSetStore.SaveAsync(refKey, refSet, cancellationToken: cancellationToken);
         }
 
         // Remove old references
         foreach (var refSceneId in oldReferences.Except(newReferences))
         {
             var refKey = $"{SCENE_REFERENCES_PREFIX}{refSceneId}";
-            var refSet = await stringSetStore.GetAsync(refKey, cancellationToken);
+            var refSet = await guidSetStore.GetAsync(refKey, cancellationToken);
             if (refSet != null)
             {
-                refSet.Remove(sceneIdStr);
-                await stringSetStore.SaveAsync(refKey, refSet, cancellationToken: cancellationToken);
+                refSet.Remove(newScene.SceneId);
+                await guidSetStore.SaveAsync(refKey, refSet, cancellationToken: cancellationToken);
             }
         }
 
         // Update asset usage tracking
         var newAssets = ExtractAssetReferences(newScene.Root);
-        var oldAssets = oldScene != null ? ExtractAssetReferences(oldScene.Root) : new HashSet<string>();
+        var oldAssets = oldScene != null ? ExtractAssetReferences(oldScene.Root) : new HashSet<Guid>();
 
         foreach (var assetId in newAssets.Except(oldAssets))
         {
             var assetKey = $"{SCENE_ASSETS_PREFIX}{assetId}";
-            var assetSet = await stringSetStore.GetAsync(assetKey, cancellationToken) ?? new HashSet<string>();
-            assetSet.Add(sceneIdStr);
-            await stringSetStore.SaveAsync(assetKey, assetSet, cancellationToken: cancellationToken);
+            var assetSet = await guidSetStore.GetAsync(assetKey, cancellationToken) ?? new HashSet<Guid>();
+            assetSet.Add(newScene.SceneId);
+            await guidSetStore.SaveAsync(assetKey, assetSet, cancellationToken: cancellationToken);
         }
 
         foreach (var assetId in oldAssets.Except(newAssets))
         {
             var assetKey = $"{SCENE_ASSETS_PREFIX}{assetId}";
-            var assetSet = await stringSetStore.GetAsync(assetKey, cancellationToken);
+            var assetSet = await guidSetStore.GetAsync(assetKey, cancellationToken);
             if (assetSet != null)
             {
-                assetSet.Remove(sceneIdStr);
-                await stringSetStore.SaveAsync(assetKey, assetSet, cancellationToken: cancellationToken);
+                assetSet.Remove(newScene.SceneId);
+                await guidSetStore.SaveAsync(assetKey, assetSet, cancellationToken: cancellationToken);
             }
         }
     }
