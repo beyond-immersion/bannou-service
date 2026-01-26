@@ -87,14 +87,15 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
     if [ "$SCHEMA_TO_PROCESS" = "$RESOLVED_SCHEMA" ]; then
         echo -e "  ${BLUE}Using resolved schema (complex refs inlined for NSwag)${NC}"
         # Extract ALL inlined types from resolved schema - these are API types that need exclusion
-        INLINED_TYPES=$(extract_inlined_types "$RESOLVED_SCHEMA" "$API_REFS")
+        INLINED_TYPES=$(extract_inlined_types "$RESOLVED_SCHEMA")
         if [ -n "$INLINED_TYPES" ]; then
             EXCLUSIONS="${EXCLUSIONS},${INLINED_TYPES}"
-            NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
             echo -e "  ${BLUE}Excluding inlined API types: ${INLINED_TYPES}${NC}"
         fi
-    elif [ -n "$API_REFS" ]; then
-        # Standard case: exclude directly-referenced API types
+    fi
+
+    # Always exclude API refs (simple types like enums that aren't inlined but are referenced)
+    if [ -n "$API_REFS" ]; then
         EXCLUSIONS="${EXCLUSIONS},${API_REFS}"
         NAMESPACE_USAGES="${NAMESPACE_USAGES},BeyondImmersion.BannouService.${SERVICE_PASCAL}"
         echo -e "  ${BLUE}Excluding API types: ${API_REFS}${NC}"

@@ -74,7 +74,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<ServiceErrorEventSeverity>(), It.IsAny<object?>(),
-                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Default save returns etag
@@ -142,25 +142,25 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
     #region State Machine Tests
 
     [Theory]
-    [InlineData(EscrowStatus.Pending_deposits, EscrowStatus.Partially_funded, true)]
-    [InlineData(EscrowStatus.Pending_deposits, EscrowStatus.Funded, true)]
-    [InlineData(EscrowStatus.Pending_deposits, EscrowStatus.Cancelled, true)]
-    [InlineData(EscrowStatus.Pending_deposits, EscrowStatus.Expired, true)]
-    [InlineData(EscrowStatus.Pending_deposits, EscrowStatus.Released, false)]
-    [InlineData(EscrowStatus.Funded, EscrowStatus.Pending_consent, true)]
+    [InlineData(EscrowStatus.PendingDeposits, EscrowStatus.PartiallyFunded, true)]
+    [InlineData(EscrowStatus.PendingDeposits, EscrowStatus.Funded, true)]
+    [InlineData(EscrowStatus.PendingDeposits, EscrowStatus.Cancelled, true)]
+    [InlineData(EscrowStatus.PendingDeposits, EscrowStatus.Expired, true)]
+    [InlineData(EscrowStatus.PendingDeposits, EscrowStatus.Released, false)]
+    [InlineData(EscrowStatus.Funded, EscrowStatus.PendingConsent, true)]
     [InlineData(EscrowStatus.Funded, EscrowStatus.Finalizing, true)]
     [InlineData(EscrowStatus.Funded, EscrowStatus.Disputed, true)]
     [InlineData(EscrowStatus.Funded, EscrowStatus.Released, false)]
-    [InlineData(EscrowStatus.Pending_consent, EscrowStatus.Finalizing, true)]
-    [InlineData(EscrowStatus.Pending_consent, EscrowStatus.Disputed, true)]
+    [InlineData(EscrowStatus.PendingConsent, EscrowStatus.Finalizing, true)]
+    [InlineData(EscrowStatus.PendingConsent, EscrowStatus.Disputed, true)]
     [InlineData(EscrowStatus.Finalizing, EscrowStatus.Releasing, true)]
     [InlineData(EscrowStatus.Finalizing, EscrowStatus.Refunding, true)]
     [InlineData(EscrowStatus.Releasing, EscrowStatus.Released, true)]
     [InlineData(EscrowStatus.Refunding, EscrowStatus.Refunded, true)]
     [InlineData(EscrowStatus.Disputed, EscrowStatus.Releasing, true)]
     [InlineData(EscrowStatus.Disputed, EscrowStatus.Refunding, true)]
-    [InlineData(EscrowStatus.Released, EscrowStatus.Pending_deposits, false)]
-    [InlineData(EscrowStatus.Refunded, EscrowStatus.Pending_deposits, false)]
+    [InlineData(EscrowStatus.Released, EscrowStatus.PendingDeposits, false)]
+    [InlineData(EscrowStatus.Refunded, EscrowStatus.PendingDeposits, false)]
     public void IsValidTransition_ReturnsExpectedResult(EscrowStatus from, EscrowStatus to, bool expected)
     {
         var result = EscrowService.IsValidTransition(from, to);
@@ -172,7 +172,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
     [InlineData(EscrowStatus.Refunded, true)]
     [InlineData(EscrowStatus.Expired, true)]
     [InlineData(EscrowStatus.Cancelled, true)]
-    [InlineData(EscrowStatus.Pending_deposits, false)]
+    [InlineData(EscrowStatus.PendingDeposits, false)]
     [InlineData(EscrowStatus.Funded, false)]
     [InlineData(EscrowStatus.Finalizing, false)]
     [InlineData(EscrowStatus.Disputed, false)]
@@ -334,9 +334,9 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotNull(response.Escrow);
-        Assert.Equal(EscrowStatus.Pending_deposits, response.Escrow.Status);
+        Assert.Equal(EscrowStatus.PendingDeposits, response.Escrow.Status);
         Assert.NotNull(savedModel);
-        Assert.Equal(EscrowType.Two_party, savedModel.EscrowType);
+        Assert.Equal(EscrowType.TwoParty, savedModel.EscrowType);
         Assert.Equal(2, savedModel.Parties?.Count);
     }
 
@@ -349,8 +349,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             Parties = new List<CreateEscrowPartyInput> { CreatePartyInput(Guid.NewGuid(), EscrowPartyRole.Depositor) },
             ExpectedDeposits = new List<ExpectedDepositInput> { CreateExpectedDepositInput(Guid.NewGuid()) },
-            EscrowType = EscrowType.Two_party,
-            TrustMode = EscrowTrustMode.Initiator_trusted
+            EscrowType = EscrowType.TwoParty,
+            TrustMode = EscrowTrustMode.InitiatorTrusted
         };
 
         // Act
@@ -376,8 +376,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
                 CreatePartyInput(partyB, EscrowPartyRole.Recipient)
             },
             ExpectedDeposits = new List<ExpectedDepositInput>(),
-            EscrowType = EscrowType.Two_party,
-            TrustMode = EscrowTrustMode.Initiator_trusted
+            EscrowType = EscrowType.TwoParty,
+            TrustMode = EscrowTrustMode.InitiatorTrusted
         };
 
         // Act
@@ -403,8 +403,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
                 CreatePartyInput(partyB, EscrowPartyRole.Recipient)
             },
             ExpectedDeposits = new List<ExpectedDepositInput> { CreateExpectedDepositInput(partyA) },
-            EscrowType = EscrowType.Two_party,
-            TrustMode = EscrowTrustMode.Single_party_trusted,
+            EscrowType = EscrowType.TwoParty,
+            TrustMode = EscrowTrustMode.SinglePartyTrusted,
             TrustedPartyId = null
         };
 
@@ -434,8 +434,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             {
                 CreateExpectedDepositInput(depositorId)
             },
-            EscrowType = EscrowType.Two_party,
-            TrustMode = EscrowTrustMode.Full_consent
+            EscrowType = EscrowType.TwoParty,
+            TrustMode = EscrowTrustMode.FullConsent
         };
 
         _mockPartyPendingStore
@@ -558,7 +558,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var model = CreateTestAgreementModel(Guid.NewGuid());
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player" }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account }
         };
 
         _mockAgreementStore
@@ -610,15 +610,15 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var escrowId = Guid.NewGuid();
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
-        model.TrustMode = EscrowTrustMode.Initiator_trusted;
+        model.Status = EscrowStatus.PendingDeposits;
+        model.TrustMode = EscrowTrustMode.InitiatorTrusted;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", DepositTokenUsed = false }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, DepositTokenUsed = false }
         };
         model.ExpectedDeposits = new List<ExpectedDepositModel>
         {
-            new ExpectedDepositModel { PartyId = partyId, PartyType = "player", Fulfilled = false, Optional = false }
+            new ExpectedDepositModel { PartyId = partyId, PartyType = EntityType.Account, Fulfilled = false, Optional = false }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -629,7 +629,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "test-key-1",
             Assets = new EscrowAssetBundleInput
             {
@@ -671,7 +671,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "dup-key"
         });
 
@@ -698,7 +698,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = Guid.NewGuid(),
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "key-1"
         });
 
@@ -714,7 +714,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var service = CreateService();
         var escrowId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
+        model.Status = EscrowStatus.PendingDeposits;
         model.ExpiresAt = DateTimeOffset.UtcNow.AddDays(-1);
 
         SetupAgreementGet(escrowId, model);
@@ -725,7 +725,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = Guid.NewGuid(),
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "key-2"
         });
 
@@ -741,10 +741,10 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var service = CreateService();
         var escrowId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
+        model.Status = EscrowStatus.PendingDeposits;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = Guid.NewGuid(), PartyType = "player" }
+            new EscrowPartyModel { PartyId = Guid.NewGuid(), PartyType = EntityType.Account }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -755,7 +755,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = Guid.NewGuid(), // Different from party in model
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "key-3"
         });
 
@@ -772,11 +772,11 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var escrowId = Guid.NewGuid();
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
-        model.TrustMode = EscrowTrustMode.Full_consent;
+        model.Status = EscrowStatus.PendingDeposits;
+        model.TrustMode = EscrowTrustMode.FullConsent;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", DepositTokenUsed = false }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, DepositTokenUsed = false }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -787,7 +787,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "key-4",
             DepositToken = null
         });
@@ -805,15 +805,15 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var escrowId = Guid.NewGuid();
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
-        model.TrustMode = EscrowTrustMode.Initiator_trusted;
+        model.Status = EscrowStatus.PendingDeposits;
+        model.TrustMode = EscrowTrustMode.InitiatorTrusted;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", DepositTokenUsed = false }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, DepositTokenUsed = false }
         };
         model.ExpectedDeposits = new List<ExpectedDepositModel>
         {
-            new ExpectedDepositModel { PartyId = partyId, PartyType = "player", Fulfilled = false, Optional = false }
+            new ExpectedDepositModel { PartyId = partyId, PartyType = EntityType.Account, Fulfilled = false, Optional = false }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -824,7 +824,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "key-5",
             Assets = new EscrowAssetBundleInput
             {
@@ -850,15 +850,15 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var escrowId = Guid.NewGuid();
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
-        model.TrustMode = EscrowTrustMode.Initiator_trusted;
+        model.Status = EscrowStatus.PendingDeposits;
+        model.TrustMode = EscrowTrustMode.InitiatorTrusted;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", DepositTokenUsed = false }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, DepositTokenUsed = false }
         };
         model.ExpectedDeposits = new List<ExpectedDepositModel>
         {
-            new ExpectedDepositModel { PartyId = partyId, PartyType = "player", Fulfilled = false, Optional = false }
+            new ExpectedDepositModel { PartyId = partyId, PartyType = EntityType.Account, Fulfilled = false, Optional = false }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -869,7 +869,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             IdempotencyKey = "key-6",
             Assets = new EscrowAssetBundleInput { Assets = new List<EscrowAssetInput>() }
         });
@@ -893,10 +893,10 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var escrowId = Guid.NewGuid();
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
+        model.Status = EscrowStatus.PendingDeposits;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", DepositTokenUsed = false }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, DepositTokenUsed = false }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -906,7 +906,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player"
+            PartyType = EntityType.Account
         });
 
         // Assert
@@ -926,7 +926,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         model.Status = EscrowStatus.Released;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player" }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -936,7 +936,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player"
+            PartyType = EntityType.Account
         });
 
         // Assert
@@ -959,11 +959,11 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
         model.Status = EscrowStatus.Funded;
-        model.TrustMode = EscrowTrustMode.Initiator_trusted;
+        model.TrustMode = EscrowTrustMode.InitiatorTrusted;
         model.RequiredConsentsForRelease = 1;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", ConsentRequired = true }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, ConsentRequired = true }
         };
         model.Consents = new List<EscrowConsentModel>();
 
@@ -974,7 +974,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
         });
 
@@ -991,7 +991,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var service = CreateService();
         var escrowId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
+        model.Status = EscrowStatus.PendingDeposits;
 
         SetupAgreementGet(escrowId, model);
 
@@ -1000,7 +1000,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = Guid.NewGuid(),
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
         });
 
@@ -1026,7 +1026,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = Guid.NewGuid(),
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
         });
 
@@ -1044,14 +1044,14 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
         model.Status = EscrowStatus.Funded;
-        model.TrustMode = EscrowTrustMode.Initiator_trusted;
+        model.TrustMode = EscrowTrustMode.InitiatorTrusted;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", ConsentRequired = true }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, ConsentRequired = true }
         };
         model.Consents = new List<EscrowConsentModel>
         {
-            new EscrowConsentModel { PartyId = partyId, PartyType = "player", ConsentType = EscrowConsentType.Release }
+            new EscrowConsentModel { PartyId = partyId, PartyType = EntityType.Account, ConsentType = EscrowConsentType.Release }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -1061,7 +1061,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
         });
 
@@ -1079,12 +1079,12 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
         model.Status = EscrowStatus.Funded;
-        model.TrustMode = EscrowTrustMode.Initiator_trusted;
+        model.TrustMode = EscrowTrustMode.InitiatorTrusted;
         model.RequiredConsentsForRelease = 1;
         model.BoundContractId = null;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", ConsentRequired = true }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, ConsentRequired = true }
         };
         model.Consents = new List<EscrowConsentModel>();
 
@@ -1095,7 +1095,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
         });
 
@@ -1115,10 +1115,10 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
         model.Status = EscrowStatus.Funded;
-        model.TrustMode = EscrowTrustMode.Initiator_trusted;
+        model.TrustMode = EscrowTrustMode.InitiatorTrusted;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", ConsentRequired = true }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, ConsentRequired = true }
         };
         model.Consents = new List<EscrowConsentModel>();
 
@@ -1129,7 +1129,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Dispute
         });
 
@@ -1149,10 +1149,10 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var partyId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
         model.Status = EscrowStatus.Funded;
-        model.TrustMode = EscrowTrustMode.Full_consent;
+        model.TrustMode = EscrowTrustMode.FullConsent;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", ConsentRequired = true, ReleaseTokenUsed = false }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, ConsentRequired = true, ReleaseTokenUsed = false }
         };
         model.Consents = new List<EscrowConsentModel>();
 
@@ -1163,7 +1163,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release,
             ReleaseToken = null
         });
@@ -1188,11 +1188,11 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         model.RequiredConsentsForRelease = 2;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player", ConsentRequired = true }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account, ConsentRequired = true }
         };
         model.Consents = new List<EscrowConsentModel>
         {
-            new EscrowConsentModel { PartyId = partyId, PartyType = "player", ConsentType = EscrowConsentType.Release }
+            new EscrowConsentModel { PartyId = partyId, PartyType = EntityType.Account, ConsentType = EscrowConsentType.Release }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -1225,7 +1225,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             new EscrowPartyModel
             {
                 PartyId = partyId,
-                PartyType = "player",
+                PartyType = EntityType.Account,
                 DepositToken = "my-deposit-token",
                 DepositTokenUsed = false
             }
@@ -1238,7 +1238,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             OwnerId = partyId,
-            OwnerType = "player",
+            OwnerType = EntityType.Account,
             TokenType = TokenType.Deposit
         });
 
@@ -1258,7 +1258,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var model = CreateTestAgreementModel(escrowId);
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = Guid.NewGuid(), PartyType = "player" }
+            new EscrowPartyModel { PartyId = Guid.NewGuid(), PartyType = EntityType.Account }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -1268,7 +1268,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             OwnerId = Guid.NewGuid(), // Different party
-            OwnerType = "player",
+            OwnerType = EntityType.Account,
             TokenType = TokenType.Deposit
         });
 
@@ -1292,7 +1292,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         model.Status = EscrowStatus.Funded;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player" }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -1302,7 +1302,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             Reason = "Goods not as described"
         });
 
@@ -1328,7 +1328,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = Guid.NewGuid(),
-            PartyType = "player",
+            PartyType = EntityType.Account,
             Reason = "Too late"
         });
 
@@ -1353,7 +1353,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = Guid.NewGuid(),
-            PartyType = "player",
+            PartyType = EntityType.Account,
             Reason = "Not found"
         });
 
@@ -1373,7 +1373,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         model.Status = EscrowStatus.Funded;
         model.Parties = new List<EscrowPartyModel>
         {
-            new EscrowPartyModel { PartyId = partyId, PartyType = "player" }
+            new EscrowPartyModel { PartyId = partyId, PartyType = EntityType.Account }
         };
 
         SetupAgreementGet(escrowId, model);
@@ -1383,7 +1383,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             Reason = "Test dispute"
         });
 
@@ -1401,7 +1401,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         var service = CreateService();
         var escrowId = Guid.NewGuid();
         var model = CreateTestAgreementModel(escrowId);
-        model.Status = EscrowStatus.Pending_deposits;
+        model.Status = EscrowStatus.PendingDeposits;
         model.Deposits = new List<EscrowDepositModel>();
 
         SetupAgreementGet(escrowId, model);
@@ -1462,8 +1462,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             {
                 CreateExpectedDepositInput(depositorId)
             },
-            EscrowType = EscrowType.Two_party,
-            TrustMode = EscrowTrustMode.Initiator_trusted
+            EscrowType = EscrowType.TwoParty,
+            TrustMode = EscrowTrustMode.InitiatorTrusted
         };
     }
 
@@ -1472,7 +1472,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         return new CreateEscrowPartyInput
         {
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             DisplayName = $"Party {partyId.ToString()[..8]}",
             Role = role
         };
@@ -1483,7 +1483,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         return new ExpectedDepositInput
         {
             PartyId = partyId,
-            PartyType = "player",
+            PartyType = EntityType.Account,
             ExpectedAssets = new List<EscrowAssetInput>
             {
                 new EscrowAssetInput
@@ -1501,9 +1501,9 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         return new EscrowAgreementModel
         {
             EscrowId = escrowId,
-            EscrowType = EscrowType.Two_party,
-            TrustMode = EscrowTrustMode.Initiator_trusted,
-            Status = EscrowStatus.Pending_deposits,
+            EscrowType = EscrowType.TwoParty,
+            TrustMode = EscrowTrustMode.InitiatorTrusted,
+            Status = EscrowStatus.PendingDeposits,
             Parties = new List<EscrowPartyModel>(),
             ExpectedDeposits = new List<ExpectedDepositModel>(),
             Deposits = new List<EscrowDepositModel>(),
@@ -1519,6 +1519,9 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         _mockAgreementStore
             .Setup(s => s.GetAsync($"agreement:{escrowId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
+        _mockAgreementStore
+            .Setup(s => s.GetWithETagAsync($"agreement:{escrowId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((model, "etag"));
     }
 
     private void SetupIdempotencyNotFound()

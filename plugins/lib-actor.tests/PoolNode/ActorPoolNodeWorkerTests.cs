@@ -335,7 +335,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         mockRunner.Verify(
             r => r.InjectPerception(It.Is<PerceptionData>(p =>
                 p.PerceptionType == "perception-update" &&
-                p.SourceType == "message")),
+                p.SourceType == PerceptionSourceType.Message)),
             Times.Once);
     }
 

@@ -785,38 +785,6 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
 
 }
 
-/// <summary>
-/// Current actor lifecycle state
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ActorStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
-    Pending = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
-    Starting = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"running")]
-    Running = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"paused")]
-    Paused = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"stopping")]
-    Stopping = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
-    Stopped = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
-    Error = 6,
-
-}
-#pragma warning restore CS1591
-
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ActorCompletedEventExitReason

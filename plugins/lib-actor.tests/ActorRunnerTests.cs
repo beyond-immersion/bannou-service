@@ -299,7 +299,7 @@ public class ActorRunnerTests
         {
             PerceptionType = "visual",
             SourceId = "entity-123",
-            SourceType = "npc",
+            SourceType = PerceptionSourceType.Npc,
             Data = new { Distance = 10.5 },
             Urgency = 0.8f
         };
@@ -323,7 +323,7 @@ public class ActorRunnerTests
         {
             PerceptionType = "audio",
             SourceId = "source-1",
-            SourceType = "environment",
+            SourceType = PerceptionSourceType.Environment,
             Data = new { Volume = 0.5 },
             Urgency = 0.3f
         };
@@ -350,7 +350,7 @@ public class ActorRunnerTests
             {
                 PerceptionType = "test",
                 SourceId = $"source-{i}",
-                SourceType = "test",
+                SourceType = PerceptionSourceType.Object,
                 Data = new { Index = i },
                 Urgency = 0.5f
             });
@@ -373,7 +373,7 @@ public class ActorRunnerTests
         {
             PerceptionType = "test",
             SourceId = "test",
-            SourceType = "test",
+            SourceType = PerceptionSourceType.Object,
             Data = new { },
             Urgency = 0.5f
         });

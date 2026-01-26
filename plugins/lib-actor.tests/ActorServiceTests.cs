@@ -877,7 +877,7 @@ public class ActorServiceTests
             {
                 PerceptionType = "test",
                 SourceId = "test-source",
-                SourceType = "unit-test",
+                SourceType = PerceptionSourceType.Object,
                 Urgency = 0.5f
             }
         };

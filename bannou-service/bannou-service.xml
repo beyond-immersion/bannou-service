@@ -11417,11 +11417,6 @@
             The perception data to deliver to the actor
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.ActorStatus">
-            <summary>
-            Current actor lifecycle state
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateCreatedEvent">
             <summary>
             Published to actor-template.created when a actortemplate is created
