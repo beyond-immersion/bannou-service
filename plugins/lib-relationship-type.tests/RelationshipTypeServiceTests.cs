@@ -26,7 +26,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<RelationshipTypeModel>> _mockRelationshipTypeStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<RelationshipTypeService>> _mockLogger;
     private readonly Mock<IRelationshipClient> _mockRelationshipClient;
@@ -37,7 +37,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockRelationshipTypeStore = new Mock<IStateStore<RelationshipTypeModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<RelationshipTypeService>>();
         _mockRelationshipClient = new Mock<IRelationshipClient>();
@@ -46,7 +46,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipTypeModel>(STATE_STORE)).Returns(_mockRelationshipTypeStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockGuidListStore.Object);
     }
 
     private RelationshipTypeService CreateService()
@@ -1434,7 +1434,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var parentId = Guid.NewGuid();
 
         var childModel = CreateTestRelationshipTypeModel(childId, "CHILD", "Child");
-        childModel.ParentTypeId = parentId.ToString();
+        childModel.ParentTypeId = parentId;
 
         var parentModel = CreateTestRelationshipTypeModel(parentId, "PARENT", "Parent");
 
@@ -1472,10 +1472,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var grandparentId = Guid.NewGuid();
 
         var grandchildModel = CreateTestRelationshipTypeModel(grandchildId, "GRANDCHILD", "Grandchild");
-        grandchildModel.ParentTypeId = parentId.ToString();
+        grandchildModel.ParentTypeId = parentId;
 
         var parentModel = CreateTestRelationshipTypeModel(parentId, "PARENT", "Parent");
-        parentModel.ParentTypeId = grandparentId.ToString();
+        parentModel.ParentTypeId = grandparentId;
 
         var grandparentModel = CreateTestRelationshipTypeModel(grandparentId, "GRANDPARENT", "Grandparent");
 
@@ -1554,10 +1554,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var grandparentId = Guid.NewGuid();
 
         var grandchildModel = CreateTestRelationshipTypeModel(grandchildId, "GRANDCHILD", "Grandchild");
-        grandchildModel.ParentTypeId = parentId.ToString();
+        grandchildModel.ParentTypeId = parentId;
 
         var parentModel = CreateTestRelationshipTypeModel(parentId, "PARENT", "Parent");
-        parentModel.ParentTypeId = grandparentId.ToString();
+        parentModel.ParentTypeId = grandparentId;
 
         var grandparentModel = CreateTestRelationshipTypeModel(grandparentId, "GRANDPARENT", "Grandparent");
         grandparentModel.ParentTypeId = null; // Root
@@ -1634,7 +1634,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         return new RelationshipTypeModel
         {
-            RelationshipTypeId = typeId.ToString(),
+            RelationshipTypeId = typeId,
             Code = code,
             Name = name,
             Description = "Test relationship type description",
@@ -1654,9 +1654,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync(codeExists ? Guid.NewGuid().ToString() : null);
 
         // Setup all-types list
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
     }
 
     private void SetupSeedMocks()
@@ -1667,14 +1667,14 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync((string?)null);
 
         // Setup all-types list
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Setup parent-index for any type (no children by default)
-        _mockListStore
+        _mockGuidListStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("parent-index:")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
     }
 
     #endregion
