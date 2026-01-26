@@ -107,4 +107,10 @@ public class ItemServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int ListOperationMaxRetries { get; set; } = 3;
 
+    /// <summary>
+    /// Timeout in seconds for distributed locks on item instance modifications
+    /// Environment variable: ITEM_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int LockTimeoutSeconds { get; set; } = 30;
+
 }

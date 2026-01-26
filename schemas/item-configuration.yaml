@@ -58,3 +58,10 @@ x-service-configuration:
       env: ITEM_LIST_OPERATION_MAX_RETRIES
       default: 3
       description: Maximum retry attempts for optimistic concurrency on list operations
+
+    # Locking Configuration
+    lockTimeoutSeconds:
+      type: integer
+      env: ITEM_LOCK_TIMEOUT_SECONDS
+      default: 30
+      description: Timeout in seconds for distributed locks on item instance modifications

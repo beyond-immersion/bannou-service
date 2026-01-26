@@ -19,6 +19,7 @@ public partial class ItemService : IItemService
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
 
@@ -44,11 +45,13 @@ public partial class ItemService : IItemService
     public ItemService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
+        IDistributedLockProvider lockProvider,
         ILogger<ItemService> logger,
         ItemServiceConfiguration configuration)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
+        _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
 
@@ -530,76 +533,14 @@ public partial class ItemService : IItemService
     {
         try
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            // Apply modifications
-            if (body.DurabilityDelta.HasValue && model.CurrentDurability.HasValue)
-            {
-                model.CurrentDurability = Math.Max(0, model.CurrentDurability.Value + body.DurabilityDelta.Value);
-            }
-            if (body.QuantityDelta.HasValue)
-            {
-                model.Quantity = Math.Max(0, model.Quantity + body.QuantityDelta.Value);
-            }
-            if (body.CustomStats is not null)
-            {
-                model.CustomStats = BannouJson.Serialize(body.CustomStats);
-            }
-            if (body.CustomName is not null)
-            {
-                model.CustomName = body.CustomName;
-            }
-            if (body.InstanceMetadata is not null)
-            {
-                model.InstanceMetadata = BannouJson.Serialize(body.InstanceMetadata);
-            }
+            // Container changes require a lock to prevent race conditions on index updates
             if (body.NewContainerId.HasValue)
             {
-                model.ContainerId = body.NewContainerId.Value;
+                return await ModifyItemInstanceWithLockAsync(body, cancellationToken);
             }
-            if (body.NewSlotIndex.HasValue)
-            {
-                model.SlotIndex = body.NewSlotIndex.Value;
-            }
-            if (body.NewSlotX.HasValue)
-            {
-                model.SlotX = body.NewSlotX.Value;
-            }
-            if (body.NewSlotY.HasValue)
-            {
-                model.SlotY = body.NewSlotY.Value;
-            }
-            model.ModifiedAt = now;
 
-            await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
-
-            // Invalidate cache after write
-            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
-
-            await _messageBus.TryPublishAsync("item-instance.modified", new ItemInstanceModifiedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = model.TemplateId,
-                ContainerId = model.ContainerId,
-                RealmId = model.RealmId,
-                Quantity = model.Quantity,
-                OriginType = model.OriginType,
-                CreatedAt = model.CreatedAt,
-                ModifiedAt = now
-            }, cancellationToken);
-
-            _logger.LogDebug("Modified item instance {InstanceId}", body.InstanceId);
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            // Non-container changes don't need locking
+            return await ModifyItemInstanceInternalAsync(body, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -610,6 +551,121 @@ public partial class ItemService : IItemService
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Modifies an item instance with a distributed lock to prevent container index races.
+    /// </summary>
+    private async Task<(StatusCodes, ItemInstanceResponse?)> ModifyItemInstanceWithLockAsync(
+        ModifyItemInstanceRequest body,
+        CancellationToken cancellationToken)
+    {
+        var lockOwner = $"modify-item-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.ItemLock,
+            body.InstanceId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for item instance {InstanceId}", body.InstanceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        return await ModifyItemInstanceInternalAsync(body, cancellationToken);
+    }
+
+    /// <summary>
+    /// Internal implementation of item instance modification.
+    /// </summary>
+    private async Task<(StatusCodes, ItemInstanceResponse?)> ModifyItemInstanceInternalAsync(
+        ModifyItemInstanceRequest body,
+        CancellationToken cancellationToken)
+    {
+        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+
+        if (model is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Capture old container ID for index updates (must be captured before modification)
+        var oldContainerId = model.ContainerId;
+        var containerChanged = body.NewContainerId.HasValue && body.NewContainerId.Value != oldContainerId;
+
+        // Apply modifications
+        if (body.DurabilityDelta.HasValue && model.CurrentDurability.HasValue)
+        {
+            model.CurrentDurability = Math.Max(0, model.CurrentDurability.Value + body.DurabilityDelta.Value);
+        }
+        if (body.QuantityDelta.HasValue)
+        {
+            model.Quantity = Math.Max(0, model.Quantity + body.QuantityDelta.Value);
+        }
+        if (body.CustomStats is not null)
+        {
+            model.CustomStats = BannouJson.Serialize(body.CustomStats);
+        }
+        if (body.CustomName is not null)
+        {
+            model.CustomName = body.CustomName;
+        }
+        if (body.InstanceMetadata is not null)
+        {
+            model.InstanceMetadata = BannouJson.Serialize(body.InstanceMetadata);
+        }
+        if (body.NewContainerId.HasValue)
+        {
+            model.ContainerId = body.NewContainerId.Value;
+        }
+        if (body.NewSlotIndex.HasValue)
+        {
+            model.SlotIndex = body.NewSlotIndex.Value;
+        }
+        if (body.NewSlotX.HasValue)
+        {
+            model.SlotX = body.NewSlotX.Value;
+        }
+        if (body.NewSlotY.HasValue)
+        {
+            model.SlotY = body.NewSlotY.Value;
+        }
+        model.ModifiedAt = now;
+
+        // Save the model first, then update indexes
+        await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
+
+        // Update container indexes if container changed (after successful save)
+        if (containerChanged)
+        {
+            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{oldContainerId}", body.InstanceId.ToString(), cancellationToken);
+            await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{body.NewContainerId!.Value}", body.InstanceId.ToString(), cancellationToken);
+        }
+
+        // Invalidate cache after write
+        await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
+        await _messageBus.TryPublishAsync("item-instance.modified", new ItemInstanceModifiedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = body.InstanceId,
+            TemplateId = model.TemplateId,
+            ContainerId = model.ContainerId,
+            RealmId = model.RealmId,
+            Quantity = model.Quantity,
+            OriginType = model.OriginType,
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = now
+        }, cancellationToken);
+
+        _logger.LogDebug("Modified item instance {InstanceId}", body.InstanceId);
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>

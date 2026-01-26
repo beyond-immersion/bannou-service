@@ -333,7 +333,20 @@ public class ContractTestHandler : BaseHttpTestHandler
             var contractClient = GetServiceClient<IContractClient>();
             var (realm, charA, charB) = await CreateTestCharacterPairAsync("LIFECYCLE");
 
-            var template = await CreateEmploymentTemplateAsync(contractClient, "lifecycle", realm.RealmId);
+            // Contracts without milestones auto-fulfill, so add a milestone to test Active state
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "complete_work",
+                    Name = "Complete Work",
+                    Description = "Complete the contracted work",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "lifecycle", realm.RealmId, milestones);
             var activeContract = await CreateActiveContractAsync(
                 contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
 
@@ -696,7 +709,20 @@ public class ContractTestHandler : BaseHttpTestHandler
             var contractClient = GetServiceClient<IContractClient>();
             var (realm, charA, charB) = await CreateTestCharacterPairAsync("BREACH");
 
-            var template = await CreateEmploymentTemplateAsync(contractClient, "breach", realm.RealmId);
+            // Contracts without milestones auto-fulfill; breach/cure requires Active status (work in progress)
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "deliver_goods",
+                    Name = "Deliver Goods",
+                    Description = "Worker delivers the agreed goods",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "breach", realm.RealmId, milestones);
             var activeContract = await CreateActiveContractAsync(
                 contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId,
                 new ContractTerms
@@ -755,7 +781,20 @@ public class ContractTestHandler : BaseHttpTestHandler
             var contractClient = GetServiceClient<IContractClient>();
             var (realm, charA, charB) = await CreateTestCharacterPairAsync("EXCLUSIVITY");
 
-            var template = await CreateEmploymentTemplateAsync(contractClient, "exclusive", realm.RealmId);
+            // Contracts without milestones auto-fulfill; exclusivity checks filter for Active status
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "ongoing_work",
+                    Name = "Ongoing Work",
+                    Description = "Worker performs ongoing duties",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
+            var template = await CreateEmploymentTemplateAsync(contractClient, "exclusive", realm.RealmId, milestones);
 
             // Create first contract with exclusivity
             var firstContract = await CreateActiveContractAsync(
@@ -851,8 +890,21 @@ public class ContractTestHandler : BaseHttpTestHandler
             var contractClient = GetServiceClient<IContractClient>();
             var (realm, charA, charB) = await CreateTestCharacterPairAsync("GUARDIAN_LOCK");
 
+            // Contracts without milestones auto-fulfill; test expects Active status for lock operations
+            var milestones = new List<MilestoneDefinition>
+            {
+                new MilestoneDefinition
+                {
+                    Code = "pending_transfer",
+                    Name = "Pending Transfer",
+                    Description = "Contract awaiting escrow settlement",
+                    Sequence = 0,
+                    Required = true
+                }
+            };
+
             var template = await CreateTransferableEmploymentTemplateAsync(
-                contractClient, "guardian_lock", realm.RealmId);
+                contractClient, "guardian_lock", realm.RealmId, milestones);
             var activeContract = await CreateActiveContractAsync(
                 contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
 
@@ -1170,7 +1222,8 @@ public class ContractTestHandler : BaseHttpTestHandler
                 WalletId = walletA.WalletId,
                 CurrencyDefinitionId = currencyDef.DefinitionId,
                 Amount = 1000,
-                TransactionType = TransactionType.Mint
+                TransactionType = TransactionType.Mint,
+                IdempotencyKey = $"contract_test_credit_{Guid.NewGuid():N}"
             });
 
             // Step 4: Create contract template with currency clauses in CustomTerms
@@ -1237,11 +1290,13 @@ public class ContractTestHandler : BaseHttpTestHandler
             });
 
             // Step 5: Create and activate contract
+            // Note: Contracts without milestones auto-fulfill (no work to do = immediately ready for execution)
             var activeContract = await CreateActiveContractAsync(
                 contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId);
 
-            if (activeContract.Status != ContractStatus.Active)
-                return TestResult.Failed($"Contract not active: {activeContract.Status}");
+            // Without milestones, contract goes directly to Fulfilled (ready for execution)
+            if (activeContract.Status != ContractStatus.Fulfilled)
+                return TestResult.Failed($"Contract not fulfilled: {activeContract.Status}");
 
             // Step 6: Set template values
             await contractClient.SetContractTemplateValuesAsync(new SetTemplateValuesRequest

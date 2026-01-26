@@ -26,6 +26,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     private readonly Mock<IStateStore<string>> _mockTemplateStringStore;
     private readonly Mock<IStateStore<string>> _mockInstanceStringStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<ItemService>> _mockLogger;
 
     public ItemServiceTests()
@@ -38,7 +39,15 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockTemplateStringStore = new Mock<IStateStore<string>>();
         _mockInstanceStringStore = new Mock<IStateStore<string>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<ItemService>>();
+
+        // Default lock provider returns successful lock
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(r => r.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Template persistent stores
         _mockStateStoreFactory
@@ -119,6 +128,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         return new ItemService(
             _mockMessageBus.Object,
             _mockStateStoreFactory.Object,
+            _mockLockProvider.Object,
             _mockLogger.Object,
             Configuration);
     }

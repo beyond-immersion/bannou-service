@@ -645,6 +645,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             new() { EntityId = partyEntityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Pending },
             new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented, ConsentedAt = DateTimeOffset.UtcNow }
         };
+        // Contracts without milestones auto-fulfill; add milestone so contract stays Active
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "work", Name = "Complete Work", Sequence = 0, Required = true, Status = MilestoneStatus.Pending }
+        };
 
         ContractInstanceModel? savedInstance = null;
         _mockInstanceStore
@@ -675,6 +680,53 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         Assert.NotNull(savedInstance);
         // When EffectiveFrom is null, contract becomes "active" immediately after all consent
         Assert.Equal(ContractStatus.Active, savedInstance.Status);
+    }
+
+    [Fact]
+    public async Task ConsentToContractAsync_NoMilestones_BecomesFulfilled()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var partyEntityId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Proposed;
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = partyEntityId, EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Pending },
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented, ConsentedAt = DateTimeOffset.UtcNow }
+        };
+        // No milestones = nothing to be "active" about, contract goes directly to Fulfilled
+
+        ContractInstanceModel? savedInstance = null;
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContractInstanceModel, string, CancellationToken>((k, m, _, _) => savedInstance = m)
+            .ReturnsAsync("etag-1");
+
+        var request = new ConsentToContractRequest
+        {
+            ContractId = contractId,
+            PartyEntityId = partyEntityId,
+            PartyEntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.ConsentToContractAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(savedInstance);
+        // Contracts without milestones have nothing to do, so they're immediately fulfilled (ready for execution)
+        Assert.Equal(ContractStatus.Fulfilled, savedInstance.Status);
     }
 
     #endregion

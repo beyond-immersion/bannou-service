@@ -154,6 +154,8 @@ public static class StateStoreDefinitions
     public const string ItemInstanceCache = "item-instance-cache";
     /// <summary>Item instances (persistent, realm-partitioned)</summary>
     public const string ItemInstanceStore = "item-instance-store";
+    /// <summary>Distributed locks for item instance modifications</summary>
+    public const string ItemLock = "item-lock";
     /// <summary>Template lookup cache (global, aggressive caching)</summary>
     public const string ItemTemplateCache = "item-template-cache";
     /// <summary>Item template definitions (persistent, queryable)</summary>
@@ -317,6 +319,7 @@ public static class StateStoreDefinitions
             [InventoryLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:lock" },
             [ItemInstanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "item:inst" },
             [ItemInstanceStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "item_instance_store" },
+            [ItemLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "item:lock" },
             [ItemTemplateCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "item:tpl" },
             [ItemTemplateStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "item_template_store" },
             [LeaderboardDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:def" },
@@ -409,6 +412,7 @@ public static class StateStoreDefinitions
             [InventoryLock] = new StoreMetadata("Inventory", "Distributed locks for concurrent modifications", "redis"),
             [ItemInstanceCache] = new StoreMetadata("Item", "Hot item instance data for active gameplay", "redis"),
             [ItemInstanceStore] = new StoreMetadata("Item", "Item instances (persistent, realm-partitioned)", "mysql"),
+            [ItemLock] = new StoreMetadata("Item", "Distributed locks for item instance modifications", "redis"),
             [ItemTemplateCache] = new StoreMetadata("Item", "Template lookup cache (global, aggressive caching)", "redis"),
             [ItemTemplateStore] = new StoreMetadata("Item", "Item template definitions (persistent, queryable)", "mysql"),
             [LeaderboardDefinition] = new StoreMetadata("Leaderboard", "Leaderboard definitions and metadata", "redis"),

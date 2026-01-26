@@ -75877,6 +75877,9 @@
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemInstanceStore">
             <summary>Item instances (persistent, realm-partitioned)</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemLock">
+            <summary>Distributed locks for item instance modifications</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Services.StateStoreDefinitions.ItemTemplateCache">
             <summary>Template lookup cache (global, aggressive caching)</summary>
         </member>

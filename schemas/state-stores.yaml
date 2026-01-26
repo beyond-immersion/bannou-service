@@ -492,6 +492,12 @@ x-state-stores:
     service: Item
     purpose: Item instances (persistent, realm-partitioned)
 
+  item-lock:
+    backend: redis
+    prefix: "item:lock"
+    service: Item
+    purpose: Distributed locks for item instance modifications
+
   # ============================================================================
   # Inventory Stores
   # ============================================================================

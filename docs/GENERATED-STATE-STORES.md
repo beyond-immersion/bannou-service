@@ -56,6 +56,7 @@ This document lists all state store components used in Bannou.
 | `inventory-lock` | Redis | Inventory | Distributed locks for concurrent modifications |
 | `item-instance-cache` | Redis | Item | Hot item instance data for active gameplay |
 | `item-instance-store` | MySQL | Item | Item instances (persistent, realm-partitioned) |
+| `item-lock` | Redis | Item | Distributed locks for item instance modifications |
 | `item-template-cache` | Redis | Item | Template lookup cache (global, aggressive caching) |
 | `item-template-store` | MySQL | Item | Item template definitions (persistent, queryable) |
 | `leaderboard-definition` | Redis | Leaderboard | Leaderboard definitions and metadata |
@@ -90,7 +91,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 80 stores (48 Redis, 32 MySQL)
+**Total**: 81 stores (49 Redis, 32 MySQL)
 
 ## Naming Conventions
 

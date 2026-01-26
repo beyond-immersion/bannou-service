@@ -783,13 +783,18 @@ public partial class ContractService : IContractService
                 // Check if we should activate immediately or wait for effectiveFrom
                 if (model.EffectiveFrom == null || model.EffectiveFrom <= DateTimeOffset.UtcNow)
                 {
-                    model.Status = ContractStatus.Active;
                     model.EffectiveFrom = DateTimeOffset.UtcNow;
 
-                    // Activate first milestone if any
+                    // Activate first milestone if any, otherwise contract is immediately fulfilled
                     if (model.Milestones?.Count > 0)
                     {
+                        model.Status = ContractStatus.Active;
                         model.Milestones[0].Status = MilestoneStatus.Active;
+                    }
+                    else
+                    {
+                        // No milestones means contract is immediately fulfilled (nothing to perform)
+                        model.Status = ContractStatus.Fulfilled;
                     }
                 }
                 else
@@ -813,7 +818,14 @@ public partial class ContractService : IContractService
             {
                 await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
 
-                if (model.Status == ContractStatus.Active)
+                if (model.Status == ContractStatus.Fulfilled)
+                {
+                    // Contract with no milestones goes directly to fulfilled
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractActivatedEventAsync(model, cancellationToken);
+                    await PublishContractFulfilledEventAsync(model, cancellationToken);
+                }
+                else if (model.Status == ContractStatus.Active)
                 {
                     await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
                     await PublishContractActivatedEventAsync(model, cancellationToken);
