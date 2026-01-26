@@ -12,10 +12,10 @@ paths: {}
 x-service-configuration:
   properties:
     defaultEnforcementMode:
-      type: string
+      $ref: 'contract-api.yaml#/components/schemas/EnforcementMode'
       env: CONTRACT_DEFAULT_ENFORCEMENT_MODE
       default: event_only
-      description: Default enforcement mode for contracts (advisory, event_only, consequence_based, community)
+      description: Default enforcement mode for contracts
     defaultConsentTimeoutDays:
       type: integer
       env: CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS

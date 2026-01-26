@@ -1296,7 +1296,7 @@ components:
           format: date-time
           description: When the failure was detected
         assetType:
-          type: string
+          $ref: '#/components/schemas/AssetType'
           description: Type of asset affected
         assetDescription:
           type: string

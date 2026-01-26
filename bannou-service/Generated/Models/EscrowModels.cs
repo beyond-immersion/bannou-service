@@ -1166,7 +1166,8 @@ public partial class ValidationFailure
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string AssetType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AssetType AssetType { get; set; } = default!;
 
     /// <summary>
     /// Description of the affected asset

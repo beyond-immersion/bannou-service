@@ -2247,7 +2247,7 @@ public partial class GameSessionService : IGameSessionService
 /// </summary>
 internal class GameSessionModel
 {
-    public string SessionId { get; set; } = string.Empty;
+    public Guid SessionId { get; set; }
     public string GameType { get; set; } = "generic";
     public string? SessionName { get; set; }
     public SessionStatus Status { get; set; }

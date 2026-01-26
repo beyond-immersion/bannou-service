@@ -54,7 +54,7 @@ public class ContractServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Default enforcement mode for contracts (advisory, event_only, consequence_based, community)
+    /// Default enforcement mode for contracts
     /// Environment variable: CONTRACT_DEFAULT_ENFORCEMENT_MODE
     /// </summary>
     public string DefaultEnforcementMode { get; set; } = "event_only";

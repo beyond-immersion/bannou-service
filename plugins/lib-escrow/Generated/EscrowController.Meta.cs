@@ -1078,7 +1078,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -1925,7 +1925,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -2824,7 +2824,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -3957,7 +3957,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -5383,7 +5383,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -6411,7 +6411,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -7309,7 +7309,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -8179,7 +8179,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -9057,7 +9057,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -10065,7 +10065,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -10949,7 +10949,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -11131,7 +11131,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {
@@ -11159,9 +11159,20 @@ public partial class EscrowController
                 }
             }
         },
+        "AssetType": {
+            "type": "string",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "enum": [
+                "currency",
+                "item",
+                "item_stack",
+                "contract",
+                "custom"
+            ]
+        },
         "ValidationFailureType": {
             "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\ n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
                 "asset_missing",
                 "asset_mutated",
@@ -11619,17 +11630,6 @@ public partial class EscrowController
                 }
             }
         },
-        "AssetType": {
-            "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
-            "enum": [
-                "currency",
-                "item",
-                "item_stack",
-                "contract",
-                "custom"
-            ]
-        },
         "EscrowDeposit": {
             "type": "object",
             "description": "Records an actual deposit",
@@ -11805,7 +11805,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -11825,7 +11825,7 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\ n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "released",
                 "refunded",
@@ -12634,7 +12634,7 @@ public partial class EscrowController
                     "description": "When the failure was detected"
                 },
                 "assetType": {
-                    "type": "string",
+                    "$ref": "#/$defs/AssetType",
                     "description": "Type of asset affected"
                 },
                 "assetDescription": {

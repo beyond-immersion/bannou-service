@@ -452,8 +452,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -779,8 +779,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -1123,8 +1123,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -1567,8 +1567,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -2108,8 +2108,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -2503,8 +2503,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -2846,8 +2846,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -3179,8 +3179,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -3515,8 +3515,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -3899,8 +3899,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -4240,8 +4240,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -4310,8 +4310,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -4320,47 +4320,53 @@ paths:
         \                    \"type\": \"string\",\n                    \"description\": \"Type of the affected party\"\n\
         \                },\n                \"details\": {\n                    \"type\": \"object\",\n                 \
         \   \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
-        : \"Additional failure details\"\n                }\n            }\n        },\n        \"ValidationFailureType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of validation failure detected.\\n- asset_missing:
-        Asset no longer exists in escrow custody\\n- asset_mutated: Asset properties changed (e.g., item durability)\\n- asset_expired:
-        Asset has a time-based expiration that triggered\\n- balance_mismatch: Wallet balance does not match expected held
-        amount\\n\",\n            \"enum\": [\n                \"asset_missing\",\n                \"asset_mutated\",\n  \
-        \              \"asset_expired\",\n                \"balance_mismatch\"\n            ]\n        },\n        \"EscrowAgreement\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Main escrow agreement record\",\n         \
-        \   \"required\": [\n                \"id\",\n                \"escrowType\",\n                \"trustMode\",\n  \
-        \              \"parties\",\n                \"expectedDeposits\",\n                \"deposits\",\n              \
-        \  \"consents\",\n                \"status\",\n                \"requiredConsentsForRelease\",\n                \"\
-        createdAt\",\n                \"createdBy\",\n                \"createdByType\",\n                \"expiresAt\"\n\
-        \            ],\n            \"properties\": {\n                \"id\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique escrow agreement identifier\"\
-        \n                },\n                \"escrowType\": {\n                    \"$ref\": \"#/$defs/EscrowType\",\n \
-        \                   \"description\": \"Type of escrow agreement\"\n                },\n                \"trustMode\"\
-        : {\n                    \"$ref\": \"#/$defs/EscrowTrustMode\",\n                    \"description\": \"Trust mode
-        for the escrow\"\n                },\n                \"trustedPartyId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"For single_party_trusted - which party has authority\"\n                },\n                \"trustedPartyType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the trusted party\"\n                },\n                \"initiatorServiceId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted
-        - which service created this\"\n                },\n                \"parties\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n        \
-        \            },\n                    \"description\": \"All parties involved in the escrow\"\n                },\n\
-        \                \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"\
-        description\": \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/EscrowDeposit\"\n                    },\n                    \"description\": \"Actual deposits received\"\
-        \n                },\n                \"releaseAllocations\": {\n                    \"type\": \"array\",\n      \
-        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\
-        \n                    },\n                    \"description\": \"How assets should be distributed on release\"\n \
-        \               },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Contract governing conditions for this escrow\"\n                },\n                \"consents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\
-        \n                    },\n                    \"description\": \"Consent decisions from parties\"\n              \
-        \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                  \
-        \  \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"How many parties must consent
+        : \"Additional failure details\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
+        \     \"type\": \"string\",\n            \"description\": \"Type of asset held in escrow.\\n- currency: Currency amount
+        held in escrow wallet\\n- item: Item instance held in escrow container\\n- item_stack: Stackable items (quantity)
+        held in escrow container\\n- contract: Contract instance locked under escrow guardianship\\n- custom: Custom asset
+        type via registered handler\\n\",\n            \"enum\": [\n                \"currency\",\n                \"item\"\
+        ,\n                \"item_stack\",\n                \"contract\",\n                \"custom\"\n            ]\n   \
+        \     },\n        \"ValidationFailureType\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Type of validation failure detected.\\n- asset_missing: Asset no longer exists in escrow custody\\n- asset_mutated:
+        Asset properties changed (e.g., item durability)\\n- asset_expired: Asset has a time-based expiration that triggered\\
+        n- balance_mismatch: Wallet balance does not match expected held amount\\n\",\n            \"enum\": [\n         \
+        \       \"asset_missing\",\n                \"asset_mutated\",\n                \"asset_expired\",\n             \
+        \   \"balance_mismatch\"\n            ]\n        },\n        \"EscrowAgreement\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Main escrow agreement record\",\n            \"required\": [\n                \"\
+        id\",\n                \"escrowType\",\n                \"trustMode\",\n                \"parties\",\n           \
+        \     \"expectedDeposits\",\n                \"deposits\",\n                \"consents\",\n                \"status\"\
+        ,\n                \"requiredConsentsForRelease\",\n                \"createdAt\",\n                \"createdBy\"\
+        ,\n                \"createdByType\",\n                \"expiresAt\"\n            ],\n            \"properties\":
+        {\n                \"id\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique escrow agreement identifier\"\n                },\n             \
+        \   \"escrowType\": {\n                    \"$ref\": \"#/$defs/EscrowType\",\n                    \"description\"\
+        : \"Type of escrow agreement\"\n                },\n                \"trustMode\": {\n                    \"$ref\"\
+        : \"#/$defs/EscrowTrustMode\",\n                    \"description\": \"Trust mode for the escrow\"\n             \
+        \   },\n                \"trustedPartyId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"For single_party_trusted
+        - which party has authority\"\n                },\n                \"trustedPartyType\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Type of the trusted
+        party\"\n                },\n                \"initiatorServiceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"For initiator_trusted - which service
+        created this\"\n                },\n                \"parties\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/EscrowParty\"\n                    },\n\
+        \                    \"description\": \"All parties involved in the escrow\"\n                },\n               \
+        \ \"expectedDeposits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
+        \              \"$ref\": \"#/$defs/ExpectedDeposit\"\n                    },\n                    \"description\"\
+        : \"What deposits are expected from each party\"\n                },\n                \"deposits\": {\n          \
+        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowDeposit\"\
+        \n                    },\n                    \"description\": \"Actual deposits received\"\n                },\n\
+        \                \"releaseAllocations\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReleaseAllocation\"\n     \
+        \               },\n                    \"description\": \"How assets should be distributed on release\"\n       \
+        \         },\n                \"boundContractId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
+        governing conditions for this escrow\"\n                },\n                \"consents\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowConsent\"\n\
+        \                    },\n                    \"description\": \"Consent decisions from parties\"\n               \
+        \ },\n                \"status\": {\n                    \"$ref\": \"#/$defs/EscrowStatus\",\n                   \
+        \ \"description\": \"Current escrow status\"\n                },\n                \"requiredConsentsForRelease\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"How many parties must consent
         for release (-1 = all required)\"\n                },\n                \"lastValidatedAt\": {\n                  \
         \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"When the escrow was last validated\"\n                },\n               \
@@ -4495,90 +4501,85 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of the source owner\"\n\
         \                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"AssetType\": {\n       \
-        \     \"type\": \"string\",\n            \"description\": \"Type of asset held in escrow.\\n- currency: Currency amount
-        held in escrow wallet\\n- item: Item instance held in escrow container\\n- item_stack: Stackable items (quantity)
-        held in escrow container\\n- contract: Contract instance locked under escrow guardianship\\n- custom: Custom asset
-        type via registered handler\\n\",\n            \"enum\": [\n                \"currency\",\n                \"item\"\
-        ,\n                \"item_stack\",\n                \"contract\",\n                \"custom\"\n            ]\n   \
-        \     },\n        \"EscrowDeposit\": {\n            \"type\": \"object\",\n            \"description\": \"Records
-        an actual deposit\",\n            \"required\": [\n                \"id\",\n                \"escrowId\",\n      \
-        \          \"partyId\",\n                \"partyType\",\n                \"assets\",\n                \"depositedAt\"\
-        ,\n                \"idempotencyKey\"\n            ],\n            \"properties\": {\n                \"id\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Deposit record identifier\"\n                },\n                \"escrowId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Escrow this deposit
-        belongs to\"\n                },\n                \"partyId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"Party who deposited\"\n           \
-        \     },\n                \"partyType\": {\n                    \"description\": \"Type of entity (Account, Character,
-        etc.)\",\n                    \"type\": \"object\"\n                },\n                \"assets\": {\n          \
-        \          \"$ref\": \"#/$defs/EscrowAssetBundle\",\n                    \"description\": \"Assets deposited\"\n \
-        \               },\n                \"depositedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the deposit was made\"\n          \
-        \      },\n                \"depositTokenUsed\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Token used (for audit)\"\n                },\n    \
-        \            \"idempotencyKey\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Idempotency key for this deposit\"\n                }\n            }\n        },\n        \"EscrowAssetBundle\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Groups multiple assets for a single deposit
-        or release\",\n            \"required\": [\n                \"bundleId\",\n                \"assets\"\n          \
-        \  ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Bundle identifier\"\n         \
-        \       },\n                \"assets\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\n                    },\n                    \"description\"\
-        : \"Assets in this bundle\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Summary for display\"\
-        \n                },\n                \"estimatedValue\": {\n                    \"type\": \"number\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Optional valuation for UI display\"\n    \
-        \            }\n            }\n        },\n        \"ReleaseAllocation\": {\n            \"type\": \"object\",\n \
-        \           \"description\": \"Defines who gets what on release\",\n            \"required\": [\n                \"\
-        recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n            ],\n       \
-        \     \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\n        \
-        \        },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Type of the recipient party\"\n                },\n                \"assets\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\
-        \n                    },\n                    \"description\": \"Assets this recipient should receive\"\n        \
-        \        },\n                \"destinationWalletId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Where
-        to deliver currency\"\n                },\n                \"destinationContainerId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Where to deliver items\"\n                }\n            }\n        },\n        \"EscrowConsent\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Records a party consent decision\",\n     \
-        \       \"required\": [\n                \"partyId\",\n                \"partyType\",\n                \"consentType\"\
-        ,\n                \"consentedAt\"\n            ],\n            \"properties\": {\n                \"partyId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Party giving consent\"\n                },\n                \"partyType\": {\n                    \"description\"\
-        : \"Type of entity (Account, Character, etc.)\",\n                    \"type\": \"object\"\n                },\n \
-        \               \"consentType\": {\n                    \"$ref\": \"#/$defs/EscrowConsentType\",\n               \
-        \     \"description\": \"Type of consent given\"\n                },\n                \"consentedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When consent was given\"\n                },\n                \"releaseTokenUsed\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Token used (for
-        audit)\"\n                },\n                \"notes\": {\n                    \"type\": \"string\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Optional notes\"\n                }\n     \
-        \       }\n        },\n        \"EscrowConsentType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of consent being given.\\n- release: Agrees to release assets to recipients\\n- refund: Agrees to refund
-        assets to depositors\\n- dispute: Raises a dispute\\n- reaffirm: Re-affirms after validation failure\\n\",\n     \
-        \       \"enum\": [\n                \"release\",\n                \"refund\",\n                \"dispute\",\n   \
-        \             \"reaffirm\"\n            ]\n        },\n        \"EscrowStatus\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Current status of the escrow agreement.\\n- pending_deposits: Waiting for parties
-        to deposit\\n- partially_funded: Some but not all deposits received\\n- funded: All deposits received, awaiting consent/condition\\
-        n- pending_consent: Some consents received, waiting for more\\n- pending_condition: Waiting for contract fulfillment
-        or external verification\\n- finalizing: Running contract finalizer prebound APIs (transient)\\n- releasing: Release
-        in progress (transient)\\n- released: Assets transferred to recipients\\n- refunding: Refund in progress (transient)\\
-        n- refunded: Assets returned to depositors\\n- disputed: In dispute, arbiter must resolve\\n- expired: Timed out without
-        completion\\n- cancelled: Cancelled before funding complete\\n- validation_failed: Held assets changed, awaiting re-affirmation\\\
-        n\",\n            \"enum\": [\n                \"pending_deposits\",\n                \"partially_funded\",\n    \
-        \            \"funded\",\n                \"pending_consent\",\n                \"pending_condition\",\n         \
-        \       \"finalizing\",\n                \"releasing\",\n                \"released\",\n                \"refunding\"\
-        ,\n                \"refunded\",\n                \"disputed\",\n                \"expired\",\n                \"\
-        cancelled\",\n                \"validation_failed\"\n            ]\n        },\n        \"EscrowResolution\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released: Assets
-        went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"released\",\n                \"\
-        refunded\",\n                \"split\",\n                \"expired_refunded\",\n                \"cancelled_refunded\"\
-        ,\n                \"violation_refunded\"\n            ]\n        }\n    }\n}"
+        : \"Source wallet/container ID\"\n                }\n            }\n        },\n        \"EscrowDeposit\": {\n   \
+        \         \"type\": \"object\",\n            \"description\": \"Records an actual deposit\",\n            \"required\"\
+        : [\n                \"id\",\n                \"escrowId\",\n                \"partyId\",\n                \"partyType\"\
+        ,\n                \"assets\",\n                \"depositedAt\",\n                \"idempotencyKey\"\n           \
+        \ ],\n            \"properties\": {\n                \"id\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Deposit record identifier\"\n       \
+        \         },\n                \"escrowId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Escrow this deposit belongs to\"\n                },\n       \
+        \         \"partyId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"Party who deposited\"\n                },\n                \"partyType\": {\n\
+        \                    \"description\": \"Type of entity (Account, Character, etc.)\",\n                    \"type\"\
+        : \"object\"\n                },\n                \"assets\": {\n                    \"$ref\": \"#/$defs/EscrowAssetBundle\"\
+        ,\n                    \"description\": \"Assets deposited\"\n                },\n                \"depositedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the deposit was made\"\n                },\n                \"depositTokenUsed\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Token used (for audit)\"\n                },\n                \"idempotencyKey\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Idempotency key for this deposit\"\n                }\n    \
+        \        }\n        },\n        \"EscrowAssetBundle\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Groups multiple assets for a single deposit or release\",\n            \"required\": [\n                \"bundleId\"\
+        ,\n                \"assets\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Bundle identifier\"\n                },\n                \"assets\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAsset\"\n                 \
+        \   },\n                    \"description\": \"Assets in this bundle\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Summary for display\"\n                },\n                \"estimatedValue\": {\n                    \"type\"\
+        : \"number\",\n                    \"nullable\": true,\n                    \"description\": \"Optional valuation
+        for UI display\"\n                }\n            }\n        },\n        \"ReleaseAllocation\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Defines who gets what on release\",\n            \"required\": [\n \
+        \               \"recipientPartyId\",\n                \"recipientPartyType\",\n                \"assets\"\n     \
+        \       ],\n            \"properties\": {\n                \"recipientPartyId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Party receiving assets\"\
+        \n                },\n                \"recipientPartyType\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"Type of the recipient party\"\n                },\n                \"assets\":
+        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/EscrowAsset\"\n                    },\n                    \"description\": \"Assets this recipient should
+        receive\"\n                },\n                \"destinationWalletId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Where to deliver currency\"\n                },\n                \"destinationContainerId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Where to deliver items\"\n                }\n            }\n        },\n \
+        \       \"EscrowConsent\": {\n            \"type\": \"object\",\n            \"description\": \"Records a party consent
+        decision\",\n            \"required\": [\n                \"partyId\",\n                \"partyType\",\n         \
+        \       \"consentType\",\n                \"consentedAt\"\n            ],\n            \"properties\": {\n       \
+        \         \"partyId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"Party giving consent\"\n                },\n                \"partyType\":
+        {\n                    \"description\": \"Type of entity (Account, Character, etc.)\",\n                    \"type\"\
+        : \"object\"\n                },\n                \"consentType\": {\n                    \"$ref\": \"#/$defs/EscrowConsentType\"\
+        ,\n                    \"description\": \"Type of consent given\"\n                },\n                \"consentedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When consent was given\"\n                },\n                \"releaseTokenUsed\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Token used (for audit)\"\n                },\n                \"notes\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional notes\"\n            \
+        \    }\n            }\n        },\n        \"EscrowConsentType\": {\n            \"type\": \"string\",\n         \
+        \   \"description\": \"Type of consent being given.\\n- release: Agrees to release assets to recipients\\n- refund:
+        Agrees to refund assets to depositors\\n- dispute: Raises a dispute\\n- reaffirm: Re-affirms after validation failure\\\
+        n\",\n            \"enum\": [\n                \"release\",\n                \"refund\",\n                \"dispute\"\
+        ,\n                \"reaffirm\"\n            ]\n        },\n        \"EscrowStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Current status of the escrow agreement.\\n- pending_deposits: Waiting for
+        parties to deposit\\n- partially_funded: Some but not all deposits received\\n- funded: All deposits received, awaiting
+        consent/condition\\n- pending_consent: Some consents received, waiting for more\\n- pending_condition: Waiting for
+        contract fulfillment or external verification\\n- finalizing: Running contract finalizer prebound APIs (transient)\\
+        n- releasing: Release in progress (transient)\\n- released: Assets transferred to recipients\\n- refunding: Refund
+        in progress (transient)\\n- refunded: Assets returned to depositors\\n- disputed: In dispute, arbiter must resolve\\
+        n- expired: Timed out without completion\\n- cancelled: Cancelled before funding complete\\n- validation_failed: Held
+        assets changed, awaiting re-affirmation\\n\",\n            \"enum\": [\n                \"pending_deposits\",\n  \
+        \              \"partially_funded\",\n                \"funded\",\n                \"pending_consent\",\n        \
+        \        \"pending_condition\",\n                \"finalizing\",\n                \"releasing\",\n               \
+        \ \"released\",\n                \"refunding\",\n                \"refunded\",\n                \"disputed\",\n  \
+        \              \"expired\",\n                \"cancelled\",\n                \"validation_failed\"\n            ]\n\
+        \        },\n        \"EscrowResolution\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the escrow was resolved.\\n- released: Assets went to designated recipients\\n- refunded: Assets returned to depositors\\
+        n- split: Arbiter split assets between parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded:
+        Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\",\n            \"enum\"\
+        : [\n                \"released\",\n                \"refunded\",\n                \"split\",\n                \"\
+        expired_refunded\",\n                \"cancelled_refunded\",\n                \"violation_refunded\"\n           \
+        \ ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually trigger validation\",\n    \"description\": \"Manually trigger
         validation on an active escrow.\",\n    \"tags\": [\n        \"Validation\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"validateEscrow\"\n}"
@@ -4884,8 +4885,8 @@ paths:
         ,\n                \"failureType\",\n                \"affectedPartyId\",\n                \"affectedPartyType\"\n\
         \            ],\n            \"properties\": {\n                \"detectedAt\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the failure
-        was detected\"\n                },\n                \"assetType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
+        was detected\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type of asset affected\"\n                },\n                \"assetDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the affected
         asset\"\n                },\n                \"failureType\": {\n                    \"$ref\": \"#/$defs/ValidationFailureType\"\
         ,\n                    \"description\": \"Type of validation failure\"\n                },\n                \"affectedPartyId\"\
@@ -5681,7 +5682,7 @@ components:
           format: date-time
           description: When the failure was detected
         assetType:
-          type: string
+          $ref: '#/components/schemas/AssetType'
           description: Type of asset affected
         assetDescription:
           type: string
