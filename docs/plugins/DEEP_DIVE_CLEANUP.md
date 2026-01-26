@@ -144,7 +144,7 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 - [ ] **T21/T25**: Three configuration properties are `string` type but represent enums: `DefaultWeightPrecision` → `WeightPrecision`, `DefaultRarity` → `ItemRarity`, `DefaultSoulboundType` → `SoulboundType`. **Decision**: Define as enums in configuration schema.
 
-- [ ] **T25**: Both `ItemTemplateModel` and `ItemInstanceModel` store GUID fields as `string` types, requiring `Guid.Parse()` in mappings. **Decision**: Change to `Guid` type.
+- [x] **T25**: Both `ItemTemplateModel` and `ItemInstanceModel` store GUID fields as `string` types, requiring `Guid.Parse()` in mappings. **FIXED**: Changed `ItemTemplateModel` fields (`TemplateId`, `MigrationTargetId`, `AvailableRealms`) and `ItemInstanceModel` fields (`InstanceId`, `TemplateId`, `ContainerId`, `RealmId`, `BoundToId`, `OriginId`) to `Guid`/`Guid?`/`List<Guid>?` types. Updated all mapping methods, event publishing, and tests to use direct Guid assignments.
 
 ### lib-location
 

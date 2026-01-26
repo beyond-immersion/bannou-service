@@ -177,9 +177,10 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var request = CreateValidTemplateRequest();
 
+        // Override default TrySaveAsync to simulate code already claimed
         _mockTemplateStringStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("tpl-code:")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid().ToString());
+            .Setup(s => s.TrySaveAsync(It.Is<string>(k => k.StartsWith("tpl-code:")), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
 
         // Act
         var (status, response) = await service.CreateItemTemplateAsync(request);
@@ -1361,9 +1362,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(BannouJson.Serialize(new List<string> { matchId.ToString(), otherId.ToString() }));
 
         var matchModel = CreateStoredInstanceModel(matchId);
-        matchModel.RealmId = targetRealm.ToString();
+        matchModel.RealmId = targetRealm;
         var otherModel = CreateStoredInstanceModel(otherId);
-        otherModel.RealmId = Guid.NewGuid().ToString();
+        otherModel.RealmId = Guid.NewGuid();
 
         _mockInstanceStore
             .Setup(s => s.GetAsync($"inst:{matchId}", It.IsAny<CancellationToken>()))
