@@ -332,7 +332,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = evt.TargetCharacterId.Value,
                 SourceAppId = "bannou", // Scheduled events come from Bannou
-                Perception = new Events.PerceptionData
+                Perception = new PerceptionData
                 {
                     PerceptionType = evt.EventType,
                     SourceId = evt.SourceId,

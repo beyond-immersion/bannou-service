@@ -615,6 +615,3 @@ components:
         perception:
           $ref: '../actor-api.yaml#/components/schemas/PerceptionData'
           description: The perception data to deliver to the actor
-
-    # Per T26 Schema Reference Hierarchy: PerceptionData, SpatialContext, NearbyObject,
-    # HazardInfo, and Position3D are defined in actor-api.yaml. Events reference API types.

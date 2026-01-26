@@ -111,7 +111,7 @@ public partial class ActorService
                     {
                         // Inject a notification perception to inform the actor
                         // Use Dictionary<string, object?> instead of anonymous object per FOUNDATION TENETS
-                        actor.InjectPerception(new Events.PerceptionData
+                        actor.InjectPerception(new PerceptionData
                         {
                             PerceptionType = "system",
                             SourceId = "behavior-service",

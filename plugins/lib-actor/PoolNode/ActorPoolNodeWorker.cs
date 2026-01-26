@@ -336,7 +336,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             }
 
             // Convert the message to a perception and inject it
-            var perception = new Events.PerceptionData
+            var perception = new PerceptionData
             {
                 PerceptionType = command.MessageType,
                 SourceId = "message-bus",
