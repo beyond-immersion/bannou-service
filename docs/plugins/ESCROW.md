@@ -392,21 +392,9 @@ No other bugs identified.
 
 ### Intentional Quirks
 
-1. **Consent from Funded state transitions to Pending_consent**: The first release consent on a Funded escrow transitions to `Pending_consent` even if consent threshold is not yet met. This is deliberate state-tracking to distinguish "funded but no consents" from "funded with partial consents".
+1. **Single refund consent triggers refund**: Any consent-required party submitting a `Refund` consent immediately transitions to `Refunding`. Unilateral refund right is a safety mechanism that can surprise developers expecting multi-party consensus.
 
-2. **Single refund consent triggers refund**: Any consent-required party submitting a `Refund` consent immediately transitions to `Refunding`. This is by design - unilateral refund right is a safety mechanism.
-
-3. **Dispute available from Finalizing**: A party can dispute even after all consents are gathered and finalization has begun. This prevents irreversible release when a party discovers fraud during the finalization window.
-
-4. **BoundContractId routes through Pending_condition**: When `BoundContractId` is set, achieving consent threshold goes to `Pending_condition` (awaiting contract verification) rather than directly to `Finalizing`. This two-phase gate ensures the bound contract's conditions are met.
-
-5. **Deposit tokens only in full_consent mode**: In `initiator_trusted` or `single_party_trusted` modes, no cryptographic tokens are generated. Deposits are accepted based on party membership alone.
-
-6. **Cancel only before full funding**: The cancel operation intentionally only works from `Pending_deposits` or `Partially_funded`. Once fully funded, the only paths out are consent-driven (release, refund, or dispute).
-
-7. **Release tokens returned on full funding**: When the last required deposit arrives, the `DepositResponse` includes all release tokens for consent-required parties. This is the only time release tokens are proactively delivered (otherwise use `GetMyToken`).
-
-8. **Arbiter does not need consent to resolve**: The arbiter bypasses the normal consent flow entirely. Resolution is a unilateral action requiring only the arbiter role.
+2. **Release tokens returned on full funding**: When the last required deposit arrives, the `DepositResponse` includes all release tokens for consent-required parties. This is the only time release tokens are proactively delivered (otherwise use `GetMyToken`).
 
 ### Design Considerations
 

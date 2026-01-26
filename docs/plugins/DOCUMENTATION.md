@@ -415,23 +415,13 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Repository-bound namespaces reject manual mutations**: Any `Create`, `Update`, or `Delete` call on a namespace with an active binding (status not Disabled) returns 403 Forbidden. This enforces git as the single source of truth.
+1. **Orphan deletion skipped on truncated sync**: When `MaxDocumentsPerSync` limits the processed file list, orphan deletion (removing documents whose slugs were not seen) is intentionally skipped to avoid incorrectly deleting unprocessed documents.
 
-2. **Orphan deletion skipped on truncated sync**: When `MaxDocumentsPerSync` limits the processed file list, orphan deletion (removing documents whose slugs were not seen) is intentionally skipped to avoid incorrectly deleting unprocessed documents.
+2. **ConcurrentBag stale references on removal**: The in-memory `SearchIndexService` uses `ConcurrentBag` for inverted index entries. Since ConcurrentBag does not support element removal, deleted documents leave stale references that are filtered out during search. Full cleanup requires index rebuild.
 
-3. **Static search result cache shared across scoped instances**: The `SearchResultCache` is a static field (singleton lifetime) using `ConcurrentDictionary` with TTL entries. This is explicitly noted as a "performance optimization, not authoritative state" - stale cache entries are acceptable.
+3. **Archive deletion does not remove Asset Service bundle**: `DeleteDocumentationArchive` only removes the archive metadata. The actual bundle data in the Asset Service is not deleted, relying on Asset Service retention policies for cleanup.
 
-4. **ConcurrentBag stale references on removal**: The in-memory `SearchIndexService` uses `ConcurrentBag` for inverted index entries. Since ConcurrentBag does not support element removal, deleted documents leave stale references that are filtered out during search. Full cleanup requires index rebuild.
-
-5. **Archive deletion does not remove Asset Service bundle**: `DeleteDocumentationArchive` only removes the archive metadata. The actual bundle data in the Asset Service is not deleted, relying on Asset Service retention policies for cleanup.
-
-6. **Trashcan expiry is lazy, not proactive**: Expired trashcan items are only detected and cleaned during `ListTrashcan` calls or `RecoverDocument` attempts. Between accesses, expired items remain in Redis.
-
-7. **Browser endpoints are GET with path params**: `ViewDocumentBySlug` and `RawDocumentBySlug` use `GET /documentation/view/{slug}` and `GET /documentation/raw/{slug}` respectively. This is a documented FOUNDATION TENETS exception (T15) for browser compatibility.
-
-8. **Namespace index operations retry 3 times**: Adding/removing documents from namespace and trashcan indexes uses optimistic concurrency with ETag-based retries (3 attempts). On exhaustion, a warning is logged but the main operation still succeeds.
-
-9. **Sync lock is 30 minutes**: The distributed lock for repository sync operations has a 1800-second (30-minute) TTL. Long-running syncs on large repositories could approach this limit. If the lock expires mid-sync, a concurrent sync could start.
+4. **Trashcan expiry is lazy, not proactive**: Expired trashcan items are only detected and cleaned during `ListTrashcan` calls or `RecoverDocument` attempts. Between accesses, expired items remain in Redis.
 
 ### Design Considerations
 

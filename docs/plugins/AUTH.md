@@ -199,23 +199,15 @@ Auth publishes 6 audit event types (login successful/failed, registration, OAuth
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **JWT config in AppConfiguration, not AuthServiceConfiguration**: JWT settings (`JwtSecret`, `JwtIssuer`, `JwtAudience`) live in the app-wide `AppConfiguration` singleton rather than `AuthServiceConfiguration`. This is intentional — nodes without the auth plugin still need JWT settings to validate tokens on authenticated endpoints. JWT is cross-cutting platform infrastructure (`BANNOU_JWT_*`), not auth-specific config. `TokenService`, `AuthService`, and `OAuthProviderService` all receive `AppConfiguration` via constructor injection.
+1. **ValidateTokenResponse.SessionId contains the session key, not the session ID**: Returns the internal Redis lookup key rather than the human-facing session identifier. This aligns with how Connect service tracks WebSocket connections, but the field name is misleading.
 
-2. **ValidateTokenResponse.SessionId contains the session key, not the session ID**: `ValidateTokenResponse.SessionId` is set to `Guid.Parse(sessionKey)` - the internal Redis lookup key - not `sessionData.SessionId` (the human-facing identifier). This is intentional so Connect service tracks WebSocket connections by the same key used in `account-sessions` index and `SessionInvalidatedEvent`, but the field name is misleading.
+2. **Account-sessions index lazy cleanup**: Expired sessions are only removed from the account index when someone calls `GetAccountSessionsAsync`. Active accounts accumulate stale entries until explicitly listed.
 
-3. **Account-sessions index lazy cleanup only**: Expired sessions are only removed from the `account-sessions:{accountId}` list when someone calls `GetAccountSessionsAsync`. If nobody lists sessions, expired entries accumulate in the list until the list's own TTL expires. The TTL is JwtExpiration + 5 minutes, but gets reset with each new login (since `AddSessionToAccountIndexAsync` re-saves the whole list), so active accounts accumulate stale entries.
+3. **Password reset always returns 200**: By design for email enumeration prevention. No way for legitimate users to know if the reset email was sent.
 
-4. **Password reset always returns 200**: By design (email enumeration prevention), but this means there's no way for a legitimate user to know if the reset email was sent. The mock implementation logs to console, so in production without email integration, password resets silently succeed without doing anything useful.
-
-5. **SessionInfo.LastActive updated on every token validation**: `SessionDataModel.LastActiveAtUnix` is updated each time `ValidateTokenAsync` successfully validates a session. This adds a Redis write to the validation path (which is otherwise read-only). The write preserves the remaining TTL so session expiry is unaffected. Sessions created before this field was introduced (where `LastActiveAtUnix` defaults to 0) fall back to `CreatedAt` for the `LastActive` display value.
-
-6. **`RefreshTokenAsync` accepts but intentionally ignores the JWT parameter**: The `jwt` parameter is generated from the schema's `x-permissions: [{ role: user }]` declaration but is intentionally unused. Refresh tokens are designed to work when the access token has expired - validating the JWT would defeat the purpose of the refresh flow. The refresh token alone is the credential for obtaining a new access token.
-
-7. **Hardcoded device info for all sessions**: `SessionService.GetAccountSessionsAsync` populates `DeviceInfo` with `DeviceType = Desktop`, `Platform = UNKNOWN_PLATFORM`, `Browser = UNKNOWN_BROWSER` for every session. No device information is captured during authentication flows. Future work: capture user agent / platform during login and store in `SessionDataModel`, enabling device-specific JWT binding and accurate session reporting.
-
-8. **False positives from original audit**: T19 on PasswordResetData (internal class), T19 on AuthServicePlugin properties (override base class), T19 on AuthController.InitOAuth (generated code), and OAuthProviderService DTOs with string.Empty (defensive coding for external service responses with existing validation) - all confirmed as non-issues.
+4. **RefreshTokenAsync ignores the JWT parameter**: The refresh token alone is the credential for obtaining a new access token. Validating the (possibly expired) JWT would defeat the purpose of the refresh flow.
 
 ### Design Considerations (Requires Planning)
 

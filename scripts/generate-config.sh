@@ -45,6 +45,10 @@ import sys
 import re
 
 def to_pascal_case(name):
+    # If name is ALL_CAPS (with or without underscores), preserve it as-is
+    # This matches NSwag behavior which keeps JSON_PATCH, GZIP, BROTLI, etc.
+    if name.isupper() or (name.replace('_', '').isupper() and '_' in name):
+        return name
     # If name has hyphens or underscores, split and capitalize each part
     # Otherwise, just ensure first letter is uppercase (preserve existing casing)
     if '-' in name or '_' in name:

@@ -1089,8 +1089,8 @@ public partial class SaveLoadService : ISaveLoadService
             var compressionTypeEnum = CompressionType.NONE;
             if (deltaSize > _configuration.AutoCompressThresholdBytes)
             {
-                compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct)
-                    ? ct : CompressionType.GZIP;
+                // Configuration already provides typed enum (T25 compliant)
+                compressionTypeEnum = _configuration.DefaultCompressionType;
                 var deltaCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
                     ? _configuration.BrotliCompressionLevel
                     : compressionTypeEnum == CompressionType.GZIP
@@ -1432,8 +1432,8 @@ public partial class SaveLoadService : ISaveLoadService
                 }
             }
 
-            // Compress the reconstructed data
-            var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
+            // Compress the reconstructed data - config already provides typed enum (T25 compliant)
+            var compressionTypeEnum = _configuration.DefaultCompressionType;
             var collapseCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
                 ? _configuration.BrotliCompressionLevel
                 : compressionTypeEnum == CompressionType.GZIP
@@ -2034,13 +2034,13 @@ public partial class SaveLoadService : ISaveLoadService
             // Sort results
             results = body.SortBy switch
             {
-                QuerySavesRequestSortBy.Created_at => body.SortOrder == QuerySavesRequestSortOrder.Asc
+                QuerySavesRequestSortBy.CreatedAt => body.SortOrder == QuerySavesRequestSortOrder.Asc
                     ? results.OrderBy(r => r.CreatedAt).ToList()
                     : results.OrderByDescending(r => r.CreatedAt).ToList(),
                 QuerySavesRequestSortBy.Size => body.SortOrder == QuerySavesRequestSortOrder.Asc
                     ? results.OrderBy(r => r.SizeBytes).ToList()
                     : results.OrderByDescending(r => r.SizeBytes).ToList(),
-                QuerySavesRequestSortBy.Version_number => body.SortOrder == QuerySavesRequestSortOrder.Asc
+                QuerySavesRequestSortBy.VersionNumber => body.SortOrder == QuerySavesRequestSortOrder.Asc
                     ? results.OrderBy(r => r.VersionNumber).ToList()
                     : results.OrderByDescending(r => r.VersionNumber).ToList(),
                 _ => results.OrderByDescending(r => r.CreatedAt).ToList()
@@ -2172,7 +2172,8 @@ public partial class SaveLoadService : ISaveLoadService
             // Create new version in target slot
             var newVersionNumber = (targetSlot.LatestVersion ?? 0) + 1;
             var contentHash = Hashing.ContentHasher.ComputeHash(sourceData);
-            var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
+            // Configuration already provides typed enum (T25 compliant)
+            var compressionTypeEnum = _configuration.DefaultCompressionType;
             var copyCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
                 ? _configuration.BrotliCompressionLevel
                 : compressionTypeEnum == CompressionType.GZIP
@@ -2751,7 +2752,7 @@ public partial class SaveLoadService : ISaveLoadService
 
             switch (body.GroupBy)
             {
-                case AdminStatsRequestGroupBy.Owner_type:
+                case AdminStatsRequestGroupBy.OwnerType:
                     var ownerTypeGroups = slotList.GroupBy(s => s.OwnerType);
                     foreach (var group in ownerTypeGroups)
                     {
@@ -2783,7 +2784,7 @@ public partial class SaveLoadService : ISaveLoadService
                     }
                     break;
 
-                case AdminStatsRequestGroupBy.Schema_version:
+                case AdminStatsRequestGroupBy.SchemaVersion:
                     var schemaGroups = versionList.GroupBy(v => v.SchemaVersion ?? "unversioned");
                     foreach (var group in schemaGroups)
                     {
@@ -2874,9 +2875,8 @@ public partial class SaveLoadService : ISaveLoadService
             SaveCategory.MANUAL_SAVE => CompressionType.GZIP,
             SaveCategory.CHECKPOINT => CompressionType.GZIP,
             SaveCategory.STATE_SNAPSHOT => CompressionType.BROTLI,
-            _ => Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var comp)
-                ? comp
-                : CompressionType.GZIP
+            // Configuration already provides typed enum (T25 compliant)
+            _ => _configuration.DefaultCompressionType
         };
     }
 

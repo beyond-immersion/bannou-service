@@ -248,7 +248,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     public async Task CreateItemTemplateAsync_UsesDefaultRarity_WhenNotProvided()
     {
         // Arrange
-        Configuration.DefaultRarity = "epic";
+        Configuration.DefaultRarity = ItemRarity.Epic;
         var service = CreateService();
         var request = CreateValidTemplateRequest();
         request.Rarity = null;
@@ -275,7 +275,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     public async Task CreateItemTemplateAsync_UsesDefaultWeightPrecision_WhenNotProvided()
     {
         // Arrange
-        Configuration.DefaultWeightPrecision = "integer";
+        Configuration.DefaultWeightPrecision = WeightPrecision.Integer;
         var service = CreateService();
         var request = CreateValidTemplateRequest();
         request.WeightPrecision = null;
@@ -302,7 +302,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     public async Task CreateItemTemplateAsync_UsesDefaultSoulboundType_WhenNotProvided()
     {
         // Arrange
-        Configuration.DefaultSoulboundType = "on_pickup";
+        Configuration.DefaultSoulboundType = SoulboundType.OnPickup;
         var service = CreateService();
         var request = CreateValidTemplateRequest();
         request.SoulboundType = null;
@@ -322,7 +322,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Assert
         Assert.NotNull(savedModel);
-        Assert.Equal(SoulboundType.On_pickup, savedModel.SoulboundType);
+        Assert.Equal(SoulboundType.OnPickup, savedModel.SoulboundType);
     }
 
     #endregion
@@ -1021,7 +1021,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             CharacterId = characterId,
-            BindType = SoulboundType.On_pickup
+            BindType = SoulboundType.OnPickup
         };
 
         // Act
@@ -1052,7 +1052,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             CharacterId = Guid.NewGuid(),
-            BindType = SoulboundType.On_equip
+            BindType = SoulboundType.OnEquip
         };
 
         // Act
@@ -1090,7 +1090,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = instanceId,
             CharacterId = newCharacterId,
-            BindType = SoulboundType.On_equip
+            BindType = SoulboundType.OnEquip
         };
 
         // Act
@@ -1115,7 +1115,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         {
             InstanceId = Guid.NewGuid(),
             CharacterId = Guid.NewGuid(),
-            BindType = SoulboundType.On_pickup
+            BindType = SoulboundType.OnPickup
         };
 
         // Act
@@ -1559,7 +1559,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             Rarity = ItemRarity.Rare,
             QuantityModel = QuantityModel.Unique,
             MaxStackSize = 1,
-            WeightPrecision = WeightPrecision.Decimal_2,
+            WeightPrecision = WeightPrecision.Decimal2,
             Weight = 3.5,
             Tradeable = true,
             Destroyable = true,
@@ -1583,7 +1583,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             Rarity = ItemRarity.Rare,
             QuantityModel = QuantityModel.Unique,
             MaxStackSize = 1,
-            WeightPrecision = WeightPrecision.Decimal_2,
+            WeightPrecision = WeightPrecision.Decimal2,
             Weight = 3.5,
             Tradeable = true,
             Destroyable = true,

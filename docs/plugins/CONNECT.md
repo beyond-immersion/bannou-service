@@ -437,29 +437,15 @@ Connection Mode Behavior Matrix
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Singleton lifetime**: Unlike all other Bannou services (which are Scoped), Connect is Singleton because it maintains in-memory WebSocket connection state. This means injected Scoped services (like `IServiceNavigator`) must be resolved via `IServiceScopeFactory.CreateAsyncScope()` per request.
 
-2. **ServiceRequestContext thread-static abuse**: The `ServiceRequestContext.SessionId` is set before each ServiceNavigator call and cleared in a finally block. This relies on single-threaded async execution and could be incorrect if the continuation runs on a different thread.
+2. **ServiceRequestContext thread-static**: The `ServiceRequestContext.SessionId` is set before each ServiceNavigator call and cleared in a finally block. This relies on single-threaded async execution and could be incorrect if the continuation runs on a different thread.
 
-3. **Empty initial capability manifest**: When a new session connects, the initial capability manifest sent to the client contains zero APIs. Real capabilities arrive asynchronously via `SessionCapabilitiesEvent` from Permission service. Clients must handle a follow-up manifest update.
+3. **Session shortcuts ignore client payload**: When a shortcut is triggered, the pre-bound payload from `SessionShortcutData.Payload` completely replaces whatever payload the client sent. The client's payload is discarded.
 
-4. **Reconnection token as security boundary**: Reconnection tokens are plain GUIDs stored in Redis. Anyone with the token can resume the session. The token is transmitted in the disconnect event; the client must securely store it.
-
-5. **Session shortcuts ignore client payload**: When a shortcut is triggered, the pre-bound payload from `SessionShortcutData.Payload` completely replaces whatever payload the client sent. The client's payload is discarded.
-
-6. **Client event NACK-on-disconnect**: When `HandleClientEventAsync` finds a disconnected session, it throws an exception to trigger RabbitMQ NACK with requeue. This is intentional - messages buffer in RabbitMQ during disconnect windows and deliver on reconnect.
-
-7. **POST-only WebSocket routing**: Only POST endpoints are exposed in capability manifests. GET and other HTTP methods are filtered out because the WebSocket binary protocol encodes all request data in the JSON body (no URL path parameters possible with GUID-based routing).
-
-8. **Meta requests always routed as GET**: When the Meta flag is set, the request is transformed to `GET {path}/meta/{suffix}` regardless of the original endpoint's HTTP method. This relies on companion meta endpoints being registered as GET.
-
-9. **Admin notification uses generated GUID**: The `HandleServiceErrorAsync` method generates a GUID via `GuidGenerator.GenerateServiceGuid("system", "admin-notification", _serverSalt)` for routing admin events. This is not a session-salted GUID but a fixed server-salted one.
-
-10. **Broadcast excludes sender**: `RouteToBroadcastAsync` always excludes the sending session from recipients. There is no option to include self in broadcast.
-
-11. **Anonymous object in HandleServiceErrorAsync**: The admin notification payload is constructed as an anonymous object, which technically violates the typed event pattern from QUALITY TENETS. This is an in-process notification, not a cross-service event.
+4. **Meta requests always routed as GET**: When the Meta flag is set, the request is transformed to `GET {path}/meta/{suffix}` regardless of the original endpoint's HTTP method.
 
 ### Design Considerations (Requires Planning)
 

@@ -226,35 +226,19 @@ None. The service is feature-complete for its scope.
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **Eight trait axes (not Big Five)**: Extends the psychological Big Five with Honesty, Aggression, and Loyalty for game-relevant behavioral dimensions. All on bipolar [-1.0, +1.0] scales.
+1. **Evolution uses `Random.Shared`**: Non-deterministic random number generation. No seed control possible for testing or replays. Each trait check and combat style transition uses independent random calls.
 
-2. **Direction weights are multipliers, not absolutes**: Experience type mappings use signed floats (e.g., -0.5, +0.3) that multiply the calculated shift magnitude. They represent relative importance, not actual shift amounts.
+2. **ALLY_LOST 50/50 random outcome**: When an ally is lost in combat, `ProtectAllies` is set to true OR false with equal probability. Not influenced by current trait values or intensity—pure coin flip.
 
-3. **Evolution uses `Random.Shared`**: Non-deterministic random number generation. No seed control possible for testing or replays. Each trait check and combat style transition uses independent random calls.
+3. **Evolution silently skips missing traits**: If a character's personality doesn't include a trait axis (e.g., no NEUROTICISM key), evolution operations that would modify it are silently skipped. Traits are NOT created by evolution—only pre-existing traits evolve.
 
-4. **UpdatedAt null if never updated**: `MapToPersonalityResponse` returns `UpdatedAt = null` when `CreatedAtUnix == UpdatedAtUnix`. First creation doesn't count as an "update".
+4. **AMBUSH_SUCCESS DEFENSIVE→TACTICAL is 100% guaranteed**: Unlike other style transitions that use probability checks (0.2-0.5), the DEFENSIVE→TACTICAL transition on ambush success is deterministic and unconditional.
 
-5. **Batch get is sequential**: `BatchGetPersonalitiesAsync` iterates character IDs sequentially (not `Task.WhenAll`). Acceptable with 100-character limit but O(n) latency.
+5. **FAILED_RETREAT can downgrade BERSERKER to AGGRESSIVE**: The 50% "fight instead of flee" branch directly sets `Style = "AGGRESSIVE"` regardless of current style, including BERSERKER (technically a de-escalation).
 
-6. **Proper enum typing in internal models**: `CombatPreferencesData` uses proper enum types for Style, PreferredRange, and GroupRole, enabling compile-time type safety.
-
-7. **ALLY_LOST 50/50 random outcome**: When an ally is lost in combat, `ProtectAllies` is set to true OR false with equal probability. Models conflicting emotional responses (determination vs. self-preservation). Not influenced by current trait values or intensity.
-
-8. **Evolution silently skips missing traits**: If a character's personality doesn't include a trait axis (e.g., no NEUROTICISM key), evolution operations that would modify it are silently skipped (line 210: `TryGetValue` returns false). Traits are NOT created by evolution—only pre-existing traits evolve.
-
-9. **AMBUSH_SUCCESS DEFENSIVE→TACTICAL is guaranteed (100%)**: Unlike other style transitions that use probability checks (0.2-0.5), line 771 shows `data.Style = data.Style == "DEFENSIVE" ? "TACTICAL" : data.Style;` — a deterministic, unconditional transition.
-
-10. **FAILED_RETREAT can downgrade BERSERKER to AGGRESSIVE**: The 50% "fight instead of flee" branch (line 760) directly sets `Style = "AGGRESSIVE"` regardless of current style. A BERSERKER becomes AGGRESSIVE, which is technically a de-escalation.
-
-11. **BERSERKER only exits via DEFEAT**: The only code path leaving BERSERKER style is lines 720-721: `if (data.Style == "BERSERKER" && Random.Shared.NextDouble() < 0.4) data.Style = "AGGRESSIVE";`. No other experience type offers an exit.
-
-12. **Combat preferences clamp to [0, 1], personality traits to [-1, +1]**: RiskTolerance/RetreatThreshold use `Math.Clamp(..., 0, 1)` (lines 701, 711, etc.) while personality traits use `Math.Clamp(..., -1.0f, 1.0f)` (line 213). Different semantic ranges for different data types.
-
-13. **Combat shift multipliers are hardcoded per experience type**: NEAR_DEATH uses `shift * 1.5f` (maximum impact), NARROW_VICTORY uses `shift * 0.5f`, SUCCESSFUL_RETREAT uses `shift * 0.3f`. These multipliers can't be configured.
-
-14. **Default combat preferences in internal model**: `CombatPreferencesData` (lines 881-886) has hardcoded field defaults: Style="BALANCED", PreferredRange="MEDIUM", GroupRole="FRONTLINE", RiskTolerance=0.5f, RetreatThreshold=0.3f, ProtectAllies=true. Used during JSON deserialization when fields are missing.
+6. **BERSERKER only exits via DEFEAT**: The only code path leaving BERSERKER style is the 40% chance on DEFEAT experience. No other experience type offers an exit.
 
 ### Design Considerations (Requires Planning)
 

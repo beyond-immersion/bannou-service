@@ -227,27 +227,11 @@ Character Key Architecture (Realm-Partitioned)
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **Realm-partitioned keys**: Character data keys include realmId (`character:{realmId}:{characterId}`). Enables efficient "list by realm" queries without full table scans. Requires global index for ID-only lookups.
+1. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
 
-2. **Dual-index maintenance with optimistic concurrency**: Realm index updates use ETag-based optimistic locking with configurable retries (default 3). Designed for low-contention scenarios (character creation is infrequent per realm).
-
-3. **Fail-CLOSED on realm/species validation**: If realm or species service is unavailable during character creation, the operation fails with an exception rather than proceeding without validation.
-
-4. **Enrichment graceful degradation**: Each enrichment section (personality, backstory, family tree) is independently caught. A failure in one doesn't prevent others from returning. Missing enrichment sections are null in the response.
-
-5. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
-
-6. **Silent deletion on compression**: When `DeleteSourceData=true`, exceptions from personality/history deletion are caught and ignored. Archive is created even if source data deletion fails.
-
-7. **Family tree type codes as strings**: Relationship type categorization uses string equality (`typeCode == "PARENT"`) rather than enum comparison. Enables extensibility but loses compile-time safety.
-
-8. **Status field uses .ToString() in event models**: `Status = character.Status.ToString()` is acceptable as an event boundary conversion per T25.
-
-9. **"balanced personality" fallback is a display string**: The string `"balanced personality"` in `GeneratePersonalitySummary` is a display string, not a tunable threshold.
-
-10. **CharacterRetentionDays is stub config**: Defined but not referenced - acceptable scaffolding for unimplemented retention/purge feature.
+2. **Silent deletion on compression**: When `DeleteSourceData=true`, exceptions from personality/history deletion are caught and ignored. Archive is created even if source data deletion fails.
 
 ### Design Considerations (Requires Planning)
 

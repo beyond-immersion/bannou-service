@@ -15,10 +15,10 @@ x-service-configuration:
       description: Auto-compress saves larger than this (default 1MB)
 
     DefaultCompressionType:
-      type: string
+      $ref: 'save-load-api.yaml#/components/schemas/CompressionType'
       env: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
       default: GZIP
-      description: Default compression algorithm (NONE, GZIP, BROTLI)
+      description: Default compression algorithm
 
     HotCacheTtlMinutes:
       type: integer
@@ -176,10 +176,10 @@ x-service-configuration:
       description: Enable delta/incremental save support
 
     DefaultDeltaAlgorithm:
-      type: string
+      $ref: 'save-load-api.yaml#/components/schemas/DeltaAlgorithm'
       env: SAVE_LOAD_DEFAULT_DELTA_ALGORITHM
       default: JSON_PATCH
-      description: Default algorithm for delta computation (JSON_PATCH, BSDIFF, XDELTA)
+      description: Default algorithm for delta computation
 
     MaxDeltaChainLength:
       type: integer

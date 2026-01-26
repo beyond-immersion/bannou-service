@@ -433,21 +433,11 @@ No other bugs identified.
 
 ### Intentional Quirks
 
-1. **Frozen wallet returns 422**: All balance-modifying operations on frozen wallets return HTTP 422 (Unprocessable Entity), not 403 or 409. This distinguishes it from auth failures and concurrency conflicts.
+1. **Transfer debits full amount even when target cap truncates**: When the target wallet cap causes overflow with `cap_and_lose` behavior, the source is debited the full transfer amount but the target only receives the capped portion. The overflow amount is lost (burned) as a currency sink.
 
-2. **Transfer debits full amount from source even when target cap truncates**: When the target wallet cap causes overflow with `cap_and_lose` behavior, the source is debited the full transfer amount but the target only receives the capped portion. The overflow amount is lost (burned). This is by design for game economies where cap overflow is a currency sink.
+2. **First autogain access initializes without retroactive gain**: When a balance with autogain is first accessed (either lazy or task mode), `LastAutogainAt` is set to now without applying any retroactive gain. This prevents exploits from creating a balance and waiting before first access.
 
-3. **Earn cap bypass for escrow and internal credits**: Escrow release/refund and wallet-close transfers all set `bypassEarnCap=true`. This ensures players receive their escrowed/closing funds regardless of daily/weekly caps.
-
-4. **First autogain access initializes timestamp without retroactive gain**: When a balance with autogain is first accessed (either lazy or task mode), `LastAutogainAt` is set to now without applying any retroactive gain. This prevents exploits from creating a balance and waiting weeks before first access.
-
-5. **Idempotency keys are ephemeral (Redis TTL)**: Idempotency deduplication expires after `IdempotencyTtlSeconds` (default 1 hour). After TTL, the same key can be used again to create a new transaction. This is intentional for retry windows but means very delayed retries will create duplicates.
-
-6. **Lock failure returns Conflict (not error)**: When distributed locks cannot be acquired within the configured timeout (default 30 seconds), the operation returns 409 Conflict. The caller should retry after a backoff.
-
-7. **Batch credit is non-atomic**: Individual credit operations in a batch can succeed or fail independently. A batch can return partial success (some items credited, some failed). The batch-level idempotency key prevents replaying the entire batch.
-
-8. **Autogain task shares namespace-level internal models**: CurrencyAutogainTaskService uses the same `CurrencyDefinitionModel`, `BalanceModel`, and `WalletModel` classes defined at namespace level in CurrencyService.cs. Both the scoped service and the background hosted service access the same model definitions, ensuring no field drift during JSON round-trips.
+3. **Batch credit is non-atomic**: Individual credit operations in a batch can succeed or fail independently. A batch can return partial success (some items credited, some failed). The batch-level idempotency key prevents replaying the entire batch.
 
 ### Design Considerations
 

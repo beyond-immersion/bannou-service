@@ -158,25 +158,11 @@ The constructor injects `IEventConsumer` and calls `RegisterEventConsumers`, but
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Unix epoch timestamp storage**: `AccountModel` stores timestamps as `long` Unix epoch values with `[JsonIgnore]` computed `DateTimeOffset` properties. Deliberate workaround for System.Text.Json's inconsistent `DateTimeOffset` serialization.
 
-2. **Password hash in by-email response**: `GetAccountByEmailAsync` includes `PasswordHash` for Auth service's `BCrypt.Verify` call. Account is internal-only and `by-email` requires admin permissions.
-
-3. **Soft-delete with immediate index removal**: Deleted accounts lose email/provider index entries immediately but remain loadable by ID for audit.
-
-4. **Admin auto-assignment is creation-time only**: `ShouldAssignAdminRole` runs only during `CreateAccountAsync`. Config changes don't retroactively affect existing accounts.
-
-5. **`BatchGetAccountsAsync` return order is non-deterministic**: `Task.WhenAll` doesn't guarantee order. Match by `AccountId`, not position.
-
-6. **`AddAuthMethodAsync` rejects cross-account provider conflicts**: Returns Conflict if provider+externalId is linked to a different account.
-
-7. **`ListAccountsWithProviderFilterAsync` uses parallel batching**: Auth method lookups parallelized within `ListBatchSize` batches.
-
-8. **`BulkUpdateRolesAsync` auto-manages anonymous role**: When `AutoManageAnonymousRole` is true (default), removing roles that would leave zero roles automatically adds "anonymous". Adding a non-anonymous role automatically removes "anonymous" if present. This ensures accounts always have at least one role for permission resolution.
-
-9. **`BatchGetAccountsAsync` has per-item error handling**: Individual account fetch failures are captured in the `failed` list with error reasons, rather than failing the entire batch. Matches the error handling pattern of `BulkUpdateRolesAsync`.
+2. **Auto-managed anonymous role**: When `AutoManageAnonymousRole` is true (default), removing roles that would leave zero roles automatically adds "anonymous". Adding a non-anonymous role automatically removes "anonymous" if present. This ensures accounts always have at least one role for permission resolution.
 
 ### Design Considerations (Requires Planning)
 

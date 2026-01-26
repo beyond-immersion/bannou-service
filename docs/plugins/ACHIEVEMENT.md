@@ -178,13 +178,11 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-- **Rarity dual-threshold logic**: An achievement is "rare" if EarnedCount < RarityThresholdEarnedCount (100) OR RarityPercent < RareThresholdPercent (5%). A brand-new achievement with 0 earned is always rare regardless of percentage.
-- **Platform sync is account-only**: Both sync endpoints reject non-Account entity types with 400. Character/guild achievements cannot be synced to external platforms.
-- **Delete preserves progress data**: Deleting a definition removes it from store and index but leaves EntityProgressData intact. Orphaned entries filtered at read time.
-- **Unconfigured platforms return Pending**: When a definition lists platforms but the provider isn't configured, unlock returns `SyncStatus.Pending`. Bulk sync rejects unconfigured platforms with 400.
-- **Mock mode is service-level only**: `MockPlatformSync` short-circuits in `ExecutePlatformUnlockWithRetriesAsync` before providers are called.
+1. **Rarity dual-threshold logic**: An achievement is "rare" if EarnedCount < RarityThresholdEarnedCount (100) OR RarityPercent < RareThresholdPercent (5%). A brand-new achievement with 0 earned is always rare regardless of percentage.
+
+2. **Delete preserves progress data**: Deleting a definition removes it from store and index but leaves EntityProgressData intact. Orphaned entries filtered at read time.
 
 ### Design Considerations (Requires Planning)
 

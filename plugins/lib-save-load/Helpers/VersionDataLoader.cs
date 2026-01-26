@@ -147,9 +147,9 @@ public sealed class VersionDataLoader : IVersionDataLoader
                 return null;
             }
 
-            // DeltaAlgorithm is now an enum - convert to string for DeltaProcessor
-            var algorithmStr = deltaVersion.DeltaAlgorithm?.ToString() ?? _configuration.DefaultDeltaAlgorithm;
-            var algorithm = algorithmStr;
+            // DeltaAlgorithm - use enum value or config default, then convert to string for DeltaProcessor
+            var algorithmEnum = deltaVersion.DeltaAlgorithm ?? _configuration.DefaultDeltaAlgorithm;
+            var algorithm = algorithmEnum.ToString();
             result = deltaProcessor.ApplyDelta(result, deltaData, algorithm);
 
             if (result == null)

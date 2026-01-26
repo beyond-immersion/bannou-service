@@ -430,33 +430,11 @@ Memory Relevance Scoring (Keyword-Based)
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **CompilationContext is thread-unsafe**: Each compilation creates a new `CompilationContext` instance. The class explicitly documents "Thread-unsafe: create a new instance for each compilation." Sharing instances across concurrent compilations would corrupt variable tables and bytecode output.
+1. **WorldState hash collisions in A***: The closed set uses `GetHashCode()` of `WorldState` for visited-state tracking. Hash collisions could cause the planner to skip valid states or revisit states. The `ComputeHashCode` implementation orders keys before hashing to ensure determinism, but the hash space is limited to 32 bits.
 
-2. **GoapPlanner is thread-safe**: Conversely, `GoapPlanner` is designed for shared use: "Thread-safe: all state is method-local." A single instance can serve concurrent planning requests because all search state (open/closed sets, nodes) lives on the stack.
-
-3. **WorldState hash collisions in A***: The closed set uses `GetHashCode()` of `WorldState` for visited-state tracking. Hash collisions could cause the planner to skip valid states or revisit states. The `ComputeHashCode` implementation orders keys before hashing to ensure determinism, but the hash space is limited to 32 bits.
-
-4. **BehaviorModelCache per-character interpreters are NOT thread-safe**: Each `BehaviorModelInterpreter` instance maintains execution state (stack, locals, PC). The cache provides per-character instances specifically because interpreters cannot be shared across threads. Multiple concurrent ticks of the same character's behavior would require external synchronization.
-
-5. **CognitionConstants static initialization is idempotent**: `CognitionConstants.Initialize(config)` can be called multiple times (scoped service instantiation) but only the first call takes effect. Subsequent calls are no-ops. Config changes require service restart.
-
-6. **Forward jump patching is deferred**: The `BytecodeEmitter` writes placeholder zeros for forward jumps and patches them in `PatchJumps()` (called implicitly by `ToArray()`). If `Finalize()` is called before all labels are defined, patching will throw `InvalidOperationException("Undefined label")`.
-
-7. **Constant pool pre-seeds 0, 1, -1**: `ConstantPoolBuilder.AddCommonConstants()` pre-allocates indices 0-2 for common numeric literals. User constants start at index 3. The pre-seeded constants count against the `CompilerMaxConstants` limit (256 default).
-
-8. **Fallback chain default**: If no fallback chain is set for a `BehaviorModelType`, `GetFallbackChain` returns `["default"]`. This means any model registered with variant "default" serves as the universal fallback for that type.
-
-9. **ValueTask.FromResult() for synchronous hot paths**: `GoapPlanner.PlanAsync`, `ValidatePlanAsync`, cognition handlers (FilterAttention, AssessSignificance, EvaluateGoalImpact), all CoreEmitters, and `BehaviorLayerBase` use `ValueTask.FromResult()` without `async/await`. This is intentional and NOT a T23 violation - T23 covers `Task`, not `ValueTask`. `ValueTask` is designed for performance-critical hot paths to avoid heap allocation when results are available synchronously.
-
-10. **IHttpClientFactory for presigned URLs**: `BehaviorService.cs` uses `IHttpClientFactory` to upload/download bytecode via presigned MinIO/S3 URLs. This is NOT a T4 violation - T4 prohibits direct Redis/RabbitMQ/HTTP for service-to-service calls. Presigned URLs are external storage endpoints.
-
-11. **Static CognitionConstants mutable state**: `CognitionConstants` uses static mutable state with first-call-wins initialization. This is intentional for performance - within a single process, all service instances share the same environment configuration. The thread-unsafe `Reset()` method is test-only.
-
-12. **In-memory runtime state**: `EntityStateRegistry` and `BehaviorModelCache` use in-memory `ConcurrentDictionary` as runtime state stores. This is intentional - these are per-process behavior execution components, not service-level persistent state.
-
-13. **SemaphoreSlim.Wait() in FileLocalizationProvider**: `YamlFileLocalizationSource.EnsureLocaleLoaded` uses synchronous `SemaphoreSlim.Wait()` for hot-path performance. This is NOT a T23 violation - T23 specifically targets `Task`, not semaphores.
+2. **Constant pool pre-seeds 0, 1, -1**: `ConstantPoolBuilder.AddCommonConstants()` pre-allocates indices 0-2 for common numeric literals. User constants start at index 3. The pre-seeded constants count against the `CompilerMaxConstants` limit (256 default), so users actually have 253 available slots.
 
 ### Design Considerations (Requires Planning)
 

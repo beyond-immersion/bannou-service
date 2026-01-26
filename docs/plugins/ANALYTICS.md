@@ -199,21 +199,13 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **Event ingestion requires Redis backend for buffer operations**: `EnsureSummaryStoreRedisAsync()` validates the `analytics-summary` store is Redis before buffer operations. The sorted set operations used for event buffering are Redis-specific. Summary data itself is persisted to MySQL (`analytics-summary-data`) during flush for queryability, while the buffer remains in Redis for high-throughput ingestion.
+1. **GetSkillRating returns default values instead of 404**: When no rating exists for an entity, the endpoint returns 200 with default rating values (1500/350/0.06) and `MatchesPlayed = 0`. New players start at the default rating.
 
-2. **`GetSkillRating` returns default values instead of 404**: When no rating exists for an entity, the endpoint returns 200 with default rating values (1500/350/0.06) and `MatchesPlayed = 0`. This is intentional - callers should always get a usable rating without checking for 404. New players start at the default rating.
+2. **Score events published during flush, not during ingestion**: `analytics.score.updated` events are published only when the buffer flushes. Leaderboard and achievement updates are delayed by up to `EventBufferFlushIntervalSeconds` (default 5s) to reduce event storm pressure.
 
-3. **Session ID used as EntityId for game action events**: `HandleGameActionPerformedAsync` uses `evt.SessionId` as both `EntityId` and `SessionId`. This tracks session-level aggregates (total actions per session), not per-player stats. Per-player analytics require the game to emit events with player entity IDs directly via the `/analytics/event/ingest` endpoint.
-
-4. **Flush uses double-check pattern with lock**: The flush logic checks whether to flush BEFORE acquiring the lock, then re-checks AFTER acquiring it. This prevents the common race condition where multiple instances simultaneously decide to flush, acquire the lock sequentially, and the second instance flushes an empty buffer unnecessarily.
-
-5. **Score events published during flush, not during ingestion**: `analytics.score.updated` events are published only when the buffer flushes, not when events are ingested. This means leaderboard and achievement updates are delayed by up to `EventBufferFlushIntervalSeconds` (default 5s). This is intentional - batching reduces event storm pressure on downstream services.
-
-6. **History event resolution drops events on failure**: If the realm or character lookup fails when handling character-history or realm-history events, the event is silently dropped (not retried). An error event is published via `TryPublishErrorAsync` for monitoring, but the analytics data is permanently lost for that event. This follows the principle that incorrect data (wrong GameServiceId) is worse than missing data.
-
-7. **Resolution caches are event-invalidated**: The character-to-realm and realm-to-gameService resolution caches subscribe to `character.updated` and `realm.updated` lifecycle events. When a character's realm or a realm's game service changes, the cached entry is immediately deleted. This ensures cache staleness is bounded to in-flight lookups only, not the full TTL window.
+3. **History event resolution drops events on failure**: If the realm or character lookup fails when handling history events, the event is silently dropped (not retried). An error event is published for monitoring, but the analytics data is permanently lost. Incorrect data (wrong GameServiceId) is considered worse than missing data.
 
 ### Design Considerations (Requires Planning)
 

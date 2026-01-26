@@ -66,10 +66,10 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     public int AutoCompressThresholdBytes { get; set; } = 1048576;
 
     /// <summary>
-    /// Default compression algorithm (NONE, GZIP, BROTLI)
+    /// Default compression algorithm
     /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
     /// </summary>
-    public string DefaultCompressionType { get; set; } = "GZIP";
+    public CompressionType DefaultCompressionType { get; set; } = CompressionType.GZIP;
 
     /// <summary>
     /// TTL for hot cache entries in minutes
@@ -205,10 +205,10 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     public bool DeltaSavesEnabled { get; set; } = true;
 
     /// <summary>
-    /// Default algorithm for delta computation (JSON_PATCH, BSDIFF, XDELTA)
+    /// Default algorithm for delta computation
     /// Environment variable: SAVE_LOAD_DEFAULT_DELTA_ALGORITHM
     /// </summary>
-    public string DefaultDeltaAlgorithm { get; set; } = "JSON_PATCH";
+    public DeltaAlgorithm DefaultDeltaAlgorithm { get; set; } = DeltaAlgorithm.JSON_PATCH;
 
     /// <summary>
     /// Maximum number of deltas before forcing collapse. Longer chains increase load latency.

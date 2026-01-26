@@ -439,27 +439,13 @@ Prebound API Batched Execution
 
 Note: `PartyModel.Role` and similar Role properties are intentionally strings - they represent user-defined template roles (e.g., "buyer", "seller", "guarantor") not a fixed enum.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
 1. **Consent expiration is lazy**: Contracts do not automatically expire when DefaultConsentTimeoutDays passes. The check only triggers on the next ConsentToContract call. A proposed contract with no further consent attempts will remain in Proposed status indefinitely.
 
-2. **Template deletion is soft-delete**: DeleteContractTemplate marks the template inactive rather than removing it. The template data remains accessible. Templates with active instances (Draft/Proposed/Pending/Active) cannot be deleted.
+2. **Index lock failure is non-fatal**: When AddToListAsync/RemoveFromListAsync cannot acquire the 15-second distributed lock, the operation logs a warning but returns without error. The index may become stale.
 
-3. **Index lock failure is non-fatal**: When AddToListAsync/RemoveFromListAsync cannot acquire the 15-second distributed lock, the operation logs a warning but returns without error. The index may become stale.
-
-4. **Distributed lock + optimistic concurrency**: All mutating methods (ProposeContract, Consent, Terminate, CompleteMilestone, FailMilestone, ReportBreach, CureBreach, ExecuteContract) acquire a `contract-instance` distributed lock (60s TTL) before reading state, and additionally use ETag-based optimistic concurrency on save. Lock acquisition failure returns Conflict (409).
-
-5. **Guardian blocks consent and termination**: A locked contract returns Forbidden for both ConsentToContract and TerminateContractInstance. The guardian (typically an escrow) has exclusive control.
-
-6. **Execution is idempotent via dual mechanisms**: ExecuteContract checks both the contract's ExecutedAt field (permanent) and an explicit idempotency key cache (24h TTL). A re-execution returns the cached distributions without re-calling external services.
-
-7. **Fee clauses execute before distributions**: In ExecuteContract, fee-type clauses always execute first to ensure fees are deducted before distribution amounts are calculated. Distribution clauses that use "remainder" amount will see the post-fee balance.
-
-8. **Remainder amount resolution queries at execution time**: When a clause specifies amount="remainder", the service queries the source wallet's current balance via the currency service at execution time. This means the remainder is dynamic, not pre-computed.
-
-9. **Template value substitution uses {{Key}} syntax**: Values in clause definitions (source_wallet, destination_wallet, etc.) support `{{TemplateKey}}` patterns that are resolved from the contract's TemplateValues dictionary at execution time.
-
-10. **GracePeriodForCure only supports "PnD" format**: The ISO 8601 duration parser is simplified to only handle "P" prefix and "D" suffix (days). Other duration formats (hours, months, etc.) are silently ignored, resulting in no cure deadline.
+3. **GracePeriodForCure only supports "PnD" format**: The ISO 8601 duration parser is simplified to only handle "P" prefix and "D" suffix (days). Other duration formats (hours, months, etc.) are silently ignored, resulting in no cure deadline.
 
 ### Design Considerations (Requires Planning)
 

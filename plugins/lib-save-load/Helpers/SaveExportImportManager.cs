@@ -400,7 +400,8 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
                 // Create version
                 var contentHash = Hashing.ContentHasher.ComputeHash(data);
-                var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
+                // Configuration already provides typed enum (T25 compliant)
+                var compressionTypeEnum = _configuration.DefaultCompressionType;
                 var importCompressionLevel = compressionTypeEnum == CompressionType.BROTLI
                     ? _configuration.BrotliCompressionLevel
                     : compressionTypeEnum == CompressionType.GZIP

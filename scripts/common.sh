@@ -341,7 +341,7 @@ postprocess_additional_properties_docs() {
 }
 
 # Convert NSwag underscore-style enum member names to proper PascalCase
-# NSwag generates enum values like "Event_only" instead of "EventOnly"
+# NSwag generates enum values like "Event_only" or "Decimal_2" instead of "EventOnly" or "Decimal2"
 # This function converts all underscore-style enum members to PascalCase
 # Also fixes default value references like "= EnumType.Value_with_underscores;"
 # Usage: postprocess_enum_pascalcase "$OUTPUT_FILE"
@@ -353,25 +353,26 @@ postprocess_enum_pascalcase() {
     fi
 
     # Use perl for easier regex replacement with proper case conversion
-    # Pass 1: Fix enum member declarations like "    Event_only = 1,"
-    # Converts to "    EventOnly = 1," while preserving EnumMember attribute values
+    # Pass 1: Fix enum member declarations like "    Event_only = 1," or "    Decimal_2 = 2,"
+    # Converts to "    EventOnly = 1," or "    Decimal2 = 2," while preserving EnumMember attribute values
     perl -i -pe '
         # Only process lines that look like enum member declarations (not attributes)
-        # Pattern: leading whitespace, PascalWord_lowercase, optional more _segments, = number
-        if (/^(\s+)([A-Z][a-z]+(?:_[a-z]+)+)(\s*=\s*\d+)/) {
+        # Pattern: leading whitespace, PascalWord, underscore followed by lowercase/digits, = number
+        # Handles both "Event_only" and "Decimal_2" patterns
+        if (/^(\s+)([A-Z][a-z]*(?:_[a-z0-9]+)+)(\s*=\s*\d+)/) {
             my ($indent, $name, $suffix) = ($1, $2, $3);
-            # Convert underscore name to PascalCase
+            # Convert underscore name to PascalCase (uppercase the char after each underscore, then remove underscore)
             $name =~ s/_(.)/\U$1/g;
             $_ = "$indent$name$suffix,\n";
         }
     ' "$file"
 
-    # Pass 2: Fix default value references like "= EnumType.Value_with_underscores;"
+    # Pass 2: Fix default value references like "= EnumType.Value_with_underscores;" or "= EnumType.Decimal_2;"
     # Pattern: = SomeType.PascalWord_lowercase_etc (ending with ; or ,)
     perl -i -pe '
         # Match enum default value references: = Namespace.EnumType.Value_with_underscores
-        # The value part starts with capital letter and contains underscores
-        s/(\s*=\s*(?:[\w.]+\.))([A-Z][a-z]+(?:_[a-z]+)+)(;|,)/
+        # The value part starts with capital letter and contains underscores followed by lowercase or digits
+        s/(\s*=\s*(?:[\w.]+\.))([A-Z][a-z]*(?:_[a-z0-9]+)+)(;|,)/
             my ($prefix, $name, $suffix) = ($1, $2, $3);
             $name =~ s:_(.):uc($1):ge;
             "$prefix$name$suffix"

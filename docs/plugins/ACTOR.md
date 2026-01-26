@@ -432,25 +432,15 @@ Actor State Model
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **Deployment mode branching**: All spawn/stop/perception operations check `DeploymentMode` enum to determine local vs remote execution. Pool-related event handlers early-return if mode is `DeploymentMode.Bannou` (not control plane).
+1. **Auto-spawn with regex pattern**: Templates with `AutoSpawn.Enabled=true` define a regex pattern. When `GetActor` is called for a non-existent actor, all auto-spawn templates are checked. If the actor ID matches a pattern, the actor is automatically spawned.
 
-2. **Auto-spawn with regex pattern**: Templates with `AutoSpawn.Enabled=true` define a regex pattern. When `GetActor` is called for a non-existent actor, all auto-spawn templates are checked. If the actor ID matches a pattern, the actor is automatically spawned. Capture groups extract CharacterId.
+2. **Perception queue DropOldest**: When the queue is full, the oldest unprocessed perception is discarded. This prioritizes recent stimuli over stale ones.
 
-3. **Perception queue DropOldest**: The bounded channel uses `BoundedChannelFullMode.DropOldest`. When the queue is full, the oldest unprocessed perception is discarded. This prioritizes recent stimuli over stale ones.
+3. **Error recovery in behavior loop**: If the behavior tick throws, the actor enters `Error` status for 1 second, then resumes `Running`. Self-healing prevents permanent actor death from transient failures.
 
-4. **Behavior hot-reload via event**: When `behavior.updated` is published, the behavior cache is invalidated and a perception is injected into affected actors. The next tick reloads the fresh ABML document without stopping the actor.
-
-5. **Pool node auto-registration on heartbeat**: If a heartbeat arrives from an unknown node (before its registration event), the node is automatically registered. This handles race conditions during node startup.
-
-6. **Error recovery in behavior loop**: If the behavior tick throws, the actor enters `Error` status for 1 second, then resumes `Running`. Self-healing prevents permanent actor death from transient failures.
-
-7. **Character state publishing**: If an actor has a `CharacterId`, it publishes `character.state_update` events with feelings/goals/memories. This bridges the actor system to the character system without tight coupling.
-
-8. **Options query freshness**: `QueryOptions` with `Fresh` freshness injects a perception and waits one tick for the behavior to recompute options. This provides up-to-date choices at the cost of one tick latency.
-
-9. **Encounter event publishing is fire-and-forget**: `StartEncounter`/`SetEncounterPhase`/`EndEncounter` in ActorRunner use `_ = _messageBus.TryPublishAsync(...)` because the `IActorRunner` interface defines these methods as synchronous (`bool` return type). The events are monitoring-only and do not affect encounter state. Publishing failures are logged by `TryPublishAsync` internally but cannot be awaited by the caller.
+4. **Encounter event publishing is fire-and-forget**: `StartEncounter`/`SetEncounterPhase`/`EndEncounter` use fire-and-forget publishing because the `IActorRunner` interface defines these methods as synchronous. Publishing failures are logged internally but cannot be awaited.
 
 ### Design Considerations (Requires Planning)
 

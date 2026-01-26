@@ -148,11 +148,7 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Stub names are always lowercase**: `ToLowerInvariant()` applied on creation. Input case is lost permanently — responses always return the normalized lowercase version.
-
-2. **Unix timestamps for dates**: `CreatedAtUnix` and `UpdatedAtUnix` stored as `long` (seconds since epoch), converted to `DateTimeOffset` in API responses.
-
-3. **Update cannot set description to null**: Since `null` means "don't change" in the update request, there's no way to explicitly set description back to null once it has a value. However, setting to empty string `""` works — the null check (`body.Description != null`) passes for empty strings.
+1. **Update cannot set description to null**: Since `null` means "don't change" in the update request, there's no way to explicitly set description back to null once it has a value. Setting to empty string `""` works as a workaround.
 
 ### Design Considerations
 

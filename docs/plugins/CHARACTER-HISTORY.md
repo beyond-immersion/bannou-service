@@ -183,26 +183,11 @@ None. The service is feature-complete for its scope.
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **Backstory returns NotFound; GetLore (realm-history) returns empty list**: Unlike the parallel realm-history service which returns OK with empty elements, character-history returns NotFound for missing backstory. Different design decisions in similar services.
+1. **Backstory returns NotFound vs empty list**: Unlike the parallel realm-history service which returns OK with empty elements, character-history returns NotFound for missing backstory. Inconsistent design between similar services.
 
-2. **Merge by type+key pair**: When `replaceExisting=false`, SetBackstory matches existing elements by `ElementType` + `Key` combination. If a match exists, value and strength are updated. New combinations are appended.
-
-3. **Template-based summarization (not AI)**: Uses switch-case patterns:
-   - ORIGIN -> "From {value}"
-   - OCCUPATION -> "Worked as {value}"
-   - TRAINING -> "Trained by {value}"
-   - TRAUMA -> "Experienced {value}"
-   - Participation roles mapped to past tense verbs (LEADER -> "led", HERO -> "was a hero of")
-
-4. **No external service dependencies**: Unlike character service, character-history is fully self-contained. It doesn't validate that the character exists before recording history.
-
-5. **Proper enum typing in internal models**: `EventCategory` and `ParticipationRole` use proper enum types in internal models, enabling compile-time type safety.
-
-6. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
-
-7. **Significance range [0.0, 1.0]**: Default significance is 0.5 (from schema). Higher values indicate more impactful events. Used for summary prioritization (top N by significance).
+2. **UpdatedAt null semantics**: `GetBackstory` returns `UpdatedAt = null` when backstory has never been modified after initial creation (CreatedAtUnix == UpdatedAtUnix).
 
 ### Design Considerations (Requires Planning)
 

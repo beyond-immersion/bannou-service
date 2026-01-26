@@ -332,23 +332,15 @@ Index Architecture
 
 No bugs identified.
 
-### Intentional Quirks (Documented Behavior)
+### Intentional Quirks
 
-1. **Pair key sorting**: Pair indexes use the lexicographically smaller GUID first (`charA < charB ? A:B : B:A`) to ensure both directions of a relationship map to the same index key.
+1. **Lazy seeding of built-in types**: Built-in encounter types are seeded on-demand when accessed (via GetEncounterType or RecordEncounter), not at service startup. This means the first access to a built-in type may have slightly higher latency.
 
-2. **Lazy seeding of built-in types**: Built-in encounter types are seeded on-demand when accessed (via GetEncounterType or RecordEncounter), not at service startup. `EnsureBuiltInTypesSeededAsync` is only called by `ListEncounterTypes`. This means the first access to a built-in type may have slightly higher latency.
+2. **Sentiment returns 0 for unknown pairs**: If two characters have never met, `GetSentiment` returns a response with sentiment=0, encounterCount=0, and null dominantEmotion. This is not a NotFound - it is a valid "neutral" response.
 
-3. **Soft-delete for custom types only**: `DeleteEncounterType` performs a soft-delete (marks inactive) rather than hard-delete. Built-in types cannot be deleted at all. Encounters referencing inactive types remain valid.
+3. **HasMet does NOT apply memory decay**: The `HasMet` endpoint is a fast index-only check. It reports true even if all memories of the encounters have faded below threshold. This is intentional: "have they met" is a factual record, not a memory.
 
-4. **ETag concurrency on perspective updates**: Both `UpdatePerspective` and `RefreshMemory` use `GetWithETagAsync` + `TrySaveAsync` for optimistic concurrency. On conflict, they return 409 Conflict rather than retrying.
-
-5. **Sentiment returns 0 for unknown pairs**: If two characters have never met, `GetSentiment` returns a response with sentiment=0, encounterCount=0, and null dominantEmotion. This is not a NotFound - it is a valid "neutral" response.
-
-6. **HasMet does NOT apply memory decay**: The `HasMet` endpoint is a fast index-only check. It reports true even if all memories of the encounters have faded below threshold. This is intentional: "have they met" is a factual record, not a memory.
-
-7. **Lazy decay during GetEncounterPerspectives**: When loading all perspectives for an encounter (used by QueryByCharacter, QueryBetween, QueryByLocation), lazy decay is applied to each perspective. This means a read-only query has write side effects (updating MemoryStrength and LastDecayedAtUnix in the store).
-
-8. **Pruning is per-recording not per-query**: Encounter pruning happens immediately after recording a new encounter, not lazily on query. If limits are reduced via configuration, existing over-limit data persists until the next recording for that character/pair.
+4. **Lazy decay has write side effects**: When loading perspectives for queries (QueryByCharacter, QueryBetween, QueryByLocation), lazy decay is applied to each perspective. This means read-only queries have write side effects (updating MemoryStrength and LastDecayedAtUnix in the store).
 
 ### Design Considerations (Requires Planning)
 
