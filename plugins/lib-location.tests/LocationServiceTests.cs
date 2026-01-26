@@ -449,7 +449,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             $"{LOCATION_KEY_PREFIX}{locationId}",
             It.IsAny<LocationService.LocationModel>(), null, It.IsAny<CancellationToken>()), Times.Once);
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -495,7 +495,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             $"{LOCATION_KEY_PREFIX}{locationId}",
             It.IsAny<LocationService.LocationModel>(), null, It.IsAny<CancellationToken>()), Times.Never);
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -530,7 +530,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.Equal("No longer in use", response.DeprecationReason);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -602,7 +602,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.Null(response.DeprecationReason);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
