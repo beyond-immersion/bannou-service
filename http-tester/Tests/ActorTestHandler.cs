@@ -655,7 +655,7 @@ public class ActorTestHandler : BaseHttpTestHandler
                 {
                     PerceptionType = "test-perception",
                     SourceId = "http-tester",
-                    SourceType = "test",
+                    SourceType = PerceptionSourceType.Environment,
                     Urgency = 0.5f,
                     Data = new { message = "Hello from HTTP tester" }
                 }
@@ -684,7 +684,7 @@ public class ActorTestHandler : BaseHttpTestHandler
                     {
                         PerceptionType = "test",
                         SourceId = "test",
-                        SourceType = "test"
+                        SourceType = PerceptionSourceType.Environment
                     }
                 });
             },
@@ -721,7 +721,7 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             // Start encounter (void return - success = no exception)
             var participantId = Guid.NewGuid();
-            var encounterId = GenerateTestSlug("enc");
+            var encounterId = Guid.NewGuid();
             await actorClient.StartEncounterAsync(new StartEncounterRequest
             {
                 ActorId = actorId,
@@ -763,7 +763,7 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             // Start encounter
             var participantId = Guid.NewGuid();
-            var encounterId = GenerateTestSlug("enc");
+            var encounterId = Guid.NewGuid();
             await actorClient.StartEncounterAsync(new StartEncounterRequest
             {
                 ActorId = actorId,
@@ -822,7 +822,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             await Task.Delay(100);
 
             // Start encounter
-            var encounterId = GenerateTestSlug("enc");
+            var encounterId = Guid.NewGuid();
             await actorClient.StartEncounterAsync(new StartEncounterRequest
             {
                 ActorId = actorId,
@@ -873,7 +873,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             await Task.Delay(100);
 
             // Start encounter
-            var encounterId = GenerateTestSlug("enc");
+            var encounterId = Guid.NewGuid();
             await actorClient.StartEncounterAsync(new StartEncounterRequest
             {
                 ActorId = actorId,
@@ -936,7 +936,7 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             // 3. Start encounter (void return - throws on failure)
             var participantId = Guid.NewGuid();
-            var encounterId = GenerateTestSlug("full-flow-enc");
+            var encounterId = Guid.NewGuid();
             await actorClient.StartEncounterAsync(new StartEncounterRequest
             {
                 ActorId = actorId,
@@ -992,7 +992,7 @@ public class ActorTestHandler : BaseHttpTestHandler
                 await actorClient.StartEncounterAsync(new StartEncounterRequest
                 {
                     ActorId = "nonexistent-actor-12345",
-                    EncounterId = "test-encounter",
+                    EncounterId = Guid.NewGuid(),
                     EncounterType = "combat",
                     Participants = new List<Guid> { Guid.NewGuid() }
                 });

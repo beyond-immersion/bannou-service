@@ -116,7 +116,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var listRequest = new ListGameSessionsRequest
             {
                 GameType = "test-game",
-                Status = ListGameSessionsRequestStatus.Waiting
+                Status = SessionStatus.Waiting
             };
 
             var response = await gameSessionClient.ListGameSessionsAsync(listRequest);

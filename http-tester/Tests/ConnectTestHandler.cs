@@ -51,7 +51,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 // sessionId is required - use a test placeholder (will get 404 or 401 which is fine)
                 var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest
                 {
-                    SessionId = Guid.NewGuid().ToString()
+                    SessionId = Guid.NewGuid()
                 });
 
                 if (response == null)
@@ -69,7 +69,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
                 return TestResult.Successful(
                     $"Client capabilities retrieved: {response.Capabilities.Count} capabilities, " +
-                    $"version={response.Version}, sessionId={response.SessionId ?? "(placeholder)"}");
+                    $"version={response.Version}, sessionId={response.SessionId}");
             }
             catch (ApiException ex) when (ex.StatusCode == 401 || ex.StatusCode == 404)
             {
@@ -91,14 +91,14 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 // sessionId is required - use a test placeholder
                 var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest
                 {
-                    SessionId = Guid.NewGuid().ToString()
+                    SessionId = Guid.NewGuid()
                 });
 
                 // Check required fields exist
                 var issues = new List<string>();
 
-                if (response.SessionId == null)
-                    issues.Add("SessionId is null (should be set even for placeholder)");
+                if (response.SessionId == Guid.Empty)
+                    issues.Add("SessionId is empty GUID (should be set even for placeholder)");
 
                 if (response.Capabilities == null)
                     issues.Add("Capabilities is null");
@@ -140,7 +140,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"test-session-{DateTime.Now.Ticks}";
+            var testSessionId = Guid.NewGuid();
 
             var proxyRequest = new InternalProxyRequest
             {
@@ -179,7 +179,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"proxy-invalid-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
 
             var proxyRequest = new InternalProxyRequest
             {
@@ -219,7 +219,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
             var proxyRequest = new InternalProxyRequest
             {
-                SessionId = "", // Empty session ID
+                SessionId = Guid.Empty, // Empty session ID
                 TargetService = "account",
                 TargetEndpoint = "/account",
                 Method = InternalProxyRequestMethod.GET
@@ -252,7 +252,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"proxy-methods-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
 
             var methods = new[]
             {
@@ -316,7 +316,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"proxy-body-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
 
             var proxyRequest = new InternalProxyRequest
             {
@@ -352,7 +352,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"proxy-headers-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
 
             var proxyRequest = new InternalProxyRequest
             {
@@ -388,7 +388,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"proxy-empty-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
 
             var proxyRequest = new InternalProxyRequest
             {
@@ -425,7 +425,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"proxy-account-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
 
             var proxyRequest = new InternalProxyRequest
             {

@@ -122,7 +122,7 @@ a=sendrecv";
                 return TestResult.Failed("Failed to create test room for join test");
 
             // Now test joining the room
-            var sessionId = Guid.NewGuid().ToString();
+            var sessionId = Guid.NewGuid();
             var joinRequest = new JoinVoiceRoomRequest
             {
                 RoomId = createResponse.RoomId,
@@ -159,7 +159,7 @@ a=sendrecv";
             };
 
             var createResponse = await voiceClient.CreateVoiceRoomAsync(createRequest);
-            var sessionId = Guid.NewGuid().ToString();
+            var sessionId = Guid.NewGuid();
 
             // Join the room
             var joinRequest = new JoinVoiceRoomRequest
@@ -201,7 +201,7 @@ a=sendrecv";
             };
 
             var createResponse = await voiceClient.CreateVoiceRoomAsync(createRequest);
-            var sessionId = Guid.NewGuid().ToString();
+            var sessionId = Guid.NewGuid();
 
             // Join the room
             var joinRequest = new JoinVoiceRoomRequest
@@ -301,7 +301,7 @@ a=sendrecv";
             Console.WriteLine($"  Step 1: Created voice room {createResponse.RoomId}");
 
             // Step 2: Join room
-            var sessionId = Guid.NewGuid().ToString();
+            var sessionId = Guid.NewGuid();
             var joinRequest = new JoinVoiceRoomRequest
             {
                 RoomId = createResponse.RoomId,

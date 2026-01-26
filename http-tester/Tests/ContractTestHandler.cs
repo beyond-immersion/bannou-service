@@ -712,7 +712,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 ContractId = activeContract.ContractId,
                 BreachingEntityId = charB.CharacterId,
                 BreachingEntityType = EntityType.Character,
-                BreachType = BreachType.Term_violation,
+                BreachType = BreachType.TermViolation,
                 Description = "Worker failed to deliver on time"
             });
 
@@ -720,7 +720,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Breach report returned empty ID");
 
             // When GracePeriodForCure is configured, breach enters cure_period status (not detected)
-            if (breach.Status != BreachStatus.Cure_period)
+            if (breach.Status != BreachStatus.CurePeriod)
                 return TestResult.Failed($"Expected cure_period status (grace period configured), got: {breach.Status}");
 
             // Cure the breach

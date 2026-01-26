@@ -79,7 +79,7 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
                 // sessionId is required - use a test placeholder
                 var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest
                 {
-                    SessionId = Guid.NewGuid().ToString()
+                    SessionId = Guid.NewGuid()
                 });
 
                 if (response == null)
@@ -93,7 +93,7 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
                 // to add it to ClientCapabilitiesResponse in connect-api.yaml.
 
                 return TestResult.Successful(
-                    $"Capability manifest retrieved. SessionId: {response.SessionId ?? "(null)"}, " +
+                    $"Capability manifest retrieved. SessionId: {response.SessionId}, " +
                     $"Capabilities: {response.Capabilities?.Count ?? 0}. " +
                     "NOTE: peerGuid is only in WebSocket CapabilityManifestEvent, not HTTP response.");
             }
@@ -160,7 +160,7 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
                 // Note: This will fail because we don't have a valid sessionId
                 var proxyRequest = new InternalProxyRequest
                 {
-                    SessionId = "test-session-id",
+                    SessionId = Guid.NewGuid(),
                     TargetService = "testing",
                     TargetEndpoint = "/testing/ping",
                     Method = InternalProxyRequestMethod.GET
