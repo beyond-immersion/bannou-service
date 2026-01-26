@@ -132,7 +132,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Assert
         Assert.True(config.MemoryDecayEnabled);
-        Assert.Equal("lazy", config.MemoryDecayMode);
+        Assert.Equal(MemoryDecayMode.Lazy, config.MemoryDecayMode);
         Assert.Equal(24, config.MemoryDecayIntervalHours);
         Assert.Equal(0.05, config.MemoryDecayRate, 3);
         Assert.Equal(0.1, config.MemoryFadeThreshold, 3);

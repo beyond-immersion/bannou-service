@@ -1382,6 +1382,8 @@ components:
       - npc
       - object
       - environment
+      - coordinator
+      - scheduled
     StopActorRequest:
       type: object
       additionalProperties: false

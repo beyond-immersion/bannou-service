@@ -179,7 +179,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "realm", "GetRealm", "unexpected_exception", It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), default), Times.Once);
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), default), Times.Once);
     }
 
     #endregion

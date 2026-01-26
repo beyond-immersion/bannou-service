@@ -121,7 +121,7 @@ public class StateServiceTests
         _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -133,7 +133,7 @@ public class StateServiceTests
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "GetState", "Exception", "Redis connection failed",
             "test-store", "post:/state/get", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -294,7 +294,7 @@ public class StateServiceTests
         _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -306,7 +306,7 @@ public class StateServiceTests
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "SaveState", "Exception", "Save failed",
             "test-store", "post:/state/save", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -386,7 +386,7 @@ public class StateServiceTests
         _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -398,7 +398,7 @@ public class StateServiceTests
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "DeleteState", "Exception", "Delete failed",
             "test-store", "post:/state/delete", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -750,7 +750,7 @@ public class StateServiceTests
         _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -762,7 +762,7 @@ public class StateServiceTests
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "QueryState", "Exception", "Backend check failed",
             "test-store", "post:/state/query", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -870,7 +870,7 @@ public class StateServiceTests
         _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -882,7 +882,7 @@ public class StateServiceTests
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "BulkGetState", "Exception", "Bulk get failed",
             "test-store", "post:/state/bulk-get", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -983,7 +983,7 @@ public class StateServiceTests
         _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -995,7 +995,7 @@ public class StateServiceTests
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "ListStores", "Exception", "Failed to list stores",
             "state-factory", "post:/state/list-stores", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

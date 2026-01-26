@@ -549,6 +549,12 @@ public enum PerceptionSourceType
     [System.Runtime.Serialization.EnumMember(Value = @"environment")]
     Environment = 3,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"coordinator")]
+    Coordinator = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"scheduled")]
+    Scheduled = 5,
+
 }
 #pragma warning restore CS1591
 

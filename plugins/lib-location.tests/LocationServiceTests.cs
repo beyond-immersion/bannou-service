@@ -204,7 +204,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "location", "GetLocation", "unexpected_exception", It.IsAny<string>(),
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>(), default), Times.Once);
+            It.IsAny<object>(), It.IsAny<string>(), It.IsAny<Guid?>(), default), Times.Once);
     }
 
     #endregion
