@@ -17246,7 +17246,7 @@
             "description": "Party giving consent"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "consentType": {
             "$ref": "#/components/schemas/EscrowConsentType",
@@ -18922,7 +18922,7 @@
             "description": "Party entity ID"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "displayName": {
             "type": "string",
@@ -20659,7 +20659,7 @@
             "description": "Party depositing"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
             "$ref": "#/components/schemas/EscrowAssetBundleInput",
@@ -20840,7 +20840,7 @@
             "description": "Party raising dispute"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "reason": {
             "type": "string",
@@ -22348,7 +22348,7 @@
             "description": "Party giving consent"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "consentType": {
             "$ref": "#/components/schemas/EscrowConsentType",
@@ -22410,7 +22410,7 @@
             "description": "Party who deposited"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
             "$ref": "#/components/schemas/EscrowAssetBundle",
@@ -22509,7 +22509,7 @@
             "description": "Party entity identifier"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "displayName": {
             "type": "string",
@@ -22952,7 +22952,7 @@
             "description": "Party who should deposit"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "expectedAssets": {
             "type": "array",
@@ -22992,7 +22992,7 @@
             "description": "Party who should deposit"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "expectedAssets": {
             "type": "array",
@@ -24410,7 +24410,7 @@
             "description": "Party ID"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           }
         }
       },
@@ -28266,7 +28266,7 @@
           "partyType": {
             "allOf": [
               {
-                "$ref": "./#/components/schemas/EntityType"
+                "$ref": "#/components/schemas/EntityType"
               }
             ],
             "nullable": true,
@@ -31305,7 +31305,7 @@
             "description": "Party ID"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "displayName": {
             "type": "string",
@@ -31414,7 +31414,7 @@
             "description": "Party ID"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "token": {
             "type": "string",
@@ -33333,7 +33333,7 @@
             "description": "Party reaffirming"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "releaseToken": {
             "type": "string",
@@ -36743,7 +36743,7 @@
             "description": "Party ID"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
             "type": "array",
@@ -39100,7 +39100,7 @@
             "description": "Party to validate"
           },
           "partyType": {
-            "$ref": "./#/components/schemas/EntityType"
+            "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
             "$ref": "#/components/schemas/EscrowAssetBundleInput",

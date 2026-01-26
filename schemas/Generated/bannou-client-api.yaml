@@ -11998,7 +11998,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
           description: Type of consent being given
@@ -13330,7 +13330,7 @@ components:
           format: uuid
           description: Party entity ID
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -14752,7 +14752,7 @@ components:
           format: uuid
           description: Party depositing
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
           description: Assets to deposit
@@ -14891,7 +14891,7 @@ components:
           format: uuid
           description: Party raising dispute
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         reason:
           type: string
           description: Reason for dispute
@@ -16081,7 +16081,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
           description: Type of consent given
@@ -16135,7 +16135,7 @@ components:
           format: uuid
           description: Party who deposited
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundle'
           description: Assets deposited
@@ -16212,7 +16212,7 @@ components:
           format: uuid
           description: Party entity identifier
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -16602,7 +16602,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         expectedAssets:
           type: array
           items:
@@ -16632,7 +16632,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         expectedAssets:
           type: array
           items:
@@ -17735,7 +17735,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
     GetDepositStatusResponse:
       type: object
       description: Response containing party deposit status
@@ -20766,7 +20766,7 @@ components:
           description: Filter by party
         partyType:
           allOf:
-          - $ref: './#/components/schemas/EntityType'
+          - $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Party type filter
         status:
@@ -23157,7 +23157,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         displayName:
           type: string
           nullable: true
@@ -23242,7 +23242,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         token:
           type: string
           description: The token
@@ -24747,7 +24747,7 @@ components:
           format: uuid
           description: Party reaffirming
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         releaseToken:
           type: string
           nullable: true
@@ -27509,7 +27509,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         assets:
           type: array
           items:
@@ -29362,7 +29362,7 @@ components:
           format: uuid
           description: Party to validate
         partyType:
-          $ref: './#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
           description: Assets to validate

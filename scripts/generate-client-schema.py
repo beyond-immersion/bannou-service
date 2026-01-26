@@ -90,8 +90,9 @@ def rewrite_common_refs(schema: Any) -> Any:
         result = {}
         for key, value in schema.items():
             if key == '$ref' and isinstance(value, str) and 'common-api.yaml#' in value:
-                # Rewrite common-api.yaml#/components/schemas/X to #/components/schemas/X
-                result[key] = value.replace('common-api.yaml#', '#')
+                # Rewrite ./common-api.yaml#/components/schemas/X to #/components/schemas/X
+                # Handle both './common-api.yaml#' and 'common-api.yaml#' forms
+                result[key] = value.replace('./common-api.yaml#', '#').replace('common-api.yaml#', '#')
             else:
                 result[key] = rewrite_common_refs(value)
         return result
