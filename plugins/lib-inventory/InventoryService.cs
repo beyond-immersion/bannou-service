@@ -1800,12 +1800,12 @@ public partial class InventoryService : IInventoryService
     {
         switch (container.ConstraintModel)
         {
-            case ContainerConstraintModel.Slot_only:
+            case ContainerConstraintModel.SlotOnly:
                 if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
                     return "Container is full (slots)";
                 break;
 
-            case ContainerConstraintModel.Weight_only:
+            case ContainerConstraintModel.WeightOnly:
                 if (container.MaxWeight.HasValue && template.Weight.HasValue)
                 {
                     var newWeight = container.ContentsWeight + template.Weight.Value * quantity;
@@ -1814,7 +1814,7 @@ public partial class InventoryService : IInventoryService
                 }
                 break;
 
-            case ContainerConstraintModel.Slot_and_weight:
+            case ContainerConstraintModel.SlotAndWeight:
                 if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
                     return "Container is full (slots)";
                 if (container.MaxWeight.HasValue && template.Weight.HasValue)
@@ -1860,12 +1860,12 @@ public partial class InventoryService : IInventoryService
     {
         switch (container.ConstraintModel)
         {
-            case ContainerConstraintModel.Slot_only:
+            case ContainerConstraintModel.SlotOnly:
                 if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
                     return "Container is full (slots)";
                 break;
 
-            case ContainerConstraintModel.Weight_only:
+            case ContainerConstraintModel.WeightOnly:
                 if (container.MaxWeight.HasValue && template.Weight.HasValue)
                 {
                     var newWeight = container.ContentsWeight + template.Weight.Value * quantity;
@@ -1874,7 +1874,7 @@ public partial class InventoryService : IInventoryService
                 }
                 break;
 
-            case ContainerConstraintModel.Slot_and_weight:
+            case ContainerConstraintModel.SlotAndWeight:
                 if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
                     return "Container is full (slots)";
                 if (container.MaxWeight.HasValue && template.Weight.HasValue)
@@ -1914,37 +1914,37 @@ public partial class InventoryService : IInventoryService
         DateTimeOffset timestamp,
         CancellationToken cancellationToken)
     {
-        string? constraintType = null;
+        ConstraintLimitType? constraintType = null;
 
         switch (container.ConstraintModel)
         {
-            case ContainerConstraintModel.Slot_only:
-            case ContainerConstraintModel.Slot_and_weight:
+            case ContainerConstraintModel.SlotOnly:
+            case ContainerConstraintModel.SlotAndWeight:
                 if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
-                    constraintType = "slots";
+                    constraintType = ConstraintLimitType.Slots;
                 break;
 
-            case ContainerConstraintModel.Weight_only:
+            case ContainerConstraintModel.WeightOnly:
                 if (container.MaxWeight.HasValue && container.ContentsWeight >= container.MaxWeight.Value)
-                    constraintType = "weight";
+                    constraintType = ConstraintLimitType.Weight;
                 break;
 
             case ContainerConstraintModel.Grid:
                 if (container.MaxSlots.HasValue && (container.UsedSlots ?? 0) >= container.MaxSlots.Value)
-                    constraintType = "grid";
+                    constraintType = ConstraintLimitType.Grid;
                 break;
 
             case ContainerConstraintModel.Volumetric:
                 if (container.MaxVolume.HasValue && (container.CurrentVolume ?? 0) >= container.MaxVolume.Value)
-                    constraintType = "volume";
+                    constraintType = ConstraintLimitType.Volume;
                 break;
         }
 
         // Also check weight for slot_and_weight
-        if (constraintType is null && container.ConstraintModel == ContainerConstraintModel.Slot_and_weight)
+        if (constraintType is null && container.ConstraintModel == ContainerConstraintModel.SlotAndWeight)
         {
             if (container.MaxWeight.HasValue && container.ContentsWeight >= container.MaxWeight.Value)
-                constraintType = "weight";
+                constraintType = ConstraintLimitType.Weight;
         }
 
         if (constraintType is not null)
@@ -1957,7 +1957,7 @@ public partial class InventoryService : IInventoryService
                 OwnerId = container.OwnerId,
                 OwnerType = container.OwnerType,
                 ContainerType = container.ContainerType,
-                ConstraintType = constraintType
+                ConstraintType = constraintType.Value
             }, cancellationToken);
         }
     }

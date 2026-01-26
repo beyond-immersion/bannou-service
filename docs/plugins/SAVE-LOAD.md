@@ -473,17 +473,9 @@ Circuit Breaker State Machine
 
 ### Bugs
 
-1. **String config properties should be enums**: Two configuration properties in `save-load-configuration.yaml` are `type: string` but represent enums:
-   - `DefaultCompressionType` → `CompressionType` enum
-   - `DefaultDeltaAlgorithm` → `DeltaAlgorithm` enum
-
-2. **Internal POCOs use string for enums**: Multiple internal models store enums as strings requiring `Enum.Parse`/`Enum.TryParse`:
-   - `PendingUploadEntry.CompressionType`: string → `CompressionType`
-   - `SaveVersionManifest.CompressionType`: string → `CompressionType`
-   - `SaveSlotMetadata.CompressionType`: string → `CompressionType`
-   - `SaveSlotMetadata.OwnerType`: string → `OwnerType`
-   - `SaveSlotMetadata.Category`: string → `SaveCategory`
-   - `ExportManifest.OwnerType`: string → `OwnerType`
+1. **String config properties should use enum references**: Two configuration properties in `save-load-configuration.yaml` are `type: string` but should use `$ref` to their respective enum types:
+   - `DefaultCompressionType` → should reference `CompressionType` enum from save-load-api.yaml
+   - `DefaultDeltaAlgorithm` → should reference `DeltaAlgorithm` enum from save-load-api.yaml
 
 ### Intentional Quirks
 
@@ -532,5 +524,3 @@ Circuit Breaker State Machine
 11. **Storage quota check mixes raw and compressed sizes**: The save quota check compares `slot.TotalSizeBytes + body.Data.Length` against `MaxTotalSizeBytesPerOwner`. The `slot.TotalSizeBytes` tracks compressed sizes, but `body.Data.Length` is the raw uncompressed data. The check happens pre-compression so the compressed size is unknown. Options: check after compression (changes error timing), use a compression ratio estimate, or accept the conservative over-estimate.
 
 12. **Storage quota check is per-slot, not per-owner**: The quota check only examines the current slot's TotalSizeBytes against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. True per-owner enforcement requires querying all slots for the owner before each save.
-
-13. **Internal POCOs use string for GUID types**: Internal models (`SaveSlotMetadata`, `SaveVersionManifest`, `PendingUploadEntry`, `HotSaveEntry`) use string fields for GUID types. String fields force `.ToString()` and `Guid.Parse()` throughout business logic.

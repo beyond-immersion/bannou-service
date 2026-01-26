@@ -17,10 +17,10 @@ x-service-configuration:
       default: 99
       description: Default max stack size for new templates when not specified
     defaultWeightPrecision:
-      type: string
+      $ref: 'item-api.yaml#/components/schemas/WeightPrecision'
       env: ITEM_DEFAULT_WEIGHT_PRECISION
       default: decimal_2
-      description: Default weight precision for new templates (integer, decimal_1, decimal_2, decimal_3)
+      description: Default weight precision for new templates
     templateCacheTtlSeconds:
       type: integer
       env: ITEM_TEMPLATE_CACHE_TTL_SECONDS
@@ -42,15 +42,15 @@ x-service-configuration:
       default: true
       description: Whether admins can unbind soulbound items
     defaultRarity:
-      type: string
+      $ref: 'item-api.yaml#/components/schemas/ItemRarity'
       env: ITEM_DEFAULT_RARITY
       default: common
-      description: Default rarity for new templates when not specified (common, uncommon, rare, epic, legendary, custom)
+      description: Default rarity for new templates when not specified
     defaultSoulboundType:
-      type: string
+      $ref: 'item-api.yaml#/components/schemas/SoulboundType'
       env: ITEM_DEFAULT_SOULBOUND_TYPE
       default: none
-      description: Default soulbound type for new templates (none, on_pickup, on_equip, on_use)
+      description: Default soulbound type for new templates
 
     # List Operation Configuration
     listOperationMaxRetries:

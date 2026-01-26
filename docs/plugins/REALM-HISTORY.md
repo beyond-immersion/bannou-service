@@ -168,11 +168,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs
 
-1. **Internal POCOs use string for enums and GUIDs**: Internal models store enums as strings requiring `Enum.TryParse` and GUIDs as strings:
-   - `RealmEventDataModel.EventCategory`: string → `RealmEventCategory`
-   - `RealmEventDataModel.Role`: string → `RealmEventRole`
-   - `RealmLoreDataModel.ElementType`: string → `RealmLoreElementType`
-   - `ParticipationId`, `RealmId`, `EventId`: string → `Guid`
+No bugs identified.
 
 ### Intentional Quirks
 
@@ -180,7 +176,7 @@ None. The service is feature-complete for its scope.
 
 2. **Lore merge by type+key pair**: When `replaceExisting=false`, SetLore matches existing elements by combining `ElementType` and `Key`. If a match exists, the value and strength are updated. New type+key combinations are appended.
 
-3. **Enum fallback pattern**: `MapToRealmHistoricalParticipation` uses `Enum.TryParse` with fallback to `RealmEventCategory.FOUNDING` if parsing fails. Handles schema evolution gracefully (new categories in data, old code reads it).
+3. **Proper enum typing in internal models**: Internal models use strongly-typed enums (`RealmEventCategory`, `RealmEventRole`, `RealmLoreElementType`) and Guids, with JSON serialization handling conversions automatically.
 
 4. **Summarize is template-based (not AI)**: Text generation uses simple switch-case mapping (e.g., "ORIGIN_MYTH" -> "Origin: {key} - {value}"). No LLM or NLP processing involved.
 
@@ -216,10 +212,6 @@ None. The service is feature-complete for its scope.
 
 12. **Unknown participation roles default to "participated in"**: Line 1013 uses `_ => "participated in"` for unrecognized roles.
 
-13. **Role enum parsing fallback to AFFECTED**: Lines 943-945 in `MapToRealmHistoricalParticipation` fall back to `RealmEventRole.AFFECTED` if the stored role string can't be parsed. Data with unknown role values silently degrades.
+13. **Doesn't use shared helper classes**: Unlike character-history which uses `DualIndexHelper` and `BackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
 
-14. **ElementType enum parsing fallback to ORIGIN_MYTH**: Lines 957-959 fall back to `RealmLoreElementType.ORIGIN_MYTH` if parsing fails. Unknown element types silently become origin myths.
-
-15. **Doesn't use shared helper classes**: Unlike character-history which uses `DualIndexHelper` and `BackstoryStorageHelper`, realm-history implements these patterns directly with nearly identical code. This is duplicate implementation that could diverge over time.
-
-16. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection.
+14. **Read-modify-write without distributed locks**: Dual-index updates and lore merge operations have no concurrency protection.

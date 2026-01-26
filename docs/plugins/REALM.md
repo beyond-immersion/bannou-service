@@ -205,5 +205,3 @@ None identified.
 4. **Event publishing non-transactional**: State store writes and event publishing are separate operations. A crash between writing state and publishing the event would leave dependent services unaware of the change until they directly query.
 
 5. **Read-modify-write without distributed locks**: Create/Delete modify the all-realms list, Update modifies realm model. Requires ETag-based optimistic concurrency or distributed locks.
-
-6. **RealmId as string**: `RealmModel.RealmId` stored as string instead of Guid. Forces conversions throughout and string defaults hide deserialization errors.

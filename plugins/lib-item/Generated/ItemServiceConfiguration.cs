@@ -60,10 +60,10 @@ public class ItemServiceConfiguration : IServiceConfiguration
     public int DefaultMaxStackSize { get; set; } = 99;
 
     /// <summary>
-    /// Default weight precision for new templates (integer, decimal_1, decimal_2, decimal_3)
+    /// Default weight precision for new templates
     /// Environment variable: ITEM_DEFAULT_WEIGHT_PRECISION
     /// </summary>
-    public string DefaultWeightPrecision { get; set; } = "decimal_2";
+    public WeightPrecision DefaultWeightPrecision { get; set; } = WeightPrecision.Decimal2;
 
     /// <summary>
     /// TTL for template cache entries in seconds (templates change infrequently)
@@ -90,16 +90,16 @@ public class ItemServiceConfiguration : IServiceConfiguration
     public bool BindingAllowAdminOverride { get; set; } = true;
 
     /// <summary>
-    /// Default rarity for new templates when not specified (common, uncommon, rare, epic, legendary, custom)
+    /// Default rarity for new templates when not specified
     /// Environment variable: ITEM_DEFAULT_RARITY
     /// </summary>
-    public string DefaultRarity { get; set; } = "common";
+    public ItemRarity DefaultRarity { get; set; } = ItemRarity.Common;
 
     /// <summary>
-    /// Default soulbound type for new templates (none, on_pickup, on_equip, on_use)
+    /// Default soulbound type for new templates
     /// Environment variable: ITEM_DEFAULT_SOULBOUND_TYPE
     /// </summary>
-    public string DefaultSoulboundType { get; set; } = "none";
+    public SoulboundType DefaultSoulboundType { get; set; } = SoulboundType.None;
 
     /// <summary>
     /// Maximum retry attempts for optimistic concurrency on list operations

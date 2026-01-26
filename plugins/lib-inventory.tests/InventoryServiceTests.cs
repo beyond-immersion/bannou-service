@@ -69,7 +69,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Configuration.DefaultMaxSlots = 20;
         Configuration.DefaultMaxWeight = 100.0;
         Configuration.DefaultMaxNestingDepth = 3;
-        Configuration.DefaultWeightContribution = "self_plus_contents";
+        Configuration.DefaultWeightContribution = WeightContribution.SelfPlusContents;
         Configuration.EnableLazyContainerCreation = true;
     }
 
@@ -119,7 +119,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.Equal(request.ContainerType, response.ContainerType);
         Assert.Equal(request.OwnerId, response.OwnerId);
         Assert.Equal(ContainerOwnerType.Character, response.OwnerType);
-        Assert.Equal(ContainerConstraintModel.Slot_only, response.ConstraintModel);
+        Assert.Equal(ContainerConstraintModel.SlotOnly, response.ConstraintModel);
         Assert.NotNull(savedModel);
         Assert.Equal("inventory", savedModel.ContainerType);
     }
@@ -198,7 +198,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             It.Is<InventoryContainerCreatedEvent>(e =>
                 e.OwnerId == request.OwnerId &&
                 e.ContainerType == request.ContainerType &&
-                e.ConstraintModel == ContainerConstraintModel.Slot_only.ToString()),
+                e.ConstraintModel == ContainerConstraintModel.SlotOnly.ToString()),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -382,7 +382,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     public async Task CreateContainerAsync_DefaultWeightContribution_AppliedWhenNone()
     {
         // Arrange
-        Configuration.DefaultWeightContribution = "self_only";
+        Configuration.DefaultWeightContribution = WeightContribution.SelfOnly;
         var service = CreateService();
         var request = CreateValidContainerRequest();
         request.WeightContribution = WeightContribution.None;
@@ -401,17 +401,17 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert
         Assert.NotNull(savedModel);
-        Assert.Equal(WeightContribution.Self_only, savedModel.WeightContribution);
+        Assert.Equal(WeightContribution.SelfOnly, savedModel.WeightContribution);
     }
 
     [Fact]
     public async Task CreateContainerAsync_ExplicitWeightContribution_NotOverridden()
     {
         // Arrange
-        Configuration.DefaultWeightContribution = "self_only";
+        Configuration.DefaultWeightContribution = WeightContribution.SelfOnly;
         var service = CreateService();
         var request = CreateValidContainerRequest();
-        request.WeightContribution = WeightContribution.Self_plus_contents;
+        request.WeightContribution = WeightContribution.SelfPlusContents;
 
         ContainerModel? savedModel = null;
         _mockContainerStore
@@ -427,7 +427,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert
         Assert.NotNull(savedModel);
-        Assert.Equal(WeightContribution.Self_plus_contents, savedModel.WeightContribution);
+        Assert.Equal(WeightContribution.SelfPlusContents, savedModel.WeightContribution);
     }
 
     #endregion
@@ -560,7 +560,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             OwnerId = ownerId,
             OwnerType = ContainerOwnerType.Character,
             ContainerType = "inventory",
-            ConstraintModel = ContainerConstraintModel.Slot_only
+            ConstraintModel = ContainerConstraintModel.SlotOnly
         };
 
         // Act
@@ -594,7 +594,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             OwnerId = ownerId,
             OwnerType = ContainerOwnerType.Character,
             ContainerType = "bank",
-            ConstraintModel = ContainerConstraintModel.Slot_and_weight,
+            ConstraintModel = ContainerConstraintModel.SlotAndWeight,
             MaxSlots = 40,
             MaxWeight = 200
         };
@@ -621,7 +621,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             OwnerId = Guid.NewGuid(),
             OwnerType = ContainerOwnerType.Character,
             ContainerType = "inventory",
-            ConstraintModel = ContainerConstraintModel.Slot_only
+            ConstraintModel = ContainerConstraintModel.SlotOnly
         };
 
         // Act
@@ -1132,7 +1132,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Weight_only;
+        container.ConstraintModel = ContainerConstraintModel.WeightOnly;
         container.MaxWeight = 50;
         container.ContentsWeight = 45;
 
@@ -1432,7 +1432,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Slot_and_weight;
+        container.ConstraintModel = ContainerConstraintModel.SlotAndWeight;
         container.ContentsWeight = 10;
         container.MaxWeight = 100;
 
@@ -1475,7 +1475,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Slot_only;
+        container.ConstraintModel = ContainerConstraintModel.SlotOnly;
         container.MaxSlots = 5;
         container.UsedSlots = 4; // One slot left - after adding, will be full
 
@@ -1503,7 +1503,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             "inventory-container.full",
             It.Is<InventoryContainerFullEvent>(e =>
                 e.ContainerId == containerId &&
-                e.ConstraintType == "slots"),
+                e.ConstraintType == ConstraintLimitType.Slots),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1516,7 +1516,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Slot_only;
+        container.ConstraintModel = ContainerConstraintModel.SlotOnly;
         container.MaxSlots = 10;
         container.UsedSlots = 3; // Plenty of room left
 
@@ -1555,7 +1555,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
         var container = CreateStoredContainerModel(containerId);
-        container.ConstraintModel = ContainerConstraintModel.Weight_only;
+        container.ConstraintModel = ContainerConstraintModel.WeightOnly;
         container.MaxWeight = 50;
         container.ContentsWeight = 45; // Adding 5 weight will fill it
 
@@ -1586,7 +1586,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             "inventory-container.full",
             It.Is<InventoryContainerFullEvent>(e =>
                 e.ContainerId == containerId &&
-                e.ConstraintType == "weight"),
+                e.ConstraintType == ConstraintLimitType.Weight),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -2326,7 +2326,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     {
         var config = new InventoryServiceConfiguration();
         Assert.Equal(3, config.DefaultMaxNestingDepth);
-        Assert.Equal("self_plus_contents", config.DefaultWeightContribution);
+        Assert.Equal(WeightContribution.SelfPlusContents, config.DefaultWeightContribution);
         Assert.Equal(300, config.ContainerCacheTtlSeconds);
         Assert.Equal(30, config.LockTimeoutSeconds);
         Assert.True(config.EnableLazyContainerCreation);
@@ -2345,9 +2345,9 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             OwnerId = Guid.NewGuid(),
             OwnerType = ContainerOwnerType.Character,
             ContainerType = "inventory",
-            ConstraintModel = ContainerConstraintModel.Slot_only,
+            ConstraintModel = ContainerConstraintModel.SlotOnly,
             MaxSlots = 20,
-            WeightContribution = WeightContribution.Self_plus_contents,
+            WeightContribution = WeightContribution.SelfPlusContents,
             SelfWeight = 1.0
         };
     }
@@ -2360,7 +2360,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             OwnerId = Guid.NewGuid(),
             OwnerType = ContainerOwnerType.Character,
             ContainerType = "inventory",
-            ConstraintModel = ContainerConstraintModel.Slot_only,
+            ConstraintModel = ContainerConstraintModel.SlotOnly,
             IsEquipmentSlot = false,
             MaxSlots = 20,
             UsedSlots = 0,
@@ -2369,7 +2369,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             NestingDepth = 0,
             MaxNestingDepth = 3,
             SelfWeight = 1.0,
-            WeightContribution = WeightContribution.Self_plus_contents,
+            WeightContribution = WeightContribution.SelfPlusContents,
             SlotCost = 1,
             Tags = new List<string>(),
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-1)

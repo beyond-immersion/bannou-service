@@ -181,10 +181,8 @@ None identified.
 
 3. **Event publishing without transactional guarantee**: State store update and event publish are separate operations. If the service crashes between saving and publishing, dependent services (Auth, GameSession) won't learn about the change until the next direct query.
 
-4. **Internal model uses string types for GUIDs**: `SubscriptionDataModel` stores `SubscriptionId`, `AccountId`, and `ServiceId` as `string` rather than `Guid`. Requires `Guid.Parse()` at every boundary (event publishing, response mapping). Refactoring to use proper types would improve type safety per IMPLEMENTATION TENETS.
+4. **Read-modify-write on indexes without distributed locks**: `AddToAccountIndexAsync`, `AddToServiceIndexAsync`, and `AddToSubscriptionIndexAsync` perform read-modify-write operations without distributed locks or optimistic concurrency (ETags). Two instances could race and lose an index entry.
 
-5. **Read-modify-write on indexes without distributed locks**: `AddToAccountIndexAsync`, `AddToServiceIndexAsync`, and `AddToSubscriptionIndexAsync` perform read-modify-write operations without distributed locks or optimistic concurrency (ETags). Two instances could race and lose an index entry.
+5. **Update operations without distributed locks**: `UpdateSubscriptionAsync`, `CancelSubscriptionAsync`, `RenewSubscriptionAsync`, and `ExpireSubscriptionAsync` perform read-modify-write operations without distributed locks or optimistic concurrency.
 
-6. **Update operations without distributed locks**: `UpdateSubscriptionAsync`, `CancelSubscriptionAsync`, `RenewSubscriptionAsync`, and `ExpireSubscriptionAsync` perform read-modify-write operations without distributed locks or optimistic concurrency.
-
-7. **AuthorizationSuffix config property is dead**: `AuthorizationSuffix` property is accessed but the resulting value is never used in any business logic. Should be wired up or removed from schema.
+6. **AuthorizationSuffix config property is dead**: `AuthorizationSuffix` property is accessed but the resulting value is never used in any business logic. Should be wired up or removed from schema.

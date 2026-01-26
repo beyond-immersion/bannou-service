@@ -156,9 +156,7 @@ End relationship:
 
 ### Bugs
 
-1. **Internal POCOs use string for enums and GUIDs**: `RelationshipModel` stores entity types as strings requiring `Enum.Parse` and GUIDs as strings:
-   - `Entity1Type`, `Entity2Type`: string → `EntityType`
-   - `RelationshipId`, `Entity1Id`, `Entity2Id`, `RelationshipTypeId`: string → `Guid`
+No bugs identified.
 
 ### Intentional Quirks
 
@@ -172,7 +170,7 @@ End relationship:
 
 5. **Metadata coalesced to empty dict in events**: Internal model allows `null` metadata, but published events always include `new Dictionary<string, object>()` instead of null, ensuring JSON serialization consistency.
 
-6. **Entity types parsed on every response**: `EntityType` enum stored as string in state store, parsed via `Enum.Parse<EntityType>()` in `MapToResponse()` on every read. Adds minor overhead but avoids enum serialization issues.
+6. **Proper enum typing in internal models**: Internal models use strongly-typed `EntityType` enums and Guids, with JSON serialization handling conversions automatically.
 
 ### Design Considerations
 

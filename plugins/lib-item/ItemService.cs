@@ -52,19 +52,10 @@ public partial class ItemService : IItemService
         _logger = logger;
         _configuration = configuration;
 
-        // Parse config defaults once at startup (boundary parsing per T25)
-        if (!Enum.TryParse<ItemRarity>(_configuration.DefaultRarity, true, out _defaultRarity))
-        {
-            _defaultRarity = ItemRarity.Common;
-        }
-        if (!Enum.TryParse<WeightPrecision>(_configuration.DefaultWeightPrecision, true, out _defaultWeightPrecision))
-        {
-            _defaultWeightPrecision = WeightPrecision.Decimal_2;
-        }
-        if (!Enum.TryParse<SoulboundType>(_configuration.DefaultSoulboundType, true, out _defaultSoulboundType))
-        {
-            _defaultSoulboundType = SoulboundType.None;
-        }
+        // Configuration already provides typed enums (T25 compliant)
+        _defaultRarity = _configuration.DefaultRarity;
+        _defaultWeightPrecision = _configuration.DefaultWeightPrecision;
+        _defaultSoulboundType = _configuration.DefaultSoulboundType;
     }
 
     #region Template Operations

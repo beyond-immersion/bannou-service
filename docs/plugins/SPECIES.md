@@ -249,9 +249,7 @@ None identified.
 
 10. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` (called at line 1089) receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
 
-11. **Internal model type safety**: `SpeciesModel` uses `string` for `SpeciesId` and `List<string>` for `RealmIds` instead of `Guid` and `List<Guid>`. This requires `Guid.Parse()`/`ToString()` conversions throughout the code. Refactoring to use proper types would improve type safety.
+11. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
 
-12. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
-
-13. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
+12. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
 

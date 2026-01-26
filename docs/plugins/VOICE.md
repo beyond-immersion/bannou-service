@@ -234,6 +234,4 @@ None identified.
 
 4. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials.
 
-5. **String-based tier and codec storage**: `VoiceRoomData` stores tier and codec as strings, requiring parsing in service methods. Allows future extensibility but loses type safety at the persistence layer. Changing to enum types would require model migration.
-
-6. **Hardcoded tunable fallbacks**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants` and 22222 for `RtpEnginePort` when configuration values are invalid. Should rely on schema defaults or throw for invalid configuration.
+5. **Hardcoded tunable fallbacks**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants` and 22222 for `RtpEnginePort` when configuration values are invalid. Should rely on schema defaults or throw for invalid configuration.

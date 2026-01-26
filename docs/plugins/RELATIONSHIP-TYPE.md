@@ -254,5 +254,3 @@ None identified.
 8. **Depth is snapshot at creation, never updated**: A type's `Depth` field is set based on parent's depth at creation time (line 407: `depth = parent.Depth + 1`). If a parent's depth changes later, children's depths become stale. The `Depth` field is not recomputed on parent reassignment.
 
 9. **Read-modify-write without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, etc.) have no concurrency protection. Concurrent operations can cause lost updates.
-
-10. **GUID fields stored as strings**: `RelationshipTypeModel` uses string for GUID fields (`RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`). Forces `Guid.Parse()` calls throughout, loses compile-time type safety.
