@@ -39,12 +39,12 @@
 
   <!-- Forward Compatibility Testing: Use Current Generated SDK -->
   <ItemGroup Condition="'$(UseCurrentSDK)' == 'true'">
-    <ProjectReference Include="../sdks/client/Bannou.Client.csproj" />
+    <ProjectReference Include="../../sdks/client/Bannou.Client.csproj" />
   </ItemGroup>
 
   <!-- Development Mode: Default to current generated SDK when no specific mode -->
   <ItemGroup Condition="'$(UsePublishedSDK)' != 'true' AND '$(UseCurrentSDK)' != 'true'">
-    <ProjectReference Include="../sdks/client/Bannou.Client.csproj" />
+    <ProjectReference Include="../../sdks/client/Bannou.Client.csproj" />
   </ItemGroup>
 
 

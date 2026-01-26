@@ -13,7 +13,7 @@ services:
   bannou-http-tester:
     build:
       context: ..
-      dockerfile: http-tester/Dockerfile
+      dockerfile: tools/http-tester/Dockerfile
     env_file: ../.env.test.http
     environment:
       - PLUGIN=${PLUGIN}
