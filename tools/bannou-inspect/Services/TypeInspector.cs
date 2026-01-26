@@ -207,12 +207,26 @@ public sealed class TypeInspector : IDisposable
         var paramDoc = methodComments?.Parameters
             .FirstOrDefault(p => p.Name == param.Name);
 
+        // Use RawDefaultValue for MetadataLoadContext compatibility
+        string? defaultValue = null;
+        if (param.HasDefaultValue)
+        {
+            try
+            {
+                defaultValue = param.RawDefaultValue?.ToString();
+            }
+            catch
+            {
+                // Ignore if RawDefaultValue is not accessible
+            }
+        }
+
         return new ModelParameterInfo
         {
             Name = param.Name ?? "unnamed",
             Type = FormatTypeName(param.ParameterType),
             IsOptional = param.IsOptional,
-            DefaultValue = param.HasDefaultValue ? param.DefaultValue?.ToString() : null,
+            DefaultValue = defaultValue,
             Description = paramDoc?.Text
         };
     }

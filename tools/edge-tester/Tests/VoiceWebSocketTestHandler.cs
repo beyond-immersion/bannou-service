@@ -579,8 +579,8 @@ a=rtpmap:111 opus/48000/2";
                 var answerRequest = new AnswerPeerRequest
                 {
                     RoomId = voiceRoomId.Value,
-                    SenderSessionId = client2.SessionId ?? "unknown",
-                    TargetSessionId = client1.SessionId ?? "unknown",
+                    SenderSessionId = Guid.TryParse(client2.SessionId, out var senderId) ? senderId : Guid.Empty,
+                    TargetSessionId = Guid.TryParse(client1.SessionId, out var targetId) ? targetId : Guid.Empty,
                     SdpAnswer = "v=0\r\no=- 12345 67890 IN IP4 127.0.0.1\r\ns=Test SDP Answer\r\n",
                     IceCandidates = new List<string> { "candidate:1 1 UDP 2130706431 192.168.1.1 12345 typ host" }
                 };
