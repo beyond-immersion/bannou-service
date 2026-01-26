@@ -317,15 +317,9 @@ Generated Model Hierarchy
 
 ### Intentional Quirks
 
-1. **REST exception to POST-only pattern**: This service deliberately uses GET/PUT/DELETE for browser compatibility. This is explicitly documented in the BANNOU_DESIGN.md as an exception: "Website service uses traditional REST patterns for browser compatibility (bookmarkable URLs, SEO, caching)."
+1. **Path params on GET endpoints**: The `content/{slug}` and `cms/pages/{slug}` endpoints use path parameters, which means they cannot be routed via the WebSocket binary protocol (which requires static POST paths for GUID mapping). This service is accessed directly via HTTP, not through the Connect gateway.
 
-2. **Browser-Facing Endpoints exception**: Per FOUNDATION TENETS (T15), this service is one of the few allowed to use GET and path parameters. The others are OAuth and WebSocket upgrade.
-
-3. **Path params on GET endpoints**: The `content/{slug}` and `cms/pages/{slug}` endpoints use path parameters, which means they cannot be routed via the WebSocket binary protocol (which requires static POST paths for GUID mapping). This service is accessed directly via HTTP, not through the Connect gateway.
-
-4. **Mixed access levels on same path**: `GET /website/cms/pages` and `POST /website/cms/pages` share the same path but have different operations. Both require `developer` role, but this pattern is unusual in Bannou where each path typically maps to one operation.
-
-5. **No NotImplemented mapping in ConvertToActionResult**: The generated `ConvertToActionResult` switch expression has no case for `StatusCodes.NotImplemented`. Since all stubs currently return NotImplemented, the controller will fall through to the `_ => StatusCode(500, result)` default case, meaning clients receive 500 Internal Server Error instead of 501 Not Implemented.
+2. **No NotImplemented mapping in ConvertToActionResult**: The generated `ConvertToActionResult` switch expression has no case for `StatusCodes.NotImplemented`. Since all stubs currently return NotImplemented, the controller will fall through to the `_ => StatusCode(500, result)` default case, meaning clients receive 500 Internal Server Error instead of 501 Not Implemented.
 
 ### Design Considerations
 

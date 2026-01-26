@@ -36,9 +36,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['GetContractTemplateRequest'], Schemas['ContractTemplateResponse']>(
-      'POST', '/contract/template/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetContractTemplateRequest'],
+      Schemas['ContractTemplateResponse']
+    >('POST', '/contract/template/get', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListContractTemplatesResponse']>> {
-    return this.client.invokeAsync<Schemas['ListContractTemplatesRequest'], Schemas['ListContractTemplatesResponse']>(
-      'POST', '/contract/template/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListContractTemplatesRequest'],
+      Schemas['ListContractTemplatesResponse']
+    >('POST', '/contract/template/list', request, channel, timeout);
   }
 
   /**
@@ -70,9 +72,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractInstanceResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateContractInstanceRequest'], Schemas['ContractInstanceResponse']>(
-      'POST', '/contract/instance/create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CreateContractInstanceRequest'],
+      Schemas['ContractInstanceResponse']
+    >('POST', '/contract/instance/create', request, channel, timeout);
   }
 
   /**
@@ -87,9 +90,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractInstanceResponse']>> {
-    return this.client.invokeAsync<Schemas['ProposeContractInstanceRequest'], Schemas['ContractInstanceResponse']>(
-      'POST', '/contract/instance/propose', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ProposeContractInstanceRequest'],
+      Schemas['ContractInstanceResponse']
+    >('POST', '/contract/instance/propose', request, channel, timeout);
   }
 
   /**
@@ -104,9 +108,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractInstanceResponse']>> {
-    return this.client.invokeAsync<Schemas['ConsentToContractRequest'], Schemas['ContractInstanceResponse']>(
-      'POST', '/contract/instance/consent', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ConsentToContractRequest'],
+      Schemas['ContractInstanceResponse']
+    >('POST', '/contract/instance/consent', request, channel, timeout);
   }
 
   /**
@@ -121,9 +126,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractInstanceResponse']>> {
-    return this.client.invokeAsync<Schemas['GetContractInstanceRequest'], Schemas['ContractInstanceResponse']>(
-      'POST', '/contract/instance/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetContractInstanceRequest'],
+      Schemas['ContractInstanceResponse']
+    >('POST', '/contract/instance/get', request, channel, timeout);
   }
 
   /**
@@ -138,9 +144,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryContractInstancesResponse']>> {
-    return this.client.invokeAsync<Schemas['QueryContractInstancesRequest'], Schemas['QueryContractInstancesResponse']>(
-      'POST', '/contract/instance/query', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['QueryContractInstancesRequest'],
+      Schemas['QueryContractInstancesResponse']
+    >('POST', '/contract/instance/query', request, channel, timeout);
   }
 
   /**
@@ -155,9 +162,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractInstanceResponse']>> {
-    return this.client.invokeAsync<Schemas['TerminateContractInstanceRequest'], Schemas['ContractInstanceResponse']>(
-      'POST', '/contract/instance/terminate', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['TerminateContractInstanceRequest'],
+      Schemas['ContractInstanceResponse']
+    >('POST', '/contract/instance/terminate', request, channel, timeout);
   }
 
   /**
@@ -172,9 +180,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractInstanceStatusResponse']>> {
-    return this.client.invokeAsync<Schemas['GetContractInstanceStatusRequest'], Schemas['ContractInstanceStatusResponse']>(
-      'POST', '/contract/instance/get-status', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetContractInstanceStatusRequest'],
+      Schemas['ContractInstanceStatusResponse']
+    >('POST', '/contract/instance/get-status', request, channel, timeout);
   }
 
   /**
@@ -189,9 +198,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['MilestoneResponse']>> {
-    return this.client.invokeAsync<Schemas['CompleteMilestoneRequest'], Schemas['MilestoneResponse']>(
-      'POST', '/contract/milestone/complete', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CompleteMilestoneRequest'],
+      Schemas['MilestoneResponse']
+    >('POST', '/contract/milestone/complete', request, channel, timeout);
   }
 
   /**
@@ -207,7 +217,11 @@ export class ContractProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MilestoneResponse']>> {
     return this.client.invokeAsync<Schemas['FailMilestoneRequest'], Schemas['MilestoneResponse']>(
-      'POST', '/contract/milestone/fail', request, channel, timeout
+      'POST',
+      '/contract/milestone/fail',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -224,7 +238,11 @@ export class ContractProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MilestoneResponse']>> {
     return this.client.invokeAsync<Schemas['GetMilestoneRequest'], Schemas['MilestoneResponse']>(
-      'POST', '/contract/milestone/get', request, channel, timeout
+      'POST',
+      '/contract/milestone/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -241,7 +259,11 @@ export class ContractProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BreachResponse']>> {
     return this.client.invokeAsync<Schemas['ReportBreachRequest'], Schemas['BreachResponse']>(
-      'POST', '/contract/breach/report', request, channel, timeout
+      'POST',
+      '/contract/breach/report',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -258,7 +280,11 @@ export class ContractProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BreachResponse']>> {
     return this.client.invokeAsync<Schemas['CureBreachRequest'], Schemas['BreachResponse']>(
-      'POST', '/contract/breach/cure', request, channel, timeout
+      'POST',
+      '/contract/breach/cure',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -275,7 +301,11 @@ export class ContractProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BreachResponse']>> {
     return this.client.invokeAsync<Schemas['GetBreachRequest'], Schemas['BreachResponse']>(
-      'POST', '/contract/breach/get', request, channel, timeout
+      'POST',
+      '/contract/breach/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -291,9 +321,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractMetadataResponse']>> {
-    return this.client.invokeAsync<Schemas['UpdateContractMetadataRequest'], Schemas['ContractMetadataResponse']>(
-      'POST', '/contract/metadata/update', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UpdateContractMetadataRequest'],
+      Schemas['ContractMetadataResponse']
+    >('POST', '/contract/metadata/update', request, channel, timeout);
   }
 
   /**
@@ -308,9 +339,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ContractMetadataResponse']>> {
-    return this.client.invokeAsync<Schemas['GetContractMetadataRequest'], Schemas['ContractMetadataResponse']>(
-      'POST', '/contract/metadata/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetContractMetadataRequest'],
+      Schemas['ContractMetadataResponse']
+    >('POST', '/contract/metadata/get', request, channel, timeout);
   }
 
   /**
@@ -325,9 +357,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CheckConstraintResponse']>> {
-    return this.client.invokeAsync<Schemas['CheckConstraintRequest'], Schemas['CheckConstraintResponse']>(
-      'POST', '/contract/check-constraint', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CheckConstraintRequest'],
+      Schemas['CheckConstraintResponse']
+    >('POST', '/contract/check-constraint', request, channel, timeout);
   }
 
   /**
@@ -342,9 +375,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryActiveContractsResponse']>> {
-    return this.client.invokeAsync<Schemas['QueryActiveContractsRequest'], Schemas['QueryActiveContractsResponse']>(
-      'POST', '/contract/query-active', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['QueryActiveContractsRequest'],
+      Schemas['QueryActiveContractsResponse']
+    >('POST', '/contract/query-active', request, channel, timeout);
   }
 
   /**
@@ -360,7 +394,11 @@ export class ContractProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['LockContractResponse']>> {
     return this.client.invokeAsync<Schemas['LockContractRequest'], Schemas['LockContractResponse']>(
-      'POST', '/contract/lock', request, channel, timeout
+      'POST',
+      '/contract/lock',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -376,9 +414,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['UnlockContractResponse']>> {
-    return this.client.invokeAsync<Schemas['UnlockContractRequest'], Schemas['UnlockContractResponse']>(
-      'POST', '/contract/unlock', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UnlockContractRequest'],
+      Schemas['UnlockContractResponse']
+    >('POST', '/contract/unlock', request, channel, timeout);
   }
 
   /**
@@ -393,9 +432,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['TransferContractPartyResponse']>> {
-    return this.client.invokeAsync<Schemas['TransferContractPartyRequest'], Schemas['TransferContractPartyResponse']>(
-      'POST', '/contract/transfer-party', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['TransferContractPartyRequest'],
+      Schemas['TransferContractPartyResponse']
+    >('POST', '/contract/transfer-party', request, channel, timeout);
   }
 
   /**
@@ -410,9 +450,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListClauseTypesResponse']>> {
-    return this.client.invokeAsync<Schemas['ListClauseTypesRequest'], Schemas['ListClauseTypesResponse']>(
-      'POST', '/contract/clause-type/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListClauseTypesRequest'],
+      Schemas['ListClauseTypesResponse']
+    >('POST', '/contract/clause-type/list', request, channel, timeout);
   }
 
   /**
@@ -427,9 +468,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SetTemplateValuesResponse']>> {
-    return this.client.invokeAsync<Schemas['SetTemplateValuesRequest'], Schemas['SetTemplateValuesResponse']>(
-      'POST', '/contract/instance/set-template-values', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['SetTemplateValuesRequest'],
+      Schemas['SetTemplateValuesResponse']
+    >('POST', '/contract/instance/set-template-values', request, channel, timeout);
   }
 
   /**
@@ -444,9 +486,10 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CheckAssetRequirementsResponse']>> {
-    return this.client.invokeAsync<Schemas['CheckAssetRequirementsRequest'], Schemas['CheckAssetRequirementsResponse']>(
-      'POST', '/contract/instance/check-asset-requirements', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CheckAssetRequirementsRequest'],
+      Schemas['CheckAssetRequirementsResponse']
+    >('POST', '/contract/instance/check-asset-requirements', request, channel, timeout);
   }
 
   /**
@@ -461,8 +504,9 @@ export class ContractProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ExecuteContractResponse']>> {
-    return this.client.invokeAsync<Schemas['ExecuteContractRequest'], Schemas['ExecuteContractResponse']>(
-      'POST', '/contract/instance/execute', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ExecuteContractRequest'],
+      Schemas['ExecuteContractResponse']
+    >('POST', '/contract/instance/execute', request, channel, timeout);
   }
 }

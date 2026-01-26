@@ -394,19 +394,21 @@ Authoring Workflow
 
 ### Intentional Quirks
 
-1. **Static ConcurrentDictionary for subscriptions**: `IngestSubscriptions` and `EventAggregationBuffers` are `static readonly` fields. This means subscription state survives across scoped service instances within the same process. This is intentional -- subscriptions must outlive individual HTTP requests.
+1. **Authority token contains expiry but expiry is NOT checked from token**: The token embeds channelId and expiresAt, but `ValidateAuthorityAsync` only uses the token's channelId for basic validation. Actual expiry is checked against `AuthorityRecord.ExpiresAt` which is updated by heartbeats. This is intentional -- heartbeats extend authority without re-issuing tokens.
 
-2. **Deterministic channel IDs**: Channel IDs are SHA-256(regionId:kind) truncated to 16 bytes as a GUID. This means the same region+kind always produces the same channel ID, enabling idempotent channel creation. Two different region+kind combinations producing the same hash (collision) is astronomically unlikely.
+2. **Event aggregation buffer is fire-and-forget**: The timer callback uses `Task.Run` to flush changes and cannot propagate exceptions. If the flush fails (e.g., message bus unavailable), the changes are silently lost. The buffer is removed from the dictionary after flush regardless of success.
 
-3. **Authority token contains expiry but expiry is NOT checked from token**: The token embeds channelId and expiresAt, but `ValidateAuthorityAsync` only uses the token's channelId for basic validation. Actual expiry is checked against `AuthorityRecord.ExpiresAt` which is updated by heartbeats. This is intentional -- heartbeats extend authority without re-issuing tokens.
+3. **Update-as-upsert semantics**: `ObjectAction.Updated` for a non-existent object is treated as a create (upsert). This prevents data loss when object creation events are missed but means "update only if exists" semantics cannot be expressed.
 
-4. **Event aggregation buffer is fire-and-forget**: The timer callback uses `Task.Run` to flush changes and cannot propagate exceptions. If the flush fails (e.g., message bus unavailable), the changes are silently lost. The buffer is removed from the dictionary after flush regardless of success.
+4. **MaxAffordanceCandidates applies per-kind, not total**: `MaxAffordanceCandidates` is passed to each kind query individually, then results are combined. With 3 kinds and a limit of 1000, you could evaluate up to 3000 candidates total, not 1000.
 
-5. **Update-as-upsert semantics**: `ObjectAction.Updated` for a non-existent object is treated as a create (upsert). This prevents data loss when object creation events are missed but means "update only if exists" semantics cannot be expressed.
+5. **Objects without position get origin coordinates**: When a candidate object has `null` Position but passes the score threshold, the response uses `new Position3D { X = 0, Y = 0, Z = 0 }` as a default. This could place affordance locations at the world origin unexpectedly.
 
-6. **Authoring and runtime channels are independent**: Authoring checkouts (`map:checkout:*`) and runtime authority (`map:authority:*`) are separate concepts. An authoring checkout does not prevent runtime publishing to the same region+kind, and vice versa. They share the same underlying object storage.
+6. **Custom affordance exclusions check property existence, not value**: The exclusions logic checks if a property EXISTS on the object data, regardless of its value. Configuring `excludes: { is_occupied: true }` will exclude objects with `is_occupied: false` too.
 
-7. **Heartbeat returns warning but does NOT fail**: When remaining authority time is below `AuthorityGracePeriodSeconds`, the heartbeat still succeeds (returns `valid=true`) but includes a warning string. The caller is expected to react to the warning by increasing heartbeat frequency.
+7. **Unknown affordance types search all map kinds**: The `Custom` type and the fallback case both return ALL `MapKind` values. An unknown affordance type triggers the most expensive possible query, searching every kind.
+
+8. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Exceptions are silently lost.
 
 ### Design Considerations
 
@@ -422,16 +424,6 @@ Authoring Workflow
 
 6. **Per-kind TTL conventions**: Durable kinds (terrain, static_geometry, navigation, ownership) use `-1` meaning no TTL. Ephemeral kinds (combat_effects at 30s, visual_effects at 60s) auto-expire from Redis. If an ephemeral object's spatial index entry outlives the object, queries will find the index entry but the object load returns null (safely filtered out, but wastes a round-trip).
 
-7. **MaxAffordanceCandidates applies per-kind, not total**: In `QueryAffordanceAsync` (lines 1052-1058), `MaxAffordanceCandidates` is passed to each kind query individually, then results are combined with `AddRange`. With 3 kinds and a limit of 1000, you could evaluate up to 3000 candidates total, not 1000.
+7. **ExtractFeatures returns null for single-feature results**: The method always adds `objectType` to the features dictionary, then returns `null` if `features.Count <= 1`. When no relevant data properties are found, the result is always null.
 
-8. **Objects without position get origin coordinates**: In `QueryAffordanceAsync` (line 1086), when a candidate object has `null` Position but passes the score threshold, the response uses `new Position3D { X = 0, Y = 0, Z = 0 }` as a default. This could place affordance locations at the world origin unexpectedly.
-
-10. **Custom affordance exclusions check property existence, not value**: In `AffordanceScorer.ScoreCustomAffordance` (lines 206-212), the exclusions logic checks if a property EXISTS on the object data, regardless of its value. Configuring `excludes: { is_occupied: true }` will exclude objects with `is_occupied: false` too. This is intentional (simple implementation) but could be surprising.
-
-11. **Unknown affordance types search all map kinds**: In `AffordanceScorer.GetKindsForAffordanceType` (lines 24-26), the `Custom` type and the fallback case (`_`) both return ALL `MapKind` values. An unknown affordance type triggers the most expensive possible query, searching every kind.
-
-12. **ExtractFeatures returns null for single-feature results**: In `AffordanceScorer.ExtractFeatures` (line 139), the method always adds `objectType` to the features dictionary, then returns `null` if `features.Count <= 1`. When no relevant data properties are found, the result is always null (only objectType exists, count == 1).
-
-13. **Hardcoded affordance scoring magic numbers**: AffordanceScorer contains ~15 hardcoded scoring weights (base score 0.5, cover weight 0.3, elevation divisor 100.0, size modifiers 0.8-1.2, etc.). Should be configuration properties for game-specific tuning.
-
-14. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Documented as intentional but exceptions are silently lost.
+8. **Hardcoded affordance scoring magic numbers**: AffordanceScorer contains ~15 hardcoded scoring weights (base score 0.5, cover weight 0.3, elevation divisor 100.0, size modifiers 0.8-1.2, etc.). Should be configuration properties for game-specific tuning.

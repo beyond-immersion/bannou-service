@@ -338,7 +338,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | int | `15` | Staleness threshold in seconds for cached clause validation ... |
 | `CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS` | int | `7` | Default number of days for parties to consent before proposa... |
-| `CONTRACT_DEFAULT_ENFORCEMENT_MODE` | string | `event_only` | Default enforcement mode for contracts (advisory, event_only... |
+| `CONTRACT_DEFAULT_ENFORCEMENT_MODE` | string | `event_only` | Default enforcement mode for contracts |
 | `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for idempotency key storage (default 24 hours... |
 | `CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Lock timeout in seconds for index update distributed locks |
 | `CONTRACT_LOCK_TIMEOUT_SECONDS` | int | `60` | Lock timeout in seconds for contract-level distributed locks |
@@ -460,9 +460,9 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ITEM_BINDING_ALLOW_ADMIN_OVERRIDE` | bool | `true` | Whether admins can unbind soulbound items |
 | `ITEM_DEFAULT_MAX_STACK_SIZE` | int | `99` | Default max stack size for new templates when not specified |
-| `ITEM_DEFAULT_RARITY` | string | `common` | Default rarity for new templates when not specified (common,... |
-| `ITEM_DEFAULT_SOULBOUND_TYPE` | string | `none` | Default soulbound type for new templates (none, on_pickup, o... |
-| `ITEM_DEFAULT_WEIGHT_PRECISION` | string | `decimal_2` | Default weight precision for new templates (integer, decimal... |
+| `ITEM_DEFAULT_RARITY` | string | `common` | Default rarity for new templates when not specified |
+| `ITEM_DEFAULT_SOULBOUND_TYPE` | string | `none` | Default soulbound type for new templates |
+| `ITEM_DEFAULT_WEIGHT_PRECISION` | string | `decimal_2` | Default weight precision for new templates |
 | `ITEM_INSTANCE_CACHE_TTL_SECONDS` | int | `900` | TTL for instance cache entries in seconds (15 minutes for ac... |
 | `ITEM_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency on list op... |
 | `ITEM_MAX_INSTANCES_PER_QUERY` | int | `1000` | Maximum item instances returned in a single query |
@@ -662,8 +662,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before cleanup service starts processing |
 | `SAVE_LOAD_CONFLICT_DETECTION_ENABLED` | bool | `true` | Enable device-based conflict detection for cloud saves. Requ... |
 | `SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES` | int | `5` | Time window for considering saves as potentially conflicting... |
-| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `GZIP` | Default compression algorithm (NONE, GZIP, BROTLI) |
-| `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JSON_PATCH` | Default algorithm for delta computation (JSON_PATCH, BSDIFF,... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `GZIP` | Default compression algorithm |
+| `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JSON_PATCH` | Default algorithm for delta computation |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE` | int | `5` | Default max versions for AUTO_SAVE category |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_CHECKPOINT` | int | `20` | Default max versions for CHECKPOINT category |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_MANUAL_SAVE` | int | `10` | Default max versions for MANUAL_SAVE category |

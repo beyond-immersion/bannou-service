@@ -215,17 +215,15 @@ None identified.
 
 ### Intentional Quirks
 
-1. **Code normalization to uppercase**: All species codes are stored and indexed as uppercase via `ToUpperInvariant()`. Lookups are case-insensitive by normalizing input.
+1. **Merge partial failures don't fail the operation**: Individual character update failures during merge increment `failedCount` but don't abort. Returns `StatusCodes.OK` even with failures. Only logs warnings.
 
-2. **Merge partial failures don't fail the operation**: Individual character update failures during merge increment `failedCount` but don't abort. Returns `StatusCodes.OK` even with failures. Only logs warnings.
+2. **Realm validation asymmetry**: `CreateSpecies` and `AddSpeciesToRealm` validate realm is active. `RemoveSpeciesFromRealm` only validates realm exists (not active status). `ListSpeciesByRealm` performs no realm validation.
 
-3. **Character reference check is fail-closed**: If `ICharacterClient` throws during delete/remove-from-realm, the operation fails (exception propagates). This prevents orphaned characters when the character service is unavailable.
+3. **Page fetch error during merge stops migration**: If fetching a page of characters fails during merge, `hasMorePages` is set to false which terminates the loop. Characters on subsequent pages are silently un-migrated.
 
-4. **ListSpeciesByRealm allows deprecated realms**: Unlike `AddSpeciesToRealm` (which requires active realm), listing species in a realm works regardless of realm deprecation status.
+4. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
 
-5. **Realm validation asymmetry**: `CreateSpecies` and `AddSpeciesToRealm` validate realm is active. `RemoveSpeciesFromRealm` only validates realm exists (not active status). `ListSpeciesByRealm` performs no realm validation.
-
-6. **Update event includes all current state**: `SpeciesUpdatedEvent` publishes the full species data plus `ChangedFields` list, even if only one field changed. Consumers can use `ChangedFields` to determine what actually changed.
+5. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
 
 ### Design Considerations
 
@@ -239,17 +237,9 @@ None identified.
 
 5. **TraitModifiers stored as untyped object**: No schema validation on trait modifier structure. Game-specific data stored as arbitrary JSON.
 
-6. **Page fetch error during merge stops migration**: Lines 1073-1077 - if fetching a page of characters fails during merge, `hasMorePages` is set to false which terminates the loop. Characters on subsequent pages are silently un-migrated. No retry mechanism.
+6. **Realm validation is sequential**: `ValidateRealmsAsync` iterates through each realm ID and calls `ValidateRealmAsync` sequentially. For N realms, N sequential API calls.
 
-7. **Realm validation is sequential**: `ValidateRealmsAsync` (lines 92-113) iterates through each realm ID and calls `ValidateRealmAsync` sequentially. For N realms, N sequential API calls.
+7. **Seed with updateExisting duplicates change tracking logic**: Seed duplicates the same `changedFields` tracking pattern from `UpdateSpeciesAsync`. Changes to update logic need to be made in both places.
 
-8. **Realm service unavailability throws wrapper exception**: Line 85 wraps RealmService exceptions in `InvalidOperationException("Cannot validate realm ... RealmService unavailable")`. This provides context but changes the exception type.
-
-9. **Seed with updateExisting duplicates change tracking logic**: Lines 770-821 duplicate the same `changedFields` tracking pattern from `UpdateSpeciesAsync` (lines 454-503). Changes to update logic need to be made in both places.
-
-10. **Merge published event doesn't include failed count**: `PublishSpeciesMergedEventAsync` (called at line 1089) receives `migratedCount` but not `failedCount`. Downstream consumers only know successful migrations, not total attempted.
-
-11. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
-
-12. **species.created event missing fields**: `SpeciesCreatedEvent` omits some fields (Description, BaseLifespan, MaturityAge, TraitModifiers, RealmIds, Metadata, CreatedAt, UpdatedAt) that are included in `SpeciesUpdatedEvent` and `SpeciesDeletedEvent`.
+8. **Configuration property naming**: `SeedPageSize` is used for both seeding pagination and character migration during merge. The dual use is not clearly documented and the name is misleading for the merge use case.
 

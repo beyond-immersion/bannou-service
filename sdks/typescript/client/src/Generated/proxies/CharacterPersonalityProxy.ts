@@ -36,9 +36,10 @@ export class CharacterPersonalityProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PersonalityResponse']>> {
-    return this.client.invokeAsync<Schemas['GetPersonalityRequest'], Schemas['PersonalityResponse']>(
-      'POST', '/character-personality/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetPersonalityRequest'],
+      Schemas['PersonalityResponse']
+    >('POST', '/character-personality/get', request, channel, timeout);
   }
 
   /**
@@ -53,8 +54,9 @@ export class CharacterPersonalityProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CombatPreferencesResponse']>> {
-    return this.client.invokeAsync<Schemas['GetCombatPreferencesRequest'], Schemas['CombatPreferencesResponse']>(
-      'POST', '/character-personality/get-combat', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetCombatPreferencesRequest'],
+      Schemas['CombatPreferencesResponse']
+    >('POST', '/character-personality/get-combat', request, channel, timeout);
   }
 }

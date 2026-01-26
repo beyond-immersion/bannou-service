@@ -17246,6 +17246,7 @@
             "description": "Party giving consent"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "consentType": {
@@ -18922,6 +18923,7 @@
             "description": "Party entity ID"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "displayName": {
@@ -20659,6 +20661,7 @@
             "description": "Party depositing"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
@@ -20840,6 +20843,7 @@
             "description": "Party raising dispute"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "reason": {
@@ -22348,6 +22352,7 @@
             "description": "Party giving consent"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "consentType": {
@@ -22410,6 +22415,7 @@
             "description": "Party who deposited"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
@@ -22509,6 +22515,7 @@
             "description": "Party entity identifier"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "displayName": {
@@ -22952,6 +22959,7 @@
             "description": "Party who should deposit"
           },
           "partyType": {
+            "description": "Type of depositing party",
             "$ref": "#/components/schemas/EntityType"
           },
           "expectedAssets": {
@@ -22992,6 +23000,7 @@
             "description": "Party who should deposit"
           },
           "partyType": {
+            "description": "Type of depositing party",
             "$ref": "#/components/schemas/EntityType"
           },
           "expectedAssets": {
@@ -24410,6 +24419,7 @@
             "description": "Party ID"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           }
         }
@@ -31305,6 +31315,7 @@
             "description": "Party ID"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "displayName": {
@@ -31414,6 +31425,7 @@
             "description": "Party ID"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "token": {
@@ -33333,6 +33345,7 @@
             "description": "Party reaffirming"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "releaseToken": {
@@ -36743,6 +36756,7 @@
             "description": "Party ID"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
@@ -39100,6 +39114,7 @@
             "description": "Party to validate"
           },
           "partyType": {
+            "description": "Type of entity (Account, Character, etc.)",
             "$ref": "#/components/schemas/EntityType"
           },
           "assets": {
@@ -39442,7 +39457,7 @@
             "description": "When the failure was detected"
           },
           "assetType": {
-            "type": "string",
+            "$ref": "#/components/schemas/AssetType",
             "description": "Type of asset affected"
           },
           "assetDescription": {

@@ -163,15 +163,11 @@ None identified.
 
 ### Intentional Quirks
 
-1. **Denormalized service metadata**: `StubName` and `DisplayName` are copied from GameService at creation time. If the game service's display name later changes, existing subscriptions retain the old name. This is intentional — subscriptions reference the state at creation time.
+1. **Denormalized service metadata**: `StubName` and `DisplayName` are copied from GameService at creation time. If the game service's display name later changes, existing subscriptions retain the old name.
 
 2. **Null means "don't change" in updates**: `ExpirationDate = null` in an update request means "leave unchanged", not "remove expiration". There is no way to convert a time-limited subscription to unlimited via the update endpoint.
 
-3. **Grace period on expiration**: The background worker only expires subscriptions that passed their expiration by `ExpirationGracePeriodSeconds` (default 30s). This prevents race conditions where multiple instances expire the same subscription simultaneously.
-
-4. **Query endpoint has no permissions**: `/subscription/query` has an empty `x-permissions` array, meaning any authenticated caller can query. This is intentional for service-to-service internal calls (Auth and GameSession need to call this without admin elevation).
-
-5. **Renewal logic depends on expiration state**: `RenewSubscriptionAsync` with `extensionDays` extends from current expiration if still valid, but from "now" if already expired. Specifically: if `currentExpiration > now`, extends from `currentExpiration`; otherwise extends from `now`. A subscription that expired 5 days ago with 30-day extension expires 30 days from now (not 25).
+3. **Renewal logic depends on expiration state**: `RenewSubscriptionAsync` with `extensionDays` extends from current expiration if still valid, but from "now" if already expired. A subscription that expired 5 days ago with 30-day extension expires 30 days from now (not 25).
 
 ### Design Considerations
 

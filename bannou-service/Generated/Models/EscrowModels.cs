@@ -318,7 +318,7 @@ public enum TokenAlgorithm
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"hmac_sha256")]
-    Hmac_sha256 = 0,
+    HmacSha256 = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"random_bytes")]
     RandomBytes = 1,

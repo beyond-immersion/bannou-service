@@ -479,25 +479,17 @@ Circuit Breaker State Machine
 
 ### Intentional Quirks
 
-1. **Slot lock on save prevents concurrent writes**: The save operation acquires a distributed lock on the slot to allocate version numbers atomically. Two concurrent saves to the same slot will serialize; the second waiter gets 409 Conflict if lock acquisition times out.
+1. **Pinned versions excluded from MaxVersions count**: CleanupService calculates `effectiveMaxVersions = max(1, slot.MaxVersions - pinnedVersions.Count)`. Heavy pinning can reduce the effective unpinned retention to 1.
 
-2. **QUICK_SAVE uses NONE compression**: By default, quick saves skip compression for speed. The intent is that quick saves are small and latency-sensitive.
+2. **Hot cache stores base64 data**: HotSaveEntry.Data is base64-encoded, not raw bytes. This increases Redis memory usage by approximately 33% but simplifies JSON serialization of the cache entry.
 
-3. **STATE_SNAPSHOT uses BROTLI**: State snapshots default to Brotli compression for maximum compression ratio, accepting the higher CPU cost since these are infrequent but large.
+3. **Promote creates a new version, does not overwrite**: PromoteVersion creates a copy at a new version number rather than moving the old version to the latest position. The original version remains at its original number.
 
-4. **Pinned versions excluded from MaxVersions count in cleanup**: CleanupService calculates `effectiveMaxVersions = max(1, slot.MaxVersions - pinnedVersions.Count)`. Heavy pinning can reduce the effective unpinned retention to 1.
+4. **Upload failure does not roll back version manifest**: If SaveUploadWorker permanently fails to upload (after UploadRetryAttempts), the version manifest remains with UploadStatus="PENDING" indefinitely. The save is loadable from hot cache until the cache entry expires.
 
-5. **SESSION-owned saves have grace period**: CleanupService skips SESSION-owned slots updated within SessionCleanupGracePeriodMinutes (default 5 min). This allows game session teardown to copy saves to longer-term storage.
+5. **CleanupControlPlaneOnly uses default app name**: The cleanup service only runs when EffectiveAppId matches "bannou". In distributed deployments with custom app IDs, cleanup will not run automatically.
 
-6. **Hot cache stores base64 data**: HotSaveEntry.Data is base64-encoded, not raw bytes. This increases Redis memory usage by approximately 33% but simplifies JSON serialization of the cache entry.
-
-7. **Promote creates a new version, does not overwrite**: PromoteVersion creates a copy at a new version number rather than moving the old version to the latest position. The original version remains at its original number.
-
-8. **Upload failure does not roll back version manifest**: If SaveUploadWorker permanently fails to upload (after UploadRetryAttempts), the version manifest remains with UploadStatus="PENDING" indefinitely. The save is loadable from hot cache until the cache entry expires.
-
-9. **CleanupControlPlaneOnly uses AppConstants.DEFAULT_APP_NAME**: The cleanup service only runs when EffectiveAppId matches the default app name ("bannou"). In distributed deployments with custom app IDs, cleanup will not run automatically.
-
-10. **Asset deletion is best-effort**: When deleting versions or slots, Asset service failures are caught and logged as warnings but do not fail the operation. Orphaned assets may accumulate if the Asset service is repeatedly unavailable.
+6. **Asset deletion is best-effort**: When deleting versions or slots, Asset service failures are caught and logged as warnings but do not fail the operation. Orphaned assets may accumulate if the Asset service is repeatedly unavailable.
 
 ### Design Considerations
 

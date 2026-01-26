@@ -233,19 +233,15 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Auto-registration uses appId as Host**: When an endpoint is auto-registered from a heartbeat event, `Host` is set to the app-id string (not an IP). This enables Docker Compose DNS-based routing where the app-id is the container service name.
+1. **HeartbeatStatus.Overloaded maps to EndpointStatus.Degraded**: The status mapping is lossy - `Overloaded` and `Degraded` heartbeat statuses both become `Degraded` endpoint status. No distinct "overloaded" endpoint state exists.
 
-2. **HeartbeatStatus.Overloaded maps to EndpointStatus.Degraded**: The status mapping is lossy - `Overloaded` and `Degraded` heartbeat statuses both become `Degraded` endpoint status. No distinct "overloaded" endpoint state exists.
+2. **GetRoute falls back to all endpoints**: If both degradation-threshold filtering and load-threshold filtering eliminate all endpoints, the algorithm falls back to the original unfiltered list. Prevents total routing failure at the cost of routing to potentially degraded endpoints.
 
-3. **GetRoute falls back to all endpoints**: If both degradation-threshold filtering and load-threshold filtering eliminate all endpoints, the algorithm falls back to the original unfiltered list. Prevents total routing failure at the cost of routing to potentially degraded endpoints.
+3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem.
 
-4. **Empty FullServiceMappingsEvent resets to default routing**: An event with empty mappings means "reset all services to route to the default app-id (bannou)". This is valid orchestrator behavior for returning to monolithic mode.
+4. **Circuit breaker is per-instance, not distributed**: Each `MeshInvocationClient` instance maintains its own circuit breaker state. In multi-instance deployments, one instance may have an open circuit while others are still closed.
 
-5. **Health checking disabled by default**: Active health probing (`HealthCheckEnabled=false`) is off by default. The mesh relies on heartbeat-driven registration and TTL expiry for passive health management.
-
-6. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem.
-
-7. **Circuit breaker is per-instance, not distributed**: Each `MeshInvocationClient` instance maintains its own circuit breaker state. In multi-instance deployments, one instance may have an open circuit while others are still closed.
+5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop indefinitely until cancellation.
 
 ### Design Considerations
 
@@ -257,10 +253,4 @@ No bugs identified.
 
 4. **Static round-robin counter in MeshService**: `_roundRobinCounters` is static, meaning it persists across scoped service instances. The counter can grow unbounded as new app-ids are encountered (no eviction).
 
-5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop indefinitely until cancellation.
-
-6. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic.
-
-7. **LocalMeshStateManager uses Task.FromResult pattern**: All methods return `Task.FromResult(...)` instead of async/await. This is intentional for a synchronous testing implementation where no I/O occurs - async would add unnecessary state machine overhead.
-
-8. **MeshService doesn't call external services**: ApiException catches would be dead code since the service uses IMeshStateManager directly (no service-to-service calls). Pattern conformance deferred.
+5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic.

@@ -36,8 +36,9 @@ export class CompileProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CompileBehaviorResponse']>> {
-    return this.client.invokeAsync<Schemas['CompileBehaviorRequest'], Schemas['CompileBehaviorResponse']>(
-      'POST', '/compile', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CompileBehaviorRequest'],
+      Schemas['CompileBehaviorResponse']
+    >('POST', '/compile', request, channel, timeout);
   }
 }

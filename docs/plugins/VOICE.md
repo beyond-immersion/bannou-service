@@ -210,19 +210,11 @@ None identified.
 
 ### Intentional Quirks
 
-1. **SDP answer in SdpOffer field**: The `VoicePeerUpdatedEvent` reuses the `SdpOffer` field to carry the SDP answer from `/voice/peer/answer`. Not a bug - intentional field reuse for the asymmetric WebRTC handshake (offer from joiner, answer from existing peer).
+1. **SDP answer in SdpOffer field**: The `VoicePeerUpdatedEvent` reuses the `SdpOffer` field to carry the SDP answer from `/voice/peer/answer`. Confusing field name for the asymmetric WebRTC handshake (offer from joiner, answer from existing peer).
 
-2. **SessionId-based tracking (not AccountId)**: All participant tracking uses WebSocket session IDs. Supports multiple simultaneous connections per account and prevents account ID enumeration through voice room queries.
+2. **Fire-and-forget tier upgrade**: `Task.Run()` for tier upgrade is not awaited. The join response returns immediately while upgrade happens in background. Errors are logged but don't affect the join response.
 
-3. **Fire-and-forget tier upgrade**: `Task.Run()` for tier upgrade is not awaited. The join response returns immediately while upgrade happens in background. Errors are logged but don't affect the join response.
-
-4. **Kamailio snake_case JSON**: `KamailioClient` uses a custom `snake_case` JSON naming policy instead of `BannouJson.Options`. Intentional: Kamailio's JSON-RPC API uses snake_case conventions.
-
-5. **Local cache + Redis hybrid in SipEndpointRegistry**: Maintains `ConcurrentDictionary` local cache with Redis as distributed truth. Loads from Redis on cache miss. Handles multi-instance scenarios but cache can be briefly stale.
-
-6. **P2P upgrade threshold is "exceeds", not "at"**: `ShouldUpgradeToScaledAsync` triggers when `currentParticipantCount > maxP2P`. A room AT capacity is still P2P; only when the next participant joins does upgrade trigger.
-
-7. **Defensive null coalescing for Kamailio responses**: External API responses use `?? string.Empty` with explanatory comments. Valid per TENETS for third-party service data where null responses are possible.
+3. **P2P upgrade threshold is "exceeds", not "at"**: `ShouldUpgradeToScaledAsync` triggers when `currentParticipantCount > maxP2P`. A room AT capacity is still P2P; only when the next participant joins does upgrade trigger.
 
 ### Design Considerations
 

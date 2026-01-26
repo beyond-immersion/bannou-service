@@ -214,15 +214,9 @@ None identified.
 
 2. **ETag format inconsistency**: Redis uses a `long` version counter as ETag. MySQL uses `SHA256(json)[0:12]` (base64). Same logical concept, different formats across backends.
 
-3. **Per-operation DbContext creation**: `MySqlStateStore` creates a fresh `StateDbContext` per operation to avoid EF Core change-tracking concurrency issues. Adds overhead but ensures thread safety.
+3. **Shared static stores in InMemory mode**: `InMemoryStateStore` uses static `ConcurrentDictionary` instances. `GetStore<TypeA>("store")` and `GetStore<TypeB>("store")` see the same underlying data. Enables cross-type access but can cause test pollution.
 
-4. **Shared static stores in InMemory mode**: `InMemoryStateStore` uses static `ConcurrentDictionary` instances. `GetStore<TypeA>("store")` and `GetStore<TypeB>("store")` see the same underlying data. Enables cross-type access but can cause test pollution.
-
-5. **RedisSearch fallback to string**: `RedisSearchStateStore` accepts both JSON objects and raw strings for backwards compatibility. If a value was stored as string before search was enabled, it's still readable.
-
-6. **FT index creation on startup**: `StateStoreFactory.InitializeAsync()` creates full-text indexes for all stores with `enableSearch=true`. Uses `TextField("$.*", "content")` to index all JSON fields. Skips if index already exists.
-
-7. **MySQL JSON query operators**: `Contains` uses `LIKE %value%`, `FullText` also uses `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
+4. **MySQL JSON query operators**: `Contains` uses `LIKE %value%`, `FullText` also uses `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
 
 ### Design Considerations
 

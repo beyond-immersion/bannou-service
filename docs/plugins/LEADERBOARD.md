@@ -222,25 +222,9 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Polymorphic member keys**: Sorted set members use format `{EntityType}:{EntityId}` enabling mixed entity types on a single leaderboard. `ParseMemberKey` uses `Enum.Parse` with `ignoreCase=true` for deserialization.
+1. **Percentile calculation**: Uses `(1 - rank/total) * 100` formula. Rank 1 of 100 entries = 99th percentile. Single-entry leaderboards default to 100th percentile.
 
-2. **Percentile calculation**: Uses `(1 - rank/total) * 100` formula. Rank 1 of 100 entries = 99th percentile. Single-entry leaderboards default to 100th percentile.
-
-3. **Analytics event matching is two-phase**: First attempts direct lookup using ScoreType/RatingType as the leaderboard ID. If not found, scans all definitions in the game service checking metadata for a `scoreType`/`ratingType` key match. Logs warning and returns null if multiple definitions match (ambiguous).
-
-4. **Rating updates require Replace mode**: `HandleRatingUpdatedAsync` validates the matched leaderboard uses `UpdateMode.Replace`. Increment/Max/Min modes are rejected with a warning because Glicko-2 ratings are absolute values.
-
-5. **Entry count is queried per-response**: `MapToResponse` doesn't cache entry counts. Each definition get/list/update calls `SortedSetCountAsync` to get the current entry count. For `ListDefinitions` with many leaderboards, this is N Redis calls.
-
-6. **Rank events only on rank change**: `leaderboard.rank.changed` is only published when the rank actually changes (previous rank != new rank). Score updates that don't affect rank produce no event.
-
-7. **Delete cascades to all seasons**: `DeleteLeaderboardDefinition` for seasonal leaderboards iterates the season index and deletes each season's sorted set. If the season index is empty but `CurrentSeason` is set, it falls back to deleting just the current season.
-
-### Design Considerations
-
-1. **No distributed locks**: Unlike game-session or matchmaking, leaderboard operations don't use distributed locks. Redis sorted set operations are atomic at the command level, but the read-calculate-write pattern in `SubmitScore` (get previous, calculate final, add) is not atomic across the full operation.
-
-2. **Definition index loaded in full**: `ListLeaderboardDefinitions` loads all IDs from the set, then loads each definition individually. With hundreds of leaderboards per game service, this generates O(N) Redis calls.
+2. **Rank events only on rank change**: `leaderboard.rank.changed` is only published when the rank actually changes (previous rank != new rank). Score updates that don't affect rank produce no event.
 
 3. **AutoArchiveOnSeasonEnd=false deletes data**: The naming is misleading - when archive is disabled, previous season data is permanently deleted on season creation. There's no way to recover it.
 
@@ -248,4 +232,10 @@ No bugs identified.
 
 5. **No score validation or bounds**: Scores are stored as doubles with no min/max validation. Negative scores, NaN, and infinity are all accepted by the sorted set operations.
 
-6. **No pagination for season index**: `GetSetAsync<int>` loads all season numbers into memory. Long-running seasonal leaderboards with many seasons could accumulate significant season index data.
+### Design Considerations
+
+1. **No distributed locks**: Unlike game-session or matchmaking, leaderboard operations don't use distributed locks. Redis sorted set operations are atomic at the command level, but the read-calculate-write pattern in `SubmitScore` (get previous, calculate final, add) is not atomic across the full operation.
+
+2. **Definition index loaded in full**: `ListLeaderboardDefinitions` loads all IDs from the set, then loads each definition individually. With hundreds of leaderboards per game service, this generates O(N) Redis calls.
+
+3. **No pagination for season index**: `GetSetAsync<int>` loads all season numbers into memory. Long-running seasonal leaderboards with many seasons could accumulate significant season index data.

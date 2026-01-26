@@ -281,19 +281,15 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Lock acquisition failure returns 409**: When the distributed lock cannot be acquired within `LockTimeoutSeconds`, the operation returns Conflict (not 500). The caller should retry.
+1. **List index locking separate from container lock**: Owner/type indexes use `ListLockTimeoutSeconds` (default 15s, shorter than container locks). Index lock failure is non-fatal - a warning is logged but the main operation succeeds.
 
-2. **Same-container move is no-op**: Moving an item within the same container (different slot) returns OK immediately without modifying weight/volume counters. Only slot position changes.
+2. **Nesting depth validation uses parent's limit**: When creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children.
 
-3. **Item service graceful degradation**: Container read operations continue if lib-item is unavailable (`GetContainer` returns empty contents, logged as warning). `DeleteContainer` returns `ServiceUnavailable` (503) when items can't be fetched, preventing orphaned items.
+3. **Missing parent returns BadRequest not NotFound**: If `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound.
 
-4. **Stack merge overflow handling**: Merging stacks respects MaxStackSize. If combined exceeds max, target gets capped and source retains the remainder. Source is only destroyed if fully consumed.
+4. **Container deletion with "destroy" continues on item failure**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed.
 
-5. **Container full event after add**: The `inventory-container.full` event is emitted after successfully adding an item that fills the container. Future add attempts will fail constraint checks.
-
-6. **List index locking separate from container lock**: Owner/type indexes use `ListLockTimeoutSeconds` (default 15s, shorter than container locks). Index lock failure is non-fatal - a warning is logged but the main operation succeeds.
-
-7. **TransferItem checks tradeable and binding**: Transfer validates that the item template's `Tradeable` flag is true AND the instance is not bound. Bound or non-tradeable items cannot be transferred between owners.
+5. **Merge stack source destruction failure non-fatal**: When stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity.
 
 ### Design Considerations
 
@@ -308,13 +304,3 @@ No bugs identified.
 5. **No event consumption**: Inventory doesn't listen for item events (destroy, bind, modify). If an item is destroyed directly via lib-item (bypassing inventory), the container's UsedSlots/ContentsWeight counters become stale.
 
 6. **Lock timeout not configurable per-operation**: All container operations use the same `LockTimeoutSeconds`. Quick operations (update metadata) and slow operations (delete with destroy) share the same timeout.
-
-7. **Cache errors are non-fatal**: Cache lookup failures, write failures, and invalidation failures are logged but don't fail operations. Container operations succeed even if Redis cache is unavailable.
-
-8. **Nesting depth validation uses parent's limit**: When creating a nested container, the depth check uses `parent.MaxNestingDepth`. The new container's own `MaxNestingDepth` only limits its future children.
-
-9. **Missing parent returns BadRequest not NotFound**: If `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound.
-
-10. **Container deletion with "destroy" continues on item failure**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed.
-
-11. **Merge stack source destruction failure non-fatal**: When stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity.

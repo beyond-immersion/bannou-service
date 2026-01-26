@@ -423,33 +423,29 @@ None identified.
 
 ### Intentional Quirks
 
-- **Secure WebSocket mode (default)**: When `SecureWebsocket=true`, the orchestrator publishes a blank permission registration with no endpoints. This makes it completely inaccessible via WebSocket - only service-to-service calls work. This is intentional: orchestrator operations are admin-only and should not be exposed to game clients.
-- **Environment variable whitelist filtering**: `IsAllowedEnvironmentVariable` uses `PluginLoader.ValidEnvironmentPrefixes` as a whitelist. Only variables with recognized service prefixes are forwarded to deployed containers. `*_SERVICE_ENABLED` flags and `BANNOU_APP_ID` are always excluded - deployment logic controls these explicitly.
-- **Orphaned container identification**: Uses the `bannou.orchestrator-managed` Docker label (set during deploy) rather than name parsing. Only containers with this label AND stopped for 24+ hours are considered orphaned. Conservative threshold avoids removing containers in active restart cycles.
-- **Rollback creates new version**: Rolling back from v5 to v3 creates v6 (a copy of v3 with new timestamp). The history trail is never overwritten. This is intentional for audit trail purposes.
-- **Reset to default resets mappings BEFORE teardown**: When resetting topology, routing mappings are updated to point to "bannou" FIRST, before tearing down the old containers. This ensures proxies get updated routes before old backends become unavailable - prevents request failures during the transition window.
-- **Config clear saves empty config as new version**: `ClearCurrentConfigurationAsync` does not delete the config entry but saves an empty `DeploymentConfiguration` with preset="default". This maintains the version history audit trail.
-- **Pool metrics window reset is lazy**: `JobsCompleted1h` and `JobsFailed1h` counters reset when the first operation occurs after the 1-hour window has elapsed (tracked via `WindowStart`). There is no background timer - the reset happens inline during `UpdatePoolMetricsAsync`.
-- **Expired lease reclamation is lazy**: When a processor lease expires (`ExpiresAt` passes), it is reclaimed during the next `AcquireProcessorAsync` call via `ReclaimExpiredLeasesAsync`. There is no background timer proactively scanning for expired leases. Pools with no acquire traffic will not reclaim expired processors until the next request arrives.
+1. **Rollback creates new version**: Rolling back from v5 to v3 creates v6 (a copy of v3 with new timestamp). The history trail is never overwritten.
+
+2. **Config clear saves empty config as new version**: `ClearCurrentConfigurationAsync` does not delete the config entry but saves an empty `DeploymentConfiguration` with preset="default". Maintains the version history audit trail.
+
+3. **Pool metrics window reset is lazy**: `JobsCompleted1h` and `JobsFailed1h` counters reset when the first operation occurs after the 1-hour window has elapsed. There is no background timer - the reset happens inline during `UpdatePoolMetricsAsync`.
+
+4. **Expired lease reclamation is lazy**: When a processor lease expires, it is reclaimed during the next `AcquireProcessorAsync` call. There is no background timer proactively scanning for expired leases. Pools with no acquire traffic will not reclaim expired processors until the next request arrives.
+
+5. **OpenResty cache invalidation is non-blocking**: If OpenResty is unavailable (common in local dev), the deployment proceeds normally. Cache will eventually expire based on OpenResty's own TTL.
+
+6. **Partial failure in topology changes (no rollback)**: Each topology change is applied independently. If 3 of 5 changes succeed, the response reports partial success with per-change error details. The already-applied changes are NOT rolled back.
 
 ### Design Considerations
 
-- **Index-based state pattern**: The orchestrator avoids Redis KEYS/SCAN commands entirely. Instead, it maintains explicit index entries (`_index` keys) that track known app IDs and service names. These indexes use ETag-based optimistic concurrency (retry loops with `TrySaveAsync`) for safe concurrent updates from multiple containers. Expired entries (TTL'd heartbeats/routings) are cleaned from indexes lazily during read operations.
-- **OpenResty cache invalidation is non-blocking**: The `InvalidateOpenRestryRoutingCacheAsync` method catches all exceptions and logs at debug/warning level. If OpenResty is unavailable (common in local dev without Docker), the deployment proceeds normally. Cache will eventually expire based on OpenResty's own TTL.
-- **Processing pools are state-tracked, not containerized abstractions**: Pool instances are tracked purely in Redis state. The orchestrator deploys actual containers for workers but does not wrap them in any higher-level abstraction. Workers self-register via heartbeat events after starting.
-- **Backend detection at request time**: `GetOrchestratorAsync` is called per-request, not at startup. This allows the backend to change dynamically (e.g., Docker socket becomes available after orchestrator starts).
-- **Partial failure reporting in topology changes**: Each topology change is applied independently. If 3 of 5 changes succeed, the response reports partial success with per-change error details. The already-applied changes are NOT rolled back.
-- **Service enable/disable flags are generated from preset services list**: When deploying, the orchestrator does not inherit `*_SERVICE_ENABLED` vars from its own environment. Instead, it sets `SERVICES_ENABLED=false` and explicitly enables only the services listed in the preset for each node.
+1. **Index-based state pattern**: The orchestrator avoids Redis KEYS/SCAN commands entirely. Instead, it maintains explicit index entries (`_index` keys) that track known app IDs and service names. These indexes use ETag-based optimistic concurrency for safe concurrent updates.
 
-- **GetOrchestratorAsync TTL check is ineffective for scoped service**: Since `OrchestratorService` is scoped (per-request), the `_orchestrator` field starts null every request and is populated on first access within the request. The TTL-based cache invalidation logic (lines 174-203) checks if cache age exceeds `CacheTtlMinutes` (default 5 min), but since the service instance lives only for the duration of one request (seconds at most), this check can never trigger. The caching only provides within-request reuse when multiple endpoint methods call `GetOrchestratorAsync`.
+2. **Processing pools are state-tracked, not containerized abstractions**: Pool instances are tracked purely in Redis state. The orchestrator deploys actual containers for workers but does not wrap them in any higher-level abstraction.
 
----
+3. **Backend detection at request time**: `GetOrchestratorAsync` is called per-request, not at startup. This allows the backend to change dynamically (e.g., Docker socket becomes available after orchestrator starts).
 
-### Additional Design Considerations
+4. **GetOrchestratorAsync TTL check is ineffective for scoped service**: Since `OrchestratorService` is scoped (per-request), the `_orchestrator` field starts null every request. The TTL-based cache invalidation logic can never trigger - the caching only provides within-request reuse.
 
-10. **`_lastKnownDeployment` in-memory state**: Orchestrator is typically single-instance, but this field could diverge across instances if multiple were ever deployed. Should read from Redis state manager.
-
-11. **PortainerOrchestrator uses direct JsonSerializerOptions**: Portainer API requires camelCase. This is an acceptable boundary exception for external API communication (similar to defensive coding for external services).
+5. **`_lastKnownDeployment` in-memory state**: Orchestrator is typically single-instance, but this field could diverge across instances if multiple were ever deployed. Should read from Redis state manager.
 
 ---
 

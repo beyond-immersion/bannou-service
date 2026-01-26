@@ -414,19 +414,15 @@ No bugs identified.
 
 1. **Expired checkout takeover**: If a checkout lock has expired, the next `CheckoutScene` call silently takes over the lock without publishing a `scene.checkout.expired` event. The previous editor loses their token.
 
-2. **UpdateScene allows checkout bypass**: If a scene is checked out but the caller provides the correct checkout token, UpdateScene succeeds. This is the mechanism `CommitScene` uses internally.
+2. **HeartbeatCheckout returns OK even at extension limit**: When `MaxCheckoutExtensions` is reached, the endpoint returns 200 OK with `extended=false` rather than an error status. Callers must check the `extended` field.
 
-3. **HeartbeatCheckout returns OK even at extension limit**: When `MaxCheckoutExtensions` is reached, the endpoint returns 200 OK with `extended=false` rather than an error status. Callers must check the `extended` field.
+3. **DuplicateScene preserves refIds**: When duplicating, node IDs are regenerated but refIds are preserved. This means the duplicate has the same scripting references as the original.
 
-4. **DiscardCheckout does not check expiry**: Unlike CommitScene, DiscardCheckout allows discarding even after the lock has expired. This is intentional -- releasing a stale lock is always safe since no changes are persisted.
+4. **InstantiateScene is notification-only**: The endpoint does not persist instance state or track active instances. It validates the scene exists and publishes an event. Instance lifecycle is entirely consumer-managed.
 
-5. **DuplicateScene preserves refIds**: When duplicating, node IDs are regenerated but refIds are preserved. This means the duplicate has the same scripting references as the original, which is correct for scene templates.
+5. **DeleteScene blocks on any reference**: Even if the referencing scene is itself deleted (orphaned reference index entry), deletion is still blocked. Index cleanup for references is not transactional.
 
-6. **InstantiateScene is notification-only**: The endpoint does not persist instance state or track active instances. It validates the scene exists and publishes an event. Instance lifecycle is entirely consumer-managed.
-
-7. **DeleteScene blocks on any reference**: Even if the referencing scene is itself deleted (orphaned reference index entry), deletion is still blocked. Index cleanup for references is not transactional.
-
-8. **Patch version only**: UpdateScene and CommitScene always increment the PATCH version. There is no mechanism to increment MAJOR or MINOR versions. Callers who need semantic versioning must set the version manually before the update.
+6. **Patch version only**: UpdateScene and CommitScene always increment the PATCH version. There is no mechanism to increment MAJOR or MINOR versions. Callers who need semantic versioning must set the version manually before the update.
 
 ### Design Considerations
 

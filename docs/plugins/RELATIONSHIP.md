@@ -160,17 +160,13 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Bidirectional uniqueness via string sort**: Composite keys are normalized so `A→B` and `B→A` are the same relationship. This prevents duplicate relationships regardless of creation order. Self-relationships (same entity and type) are explicitly rejected.
+1. **Self-relationship with different types allowed**: The self-relationship check compares both ID and type. Entity A (type: character) → Entity A (type: npc) is allowed. This supports entities that span multiple type classifications.
 
-2. **Self-relationship with different types allowed**: The self-relationship check compares both ID and type. Entity A (type: character) → Entity A (type: npc) is allowed. This supports entities that span multiple type classifications.
+2. **Ended relationships remain in indexes**: When a relationship ends, entity and type indexes retain the relationship ID. This preserves queryability of historical relationships but requires filtering in read paths.
 
-3. **Ended relationships remain in indexes**: When a relationship ends, entity and type indexes retain the relationship ID. This preserves queryability of historical relationships but requires filtering in read paths.
+3. **Composite key deletion on end**: Ending a relationship removes the uniqueness constraint, explicitly allowing the same pair of entities to form a new relationship of the same type. This models "breaking up and getting back together" scenarios.
 
-4. **Composite key deletion on end**: Ending a relationship removes the uniqueness constraint, explicitly allowing the same pair of entities to form a new relationship of the same type. This models "breaking up and getting back together" scenarios.
-
-5. **Metadata coalesced to empty dict in events**: Internal model allows `null` metadata, but published events always include `new Dictionary<string, object>()` instead of null, ensuring JSON serialization consistency.
-
-6. **Proper enum typing in internal models**: Internal models use strongly-typed `EntityType` enums and Guids, with JSON serialization handling conversions automatically.
+4. **GetBetween only checks entity1's index**: Looks up entity1's relationships and filters for entity2. If entity1's index is corrupted but entity2's is correct, the relationship won't be found. No cross-validation against entity2's index.
 
 ### Design Considerations
 
@@ -178,12 +174,10 @@ No bugs identified.
 
 2. **No index cleanup**: Entity and type indexes accumulate relationship IDs indefinitely (both active and ended). Over time, indexes grow large with ended relationships that must be filtered on every query.
 
-3. **GetBetween only checks entity1's index**: Looks up entity1's relationships and filters for entity2. If entity1's index is corrupted but entity2's is correct, the relationship won't be found. No cross-validation against entity2's index.
+3. **No optimistic concurrency**: Updates overwrite without version checking. Two concurrent updates to metadata will result in last-writer-wins with no conflict detection.
 
-4. **No optimistic concurrency**: Updates overwrite without version checking. Two concurrent updates to metadata will result in last-writer-wins with no conflict detection.
+4. **Type migration during merge**: The update endpoint allows changing `RelationshipTypeId`, which is used by the RelationshipType service during type merges. This modifies type indexes atomically but without distributed transaction guarantees — a crash between removing from old index and adding to new could leave the relationship in neither index.
 
-5. **Type migration during merge**: The update endpoint allows changing `RelationshipTypeId`, which is used by the RelationshipType service during type merges. This modifies type indexes atomically but without distributed transaction guarantees — a crash between removing from old index and adding to new could leave the relationship in neither index.
+5. **Read-modify-write without distributed locks**: Index updates and composite key checks have no concurrency protection. Requires IDistributedLockProvider integration.
 
-6. **Read-modify-write without distributed locks**: Index updates and composite key checks have no concurrency protection. Requires IDistributedLockProvider integration.
-
-7. **Data inconsistency logging without error events**: Lines 126, 225, 307 log Error when index contains ID but model not found, without publishing error event. Could add TryPublishErrorAsync for monitoring.
+6. **Data inconsistency logging without error events**: Error logging when index contains ID but model not found, without publishing error event. Could add TryPublishErrorAsync for monitoring.

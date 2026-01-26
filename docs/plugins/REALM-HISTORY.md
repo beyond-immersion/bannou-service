@@ -174,17 +174,11 @@ No bugs identified.
 
 1. **GetLore returns OK with empty list**: Unlike DeleteLore (which returns NotFound for missing lore), GetLore always returns 200 OK with an empty elements list. Read operations are lenient; delete operations are strict.
 
-2. **Lore merge by type+key pair**: When `replaceExisting=false`, SetLore matches existing elements by combining `ElementType` and `Key`. If a match exists, the value and strength are updated. New type+key combinations are appended.
+2. **Event index `RealmId` field is misleading**: When creating an event index, the code sets `RealmId = body.EventId.ToString()`. The field name is `RealmId` but stores an EventId. The `RealmParticipationIndexData` class is reused for both realm and event indices with confusing field naming.
 
-3. **Proper enum typing in internal models**: Internal models use strongly-typed enums (`RealmEventCategory`, `RealmEventRole`, `RealmLoreElementType`) and Guids, with JSON serialization handling conversions automatically.
+3. **GetLore always returns both timestamps**: Unlike character-history which returns `UpdatedAt=null` if backstory was never modified after creation, realm-history always populates both timestamps.
 
-4. **Summarize is template-based (not AI)**: Text generation uses simple switch-case mapping (e.g., "ORIGIN_MYTH" -> "Origin: {key} - {value}"). No LLM or NLP processing involved.
-
-5. **Polymorphic entity references in lore**: `RelatedEntityId` + `RelatedEntityType` in lore elements supports referencing any entity type (characters, locations, species) without foreign key constraints.
-
-6. **Timestamp preservation on update**: SetLore preserves the original `CreatedAtUnix` timestamp when updating existing lore. Only `UpdatedAtUnix` changes.
-
-7. **DeleteAll is O(n)**: Iterates through all participations for the realm, removing each from event indexes individually. For realms with thousands of events, this could be slow.
+4. **Summarize doesn't publish any event**: `SummarizeRealmHistoryAsync` generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
 
 ### Design Considerations
 
@@ -198,13 +192,9 @@ No bugs identified.
 
 5. **Metadata stored as `object?`**: Participation metadata accepts any JSON structure with no schema validation. Enables flexibility but sacrifices type safety and queryability.
 
-6. **Event index `RealmId` field is misleading**: At line 124, when creating an event index, the code sets `RealmId = body.EventId.ToString()`. The field name is `RealmId` but stores an EventId. The `RealmParticipationIndexData` class is reused for both realm and event indices with confusing field naming.
+6. **DeleteParticipation doesn't delete empty indices**: Realm and event indices are updated by removing the participation ID but don't delete the index documents when they become empty.
 
-7. **GetLore always returns both timestamps**: Lines 449-450 always return both `CreatedAt` and `UpdatedAt`. Unlike character-history which returns `UpdatedAt=null` if backstory was never modified after creation, realm-history always populates both.
-
-8. **DeleteParticipation doesn't delete empty indices**: Lines 356-369 update realm and event indices by removing the participation ID but don't delete the index documents when they become empty. Only DeleteAll deletes the realm index.
-
-9. **Summarize doesn't publish any event**: Like character-history, `SummarizeRealmHistoryAsync` (lines 841-926) generates summaries silently with no event publication. Consuming services have no notification that summarization occurred.
+7. **DeleteAll is O(n)**: Iterates through all participations for the realm, removing each from event indexes individually. For realms with thousands of events, this could be slow.
 
 10. **ORIGIN and INSTIGATOR roles both map to "instigated"**: Lines 1005 and 1011 in `GenerateEventSummary` both produce "instigated" - semantically different roles with identical summary text.
 

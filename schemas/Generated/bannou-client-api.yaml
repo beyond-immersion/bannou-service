@@ -11998,6 +11998,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
@@ -13330,6 +13331,7 @@ components:
           format: uuid
           description: Party entity ID
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         displayName:
           type: string
@@ -14752,6 +14754,7 @@ components:
           format: uuid
           description: Party depositing
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
@@ -14891,6 +14894,7 @@ components:
           format: uuid
           description: Party raising dispute
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         reason:
           type: string
@@ -16081,6 +16085,7 @@ components:
           format: uuid
           description: Party giving consent
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         consentType:
           $ref: '#/components/schemas/EscrowConsentType'
@@ -16135,6 +16140,7 @@ components:
           format: uuid
           description: Party who deposited
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundle'
@@ -16212,6 +16218,7 @@ components:
           format: uuid
           description: Party entity identifier
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         displayName:
           type: string
@@ -16602,6 +16609,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
+          description: Type of depositing party
           $ref: '#/components/schemas/EntityType'
         expectedAssets:
           type: array
@@ -16632,6 +16640,7 @@ components:
           format: uuid
           description: Party who should deposit
         partyType:
+          description: Type of depositing party
           $ref: '#/components/schemas/EntityType'
         expectedAssets:
           type: array
@@ -17735,6 +17744,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
     GetDepositStatusResponse:
       type: object
@@ -23157,6 +23167,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         displayName:
           type: string
@@ -23242,6 +23253,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         token:
           type: string
@@ -24747,6 +24759,7 @@ components:
           format: uuid
           description: Party reaffirming
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         releaseToken:
           type: string
@@ -27509,6 +27522,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         assets:
           type: array
@@ -29362,6 +29376,7 @@ components:
           format: uuid
           description: Party to validate
         partyType:
+          description: Type of entity (Account, Character, etc.)
           $ref: '#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundleInput'
@@ -29635,7 +29650,7 @@ components:
           format: date-time
           description: When the failure was detected
         assetType:
-          type: string
+          $ref: '#/components/schemas/AssetType'
           description: Type of asset affected
         assetDescription:
           type: string

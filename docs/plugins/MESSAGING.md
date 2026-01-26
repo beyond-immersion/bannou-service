@@ -213,15 +213,11 @@ No bugs identified.
 
 2. **HTTP callbacks don't retry on HTTP errors**: Only retries on network failures (`HttpRequestException`, `TaskCanceledException`). HTTP 4xx/5xx is treated as successful delivery. Philosophy: callback endpoint is responsible for its own error handling.
 
-3. **GenericMessageEnvelope wrapping**: The Publish HTTP API wraps payloads in `GenericMessageEnvelope` because the underlying messaging system requires concrete types. Internal `IMessageBus.TryPublishAsync<T>()` uses proper typed events.
+3. **Channel pool size fixed at 10**: `RabbitMQConnectionManager` uses `MAX_POOL_SIZE = 10` hardcoded constant. Not configurable. Consumer channels are separate (not pooled).
 
-4. **Channel pool size fixed at 10**: `RabbitMQConnectionManager` uses `MAX_POOL_SIZE = 10` hardcoded constant. Not configurable. Consumer channels are separate (not pooled).
+4. **Two queue naming schemes**: HTTP API subscriptions use `bannou-dynamic-{id:N}` while internal dynamic subscriptions use `{topic}.dynamic.{id:N}`. Different schemes for different subscription paths.
 
-5. **Two queue naming schemes**: HTTP API subscriptions use `bannou-dynamic-{id:N}` while internal dynamic subscriptions use `{topic}.dynamic.{id:N}`. Different schemes for different subscription paths.
-
-6. **Recovery startup delay**: External subscription recovery waits `SubscriptionRecoveryStartupDelaySeconds` (default 2s) before attempting recovery. Prevents race conditions with RabbitMQ connection establishment.
-
-7. **Exchange caching**: Both `RabbitMQMessageBus` and `MessageRetryBuffer` cache declared exchanges in ConcurrentDictionaries to avoid redundant `ExchangeDeclareAsync` calls. Lock-free thread-safe access.
+5. **GetAwaiter().GetResult() in ReturnChannel**: `RabbitMQConnectionManager.ReturnChannel()` uses synchronous blocking on async disposal. Could cause deadlocks in certain synchronization contexts. Requires method signature change to fix properly.
 
 ### Design Considerations
 
@@ -235,8 +231,4 @@ No bugs identified.
 
 5. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
 
-6. **GetAwaiter().GetResult() in ReturnChannel**: `RabbitMQConnectionManager.ReturnChannel()` uses synchronous blocking on async disposal. Could cause deadlocks in certain synchronization contexts. Requires method signature change to fix properly.
-
-7. **Non-thread-safe List in NativeEventConsumerBackend**: `List<IAsyncDisposable> _subscriptions` is only written in StartAsync and read in StopAsync. Race between late startup and early shutdown is possible but unlikely in practice.
-
-8. **JsonDocument.Parse direct usage**: `RabbitMQMessageTap` uses `JsonDocument.Parse` directly for low-level property extraction. BannouJson doesn't provide document-level parsing, so this is an acceptable boundary exception.
+6. **Non-thread-safe List in NativeEventConsumerBackend**: `List<IAsyncDisposable> _subscriptions` is only written in StartAsync and read in StopAsync. Race between late startup and early shutdown is possible but unlikely in practice.

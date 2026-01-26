@@ -187,19 +187,13 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **480 ticks per beat hardcoded**: All generation uses 480 TPB (standard MIDI resolution). Not configurable per request. This is a common MIDI standard value.
+1. **Storyteller always used for Generate**: Even when no mood or narrative options are provided, the Storyteller SDK is invoked with default parameters (neutral mood → `simple_arc` template).
 
-2. **Seed determinism**: When `body.Seed` is provided, the same seed + parameters produces identical output. This enables Redis caching. Without a seed, `Environment.TickCount` is used (non-deterministic).
+2. **VoiceLead returns violations alongside results**: Unlike validation endpoints that return pass/fail, voice leading always produces voicings even when rules are violated. Violations are reported alongside the result for informational purposes.
 
-3. **Style lookup is in-memory only**: `BuiltInStyles.GetById()` and `BuiltInStyles.All` are static collections. No database lookup occurs. Adding styles requires code deployment.
+3. **Melody infers key from first chord**: `GenerateMelodyAsync` uses the root of the first harmony chord as the key center with Major mode. Does not attempt to detect actual key from the full progression.
 
-4. **Storyteller always used for Generate**: Even when no mood or narrative options are provided, the Storyteller SDK is invoked with default parameters (neutral mood → `simple_arc` template).
-
-5. **Mood-to-template mapping is hardcoded**: The switch expression mapping moods to narrative templates and emotional presets is embedded in code. Not externally configurable.
-
-6. **VoiceLead returns violations alongside results**: Unlike validation endpoints that return pass/fail, voice leading always produces voicings even when rules are violated. Violations are reported alongside the result for informational purposes.
-
-7. **Melody infers key from first chord**: `GenerateMelodyAsync` uses the root of the first harmony chord as the key center with Major mode. Does not attempt to detect actual key from the full progression.
+4. **SDK types cross the API boundary**: Several types (PitchClass, Pitch, PitchRange, VoiceLeadingViolation) use `x-sdk-type` annotations meaning the API models are the actual SDK types. Changes to SDK types directly affect the API contract.
 
 ### Design Considerations
 
@@ -211,10 +205,4 @@ No bugs identified.
 
 4. **No event publishing for compositions**: Generated compositions are not tracked. No analytics on what styles/moods are popular, no composition history per user.
 
-5. **Cache key includes all parameters**: The cache key for deterministic compositions includes seed, style, mood, tempo, bars, key, and tune type. Any parameter change misses the cache.
-
-6. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
-
-7. **SDK types cross the API boundary**: Several types (PitchClass, Pitch, PitchRange, VoiceLeadingViolation) use `x-sdk-type` annotations meaning the API models are the actual SDK types. Changes to SDK types directly affect the API contract.
-
-8. **EmotionalState has 6 floating-point dimensions**: The emotional space is 6D (tension, brightness, energy, warmth, stability, valence). Default values are 0.2/0.5/0.5/0.5/0.8/0.5 respectively. The relationship between these dimensions and musical output is embedded in the Storyteller SDK.
+5. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.

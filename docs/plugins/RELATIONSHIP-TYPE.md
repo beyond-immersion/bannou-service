@@ -223,34 +223,22 @@ None identified.
 
 ### Intentional Quirks
 
-1. **Code immutability**: Once a relationship type is created, its code cannot be changed. The code index key is never updated or deleted on type update.
+1. **Depth auto-calculated but not updated**: Depth is `parent.Depth + 1` at creation time. If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated.
 
-2. **IsBidirectional vs InverseType**: These are separate concepts. Bidirectional relationships (e.g., FRIEND) are symmetric - if A→B exists, B→A is implied. Inverse types (e.g., PARENT↔CHILD) are asymmetric - A is PARENT of B means B is CHILD of A. A type can have neither, either, or both properties.
-
-3. **Depth auto-calculated**: Depth is `parent.Depth + 1` at creation time. If a parent's depth later changes (e.g., its own parent is reassigned), children are NOT automatically updated.
-
-4. **Update only publishes when fields change**: `UpdateRelationshipTypeAsync` tracks changed fields and only publishes `relationship-type.updated` event if `changedFields.Count > 0`.
-
-5. **Guid.Empty as null marker in events**: Event payloads use `Guid.Empty` for nullable fields like `ParentTypeId` and `InverseTypeId` when no value is set.
-
-6. **Merge error detail limit**: Merge operations track up to `MaxMigrationErrorsToTrack` (default 100) individual error details. Beyond that, only the count is accurate.
-
-### Design Considerations
-
-1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. The depth calculation would produce incorrect values. Hierarchy traversal methods (`MatchesHierarchy`, `GetAncestors`, `GetChildTypeIdsAsync`) have a configurable safety limit (`MaxHierarchyDepth`, default 20) to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment.
-
-2. **Code index not cleaned on delete**: When a type is deleted, its code index entry is removed. However, if the code was reassigned between deprecation and deletion (unlikely given code immutability), the index could become stale.
+2. **Guid.Empty as null marker in events**: Event payloads use `Guid.Empty` for nullable fields like `ParentTypeId` and `InverseTypeId` when no value is set.
 
 3. **Partial merge failure leaves inconsistent state**: If merge fails midway, some relationships are migrated and others are not. No rollback mechanism exists. The response reports counts for manual resolution.
 
-4. **Recursive child query unbounded**: `GetChildRelationshipTypes` with `recursive=true` traverses the full subtree. Deep hierarchies with many branches could generate many state store calls.
+4. **Merge page fetch error stops pagination**: If fetching a page of relationships fails during merge, the migration loop terminates. Relationships on subsequent pages are silently un-migrated.
 
-5. **Seed multi-pass has fixed iteration limit**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2` (line 672). For a list of N types, max 2N passes. Extremely deep dependency chains could fail to resolve within the limit.
+### Design Considerations
 
-6. **Merge page fetch error stops pagination**: Like species merge, if `ListRelationshipsByTypeAsync` fails on a page, the migration loop terminates. Relationships on subsequent pages remain un-migrated.
+1. **No circular hierarchy prevention**: Creating types A.parent=B and then B.parent=A is not explicitly prevented. Hierarchy traversal methods have a configurable safety limit (`MaxHierarchyDepth`, default 20) to prevent infinite loops on corrupted data, but circular references are not rejected during parent assignment.
 
-7. **Recursive child query is sequential**: `GetChildTypeIdsAsync` with `recursive=true` traverses the subtree via recursive calls with a configurable depth limit (`MaxHierarchyDepth`, default 20). Each level generates a state store call for the parent index, and wide hierarchies could generate many sequential calls.
+2. **Code index not cleaned on delete**: When a type is deleted, its code index entry is removed. However, if the code was reassigned between deprecation and deletion (unlikely given code immutability), the index could become stale.
 
-8. **Depth is snapshot at creation, never updated**: A type's `Depth` field is set based on parent's depth at creation time (line 407: `depth = parent.Depth + 1`). If a parent's depth changes later, children's depths become stale. The `Depth` field is not recomputed on parent reassignment.
+3. **Recursive child query unbounded**: `GetChildRelationshipTypes` with `recursive=true` traverses the full subtree. Deep hierarchies with many branches could generate many state store calls.
 
-9. **Read-modify-write without distributed locks**: Index updates (`AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, etc.) have no concurrency protection. Concurrent operations can cause lost updates.
+4. **Seed multi-pass has fixed iteration limit**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2`. For a list of N types, max 2N passes. Extremely deep dependency chains could fail to resolve within the limit.
+
+5. **Read-modify-write without distributed locks**: Index updates have no concurrency protection. Concurrent operations can cause lost updates.

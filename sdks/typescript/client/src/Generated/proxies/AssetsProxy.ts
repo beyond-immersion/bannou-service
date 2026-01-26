@@ -37,7 +37,11 @@ export class AssetsProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['UploadResponse']>> {
     return this.client.invokeAsync<Schemas['UploadRequest'], Schemas['UploadResponse']>(
-      'POST', '/assets/upload/request', request, channel, timeout
+      'POST',
+      '/assets/upload/request',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +58,11 @@ export class AssetsProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AssetMetadata']>> {
     return this.client.invokeAsync<Schemas['CompleteUploadRequest'], Schemas['AssetMetadata']>(
-      'POST', '/assets/upload/complete', request, channel, timeout
+      'POST',
+      '/assets/upload/complete',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -71,7 +79,11 @@ export class AssetsProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AssetWithDownloadUrl']>> {
     return this.client.invokeAsync<Schemas['GetAssetRequest'], Schemas['AssetWithDownloadUrl']>(
-      'POST', '/assets/get', request, channel, timeout
+      'POST',
+      '/assets/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -88,7 +100,11 @@ export class AssetsProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AssetVersionList']>> {
     return this.client.invokeAsync<Schemas['ListVersionsRequest'], Schemas['AssetVersionList']>(
-      'POST', '/assets/list-versions', request, channel, timeout
+      'POST',
+      '/assets/list-versions',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -105,7 +121,11 @@ export class AssetsProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AssetSearchResult']>> {
     return this.client.invokeAsync<Schemas['AssetSearchRequest'], Schemas['AssetSearchResult']>(
-      'POST', '/assets/search', request, channel, timeout
+      'POST',
+      '/assets/search',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -121,8 +141,9 @@ export class AssetsProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BulkGetAssetsResponse']>> {
-    return this.client.invokeAsync<Schemas['BulkGetAssetsRequest'], Schemas['BulkGetAssetsResponse']>(
-      'POST', '/assets/bulk-get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['BulkGetAssetsRequest'],
+      Schemas['BulkGetAssetsResponse']
+    >('POST', '/assets/bulk-get', request, channel, timeout);
   }
 }

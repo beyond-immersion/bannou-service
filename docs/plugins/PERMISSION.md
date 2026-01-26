@@ -222,32 +222,20 @@ None identified.
 
 ### Intentional Quirks
 
-1. **Singleton lifetime**: Unlike most services (Scoped), PermissionService is Singleton. The in-memory `ConcurrentDictionary` cache persists for the application lifetime, enabling fast capability lookups without Redis calls.
+1. **activeConnections guards publishing**: Capability updates are only published to sessions in the `active_connections` set. Publishing to sessions without WebSocket connections causes RabbitMQ `exchange not_found` errors that crash the channel.
 
-2. **Idempotent registration via SHA-256 hash**: Permission data is hashed using a canonical sorted representation. If the hash matches and the service is already registered, registration is skipped entirely. Prevents redundant recompilation on service restarts.
+2. **ValidateApiAccess never uses cache**: Unlike `GetCapabilities` which uses the in-memory cache, `ValidateApiAccess` always reads from Redis. This ensures validation uses the latest compiled permissions at the cost of latency.
 
-3. **Lock scope minimized**: The distributed lock for `registered_services` list is held only for the read-modify-write on the set. Session recompilation happens OUTSIDE the lock to prevent lock timeouts during concurrent registrations at startup.
+3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until the session is garbage-collected or a new recompilation overwrites it.
 
-4. **activeConnections guards publishing**: Capability updates are only published to sessions in the `active_connections` set. Publishing to sessions without WebSocket connections causes RabbitMQ `exchange not_found` errors that crash the channel.
-
-5. **Cross-service state keys**: State keys use format `{serviceId}:{stateValue}` for cross-service states (e.g., `game-session:in_game`). Same-service states use just the state value (e.g., `in_game`). Matches registration logic in `HandleServiceRegistrationAsync`.
-
-6. **Authorization strings format**: From Auth service's `SessionUpdatedEvent`, authorizations are in `{stubName}:{state}` format (e.g., `arcadia:authorized`). The stub name becomes the service ID for state tracking.
-
-7. **ValidateApiAccess never uses cache**: Unlike `GetCapabilities` which uses the in-memory cache, `ValidateApiAccess` always reads from Redis. This ensures validation uses the latest compiled permissions at the cost of latency.
+4. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
 
 ### Design Considerations
 
 1. **Full session recompilation on service registration**: Every time a service registers, ALL active sessions are recompiled. With many concurrent sessions and frequent service restarts, this generates O(sessions * services) Redis operations.
 
-2. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until the session is garbage-collected or a new recompilation overwrites it.
+2. **Permission matrix stored as individual keys**: Each `service:state:role` combination is a separate Redis key. For 40 services with 3 states and 4 roles, this is 480 keys. Queries during recompilation read many keys per session.
 
-3. **Permission matrix stored as individual keys**: Each `service:state:role` combination is a separate Redis key. For 40 services with 3 states and 4 roles, this is 480 keys. Queries during recompilation read many keys per session.
+3. **Read-modify-write on session sets**: `activeConnections`/`activeSessions` set operations without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
 
-4. **Exponential backoff jitter**: Lock retry uses `baseDelayMs * (1 << min(attempt, 5)) + random(0, 50)`. Maximum delay caps at 32x base (3200ms + jitter). 10 retries at worst case = ~6 seconds of waiting.
-
-5. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
-
-6. **Read-modify-write on session sets**: `activeConnections`/`activeSessions` set operations without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
-
-7. **Anonymous type for registration info**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. Should define a typed `ServiceRegistrationInfo` POCO class.
+4. **Anonymous type for registration info**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. Should define a typed `ServiceRegistrationInfo` POCO class.

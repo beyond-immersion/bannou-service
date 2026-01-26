@@ -265,23 +265,17 @@ No other bugs identified.
 
 ### Intentional Quirks
 
-1. **Static `_accountSubscriptions` cache with eviction**: A `static ConcurrentDictionary` shared across all scoped instances. Only holds accounts with active subscriptions - entries are evicted when the last subscription is removed. Unsubscribed accounts are NOT cached (triggers a fresh Subscription service query on each connect event). This is a local filter cache only - authoritative state is in lib-state's subscriber sessions.
+1. **Lobby stored twice**: Auto-created lobbies are saved under both `session:{sessionId}` and `lobby:{stubName}` keys. The lobby key enables O(1) lookup by game type; the session key enables the standard session operations. Potential for drift if one write fails.
 
-2. **Dual join paths**: `JoinGameSessionAsync` joins by game type (resolves lobby), while `JoinGameSessionByIdAsync` joins by session ID (for matchmade sessions). Both share the same lock/permission/event pattern but have different validation (subscriber session vs reservation token).
+2. **Session timeout 0 = infinite**: When `DefaultSessionTimeoutSeconds` is 0, `SessionTtlOptions` is null and no TTL is applied to state store saves. Sessions persist indefinitely until explicitly deleted or cleaned up.
 
-3. **Voice integration is non-fatal**: Voice room creation, join, leave, and delete failures are all caught and logged as warnings. Sessions function without voice if the voice service is unavailable.
+3. **Chat allows messages from non-members**: `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
 
-4. **Permission state rollback on failure**: If setting `in_game` permission state fails during join, the player is removed from the session model before saving. For matchmade sessions, the reservation is also un-claimed.
+4. **Whisper to non-existent target silently succeeds**: If the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
 
-5. **ServerSalt is required (fail-fast)**: Constructor throws `InvalidOperationException` if `ServerSalt` is empty. All instances must share the same salt for GUID generation to produce consistent shortcuts.
+5. **Chat returns OK when no players exist**: Returns `StatusCodes.OK` even when all players have left (no WebSocket sessions to deliver to). From the sender's perspective, the message "sent" successfully.
 
-6. **Reconnection re-publishes shortcuts**: `session.reconnected` is handled identically to `session.connected` - all shortcuts are re-published. This handles the case where a client loses connection and reconnects without needing to re-subscribe.
-
-7. **Lobby stored twice**: Auto-created lobbies are saved under both `session:{sessionId}` and `lobby:{stubName}` keys. The lobby key enables O(1) lookup by game type; the session key enables the standard session operations.
-
-8. **Session timeout 0 = infinite**: When `DefaultSessionTimeoutSeconds` is 0, `SessionTtlOptions` is null and no TTL is applied to state store saves. Sessions persist indefinitely until explicitly deleted or cleaned up.
-
-9. **Whisper chat delivery**: Whisper messages are sent to exactly two recipients (sender and target) using individual `PublishToSessionAsync` calls. The sender receives a copy with `IsWhisperToMe=false` for local echo.
+6. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.
 
 ### Design Considerations
 
@@ -295,18 +289,8 @@ No other bugs identified.
 
 5. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
 
-6. **Chat broadcasts to all players regardless of game state**: `SendChatMessageAsync` sends to all players in the session. There's no concept of "muted" players or chat rate limiting.
+6. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
-7. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+7. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
 
-8. **Chat allows messages from non-members**: `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
-
-9. **Whisper to non-existent target silently succeeds**: If the whisper target isn't in the session (or has left), the whisper is silently not delivered to them. The sender still receives their copy. No error returned.
-
-10. **Chat returns OK when no players exist**: Returns `StatusCodes.OK` even when all players have left (no WebSocket sessions to deliver to). From the sender's perspective, the message "sent" successfully.
-
-11. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
-
-12. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
-
-13. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.
+8. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.

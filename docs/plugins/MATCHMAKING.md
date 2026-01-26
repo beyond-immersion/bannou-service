@@ -258,23 +258,15 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **ServerSalt required (fail-fast)**: Constructor throws `InvalidOperationException` if `ServerSalt` is empty. All instances must share the same salt for consistent shortcut GUID generation.
+1. **Disconnect cancels tickets per-session**: When a session disconnects, only tickets with matching `WebSocketSessionId` are cancelled. A player with tickets from multiple sessions only loses the disconnected session's tickets.
 
-2. **Immediate match check on join**: When `ImmediateMatchCheckEnabled=true`, newly created tickets immediately try to form a match (with no skill expansion). This provides instant matches when enough compatible players are already waiting.
+2. **Reconnection restores pending matches only**: Reconnection checks for `pending-match:{accountId}` (match in accept phase). It does NOT restore `Searching` tickets - those are cancelled on disconnect.
 
-3. **Exclusive groups prevent dual-queuing**: If two queues share an `ExclusiveGroup`, a player can only be in one at a time. Prevents exploiting overlapping queues.
+3. **Auto-requeue creates new tickets**: When `AutoRequeueOnDecline=true` and a match is declined, non-declining players get new tickets (new IDs, reset intervals). Their original tickets are cleaned up.
 
-4. **Party skill aggregation**: Three modes for multi-player parties: `Highest` (uses max rating), `Average` (mean), `Weighted` (configurable per-position weights). Default fallback is Average.
+4. **Lock owner is random GUID per call**: Each lock acquisition uses `Guid.NewGuid().ToString()` as the owner. The same service instance cannot extend or re-acquire its own lock.
 
-5. **Disconnect cancels tickets per-session**: When a session disconnects, only tickets with matching `WebSocketSessionId` are cancelled. A player with tickets from multiple sessions only loses the disconnected session's tickets.
-
-6. **Reconnection restores pending matches only**: Reconnection checks for `pending-match:{accountId}` (match in accept phase). It does NOT restore `Searching` tickets - those are cancelled on disconnect.
-
-7. **Background service creates scoped service**: `MatchmakingBackgroundService` creates a new DI scope per processing cycle via `IServiceProvider.CreateScope()`. This correctly handles the scoped lifetime of `MatchmakingService`.
-
-8. **Auto-requeue creates new tickets**: When `AutoRequeueOnDecline=true` and a match is declined, non-declining players get new tickets (new IDs, reset intervals). Their original tickets are cleaned up.
-
-9. **Match lock timeout 30 seconds**: Accept/decline operations use a 30-second distributed lock on the match. Shorter than game-session's 60-second locks because accept operations are simpler.
+5. **Reconnection updates ticket session ID silently**: The ticket's `WebSocketSessionId` is updated to the new session on reconnection. No event published for this session ID change.
 
 ### Design Considerations
 
@@ -286,24 +278,4 @@ No bugs identified.
 
 4. **Algorithm is internal and inline**: `MatchmakingAlgorithm` is constructed directly in the service constructor (not DI-registered). `InternalsVisibleTo` enables unit testing, but integration tests can't substitute it.
 
-5. **Permission state cleanup on match finalization**: Each matched player's permission state is cleared individually with separate try-catch. A failure clearing one player's state doesn't prevent others from being cleared.
-
-6. **Pending match TTL provides reconnection window**: `PendingMatchRedisKeyTtlSeconds=300` (5 minutes) defines how long after disconnect a player can reconnect and resume the accept flow. After TTL expiry, the match may timeout independently.
-
-7. **Index locks are 15 seconds, match locks are 30 seconds**: Queue list operations (add/remove from queue-list, queue-tickets) use 15-second locks (lines 1515, 1534, 1657, 1677), while match accept/decline uses 30-second locks (line 728). Different timeouts for different operation complexities.
-
-8. **Lock owner is random GUID per call**: Like game-session, each lock acquisition uses `Guid.NewGuid().ToString()` as the owner. The same service instance cannot extend or re-acquire its own lock.
-
-9. **ListQueues loads all queue IDs then fetches each**: `ListQueuesAsync` (lines 119-149) loads all queue IDs from `queue-list`, then iterates and loads each queue individually. No batch loading. With many queues, this is N+1 database calls.
-
-10. **Reconnection re-sends MatchFoundEvent with remaining time**: When a player reconnects with a pending match (lines 146-158), they receive a new `MatchFoundEvent` with `AcceptTimeoutSeconds` calculated as the remaining time until deadline. Negative values are clamped to 0 (`Math.Max(0, ...)`).
-
-11. **Reconnection updates ticket session ID silently**: Lines 135-140 update the ticket's `WebSocketSessionId` to the new session on reconnection. No event published for this session ID change.
-
-12. **Disconnect handler returns early without logging for unauthenticated sessions**: Line 58-63 - if `AccountId` is null (unauthenticated connection), cleanup is skipped with only a debug log. No warning for potential missed cleanup.
-
-13. **Session.connected is a no-op**: `HandleSessionConnectedAsync` (lines 41-48) does nothing - just logs at debug level. Players must explicitly join queues; there's no automatic queue restoration on fresh connection (only on reconnection).
-
-14. **Internal POCOs use plain Dictionary (thread-safe by design)**: `TicketModel` uses `Dictionary<string, string>` and `Dictionary<string, double>` for properties. This is safe because POCOs are deserialized fresh from Redis on each access - no POCO instance is shared across threads or mutated after creation.
-
-15. **Internal model classes lack XML documentation**: `SkillExpansionStepModel`, `PartyMemberModel`, and `MatchedTicketModel` are internal classes without `<summary>` documentation. Could improve maintainability but not required for functionality.
+5. **ListQueues loads all queue IDs then fetches each**: `ListQueuesAsync` loads all queue IDs from `queue-list`, then iterates and loads each queue individually. No batch loading. With many queues, this is N+1 database calls.

@@ -226,17 +226,17 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Code uniqueness is per-realm**: The same code (e.g., "TAVERN") can exist in multiple realms. The code index key includes realm ID: `code-index:{realmId}:{CODE}`.
+1. **Delete doesn't require deprecation**: Unlike species and relationship-type, locations can be hard-deleted without first being deprecated. However, they cannot be deleted if they have child locations.
 
-2. **Delete doesn't require deprecation**: Unlike species and relationship-type, locations can be hard-deleted without first being deprecated. However, they cannot be deleted if they have child locations.
+2. **Realm validation only at creation**: `CreateLocation` validates realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm. A deleted realm's locations remain accessible.
 
-3. **Circular reference prevention**: `IsDescendantOfAsync` walks up the parent chain (max 20 levels) to detect if the proposed parent is actually a descendant of the current location. Prevents creating cycles.
+3. **Seed update doesn't publish events**: When updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
 
-4. **Cascading depth updates**: When a location's parent changes, `UpdateDescendantDepthsAsync` recursively updates all descendant depths (max 20 levels deep). This happens synchronously within the request.
+4. **ListLocationsByParent returns NotFound for missing parent**: If the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
 
-5. **Realm validation only at creation**: `CreateLocation` validates realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm. A deleted realm's locations remain accessible.
+5. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
 
-6. **Same-realm enforcement for parents**: `SetLocationParent` validates that the new parent is in the same realm as the location. Cross-realm parent-child relationships are forbidden.
+6. **Event sentinel values for nullable fields**: Events use `Guid.Empty` for null parent, `default` for null deprecation date, and `new object()` for null metadata. Schema should define these as optional instead of using sentinel values.
 
 ### Design Considerations
 
@@ -248,16 +248,8 @@ No bugs identified.
 
 4. **Seed realm code resolution is serial**: During seeding, each unique realm code triggers a separate `IRealmClient.GetRealmByCodeAsync` call. Many locations in the same realm still only resolve once (cached in local dict), but multiple realms = serial calls.
 
-5. **Seed update doesn't publish events**: Lines 1084-1101 - when updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
+5. **Index updates lack optimistic concurrency**: Index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
 
-6. **Index updates lack optimistic concurrency**: Index operations (realm, parent, root) load list, modify in-memory, then save without ETag or locking. Concurrent location creations could lose index updates in a race condition.
+6. **Empty parent index key not cleaned up**: When the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
 
-7. **Empty parent index key not cleaned up**: When the last child is removed from a parent index, the key remains with an empty list rather than being deleted. Over time, empty index keys accumulate.
-
-8. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
-
-9. **ListLocationsByParent returns NotFound for missing parent**: Lines 264-267 - if the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
-
-10. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
-
-11. **Event sentinel values for nullable fields**: Events use `Guid.Empty` for null parent, `default` for null deprecation date, and `new object()` for null metadata. Schema should define these as optional instead of using sentinel values.
+7. **Depth cascade updates descendants sequentially**: `UpdateDescendantDepthsAsync` first collects ALL descendants (up to 20 levels), then updates each one with a separate state store call. A wide tree with hundreds of descendants generates hundreds of sequential writes in a single request.
