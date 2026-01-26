@@ -89,7 +89,7 @@ public partial class MatchmakingService
                 // Cancel the ticket
                 await CancelTicketInternalAsync(
                     ticket.TicketId,
-                    CancelReason.Session_disconnected,
+                    CancelReason.SessionDisconnected,
                     CancellationToken.None);
             }
         }

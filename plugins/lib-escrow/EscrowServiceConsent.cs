@@ -33,8 +33,8 @@ public partial class EscrowService
                 var validConsentStates = new HashSet<EscrowStatus>
                 {
                     EscrowStatus.Funded,
-                    EscrowStatus.Pending_consent,
-                    EscrowStatus.Pending_condition
+                    EscrowStatus.PendingConsent,
+                    EscrowStatus.PendingCondition
                 };
 
                 if (!validConsentStates.Contains(agreementModel.Status))
@@ -56,7 +56,7 @@ public partial class EscrowService
                 }
 
                 // Validate release token if in full_consent mode (read-only validation, marking deferred)
-                if (agreementModel.TrustMode == EscrowTrustMode.Full_consent &&
+                if (agreementModel.TrustMode == EscrowTrustMode.FullConsent &&
                     body.ConsentType == EscrowConsentType.Release)
                 {
                     if (string.IsNullOrEmpty(body.ReleaseToken))
@@ -138,13 +138,13 @@ public partial class EscrowService
                         if (releaseConsentCount >= requiredConsents)
                         {
                             newStatus = agreementModel.BoundContractId != null
-                                ? EscrowStatus.Pending_condition
+                                ? EscrowStatus.PendingCondition
                                 : EscrowStatus.Finalizing;
                             triggered = true;
                         }
                         else if (previousStatus == EscrowStatus.Funded)
                         {
-                            newStatus = EscrowStatus.Pending_consent;
+                            newStatus = EscrowStatus.PendingConsent;
                         }
                         break;
 
@@ -174,7 +174,7 @@ public partial class EscrowService
 
                 // Agreement saved successfully - now perform secondary operations
                 // Mark release token as used (deferred to after agreement save for atomicity)
-                if (agreementModel.TrustMode == EscrowTrustMode.Full_consent &&
+                if (agreementModel.TrustMode == EscrowTrustMode.FullConsent &&
                     body.ConsentType == EscrowConsentType.Release &&
                     !string.IsNullOrEmpty(body.ReleaseToken))
                 {

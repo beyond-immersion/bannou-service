@@ -1327,13 +1327,13 @@ public partial class AchievementService : IAchievementService
         var isLinked = await syncProvider.IsLinkedAsync(entityId, cancellationToken);
         if (!isLinked)
         {
-            return SyncStatus.Not_linked;
+            return SyncStatus.NotLinked;
         }
 
         var externalId = await syncProvider.GetExternalIdAsync(entityId, cancellationToken);
         if (string.IsNullOrEmpty(externalId))
         {
-            return SyncStatus.Not_linked;
+            return SyncStatus.NotLinked;
         }
 
         var platformAchievementId = definition.PlatformIds?.GetValueOrDefault(platform);

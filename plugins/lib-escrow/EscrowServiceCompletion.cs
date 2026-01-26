@@ -168,10 +168,10 @@ public partial class EscrowService
                 var validRefundStates = new HashSet<EscrowStatus>
                 {
                     EscrowStatus.Refunding,
-                    EscrowStatus.Validation_failed,
+                    EscrowStatus.ValidationFailed,
                     EscrowStatus.Disputed,
-                    EscrowStatus.Partially_funded,
-                    EscrowStatus.Pending_deposits
+                    EscrowStatus.PartiallyFunded,
+                    EscrowStatus.PendingDeposits
                 };
 
                 if (!validRefundStates.Contains(agreementModel.Status))
@@ -295,8 +295,8 @@ public partial class EscrowService
 
                 var validCancelStates = new HashSet<EscrowStatus>
                 {
-                    EscrowStatus.Pending_deposits,
-                    EscrowStatus.Partially_funded
+                    EscrowStatus.PendingDeposits,
+                    EscrowStatus.PartiallyFunded
                 };
 
                 if (!validCancelStates.Contains(agreementModel.Status))
@@ -320,7 +320,7 @@ public partial class EscrowService
                 }
 
                 agreementModel.Status = EscrowStatus.Cancelled;
-                agreementModel.Resolution = EscrowResolution.Cancelled_refunded;
+                agreementModel.Resolution = EscrowResolution.CancelledRefunded;
                 agreementModel.CompletedAt = now;
                 agreementModel.ResolutionNotes = body.Reason;
 
@@ -410,8 +410,8 @@ public partial class EscrowService
                 var validDisputeStates = new HashSet<EscrowStatus>
                 {
                     EscrowStatus.Funded,
-                    EscrowStatus.Pending_consent,
-                    EscrowStatus.Pending_condition,
+                    EscrowStatus.PendingConsent,
+                    EscrowStatus.PendingCondition,
                     EscrowStatus.Finalizing
                 };
 

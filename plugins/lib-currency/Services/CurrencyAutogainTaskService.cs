@@ -287,7 +287,7 @@ public class CurrencyAutogainTaskService : BackgroundService
                 PeriodsApplied = periodsElapsed,
                 AmountGained = gain,
                 NewBalance = balance.Amount,
-                AutogainMode = (definition.AutogainMode ?? AutogainMode.Simple).ToString(),
+                AutogainMode = definition.AutogainMode ?? AutogainMode.Simple,
                 CalculatedAt = now,
                 PeriodsFrom = periodsFrom,
                 PeriodsTo = balance.LastAutogainAt.Value

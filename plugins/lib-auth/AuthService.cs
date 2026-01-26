@@ -1359,7 +1359,7 @@ public partial class AuthService : IAuthService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                Provider = provider,
+                Provider = Enum.Parse<Provider>(provider, ignoreCase: true),
                 ProviderUserId = providerUserId,
                 SessionId = sessionId,
                 IsNewAccount = isNewAccount

@@ -1676,7 +1676,7 @@ public partial class SceneService : ISceneService
                         NodeId = node.NodeId,
                         RefId = node.RefId,
                         ReferencedSceneId = referencedSceneId.Value,
-                        Reason = UnresolvedReferenceReason.Depth_exceeded
+                        Reason = UnresolvedReferenceReason.DepthExceeded
                     });
                     errors.Add($"Reference at node '{node.RefId}' exceeds max depth {maxDepth}");
                 }
@@ -1687,7 +1687,7 @@ public partial class SceneService : ISceneService
                         NodeId = node.NodeId,
                         RefId = node.RefId,
                         ReferencedSceneId = referencedSceneId.Value,
-                        Reason = UnresolvedReferenceReason.Circular_reference,
+                        Reason = UnresolvedReferenceReason.CircularReference,
                         CyclePath = visited.ToList()
                     });
                     errors.Add($"Circular reference detected at node '{node.RefId}'");
@@ -1704,7 +1704,7 @@ public partial class SceneService : ISceneService
                             NodeId = node.NodeId,
                             RefId = node.RefId,
                             ReferencedSceneId = referencedSceneId.Value,
-                            Reason = UnresolvedReferenceReason.Not_found
+                            Reason = UnresolvedReferenceReason.NotFound
                         });
                         errors.Add($"Referenced scene '{referencedSceneId.Value}' not found");
                     }

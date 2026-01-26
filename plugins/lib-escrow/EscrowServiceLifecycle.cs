@@ -32,7 +32,7 @@ public partial class EscrowService
             var escrowId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
-            if (body.TrustMode == EscrowTrustMode.Single_party_trusted && body.TrustedPartyId == null)
+            if (body.TrustMode == EscrowTrustMode.SinglePartyTrusted && body.TrustedPartyId == null)
             {
                 return (StatusCodes.BadRequest, null);
             }
@@ -60,7 +60,7 @@ public partial class EscrowService
                     ReleaseTokenUsed = false
                 };
 
-                if (body.TrustMode == EscrowTrustMode.Full_consent)
+                if (body.TrustMode == EscrowTrustMode.FullConsent)
                 {
                     var hasExpectedDeposit = body.ExpectedDeposits.Any(ed =>
                         ed.PartyId == partyInput.PartyId && ed.PartyType == partyInput.PartyType);
@@ -154,7 +154,7 @@ public partial class EscrowService
                 ReleaseAllocations = releaseAllocationModels,
                 BoundContractId = body.BoundContractId,
                 Consents = new List<EscrowConsentModel>(),
-                Status = EscrowStatus.Pending_deposits,
+                Status = EscrowStatus.PendingDeposits,
                 RequiredConsentsForRelease = requiredConsents,
                 CreatedAt = now,
                 ExpiresAt = expiresAt,
@@ -173,11 +173,11 @@ public partial class EscrowService
                 await TokenStore.SaveAsync(tokenKey, tokenRecord, cancellationToken: cancellationToken);
             }
 
-            var statusIndexKey = $"{GetStatusIndexKey(EscrowStatus.Pending_deposits)}:{escrowId}";
+            var statusIndexKey = $"{GetStatusIndexKey(EscrowStatus.PendingDeposits)}:{escrowId}";
             var statusEntry = new StatusIndexEntry
             {
                 EscrowId = escrowId,
-                Status = EscrowStatus.Pending_deposits,
+                Status = EscrowStatus.PendingDeposits,
                 ExpiresAt = expiresAt,
                 AddedAt = now
             };
@@ -445,7 +445,7 @@ public partial class EscrowService
         {
             EscrowPartyRole.Depositor => true,
             EscrowPartyRole.Recipient => true,
-            EscrowPartyRole.Depositor_recipient => true,
+            EscrowPartyRole.DepositorRecipient => true,
             EscrowPartyRole.Arbiter => false,
             EscrowPartyRole.Observer => false,
             _ => false

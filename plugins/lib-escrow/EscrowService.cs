@@ -106,14 +106,14 @@ public partial class EscrowService : IEscrowService
     /// </summary>
     private static readonly Dictionary<EscrowStatus, HashSet<EscrowStatus>> ValidTransitions = new()
     {
-        [EscrowStatus.Pending_deposits] = new HashSet<EscrowStatus>
+        [EscrowStatus.PendingDeposits] = new HashSet<EscrowStatus>
         {
-            EscrowStatus.Partially_funded,
+            EscrowStatus.PartiallyFunded,
             EscrowStatus.Funded,
             EscrowStatus.Cancelled,
             EscrowStatus.Expired
         },
-        [EscrowStatus.Partially_funded] = new HashSet<EscrowStatus>
+        [EscrowStatus.PartiallyFunded] = new HashSet<EscrowStatus>
         {
             EscrowStatus.Funded,
             EscrowStatus.Refunding,
@@ -122,29 +122,29 @@ public partial class EscrowService : IEscrowService
         },
         [EscrowStatus.Funded] = new HashSet<EscrowStatus>
         {
-            EscrowStatus.Pending_consent,
-            EscrowStatus.Pending_condition,
+            EscrowStatus.PendingConsent,
+            EscrowStatus.PendingCondition,
             EscrowStatus.Disputed,
             EscrowStatus.Finalizing
         },
-        [EscrowStatus.Pending_consent] = new HashSet<EscrowStatus>
+        [EscrowStatus.PendingConsent] = new HashSet<EscrowStatus>
         {
             EscrowStatus.Finalizing,
             EscrowStatus.Refunding,
             EscrowStatus.Disputed,
             EscrowStatus.Expired
         },
-        [EscrowStatus.Pending_condition] = new HashSet<EscrowStatus>
+        [EscrowStatus.PendingCondition] = new HashSet<EscrowStatus>
         {
             EscrowStatus.Finalizing,
             EscrowStatus.Refunding,
-            EscrowStatus.Validation_failed,
+            EscrowStatus.ValidationFailed,
             EscrowStatus.Disputed,
             EscrowStatus.Expired
         },
-        [EscrowStatus.Validation_failed] = new HashSet<EscrowStatus>
+        [EscrowStatus.ValidationFailed] = new HashSet<EscrowStatus>
         {
-            EscrowStatus.Pending_condition,
+            EscrowStatus.PendingCondition,
             EscrowStatus.Refunding
         },
         [EscrowStatus.Finalizing] = new HashSet<EscrowStatus>
@@ -679,7 +679,7 @@ public partial class EscrowService : IEscrowService
             {
                 AssetType.Currency => $"{asset.CurrencyAmount} {asset.CurrencyCode ?? "currency"}",
                 AssetType.Item => asset.ItemName ?? "item",
-                AssetType.Item_stack => $"{asset.ItemQuantity}x {asset.ItemTemplateName ?? "items"}",
+                AssetType.ItemStack => $"{asset.ItemQuantity}x {asset.ItemTemplateName ?? "items"}",
                 AssetType.Contract => asset.ContractTemplateCode ?? "contract",
                 AssetType.Custom => asset.CustomAssetType ?? "custom asset",
                 _ => "unknown asset"
@@ -713,7 +713,7 @@ internal class EscrowAgreementModel
     public List<ReleaseAllocationModel>? ReleaseAllocations { get; set; }
     public Guid? BoundContractId { get; set; }
     public List<EscrowConsentModel>? Consents { get; set; }
-    public EscrowStatus Status { get; set; } = EscrowStatus.Pending_deposits;
+    public EscrowStatus Status { get; set; } = EscrowStatus.PendingDeposits;
     public int RequiredConsentsForRelease { get; set; } = -1;
     public DateTimeOffset? LastValidatedAt { get; set; }
     public List<ValidationFailureModel>? ValidationFailures { get; set; }
@@ -737,7 +737,7 @@ internal class EscrowAgreementModel
 internal class EscrowPartyModel
 {
     public Guid PartyId { get; set; }
-    public string PartyType { get; set; } = string.Empty;
+    public EntityType PartyType { get; set; }
     public string? DisplayName { get; set; }
     public EscrowPartyRole Role { get; set; }
     public bool ConsentRequired { get; set; }
@@ -759,7 +759,7 @@ internal class EscrowPartyModel
 internal class ExpectedDepositModel
 {
     public Guid PartyId { get; set; }
-    public string PartyType { get; set; } = string.Empty;
+    public EntityType PartyType { get; set; }
     public List<EscrowAssetModel>? ExpectedAssets { get; set; }
     public bool Optional { get; set; }
     public DateTimeOffset? DepositDeadline { get; set; }
@@ -774,7 +774,7 @@ internal class EscrowDepositModel
     public Guid DepositId { get; set; }
     public Guid EscrowId { get; set; }
     public Guid PartyId { get; set; }
-    public string PartyType { get; set; } = string.Empty;
+    public EntityType PartyType { get; set; }
     public EscrowAssetBundleModel Assets { get; set; } = new();
     public DateTimeOffset DepositedAt { get; set; }
     public string? DepositTokenUsed { get; set; }
@@ -837,7 +837,7 @@ internal class ReleaseAllocationModel
 internal class EscrowConsentModel
 {
     public Guid PartyId { get; set; }
-    public string PartyType { get; set; } = string.Empty;
+    public EntityType PartyType { get; set; }
     public EscrowConsentType ConsentType { get; set; }
     public DateTimeOffset ConsentedAt { get; set; }
     public string? ReleaseTokenUsed { get; set; }
@@ -909,7 +909,7 @@ internal class AssetHandlerModel
 internal class PartyPendingCount
 {
     public Guid PartyId { get; set; }
-    public string PartyType { get; set; } = string.Empty;
+    public EntityType PartyType { get; set; }
     public int PendingCount { get; set; }
     public DateTimeOffset LastUpdated { get; set; }
 }

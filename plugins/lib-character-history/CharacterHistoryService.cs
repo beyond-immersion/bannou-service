@@ -146,7 +146,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 CharacterId = body.CharacterId,
                 HistoricalEventId = body.EventId,
                 ParticipationId = participationId,
-                Role = body.Role.ToString()
+                Role = body.Role
             }, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Recorded participation {ParticipationId} for character {CharacterId}",

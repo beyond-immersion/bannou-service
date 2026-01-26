@@ -571,10 +571,10 @@ public partial class DocumentationService : IDocumentationService
             // Apply sorting
             IEnumerable<(DocumentSummary Summary, StoredDocument Doc)> sortedDocuments = body.SortBy switch
             {
-                ListSortField.Created_at => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                ListSortField.CreatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
                     ? documentsWithMetadata.OrderBy(d => d.Doc.CreatedAt)
                     : documentsWithMetadata.OrderByDescending(d => d.Doc.CreatedAt),
-                ListSortField.Updated_at => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                ListSortField.UpdatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
                     ? documentsWithMetadata.OrderBy(d => d.Doc.UpdatedAt)
                     : documentsWithMetadata.OrderByDescending(d => d.Doc.UpdatedAt),
                 ListSortField.Title => body.SortOrder == ListDocumentsRequestSortOrder.Asc
@@ -1917,7 +1917,7 @@ public partial class DocumentationService : IDocumentationService
     {
         return source switch
         {
-            SuggestionSource.Document_id => $"Related to document {sourceValue}",
+            SuggestionSource.DocumentId => $"Related to document {sourceValue}",
             SuggestionSource.Slug => $"Similar to '{sourceValue}'",
             SuggestionSource.Topic => $"Covers topic '{sourceValue}'",
             SuggestionSource.Category => $"In category '{doc.Category}'",

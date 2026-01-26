@@ -112,7 +112,7 @@ public partial class EscrowService
                 return;
             }
 
-            if (agreementModel.Status != EscrowStatus.Pending_condition)
+            if (agreementModel.Status != EscrowStatus.PendingCondition)
             {
                 _logger.LogDebug("Escrow {EscrowId} in state {Status}, not Pending_condition; ignoring contract.fulfilled",
                     escrowId, agreementModel.Status);
@@ -209,9 +209,9 @@ public partial class EscrowService
             // Only refund from states where a contract termination is meaningful
             var validStatesForContractRefund = new HashSet<EscrowStatus>
             {
-                EscrowStatus.Pending_condition,
-                EscrowStatus.Validation_failed,
-                EscrowStatus.Pending_consent
+                EscrowStatus.PendingCondition,
+                EscrowStatus.ValidationFailed,
+                EscrowStatus.PendingConsent
             };
 
             if (!validStatesForContractRefund.Contains(agreementModel.Status))

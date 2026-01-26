@@ -50,8 +50,8 @@ public partial class EscrowService
                     return (StatusCodes.NotFound, null);
                 }
 
-                if (agreementModel.Status != EscrowStatus.Pending_deposits &&
-                    agreementModel.Status != EscrowStatus.Partially_funded)
+                if (agreementModel.Status != EscrowStatus.PendingDeposits &&
+                    agreementModel.Status != EscrowStatus.PartiallyFunded)
                 {
                     return (StatusCodes.BadRequest, null);
                 }
@@ -70,7 +70,7 @@ public partial class EscrowService
                 }
 
                 // Validate deposit token if in full_consent mode (read-only validation, marking deferred)
-                if (agreementModel.TrustMode == EscrowTrustMode.Full_consent)
+                if (agreementModel.TrustMode == EscrowTrustMode.FullConsent)
                 {
                     if (string.IsNullOrEmpty(body.DepositToken))
                     {
@@ -156,7 +156,7 @@ public partial class EscrowService
                 }
                 else
                 {
-                    newStatus = EscrowStatus.Partially_funded;
+                    newStatus = EscrowStatus.PartiallyFunded;
                     agreementModel.Status = newStatus;
                 }
 
@@ -170,7 +170,7 @@ public partial class EscrowService
 
                 // Agreement saved successfully - now perform secondary operations
                 // Mark deposit token as used (deferred to after agreement save for atomicity)
-                if (agreementModel.TrustMode == EscrowTrustMode.Full_consent && !string.IsNullOrEmpty(body.DepositToken))
+                if (agreementModel.TrustMode == EscrowTrustMode.FullConsent && !string.IsNullOrEmpty(body.DepositToken))
                 {
                     var tokenHash = HashToken(body.DepositToken);
                     var tokenKey = GetTokenKey(tokenHash);
@@ -306,8 +306,8 @@ public partial class EscrowService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (agreementModel.Status != EscrowStatus.Pending_deposits &&
-                agreementModel.Status != EscrowStatus.Partially_funded)
+            if (agreementModel.Status != EscrowStatus.PendingDeposits &&
+                agreementModel.Status != EscrowStatus.PartiallyFunded)
             {
                 validationErrors.Add($"Escrow is in {agreementModel.Status} state and cannot accept deposits");
             }

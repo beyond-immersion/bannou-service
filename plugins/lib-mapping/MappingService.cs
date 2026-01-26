@@ -165,17 +165,17 @@ public partial class MappingService : IMappingService
         var ttl = kind switch
         {
             MapKind.Terrain => _configuration.TtlTerrain,
-            MapKind.Static_geometry => _configuration.TtlStaticGeometry,
+            MapKind.StaticGeometry => _configuration.TtlStaticGeometry,
             MapKind.Navigation => _configuration.TtlNavigation,
             MapKind.Resources => _configuration.TtlResources,
-            MapKind.Spawn_points => _configuration.TtlSpawnPoints,
-            MapKind.Points_of_interest => _configuration.TtlPointsOfInterest,
-            MapKind.Dynamic_objects => _configuration.TtlDynamicObjects,
+            MapKind.SpawnPoints => _configuration.TtlSpawnPoints,
+            MapKind.PointsOfInterest => _configuration.TtlPointsOfInterest,
+            MapKind.DynamicObjects => _configuration.TtlDynamicObjects,
             MapKind.Hazards => _configuration.TtlHazards,
-            MapKind.Weather_effects => _configuration.TtlWeatherEffects,
+            MapKind.WeatherEffects => _configuration.TtlWeatherEffects,
             MapKind.Ownership => _configuration.TtlOwnership,
-            MapKind.Combat_effects => _configuration.TtlCombatEffects,
-            MapKind.Visual_effects => _configuration.TtlVisualEffects,
+            MapKind.CombatEffects => _configuration.TtlCombatEffects,
+            MapKind.VisualEffects => _configuration.TtlVisualEffects,
             _ => _configuration.DefaultLayerCacheTtlSeconds
         };
 
@@ -315,7 +315,7 @@ public partial class MappingService : IMappingService
                 .SaveAsync(channelKey, channel, cancellationToken: cancellationToken);
 
             // Create authority record with require_consume flag if needed
-            var requiresConsume = takeoverMode == AuthorityTakeoverMode.Require_consume && existingChannel != null;
+            var requiresConsume = takeoverMode == AuthorityTakeoverMode.RequireConsume && existingChannel != null;
             var authority = new AuthorityRecord
             {
                 ChannelId = channelId,
@@ -672,16 +672,16 @@ public partial class MappingService : IMappingService
 
         switch (mode)
         {
-            case NonAuthorityHandlingMode.Reject_silent:
+            case NonAuthorityHandlingMode.RejectSilent:
                 _logger.LogDebug("Non-authority object changes rejected silently for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Reject_and_alert:
+            case NonAuthorityHandlingMode.RejectAndAlert:
                 await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: false, cancellationToken);
                 _logger.LogWarning("Non-authority object changes rejected with alert for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Accept_and_alert:
+            case NonAuthorityHandlingMode.AcceptAndAlert:
                 await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: true, cancellationToken);
                 // Process the changes anyway - use null for sourceAppId since this is unauthorized
                 var (status, response) = await ProcessAuthorizedObjectChangesAsync(channel, changes, null, cancellationToken);
@@ -1641,16 +1641,16 @@ public partial class MappingService : IMappingService
 
         switch (mode)
         {
-            case NonAuthorityHandlingMode.Reject_silent:
+            case NonAuthorityHandlingMode.RejectSilent:
                 _logger.LogDebug("Non-authority publish rejected silently for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Reject_and_alert:
+            case NonAuthorityHandlingMode.RejectAndAlert:
                 await PublishUnauthorizedWarningAsync(channel, payload, attemptedPublisher, false, cancellationToken);
                 _logger.LogDebug("Non-authority publish rejected with alert for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.Unauthorized, null);
 
-            case NonAuthorityHandlingMode.Accept_and_alert:
+            case NonAuthorityHandlingMode.AcceptAndAlert:
                 await PublishUnauthorizedWarningAsync(channel, payload, attemptedPublisher, true, cancellationToken);
                 // Process the payload anyway
                 var payloads = new List<MapPayload> { payload };
@@ -2521,16 +2521,16 @@ public partial class MappingService : IMappingService
 
         switch (mode)
         {
-            case NonAuthorityHandlingMode.Reject_silent:
+            case NonAuthorityHandlingMode.RejectSilent:
                 _logger.LogDebug("Rejecting non-authority ingest silently for channel {ChannelId}", channel.ChannelId);
                 return;
 
-            case NonAuthorityHandlingMode.Reject_and_alert:
+            case NonAuthorityHandlingMode.RejectAndAlert:
                 _logger.LogWarning("Rejecting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
                 await PublishUnauthorizedIngestWarningAsync(channel, evt, accepted: false, cancellationToken);
                 return;
 
-            case NonAuthorityHandlingMode.Accept_and_alert:
+            case NonAuthorityHandlingMode.AcceptAndAlert:
                 _logger.LogWarning("Accepting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
                 await PublishUnauthorizedIngestWarningAsync(channel, evt, accepted: true, cancellationToken);
                 // Process the ingest anyway (recursively but with force flag would be complex, so inline)

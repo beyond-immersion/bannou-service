@@ -880,7 +880,7 @@ public partial class CurrencyService : ICurrencyService
                         OwnerId = wallet.OwnerId,
                         CurrencyDefinitionId = body.CurrencyDefinitionId,
                         CurrencyCode = definition.Code,
-                        CapType = definition.DailyEarnCap is not null ? "daily" : "weekly",
+                        CapType = definition.DailyEarnCap is not null ? EarnCapType.Daily : EarnCapType.Weekly,
                         CapAmount = definition.DailyEarnCap ?? definition.WeeklyEarnCap ?? 0,
                         AttemptedAmount = body.Amount,
                         LimitedAmount = creditAmount
@@ -919,7 +919,7 @@ public partial class CurrencyService : ICurrencyService
                         CurrencyDefinitionId = body.CurrencyDefinitionId,
                         CurrencyCode = definition.Code,
                         CapAmount = definition.PerWalletCap.Value,
-                        OverflowBehavior = behavior.ToString(),
+                        OverflowBehavior = behavior,
                         AmountLost = overflow
                     }, cancellationToken);
                 }
@@ -1371,7 +1371,7 @@ public partial class CurrencyService : ICurrencyService
                 WalletId = body.WalletId,
                 CurrencyDefinitionId = body.FromCurrencyId,
                 Amount = body.FromAmount,
-                TransactionType = TransactionType.Conversion_debit,
+                TransactionType = TransactionType.ConversionDebit,
                 IdempotencyKey = debitKey,
                 ReferenceType = "conversion"
             }, cancellationToken);
@@ -1385,7 +1385,7 @@ public partial class CurrencyService : ICurrencyService
                 WalletId = body.WalletId,
                 CurrencyDefinitionId = body.ToCurrencyId,
                 Amount = toAmount,
-                TransactionType = TransactionType.Conversion_credit,
+                TransactionType = TransactionType.ConversionCredit,
                 IdempotencyKey = creditKey,
                 ReferenceType = "conversion",
                 BypassEarnCap = true
@@ -1400,7 +1400,7 @@ public partial class CurrencyService : ICurrencyService
                     WalletId = body.WalletId,
                     CurrencyDefinitionId = body.FromCurrencyId,
                     Amount = body.FromAmount,
-                    TransactionType = TransactionType.Conversion_credit,
+                    TransactionType = TransactionType.ConversionCredit,
                     IdempotencyKey = compensateKey,
                     ReferenceType = "conversion_reversal",
                     BypassEarnCap = true
@@ -1793,7 +1793,7 @@ public partial class CurrencyService : ICurrencyService
                 WalletId = body.WalletId,
                 CurrencyDefinitionId = body.CurrencyDefinitionId,
                 Amount = body.Amount,
-                TransactionType = TransactionType.Escrow_deposit,
+                TransactionType = TransactionType.EscrowDeposit,
                 ReferenceType = "escrow",
                 ReferenceId = body.EscrowId,
                 IdempotencyKey = body.IdempotencyKey
@@ -1835,7 +1835,7 @@ public partial class CurrencyService : ICurrencyService
                 WalletId = body.WalletId,
                 CurrencyDefinitionId = body.CurrencyDefinitionId,
                 Amount = body.Amount,
-                TransactionType = TransactionType.Escrow_release,
+                TransactionType = TransactionType.EscrowRelease,
                 ReferenceType = "escrow",
                 ReferenceId = body.EscrowId,
                 IdempotencyKey = body.IdempotencyKey,
@@ -1878,7 +1878,7 @@ public partial class CurrencyService : ICurrencyService
                 WalletId = body.WalletId,
                 CurrencyDefinitionId = body.CurrencyDefinitionId,
                 Amount = body.Amount,
-                TransactionType = TransactionType.Escrow_refund,
+                TransactionType = TransactionType.EscrowRefund,
                 ReferenceType = "escrow",
                 ReferenceId = body.EscrowId,
                 IdempotencyKey = body.IdempotencyKey,
@@ -2502,7 +2502,7 @@ public partial class CurrencyService : ICurrencyService
             PeriodsApplied = periodsElapsed,
             AmountGained = gain,
             NewBalance = balance.Amount,
-            AutogainMode = (definition.AutogainMode ?? AutogainMode.Simple).ToString(),
+            AutogainMode = definition.AutogainMode ?? AutogainMode.Simple,
             CalculatedAt = now,
             PeriodsFrom = periodsFrom,
             PeriodsTo = balance.LastAutogainAt.Value

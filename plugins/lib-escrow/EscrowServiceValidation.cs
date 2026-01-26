@@ -36,8 +36,8 @@ public partial class EscrowService
 
                 var validStates = new HashSet<EscrowStatus>
                 {
-                    EscrowStatus.Pending_condition,
-                    EscrowStatus.Validation_failed
+                    EscrowStatus.PendingCondition,
+                    EscrowStatus.ValidationFailed
                 };
 
                 if (!validStates.Contains(agreementModel.Status))
@@ -62,7 +62,7 @@ public partial class EscrowService
                 }
                 else
                 {
-                    newStatus = EscrowStatus.Validation_failed;
+                    newStatus = EscrowStatus.ValidationFailed;
 
                     agreementModel.ValidationFailures ??= new List<ValidationFailureModel>();
                     agreementModel.ValidationFailures.Add(new ValidationFailureModel
@@ -70,7 +70,7 @@ public partial class EscrowService
                         DetectedAt = now,
                         AssetType = AssetType.Custom,
                         AssetDescription = "Contract condition",
-                        FailureType = ValidationFailureType.Asset_missing,
+                        FailureType = ValidationFailureType.AssetMissing,
                         AffectedPartyId = body.VerifierId,
                         AffectedPartyType = body.VerifierType
                     });
@@ -114,7 +114,7 @@ public partial class EscrowService
                             new ValidationFailureInfo
                             {
                                 AssetType = AssetType.Custom,
-                                FailureType = ValidationFailureType.Asset_missing,
+                                FailureType = ValidationFailureType.AssetMissing,
                                 AffectedPartyId = body.VerifierId,
                                 Details = body.VerificationData?.ToString()
                             }
@@ -226,9 +226,9 @@ public partial class EscrowService
                         })
                         .ToList();
 
-                    if (agreementModel.Status == EscrowStatus.Pending_condition)
+                    if (agreementModel.Status == EscrowStatus.PendingCondition)
                     {
-                        agreementModel.Status = EscrowStatus.Validation_failed;
+                        agreementModel.Status = EscrowStatus.ValidationFailed;
                     }
                 }
                 else
@@ -263,11 +263,11 @@ public partial class EscrowService
                         var oldStatusKey = $"{GetStatusIndexKey(previousStatus)}:{body.EscrowId}";
                         await StatusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-                        var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.Validation_failed)}:{body.EscrowId}";
+                        var newStatusKey = $"{GetStatusIndexKey(EscrowStatus.ValidationFailed)}:{body.EscrowId}";
                         var statusEntry = new StatusIndexEntry
                         {
                             EscrowId = body.EscrowId,
-                            Status = EscrowStatus.Validation_failed,
+                            Status = EscrowStatus.ValidationFailed,
                             ExpiresAt = agreementModel.ExpiresAt,
                             AddedAt = now
                         };
@@ -335,7 +335,7 @@ public partial class EscrowService
                     return (StatusCodes.NotFound, null);
                 }
 
-                if (agreementModel.Status != EscrowStatus.Validation_failed)
+                if (agreementModel.Status != EscrowStatus.ValidationFailed)
                 {
                     return (StatusCodes.BadRequest, null);
                 }
@@ -376,12 +376,12 @@ public partial class EscrowService
 
                 if (allReaffirmed)
                 {
-                    newStatus = EscrowStatus.Pending_condition;
+                    newStatus = EscrowStatus.PendingCondition;
                     agreementModel.ValidationFailures = null;
                 }
                 else
                 {
-                    newStatus = EscrowStatus.Validation_failed;
+                    newStatus = EscrowStatus.ValidationFailed;
                 }
 
                 agreementModel.Status = newStatus;

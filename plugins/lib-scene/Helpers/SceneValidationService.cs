@@ -223,7 +223,7 @@ public class SceneValidationService : ISceneValidationService
 
         switch (rule.RuleType)
         {
-            case ValidationRuleType.Require_tag:
+            case ValidationRuleType.RequireTag:
                 if (!string.IsNullOrEmpty(config?.Tag))
                 {
                     var matchingNodes = allNodes.Where(n =>
@@ -253,7 +253,7 @@ public class SceneValidationService : ISceneValidationService
                 }
                 break;
 
-            case ValidationRuleType.Forbid_tag:
+            case ValidationRuleType.ForbidTag:
                 if (!string.IsNullOrEmpty(config?.Tag))
                 {
                     var forbiddenNodes = allNodes.Where(n => n.Tags != null && n.Tags.Contains(config.Tag)).ToList();
@@ -270,7 +270,7 @@ public class SceneValidationService : ISceneValidationService
                 }
                 break;
 
-            case ValidationRuleType.Require_node_type:
+            case ValidationRuleType.RequireNodeType:
                 if (!string.IsNullOrEmpty(config?.NodeType))
                 {
                     var matchingNodes = allNodes.Where(n => n.NodeType.ToString() == config.NodeType).ToList();
