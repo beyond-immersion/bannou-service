@@ -243,12 +243,12 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Setup all-types list
         _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Setup children index
         _mockGuidListStore
             .Setup(s => s.GetAsync($"children-idx:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         var request = new CreateRelationshipTypeRequest
         {
@@ -399,12 +399,12 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Setup all-types list
         _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { typeId.ToString() });
+            .ReturnsAsync(new List<Guid> { typeId });
 
         // Setup children index (no children)
         _mockGuidListStore
             .Setup(s => s.GetAsync($"children-idx:{typeId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var status = await service.DeleteRelationshipTypeAsync(
@@ -445,7 +445,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (status, response) = await service.ListRelationshipTypesAsync(new ListRelationshipTypesRequest());
@@ -461,7 +461,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         // Arrange
         var service = CreateService();
-        var typeIds = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        var typeIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
         _mockGuidListStore
             .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
@@ -470,7 +470,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var bulkResults = typeIds.Select((id, idx) =>
             new KeyValuePair<string, RelationshipTypeModel>(
                 $"type:{id}",
-                CreateTestRelationshipTypeModel(Guid.Parse(id), $"TYPE{idx}", $"Type {idx}")))
+                CreateTestRelationshipTypeModel(id, $"TYPE{idx}", $"Type {idx}")))
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         _mockRelationshipTypeStore
@@ -505,7 +505,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         _mockGuidListStore
             .Setup(s => s.GetAsync($"children-idx:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         // Act
         var (status, response) = await service.GetChildRelationshipTypesAsync(
@@ -1134,7 +1134,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // List store for all-types and parent-index
         _mockGuidListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Child references parent - should process parent first even though child comes first in list
         var request = new SeedRelationshipTypesRequest
@@ -1225,7 +1225,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         _mockGuidListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         // Grandchild -> Child -> Parent hierarchy
         var request = new SeedRelationshipTypesRequest
@@ -1297,7 +1297,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         _mockGuidListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync(new List<Guid>());
 
         var request = new SeedRelationshipTypesRequest
         {
@@ -1344,7 +1344,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { child1Id.ToString(), child2Id.ToString() });
+            .ReturnsAsync(new List<Guid> { child1Id, child2Id });
 
         _mockRelationshipTypeStore
             .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
@@ -1385,17 +1385,17 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Parent has child
         _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{parentId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { childId.ToString() });
+            .ReturnsAsync(new List<Guid> { childId });
 
         // Child has grandchild
         _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{childId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { grandchildId.ToString() });
+            .ReturnsAsync(new List<Guid> { grandchildId });
 
         // Grandchild has no children
         _mockGuidListStore
             .Setup(s => s.GetAsync($"parent-index:{grandchildId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+            .ReturnsAsync((List<Guid>?)null);
 
         _mockRelationshipTypeStore
             .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))

@@ -89,39 +89,42 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-auth
 
-- [ ] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. Multiple sites use `Guid.Parse(sessionId)`. **Decision**: Change to `Guid` type.
+- [x] **T25**: `SessionDataModel.SessionId` stores a GUID as string with `= string.Empty` default. **ALREADY FIXED** - `SessionDataModel.SessionId` is now `Guid SessionId { get; set; }`. The remaining `Guid.Parse(sessionKey)` at storage boundaries (e.g., TokenService.cs:300) is correct - Redis keys must be strings, and the parse converts back to Guid for API responses.
 
 ### lib-character-encounter
 
-- [ ] **T25**: Multiple internal models store enums as strings requiring `Enum.Parse`: `EncounterData.Outcome`, `PerspectiveData.EmotionalImpact`, `EncounterTypeData.DefaultEmotionalImpact`. **Decision**: Change POCOs to use enum types directly.
+- [x] **T25**: Multiple internal models store enums as strings requiring `Enum.Parse`: `EncounterData.Outcome`, `PerspectiveData.EmotionalImpact`, `EncounterTypeData.DefaultEmotionalImpact`. **ALREADY FIXED** - All POCOs now use proper enum types: `EncounterOutcome`, `EmotionalImpact`, etc. No `Enum.Parse` calls remain.
 
 - [ ] **T21/T25**: `MemoryDecayMode` configuration property is string representing discrete values ("lazy", "scheduled"). **Decision**: Define `MemoryDecayMode` enum in schema.
 
 ### lib-character-history
 
-- [ ] **T25**: Multiple internal POCOs store enums as strings requiring `Enum.Parse`: `EventParticipationData.EventCategory`, `EventParticipationData.Role`, `BackstoryElementData.ElementType`. **Decision**: Change POCOs to use enum types directly.
+- [x] **T25**: Multiple internal POCOs store enums as strings requiring `Enum.Parse`: `EventParticipationData.EventCategory`, `EventParticipationData.Role`, `BackstoryElementData.ElementType`. **ALREADY FIXED** - All POCOs now use proper enum types: `EventCategory`, `ParticipationRole`, `BackstoryElementType`. No `Enum.Parse` calls remain in business logic.
 
-- [ ] **T25**: Multiple internal POCOs store GUIDs as strings: `ParticipationData.ParticipationId`, `ParticipationData.CharacterId`, `ParticipationData.EventId`, `BackstoryData.CharacterId`. **Decision**: Change to `Guid` type.
+- [x] **T25**: Multiple internal POCOs store GUIDs as strings: `ParticipationData.ParticipationId`, `ParticipationData.CharacterId`, `ParticipationData.EventId`, `BackstoryData.CharacterId`. **ALREADY FIXED** - All fields now use `Guid` type. Storage boundary conversions (`Guid.Parse`/`.ToString()`) for state store key access are acceptable per IMPLEMENTATION TENETS.
 
 ### lib-character-personality
 
-- [ ] **T25**: `CombatPreferencesModel` stores enums as strings: `Style`, `PreferredRange`, `GroupRole`. **Decision**: Change POCOs to use enum types directly.
+- [x] **T25**: `CombatPreferencesModel` stores enums as strings: `Style`, `PreferredRange`, `GroupRole`. **ALREADY FIXED** - `CombatPreferencesData` uses enum types directly: `CombatStyle`, `PreferredRange`, `GroupRole`.
 
-- [ ] **T25**: `PersonalityData.Traits` uses `Dictionary<string, float>` with string keys for trait axes. **Decision**: Change to `Dictionary<TraitAxis, float>`.
+- [x] **T25**: `PersonalityData.Traits` uses `Dictionary<string, float>` with string keys for trait axes. **ALREADY FIXED** - Now uses `Dictionary<TraitAxis, float>` with enum keys.
 
-- [ ] **T25**: Both `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`. **Decision**: Change to `Guid` type.
+- [x] **T25**: Both `CombatPreferencesData.CharacterId` and `PersonalityData.CharacterId` use `string` instead of `Guid`. **ALREADY FIXED** - Both use `Guid` type.
 
 ### lib-contract
 
-- [ ] **T21/T25**: `DefaultEnforcementMode` config uses string requiring runtime parsing. **Decision**: Define `EnforcementMode` enum in schema.
+- [ ] **T21/T25**: `DefaultEnforcementMode` config uses string requiring runtime parsing. **Decision**: Define `EnforcementMode` enum in schema. **NOTE**: Requires schema change in `schemas/contract-configuration.yaml`, not service implementation change.
 
-- [ ] **T25**: `PartyModel.Role`, `MilestoneModel.Role`, `AssetReferenceModel.AssetType` store enums as strings. **Decision**: Change POCOs to use enum types directly.
+- [x] **T25**: `PartyModel.Role`, `MilestoneModel.Role`, `AssetReferenceModel.AssetType` store enums as strings. **CLARIFIED - NOT A T25 ISSUE**:
+  - `ContractPartyModel.Role` is intentionally `string` - roles are human-defined per contract template (e.g., "employer", "employee", "buyer", "seller"). Schema explicitly defines `role: type: string`. This is correct semantic intent.
+  - `MilestoneInstanceModel` has no `Role` field - it has `Code`, `Name`, `Status` (which IS an enum: `MilestoneStatus`)
+  - `AssetReferenceModel` does not exist in the codebase - likely was removed or never implemented
 
 ### lib-currency
 
-- [ ] **T25**: Multiple internal models store enums as strings requiring `Enum.TryParse`: `CurrencyDefinitionModel.Scope`, `CurrencyDefinitionModel.Precision`, `CurrencyDefinitionModel.CapOverflowBehavior`, `CurrencyDefinitionModel.AutogainMode`, `CurrencyDefinitionModel.ExpirationPolicy`, `CurrencyDefinitionModel.LinkageMode`, `WalletModel.OwnerType`, `TransactionRecordModel.TransactionType`. **Decision**: Change POCOs to use enum types directly.
+- [x] **T25**: Multiple internal models store enums as strings requiring `Enum.TryParse`: `CurrencyDefinitionModel.Scope`, `CurrencyDefinitionModel.Precision`, `CurrencyDefinitionModel.CapOverflowBehavior`, `CurrencyDefinitionModel.AutogainMode`, `CurrencyDefinitionModel.ExpirationPolicy`, `CurrencyDefinitionModel.LinkageMode`, `WalletModel.OwnerType`, `TransactionRecordModel.TransactionType`. **ALREADY FIXED** - All POCOs use proper enum types: `CurrencyScope`, `CurrencyPrecision`, `CapOverflowBehavior?`, `AutogainMode?`, `ExpirationPolicy?`, `WalletOwnerType`, `TransactionType`. Note: `LinkageMode` is not used in the current POCOs.
 
-- [ ] **T25**: Internal models use `string` for GUID fields: `CurrencyDefinitionModel.DefinitionId`, `WalletModel.WalletId`, `BalanceModel` ID fields, `TransactionRecordModel.TransactionId`, `HoldModel.HoldId`, etc. **Decision**: Change to `Guid` type.
+- [x] **T25**: Internal models use `string` for GUID fields: `CurrencyDefinitionModel.DefinitionId`, `WalletModel.WalletId`, `BalanceModel` ID fields, `TransactionRecordModel.TransactionId`, `HoldModel.HoldId`, etc. **ALREADY FIXED** - All POCOs use `Guid` type for ID fields. The `Guid.Parse()` calls at internal helper method boundaries (e.g., `GetOrCreateBalanceAsync`) are for key construction, which is an acceptable storage boundary pattern.
 
 ### lib-escrow
 
@@ -163,13 +166,13 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-relationship
 
-- [ ] **T25**: `RelationshipModel` stores entity types as strings requiring `Enum.Parse`: `Entity1Type`, `Entity2Type`. **Decision**: Change POCOs to use `EntityType` enum directly.
+- [x] **T25**: `RelationshipModel` stores entity types as strings requiring `Enum.Parse`: `Entity1Type`, `Entity2Type`. **Decision**: Change POCOs to use `EntityType` enum directly. **ALREADY FIXED** - Internal `RelationshipModel` already uses `EntityType` enum directly for `Entity1Type` and `Entity2Type`. No `Enum.Parse` calls exist in the service.
 
-- [ ] **T25**: `RelationshipModel` stores GUIDs as strings: `RelationshipId`, `Entity1Id`, `Entity2Id`, `RelationshipTypeId`. **Decision**: Change to `Guid` type.
+- [x] **T25**: `RelationshipModel` stores GUIDs as strings: `RelationshipId`, `Entity1Id`, `Entity2Id`, `RelationshipTypeId`. **Decision**: Change to `Guid` type. **ALREADY FIXED** - Internal `RelationshipModel` already uses `Guid` type for all ID fields. Index stores use `List<Guid>`. Only boundary storage uses `.ToString()` for composite uniqueness key (same pattern as other services where state store constraint applies).
 
 ### lib-relationship-type
 
-- [ ] **T25**: `RelationshipTypeModel` stores GUIDs as strings: `RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`. **Decision**: Change to `Guid` type.
+- [x] **T25**: `RelationshipTypeModel` stores GUIDs as strings: `RelationshipTypeId`, `ParentTypeId`, `InverseTypeId`. **Decision**: Change to `Guid` type. **FIXED** - Changed `RelationshipTypeModel.RelationshipTypeId` to `Guid`, `ParentTypeId` to `Guid?`, `InverseTypeId` to `Guid?`. Updated all helper methods (`BuildTypeKey`, `BuildParentIndexKey`, `AddToParentIndexAsync`, `RemoveFromParentIndexAsync`, `GetChildTypeIdsAsync`, `AddToAllTypesListAsync`, `RemoveFromAllTypesListAsync`) to use `Guid` parameters. Changed index stores from `List<string>` to `List<Guid>`. Removed all `Guid.Parse()` and `.ToString()` conversions throughout. Note: Code index (code→ID reverse lookup) uses string storage due to state store reference type constraint (`GetStore<TValue>` requires `TValue : class`), with `Guid.TryParse` at the boundary.
 
 ### lib-save-load
 
