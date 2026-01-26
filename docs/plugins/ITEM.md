@@ -237,9 +237,7 @@ Soulbound Types
 
 ### Bugs
 
-*T21/T25 and T25 violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
-
-No other bugs identified.
+No bugs identified.
 
 ### Intentional Quirks
 

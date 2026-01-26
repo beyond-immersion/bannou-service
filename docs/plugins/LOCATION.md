@@ -222,9 +222,7 @@ State Store Layout
 
 ### Bugs
 
-*T25 violation has been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
-
-No other bugs identified.
+No bugs identified.
 
 ### Intentional Quirks
 
