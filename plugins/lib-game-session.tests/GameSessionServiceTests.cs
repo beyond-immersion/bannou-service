@@ -120,7 +120,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     /// </summary>
     private Guid SetupExistingLobby(string gameType, GameSessionModel lobby)
     {
-        var lobbyId = Guid.Parse(lobby.SessionId);
+        var lobbyId = lobby.SessionId;
 
         // Setup lookup by lobby key (lobby:{gameType})
         _mockGameSessionStore
@@ -272,7 +272,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         var sessionModel = new GameSessionModel
         {
-            SessionId = sessionId.ToString(),
+            SessionId = sessionId,
             SessionName = "Existing Session",
             GameType = "test-game",
             MaxPlayers = 4,
@@ -366,11 +366,11 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Arrange
         var service = CreateService();
         var request = new ListGameSessionsRequest();
-        var sessionId = Guid.NewGuid().ToString();
+        var sessionId = Guid.NewGuid();
 
         _mockListStore
             .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { sessionId });
+            .ReturnsAsync(new List<string> { sessionId.ToString() });
 
         _mockGameSessionStore
             .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
@@ -402,12 +402,12 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Arrange
         var service = CreateService();
         var request = new ListGameSessionsRequest();
-        var activeSessionId = Guid.NewGuid().ToString();
-        var finishedSessionId = Guid.NewGuid().ToString();
+        var activeSessionId = Guid.NewGuid();
+        var finishedSessionId = Guid.NewGuid();
 
         _mockListStore
             .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { activeSessionId, finishedSessionId });
+            .ReturnsAsync(new List<string> { activeSessionId.ToString(), finishedSessionId.ToString() });
 
         _mockGameSessionStore
             .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + activeSessionId, It.IsAny<CancellationToken>()))
@@ -464,7 +464,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Return a lobby from lobby key lookup, but nothing from session key lookup
         var lobbyId = Guid.NewGuid();
-        var lobby = new GameSessionModel { SessionId = lobbyId.ToString() };
+        var lobby = new GameSessionModel { SessionId = lobbyId };
         _mockGameSessionStore
             .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lobby);
@@ -501,7 +501,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var lobbyId = Guid.NewGuid();
         var lobby = new GameSessionModel
         {
-            SessionId = lobbyId.ToString(),
+            SessionId = lobbyId,
             MaxPlayers = 2,
             CurrentPlayers = 2,
             Status = SessionStatus.Full,
@@ -543,7 +543,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var lobbyId = Guid.NewGuid();
         var lobby = new GameSessionModel
         {
-            SessionId = lobbyId.ToString(),
+            SessionId = lobbyId,
             MaxPlayers = 4,
             CurrentPlayers = 0,
             Status = SessionStatus.Finished,
@@ -581,7 +581,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var lobbyId = Guid.NewGuid();
         var lobby = new GameSessionModel
         {
-            SessionId = lobbyId.ToString(),
+            SessionId = lobbyId,
             MaxPlayers = 4,
             CurrentPlayers = 1,
             Status = SessionStatus.Active,
@@ -632,7 +632,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Setup active lobby
         var lobby = new GameSessionModel
         {
-            SessionId = lobbyId.ToString(),
+            SessionId = lobbyId,
             MaxPlayers = 4,
             CurrentPlayers = 1,
             Status = SessionStatus.Active,
@@ -684,7 +684,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Setup lobby with the player in it
         var lobby = new GameSessionModel
         {
-            SessionId = lobbyId.ToString(),
+            SessionId = lobbyId,
             MaxPlayers = 4,
             CurrentPlayers = 2,
             Status = SessionStatus.Active,
@@ -732,7 +732,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Return a lobby from lobby key lookup, but nothing from session key lookup
         var lobbyId = Guid.NewGuid();
-        var lobby = new GameSessionModel { SessionId = lobbyId.ToString() };
+        var lobby = new GameSessionModel { SessionId = lobbyId };
         _mockGameSessionStore
             .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lobby);
@@ -768,7 +768,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Return a lobby from lobby key lookup, but nothing from session key lookup
         var lobbyId = Guid.NewGuid();
-        var lobby = new GameSessionModel { SessionId = lobbyId.ToString() };
+        var lobby = new GameSessionModel { SessionId = lobbyId };
         _mockGameSessionStore
             .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lobby);
@@ -803,7 +803,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Setup finished lobby
         var lobby = new GameSessionModel
         {
-            SessionId = lobbyId.ToString(),
+            SessionId = lobbyId,
             Status = SessionStatus.Finished,
             Players = new List<GamePlayer>(),
             CreatedAt = DateTimeOffset.UtcNow

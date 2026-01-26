@@ -95,7 +95,7 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 - [x] **T25**: Multiple internal models store enums as strings requiring `Enum.Parse`: `EncounterData.Outcome`, `PerspectiveData.EmotionalImpact`, `EncounterTypeData.DefaultEmotionalImpact`. **ALREADY FIXED** - All POCOs now use proper enum types: `EncounterOutcome`, `EmotionalImpact`, etc. No `Enum.Parse` calls remain.
 
-- [ ] **T21/T25**: `MemoryDecayMode` configuration property is string representing discrete values ("lazy", "scheduled"). **Decision**: Define `MemoryDecayMode` enum in schema.
+- [x] **T21/T25**: `MemoryDecayMode` configuration property is string representing discrete values ("lazy", "scheduled"). **FIXED** - Changed schema to use inline enum `[lazy, scheduled]`. Regenerated config. Updated service code to use `MemoryDecayMode.Lazy` enum equality. Also fixed T25 violation in `PerspectiveUpdatedEvent` where `EmotionalImpact` enum was being converted to string with `.ToString()` - now passes enum directly.
 
 ### lib-character-history
 
@@ -132,9 +132,9 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-game-session
 
-- [ ] **T25**: `GameSessionModel.SessionId` and `CleanupSessionModel.SessionId` are `string` instead of `Guid`. **Decision**: Change to `Guid` type.
+- [x] **T25**: `GameSessionModel.SessionId` and `CleanupSessionModel.SessionId` are `string` instead of `Guid`. **FIXED**: `GameSessionModel.SessionId` was already `Guid`. Updated `CleanupSessionModel.SessionId` to `Guid`. Fixed all `.ToString()` calls for model creation and removed `Guid.Parse()` calls in mapping methods. Fixed tests to use proper Guid types. Also fixed unquoted `generic` identifier errors (should have been `"system"`).
 
-- [ ] **T25**: `HandleSubscriptionUpdatedInternalAsync` compares string literals for subscription actions instead of using typed enum. **Decision**: Accept typed enum parameter and use enum equality.
+- [x] **T25**: `HandleSubscriptionUpdatedInternalAsync` compares string literals for subscription actions instead of using typed enum. **FIXED**: Changed method parameter from `string action` to `SubscriptionUpdatedEventAction action`. Updated event handler to pass enum directly instead of `evt.Action.ToString().ToLowerInvariant()`. Updated comparisons from string literals (`"created"`, `"cancelled"`, `"expired"`) to enum values (`SubscriptionUpdatedEventAction.Created`, etc.).
 
 ### lib-inventory
 
