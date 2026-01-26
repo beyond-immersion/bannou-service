@@ -152,7 +152,7 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-permission
 
-- [ ] **T25**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. **Decision**: Define a typed `ServiceRegistrationInfo` POCO class. See `PermissionService.cs:355-360`.
+- [x] **T25**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. **Decision**: Define a typed `ServiceRegistrationInfo` POCO class. **FIXED** - Created `ServiceRegistrationInfo` internal class with `ServiceId`, `Version`, and `RegisteredAtUnix` properties. Updated write path to use typed store `GetStore<ServiceRegistrationInfo>()`. Simplified read path in `ListRegisteredServicesAsync` to directly access typed properties instead of manual dictionary parsing with JsonElement handling.
 
 ### lib-realm
 

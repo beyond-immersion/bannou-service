@@ -95,7 +95,7 @@ public partial class ItemService : IItemService
 
             var model = new ItemTemplateModel
             {
-                TemplateId = templateId.ToString(),
+                TemplateId = templateId,
                 Code = body.Code,
                 GameId = body.GameId,
                 Name = body.Name,
@@ -120,7 +120,7 @@ public partial class ItemService : IItemService
                 HasDurability = body.HasDurability,
                 MaxDurability = body.MaxDurability,
                 Scope = body.Scope,
-                AvailableRealms = body.AvailableRealms?.Select(r => r.ToString()).ToList(),
+                AvailableRealms = body.AvailableRealms?.ToList(),
                 Stats = body.Stats is not null ? BannouJson.Serialize(body.Stats) : null,
                 Effects = body.Effects is not null ? BannouJson.Serialize(body.Effects) : null,
                 Requirements = body.Requirements is not null ? BannouJson.Serialize(body.Requirements) : null,
@@ -238,7 +238,7 @@ public partial class ItemService : IItemService
                 if (body.Rarity != default && model.Rarity != body.Rarity) continue;
                 if (body.Scope != default && model.Scope != body.Scope) continue;
                 if (body.RealmId.HasValue && model.AvailableRealms is not null &&
-                    !model.AvailableRealms.Contains(body.RealmId.Value.ToString())) continue;
+                    !model.AvailableRealms.Contains(body.RealmId.Value)) continue;
                 if (body.Tags is not null && body.Tags.Count > 0 &&
                     !body.Tags.All(t => model.Tags.Contains(t))) continue;
                 if (!string.IsNullOrEmpty(body.Search) &&
@@ -300,7 +300,7 @@ public partial class ItemService : IItemService
             if (body.Tradeable.HasValue) model.Tradeable = body.Tradeable.Value;
             if (body.Destroyable.HasValue) model.Destroyable = body.Destroyable.Value;
             if (body.MaxDurability.HasValue) model.MaxDurability = body.MaxDurability;
-            if (body.AvailableRealms is not null) model.AvailableRealms = body.AvailableRealms.Select(r => r.ToString()).ToList();
+            if (body.AvailableRealms is not null) model.AvailableRealms = body.AvailableRealms.ToList();
             if (body.Stats is not null) model.Stats = BannouJson.Serialize(body.Stats);
             if (body.Effects is not null) model.Effects = BannouJson.Serialize(body.Effects);
             if (body.Requirements is not null) model.Requirements = BannouJson.Serialize(body.Requirements);
@@ -363,7 +363,7 @@ public partial class ItemService : IItemService
             var now = DateTimeOffset.UtcNow;
             model.IsDeprecated = true;
             model.DeprecatedAt = now;
-            model.MigrationTargetId = body.MigrationTargetId?.ToString();
+            model.MigrationTargetId = body.MigrationTargetId;
             model.UpdatedAt = now;
 
             await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
@@ -453,10 +453,10 @@ public partial class ItemService : IItemService
 
             var model = new ItemInstanceModel
             {
-                InstanceId = instanceId.ToString(),
-                TemplateId = body.TemplateId.ToString(),
-                ContainerId = body.ContainerId.ToString(),
-                RealmId = body.RealmId.ToString(),
+                InstanceId = instanceId,
+                TemplateId = body.TemplateId,
+                ContainerId = body.ContainerId,
+                RealmId = body.RealmId,
                 Quantity = quantity,
                 SlotIndex = body.SlotIndex,
                 SlotX = body.SlotX,
@@ -467,7 +467,7 @@ public partial class ItemService : IItemService
                 CustomName = body.CustomName,
                 InstanceMetadata = body.InstanceMetadata is not null ? BannouJson.Serialize(body.InstanceMetadata) : null,
                 OriginType = body.OriginType,
-                OriginId = body.OriginId?.ToString(),
+                OriginId = body.OriginId,
                 CreatedAt = now
             };
 
@@ -578,9 +578,9 @@ public partial class ItemService : IItemService
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 InstanceId = body.InstanceId,
-                TemplateId = Guid.Parse(model.TemplateId),
-                ContainerId = Guid.Parse(model.ContainerId),
-                RealmId = Guid.Parse(model.RealmId),
+                TemplateId = model.TemplateId,
+                ContainerId = model.ContainerId,
+                RealmId = model.RealmId,
                 Quantity = model.Quantity,
                 OriginType = model.OriginType,
                 CreatedAt = model.CreatedAt,
@@ -628,7 +628,7 @@ public partial class ItemService : IItemService
             }
 
             var now = DateTimeOffset.UtcNow;
-            model.BoundToId = body.CharacterId.ToString();
+            model.BoundToId = body.CharacterId;
             model.BoundAt = now;
             model.ModifiedAt = now;
 
@@ -653,9 +653,9 @@ public partial class ItemService : IItemService
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 InstanceId = body.InstanceId,
-                TemplateId = Guid.Parse(model.TemplateId),
+                TemplateId = model.TemplateId,
                 TemplateCode = templateCode,
-                RealmId = Guid.Parse(model.RealmId),
+                RealmId = model.RealmId,
                 CharacterId = body.CharacterId,
                 BindType = body.BindType
             }, cancellationToken);
@@ -714,9 +714,9 @@ public partial class ItemService : IItemService
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 InstanceId = body.InstanceId,
-                TemplateId = Guid.Parse(model.TemplateId),
-                ContainerId = Guid.Parse(model.ContainerId),
-                RealmId = Guid.Parse(model.RealmId),
+                TemplateId = model.TemplateId,
+                ContainerId = model.ContainerId,
+                RealmId = model.RealmId,
                 Quantity = model.Quantity,
                 OriginType = model.OriginType,
                 CreatedAt = model.CreatedAt,
@@ -728,7 +728,7 @@ public partial class ItemService : IItemService
             {
                 Destroyed = true,
                 InstanceId = body.InstanceId,
-                TemplateId = Guid.Parse(model.TemplateId)
+                TemplateId = model.TemplateId
             });
         }
         catch (Exception ex)
@@ -810,7 +810,7 @@ public partial class ItemService : IItemService
                 if (model is null) continue;
 
                 // Apply realm filter
-                if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value.ToString()) continue;
+                if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
 
                 items.Add(MapInstanceToResponse(model));
             }
@@ -1066,7 +1066,7 @@ public partial class ItemService : IItemService
     {
         return new ItemTemplateResponse
         {
-            TemplateId = Guid.Parse(model.TemplateId),
+            TemplateId = model.TemplateId,
             Code = model.Code,
             GameId = model.GameId,
             Name = model.Name,
@@ -1091,7 +1091,7 @@ public partial class ItemService : IItemService
             HasDurability = model.HasDurability,
             MaxDurability = model.MaxDurability,
             Scope = model.Scope,
-            AvailableRealms = model.AvailableRealms?.Select(r => Guid.Parse(r)).ToList(),
+            AvailableRealms = model.AvailableRealms,
             Stats = model.Stats is not null ? BannouJson.Deserialize<object>(model.Stats) : null,
             Effects = model.Effects is not null ? BannouJson.Deserialize<object>(model.Effects) : null,
             Requirements = model.Requirements is not null ? BannouJson.Deserialize<object>(model.Requirements) : null,
@@ -1100,7 +1100,7 @@ public partial class ItemService : IItemService
             IsActive = model.IsActive,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
-            MigrationTargetId = model.MigrationTargetId is not null ? Guid.Parse(model.MigrationTargetId) : null,
+            MigrationTargetId = model.MigrationTargetId,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -1110,23 +1110,23 @@ public partial class ItemService : IItemService
     {
         return new ItemInstanceResponse
         {
-            InstanceId = Guid.Parse(model.InstanceId),
-            TemplateId = Guid.Parse(model.TemplateId),
-            ContainerId = Guid.Parse(model.ContainerId),
-            RealmId = Guid.Parse(model.RealmId),
+            InstanceId = model.InstanceId,
+            TemplateId = model.TemplateId,
+            ContainerId = model.ContainerId,
+            RealmId = model.RealmId,
             Quantity = model.Quantity,
             SlotIndex = model.SlotIndex,
             SlotX = model.SlotX,
             SlotY = model.SlotY,
             Rotated = model.Rotated,
             CurrentDurability = model.CurrentDurability,
-            BoundToId = model.BoundToId is not null ? Guid.Parse(model.BoundToId) : null,
+            BoundToId = model.BoundToId,
             BoundAt = model.BoundAt,
             CustomStats = model.CustomStats is not null ? BannouJson.Deserialize<object>(model.CustomStats) : null,
             CustomName = model.CustomName,
             InstanceMetadata = model.InstanceMetadata is not null ? BannouJson.Deserialize<object>(model.InstanceMetadata) : null,
             OriginType = model.OriginType,
-            OriginId = model.OriginId is not null ? Guid.Parse(model.OriginId) : null,
+            OriginId = model.OriginId,
             CreatedAt = model.CreatedAt,
             ModifiedAt = model.ModifiedAt
         };
@@ -1142,7 +1142,7 @@ public partial class ItemService : IItemService
 /// </summary>
 internal class ItemTemplateModel
 {
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string GameId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -1167,7 +1167,7 @@ internal class ItemTemplateModel
     public bool HasDurability { get; set; }
     public int? MaxDurability { get; set; }
     public ItemScope Scope { get; set; }
-    public List<string>? AvailableRealms { get; set; }
+    public List<Guid>? AvailableRealms { get; set; }
     public string? Stats { get; set; }
     public string? Effects { get; set; }
     public string? Requirements { get; set; }
@@ -1176,7 +1176,7 @@ internal class ItemTemplateModel
     public bool IsActive { get; set; }
     public bool IsDeprecated { get; set; }
     public DateTimeOffset? DeprecatedAt { get; set; }
-    public string? MigrationTargetId { get; set; }
+    public Guid? MigrationTargetId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
@@ -1186,23 +1186,23 @@ internal class ItemTemplateModel
 /// </summary>
 internal class ItemInstanceModel
 {
-    public string InstanceId { get; set; } = string.Empty;
-    public string TemplateId { get; set; } = string.Empty;
-    public string ContainerId { get; set; } = string.Empty;
-    public string RealmId { get; set; } = string.Empty;
+    public Guid InstanceId { get; set; }
+    public Guid TemplateId { get; set; }
+    public Guid ContainerId { get; set; }
+    public Guid RealmId { get; set; }
     public double Quantity { get; set; }
     public int? SlotIndex { get; set; }
     public int? SlotX { get; set; }
     public int? SlotY { get; set; }
     public bool? Rotated { get; set; }
     public int? CurrentDurability { get; set; }
-    public string? BoundToId { get; set; }
+    public Guid? BoundToId { get; set; }
     public DateTimeOffset? BoundAt { get; set; }
     public string? CustomStats { get; set; }
     public string? CustomName { get; set; }
     public string? InstanceMetadata { get; set; }
     public ItemOriginType OriginType { get; set; }
-    public string? OriginId { get; set; }
+    public Guid? OriginId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? ModifiedAt { get; set; }
 }

@@ -43,6 +43,7 @@ public class PermissionServiceTests : IAsyncLifetime
     private readonly Mock<IStateStore<Dictionary<string, object>>> _mockDictObjectStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<object>> _mockObjectStore;
+    private readonly Mock<IStateStore<ServiceRegistrationInfo>> _mockRegistrationInfoStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
@@ -67,6 +68,7 @@ public class PermissionServiceTests : IAsyncLifetime
         _mockDictObjectStore = new Mock<IStateStore<Dictionary<string, object>>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockObjectStore = new Mock<IStateStore<object>>();
+        _mockRegistrationInfoStore = new Mock<IStateStore<ServiceRegistrationInfo>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
@@ -83,6 +85,8 @@ public class PermissionServiceTests : IAsyncLifetime
             .Returns(_mockDictStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, object>>(STATE_STORE))
             .Returns(_mockDictObjectStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<ServiceRegistrationInfo>(STATE_STORE))
+            .Returns(_mockRegistrationInfoStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
 
@@ -96,6 +100,8 @@ public class PermissionServiceTests : IAsyncLifetime
         _mockStringStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockObjectStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockRegistrationInfoStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ServiceRegistrationInfo>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
