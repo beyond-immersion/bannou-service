@@ -1060,7 +1060,7 @@ public class AssetServiceTests
 
         var existingBundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared",
@@ -1090,7 +1090,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             AssetIds = new List<string> { "nonexistent-asset" }
         };
 
@@ -1234,7 +1234,7 @@ public class AssetServiceTests
 
         var pendingBundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared",
@@ -1536,7 +1536,7 @@ public class AssetServiceTests
 
         var existingBundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared",
@@ -1646,7 +1646,7 @@ public class AssetServiceTests
 
         var existingMetabundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Metabundle,
             Realm = "test-realm",
@@ -1751,7 +1751,7 @@ public class AssetServiceTests
 
         var pendingBundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "test-realm",
@@ -1840,7 +1840,7 @@ public class AssetServiceTests
 
         var wrongRealmBundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "other-realm", // Different realm
@@ -1886,7 +1886,7 @@ public class AssetServiceTests
 
         var sharedBundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             BundleType = BundleType.Source,
             Realm = "shared", // Shared realm should work with any target realm
@@ -1965,7 +1965,7 @@ public class AssetServiceTests
         // Bundle 1 has asset "shared-asset" with hash "hash-a"
         var bundle1 = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/bundle-1.bundle",
@@ -1991,7 +1991,7 @@ public class AssetServiceTests
         // Bundle 2 has same asset "shared-asset" but with different hash "hash-b"
         var bundle2 = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/bundle-2.bundle",
@@ -2050,7 +2050,7 @@ public class AssetServiceTests
 
         var sourceBundle = new BundleMetadata
         {
-            BundleId = Guid.NewGuid(),
+            BundleId = $"test-bundle-{Guid.NewGuid():N}",
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/multi-asset-bundle.bundle",
@@ -2354,8 +2354,8 @@ public class AssetServiceTests
         // Arrange
         _configuration.StorageBucket = "test-bucket";
         var service = CreateService();
-        var bundle1Id = Guid.NewGuid();
-        var bundle2Id = Guid.NewGuid();
+        var bundle1Id = "test-bundle-1";
+        var bundle2Id = "test-bundle-2";
         var request = new QueryBundlesByAssetRequest
         {
             AssetId = "test-asset"
@@ -2363,12 +2363,12 @@ public class AssetServiceTests
 
         var assetIndex = new AssetBundleIndex
         {
-            BundleIds = new List<Guid> { bundle1Id, bundle2Id }
+            BundleIds = new List<string> { bundle1Id, bundle2Id }
         };
 
         var bundle1 = new BundleMetadata
         {
-            BundleId = bundle1Id.ToString(),
+            BundleId = bundle1Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/b1.bundle",
@@ -2382,7 +2382,7 @@ public class AssetServiceTests
 
         var bundle2 = new BundleMetadata
         {
-            BundleId = bundle2Id.ToString(),
+            BundleId = bundle2Id,
             Version = "1.0.0",
             Bucket = "test-bucket",
             StorageKey = "bundles/b2.bundle",
@@ -2399,10 +2399,10 @@ public class AssetServiceTests
             .ReturnsAsync(assetIndex);
 
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle1Id.ToString())), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle1Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bundle1);
         _mockBundleStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle2Id.ToString())), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(bundle2Id)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(bundle2);
 
         // Act
@@ -2599,7 +2599,7 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var metabundleId = Guid.NewGuid();
+        var metabundleId = "test-metabundle-queued";
         var request = new GetJobStatusRequest { JobId = jobId };
 
         var job = new MetabundleJob
@@ -2623,7 +2623,7 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal(jobId, result.JobId);
-        Assert.Equal(metabundleId.ToString(), result.MetabundleId);
+        Assert.Equal(metabundleId, result.MetabundleId);
         Assert.Equal(GetJobStatusResponseStatus.Queued, result.Status);
     }
 
@@ -2633,9 +2633,9 @@ public class AssetServiceTests
         // Arrange
         var service = CreateService();
         var jobId = Guid.NewGuid();
-        var metabundleId = Guid.NewGuid();
-        var sourceBundleId = Guid.NewGuid();
-        var assetId = Guid.NewGuid();
+        var metabundleId = "test-metabundle-v1";
+        var sourceBundleId = "source-bundle-v1";
+        var assetId = "asset-1";
         var storageKey = "bundles/current/test-metabundle.bundle";
         var expectedUrl = "https://storage.example.com/download/test-metabundle.bundle";
         var request = new GetJobStatusRequest { JobId = jobId };
@@ -2657,7 +2657,7 @@ public class AssetServiceTests
                 StorageKey = storageKey,
                 SourceBundles = new List<SourceBundleReferenceInternal>
                 {
-                    new() { BundleId = sourceBundleId, Version = "1.0.0", AssetIds = new List<Guid> { assetId }, ContentHash = "hash1" }
+                    new() { BundleId = sourceBundleId, Version = "1.0.0", AssetIds = new List<string> { assetId }, ContentHash = "hash1" }
                 }
             }
         };
@@ -2707,7 +2707,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = Guid.NewGuid(),
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Failed,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2783,7 +2783,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = Guid.NewGuid(),
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Queued,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
@@ -2831,7 +2831,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = Guid.NewGuid(),
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Ready,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2865,7 +2865,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = Guid.NewGuid(),
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Cancelled,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -2900,7 +2900,7 @@ public class AssetServiceTests
         var job = new MetabundleJob
         {
             JobId = jobId,
-            MetabundleId = Guid.NewGuid(),
+            MetabundleId = $"test-metabundle-{Guid.NewGuid():N}",
             Status = InternalJobStatus.Queued,
             RequesterSessionId = sessionId,
             CreatedAt = DateTimeOffset.UtcNow,

@@ -147,7 +147,7 @@ public partial class AssetService
 
         // Load source bundles and validate
         var sourceBundles = new List<BundleMetadata>();
-        foreach (var sourceBundleId in request.SourceBundleIds ?? Enumerable.Empty<Guid>())
+        foreach (var sourceBundleId in request.SourceBundleIds ?? Enumerable.Empty<string>())
         {
             var bundleKey = $"{_configuration.BundleKeyPrefix}{sourceBundleId}";
             var sourceBundle = await bundleStore.GetAsync(bundleKey, cancellationToken: cancellationToken).ConfigureAwait(false);

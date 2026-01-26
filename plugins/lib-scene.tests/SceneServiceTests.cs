@@ -68,8 +68,9 @@ public class SceneServiceTests
     public void SceneServiceConfiguration_CanSetForceServiceId()
     {
         var config = new SceneServiceConfiguration();
-        config.ForceServiceId = "test-id";
-        Assert.Equal("test-id", config.ForceServiceId);
+        var testId = Guid.NewGuid();
+        config.ForceServiceId = testId;
+        Assert.Equal(testId, config.ForceServiceId);
     }
 
     #endregion
@@ -665,11 +666,11 @@ public class SceneServiceTests
             Timestamp = DateTimeOffset.UtcNow,
             SceneId = Guid.NewGuid(),
             GameId = "test-game",
-            SceneType = "region",
+            SceneType = SceneType.Region,
             Name = "Test Scene"
         };
         Assert.Equal("test-game", evt.GameId);
-        Assert.Equal("region", evt.SceneType);
+        Assert.Equal(SceneType.Region, evt.SceneType);
     }
 
     [Fact]

@@ -1099,7 +1099,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Validate input
-            if (body.BundleId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 return (StatusCodes.BadRequest, null);
             }
@@ -1275,7 +1275,7 @@ public partial class AssetService : IAssetService
 
             // Validate manifest preview
             if (body.ManifestPreview == null ||
-                body.ManifestPreview.BundleId == Guid.Empty)
+                string.IsNullOrWhiteSpace(body.ManifestPreview.BundleId))
             {
                 _logger.LogWarning("RequestBundleUpload: Missing manifest preview");
                 return (StatusCodes.BadRequest, null);
@@ -1390,7 +1390,7 @@ public partial class AssetService : IAssetService
         try
         {
             // Validate request
-            if (body.MetabundleId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(body.MetabundleId))
             {
                 _logger.LogWarning("CreateMetabundle: Empty metabundle_id");
                 return (StatusCodes.BadRequest, null);
@@ -2848,7 +2848,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (body.BundleId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("UpdateBundle: Empty bundleId");
                 return (StatusCodes.BadRequest, null);
@@ -3018,7 +3018,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (body.BundleId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("DeleteBundle: Empty bundleId");
                 return (StatusCodes.BadRequest, null);
@@ -3155,7 +3155,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (body.BundleId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("RestoreBundle: Empty bundleId");
                 return (StatusCodes.BadRequest, null);
@@ -3433,7 +3433,7 @@ public partial class AssetService : IAssetService
 
         try
         {
-            if (body.BundleId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("ListBundleVersions: Empty bundleId");
                 return (StatusCodes.BadRequest, null);

@@ -178,15 +178,15 @@ When fixing T25 type safety issues where a field IS legitimately a Guid or enum:
 
 ### lib-save-load
 
-- [ ] **T21/T25**: `DefaultCompressionType` and `DefaultDeltaAlgorithm` configuration properties are `string` but represent enums. **Decision**: Define as enums in configuration schema.
+- [ ] **T21/T25**: `DefaultCompressionType` and `DefaultDeltaAlgorithm` configuration properties are `string` but represent enums. **Decision**: Define as enums in configuration schema. **NOTE**: Requires schema change in `schemas/save-load-configuration.yaml`, not service implementation change.
 
-- [ ] **T25**: Multiple internal models store enums as strings: `PendingUploadEntry.CompressionType`, `SaveVersionManifest.CompressionType`, `SaveSlotMetadata.CompressionType/OwnerType/Category`, `ExportManifest.OwnerType`. **Decision**: Change POCOs to use enum types directly.
+- [x] **T25**: Internal models now use proper enum types. **ALREADY FIXED** - `PendingUploadEntry.CompressionType`, `SaveVersionManifest.CompressionType`, `SaveSlotMetadata.CompressionType/OwnerType/Category` all use proper enum types. Note: `ExportManifest.OwnerType` intentionally uses `string` as this is a portable export format for ZIP archives - strings provide better cross-version compatibility and human readability.
 
 ### lib-scene
 
-- [ ] **T25**: `SceneIndexEntry.SceneType` is stored as string requiring `Enum.TryParse<SceneType>()`. **Decision**: Change POCO to use `SceneType` enum directly.
+- [x] **T25**: `SceneIndexEntry.SceneType` is stored as string requiring `Enum.TryParse<SceneType>()`. **Decision**: Change POCO to use `SceneType` enum directly. **FIXED** - Changed POCO and all related code to use enum directly, including event publishing and CreateSceneSummary.
 
-- [ ] **T25**: Multiple internal models store GUIDs as strings: `SceneIndexEntry.SceneId`, `SceneIndexEntry.AssetId`, `CheckoutState.SceneId`, `CheckoutState.EditorId`, `SceneContentEntry.SceneId`. **Decision**: Change to `Guid` type.
+- [x] **T25**: Multiple internal models store GUIDs as strings: `SceneIndexEntry.SceneId`, `SceneIndexEntry.AssetId`, `CheckoutState.SceneId`, `SceneContentEntry.SceneId`. **Decision**: Change to `Guid` type. **FIXED** - Changed all to Guid, including HashSet index stores, extraction functions (ExtractSceneReferences, ExtractAssetReferences), GetReferenceSceneId, and reference resolution (ResolveReferencesAsync). Note: `CheckoutState.EditorId` and `SceneIndexEntry.CheckedOutBy` intentionally remain `string` because editorId can hold either accountId (Guid) OR app-id (string like "bannou") - this is correct semantic intent.
 
 ### lib-species
 
