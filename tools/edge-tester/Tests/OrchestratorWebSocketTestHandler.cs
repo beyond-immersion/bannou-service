@@ -76,7 +76,7 @@ public class OrchestratorWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Total services: {result.TotalServices}");
             Console.WriteLine($"   Health percentage: {result.HealthPercentage:F1}%");
 
-            return true; // Test passes if we got valid response structure
+            return result.TotalServices > 0;
         });
     }
 
@@ -102,7 +102,7 @@ public class OrchestratorWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Backends: {result.Backends?.Count ?? 0}");
             Console.WriteLine($"   Recommended: {result.Recommended}");
 
-            return true; // Test passes if we got valid response structure
+            return result.Backends != null && result.Backends.Count > 0;
         });
     }
 
@@ -129,7 +129,7 @@ public class OrchestratorWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Backend: {result.Backend}");
             Console.WriteLine($"   Services: {result.Services?.Count ?? 0}");
 
-            return true; // Test passes if we got valid response structure
+            return result.Services != null;
         });
     }
 }

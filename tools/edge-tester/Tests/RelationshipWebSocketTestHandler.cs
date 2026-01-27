@@ -188,31 +188,34 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
             });
             Console.WriteLine("   End relationship event sent");
 
-            // Give a moment for the event to process
-            await Task.Delay(100);
-
-            // Step 4: Verify relationship has endedAt set
+            // Step 4: Verify relationship has endedAt set (retry for async event processing)
             Console.WriteLine("   Step 4: Verifying relationship ended...");
-            var getResponse = await adminClient.Relationship.GetRelationshipAsync(new GetRelationshipRequest
+            for (var attempt = 0; attempt < 10; attempt++)
             {
-                RelationshipId = relationship.RelationshipId
-            });
+                await Task.Delay(200);
 
-            if (!getResponse.IsSuccess || getResponse.Result == null)
-            {
-                Console.WriteLine($"   Failed to get relationship: {FormatError(getResponse.Error)}");
-                return false;
+                var getResponse = await adminClient.Relationship.GetRelationshipAsync(new GetRelationshipRequest
+                {
+                    RelationshipId = relationship.RelationshipId
+                });
+
+                if (!getResponse.IsSuccess || getResponse.Result == null)
+                {
+                    Console.WriteLine($"   Failed to get relationship: {FormatError(getResponse.Error)}");
+                    return false;
+                }
+
+                if (getResponse.Result.EndedAt != null)
+                {
+                    Console.WriteLine($"   Relationship has endedAt timestamp: {getResponse.Result.EndedAt}");
+                    return true;
+                }
+
+                Console.WriteLine($"   Attempt {attempt + 1}: endedAt not yet set, retrying...");
             }
 
-            if (getResponse.Result.EndedAt == null)
-            {
-                Console.WriteLine("   Relationship has no endedAt timestamp - end event may not have processed yet");
-                // This might be expected if the event is async
-                return true;
-            }
-            Console.WriteLine($"   Relationship has endedAt timestamp: {getResponse.Result.EndedAt}");
-
-            return true;
+            Console.WriteLine("   FAILED: Relationship endedAt was never set after 10 retries");
+            return false;
         });
     }
 }

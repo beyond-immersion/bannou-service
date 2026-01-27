@@ -203,6 +203,61 @@ dotnet run --project edge-tester
 DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
 ```
 
+#### Edge Test Development Guidelines
+
+**Typed Proxy Requirement (MANDATORY)**
+
+Edge tests MUST use **typed service proxies** (e.g., `adminClient.Realm.CreateRealmAsync()`) instead of raw `InvokeAsync` calls. Typed proxies provide:
+
+1. **Compile-time validation** of request/response types against the schema
+2. **Correct endpoint paths** (prevents typos like `/game-service/create` vs `/game-service/services/create`)
+3. **Correct property names** (prevents mismatches like `name` vs `displayName`)
+4. **Correct enum values** (prevents case issues like `CHARACTER` vs `character`)
+5. **SDK proxy testing** -- validates that the generated typed proxies themselves work correctly over the binary protocol
+
+New edge tests should extend `BaseWebSocketTestHandler` which provides:
+- `RunWebSocketTest()` for standardized test execution with error handling
+- `FormatError()` for consistent error formatting
+- `GenerateUniqueCode()` for test data uniqueness
+- Typed resource creation helpers (`CreateTestRealmAsync`, `CreateTestSpeciesAsync`, etc.)
+
+**Example -- correct pattern:**
+```csharp
+var response = await adminClient.Character.CreateCharacterAsync(new CreateCharacterRequest
+{
+    Name = "Test Character",
+    RealmId = realmId,
+    SpeciesId = speciesId
+}, timeout: TimeSpan.FromSeconds(5));
+
+if (!response.IsSuccess || response.Result == null)
+{
+    Console.WriteLine($"   Failed: {FormatError(response.Error)}");
+    return false;
+}
+
+return response.Result.CharacterId != Guid.Empty;
+```
+
+**Example -- incorrect pattern (do not use for service API tests):**
+```csharp
+// WRONG: Raw InvokeAsync bypasses typed proxy validation
+var response = await adminClient.InvokeAsync<object, JsonElement>(
+    "POST", "/character/create", new { name = "Test", realmId = id }, ...);
+```
+
+**Legitimate InvokeAsync Exceptions**
+
+Raw `InvokeAsync` is permitted ONLY in these specific categories. If adding a new exception, document WHY typed proxies cannot be used:
+
+| Category | Files | Rationale |
+|----------|-------|-----------|
+| **Raw protocol testing** | `ConnectWebSocketTestHandler.cs` | Tests binary header construction, frame parsing, malformed messages -- operates below the proxy abstraction layer |
+| **SDK parity testing** | `TypeScriptParityTestHandler.cs` | Must use raw JSON to compare byte-level output with TypeScript SDK |
+| **Infrastructure/routing testing** | `SplitServiceRoutingTestHandler.cs` | Tests orchestrator deployment and dynamic routing topology changes |
+| **Protocol mechanism testing** | `CapabilityFlowTestHandler.cs`, `ClientEventTestHandler.cs` | Tests capability push and event delivery mechanics, not service APIs |
+| **Dynamic endpoint testing** | `GameSessionWebSocketTestHandler.cs` | Tests runtime-created shortcuts with dynamic GUIDs that have no typed proxy |
+
 ### 4. Infrastructure Testing (`lib-testing`)
 
 **Purpose**: Docker Compose service availability and minimal infrastructure validation

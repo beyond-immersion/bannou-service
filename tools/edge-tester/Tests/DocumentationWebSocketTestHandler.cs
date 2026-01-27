@@ -547,7 +547,14 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
 
             var result = response.Result;
             Console.WriteLine($"   Listed {result.Documents?.Count ?? 0} documents (total: {result.TotalCount})");
-            return result.Documents != null;
+
+            if (result.Documents == null || result.TotalCount < 1)
+            {
+                Console.WriteLine("   FAILED: Expected at least 1 document in listing");
+                return false;
+            }
+
+            return true;
         });
     }
 
@@ -628,7 +635,7 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             var result = response.Result;
             Console.WriteLine($"   Suggestions: {result.Suggestions?.Count ?? 0}");
             Console.WriteLine($"   Voice prompt: {result.VoicePrompt?.Substring(0, Math.Min(50, result.VoicePrompt?.Length ?? 0))}...");
-            return true;
+            return result.Suggestions != null;
         });
     }
 
@@ -660,7 +667,14 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Total documents: {result.DocumentCount}");
             Console.WriteLine($"   Trashed documents: {result.TrashcanCount}");
             Console.WriteLine($"   Categories: {result.CategoryCounts?.Count ?? 0}");
-            return true;
+
+            if (result.DocumentCount < 1)
+            {
+                Console.WriteLine("   FAILED: Expected at least 1 document in namespace stats");
+                return false;
+            }
+
+            return result.CategoryCounts != null;
         });
     }
 
@@ -838,7 +852,7 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine($"   Sync status: {response.Result.Status}");
             Console.WriteLine($"   Documents created: {response.Result.DocumentsCreated}, updated: {response.Result.DocumentsUpdated}, deleted: {response.Result.DocumentsDeleted}");
-            return true;
+            return response.Result.SyncId != Guid.Empty;
         });
     }
 
@@ -921,7 +935,7 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             }
 
             Console.WriteLine($"   Unbound successfully, documents deleted: {response.Result.DocumentsDeleted}");
-            return true;
+            return response.Result.Namespace == testNamespace;
         });
     }
 
@@ -982,7 +996,7 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             }
 
             Console.WriteLine($"   Archives found: {response.Result.Total}");
-            return response.Result.Archives != null;
+            return response.Result.Archives != null && response.Result.Total >= 0;
         });
     }
 
