@@ -4,12 +4,13 @@ using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Voice;
 using System.Text;
 using System.Text.Json;
+using GameSessionVoiceTier = BeyondImmersion.BannouService.GameSession.VoiceTier;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
 /// WebSocket-based test handler for voice service integration.
-/// Tests voice room lifecycle through GameSession APIs and verifies event-only peer delivery.
+/// Tests voice room lifecycle through GameSession APIs using TYPED PROXIES and verifies event-only peer delivery.
 ///
 /// Voice Architecture:
 /// - Voice rooms are created automatically when joining GameSession with voice enabled
@@ -158,9 +159,10 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Creates a game session with voice enabled.
+    /// Creates a game session using typed proxy and returns its ID.
+    /// Voice room ID is only available after joining the session with voice enabled.
     /// </summary>
-    private async Task<(Guid sessionId, Guid? voiceRoomId)?> CreateVoiceEnabledSessionAsync(BannouClient client, string sessionName)
+    private async Task<Guid?> CreateVoiceEnabledSessionAsync(BannouClient client, string sessionName)
     {
         var createRequest = new CreateGameSessionRequest
         {
@@ -173,30 +175,15 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
 
         try
         {
-            var response = (await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
-                "POST",
-                "/sessions/create",
-                createRequest,
-                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+            var response = await client.GameSession.CreateGameSessionAsync(createRequest, timeout: TimeSpan.FromSeconds(5));
 
-            var sessionIdStr = response.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
-            if (string.IsNullOrEmpty(sessionIdStr))
+            if (!response.IsSuccess || response.Result == null)
             {
-                Console.WriteLine("   No sessionId in create response");
+                Console.WriteLine($"   Failed to create session: {response.Error?.Message ?? "Unknown error"}");
                 return null;
             }
 
-            var sessionId = Guid.Parse(sessionIdStr);
-
-            // Voice room ID might be in the response
-            Guid? voiceRoomId = null;
-            if (response.TryGetProperty("voiceRoomId", out var voiceIdProp) &&
-                voiceIdProp.ValueKind == JsonValueKind.String)
-            {
-                voiceRoomId = Guid.Parse(voiceIdProp.GetString()!);
-            }
-
-            return (sessionId, voiceRoomId);
+            return response.Result.SessionId;
         }
         catch (Exception ex)
         {
@@ -258,50 +245,41 @@ a=rtpmap:111 opus/48000/2";
                 }
 
                 // Create a voice-enabled session
-                var createResult = await CreateVoiceEnabledSessionAsync(client, $"VoiceTest_{DateTime.Now.Ticks}");
-                if (createResult == null)
+                var sessionId = await CreateVoiceEnabledSessionAsync(client, $"VoiceTest_{DateTime.Now.Ticks}");
+                if (sessionId == null)
                 {
                     return false;
                 }
 
-                var sessionId = createResult.Value.sessionId;
                 Console.WriteLine($"   Created session {sessionId}");
 
-                // Join the session
+                // Join the session using typed proxy
                 Console.WriteLine("   Joining session...");
                 var joinRequest = new JoinGameSessionRequest
                 {
-                    SessionId = sessionId,
+                    SessionId = sessionId.Value,
                     VoiceEndpoint = CreateMockVoiceEndpoint()
                 };
 
-                var joinResponse = (await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST",
-                    "/sessions/join",
-                    joinRequest,
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                var joinResponse = await client.GameSession.JoinGameSessionAsync(joinRequest, timeout: TimeSpan.FromSeconds(5));
 
-                var joinSuccess = joinResponse.TryGetProperty("success", out var successProp) && successProp.GetBoolean();
-                if (!joinSuccess)
+                if (!joinResponse.IsSuccess || joinResponse.Result == null)
                 {
-                    Console.WriteLine("   Failed to join session");
+                    Console.WriteLine($"   Failed to join session: {joinResponse.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
 
+                var joinResult = joinResponse.Result;
+
                 // Check for voice connection info in response
-                if (joinResponse.TryGetProperty("voice", out var voiceProp) &&
-                    voiceProp.ValueKind == JsonValueKind.Object)
+                if (joinResult.Voice != null)
                 {
-                    var voiceEnabled = voiceProp.TryGetProperty("voiceEnabled", out var enabledProp) && enabledProp.GetBoolean();
-                    var hasRoomId = voiceProp.TryGetProperty("roomId", out var roomIdProp) &&
-                                    roomIdProp.ValueKind == JsonValueKind.String;
+                    Console.WriteLine($"   Voice enabled: {joinResult.Voice.VoiceEnabled}");
+                    Console.WriteLine($"   Has room ID: {joinResult.Voice.RoomId != null}");
 
-                    Console.WriteLine($"   Voice enabled: {voiceEnabled}");
-                    Console.WriteLine($"   Has room ID: {hasRoomId}");
-
-                    if (voiceEnabled && hasRoomId)
+                    if (joinResult.Voice.VoiceEnabled && joinResult.Voice.RoomId != null)
                     {
-                        Console.WriteLine($"   Voice room ID: {roomIdProp.GetString()}");
+                        Console.WriteLine($"   Voice room ID: {joinResult.Voice.RoomId}");
                         return true;
                     }
                 }
@@ -358,28 +336,22 @@ a=rtpmap:111 opus/48000/2";
                 }
 
                 // Client 1 creates and joins a voice-enabled session
-                var createResult = await CreateVoiceEnabledSessionAsync(client1, $"TwoClientTest_{DateTime.Now.Ticks}");
-                if (createResult == null)
+                var sessionId = await CreateVoiceEnabledSessionAsync(client1, $"TwoClientTest_{DateTime.Now.Ticks}");
+                if (sessionId == null)
                 {
                     Console.WriteLine("   Failed to create session");
                     return false;
                 }
 
-                var sessionId = createResult.Value.sessionId;
                 Console.WriteLine($"   Client 1 created session {sessionId}");
 
-                // Client 1 joins
-                var joinRequest1 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
-                var joinResponse1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST",
-                    "/sessions/join",
-                    joinRequest1,
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                // Client 1 joins using typed proxy
+                var joinRequest1 = new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() };
+                var joinResponse1 = await client1.GameSession.JoinGameSessionAsync(joinRequest1, timeout: TimeSpan.FromSeconds(5));
 
-                var join1Success = joinResponse1.TryGetProperty("success", out var s1) && s1.GetBoolean();
-                if (!join1Success)
+                if (!joinResponse1.IsSuccess || joinResponse1.Result == null)
                 {
-                    Console.WriteLine("   Client 1 failed to join");
+                    Console.WriteLine($"   Client 1 failed to join: {joinResponse1.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
                 Console.WriteLine($"   Client 1 joined, session: {client1.SessionId}");
@@ -408,19 +380,14 @@ a=rtpmap:111 opus/48000/2";
                     }
                 });
 
-                // Client 2 joins the same session
+                // Client 2 joins the same session using typed proxy
                 Console.WriteLine("   Client 2 joining session...");
-                var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
-                var joinResponse2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST",
-                    "/sessions/join",
-                    joinRequest2,
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() };
+                var joinResponse2 = await client2.GameSession.JoinGameSessionAsync(joinRequest2, timeout: TimeSpan.FromSeconds(5));
 
-                var join2Success = joinResponse2.TryGetProperty("success", out var s2) && s2.GetBoolean();
-                if (!join2Success)
+                if (!joinResponse2.IsSuccess || joinResponse2.Result == null)
                 {
-                    Console.WriteLine("   Client 2 failed to join");
+                    Console.WriteLine($"   Client 2 failed to join: {joinResponse2.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
                 Console.WriteLine($"   Client 2 joined, session: {client2.SessionId}");
@@ -497,32 +464,31 @@ a=rtpmap:111 opus/48000/2";
                 }
 
                 // Create and join a voice-enabled session
-                var createResult = await CreateVoiceEnabledSessionAsync(client1, $"AnswerPeerTest_{DateTime.Now.Ticks}");
-                if (createResult == null)
+                var sessionId = await CreateVoiceEnabledSessionAsync(client1, $"AnswerPeerTest_{DateTime.Now.Ticks}");
+                if (sessionId == null)
                 {
                     Console.WriteLine("   Failed to create session");
                     return false;
                 }
 
-                var sessionId = createResult.Value.sessionId;
                 Console.WriteLine($"   Created session {sessionId}");
 
-                // Both clients join
-                var joinRequest1 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
-                var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
+                // Both clients join using typed proxies
+                var joinRequest1 = new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() };
+                var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() };
 
-                var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join", joinRequest1, timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                var joinResponse1 = await client1.GameSession.JoinGameSessionAsync(joinRequest1, timeout: TimeSpan.FromSeconds(5));
+                var joinResponse2 = await client2.GameSession.JoinGameSessionAsync(joinRequest2, timeout: TimeSpan.FromSeconds(5));
 
-                var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join", joinRequest2, timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-
-                var success1 = join1.TryGetProperty("success", out var s1) && s1.GetBoolean();
-                var success2 = join2.TryGetProperty("success", out var s2) && s2.GetBoolean();
-
-                if (!success1 || !success2)
+                if (!joinResponse1.IsSuccess || joinResponse1.Result == null)
                 {
-                    Console.WriteLine("   Failed to join session with both clients");
+                    Console.WriteLine($"   Client 1 failed to join: {joinResponse1.Error?.Message ?? "Unknown error"}");
+                    return false;
+                }
+
+                if (!joinResponse2.IsSuccess || joinResponse2.Result == null)
+                {
+                    Console.WriteLine($"   Client 2 failed to join: {joinResponse2.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
 
@@ -531,16 +497,12 @@ a=rtpmap:111 opus/48000/2";
                 Console.WriteLine($"   Client 2 session: {client2.SessionId}");
 
                 // Get voice room ID from join response
-                Guid? voiceRoomId = null;
-                if (join1.TryGetProperty("voice", out var voiceProp) &&
-                    voiceProp.TryGetProperty("roomId", out var roomIdProp) &&
-                    roomIdProp.ValueKind == JsonValueKind.String)
+                var voiceRoomId = joinResponse1.Result.Voice?.RoomId;
+                if (voiceRoomId != null)
                 {
-                    voiceRoomId = Guid.Parse(roomIdProp.GetString()!);
                     Console.WriteLine($"   Voice room ID: {voiceRoomId}");
                 }
-
-                if (voiceRoomId == null)
+                else
                 {
                     Console.WriteLine("   FAIL: No voice room ID in response - voice is not enabled");
                     return false;
@@ -570,7 +532,7 @@ a=rtpmap:111 opus/48000/2";
                     }
                 });
 
-                // Client 2 sends SDP answer to Client 1
+                // Client 2 sends SDP answer to Client 1 using typed proxy
                 // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer_joined event
                 // due to race condition between Permission service capability push and Voice service event publish.
                 // Retry up to 5 times (4 seconds total) for "Unknown endpoint" errors.
@@ -593,11 +555,8 @@ a=rtpmap:111 opus/48000/2";
                 {
                     try
                     {
-                        await client2.InvokeAsync<AnswerPeerRequest, JsonElement>(
-                            "POST",
-                            "/voice/peer/answer",
-                            answerRequest,
-                            timeout: TimeSpan.FromSeconds(5));
+                        // Use typed proxy for fire-and-forget event
+                        await client2.Voice.AnswerPeerEventAsync(answerRequest);
 
                         Console.WriteLine("   SDP answer sent successfully");
                         answerSent = true;
@@ -695,14 +654,13 @@ a=rtpmap:111 opus/48000/2";
                 }
 
                 // Client 1 creates a voice-enabled session
-                var createResult = await CreateVoiceEnabledSessionAsync(client1, $"TierUpgradeTest_{DateTime.Now.Ticks}");
-                if (createResult == null)
+                var sessionId = await CreateVoiceEnabledSessionAsync(client1, $"TierUpgradeTest_{DateTime.Now.Ticks}");
+                if (sessionId == null)
                 {
                     Console.WriteLine("   Failed to create session");
                     return false;
                 }
 
-                var sessionId = createResult.Value.sessionId;
                 Console.WriteLine($"   Created session {sessionId}");
 
                 // Set up tier upgrade event listeners on all clients
@@ -744,33 +702,31 @@ a=rtpmap:111 opus/48000/2";
                 SetupTierUpgradeListener(client2, tierUpgrade2Received, "Client 2");
                 SetupTierUpgradeListener(client3, tierUpgrade3Received, "Client 3");
 
-                // Client 1 joins (1 participant - under P2P limit)
+                // Client 1 joins (1 participant - under P2P limit) using typed proxy
                 Console.WriteLine("   Client 1 joining session...");
-                var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                var join1Response = await client1.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(5));
 
-                if (!(join1.TryGetProperty("success", out var s1) && s1.GetBoolean()))
+                if (!join1Response.IsSuccess || join1Response.Result == null)
                 {
-                    Console.WriteLine("   Client 1 failed to join");
+                    Console.WriteLine($"   Client 1 failed to join: {join1Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
-                Console.WriteLine($"   Client 1 joined (1/2 P2P capacity)");
+                Console.WriteLine($"   Client 1 joined (1/{GetP2PMaxParticipants()} P2P capacity)");
 
-                // Client 2 joins (2 participants - at P2P limit)
+                // Client 2 joins (2 participants - at P2P limit) using typed proxy
                 Console.WriteLine("   Client 2 joining session...");
-                var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                var join2Response = await client2.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(5));
 
-                if (!(join2.TryGetProperty("success", out var s2) && s2.GetBoolean()))
+                if (!join2Response.IsSuccess || join2Response.Result == null)
                 {
-                    Console.WriteLine("   Client 2 failed to join");
+                    Console.WriteLine($"   Client 2 failed to join: {join2Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
-                Console.WriteLine($"   Client 2 joined (2/2 P2P capacity - FULL)");
+                Console.WriteLine($"   Client 2 joined (2/{GetP2PMaxParticipants()} P2P capacity - FULL)");
 
                 // Verify no tier upgrade yet (still within P2P capacity)
                 await Task.Delay(1000);
@@ -784,32 +740,24 @@ a=rtpmap:111 opus/48000/2";
                 // Client 3's join triggers the upgrade, but they join DIRECTLY into scaled mode
                 // so they don't receive a tier_upgrade event - their join response already says tier=scaled
                 Console.WriteLine("   Client 3 joining session (should trigger tier upgrade)...");
-                var join3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                var join3Response = await client3.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(5));
 
-                if (!(join3.TryGetProperty("success", out var s3) && s3.GetBoolean()))
+                if (!join3Response.IsSuccess || join3Response.Result == null)
                 {
-                    Console.WriteLine("   Client 3 failed to join");
+                    Console.WriteLine($"   Client 3 failed to join: {join3Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
                 Console.WriteLine($"   Client 3 joined (3 participants - EXCEEDS P2P limit)");
 
                 // Verify Client 3's join response indicates scaled tier (they joined after upgrade)
-                if (join3.TryGetProperty("voice", out var voice3) && voice3.TryGetProperty("tier", out var tier3))
+                var client3Tier = join3Response.Result.Voice?.Tier;
+                Console.WriteLine($"   Client 3 join response tier: {client3Tier}");
+                if (client3Tier != GameSessionVoiceTier.Scaled)
                 {
-                    var tierValue = tier3.GetString();
-                    Console.WriteLine($"   Client 3 join response tier: {tierValue}");
-                    if (tierValue?.ToLowerInvariant() != "scaled")
-                    {
-                        Console.WriteLine($"   FAIL: Client 3 should have joined directly into scaled tier, got: {tierValue}");
-                        return false;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("   WARNING: Could not verify Client 3's tier from join response");
+                    Console.WriteLine($"   FAIL: Client 3 should have joined directly into scaled tier, got: {client3Tier}");
+                    return false;
                 }
 
                 // Wait for tier upgrade events on Clients 1 & 2 only
@@ -926,37 +874,34 @@ a=rtpmap:111 opus/48000/2";
                 Console.WriteLine();
                 Console.WriteLine("   === Phase 1: Trigger upgrade with 3 clients ===");
 
-                var createResult = await CreateVoiceEnabledSessionAsync(client1, $"ScaledPersistTest_{DateTime.Now.Ticks}");
-                if (createResult == null)
+                var sessionId = await CreateVoiceEnabledSessionAsync(client1, $"ScaledPersistTest_{DateTime.Now.Ticks}");
+                if (sessionId == null)
                 {
                     Console.WriteLine("   Failed to create voice-enabled session");
                     return false;
                 }
-                var sessionId = createResult.Value.sessionId;
                 Console.WriteLine($"   Created session: {sessionId}");
 
-                // Client 1 joins the session with voice (1/2 P2P capacity)
-                var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+                // Client 1 joins the session with voice (1/2 P2P capacity) using typed proxy
+                var join1Response = await client1.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10));
 
-                if (!(join1.TryGetProperty("success", out var s1) && s1.GetBoolean()))
+                if (!join1Response.IsSuccess || join1Response.Result == null)
                 {
-                    Console.WriteLine("   Client 1 failed to join");
+                    Console.WriteLine($"   Client 1 failed to join: {join1Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
                 Console.WriteLine($"   Client 1 joined (1/{GetP2PMaxParticipants()} P2P capacity)");
 
-                // Client 2 joins (2/2 - at capacity)
-                var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+                // Client 2 joins (2/2 - at capacity) using typed proxy
+                var join2Response = await client2.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10));
 
-                if (!(join2.TryGetProperty("success", out var s2) && s2.GetBoolean()))
+                if (!join2Response.IsSuccess || join2Response.Result == null)
                 {
-                    Console.WriteLine("   Client 2 failed to join");
+                    Console.WriteLine($"   Client 2 failed to join: {join2Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
                 Console.WriteLine($"   Client 2 joined (2/{GetP2PMaxParticipants()} P2P capacity - FULL)");
@@ -967,27 +912,22 @@ a=rtpmap:111 opus/48000/2";
                 client1.OnEvent("voice.tier_upgrade", (_) => tierUpgrade1.TrySetResult(true));
                 client2.OnEvent("voice.tier_upgrade", (_) => tierUpgrade2.TrySetResult(true));
 
-                // Client 3 joins (triggers upgrade)
-                var join3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                // Client 3 joins (triggers upgrade) using typed proxy
+                var join3Response = await client3.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(5));
 
-                if (!(join3.TryGetProperty("success", out var s3) && s3.GetBoolean()))
+                if (!join3Response.IsSuccess || join3Response.Result == null)
                 {
-                    Console.WriteLine("   Client 3 failed to join");
+                    Console.WriteLine($"   Client 3 failed to join: {join3Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
 
                 // Verify Client 3 joined directly into scaled tier
-                var client3Tier = "unknown";
-                if (join3.TryGetProperty("voice", out var voice3) && voice3.TryGetProperty("tier", out var tier3))
-                {
-                    client3Tier = tier3.GetString() ?? "unknown";
-                }
+                var client3Tier = join3Response.Result.Voice?.Tier;
                 Console.WriteLine($"   Client 3 joined with tier: {client3Tier}");
 
-                if (client3Tier.ToLowerInvariant() != "scaled")
+                if (client3Tier != GameSessionVoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 3 should have joined scaled tier, got: {client3Tier}");
                     return false;
@@ -1008,37 +948,30 @@ a=rtpmap:111 opus/48000/2";
                 Console.WriteLine();
                 Console.WriteLine("   === Phase 2: Client 3 leaves (2 remaining, should stay scaled) ===");
 
-                var leave3 = await client3.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/leave",
-                    new LeaveGameSessionRequest { SessionId = sessionId },
-                    timeout: TimeSpan.FromSeconds(10));
+                // Use typed proxy for leave event
+                await client3.GameSession.LeaveGameSessionEventAsync(new LeaveGameSessionRequest { SessionId = sessionId.Value });
 
                 Console.WriteLine("   Client 3 left the session");
                 Console.WriteLine($"   Room now has 2 participants (at P2P threshold, but MUST stay scaled)");
 
-                // Phase 3: Client 4 joins - should join directly into SCALED tier
+                // Phase 3: Client 4 joins - should join directly into SCALED tier using typed proxy
                 Console.WriteLine();
                 Console.WriteLine("   === Phase 3: Client 4 joins (should join SCALED, not P2P) ===");
 
-                var join4 = (await client4.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+                var join4Response = await client4.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10));
 
-                if (!(join4.TryGetProperty("success", out var s4) && s4.GetBoolean()))
+                if (!join4Response.IsSuccess || join4Response.Result == null)
                 {
-                    Console.WriteLine("   Client 4 failed to join");
+                    Console.WriteLine($"   Client 4 failed to join: {join4Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
 
-                var client4Tier = "unknown";
-                if (join4.TryGetProperty("voice", out var voice4) && voice4.TryGetProperty("tier", out var tier4))
-                {
-                    client4Tier = tier4.GetString() ?? "unknown";
-                }
+                var client4Tier = join4Response.Result.Voice?.Tier;
                 Console.WriteLine($"   Client 4 joined with tier: {client4Tier}");
 
-                if (client4Tier.ToLowerInvariant() != "scaled")
+                if (client4Tier != GameSessionVoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 4 should have joined SCALED tier (room already upgraded), got: {client4Tier}");
                     Console.WriteLine("   This indicates the room incorrectly downgraded to P2P when participants left!");
@@ -1050,31 +983,24 @@ a=rtpmap:111 opus/48000/2";
                 Console.WriteLine();
                 Console.WriteLine("   === Phase 4: Client 1 leaves, Client 5 joins (should still be scaled) ===");
 
-                var leave1 = await client1.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/leave",
-                    new LeaveGameSessionRequest { SessionId = sessionId },
-                    timeout: TimeSpan.FromSeconds(10));
+                // Use typed proxy for leave event
+                await client1.GameSession.LeaveGameSessionEventAsync(new LeaveGameSessionRequest { SessionId = sessionId.Value });
                 Console.WriteLine("   Client 1 left the session");
 
-                var join5 = (await client5.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+                var join5Response = await client5.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10));
 
-                if (!(join5.TryGetProperty("success", out var s5) && s5.GetBoolean()))
+                if (!join5Response.IsSuccess || join5Response.Result == null)
                 {
-                    Console.WriteLine("   Client 5 failed to join");
+                    Console.WriteLine($"   Client 5 failed to join: {join5Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
 
-                var client5Tier = "unknown";
-                if (join5.TryGetProperty("voice", out var voice5) && voice5.TryGetProperty("tier", out var tier5))
-                {
-                    client5Tier = tier5.GetString() ?? "unknown";
-                }
+                var client5Tier = join5Response.Result.Voice?.Tier;
                 Console.WriteLine($"   Client 5 joined with tier: {client5Tier}");
 
-                if (client5Tier.ToLowerInvariant() != "scaled")
+                if (client5Tier != GameSessionVoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 5 should have joined SCALED tier, got: {client5Tier}");
                     return false;
@@ -1086,39 +1012,28 @@ a=rtpmap:111 opus/48000/2";
                 Console.WriteLine("   === Phase 5: Reduce to 1 participant, verify new join is still scaled ===");
 
                 // Leave clients 4 and 5, leaving only client 2
-                await client4.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/leave",
-                    new LeaveGameSessionRequest { SessionId = sessionId },
-                    timeout: TimeSpan.FromSeconds(10));
+                await client4.GameSession.LeaveGameSessionEventAsync(new LeaveGameSessionRequest { SessionId = sessionId.Value });
                 Console.WriteLine("   Client 4 left");
 
-                await client5.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/leave",
-                    new LeaveGameSessionRequest { SessionId = sessionId },
-                    timeout: TimeSpan.FromSeconds(10));
+                await client5.GameSession.LeaveGameSessionEventAsync(new LeaveGameSessionRequest { SessionId = sessionId.Value });
                 Console.WriteLine("   Client 5 left");
                 Console.WriteLine("   Only Client 2 remains (1 participant - well below P2P threshold)");
 
-                // Client 3 rejoins (reusing the account)
-                var rejoin3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join",
-                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+                // Client 3 rejoins (reusing the account) using typed proxy
+                var rejoin3Response = await client3.GameSession.JoinGameSessionAsync(
+                    new JoinGameSessionRequest { SessionId = sessionId.Value, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10));
 
-                if (!(rejoin3.TryGetProperty("success", out var rs3) && rs3.GetBoolean()))
+                if (!rejoin3Response.IsSuccess || rejoin3Response.Result == null)
                 {
-                    Console.WriteLine("   Client 3 failed to rejoin");
+                    Console.WriteLine($"   Client 3 failed to rejoin: {rejoin3Response.Error?.Message ?? "Unknown error"}");
                     return false;
                 }
 
-                var client3RejoinTier = "unknown";
-                if (rejoin3.TryGetProperty("voice", out var rvoice3) && rvoice3.TryGetProperty("tier", out var rtier3))
-                {
-                    client3RejoinTier = rtier3.GetString() ?? "unknown";
-                }
+                var client3RejoinTier = rejoin3Response.Result.Voice?.Tier;
                 Console.WriteLine($"   Client 3 rejoined with tier: {client3RejoinTier}");
 
-                if (client3RejoinTier.ToLowerInvariant() != "scaled")
+                if (client3RejoinTier != GameSessionVoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 3 rejoin should be SCALED tier, got: {client3RejoinTier}");
                     Console.WriteLine("   The room incorrectly downgraded when only 1 participant remained!");

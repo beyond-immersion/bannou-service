@@ -8,26 +8,27 @@ namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
 /// WebSocket-based test handler for matchmaking service API endpoints.
-/// Tests the matchmaking service APIs through the Connect service WebSocket binary protocol.
+/// Tests the matchmaking service APIs using TYPED PROXIES through the Connect service WebSocket binary protocol.
+/// This validates both the service logic AND the typed proxy generation.
 ///
 /// IMPORTANT: These tests create dedicated test accounts with their own BannouClient instances.
 /// This avoids interfering with Program.Client or Program.AdminClient, and properly tests
 /// the user experience from account creation through API usage.
 /// </summary>
-public class MatchmakingWebSocketTestHandler : IServiceTestHandler
+public class MatchmakingWebSocketTestHandler : BaseWebSocketTestHandler
 {
-    public ServiceTest[] GetServiceTests()
+    public override ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]
         {
             new ServiceTest(TestListQueuesViaWebSocket, "Matchmaking - List Queues (WebSocket)", "WebSocket",
-                "Test listing matchmaking queues via WebSocket protocol"),
+                "Test listing matchmaking queues via typed proxy"),
             new ServiceTest(TestCreateQueueViaWebSocket, "Matchmaking - Create Queue (WebSocket)", "WebSocket",
-                "Test creating a matchmaking queue via WebSocket protocol"),
+                "Test creating a matchmaking queue via typed proxy"),
             new ServiceTest(TestQueueLifecycleViaWebSocket, "Matchmaking - Queue Lifecycle (WebSocket)", "WebSocket",
-                "Test complete queue lifecycle: create -> get -> update -> delete via WebSocket"),
+                "Test complete queue lifecycle: create -> get -> update -> delete via typed proxy"),
             new ServiceTest(TestJoinMatchmakingViaWebSocket, "Matchmaking - Join Queue (WebSocket)", "WebSocket",
-                "Test joining a matchmaking queue via WebSocket protocol"),
+                "Test joining a matchmaking queue via typed proxy"),
         };
     }
 
@@ -125,291 +126,219 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
         }
     }
 
+    /// <summary>
+    /// Deletes a queue safely using typed proxy, ignoring errors.
+    /// </summary>
+    private async Task TryDeleteQueueAsync(BannouClient adminClient, string queueId)
+    {
+        try
+        {
+            await adminClient.Matchmaking.DeleteQueueEventAsync(new DeleteQueueRequest
+            {
+                QueueId = queueId
+            });
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+    }
+
     #endregion
 
     private void TestListQueuesViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Matchmaking List Queues Test (WebSocket) ===");
+        Console.WriteLine("Testing listing matchmaking queues via typed proxy...");
 
-        try
+        RunWebSocketTest("Matchmaking list queues test", async adminClient =>
         {
-            var result = Task.Run(async () =>
+            Console.WriteLine("   Listing matchmaking queues via typed proxy...");
+            var response = await adminClient.Matchmaking.ListQueuesAsync(new ListQueuesRequest
             {
-                var adminClient = Program.AdminClient;
-                if (adminClient == null || !adminClient.IsConnected)
-                {
-                    Console.WriteLine("   Admin client not connected");
-                    return false;
-                }
+                GameId = "test-game"
+            }, timeout: TimeSpan.FromSeconds(5));
 
-                try
-                {
-                    Console.WriteLine("   Listing matchmaking queues via WebSocket...");
-                    var response = await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/list",
-                        new { gameId = "test-game" },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    if (!response.IsSuccess)
-                    {
-                        Console.WriteLine($"   List queues failed: {response.Error?.Message}");
-                        return false;
-                    }
-
-                    var json = System.Text.Json.Nodes.JsonNode.Parse(response.Result.GetRawText())?.AsObject();
-                    var queues = json?["queues"]?.AsArray();
-                    Console.WriteLine($"   Listed {queues?.Count ?? 0} queues");
-
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   Test failed: {ex.Message}");
-                    return false;
-                }
-            }).Result;
-
-            if (result)
+            if (!response.IsSuccess || response.Result == null)
             {
-                Console.WriteLine("PASSED Matchmaking list queues test via WebSocket");
+                Console.WriteLine($"   List queues failed: {FormatError(response.Error)}");
+                return false;
             }
-            else
-            {
-                Console.WriteLine("FAILED Matchmaking list queues test via WebSocket");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED Matchmaking list queues test with exception: {ex.Message}");
-        }
+
+            var result = response.Result;
+            Console.WriteLine($"   Listed {result.Queues?.Count ?? 0} queues");
+
+            return result.Queues != null;
+        });
     }
 
     private void TestCreateQueueViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Matchmaking Create Queue Test (WebSocket) ===");
+        Console.WriteLine("Testing creating matchmaking queue via typed proxy...");
 
-        try
+        RunWebSocketTest("Matchmaking create queue test", async adminClient =>
         {
-            var result = Task.Run(async () =>
+            var queueId = $"ws-test-queue-{DateTime.Now.Ticks}";
+
+            try
             {
-                var adminClient = Program.AdminClient;
-                if (adminClient == null || !adminClient.IsConnected)
+                Console.WriteLine($"   Creating queue {queueId} via typed proxy...");
+                var createResponse = await adminClient.Matchmaking.CreateQueueAsync(new CreateQueueRequest
                 {
-                    Console.WriteLine("   Admin client not connected");
+                    QueueId = queueId,
+                    GameId = "test-game",
+                    DisplayName = "WebSocket Test Queue",
+                    Description = "Queue created via WebSocket edge test",
+                    MinCount = 2,
+                    MaxCount = 4,
+                    UseSkillRating = true,
+                    MatchAcceptTimeoutSeconds = 30
+                }, timeout: TimeSpan.FromSeconds(5));
+
+                if (!createResponse.IsSuccess || createResponse.Result == null)
+                {
+                    Console.WriteLine($"   Create queue failed: {FormatError(createResponse.Error)}");
                     return false;
                 }
 
-                var queueId = $"ws-test-queue-{DateTime.Now.Ticks}";
-
-                try
+                var result = createResponse.Result;
+                if (result.QueueId != queueId)
                 {
-                    Console.WriteLine($"   Creating queue {queueId} via WebSocket...");
-                    var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/create",
-                        new
-                        {
-                            queueId = queueId,
-                            gameId = "test-game",
-                            displayName = "WebSocket Test Queue",
-                            description = "Queue created via WebSocket edge test",
-                            minCount = 2,
-                            maxCount = 4,
-                            useSkillRating = true,
-                            matchAcceptTimeoutSeconds = 30
-                        },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    if (!createResponse.IsSuccess)
-                    {
-                        Console.WriteLine($"   Create queue failed: {createResponse.Error?.Message}");
-                        return false;
-                    }
-
-                    var json = System.Text.Json.Nodes.JsonNode.Parse(createResponse.Result.GetRawText())?.AsObject();
-                    var createdQueueId = json?["queueId"]?.GetValue<string>();
-
-                    if (createdQueueId != queueId)
-                    {
-                        Console.WriteLine($"   Queue ID mismatch: expected {queueId}, got {createdQueueId}");
-                        return false;
-                    }
-
-                    Console.WriteLine($"   Queue created: {createdQueueId}");
-
-                    // Cleanup: delete the queue
-                    Console.WriteLine("   Cleaning up - deleting queue...");
-                    await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/delete",
-                        new { queueId = queueId },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   Test failed: {ex.Message}");
+                    Console.WriteLine($"   Queue ID mismatch: expected {queueId}, got {result.QueueId}");
                     return false;
                 }
-            }).Result;
 
-            if (result)
-            {
-                Console.WriteLine("PASSED Matchmaking create queue test via WebSocket");
+                Console.WriteLine($"   Queue created: {result.QueueId}");
+
+                // Cleanup: delete the queue
+                Console.WriteLine("   Cleaning up - deleting queue...");
+                await TryDeleteQueueAsync(adminClient, queueId);
+
+                return true;
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("FAILED Matchmaking create queue test via WebSocket");
+                Console.WriteLine($"   Test failed: {ex.Message}");
+                await TryDeleteQueueAsync(adminClient, queueId);
+                return false;
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED Matchmaking create queue test with exception: {ex.Message}");
-        }
+        });
     }
 
     private void TestQueueLifecycleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Matchmaking Queue Lifecycle Test (WebSocket) ===");
+        Console.WriteLine("Testing complete queue lifecycle via typed proxy...");
 
-        try
+        RunWebSocketTest("Matchmaking queue lifecycle test", async adminClient =>
         {
-            var result = Task.Run(async () =>
+            var queueId = $"ws-lifecycle-queue-{DateTime.Now.Ticks}";
+
+            try
             {
-                var adminClient = Program.AdminClient;
-                if (adminClient == null || !adminClient.IsConnected)
+                // Step 1: Create queue
+                Console.WriteLine($"   Step 1: Creating queue {queueId}...");
+                var createResponse = await adminClient.Matchmaking.CreateQueueAsync(new CreateQueueRequest
                 {
-                    Console.WriteLine("   Admin client not connected");
+                    QueueId = queueId,
+                    GameId = "test-game",
+                    DisplayName = "Lifecycle Test Queue",
+                    MinCount = 2,
+                    MaxCount = 4
+                }, timeout: TimeSpan.FromSeconds(5));
+
+                if (!createResponse.IsSuccess || createResponse.Result == null)
+                {
+                    Console.WriteLine($"   Create queue failed: {FormatError(createResponse.Error)}");
+                    return false;
+                }
+                Console.WriteLine("   Queue created");
+
+                // Step 2: Get queue
+                Console.WriteLine("   Step 2: Getting queue...");
+                var getResponse = await adminClient.Matchmaking.GetQueueAsync(new GetQueueRequest
+                {
+                    QueueId = queueId
+                }, timeout: TimeSpan.FromSeconds(5));
+
+                if (!getResponse.IsSuccess || getResponse.Result == null)
+                {
+                    Console.WriteLine($"   Get queue failed: {FormatError(getResponse.Error)}");
                     return false;
                 }
 
-                var queueId = $"ws-lifecycle-queue-{DateTime.Now.Ticks}";
+                Console.WriteLine($"   Got queue: {getResponse.Result.DisplayName}");
 
-                try
+                // Step 3: Update queue
+                Console.WriteLine("   Step 3: Updating queue...");
+                var updateResponse = await adminClient.Matchmaking.UpdateQueueAsync(new UpdateQueueRequest
                 {
-                    // Step 1: Create queue
-                    Console.WriteLine($"   Step 1: Creating queue {queueId}...");
-                    var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/create",
-                        new
-                        {
-                            queueId = queueId,
-                            gameId = "test-game",
-                            displayName = "Lifecycle Test Queue",
-                            minCount = 2,
-                            maxCount = 4
-                        },
-                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                    QueueId = queueId,
+                    DisplayName = "Updated Lifecycle Queue",
+                    MaxCount = 8
+                }, timeout: TimeSpan.FromSeconds(5));
 
-                    Console.WriteLine("   Queue created");
-
-                    // Step 2: Get queue
-                    Console.WriteLine("   Step 2: Getting queue...");
-                    var getResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/get",
-                        new { queueId = queueId },
-                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-
-                    var json = System.Text.Json.Nodes.JsonNode.Parse(getResponse.GetRawText())?.AsObject();
-                    var displayName = json?["displayName"]?.GetValue<string>();
-                    Console.WriteLine($"   Got queue: {displayName}");
-
-                    // Step 3: Update queue
-                    Console.WriteLine("   Step 3: Updating queue...");
-                    var updateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/update",
-                        new
-                        {
-                            queueId = queueId,
-                            displayName = "Updated Lifecycle Queue",
-                            maxCount = 8
-                        },
-                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-
-                    var updatedJson = System.Text.Json.Nodes.JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
-                    var updatedDisplayName = updatedJson?["displayName"]?.GetValue<string>();
-                    var updatedMaxCount = updatedJson?["maxCount"]?.GetValue<int>() ?? 0;
-
-                    if (updatedDisplayName != "Updated Lifecycle Queue" || updatedMaxCount != 8)
-                    {
-                        Console.WriteLine($"   Update failed: displayName={updatedDisplayName}, maxCount={updatedMaxCount}");
-                        return false;
-                    }
-                    Console.WriteLine("   Queue updated");
-
-                    // Step 4: Delete queue
-                    Console.WriteLine("   Step 4: Deleting queue...");
-                    await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/delete",
-                        new { queueId = queueId },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    Console.WriteLine("   Queue deleted");
-
-                    // Step 5: Verify deletion (should return 404)
-                    Console.WriteLine("   Step 5: Verifying deletion...");
-                    var verifyResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/get",
-                        new { queueId = queueId },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    if (verifyResponse.IsSuccess)
-                    {
-                        Console.WriteLine("   Queue still exists after deletion!");
-                        return false;
-                    }
-
-                    if (verifyResponse.Error?.ResponseCode != 404)
-                    {
-                        Console.WriteLine($"   Expected 404, got {verifyResponse.Error?.ResponseCode}");
-                        return false;
-                    }
-
-                    Console.WriteLine("   Deletion verified (404)");
-                    return true;
-                }
-                catch (Exception ex)
+                if (!updateResponse.IsSuccess || updateResponse.Result == null)
                 {
-                    Console.WriteLine($"   Test failed: {ex.Message}");
-                    // Try to cleanup
-                    try
-                    {
-                        await adminClient.InvokeAsync<object, JsonElement>(
-                            "POST",
-                            "/matchmaking/queue/delete",
-                            new { queueId = queueId },
-                            timeout: TimeSpan.FromSeconds(2));
-                    }
-                    catch { }
+                    Console.WriteLine($"   Update queue failed: {FormatError(updateResponse.Error)}");
                     return false;
                 }
-            }).Result;
 
-            if (result)
-            {
-                Console.WriteLine("PASSED Matchmaking queue lifecycle test via WebSocket");
+                var updated = updateResponse.Result;
+                if (updated.DisplayName != "Updated Lifecycle Queue" || updated.MaxCount != 8)
+                {
+                    Console.WriteLine($"   Update failed: displayName={updated.DisplayName}, maxCount={updated.MaxCount}");
+                    return false;
+                }
+                Console.WriteLine("   Queue updated");
+
+                // Step 4: Delete queue
+                Console.WriteLine("   Step 4: Deleting queue...");
+                await adminClient.Matchmaking.DeleteQueueEventAsync(new DeleteQueueRequest
+                {
+                    QueueId = queueId
+                });
+                Console.WriteLine("   Queue deleted");
+
+                // Give a moment for the delete event to process
+                await Task.Delay(100);
+
+                // Step 5: Verify deletion (should return 404)
+                Console.WriteLine("   Step 5: Verifying deletion...");
+                var verifyResponse = await adminClient.Matchmaking.GetQueueAsync(new GetQueueRequest
+                {
+                    QueueId = queueId
+                }, timeout: TimeSpan.FromSeconds(5));
+
+                if (verifyResponse.IsSuccess)
+                {
+                    Console.WriteLine("   Queue still exists after deletion!");
+                    return false;
+                }
+
+                if (verifyResponse.Error?.ResponseCode != 404)
+                {
+                    Console.WriteLine($"   Expected 404, got {verifyResponse.Error?.ResponseCode}");
+                    return false;
+                }
+
+                Console.WriteLine("   Deletion verified (404)");
+                return true;
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("FAILED Matchmaking queue lifecycle test via WebSocket");
+                Console.WriteLine($"   Test failed: {ex.Message}");
+                await TryDeleteQueueAsync(adminClient, queueId);
+                return false;
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED Matchmaking queue lifecycle test with exception: {ex.Message}");
-        }
+        });
     }
 
     private void TestJoinMatchmakingViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Matchmaking Join Queue Test (WebSocket) ===");
+        Console.WriteLine("Testing joining matchmaking queue via typed proxy...");
 
         try
         {
@@ -442,85 +371,68 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                         return false;
                     }
 
-                    // Step 2: Create queue (admin)
+                    // Step 2: Create queue (admin) using typed proxy
                     Console.WriteLine($"   Step 2: Creating queue {queueId}...");
-                    await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/create",
-                        new
-                        {
-                            queueId = queueId,
-                            gameId = "test-game",
-                            displayName = "Join Test Queue",
-                            minCount = 2,
-                            maxCount = 4
-                        },
-                        timeout: TimeSpan.FromSeconds(5));
+                    var createResponse = await adminClient.Matchmaking.CreateQueueAsync(new CreateQueueRequest
+                    {
+                        QueueId = queueId,
+                        GameId = "test-game",
+                        DisplayName = "Join Test Queue",
+                        MinCount = 2,
+                        MaxCount = 4
+                    }, timeout: TimeSpan.FromSeconds(5));
 
+                    if (!createResponse.IsSuccess)
+                    {
+                        Console.WriteLine($"   Create queue failed: {FormatError(createResponse.Error)}");
+                        return false;
+                    }
                     Console.WriteLine("   Queue created");
 
-                    // Step 3: Join matchmaking (user)
+                    // Step 3: Join matchmaking (user) using typed proxy
                     Console.WriteLine("   Step 3: Joining matchmaking...");
-                    var joinResponse = await userClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/join",
-                        new
-                        {
-                            queueId = queueId,
-                            accountId = authResult.Value.accountId,
-                            webSocketSessionId = userClient.SessionId
-                        },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    if (!joinResponse.IsSuccess)
+                    if (!Guid.TryParse(userClient.SessionId, out var sessionGuid))
                     {
-                        Console.WriteLine($"   Join failed: {joinResponse.Error?.Message}");
-                        // Cleanup
-                        await adminClient.InvokeAsync<object, JsonElement>(
-                            "POST",
-                            "/matchmaking/queue/delete",
-                            new { queueId = queueId },
-                            timeout: TimeSpan.FromSeconds(2));
+                        Console.WriteLine("   Invalid session ID format");
+                        await TryDeleteQueueAsync(adminClient, queueId);
                         return false;
                     }
 
-                    var json = System.Text.Json.Nodes.JsonNode.Parse(joinResponse.Result.GetRawText())?.AsObject();
-                    var ticketId = json?["ticketId"]?.GetValue<string>();
+                    var joinResponse = await userClient.Matchmaking.JoinMatchmakingAsync(new JoinMatchmakingRequest
+                    {
+                        QueueId = queueId,
+                        AccountId = authResult.Value.accountId,
+                        WebSocketSessionId = sessionGuid
+                    }, timeout: TimeSpan.FromSeconds(5));
+
+                    if (!joinResponse.IsSuccess || joinResponse.Result == null)
+                    {
+                        Console.WriteLine($"   Join failed: {FormatError(joinResponse.Error)}");
+                        await TryDeleteQueueAsync(adminClient, queueId);
+                        return false;
+                    }
+
+                    var ticketId = joinResponse.Result.TicketId;
                     Console.WriteLine($"   Joined with ticket: {ticketId}");
 
-                    // Step 4: Leave matchmaking
+                    // Step 4: Leave matchmaking using typed proxy
                     Console.WriteLine("   Step 4: Leaving matchmaking...");
-                    await userClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/leave",
-                        new { ticketId = ticketId },
-                        timeout: TimeSpan.FromSeconds(5));
-
+                    await userClient.Matchmaking.LeaveMatchmakingEventAsync(new LeaveMatchmakingRequest
+                    {
+                        TicketId = ticketId
+                    });
                     Console.WriteLine("   Left matchmaking");
 
                     // Cleanup
                     Console.WriteLine("   Cleaning up...");
-                    await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/matchmaking/queue/delete",
-                        new { queueId = queueId },
-                        timeout: TimeSpan.FromSeconds(5));
+                    await TryDeleteQueueAsync(adminClient, queueId);
 
                     return true;
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"   Test failed: {ex.Message}");
-                    // Try to cleanup
-                    try
-                    {
-                        await adminClient.InvokeAsync<object, JsonElement>(
-                            "POST",
-                            "/matchmaking/queue/delete",
-                            new { queueId = queueId },
-                            timeout: TimeSpan.FromSeconds(2));
-                    }
-                    catch { }
+                    await TryDeleteQueueAsync(adminClient, queueId);
                     return false;
                 }
             }).Result;

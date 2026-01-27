@@ -1,345 +1,264 @@
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Net.Http.Headers;
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.BannouService.Asset;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
 /// WebSocket-based test handler for asset service API endpoints.
-/// Tests the asset service APIs through the Connect service WebSocket binary protocol.
+/// Tests the asset service APIs using TYPED PROXIES through the Connect service WebSocket binary protocol.
+/// This validates both the service logic AND the typed proxy generation.
 ///
 /// Note: Asset upload requires HTTP PUT to MinIO, so this test handler focuses on
 /// the API calls (request upload, complete upload, get asset, bundles, metabundles)
 /// via WebSocket, using HTTP only for the actual file upload to MinIO.
 /// </summary>
-public class AssetWebSocketTestHandler : IServiceTestHandler
+public class AssetWebSocketTestHandler : BaseWebSocketTestHandler
 {
     private static readonly HttpClient _uploadClient = new();
 
-    public ServiceTest[] GetServiceTests()
+    public override ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]
         {
             new ServiceTest(TestGetBundleViaWebSocket, "Asset - Get Bundle (WebSocket)", "WebSocket",
-                "Test bundle retrieval via WebSocket binary protocol"),
+                "Test bundle retrieval via typed proxy"),
             new ServiceTest(TestSearchAssetsViaWebSocket, "Asset - Search Assets (WebSocket)", "WebSocket",
-                "Test asset search via WebSocket binary protocol"),
+                "Test asset search via typed proxy"),
             new ServiceTest(TestAssetUploadFlowViaWebSocket, "Asset - Upload Flow (WebSocket)", "WebSocket",
-                "Test asset upload flow via WebSocket (API calls) and HTTP (file upload)"),
+                "Test asset upload flow via typed proxy (API calls) and HTTP (file upload)"),
             new ServiceTest(TestCreateMetabundleViaWebSocket, "Asset - Create Metabundle (WebSocket)", "WebSocket",
-                "Test metabundle creation with standalone assets via WebSocket"),
+                "Test metabundle creation with standalone assets via typed proxy"),
         };
     }
 
     /// <summary>
-    /// Test searching for assets via WebSocket.
+    /// Test searching for assets via WebSocket typed proxy.
     /// </summary>
     private void TestSearchAssetsViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Asset Search Test (WebSocket) ===");
-        Console.WriteLine("Testing /assets/search via shared admin WebSocket...");
+        Console.WriteLine("Testing /assets/search via typed proxy...");
 
-        try
+        RunWebSocketTest("Asset search test", async adminClient =>
         {
-            var result = Task.Run(async () =>
+            // Search for assets with test tag using typed proxy
+            var response = await adminClient.Asset.SearchAssetsAsync(new AssetSearchRequest
             {
-                var adminClient = Program.AdminClient;
-                if (adminClient == null || !adminClient.IsConnected)
-                {
-                    Console.WriteLine("   Admin client not connected");
-                    return false;
-                }
+                Tags = new List<string> { "test" },
+                AssetType = AssetType.Behavior,
+                Realm = "test-realm",
+                Limit = 10,
+                Offset = 0
+            }, timeout: TimeSpan.FromSeconds(5));
 
-                // Search for assets with test tag
-                var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
-                    "/assets/search",
-                    new
-                    {
-                        tags = new[] { "test" },
-                        assetType = "behavior",
-                        realm = "test-realm",
-                        limit = 10,
-                        offset = 0
-                    },
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+            if (!response.IsSuccess || response.Result == null)
+            {
+                Console.WriteLine($"   Search failed: {FormatError(response.Error)}");
+                return false;
+            }
 
-                var json = JsonNode.Parse(response.GetRawText())?.AsObject();
-                var hasAssetsArray = json?["assets"] != null && json["assets"] is JsonArray;
-                var total = json?["total"]?.GetValue<int>() ?? 0;
+            var result = response.Result;
+            Console.WriteLine($"   Assets array present: {result.Assets != null}");
+            Console.WriteLine($"   Total: {result.Total}");
 
-                Console.WriteLine($"   Assets array present: {hasAssetsArray}");
-                Console.WriteLine($"   Total: {total}");
-
-                return hasAssetsArray;
-            }).Result;
-
-            if (result)
-                Console.WriteLine("Asset search test PASSED");
-            else
-                Console.WriteLine("Asset search test FAILED");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Asset search test FAILED with exception: {ex.Message}");
-        }
+            return result.Assets != null;
+        });
     }
 
     /// <summary>
-    /// Test retrieving a bundle via WebSocket (expects 404 for non-existent bundle).
+    /// Test retrieving a bundle via WebSocket typed proxy.
     /// </summary>
     private void TestGetBundleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Asset Get Bundle Test (WebSocket) ===");
-        Console.WriteLine("Testing /bundles/get via shared admin WebSocket...");
+        Console.WriteLine("Testing /bundles/get via typed proxy...");
 
-        try
+        RunWebSocketTest("Asset get bundle test", async adminClient =>
         {
-            var result = Task.Run(async () =>
+            // First upload and create a bundle for testing
+            var uploadedAssetId = await UploadTestAssetAsync(adminClient, "ws-bundle-test");
+            if (uploadedAssetId == null)
             {
-                var adminClient = Program.AdminClient;
-                if (adminClient == null || !adminClient.IsConnected)
-                {
-                    Console.WriteLine("   Admin client not connected");
-                    return false;
-                }
+                Console.WriteLine("   Failed to upload test asset");
+                return false;
+            }
 
-                // First upload and create a bundle for testing
-                var uploadedAssetId = await UploadTestAssetAsync(adminClient, "ws-bundle-test");
-                if (uploadedAssetId == null)
-                {
-                    Console.WriteLine("   Failed to upload test asset");
-                    return false;
-                }
+            // Create a bundle using typed proxy
+            var bundleId = $"ws-bundle-{DateTime.Now.Ticks}";
+            var createResponse = await adminClient.Asset.CreateBundleAsync(new CreateBundleRequest
+            {
+                BundleId = bundleId,
+                Version = "1.0.0",
+                Owner = "edge-tester",
+                AssetIds = new List<string> { uploadedAssetId },
+                Compression = CompressionType.None
+            }, timeout: TimeSpan.FromSeconds(10));
 
-                // Create a bundle
-                var bundleId = $"ws-bundle-{DateTime.Now.Ticks}";
-                var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
-                    "/bundles/create",
-                    new
-                    {
-                        bundleId = bundleId,
-                        version = "1.0.0",
-                        owner = "edge-tester",
-                        assetIds = new[] { uploadedAssetId },
-                        compression = "none"
-                    },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+            if (!createResponse.IsSuccess || createResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to create bundle: {FormatError(createResponse.Error)}");
+                return false;
+            }
 
-                var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
-                var status = createJson?["status"]?.GetValue<string>();
-                Console.WriteLine($"   Bundle created: {bundleId}, status: {status}");
+            Console.WriteLine($"   Bundle created: {bundleId}, status: {createResponse.Result.Status}");
 
-                // Now retrieve it
-                var getResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
-                    "/bundles/get",
-                    new
-                    {
-                        bundleId = bundleId,
-                        format = "bannou"
-                    },
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+            // Now retrieve it using typed proxy
+            var getResponse = await adminClient.Asset.GetBundleAsync(new GetBundleRequest
+            {
+                BundleId = bundleId,
+                Format = BundleFormat.Bannou
+            }, timeout: TimeSpan.FromSeconds(5));
 
-                var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
-                var retrievedBundleId = getJson?["bundleId"]?.GetValue<string>();
-                var downloadUrl = getJson?["downloadUrl"]?.GetValue<string>();
+            if (!getResponse.IsSuccess || getResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to get bundle: {FormatError(getResponse.Error)}");
+                return false;
+            }
 
-                Console.WriteLine($"   Retrieved bundle: {retrievedBundleId}");
-                Console.WriteLine($"   Has download URL: {!string.IsNullOrEmpty(downloadUrl)}");
+            var result = getResponse.Result;
+            Console.WriteLine($"   Retrieved bundle: {result.BundleId}");
+            Console.WriteLine($"   Has download URL: {result.DownloadUrl != null}");
 
-                return retrievedBundleId == bundleId && !string.IsNullOrEmpty(downloadUrl);
-            }).Result;
-
-            if (result)
-                Console.WriteLine("Asset get bundle test PASSED");
-            else
-                Console.WriteLine("Asset get bundle test FAILED");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Asset get bundle test FAILED with exception: {ex.Message}");
-            if (ex.InnerException != null)
-                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-        }
+            return result.BundleId == bundleId && result.DownloadUrl != null;
+        });
     }
 
     /// <summary>
-    /// Test the complete asset upload flow via WebSocket for API calls.
+    /// Test the complete asset upload flow via WebSocket typed proxy for API calls.
     /// Uses HTTP only for the actual file upload to MinIO pre-signed URL.
     /// </summary>
     private void TestAssetUploadFlowViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Asset Upload Flow Test (WebSocket) ===");
-        Console.WriteLine("Testing upload flow via WebSocket (API) + HTTP (file upload)...");
+        Console.WriteLine("Testing upload flow via typed proxy (API) + HTTP (file upload)...");
 
-        try
+        RunWebSocketTest("Asset upload flow test", async adminClient =>
         {
-            var result = Task.Run(async () =>
+            // Step 1: Request upload URL via typed proxy
+            Console.WriteLine("   Step 1: Requesting upload URL via typed proxy...");
+            var testContent = $"{{\"test\": \"ws-upload-{DateTime.Now.Ticks}\"}}";
+            var testBytes = Encoding.UTF8.GetBytes(testContent);
+
+            var requestUploadResponse = await adminClient.Asset.RequestUploadAsync(new UploadRequest
             {
-                var adminClient = Program.AdminClient;
-                if (adminClient == null || !adminClient.IsConnected)
+                Filename = $"ws-test-{DateTime.Now.Ticks}.json",
+                Size = testBytes.Length,
+                ContentType = "application/json",
+                Owner = "edge-tester",
+                Metadata = new AssetMetadataInput
                 {
-                    Console.WriteLine("   Admin client not connected");
-                    return false;
+                    AssetType = AssetType.Behavior,
+                    Realm = "test-realm",
+                    Tags = new List<string> { "test", "websocket", "edge-test" }
                 }
+            }, timeout: TimeSpan.FromSeconds(5));
 
-                // Step 1: Request upload URL via WebSocket
-                Console.WriteLine("   Step 1: Requesting upload URL via WebSocket...");
-                var testContent = $"{{\"test\": \"ws-upload-{DateTime.Now.Ticks}\"}}";
-                var testBytes = Encoding.UTF8.GetBytes(testContent);
+            if (!requestUploadResponse.IsSuccess || requestUploadResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to request upload: {FormatError(requestUploadResponse.Error)}");
+                return false;
+            }
 
-                var requestUploadResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
-                    "/assets/upload/request",
-                    new
-                    {
-                        filename = $"ws-test-{DateTime.Now.Ticks}.json",
-                        size = testBytes.Length,
-                        contentType = "application/json",
-                        owner = "edge-tester",
-                        metadata = new
-                        {
-                            assetType = "behavior",
-                            realm = "test-realm",
-                            tags = new[] { "test", "websocket", "edge-test" }
-                        }
-                    },
-                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+            var uploadUrl = requestUploadResponse.Result.UploadUrl;
+            var uploadId = requestUploadResponse.Result.UploadId;
 
-                var requestJson = JsonNode.Parse(requestUploadResponse.GetRawText())?.AsObject();
-                var uploadUrl = requestJson?["uploadUrl"]?.GetValue<string>();
-                var uploadIdStr = requestJson?["uploadId"]?.GetValue<string>();
+            if (uploadUrl == null)
+            {
+                Console.WriteLine("   Failed to get upload URL");
+                return false;
+            }
+            Console.WriteLine($"   Got upload URL, uploadId: {uploadId}");
 
-                if (string.IsNullOrEmpty(uploadUrl) || string.IsNullOrEmpty(uploadIdStr))
-                {
-                    Console.WriteLine("   Failed to get upload URL");
-                    return false;
-                }
-                Console.WriteLine($"   Got upload URL, uploadId: {uploadIdStr}");
+            // Step 2: Upload file to MinIO via HTTP
+            Console.WriteLine("   Step 2: Uploading file to MinIO via HTTP...");
+            using var content = new ByteArrayContent(testBytes);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-                // Step 2: Upload file to MinIO via HTTP
-                Console.WriteLine("   Step 2: Uploading file to MinIO via HTTP...");
-                using var content = new ByteArrayContent(testBytes);
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            var minioResponse = await _uploadClient.PutAsync(uploadUrl, content);
+            if (!minioResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"   MinIO upload failed: {minioResponse.StatusCode}");
+                return false;
+            }
+            Console.WriteLine("   File uploaded to MinIO");
 
-                var minioResponse = await _uploadClient.PutAsync(uploadUrl, content);
-                if (!minioResponse.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"   MinIO upload failed: {minioResponse.StatusCode}");
-                    return false;
-                }
-                Console.WriteLine("   File uploaded to MinIO");
+            // Step 3: Complete upload via typed proxy
+            Console.WriteLine("   Step 3: Completing upload via typed proxy...");
+            var completeResponse = await adminClient.Asset.CompleteUploadAsync(new CompleteUploadRequest
+            {
+                UploadId = uploadId
+            }, timeout: TimeSpan.FromSeconds(10));
 
-                // Step 3: Complete upload via WebSocket
-                Console.WriteLine("   Step 3: Completing upload via WebSocket...");
-                var completeResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
-                    "/assets/upload/complete",
-                    new { uploadId = uploadIdStr },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+            if (!completeResponse.IsSuccess || completeResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to complete upload: {FormatError(completeResponse.Error)}");
+                return false;
+            }
 
-                var completeJson = JsonNode.Parse(completeResponse.GetRawText())?.AsObject();
-                var assetId = completeJson?["assetId"]?.GetValue<string>();
-                var processingStatus = completeJson?["processingStatus"]?.GetValue<string>();
+            var assetId = completeResponse.Result.AssetId;
+            var processingStatus = completeResponse.Result.ProcessingStatus;
 
-                Console.WriteLine($"   Upload complete: assetId={assetId}, status={processingStatus}");
+            Console.WriteLine($"   Upload complete: assetId={assetId}, status={processingStatus}");
 
-                return !string.IsNullOrEmpty(assetId);
-            }).Result;
-
-            if (result)
-                Console.WriteLine("Asset upload flow test PASSED");
-            else
-                Console.WriteLine("Asset upload flow test FAILED");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Asset upload flow test FAILED with exception: {ex.Message}");
-            if (ex.InnerException != null)
-                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-        }
+            return !string.IsNullOrEmpty(assetId);
+        });
     }
 
     /// <summary>
-    /// Test metabundle creation with standalone assets via WebSocket.
+    /// Test metabundle creation with standalone assets via WebSocket typed proxy.
     /// This tests the new standalone asset support for packaging behaviors with 3D assets.
     /// </summary>
     private void TestCreateMetabundleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Asset Create Metabundle Test (WebSocket) ===");
-        Console.WriteLine("Testing metabundle creation with standalone assets via WebSocket...");
+        Console.WriteLine("Testing metabundle creation with standalone assets via typed proxy...");
 
-        try
+        RunWebSocketTest("Asset create metabundle test", async adminClient =>
         {
-            var result = Task.Run(async () =>
+            // Step 1: Upload standalone assets
+            Console.WriteLine("   Step 1: Uploading standalone assets...");
+            var standaloneAsset1 = await UploadTestAssetAsync(adminClient, "ws-metabundle-standalone-1");
+            var standaloneAsset2 = await UploadTestAssetAsync(adminClient, "ws-metabundle-standalone-2");
+
+            if (standaloneAsset1 == null || standaloneAsset2 == null)
             {
-                var adminClient = Program.AdminClient;
-                if (adminClient == null || !adminClient.IsConnected)
-                {
-                    Console.WriteLine("   Admin client not connected");
-                    return false;
-                }
+                Console.WriteLine("   Failed to upload standalone assets");
+                return false;
+            }
+            Console.WriteLine($"   Uploaded: {standaloneAsset1}, {standaloneAsset2}");
 
-                // Step 1: Upload standalone assets
-                Console.WriteLine("   Step 1: Uploading standalone assets...");
-                var standaloneAsset1 = await UploadTestAssetAsync(adminClient, "ws-metabundle-standalone-1");
-                var standaloneAsset2 = await UploadTestAssetAsync(adminClient, "ws-metabundle-standalone-2");
+            // Step 2: Create metabundle from standalone assets using typed proxy
+            Console.WriteLine("   Step 2: Creating metabundle from standalone assets...");
+            var metabundleId = $"ws-metabundle-{DateTime.Now.Ticks}";
 
-                if (standaloneAsset1 == null || standaloneAsset2 == null)
-                {
-                    Console.WriteLine("   Failed to upload standalone assets");
-                    return false;
-                }
-                Console.WriteLine($"   Uploaded: {standaloneAsset1}, {standaloneAsset2}");
+            var createResponse = await adminClient.Asset.CreateMetabundleAsync(new CreateMetabundleRequest
+            {
+                MetabundleId = metabundleId,
+                StandaloneAssetIds = new List<string> { standaloneAsset1, standaloneAsset2 },
+                Owner = "edge-tester",
+                Version = "1.0.0",
+                Realm = "test-realm"
+            }, timeout: TimeSpan.FromSeconds(10));
 
-                // Step 2: Create metabundle from standalone assets
-                Console.WriteLine("   Step 2: Creating metabundle from standalone assets...");
-                var metabundleId = $"ws-metabundle-{DateTime.Now.Ticks}";
+            if (!createResponse.IsSuccess || createResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to create metabundle: {FormatError(createResponse.Error)}");
+                return false;
+            }
 
-                var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                    "POST",
-                    "/bundles/metabundle/create",
-                    new
-                    {
-                        metabundleId = metabundleId,
-                        standaloneAssetIds = new[] { standaloneAsset1, standaloneAsset2 },
-                        owner = "edge-tester",
-                        version = "1.0.0",
-                        realm = "test-realm"
-                    },
-                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+            var result = createResponse.Result;
+            Console.WriteLine($"   Metabundle created: status={result.Status}, assetCount={result.AssetCount}, standaloneCount={result.StandaloneAssetCount}");
 
-                var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
-                var status = createJson?["status"]?.GetValue<string>();
-                var assetCount = createJson?["assetCount"]?.GetValue<int>() ?? 0;
-                var standaloneCount = createJson?["standaloneAssetCount"]?.GetValue<int>();
-
-                Console.WriteLine($"   Metabundle created: status={status}, assetCount={assetCount}, standaloneCount={standaloneCount}");
-
-                // For metabundle with standalone assets, we expect Ready or Queued status
-                return status == "ready" || status == "queued" || status == "Ready" || status == "Queued";
-            }).Result;
-
-            if (result)
-                Console.WriteLine("Asset create metabundle test PASSED");
-            else
-                Console.WriteLine("Asset create metabundle test FAILED");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Asset create metabundle test FAILED with exception: {ex.Message}");
-            if (ex.InnerException != null)
-                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-        }
+            // For metabundle with standalone assets, we expect Ready or Queued status
+            return result.Status == CreateMetabundleResponseStatus.Ready || result.Status == CreateMetabundleResponseStatus.Queued;
+        });
     }
 
     /// <summary>
-    /// Helper method to upload a test asset via WebSocket API calls.
-    /// Returns the asset ID if successful.
+    /// Helper method to upload a test asset via WebSocket typed proxy.
+    /// Returns the asset ID (as string) if successful.
     /// </summary>
     private async Task<string?> UploadTestAssetAsync(BannouClient adminClient, string testName)
     {
@@ -348,30 +267,28 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
             var testContent = $"{{\"test\": \"{testName}\", \"timestamp\": \"{DateTime.UtcNow:O}\"}}";
             var testBytes = Encoding.UTF8.GetBytes(testContent);
 
-            // Request upload URL
-            var requestResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
-                "/assets/upload/request",
-                new
+            // Request upload URL using typed proxy
+            var requestResponse = await adminClient.Asset.RequestUploadAsync(new UploadRequest
+            {
+                Filename = $"{testName}-{DateTime.Now.Ticks}.json",
+                Size = testBytes.Length,
+                ContentType = "application/json",
+                Owner = "edge-tester",
+                Metadata = new AssetMetadataInput
                 {
-                    filename = $"{testName}-{DateTime.Now.Ticks}.json",
-                    size = testBytes.Length,
-                    contentType = "application/json",
-                    owner = "edge-tester",
-                    metadata = new
-                    {
-                        assetType = "behavior",
-                        realm = "test-realm",
-                        tags = new[] { "test", "edge-test", testName }
-                    }
-                },
-                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                    AssetType = AssetType.Behavior,
+                    Realm = "test-realm",
+                    Tags = new List<string> { "test", "edge-test", testName }
+                }
+            }, timeout: TimeSpan.FromSeconds(5));
 
-            var requestJson = JsonNode.Parse(requestResponse.GetRawText())?.AsObject();
-            var uploadUrl = requestJson?["uploadUrl"]?.GetValue<string>();
-            var uploadIdStr = requestJson?["uploadId"]?.GetValue<string>();
+            if (!requestResponse.IsSuccess || requestResponse.Result == null)
+                return null;
 
-            if (string.IsNullOrEmpty(uploadUrl) || string.IsNullOrEmpty(uploadIdStr))
+            var uploadUrl = requestResponse.Result.UploadUrl;
+            var uploadId = requestResponse.Result.UploadId;
+
+            if (uploadUrl == null)
                 return null;
 
             // Upload to MinIO
@@ -381,15 +298,16 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
             if (!minioResponse.IsSuccessStatusCode)
                 return null;
 
-            // Complete upload
-            var completeResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
-                "/assets/upload/complete",
-                new { uploadId = uploadIdStr },
-                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+            // Complete upload using typed proxy
+            var completeResponse = await adminClient.Asset.CompleteUploadAsync(new CompleteUploadRequest
+            {
+                UploadId = uploadId
+            }, timeout: TimeSpan.FromSeconds(10));
 
-            var completeJson = JsonNode.Parse(completeResponse.GetRawText())?.AsObject();
-            return completeJson?["assetId"]?.GetValue<string>();
+            if (!completeResponse.IsSuccess || completeResponse.Result == null)
+                return null;
+
+            return completeResponse.Result.AssetId;
         }
         catch
         {

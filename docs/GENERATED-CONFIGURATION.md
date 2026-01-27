@@ -465,6 +465,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ITEM_DEFAULT_WEIGHT_PRECISION` | string | `decimal_2` | Default weight precision for new templates |
 | `ITEM_INSTANCE_CACHE_TTL_SECONDS` | int | `900` | TTL for instance cache entries in seconds (15 minutes for ac... |
 | `ITEM_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency on list op... |
+| `ITEM_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on item instance mo... |
 | `ITEM_MAX_INSTANCES_PER_QUERY` | int | `1000` | Maximum item instances returned in a single query |
 | `ITEM_TEMPLATE_CACHE_TTL_SECONDS` | int | `3600` | TTL for template cache entries in seconds (templates change ... |
 
@@ -762,9 +763,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 583
+- **Total properties**: 584
 - **Required (no default)**: 39
-- **Optional (has default)**: 544
+- **Optional (has default)**: 545
 
 ## Environment Variable Naming Convention
 

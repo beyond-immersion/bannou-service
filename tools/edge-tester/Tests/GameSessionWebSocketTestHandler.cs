@@ -1,6 +1,8 @@
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.Bannou.Core;
-using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Subscription;
 using System.Text;
 using System.Text.Json;
 
@@ -14,9 +16,9 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// This avoids interfering with Program.Client or Program.AdminClient, and properly tests
 /// the user experience from account creation through API usage.
 /// </summary>
-public class GameSessionWebSocketTestHandler : IServiceTestHandler
+public class GameSessionWebSocketTestHandler : BaseWebSocketTestHandler
 {
-    public ServiceTest[] GetServiceTests()
+    public override ServiceTest[] GetServiceTests()
     {
         // Note: Direct game session endpoints (create/list/join) are now shortcut-only.
         // Users access these through session shortcuts pushed by the game-session service
@@ -123,6 +125,53 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
         }
     }
 
+    /// <summary>
+    /// Gets or creates the test-game service using typed proxy.
+    /// </summary>
+    private async Task<ServiceInfo?> GetOrCreateTestServiceAsync(BannouClient adminClient)
+    {
+        // Try to create the service first
+        var createResponse = await adminClient.GameService.CreateServiceAsync(new CreateServiceRequest
+        {
+            StubName = "test-game",
+            DisplayName = "Test Game Service",
+            Description = "Test game service for shortcut flow"
+        }, timeout: TimeSpan.FromSeconds(5));
+
+        if (createResponse.IsSuccess && createResponse.Result != null)
+        {
+            Console.WriteLine($"   Created service: {createResponse.Result.ServiceId}");
+            return createResponse.Result;
+        }
+
+        // If 409 conflict, service already exists - fetch it
+        if (createResponse.Error?.ResponseCode == 409)
+        {
+            Console.WriteLine("   Service 'test-game' already exists, fetching...");
+            var listResponse = await adminClient.GameService.ListServicesAsync(new ListServicesRequest(),
+                timeout: TimeSpan.FromSeconds(5));
+
+            if (!listResponse.IsSuccess || listResponse.Result?.Services == null)
+            {
+                Console.WriteLine($"   Failed to list services: {FormatError(listResponse.Error)}");
+                return null;
+            }
+
+            var service = listResponse.Result.Services.FirstOrDefault(s => s.StubName == "test-game");
+            if (service != null)
+            {
+                Console.WriteLine($"   Found existing service: {service.ServiceId}");
+                return service;
+            }
+
+            Console.WriteLine("   Service 'test-game' not found in list");
+            return null;
+        }
+
+        Console.WriteLine($"   Failed to create service: {FormatError(createResponse.Error)}");
+        return null;
+    }
+
     #endregion
 
     // Note: TestCreateGameSessionViaWebSocket, TestListGameSessionsViaWebSocket, and
@@ -152,57 +201,10 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                 {
                     // Step 1: Create a test service (test-game type for game-session to recognize)
                     Console.WriteLine("   Step 1: Creating test service 'test-game'...");
-                    var serviceResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/game-service/services/create",
-                        new
-                        {
-                            stubName = "test-game",
-                            displayName = "Test Game Service",
-                            description = "Test game service for shortcut flow"
-                        },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    string? serviceId = null;
-                    if (serviceResponse.IsSuccess)
+                    var service = await GetOrCreateTestServiceAsync(adminClient);
+                    if (service == null)
                     {
-                        var json = System.Text.Json.Nodes.JsonNode.Parse(serviceResponse.Result.GetRawText())?.AsObject();
-                        serviceId = json?["serviceId"]?.GetValue<string>();
-                        Console.WriteLine($"   Created service: {serviceId}");
-                    }
-                    else if (serviceResponse.Error?.ResponseCode == 409)
-                    {
-                        // Service already exists - get it
-                        Console.WriteLine("   Service 'test-game' already exists, fetching...");
-                        var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                            "POST",
-                            "/game-service/services/list",
-                            new { },
-                            timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-                        var listJson = System.Text.Json.Nodes.JsonNode.Parse(listResponse.GetRawText())?.AsObject();
-                        var services = listJson?["services"]?.AsArray();
-                        if (services != null)
-                        {
-                            foreach (var svc in services)
-                            {
-                                if (svc?["stubName"]?.GetValue<string>() == "test-game")
-                                {
-                                    serviceId = svc?["serviceId"]?.GetValue<string>();
-                                    break;
-                                }
-                            }
-                        }
-                        Console.WriteLine($"   Found existing service: {serviceId}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"   Failed to create service: {serviceResponse.Error?.Message}");
-                        return false;
-                    }
-
-                    if (string.IsNullOrEmpty(serviceId))
-                    {
-                        Console.WriteLine("   Could not obtain service ID");
+                        Console.WriteLine("   Could not obtain service");
                         return false;
                     }
 
@@ -215,45 +217,38 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         return false;
                     }
 
-                    // Step 3: Look up the account ID by email (using admin client)
+                    // Step 3: Look up the account ID by email (using admin client typed proxy)
                     Console.WriteLine($"   Step 3: Looking up account ID for {authResult.Value.email}...");
-                    var accountLookupResponse = await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/account/by-email",
-                        new { email = authResult.Value.email },
-                        timeout: TimeSpan.FromSeconds(5));
-
-                    if (!accountLookupResponse.IsSuccess)
+                    var accountLookupResponse = await adminClient.Account.GetAccountByEmailAsync(new GetAccountByEmailRequest
                     {
-                        Console.WriteLine($"   Failed to look up account: {accountLookupResponse.Error?.Message}");
+                        Email = authResult.Value.email
+                    }, timeout: TimeSpan.FromSeconds(5));
+
+                    if (!accountLookupResponse.IsSuccess || accountLookupResponse.Result == null)
+                    {
+                        Console.WriteLine($"   Failed to look up account: {FormatError(accountLookupResponse.Error)}");
                         return false;
                     }
 
-                    var accountJson = System.Text.Json.Nodes.JsonNode.Parse(accountLookupResponse.Result.GetRawText())?.AsObject();
-                    var accountId = accountJson?["accountId"]?.GetValue<string>();
-                    if (string.IsNullOrEmpty(accountId))
-                    {
-                        Console.WriteLine($"   Could not extract accountId from response: {accountLookupResponse.Result.GetRawText()}");
-                        return false;
-                    }
+                    var accountId = accountLookupResponse.Result.AccountId;
                     Console.WriteLine($"   Account ID: {accountId}");
 
                     // Step 4: Create subscription for this account to the test-game service
                     Console.WriteLine("   Step 4: Creating subscription...");
-                    var subResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/subscription/create",
-                        new
-                        {
-                            accountId = accountId,
-                            serviceId = serviceId,
-                            durationDays = 30
-                        },
-                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+                    var subResponse = await adminClient.Subscription.CreateSubscriptionAsync(new CreateSubscriptionRequest
+                    {
+                        AccountId = accountId,
+                        ServiceId = service.ServiceId,
+                        DurationDays = 30
+                    }, timeout: TimeSpan.FromSeconds(5));
 
-                    var subJson = System.Text.Json.Nodes.JsonNode.Parse(subResponse.GetRawText())?.AsObject();
-                    var subscriptionId = subJson?["subscriptionId"]?.GetValue<string>();
-                    Console.WriteLine($"   Created subscription: {subscriptionId}");
+                    if (!subResponse.IsSuccess || subResponse.Result == null)
+                    {
+                        Console.WriteLine($"   Failed to create subscription: {FormatError(subResponse.Error)}");
+                        return false;
+                    }
+
+                    Console.WriteLine($"   Created subscription: {subResponse.Result.SubscriptionId}");
 
                     // Step 5: Connect via WebSocket (subscription now exists for this account)
                     Console.WriteLine("   Step 5: Connecting via WebSocket...");
@@ -264,8 +259,8 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         return false;
                     }
 
-                    // Step 5: Wait for shortcut to appear in available APIs
-                    Console.WriteLine("   Step 5: Waiting for shortcut in available APIs...");
+                    // Step 6: Wait for shortcut to appear in available APIs
+                    Console.WriteLine("   Step 6: Waiting for shortcut in available APIs...");
                     var deadline = DateTime.UtcNow.AddSeconds(10);
                     Guid? shortcutGuid = null;
 
@@ -288,8 +283,9 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         return false;
                     }
 
-                    // Step 6: Invoke the shortcut with empty payload
-                    Console.WriteLine("   Step 6: Invoking shortcut with empty payload...");
+                    // Step 7: Invoke the shortcut with empty payload
+                    // Note: Shortcuts use raw InvokeAsync because they're dynamically created
+                    Console.WriteLine("   Step 7: Invoking shortcut with empty payload...");
                     var joinResponse = await client.InvokeAsync<object, JsonElement>(
                         "SHORTCUT",
                         "join_game_test-game",
