@@ -196,11 +196,19 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var uniqueCode = GenerateUniqueCode();
             var realmCode = $"PARITY_CR_{uniqueCode}";
 
+            // Get or create game service (required for realm creation)
+            var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
+            if (string.IsNullOrEmpty(gameServiceId))
+            {
+                Console.WriteLine("❌ Failed to get/create game service");
+                return false;
+            }
+
             // Create via C# SDK
             Console.WriteLine($"   [C# SDK] Creating realm {realmCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Parity Test {uniqueCode}", description = "Parity test", category = "test" },
+                new { code = realmCode, name = $"Parity Test {uniqueCode}", description = "Parity test", category = "test", gameServiceId },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!createResponse.IsSuccess)
@@ -272,10 +280,18 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var uniqueCode = GenerateUniqueCode();
             var realmCode = $"PARITY_LC_{uniqueCode}";
 
+            // Get or create game service (required for realm creation)
+            var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
+            if (string.IsNullOrEmpty(gameServiceId))
+            {
+                Console.WriteLine("❌ Failed to get/create game service");
+                return false;
+            }
+
             // Create realm
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Lifecycle Test {uniqueCode}", description = "Lifecycle parity test", category = "test" },
+                new { code = realmCode, name = $"Lifecycle Test {uniqueCode}", description = "Lifecycle parity test", category = "test", gameServiceId },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!createResponse.IsSuccess)
@@ -565,11 +581,19 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var uniqueCode = GenerateUniqueCode();
             var realmCode = $"CONFLICT_{uniqueCode}";
 
+            // Get or create game service (required for realm creation)
+            var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
+            if (string.IsNullOrEmpty(gameServiceId))
+            {
+                Console.WriteLine("❌ Failed to get/create game service");
+                return false;
+            }
+
             // Create realm first time - should succeed
             Console.WriteLine($"   Creating realm {realmCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Conflict Test {uniqueCode}", description = "Conflict test", category = "test" },
+                new { code = realmCode, name = $"Conflict Test {uniqueCode}", description = "Conflict test", category = "test", gameServiceId },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!createResponse.IsSuccess)
@@ -583,7 +607,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   [C# SDK] Attempting duplicate create...");
             var csharpDupeResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Duplicate {uniqueCode}", description = "Should fail", category = "test" },
+                new { code = realmCode, name = $"Duplicate {uniqueCode}", description = "Should fail", category = "test", gameServiceId },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (csharpDupeResponse.IsSuccess)
@@ -599,7 +623,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine("   [TS SDK] Attempting same duplicate create...");
             var tsDupeResult = await tsHelper.InvokeRawAsync("POST", "/realm/create",
-                new { code = realmCode, name = $"TS Duplicate {uniqueCode}", description = "Should also fail", category = "test" });
+                new { code = realmCode, name = $"TS Duplicate {uniqueCode}", description = "Should also fail", category = "test", gameServiceId });
 
             if (tsDupeResult.IsSuccess)
             {

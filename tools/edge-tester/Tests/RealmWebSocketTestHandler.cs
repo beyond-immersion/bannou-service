@@ -50,6 +50,14 @@ public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
         {
             var uniqueCode = $"REALM{GenerateUniqueCode()}";
 
+            // Get or create a game service first (required for realm creation)
+            var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
+            if (string.IsNullOrEmpty(gameServiceId))
+            {
+                Console.WriteLine("   Failed to get/create game service");
+                return false;
+            }
+
             // Create realm
             Console.WriteLine("   Invoking /realm/create...");
             var createResponse = await InvokeApiAsync(adminClient, "/realm/create", new
@@ -57,7 +65,8 @@ public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
                 code = uniqueCode,
                 name = $"Test Realm {uniqueCode}",
                 description = "Created via WebSocket edge test",
-                category = "test"
+                category = "test",
+                gameServiceId
             });
 
             var realmId = GetStringProperty(createResponse, "realmId");
@@ -89,6 +98,14 @@ public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
 
         RunWebSocketTest("Realm complete lifecycle test", async adminClient =>
         {
+            // Get or create a game service first (required for realm creation)
+            var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
+            if (string.IsNullOrEmpty(gameServiceId))
+            {
+                Console.WriteLine("   Failed to get/create game service");
+                return false;
+            }
+
             // Step 1: Create realm
             Console.WriteLine("   Step 1: Creating realm...");
             var uniqueCode = $"LIFE{GenerateUniqueCode()}";
@@ -98,7 +115,8 @@ public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
                 code = uniqueCode,
                 name = $"Lifecycle Test {uniqueCode}",
                 description = "Lifecycle test realm",
-                category = "test"
+                category = "test",
+                gameServiceId
             });
 
             var realmId = GetStringProperty(createResponse, "realmId");

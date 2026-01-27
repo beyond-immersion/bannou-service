@@ -1147,7 +1147,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                         new
                         {
                             @namespace = testNamespace,
-                            suggestionSource = "Document_id",
+                            suggestionSource = "document_id",
                             sourceValue = mainDocId
                         },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();

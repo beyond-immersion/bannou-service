@@ -52,13 +52,22 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
         {
             var uniqueCode = GenerateUniqueCode();
 
+            // Setup: Get or create game service (required for realm creation)
+            var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
+            if (string.IsNullOrEmpty(gameServiceId))
+            {
+                Console.WriteLine("   Failed to get/create game service");
+                return false;
+            }
+
             // Setup: Create realm and species using typed proxies
             Console.WriteLine("   Creating realm using typed proxy...");
             var realmResponse = await adminClient.Realm.CreateRealmAsync(new CreateRealmRequest
             {
                 Code = $"{CodePrefix}REALM{uniqueCode}",
                 Name = $"{Description} Realm {uniqueCode}",
-                Description = $"Test realm for {Description}"
+                Description = $"Test realm for {Description}",
+                GameServiceId = Guid.Parse(gameServiceId)
             });
 
             if (!realmResponse.IsSuccess || realmResponse.Result == null)

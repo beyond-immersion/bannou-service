@@ -77,6 +77,47 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
     #region Resource Creation Helpers
 
     /// <summary>
+    /// Cached game service ID for test resource creation.
+    /// </summary>
+    private static string? _cachedGameServiceId;
+
+    /// <summary>
+    /// Gets or creates a test game service for use in realm creation.
+    /// </summary>
+    protected static async Task<string?> GetOrCreateTestGameServiceAsync(BannouClient adminClient)
+    {
+        if (!string.IsNullOrEmpty(_cachedGameServiceId))
+            return _cachedGameServiceId;
+
+        try
+        {
+            var uniqueCode = GenerateUniqueCode();
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/game-service/services/create",
+                new
+                {
+                    stubName = $"edge_test_{uniqueCode}",
+                    displayName = $"Edge Test Game Service {uniqueCode}",
+                    description = "Test game service for edge-tester integration tests"
+                },
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+
+            _cachedGameServiceId = GetStringProperty(response, "serviceId");
+            if (!string.IsNullOrEmpty(_cachedGameServiceId))
+            {
+                Console.WriteLine($"   Created test game service: {_cachedGameServiceId}");
+            }
+            return _cachedGameServiceId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test game service: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Creates a test realm via WebSocket.
     /// </summary>
     /// <param name="adminClient">The admin client to use</param>
@@ -92,6 +133,14 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
     {
         try
         {
+            // Ensure we have a game service for realm creation
+            var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
+            if (string.IsNullOrEmpty(gameServiceId))
+            {
+                Console.WriteLine("   Failed to create test realm - no game service available");
+                return null;
+            }
+
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
                 "/realm/create",
@@ -100,7 +149,8 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
                     code = $"{codePrefix}_REALM_{uniqueCode}",
                     name = $"{description} Test Realm {uniqueCode}",
                     description = $"Test realm for {description.ToLowerInvariant()} tests",
-                    category = "test"
+                    category = "test",
+                    gameServiceId = gameServiceId
                 },
                 timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 

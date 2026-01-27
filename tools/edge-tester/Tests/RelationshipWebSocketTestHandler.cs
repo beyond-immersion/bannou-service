@@ -38,9 +38,9 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
             var createResponse = await InvokeApiAsync(adminClient, "/relationship/create", new
             {
                 entity1Id = entity1Id.ToString(),
-                entity1Type = "CHARACTER",
+                entity1Type = "character",
                 entity2Id = entity2Id.ToString(),
-                entity2Type = "CHARACTER",
+                entity2Type = "character",
                 relationshipTypeId = relationshipTypeId.ToString(),
                 startedAt = DateTimeOffset.UtcNow
             });
@@ -81,9 +81,9 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
             await InvokeApiAsync(adminClient, "/relationship/create", new
             {
                 entity1Id = entityId.ToString(),
-                entity1Type = "CHARACTER",
+                entity1Type = "character",
                 entity2Id = Guid.NewGuid().ToString(),
-                entity2Type = "NPC",
+                entity2Type = "actor",
                 relationshipTypeId = Guid.NewGuid().ToString(),
                 startedAt = DateTimeOffset.UtcNow
             });
@@ -93,7 +93,7 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
             var listResponse = await InvokeApiAsync(adminClient, "/relationship/list-by-entity", new
             {
                 entityId = entityId.ToString(),
-                entityType = "CHARACTER",
+                entityType = "character",
                 includeEnded = true
             });
 
@@ -122,9 +122,9 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
             var createResponse = await InvokeApiAsync(adminClient, "/relationship/create", new
             {
                 entity1Id = entity1Id.ToString(),
-                entity1Type = "CHARACTER",
+                entity1Type = "character",
                 entity2Id = entity2Id.ToString(),
-                entity2Type = "CHARACTER",
+                entity2Type = "character",
                 relationshipTypeId = Guid.NewGuid().ToString(),
                 startedAt = DateTimeOffset.UtcNow,
                 metadata = new Dictionary<string, object> { { "testKey", "testValue" } }

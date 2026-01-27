@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
@@ -153,6 +154,31 @@ public abstract class BaseHttpTestHandler : IServiceTestHandler
     }
 
     /// <summary>
+    /// Cached game service ID for test resource creation.
+    /// </summary>
+    private static Guid? _cachedGameServiceId;
+
+    /// <summary>
+    /// Gets or creates a test game service for use in realm creation.
+    /// </summary>
+    protected static async Task<Guid> GetOrCreateTestGameServiceAsync()
+    {
+        if (_cachedGameServiceId.HasValue)
+            return _cachedGameServiceId.Value;
+
+        var gameServiceClient = GetServiceClient<IGameServiceClient>();
+        var response = await gameServiceClient.CreateServiceAsync(new CreateServiceRequest
+        {
+            StubName = $"http_test_{DateTime.Now.Ticks}",
+            DisplayName = "HTTP Test Game Service",
+            Description = "Test game service for HTTP integration tests"
+        });
+
+        _cachedGameServiceId = response.ServiceId;
+        return _cachedGameServiceId.Value;
+    }
+
+    /// <summary>
     /// Creates a test realm for tests that need realm-dependent resources.
     /// Consolidates the repeated realm creation pattern used by Location, Species, and Character tests.
     /// </summary>
@@ -162,12 +188,14 @@ public abstract class BaseHttpTestHandler : IServiceTestHandler
     /// <returns>The created realm response</returns>
     protected static async Task<RealmResponse> CreateTestRealmAsync(string prefix, string description, string suffix)
     {
+        var gameServiceId = await GetOrCreateTestGameServiceAsync();
         var realmClient = GetServiceClient<IRealmClient>();
         return await realmClient.CreateRealmAsync(new CreateRealmRequest
         {
             Code = $"{prefix}_{DateTime.Now.Ticks}_{suffix}",
             Name = $"{description} Test Realm {suffix}",
-            Category = "TEST"
+            Category = "TEST",
+            GameServiceId = gameServiceId
         });
     }
 }
