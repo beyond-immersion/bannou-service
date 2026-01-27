@@ -53,8 +53,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                 {
                     stubName = stubName,
                     displayName = $"Test Service {uniqueCode}",
-                    description = "Test service for subscription tests",
-                    serviceType = "game"
+                    description = "Test service for subscription tests"
                 },
                 timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 

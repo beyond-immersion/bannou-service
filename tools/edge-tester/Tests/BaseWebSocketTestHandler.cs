@@ -97,7 +97,7 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
                 "/game-service/services/create",
                 new
                 {
-                    stubName = $"edge_test_{uniqueCode}",
+                    stubName = $"edge-test-{uniqueCode}",
                     displayName = $"Edge Test Game Service {uniqueCode}",
                     description = "Test game service for edge-tester integration tests"
                 },

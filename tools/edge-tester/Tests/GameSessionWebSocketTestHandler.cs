@@ -159,8 +159,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         {
                             stubName = "test-game",
                             displayName = "Test Game Service",
-                            description = "Test game service for shortcut flow",
-                            serviceType = "game"
+                            description = "Test game service for shortcut flow"
                         },
                         timeout: TimeSpan.FromSeconds(5));
 
