@@ -1,12 +1,30 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Location;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Species;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
 /// Base class for WebSocket test handlers providing common utilities.
-/// Consolidates repeated patterns for realm creation, test execution, and JSON parsing.
+/// Consolidates repeated patterns for realm creation, test execution, and typed proxy access.
+///
+/// IMPORTANT: Edge tests should use TYPED PROXIES (e.g., adminClient.Realm.CreateRealmAsync)
+/// instead of raw InvokeAsync calls wherever possible. This ensures:
+/// 1. Compile-time validation of request/response types
+/// 2. Correct endpoint paths (no typos like /game-service/create vs /game-service/services/create)
+/// 3. Correct property names (no mismatches like 'name' vs 'displayName')
+/// 4. Correct enum values (no case issues like 'CHARACTER' vs 'character')
+/// 5. Testing that the typed proxies themselves work correctly
+///
+/// Raw InvokeAsync should ONLY be used for:
+/// - Testing the raw WebSocket protocol itself (MetaEndpointTestHandler, ConnectWebSocketTestHandler)
+/// - Testing SDK parity between TypeScript and C# (TypeScriptParityTestHandler)
+/// - Testing error handling for malformed requests
 /// </summary>
 public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 {
@@ -74,41 +92,42 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     #endregion
 
-    #region Resource Creation Helpers
+    #region Typed Resource Creation Helpers
 
     /// <summary>
-    /// Cached game service ID for test resource creation.
+    /// Cached game service for test resource creation.
     /// </summary>
-    private static string? _cachedGameServiceId;
+    private static ServiceInfo? _cachedGameService;
 
     /// <summary>
     /// Gets or creates a test game service for use in realm creation.
+    /// Uses typed proxy for compile-time validation.
     /// </summary>
-    protected static async Task<string?> GetOrCreateTestGameServiceAsync(BannouClient adminClient)
+    /// <returns>The game service ID if successful, null otherwise</returns>
+    protected static async Task<Guid?> GetOrCreateTestGameServiceAsync(BannouClient adminClient)
     {
-        if (!string.IsNullOrEmpty(_cachedGameServiceId))
-            return _cachedGameServiceId;
+        if (_cachedGameService != null)
+            return _cachedGameService.ServiceId;
 
         try
         {
             var uniqueCode = GenerateUniqueCode();
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
-                "/game-service/services/create",
-                new
-                {
-                    stubName = $"edge-test-{uniqueCode}",
-                    displayName = $"Edge Test Game Service {uniqueCode}",
-                    description = "Test game service for edge-tester integration tests"
-                },
-                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-
-            _cachedGameServiceId = GetStringProperty(response, "serviceId");
-            if (!string.IsNullOrEmpty(_cachedGameServiceId))
+            var response = await adminClient.GameService.CreateServiceAsync(new CreateServiceRequest
             {
-                Console.WriteLine($"   Created test game service: {_cachedGameServiceId}");
+                StubName = $"edge-test-{uniqueCode}",
+                DisplayName = $"Edge Test Game Service {uniqueCode}",
+                Description = "Test game service for edge-tester integration tests"
+            }, timeout: TimeSpan.FromSeconds(5));
+
+            if (!response.IsSuccess || response.Result == null)
+            {
+                Console.WriteLine($"   Failed to create test game service: {FormatError(response.Error)}");
+                return null;
             }
-            return _cachedGameServiceId;
+
+            _cachedGameService = response.Result;
+            Console.WriteLine($"   Created test game service: {_cachedGameService.ServiceId}");
+            return _cachedGameService.ServiceId;
         }
         catch (Exception ex)
         {
@@ -118,14 +137,14 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Creates a test realm via WebSocket.
+    /// Creates a test realm using typed proxy.
     /// </summary>
     /// <param name="adminClient">The admin client to use</param>
     /// <param name="codePrefix">Prefix for the realm code (e.g., "CHAR", "LOC")</param>
     /// <param name="description">Human-readable description (e.g., "Character", "Location")</param>
     /// <param name="uniqueCode">Unique suffix for this test run</param>
-    /// <returns>The realm ID if successful, null otherwise</returns>
-    protected static async Task<string?> CreateTestRealmAsync(
+    /// <returns>The created realm if successful, null otherwise</returns>
+    protected static async Task<RealmResponse?> CreateTestRealmAsync(
         BannouClient adminClient,
         string codePrefix,
         string description,
@@ -135,34 +154,29 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
         {
             // Ensure we have a game service for realm creation
             var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
-            if (string.IsNullOrEmpty(gameServiceId))
+            if (gameServiceId == null)
             {
                 Console.WriteLine("   Failed to create test realm - no game service available");
                 return null;
             }
 
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
-                "/realm/create",
-                new
-                {
-                    code = $"{codePrefix}_REALM_{uniqueCode}",
-                    name = $"{description} Test Realm {uniqueCode}",
-                    description = $"Test realm for {description.ToLowerInvariant()} tests",
-                    category = "test",
-                    gameServiceId = gameServiceId
-                },
-                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-
-            var realmId = GetStringProperty(response, "realmId");
-            if (string.IsNullOrEmpty(realmId))
+            var response = await adminClient.Realm.CreateRealmAsync(new CreateRealmRequest
             {
-                Console.WriteLine("   Failed to create test realm - no realmId in response");
+                Code = $"{codePrefix}_REALM_{uniqueCode}",
+                Name = $"{description} Test Realm {uniqueCode}",
+                Description = $"Test realm for {description.ToLowerInvariant()} tests",
+                Category = "test",
+                GameServiceId = gameServiceId.Value
+            }, timeout: TimeSpan.FromSeconds(5));
+
+            if (!response.IsSuccess || response.Result == null)
+            {
+                Console.WriteLine($"   Failed to create test realm: {FormatError(response.Error)}");
                 return null;
             }
 
-            Console.WriteLine($"   Created test realm: {realmId}");
-            return realmId;
+            Console.WriteLine($"   Created test realm: {response.Result.RealmId}");
+            return response.Result;
         }
         catch (Exception ex)
         {
@@ -172,45 +186,40 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Creates a test species via WebSocket and associates it with the given realm.
+    /// Creates a test species using typed proxy.
     /// </summary>
     /// <param name="adminClient">The admin client to use</param>
     /// <param name="codePrefix">Prefix for the species code (e.g., "CHAR")</param>
     /// <param name="description">Human-readable description (e.g., "Character")</param>
     /// <param name="uniqueCode">Unique suffix for this test run</param>
     /// <param name="realmId">The realm ID to associate the species with</param>
-    /// <returns>The species ID if successful, null otherwise</returns>
-    protected static async Task<string?> CreateTestSpeciesAsync(
+    /// <returns>The created species if successful, null otherwise</returns>
+    protected static async Task<SpeciesResponse?> CreateTestSpeciesAsync(
         BannouClient adminClient,
         string codePrefix,
         string description,
         string uniqueCode,
-        string realmId)
+        Guid realmId)
     {
         try
         {
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
-                "/species/create",
-                new
-                {
-                    code = $"{codePrefix}_SPECIES_{uniqueCode}",
-                    name = $"{description} Test Species {uniqueCode}",
-                    description = $"Test species for {description.ToLowerInvariant()} tests",
-                    category = "test",
-                    realmIds = new[] { realmId }
-                },
-                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-
-            var speciesId = GetStringProperty(response, "speciesId");
-            if (string.IsNullOrEmpty(speciesId))
+            var response = await adminClient.Species.CreateSpeciesAsync(new CreateSpeciesRequest
             {
-                Console.WriteLine("   Failed to create test species - no speciesId in response");
+                Code = $"{codePrefix}_SPECIES_{uniqueCode}",
+                Name = $"{description} Test Species {uniqueCode}",
+                Description = $"Test species for {description.ToLowerInvariant()} tests",
+                Category = "test",
+                RealmIds = new List<Guid> { realmId }
+            }, timeout: TimeSpan.FromSeconds(5));
+
+            if (!response.IsSuccess || response.Result == null)
+            {
+                Console.WriteLine($"   Failed to create test species: {FormatError(response.Error)}");
                 return null;
             }
 
-            Console.WriteLine($"   Created test species: {speciesId}");
-            return speciesId;
+            Console.WriteLine($"   Created test species: {response.Result.SpeciesId}");
+            return response.Result;
         }
         catch (Exception ex)
         {
@@ -220,45 +229,36 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Creates a test location via WebSocket.
+    /// Creates a test location using typed proxy.
     /// </summary>
-    protected static async Task<string?> CreateTestLocationAsync(
+    protected static async Task<LocationResponse?> CreateTestLocationAsync(
         BannouClient adminClient,
         string codePrefix,
         string uniqueCode,
-        string realmId,
-        string locationType = "CITY",
-        string? parentLocationId = null)
+        Guid realmId,
+        LocationType locationType = LocationType.CITY,
+        Guid? parentLocationId = null)
     {
         try
         {
-            var request = new Dictionary<string, object?>
+            var response = await adminClient.Location.CreateLocationAsync(new CreateLocationRequest
             {
-                ["code"] = $"{codePrefix}_LOC_{uniqueCode}",
-                ["name"] = $"Test Location {uniqueCode}",
-                ["description"] = "Test location",
-                ["realmId"] = realmId,
-                ["locationType"] = locationType
-            };
+                Code = $"{codePrefix}_LOC_{uniqueCode}",
+                Name = $"Test Location {uniqueCode}",
+                Description = "Test location",
+                RealmId = realmId,
+                LocationType = locationType,
+                ParentLocationId = parentLocationId
+            }, timeout: TimeSpan.FromSeconds(5));
 
-            if (parentLocationId != null)
-                request["parentLocationId"] = parentLocationId;
-
-            var response = (await adminClient.InvokeAsync<object, JsonElement>(
-                "POST",
-                "/location/create",
-                request,
-                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
-
-            var locationId = GetStringProperty(response, "locationId");
-            if (string.IsNullOrEmpty(locationId))
+            if (!response.IsSuccess || response.Result == null)
             {
-                Console.WriteLine("   Failed to create test location - no locationId in response");
+                Console.WriteLine($"   Failed to create test location: {FormatError(response.Error)}");
                 return null;
             }
 
-            Console.WriteLine($"   Created test location: {locationId}");
-            return locationId;
+            Console.WriteLine($"   Created test location: {response.Result.LocationId}");
+            return response.Result;
         }
         catch (Exception ex)
         {
@@ -269,11 +269,27 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     #endregion
 
-    #region JSON Parsing Helpers
+    #region Error Formatting
+
+    /// <summary>
+    /// Formats an API error for logging.
+    /// </summary>
+    protected static string FormatError(ErrorResponse? error)
+    {
+        if (error == null)
+            return "<null error>";
+
+        return $"{error.ResponseCode}: {error.Message}";
+    }
+
+    #endregion
+
+    #region JSON Parsing Helpers (for raw protocol tests only)
 
     /// <summary>
     /// Parses a JsonElement response into a JsonObject.
     /// Handles empty success responses (default JsonElement) gracefully.
+    /// NOTE: Only use for raw InvokeAsync tests - prefer typed proxies.
     /// </summary>
     protected static JsonObject? ParseResponse(JsonElement response)
     {
@@ -289,6 +305,7 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Gets a string property from a JsonElement response.
+    /// NOTE: Only use for raw InvokeAsync tests - prefer typed proxies.
     /// </summary>
     protected static string? GetStringProperty(JsonElement response, string propertyName)
     {
@@ -298,6 +315,7 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Gets a string property from a JsonObject.
+    /// NOTE: Only use for raw InvokeAsync tests - prefer typed proxies.
     /// </summary>
     protected static string? GetStringProperty(JsonObject? json, string propertyName)
     {
@@ -306,6 +324,7 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Gets an int property from a JsonObject.
+    /// NOTE: Only use for raw InvokeAsync tests - prefer typed proxies.
     /// </summary>
     protected static int GetIntProperty(JsonObject? json, string propertyName, int defaultValue = 0)
     {
@@ -314,6 +333,7 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Checks if a property exists and is a JsonArray.
+    /// NOTE: Only use for raw InvokeAsync tests - prefer typed proxies.
     /// </summary>
     protected static bool HasArrayProperty(JsonObject? json, string propertyName)
     {
@@ -322,10 +342,12 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     #endregion
 
-    #region API Invocation Helpers
+    #region Raw API Invocation (for protocol tests only)
 
     /// <summary>
-    /// Performs an API call via the admin WebSocket with standardized error handling.
+    /// Performs a raw API call via the admin WebSocket with standardized error handling.
+    /// WARNING: Only use for testing the raw WebSocket protocol itself or SDK parity tests.
+    /// For service tests, use typed proxies (e.g., adminClient.Realm.CreateRealmAsync).
     /// </summary>
     protected static async Task<JsonObject?> InvokeApiAsync(
         BannouClient adminClient,

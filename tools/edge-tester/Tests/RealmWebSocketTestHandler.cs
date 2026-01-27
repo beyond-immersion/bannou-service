@@ -1,11 +1,12 @@
-using System.Text.Json;
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.BannouService.Realm;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
 /// WebSocket-based test handler for realm service API endpoints.
-/// Tests the realm service APIs through the Connect service WebSocket binary protocol.
+/// Tests the realm service APIs using TYPED PROXIES through the Connect service WebSocket binary protocol.
+/// This validates both the service logic AND the typed proxy generation.
 /// </summary>
 public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
 {
@@ -15,36 +16,40 @@ public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
     public override ServiceTest[] GetServiceTests() =>
     [
         new ServiceTest(TestListRealmsViaWebSocket, "Realm - List (WebSocket)", "WebSocket",
-            "Test realm listing via WebSocket binary protocol"),
+            "Test realm listing via typed proxy"),
         new ServiceTest(TestCreateAndGetRealmViaWebSocket, "Realm - Create and Get (WebSocket)", "WebSocket",
-            "Test realm creation and retrieval via WebSocket binary protocol"),
+            "Test realm creation and retrieval via typed proxy"),
         new ServiceTest(TestRealmLifecycleViaWebSocket, "Realm - Full Lifecycle (WebSocket)", "WebSocket",
-            "Test complete realm lifecycle via WebSocket: create -> update -> deprecate -> undeprecate"),
+            "Test complete realm lifecycle via typed proxy: create -> update -> deprecate -> undeprecate"),
     ];
 
     private void TestListRealmsViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Realm List Test (WebSocket) ===");
-        Console.WriteLine("Testing /realm/list via shared admin WebSocket...");
+        Console.WriteLine("Testing realm list via typed proxy...");
 
         RunWebSocketTest("Realm list test", async adminClient =>
         {
-            var response = await InvokeApiAsync(adminClient, "/realm/list", new { });
+            var response = await adminClient.Realm.ListRealmsAsync(new ListRealmsRequest());
 
-            var hasRealmsArray = HasArrayProperty(response, "realms");
-            var totalCount = GetIntProperty(response, "totalCount");
+            if (!response.IsSuccess || response.Result == null)
+            {
+                Console.WriteLine($"   Failed to list realms: {FormatError(response.Error)}");
+                return false;
+            }
 
-            Console.WriteLine($"   Realms array present: {hasRealmsArray}");
-            Console.WriteLine($"   Total Count: {totalCount}");
+            var result = response.Result;
+            Console.WriteLine($"   Realms returned: {result.Realms?.Count ?? 0}");
+            Console.WriteLine($"   Total Count: {result.TotalCount}");
 
-            return hasRealmsArray;
+            return result.Realms != null;
         });
     }
 
     private void TestCreateAndGetRealmViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Realm Create and Get Test (WebSocket) ===");
-        Console.WriteLine("Testing /realm/create and /realm/get via shared admin WebSocket...");
+        Console.WriteLine("Testing realm creation and retrieval via typed proxy...");
 
         RunWebSocketTest("Realm create and get test", async adminClient =>
         {
@@ -52,55 +57,62 @@ public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Get or create a game service first (required for realm creation)
             var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
-            if (string.IsNullOrEmpty(gameServiceId))
+            if (gameServiceId == null)
             {
                 Console.WriteLine("   Failed to get/create game service");
                 return false;
             }
 
-            // Create realm
-            Console.WriteLine("   Invoking /realm/create...");
-            var createResponse = await InvokeApiAsync(adminClient, "/realm/create", new
+            // Create realm using typed proxy
+            Console.WriteLine("   Creating realm via typed proxy...");
+            var createResponse = await adminClient.Realm.CreateRealmAsync(new CreateRealmRequest
             {
-                code = uniqueCode,
-                name = $"Test Realm {uniqueCode}",
-                description = "Created via WebSocket edge test",
-                category = "test",
-                gameServiceId
+                Code = uniqueCode,
+                Name = $"Test Realm {uniqueCode}",
+                Description = "Created via WebSocket edge test",
+                Category = "test",
+                GameServiceId = gameServiceId.Value
             });
 
-            var realmId = GetStringProperty(createResponse, "realmId");
-            if (string.IsNullOrEmpty(realmId))
+            if (!createResponse.IsSuccess || createResponse.Result == null)
             {
-                Console.WriteLine("   Failed to create realm - no realmId in response");
+                Console.WriteLine($"   Failed to create realm: {FormatError(createResponse.Error)}");
                 return false;
             }
 
-            Console.WriteLine($"   Created realm: {realmId} ({GetStringProperty(createResponse, "code")})");
+            var realm = createResponse.Result;
+            Console.WriteLine($"   Created realm: {realm.RealmId} ({realm.Code})");
 
-            // Retrieve it
-            Console.WriteLine("   Invoking /realm/get...");
-            var getResponse = await InvokeApiAsync(adminClient, "/realm/get", new { realmId });
+            // Retrieve it using typed proxy
+            Console.WriteLine("   Retrieving realm via typed proxy...");
+            var getResponse = await adminClient.Realm.GetRealmAsync(new GetRealmRequest
+            {
+                RealmId = realm.RealmId
+            });
 
-            var retrievedId = GetStringProperty(getResponse, "realmId");
-            var retrievedCode = GetStringProperty(getResponse, "code");
+            if (!getResponse.IsSuccess || getResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to get realm: {FormatError(getResponse.Error)}");
+                return false;
+            }
 
-            Console.WriteLine($"   Retrieved realm: {retrievedId} ({retrievedCode})");
+            var retrieved = getResponse.Result;
+            Console.WriteLine($"   Retrieved realm: {retrieved.RealmId} ({retrieved.Code})");
 
-            return retrievedId == realmId && retrievedCode == uniqueCode;
+            return retrieved.RealmId == realm.RealmId && retrieved.Code == uniqueCode;
         });
     }
 
     private void TestRealmLifecycleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Realm Full Lifecycle Test (WebSocket) ===");
-        Console.WriteLine("Testing complete realm lifecycle via shared admin WebSocket...");
+        Console.WriteLine("Testing complete realm lifecycle via typed proxy...");
 
         RunWebSocketTest("Realm complete lifecycle test", async adminClient =>
         {
             // Get or create a game service first (required for realm creation)
             var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
-            if (string.IsNullOrEmpty(gameServiceId))
+            if (gameServiceId == null)
             {
                 Console.WriteLine("   Failed to get/create game service");
                 return false;
@@ -110,64 +122,84 @@ public class RealmWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   Step 1: Creating realm...");
             var uniqueCode = $"LIFE{GenerateUniqueCode()}";
 
-            var createResponse = await InvokeApiAsync(adminClient, "/realm/create", new
+            var createResponse = await adminClient.Realm.CreateRealmAsync(new CreateRealmRequest
             {
-                code = uniqueCode,
-                name = $"Lifecycle Test {uniqueCode}",
-                description = "Lifecycle test realm",
-                category = "test",
-                gameServiceId
+                Code = uniqueCode,
+                Name = $"Lifecycle Test {uniqueCode}",
+                Description = "Lifecycle test realm",
+                Category = "test",
+                GameServiceId = gameServiceId.Value
             });
 
-            var realmId = GetStringProperty(createResponse, "realmId");
-            if (string.IsNullOrEmpty(realmId))
+            if (!createResponse.IsSuccess || createResponse.Result == null)
             {
-                Console.WriteLine("   Failed to create realm - no realmId in response");
+                Console.WriteLine($"   Failed to create realm: {FormatError(createResponse.Error)}");
                 return false;
             }
-            Console.WriteLine($"   Created realm {realmId}");
+
+            var realm = createResponse.Result;
+            Console.WriteLine($"   Created realm {realm.RealmId}");
 
             // Step 2: Update realm
             Console.WriteLine("   Step 2: Updating realm...");
-            var updateResponse = await InvokeApiAsync(adminClient, "/realm/update", new
+            var updateResponse = await adminClient.Realm.UpdateRealmAsync(new UpdateRealmRequest
             {
-                realmId,
-                name = $"Updated Lifecycle Test {uniqueCode}",
-                description = "Updated description"
+                RealmId = realm.RealmId,
+                Name = $"Updated Lifecycle Test {uniqueCode}",
+                Description = "Updated description"
             });
 
-            var updatedName = GetStringProperty(updateResponse, "name");
-            if (!updatedName?.StartsWith("Updated") ?? true)
+            if (!updateResponse.IsSuccess || updateResponse.Result == null)
             {
-                Console.WriteLine($"   Failed to update realm - name: {updatedName}");
+                Console.WriteLine($"   Failed to update realm: {FormatError(updateResponse.Error)}");
                 return false;
             }
-            Console.WriteLine($"   Updated realm name to: {updatedName}");
+
+            var updated = updateResponse.Result;
+            if (!updated.Name.StartsWith("Updated"))
+            {
+                Console.WriteLine($"   Update didn't apply - name: {updated.Name}");
+                return false;
+            }
+            Console.WriteLine($"   Updated realm name to: {updated.Name}");
 
             // Step 3: Deprecate realm
             Console.WriteLine("   Step 3: Deprecating realm...");
-            var deprecateResponse = await InvokeApiAsync(adminClient, "/realm/deprecate", new
+            var deprecateResponse = await adminClient.Realm.DeprecateRealmAsync(new DeprecateRealmRequest
             {
-                realmId,
-                reason = "WebSocket lifecycle test"
+                RealmId = realm.RealmId,
+                Reason = "WebSocket lifecycle test"
             });
 
-            var isDeprecated = deprecateResponse?["isDeprecated"]?.GetValue<bool>() ?? false;
-            if (!isDeprecated)
+            if (!deprecateResponse.IsSuccess || deprecateResponse.Result == null)
             {
-                Console.WriteLine("   Failed to deprecate realm");
+                Console.WriteLine($"   Failed to deprecate realm: {FormatError(deprecateResponse.Error)}");
+                return false;
+            }
+
+            if (!deprecateResponse.Result.IsDeprecated)
+            {
+                Console.WriteLine("   Realm not marked as deprecated");
                 return false;
             }
             Console.WriteLine("   Realm deprecated successfully");
 
             // Step 4: Undeprecate realm
             Console.WriteLine("   Step 4: Undeprecating realm...");
-            var undeprecateResponse = await InvokeApiAsync(adminClient, "/realm/undeprecate", new { realmId });
-
-            var isUndeprecated = !(undeprecateResponse?["isDeprecated"]?.GetValue<bool>() ?? true);
-            if (!isUndeprecated)
+            var undeprecateResponse = await adminClient.Realm.UndeprecateRealmAsync(new UndeprecateRealmRequest
             {
-                Console.WriteLine("   Failed to undeprecate realm");
+                RealmId = realm.RealmId
+            });
+
+            if (!undeprecateResponse.IsSuccess || undeprecateResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to undeprecate realm: {FormatError(undeprecateResponse.Error)}");
+                return false;
+            }
+
+            if (undeprecateResponse.Result.IsDeprecated)
+            {
+                Console.WriteLine("   Realm still marked as deprecated");
                 return false;
             }
             Console.WriteLine("   Realm restored successfully");

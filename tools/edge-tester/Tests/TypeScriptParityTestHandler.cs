@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BeyondImmersion.BannouService.Location;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -198,7 +199,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Get or create game service (required for realm creation)
             var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
-            if (string.IsNullOrEmpty(gameServiceId))
+            if (!gameServiceId.HasValue)
             {
                 Console.WriteLine("❌ Failed to get/create game service");
                 return false;
@@ -208,7 +209,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   [C# SDK] Creating realm {realmCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Parity Test {uniqueCode}", description = "Parity test", category = "test", gameServiceId },
+                new { code = realmCode, name = $"Parity Test {uniqueCode}", description = "Parity test", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!createResponse.IsSuccess)
@@ -282,7 +283,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Get or create game service (required for realm creation)
             var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
-            if (string.IsNullOrEmpty(gameServiceId))
+            if (!gameServiceId.HasValue)
             {
                 Console.WriteLine("❌ Failed to get/create game service");
                 return false;
@@ -291,7 +292,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             // Create realm
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Lifecycle Test {uniqueCode}", description = "Lifecycle parity test", category = "test", gameServiceId },
+                new { code = realmCode, name = $"Lifecycle Test {uniqueCode}", description = "Lifecycle parity test", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!createResponse.IsSuccess)
@@ -406,15 +407,15 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
         {
             // First create a realm for the species
             var uniqueCode = GenerateUniqueCode();
-            var realmId = await CreateTestRealmAsync(adminClient, "SPECIES_PARITY", "Species Parity", uniqueCode);
-            if (string.IsNullOrEmpty(realmId)) return false;
+            var realm = await CreateTestRealmAsync(adminClient, "SPECIES_PARITY", "Species Parity", uniqueCode);
+            if (realm == null) return false;
 
             // Create species via C# SDK
             var speciesCode = $"SP_PARITY_{uniqueCode}";
             Console.WriteLine($"   [C# SDK] Creating species {speciesCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/species/create",
-                new { code = speciesCode, name = $"Parity Species {uniqueCode}", description = "Species parity test", category = "test", realmIds = new[] { realmId } },
+                new { code = speciesCode, name = $"Parity Species {uniqueCode}", description = "Species parity test", category = "test", realmIds = new[] { realm.RealmId } },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!createResponse.IsSuccess)
@@ -479,20 +480,20 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var uniqueCode = GenerateUniqueCode();
 
             // Create realm and parent location
-            var realmId = await CreateTestRealmAsync(adminClient, "LOC_PARITY", "Location Parity", uniqueCode);
-            if (string.IsNullOrEmpty(realmId)) return false;
+            var realm = await CreateTestRealmAsync(adminClient, "LOC_PARITY", "Location Parity", uniqueCode);
+            if (realm == null) return false;
 
-            var parentLocationId = await CreateTestLocationAsync(adminClient, "PARENT", uniqueCode, realmId, "REGION");
-            if (string.IsNullOrEmpty(parentLocationId)) return false;
+            var parentLocation = await CreateTestLocationAsync(adminClient, "PARENT", uniqueCode, realm.RealmId, LocationType.REGION);
+            if (parentLocation == null) return false;
 
-            var childLocationId = await CreateTestLocationAsync(adminClient, "CHILD", uniqueCode, realmId, "CITY", parentLocationId);
-            if (string.IsNullOrEmpty(childLocationId)) return false;
+            var childLocation = await CreateTestLocationAsync(adminClient, "CHILD", uniqueCode, realm.RealmId, LocationType.CITY, parentLocation.LocationId);
+            if (childLocation == null) return false;
 
             // Query children via C# SDK
             Console.WriteLine("   [C# SDK] Querying location children...");
             var csharpChildrenResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/location/list-by-parent",
-                new { parentLocationId },
+                new { parentLocationId = parentLocation.LocationId },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpChildrenResponse.IsSuccess)
@@ -507,7 +508,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine("   [TS SDK] Querying location children...");
             var tsChildrenResult = await tsHelper.InvokeRawAsync("POST", "/location/list-by-parent",
-                new { parentLocationId });
+                new { parentLocationId = parentLocation.LocationId });
 
             if (!tsChildrenResult.IsSuccess)
             {
@@ -583,7 +584,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Get or create game service (required for realm creation)
             var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
-            if (string.IsNullOrEmpty(gameServiceId))
+            if (!gameServiceId.HasValue)
             {
                 Console.WriteLine("❌ Failed to get/create game service");
                 return false;
@@ -593,7 +594,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Creating realm {realmCode}...");
             var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Conflict Test {uniqueCode}", description = "Conflict test", category = "test", gameServiceId },
+                new { code = realmCode, name = $"Conflict Test {uniqueCode}", description = "Conflict test", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (!createResponse.IsSuccess)
@@ -607,7 +608,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   [C# SDK] Attempting duplicate create...");
             var csharpDupeResponse = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST", "/realm/create",
-                new { code = realmCode, name = $"Duplicate {uniqueCode}", description = "Should fail", category = "test", gameServiceId },
+                new { code = realmCode, name = $"Duplicate {uniqueCode}", description = "Should fail", category = "test", gameServiceId = gameServiceId.Value },
                 timeout: TimeSpan.FromSeconds(10));
 
             if (csharpDupeResponse.IsSuccess)
@@ -623,7 +624,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine("   [TS SDK] Attempting same duplicate create...");
             var tsDupeResult = await tsHelper.InvokeRawAsync("POST", "/realm/create",
-                new { code = realmCode, name = $"TS Duplicate {uniqueCode}", description = "Should also fail", category = "test", gameServiceId });
+                new { code = realmCode, name = $"TS Duplicate {uniqueCode}", description = "Should also fail", category = "test", gameServiceId = gameServiceId.Value });
 
             if (tsDupeResult.IsSuccess)
             {
@@ -691,11 +692,11 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var uniqueCode = GenerateUniqueCode();
 
             // Create realm and species first (character dependencies)
-            var realmId = await CreateTestRealmAsync(adminClient, "CHAR_PARITY", "Character Parity", uniqueCode);
-            if (string.IsNullOrEmpty(realmId)) return false;
+            var realm = await CreateTestRealmAsync(adminClient, "CHAR_PARITY", "Character Parity", uniqueCode);
+            if (realm == null) return false;
 
-            var speciesId = await CreateTestSpeciesAsync(adminClient, "CHAR_PARITY", "Character Parity", uniqueCode, realmId);
-            if (string.IsNullOrEmpty(speciesId)) return false;
+            var species = await CreateTestSpeciesAsync(adminClient, "CHAR_PARITY", "Character Parity", uniqueCode, realm.RealmId);
+            if (species == null) return false;
 
             // Create character via C# SDK
             Console.WriteLine($"   [C# SDK] Creating character...");
@@ -704,8 +705,8 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
                 new
                 {
                     name = $"Parity Character {uniqueCode}",
-                    realmId,
-                    speciesId,
+                    realmId = realm.RealmId,
+                    speciesId = species.SpeciesId,
                     birthDate = DateTime.UtcNow.AddYears(-25).ToString("O"),
                     gender = "male"
                 },
@@ -1128,8 +1129,8 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             var uniqueCode = GenerateUniqueCode();
 
             // Create realm first
-            var realmId = await CreateTestRealmAsync(adminClient, "LOC_CR_PARITY", "Location CR Parity", uniqueCode);
-            if (string.IsNullOrEmpty(realmId)) return false;
+            var realm = await CreateTestRealmAsync(adminClient, "LOC_CR_PARITY", "Location CR Parity", uniqueCode);
+            if (realm == null) return false;
 
             // Create location via C# SDK
             var locationCode = $"LOC_PARITY_{uniqueCode}";
@@ -1141,7 +1142,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
                     code = locationCode,
                     name = $"Parity Location {uniqueCode}",
                     description = "Location parity test",
-                    realmId,
+                    realmId = realm.RealmId,
                     locationType = "REGION"
                 },
                 timeout: TimeSpan.FromSeconds(10));

@@ -1,11 +1,12 @@
-using System.Text.Json;
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.BannouService.RelationshipType;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
 /// WebSocket-based test handler for relationship type service API endpoints.
-/// Tests the relationship type service APIs through the Connect service WebSocket binary protocol.
+/// Tests the relationship type service APIs using TYPED PROXIES through the Connect service WebSocket binary protocol.
+/// This validates both the service logic AND the typed proxy generation.
 /// </summary>
 public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 {
@@ -15,80 +16,91 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
     public override ServiceTest[] GetServiceTests() =>
     [
         new ServiceTest(TestListRelationshipTypesViaWebSocket, "RelationshipType - List (WebSocket)", "WebSocket",
-            "Test relationship type listing via WebSocket binary protocol"),
+            "Test relationship type listing via typed proxy"),
         new ServiceTest(TestCreateAndGetRelationshipTypeViaWebSocket, "RelationshipType - Create and Get (WebSocket)", "WebSocket",
-            "Test relationship type creation and retrieval via WebSocket binary protocol"),
+            "Test relationship type creation and retrieval via typed proxy"),
         new ServiceTest(TestRelationshipTypeHierarchyViaWebSocket, "RelationshipType - Hierarchy (WebSocket)", "WebSocket",
-            "Test relationship type hierarchy operations via WebSocket binary protocol"),
+            "Test relationship type hierarchy operations via typed proxy"),
         new ServiceTest(TestRelationshipTypeLifecycleViaWebSocket, "RelationshipType - Full Lifecycle (WebSocket)", "WebSocket",
-            "Test complete relationship type lifecycle via WebSocket: create -> update -> deprecate -> undeprecate"),
+            "Test complete relationship type lifecycle via typed proxy: create -> update -> deprecate -> undeprecate"),
     ];
 
     private void TestListRelationshipTypesViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType List Test (WebSocket) ===");
-        Console.WriteLine("Testing /relationship-type/list via shared admin WebSocket...");
+        Console.WriteLine("Testing relationship type list via typed proxy...");
 
         RunWebSocketTest("RelationshipType list test", async adminClient =>
         {
-            var response = await InvokeApiAsync(adminClient, "/relationship-type/list", new { });
+            var response = await adminClient.RelationshipType.ListRelationshipTypesAsync(new ListRelationshipTypesRequest());
 
-            var hasTypesArray = HasArrayProperty(response, "types");
-            var totalCount = GetIntProperty(response, "totalCount");
+            if (!response.IsSuccess || response.Result == null)
+            {
+                Console.WriteLine($"   Failed to list relationship types: {FormatError(response.Error)}");
+                return false;
+            }
 
-            Console.WriteLine($"   Types array present: {hasTypesArray}");
-            Console.WriteLine($"   Total Count: {totalCount}");
+            var result = response.Result;
+            Console.WriteLine($"   Types array present: {result.Types != null}");
+            Console.WriteLine($"   Total Count: {result.TotalCount}");
 
-            return hasTypesArray;
+            return result.Types != null;
         });
     }
 
     private void TestCreateAndGetRelationshipTypeViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType Create and Get Test (WebSocket) ===");
-        Console.WriteLine("Testing /relationship-type/create and /relationship-type/get via shared admin WebSocket...");
+        Console.WriteLine("Testing relationship type creation and retrieval via typed proxy...");
 
         RunWebSocketTest("RelationshipType create and get test", async adminClient =>
         {
             var uniqueCode = $"TYPE{GenerateUniqueCode()}";
 
-            // Create relationship type
-            Console.WriteLine("   Invoking /relationship-type/create...");
-            var createResponse = await InvokeApiAsync(adminClient, "/relationship-type/create", new
+            // Create relationship type using typed proxy
+            Console.WriteLine("   Creating relationship type via typed proxy...");
+            var createResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
-                code = uniqueCode,
-                name = $"Test Type {uniqueCode}",
-                description = "Created via WebSocket edge test",
-                category = "TEST",
-                isBidirectional = true
+                Code = uniqueCode,
+                Name = $"Test Type {uniqueCode}",
+                Description = "Created via WebSocket edge test",
+                Category = "TEST",
+                IsBidirectional = true
             });
 
-            var typeId = GetStringProperty(createResponse, "relationshipTypeId");
-            if (string.IsNullOrEmpty(typeId))
+            if (!createResponse.IsSuccess || createResponse.Result == null)
             {
-                Console.WriteLine("   Failed to create relationship type - no relationshipTypeId in response");
+                Console.WriteLine($"   Failed to create relationship type: {FormatError(createResponse.Error)}");
                 return false;
             }
 
-            Console.WriteLine($"   Created relationship type: {typeId} ({GetStringProperty(createResponse, "code")})");
+            var relType = createResponse.Result;
+            Console.WriteLine($"   Created relationship type: {relType.RelationshipTypeId} ({relType.Code})");
 
-            // Retrieve it
-            Console.WriteLine("   Invoking /relationship-type/get...");
-            var getResponse = await InvokeApiAsync(adminClient, "/relationship-type/get", new { relationshipTypeId = typeId });
+            // Retrieve it using typed proxy
+            Console.WriteLine("   Retrieving relationship type via typed proxy...");
+            var getResponse = await adminClient.RelationshipType.GetRelationshipTypeAsync(new GetRelationshipTypeRequest
+            {
+                RelationshipTypeId = relType.RelationshipTypeId
+            });
 
-            var retrievedId = GetStringProperty(getResponse, "relationshipTypeId");
-            var retrievedCode = GetStringProperty(getResponse, "code");
+            if (!getResponse.IsSuccess || getResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to get relationship type: {FormatError(getResponse.Error)}");
+                return false;
+            }
 
-            Console.WriteLine($"   Retrieved relationship type: {retrievedId} ({retrievedCode})");
+            var retrieved = getResponse.Result;
+            Console.WriteLine($"   Retrieved relationship type: {retrieved.RelationshipTypeId} ({retrieved.Code})");
 
-            return retrievedId == typeId && retrievedCode == uniqueCode;
+            return retrieved.RelationshipTypeId == relType.RelationshipTypeId && retrieved.Code == uniqueCode;
         });
     }
 
     private void TestRelationshipTypeHierarchyViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType Hierarchy Test (WebSocket) ===");
-        Console.WriteLine("Testing hierarchy operations via shared admin WebSocket...");
+        Console.WriteLine("Testing hierarchy operations via typed proxy...");
 
         RunWebSocketTest("RelationshipType hierarchy test", async adminClient =>
         {
@@ -96,67 +108,81 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   Step 1: Creating parent type...");
             var parentCode = $"PARENT{GenerateUniqueCode()}";
 
-            var parentResponse = await InvokeApiAsync(adminClient, "/relationship-type/create", new
+            var parentResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
-                code = parentCode,
-                name = $"Parent Type {parentCode}",
-                category = "FAMILY",
-                isBidirectional = false
+                Code = parentCode,
+                Name = $"Parent Type {parentCode}",
+                Category = "FAMILY",
+                IsBidirectional = false
             });
 
-            var parentId = GetStringProperty(parentResponse, "relationshipTypeId");
-            if (string.IsNullOrEmpty(parentId))
+            if (!parentResponse.IsSuccess || parentResponse.Result == null)
             {
-                Console.WriteLine("   Failed to create parent type");
+                Console.WriteLine($"   Failed to create parent type: {FormatError(parentResponse.Error)}");
                 return false;
             }
-            Console.WriteLine($"   Created parent type {parentId}");
+
+            var parent = parentResponse.Result;
+            Console.WriteLine($"   Created parent type {parent.RelationshipTypeId}");
 
             // Step 2: Create child type with parent
             Console.WriteLine("   Step 2: Creating child type...");
             var childCode = $"CHILD{GenerateUniqueCode()}";
 
-            var childResponse = await InvokeApiAsync(adminClient, "/relationship-type/create", new
+            var childResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
-                code = childCode,
-                name = $"Child Type {childCode}",
-                category = "FAMILY",
-                parentTypeId = parentId,
-                isBidirectional = false
+                Code = childCode,
+                Name = $"Child Type {childCode}",
+                Category = "FAMILY",
+                ParentTypeId = parent.RelationshipTypeId,
+                IsBidirectional = false
             });
 
-            var childId = GetStringProperty(childResponse, "relationshipTypeId");
-            if (string.IsNullOrEmpty(childId))
+            if (!childResponse.IsSuccess || childResponse.Result == null)
             {
-                Console.WriteLine("   Failed to create child type");
+                Console.WriteLine($"   Failed to create child type: {FormatError(childResponse.Error)}");
                 return false;
             }
-            Console.WriteLine($"   Created child type {childId}");
+
+            var child = childResponse.Result;
+            Console.WriteLine($"   Created child type {child.RelationshipTypeId}");
 
             // Step 3: Test GetChildRelationshipTypes
             Console.WriteLine("   Step 3: Getting child types...");
-            var childrenResponse = await InvokeApiAsync(adminClient, "/relationship-type/get-children", new { parentTypeId = parentId });
+            var childrenResponse = await adminClient.RelationshipType.GetChildRelationshipTypesAsync(new GetChildRelationshipTypesRequest
+            {
+                ParentTypeId = parent.RelationshipTypeId
+            });
 
-            var typesArray = childrenResponse?["types"]?.AsArray();
-            var hasChildren = typesArray != null && typesArray.Count > 0;
+            if (!childrenResponse.IsSuccess || childrenResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to get children: {FormatError(childrenResponse.Error)}");
+                return false;
+            }
 
-            if (!hasChildren)
+            var childCount = childrenResponse.Result.Types?.Count ?? 0;
+            if (childCount == 0)
             {
                 Console.WriteLine("   No children found for parent type");
                 return false;
             }
-            Console.WriteLine($"   Found {typesArray?.Count} child type(s)");
+            Console.WriteLine($"   Found {childCount} child type(s)");
 
             // Step 4: Test MatchesHierarchy
             Console.WriteLine("   Step 4: Testing hierarchy match...");
-            var matchResponse = await InvokeApiAsync(adminClient, "/relationship-type/matches-hierarchy", new
+            var matchResponse = await adminClient.RelationshipType.MatchesHierarchyAsync(new MatchesHierarchyRequest
             {
-                typeId = childId,
-                ancestorTypeId = parentId
+                TypeId = child.RelationshipTypeId,
+                AncestorTypeId = parent.RelationshipTypeId
             });
 
-            var matches = matchResponse?["matches"]?.GetValue<bool>() ?? false;
-            if (!matches)
+            if (!matchResponse.IsSuccess || matchResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to check hierarchy: {FormatError(matchResponse.Error)}");
+                return false;
+            }
+
+            if (!matchResponse.Result.Matches)
             {
                 Console.WriteLine("   Child type does not match parent hierarchy");
                 return false;
@@ -165,17 +191,24 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Step 5: Test GetAncestors
             Console.WriteLine("   Step 5: Getting ancestors...");
-            var ancestorsResponse = await InvokeApiAsync(adminClient, "/relationship-type/get-ancestors", new { typeId = childId });
+            var ancestorsResponse = await adminClient.RelationshipType.GetAncestorsAsync(new GetAncestorsRequest
+            {
+                TypeId = child.RelationshipTypeId
+            });
 
-            var ancestorsArray = ancestorsResponse?["types"]?.AsArray();
-            var hasAncestors = ancestorsArray != null && ancestorsArray.Count > 0;
+            if (!ancestorsResponse.IsSuccess || ancestorsResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to get ancestors: {FormatError(ancestorsResponse.Error)}");
+                return false;
+            }
 
-            if (!hasAncestors)
+            var ancestorCount = ancestorsResponse.Result.Types?.Count ?? 0;
+            if (ancestorCount == 0)
             {
                 Console.WriteLine("   No ancestors found for child type");
                 return false;
             }
-            Console.WriteLine($"   Found {ancestorsArray?.Count} ancestor(s)");
+            Console.WriteLine($"   Found {ancestorCount} ancestor(s)");
 
             return true;
         });
@@ -184,7 +217,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
     private void TestRelationshipTypeLifecycleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType Full Lifecycle Test (WebSocket) ===");
-        Console.WriteLine("Testing complete relationship type lifecycle via shared admin WebSocket...");
+        Console.WriteLine("Testing complete relationship type lifecycle via typed proxy...");
 
         RunWebSocketTest("RelationshipType complete lifecycle test", async adminClient =>
         {
@@ -192,64 +225,84 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   Step 1: Creating relationship type...");
             var uniqueCode = $"LIFE{GenerateUniqueCode()}";
 
-            var createResponse = await InvokeApiAsync(adminClient, "/relationship-type/create", new
+            var createResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
-                code = uniqueCode,
-                name = $"Lifecycle Test {uniqueCode}",
-                description = "Lifecycle test type",
-                category = "TEST",
-                isBidirectional = true
+                Code = uniqueCode,
+                Name = $"Lifecycle Test {uniqueCode}",
+                Description = "Lifecycle test type",
+                Category = "TEST",
+                IsBidirectional = true
             });
 
-            var typeId = GetStringProperty(createResponse, "relationshipTypeId");
-            if (string.IsNullOrEmpty(typeId))
+            if (!createResponse.IsSuccess || createResponse.Result == null)
             {
-                Console.WriteLine("   Failed to create relationship type - no relationshipTypeId in response");
+                Console.WriteLine($"   Failed to create relationship type: {FormatError(createResponse.Error)}");
                 return false;
             }
-            Console.WriteLine($"   Created relationship type {typeId}");
+
+            var relType = createResponse.Result;
+            Console.WriteLine($"   Created relationship type {relType.RelationshipTypeId}");
 
             // Step 2: Update type
             Console.WriteLine("   Step 2: Updating relationship type...");
-            var updateResponse = await InvokeApiAsync(adminClient, "/relationship-type/update", new
+            var updateResponse = await adminClient.RelationshipType.UpdateRelationshipTypeAsync(new UpdateRelationshipTypeRequest
             {
-                relationshipTypeId = typeId,
-                name = $"Updated Lifecycle Test {uniqueCode}",
-                description = "Updated description"
+                RelationshipTypeId = relType.RelationshipTypeId,
+                Name = $"Updated Lifecycle Test {uniqueCode}",
+                Description = "Updated description"
             });
 
-            var updatedName = GetStringProperty(updateResponse, "name");
-            if (!updatedName?.StartsWith("Updated") ?? true)
+            if (!updateResponse.IsSuccess || updateResponse.Result == null)
             {
-                Console.WriteLine($"   Failed to update relationship type - name: {updatedName}");
+                Console.WriteLine($"   Failed to update relationship type: {FormatError(updateResponse.Error)}");
                 return false;
             }
-            Console.WriteLine($"   Updated relationship type name to: {updatedName}");
+
+            var updated = updateResponse.Result;
+            if (!updated.Name.StartsWith("Updated"))
+            {
+                Console.WriteLine($"   Update didn't apply - name: {updated.Name}");
+                return false;
+            }
+            Console.WriteLine($"   Updated relationship type name to: {updated.Name}");
 
             // Step 3: Deprecate type
             Console.WriteLine("   Step 3: Deprecating relationship type...");
-            var deprecateResponse = await InvokeApiAsync(adminClient, "/relationship-type/deprecate", new
+            var deprecateResponse = await adminClient.RelationshipType.DeprecateRelationshipTypeAsync(new DeprecateRelationshipTypeRequest
             {
-                relationshipTypeId = typeId,
-                reason = "WebSocket lifecycle test"
+                RelationshipTypeId = relType.RelationshipTypeId,
+                Reason = "WebSocket lifecycle test"
             });
 
-            var isDeprecated = deprecateResponse?["isDeprecated"]?.GetValue<bool>() ?? false;
-            if (!isDeprecated)
+            if (!deprecateResponse.IsSuccess || deprecateResponse.Result == null)
             {
-                Console.WriteLine("   Failed to deprecate relationship type");
+                Console.WriteLine($"   Failed to deprecate relationship type: {FormatError(deprecateResponse.Error)}");
+                return false;
+            }
+
+            if (!deprecateResponse.Result.IsDeprecated)
+            {
+                Console.WriteLine("   Relationship type not marked as deprecated");
                 return false;
             }
             Console.WriteLine("   Relationship type deprecated successfully");
 
             // Step 4: Undeprecate type
             Console.WriteLine("   Step 4: Undeprecating relationship type...");
-            var undeprecateResponse = await InvokeApiAsync(adminClient, "/relationship-type/undeprecate", new { relationshipTypeId = typeId });
-
-            var isUndeprecated = !(undeprecateResponse?["isDeprecated"]?.GetValue<bool>() ?? true);
-            if (!isUndeprecated)
+            var undeprecateResponse = await adminClient.RelationshipType.UndeprecateRelationshipTypeAsync(new UndeprecateRelationshipTypeRequest
             {
-                Console.WriteLine("   Failed to undeprecate relationship type");
+                RelationshipTypeId = relType.RelationshipTypeId
+            });
+
+            if (!undeprecateResponse.IsSuccess || undeprecateResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to undeprecate relationship type: {FormatError(undeprecateResponse.Error)}");
+                return false;
+            }
+
+            if (undeprecateResponse.Result.IsDeprecated)
+            {
+                Console.WriteLine("   Relationship type still marked as deprecated");
                 return false;
             }
             Console.WriteLine("   Relationship type restored successfully");

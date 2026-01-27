@@ -54,7 +54,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
 
             // Setup: Get or create game service (required for realm creation)
             var gameServiceId = await GetOrCreateTestGameServiceAsync(adminClient);
-            if (string.IsNullOrEmpty(gameServiceId))
+            if (gameServiceId == null)
             {
                 Console.WriteLine("   Failed to get/create game service");
                 return false;
@@ -67,7 +67,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
                 Code = $"{CodePrefix}REALM{uniqueCode}",
                 Name = $"{Description} Realm {uniqueCode}",
                 Description = $"Test realm for {Description}",
-                GameServiceId = Guid.Parse(gameServiceId)
+                GameServiceId = gameServiceId.Value
             });
 
             if (!realmResponse.IsSuccess || realmResponse.Result == null)
