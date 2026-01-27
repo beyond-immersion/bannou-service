@@ -1034,6 +1034,11 @@ public class Program
         foreach (ServiceTest serviceTest in documentationTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load save-load websocket tests
+        var saveLoadTestHandler = new SaveLoadWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in saveLoadTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load voice websocket tests
         var voiceTestHandler = new VoiceWebSocketTestHandler();
         foreach (ServiceTest serviceTest in voiceTestHandler.GetServiceTests())
