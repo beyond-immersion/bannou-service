@@ -61,22 +61,39 @@ public class OrchestratorWebSocketTestHandler : BaseWebSocketTestHandler
 
         RunWebSocketTest("Orchestrator services health test", async adminClient =>
         {
-            Console.WriteLine("   Checking services health via typed proxy...");
-            var response = await adminClient.Orchestrator.GetServicesHealthAsync(
-                new ServiceHealthRequest(),
-                timeout: TimeSpan.FromSeconds(10));
-
-            if (!response.IsSuccess || response.Result == null)
+            // Services health depends on heartbeat ingestion which may not be
+            // complete when this test runs. Retry with delay to allow heartbeats
+            // to propagate.
+            var maxAttempts = 5;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                Console.WriteLine($"   Failed to get services health: {FormatError(response.Error)}");
-                return false;
+                Console.WriteLine($"   Checking services health via typed proxy (attempt {attempt}/{maxAttempts})...");
+                var response = await adminClient.Orchestrator.GetServicesHealthAsync(
+                    new ServiceHealthRequest(),
+                    timeout: TimeSpan.FromSeconds(10));
+
+                if (!response.IsSuccess || response.Result == null)
+                {
+                    Console.WriteLine($"   Failed to get services health: {FormatError(response.Error)}");
+                    return false;
+                }
+
+                var result = response.Result;
+                Console.WriteLine($"   Total services: {result.TotalServices}");
+                Console.WriteLine($"   Health percentage: {result.HealthPercentage:F1}%");
+
+                if (result.TotalServices > 0)
+                    return true;
+
+                if (attempt < maxAttempts)
+                {
+                    Console.WriteLine("   No services reported yet, waiting for heartbeats...");
+                    await Task.Delay(3000);
+                }
             }
 
-            var result = response.Result;
-            Console.WriteLine($"   Total services: {result.TotalServices}");
-            Console.WriteLine($"   Health percentage: {result.HealthPercentage:F1}%");
-
-            return result.TotalServices > 0;
+            Console.WriteLine("   Services health never reported any services after retries");
+            return false;
         });
     }
 

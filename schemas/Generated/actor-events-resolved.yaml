@@ -671,6 +671,20 @@ components:
             Provides structured information about terrain, nearby objects, hazards, etc.
             Alternative to using perceptionType="spatial" with schema-less data.
 
+    PerceptionSourceType:
+      type: string
+      description: Type of source generating a perception event
+      enum:
+      - character
+      - npc
+      - object
+      - environment
+      - coordinator
+      - scheduled
+      - message
+      - service
+      - system
+
     SpatialContext:
       type: object
       additionalProperties: true
@@ -717,29 +731,6 @@ components:
           type: boolean
           nullable: true
           description: Whether character is currently indoors/under roof
-
-    HazardInfo:
-      type: object
-      additionalProperties: true
-      description: Information about a hazard in range
-      properties:
-        hazardType:
-          type: string
-          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
-        distance:
-          type: number
-          format: float
-          description: Distance to hazard edge
-        severity:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Hazard severity (0-1)
-        direction:
-          type: string
-          nullable: true
-          description: Direction to hazard center
 
     NearbyObject:
       type: object
@@ -788,17 +779,26 @@ components:
           format: float
           description: Z coordinate
 
-    PerceptionSourceType:
-      type: string
-      description: Type of source generating a perception event
-      enum:
-      - character
-      - npc
-      - object
-      - environment
-      - coordinator
-      - scheduled
-      - message
-      - service
-      - system
+    HazardInfo:
+      type: object
+      additionalProperties: true
+      description: Information about a hazard in range
+      properties:
+        hazardType:
+          type: string
+          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance to hazard edge
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Hazard severity (0-1)
+        direction:
+          type: string
+          nullable: true
+          description: Direction to hazard center
 

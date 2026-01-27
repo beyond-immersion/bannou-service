@@ -1272,16 +1272,18 @@ paths:
         \       \"syncIntervalMinutes\": {\n                    \"type\": \"integer\",\n                    \"default\": 60,\n\
         \                    \"minimum\": 5,\n                    \"maximum\": 1440,\n                    \"description\"\
         : \"How often to sync (5 min to 24 hours)\"\n                },\n                \"filePatterns\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n \
-        \                   },\n                    \"default\": [\n                        \"**/*.md\"\n                \
-        \    ],\n                    \"description\": \"Glob patterns for files to include\"\n                },\n       \
-        \         \"excludePatterns\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"type\": \"string\"\n                    },\n                    \"default\": [\n         \
-        \               \".git/**\",\n                        \".obsidian/**\",\n                        \"node_modules/**\"\
-        \n                    ],\n                    \"description\": \"Glob patterns for files to exclude\"\n          \
-        \      },\n                \"categoryMapping\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n            \
-        \        \"description\": \"Map directory prefixes to categories\"\n                },\n                \"defaultCategory\"\
+        \         \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n      \
+        \                  \"type\": \"string\"\n                    },\n                    \"default\": [\n            \
+        \            \"**/*.md\"\n                    ],\n                    \"description\": \"Glob patterns for files to
+        include (defaults to all markdown files if not provided)\"\n                },\n                \"excludePatterns\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"default\": [\n  \
+        \                      \".git/**\",\n                        \".obsidian/**\",\n                        \"node_modules/**\"\
+        \n                    ],\n                    \"description\": \"Glob patterns for files to exclude (defaults to common
+        non-content directories if not provided)\"\n                },\n                \"categoryMapping\": {\n         \
+        \           \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Map directory prefixes to categories (empty mapping if not provided)\"\n                },\n                \"defaultCategory\"\
         : {\n                    \"$ref\": \"#/$defs/DocumentCategory\",\n                    \"description\": \"Default category
         for documents without mapping\"\n                },\n                \"archiveEnabled\": {\n                    \"\
         type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Enable archive
@@ -3120,25 +3122,28 @@ components:
           description: How often to sync (5 min to 24 hours)
         filePatterns:
           type: array
+          nullable: true
           items:
             type: string
           default:
           - "**/*.md"
-          description: Glob patterns for files to include
+          description: Glob patterns for files to include (defaults to all markdown files if not provided)
         excludePatterns:
           type: array
+          nullable: true
           items:
             type: string
           default:
           - ".git/**"
           - ".obsidian/**"
           - "node_modules/**"
-          description: Glob patterns for files to exclude
+          description: Glob patterns for files to exclude (defaults to common non-content directories if not provided)
         categoryMapping:
           type: object
+          nullable: true
           additionalProperties:
             type: string
-          description: Map directory prefixes to categories
+          description: Map directory prefixes to categories (empty mapping if not provided)
         defaultCategory:
           $ref: '#/components/schemas/DocumentCategory'
           description: Default category for documents without mapping
