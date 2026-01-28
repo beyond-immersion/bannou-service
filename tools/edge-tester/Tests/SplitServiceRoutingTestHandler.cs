@@ -905,7 +905,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             {
                 Console.WriteLine("   Shortcut not received within timeout");
                 Console.WriteLine("   This likely means game-session on bannou-auth didn't process the subscription.updated event");
-                Console.WriteLine("   Check that GAMESESSION_SUPPORTEDGAMESERVICES=test-game is set on bannou-auth");
+                Console.WriteLine("   Check that GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game is set on bannou-auth");
                 return false;
             }
 

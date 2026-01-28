@@ -47,7 +47,7 @@ topology:
         # Node-specific marker
         BANNOU_IS_AUTH_NODE: "true"
         # Only handle "test-game" subscriptions - main node handles "generic" catch-all
-        GAMESESSION_SUPPORTEDGAMESERVICES: "test-game"
+        GAME_SESSION_SUPPORTED_GAME_SERVICES: "test-game"
 
   infrastructure:
     mysql:
