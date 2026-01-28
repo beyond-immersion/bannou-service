@@ -138,6 +138,8 @@ GAME_SESSION_SUPPORTED_GAME_SERVICES=fantasia
 GAME_SESSION_SUPPORTED_GAME_SERVICES=arcadia,fantasia
 ```
 
+> **Important**: If you create a new game service (e.g., `my-new-game`), subscription-based lobby shortcuts **will not work** until you add it to `SupportedGameServices` on at least one game-session instance. The default configuration only handles `generic`. This is by design for horizontal scaling, but means new games are silent until configured.
+
 ### Why This Works Transparently
 
 Because **all game-session endpoints are accessed via prebound shortcuts** (not direct API calls), clients never need to know which node handles which game. When a subscription is created:

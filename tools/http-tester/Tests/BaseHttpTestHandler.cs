@@ -154,12 +154,19 @@ public abstract class BaseHttpTestHandler : IServiceTestHandler
     }
 
     /// <summary>
+    /// Fixed stub name for the shared test game service.
+    /// Must match GAME_SESSION_SUPPORTED_GAME_SERVICES in .env.test.http.
+    /// </summary>
+    private const string TestGameServiceStubName = "http-test";
+
+    /// <summary>
     /// Cached game service ID for test resource creation.
     /// </summary>
     private static Guid? _cachedGameServiceId;
 
     /// <summary>
     /// Gets or creates a test game service for use in realm creation.
+    /// Uses a fixed stub name so it can be added to GAME_SESSION_SUPPORTED_GAME_SERVICES.
     /// </summary>
     protected static async Task<Guid> GetOrCreateTestGameServiceAsync()
     {
@@ -167,9 +174,25 @@ public abstract class BaseHttpTestHandler : IServiceTestHandler
             return _cachedGameServiceId.Value;
 
         var gameServiceClient = GetServiceClient<IGameServiceClient>();
+
+        // Try to get existing service first (may exist from previous test run)
+        try
+        {
+            var existing = await gameServiceClient.GetServiceAsync(new GetServiceRequest
+            {
+                StubName = TestGameServiceStubName
+            });
+            _cachedGameServiceId = existing.ServiceId;
+            return _cachedGameServiceId.Value;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            // Service doesn't exist, create it
+        }
+
         var response = await gameServiceClient.CreateServiceAsync(new CreateServiceRequest
         {
-            StubName = $"http_test_{DateTime.Now.Ticks}",
+            StubName = TestGameServiceStubName,
             DisplayName = "HTTP Test Game Service",
             Description = "Test game service for HTTP integration tests"
         });

@@ -98,6 +98,55 @@ push-dev: build-compose ## Build and push development image to Docker Hub
 	docker push beyondimmersion/bannou-service:development
 	@echo "✅ Push complete"
 
+# =============================================================================
+# ⛔ PRODUCTION DEPLOYMENT - AI AGENTS MUST NEVER RUN THIS COMMAND ⛔
+# =============================================================================
+# This command promotes the development image to production. It:
+#   1. Reads version from VERSION file
+#   2. Retags beyondimmersion/bannou-service:development as :{version}
+#   3. Also tags as :latest
+#   4. Pushes both tags to Docker Hub
+#
+# AI AGENTS: DO NOT RUN THIS COMMAND. If the developer asks about deploying
+# to production, return the command for them to run manually:
+#   make push-release
+#
+# A PreToolUse hook blocks Claude from executing this command.
+# =============================================================================
+push-release: ## ⛔ PRODUCTION DEPLOY - Promote development image to versioned release + latest (AI: DO NOT RUN)
+	@echo ""
+	@echo "⚠️  =========================================="
+	@echo "⚠️  PRODUCTION DEPLOYMENT"
+	@echo "⚠️  =========================================="
+	@echo ""
+	@VERSION=$$(cat VERSION | tr -d '[:space:]'); \
+	echo "📦 Version from VERSION file: $$VERSION"; \
+	echo ""; \
+	echo "This will:"; \
+	echo "  1. Tag beyondimmersion/bannou-service:development as :$$VERSION"; \
+	echo "  2. Tag beyondimmersion/bannou-service:development as :latest"; \
+	echo "  3. Push both tags to Docker Hub"; \
+	echo ""; \
+	read -p "Continue with production deployment? [y/N] " confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "❌ Deployment cancelled"; \
+		exit 1; \
+	fi; \
+	echo ""; \
+	echo "🏷️  Tagging beyondimmersion/bannou-service:development as :$$VERSION"; \
+	docker tag beyondimmersion/bannou-service:development beyondimmersion/bannou-service:$$VERSION; \
+	echo "🏷️  Tagging beyondimmersion/bannou-service:development as :latest"; \
+	docker tag beyondimmersion/bannou-service:development beyondimmersion/bannou-service:latest; \
+	echo ""; \
+	echo "🚀 Pushing beyondimmersion/bannou-service:$$VERSION"; \
+	docker push beyondimmersion/bannou-service:$$VERSION; \
+	echo "🚀 Pushing beyondimmersion/bannou-service:latest"; \
+	docker push beyondimmersion/bannou-service:latest; \
+	echo ""; \
+	echo "✅ Production deployment complete!"; \
+	echo "   - beyondimmersion/bannou-service:$$VERSION"; \
+	echo "   - beyondimmersion/bannou-service:latest"
+
 up-compose: ## Start services locally (base + services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \
