@@ -2,242 +2,11 @@
 
 > **Category**: Architecture & Design
 > **When to Reference**: Before starting any new service, feature, or significant code change
-> **Tenets**: T1, T2, T4, T5, T6, T13, T15, T18
+> **Tenets**: T4, T5, T6, T13, T15, T18
 
 These tenets define the architectural foundation of Bannou. Understanding them is prerequisite to any development work.
 
----
-
-## Tenet 1: Schema-First Development (ABSOLUTE)
-
-**Rule**: All API contracts, models, events, and configurations MUST be defined in OpenAPI YAML schemas before any code is written.
-
-### Requirements
-
-- Define all endpoints in `/schemas/{service}-api.yaml`
-- Define all events in `/schemas/{service}-events.yaml` or `common-events.yaml`
-- Use `x-permissions` to declare role/state requirements for WebSocket clients
-- **ALL schema properties MUST have `description` fields** - NSwag generates XML documentation from these
-- Run `make generate` to generate all code
-- **NEVER** manually edit files in `*/Generated/` directories
-
-**Important**: Scripts in `/scripts/` assume execution from the solution root directory. Always use Makefile commands rather than running scripts directly.
-
-### Property Documentation (MANDATORY)
-
-Every property in every schema MUST have a `description` field. NSwag converts these to XML `<summary>` tags in generated code. Missing descriptions cause CS1591 compiler warnings.
-
-```yaml
-# CORRECT: Property has description
-properties:
-  accountId:
-    type: string
-    format: uuid
-    description: Unique identifier for the account
-
-# WRONG: Missing description causes CS1591 warning
-properties:
-  accountId:
-    type: string
-    format: uuid
-```
-
-**Why This Matters**: XML documentation enables IntelliSense, auto-generated API docs, and compile-time validation that all public members are documented.
-
-### Best Practices
-
-- **POST-only pattern** for internal service APIs (enables zero-copy WebSocket routing)
-- Path parameters allowed only for browser-facing endpoints (Website, OAuth redirects)
-- Consolidate shared enums in `components/schemas` with `$ref` references
-
-### Generated vs Manual Files
-
-```
-plugins/lib-{service}/
-├── Generated/                      # NEVER EDIT - auto-generated
-│   ├── I{Service}Service.cs        # Service interface
-│   ├── {Service}Models.cs          # Request/response models
-│   ├── {Service}Controller.cs      # HTTP controller
-│   ├── {Service}ServiceConfiguration.cs  # Configuration class
-│   ├── {Service}PermissionRegistration.cs
-│   └── {Service}EventsController.cs     # Event subscription handlers
-├── {Service}Service.cs             # MANUAL - business logic only
-├── {Service}ServiceEvents.cs       # MANUAL - event handler implementations
-└── Services/                       # MANUAL - optional helper services
-```
-
-### Why POST-Only?
-
-Path parameters (e.g., `/account/{id}`) cannot map to static GUIDs for zero-copy binary WebSocket routing. All parameters move to request bodies for static endpoint signatures.
-
-**Related**: See Tenet 15 for browser-facing endpoint exceptions (OAuth, Website, WebSocket upgrade).
-
-### Allowed Exceptions
-
-#### 1. Binary Format Specifications (ABML Bytecode)
-
-The ABML Local Runtime uses a binary bytecode format for client-side behavior model execution. This format is specified in dedicated documentation rather than OpenAPI because:
-- Binary formats are not HTTP APIs - OpenAPI is designed for REST/HTTP specifications
-- Bytecode is a compiler output, not a request/response contract
-- The specification document serves as the "schema" defining format, opcodes, and semantics
-
-```
-plugins/lib-behavior/Runtime/    # ABML bytecode interpreter (canonical location)
-├── BehaviorModel.cs             # Binary format (not OpenAPI)
-├── BehaviorModelInterpreter.cs  # Stack-based VM (not generated)
-├── BehaviorOpcode.cs            # Opcode definitions (not generated)
-└── StateSchema.cs               # Input/output schema (not generated)
-```
-
-**Key Principle**: Binary format specifications use dedicated markdown documentation as their "schema". The format spec is the contract between compiler (server) and interpreter (client).
-
----
-
-## Tenet 2: Code Generation System (FOUNDATIONAL)
-
-**Rule**: All service code is generated from schemas via a defined 9-component pipeline. Understanding what is generated vs. manual is essential.
-
-### Generation Pipeline
-
-Run `make generate` to execute the full pipeline in order:
-
-| Step | Source | Generated Output |
-|------|--------|------------------|
-| 1. State Stores | `schemas/state-stores.yaml` | `lib-state/Generated/StateStoreDefinitions.cs` |
-| 2. Lifecycle Events | `x-lifecycle` in `{service}-events.yaml` | `schemas/Generated/{service}-lifecycle-events.yaml` |
-| 3. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
-| 4. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
-| 5. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
-| 6. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
-| 7. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
-| 7a. Meta Controllers | `{service}-api-meta.yaml` | `{Service}Controller.Meta.cs` |
-| 8. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
-| 9. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
-| 10. Event Subscriptions | `x-event-subscriptions` in events.yaml | `{Service}EventsController.cs` + `{Service}ServiceEvents.cs` |
-
-**Order Matters**: State stores and events must be generated before service APIs because services may reference these types. Meta schemas must be generated before meta controllers.
-
-### What Is Safe to Edit
-
-| File Pattern | Safe to Edit? | Notes |
-|--------------|---------------|-------|
-| `lib-{service}/{Service}Service.cs` | Yes | Main business logic |
-| `lib-{service}/Services/*.cs` | Yes | Helper services |
-| `lib-{service}/{Service}ServiceEvents.cs` | Yes | Generated once, then manual |
-| `lib-{service}/Generated/*.cs` | Never | Regenerated on `make generate` |
-| `lib-{service}/Generated/*Controller.Meta.cs` | Never | Meta endpoints (regenerated) |
-| `bannou-service/Generated/*.cs` | Never | All generated directories |
-| `schemas/*.yaml` | Yes | Edit schemas, regenerate code |
-| `schemas/Generated/*.yaml` | Never | Generated lifecycle events + meta schemas |
-
-### Schema File Types
-
-| File Pattern | Purpose |
-|--------------|---------|
-| `state-stores.yaml` | State store definitions (backend, prefix, service owner) |
-| `{service}-api.yaml` | API endpoints with `x-permissions` |
-| `{service}-events.yaml` | Service events with `x-lifecycle`, `x-event-subscriptions` |
-| `{service}-configuration.yaml` | Service configuration with `x-service-configuration` |
-| `{service}-client-events.yaml` | Server→client WebSocket push events |
-| `common-events.yaml` | Shared infrastructure events |
-
-### Meta Endpoint Generation (Runtime Schema Introspection)
-
-Each service gets companion "meta" endpoints for runtime schema introspection. These enable clients to discover API contracts at runtime without hardcoded knowledge.
-
-**Architecture**:
-- **Source**: `schemas/{service}-api.yaml` (clean, no embedded metadata)
-- **Intermediate**: `schemas/Generated/{service}-api-meta.yaml` (copy with `x-*-json` extensions)
-- **Output**: `plugins/lib-{service}/Generated/{Service}Controller.Meta.cs` (partial class)
-
-**Generated Meta Endpoints** (4 per operation):
-| Endpoint | Purpose |
-|----------|---------|
-| `/path/meta/info` | Human-readable endpoint description |
-| `/path/meta/request-schema` | JSON Schema for request body |
-| `/path/meta/response-schema` | JSON Schema for response body |
-| `/path/meta/schema` | Complete schema (info + request + response) |
-
-**Why Separate Files?**
-- **Clean schemas**: Main `{service}-api.yaml` stays focused on business logic
-- **Clean controllers**: Main `{Service}Controller.cs` contains only business endpoints
-- **Agent-friendliness**: AI agents can ignore `*.Meta.cs` and `Generated/*-meta.yaml`
-- **Debugging clarity**: Meta endpoints physically separated for easier navigation
-
-**Generation Pipeline**:
-1. `embed-meta-schemas.py` creates `schemas/Generated/{service}-api-meta.yaml` with bundled JSON Schemas
-2. `generate-meta-controller.sh` creates `{Service}Controller.Meta.cs` partial class
-3. Partial class merges with main controller at compile time
-
-**NEVER edit** `schemas/Generated/*-meta.yaml` or `*Controller.Meta.cs` - regenerate from source schemas.
-
-### Configuration Environment Variable Naming (MANDATORY)
-
-**Rule**: ALL configuration properties MUST have explicit `env:` keys following the `{SERVICE}_{PROPERTY}` pattern.
-
-**Three Inviolable Requirements**:
-1. **Explicit `env:` keys**: Every property MUST have an explicit `env:` field - never rely on auto-generation from property name
-2. **Service prefix**: All env vars MUST start with the service prefix (e.g., `CONNECT_`, `AUTH_`, `STATE_`)
-3. **Underscore separation**: Multi-word properties use underscores between words (e.g., `MAX_CONCURRENT_CONNECTIONS`)
-
-```yaml
-# In {service}-configuration.yaml
-x-service-configuration:
-  properties:
-    JwtSecret:
-      type: string
-      env: AUTH_JWT_SECRET           # CORRECT: Explicit env with SERVICE_PROPERTY format
-    MaxConcurrentConnections:
-      type: integer
-      env: CONNECT_MAX_CONCURRENT_CONNECTIONS  # CORRECT: Underscores between words
-```
-
-**Correct Examples**:
-- `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_MOCK_PROVIDERS`
-- `CONNECT_MAX_CONCURRENT_CONNECTIONS`, `CONNECT_HEARTBEAT_INTERVAL_SECONDS`
-- `STATE_REDIS_CONNECTION_STRING`, `STATE_DEFAULT_CONSISTENCY`
-- `GAME_SESSION_MAX_PLAYERS_PER_SESSION` (hyphenated services use underscores)
-
-**Prohibited Patterns** (cause binding failures or inconsistency):
-- Missing `env:` key - Generates `MAXCONCURRENTCONNECTIONS` instead of `MAX_CONCURRENT_CONNECTIONS`
-- `JWTSECRET` - No service prefix, no delimiter
-- `JwtSecret` - camelCase not allowed
-- `auth-jwt-secret` - kebab-case not allowed
-- `AUTH_JWTSECRET` - Missing underscore delimiter in property name
-- `REDIS_CONNECTION_STRING` - Missing service prefix (should be `STATE_REDIS_CONNECTION_STRING`)
-
-### Namespace for Generated Events
-
-All event models are generated into a single namespace:
-
-```csharp
-using BeyondImmersion.BannouService.Events;
-
-// All event types available from all services
-var acctEvent = new AccountDeletedEvent { ... };
-var authEvent = new SessionInvalidatedEvent { ... };
-```
-
-### Allowed Exceptions
-
-#### 1. Runtime Interpreters for Compiled Artifacts
-
-The ABML behavior model interpreter is handwritten code that **consumes** generated artifacts (compiled bytecode), not **produces** them. The compiler-to-interpreter boundary is:
-- **Compiler (lib-behavior)**: Generated from ABML YAML via `BehaviorCompiler` - follows schema-first
-- **Interpreter (lib-behavior/Runtime)**: Handwritten VM that executes bytecode - NOT generated
-
-```
-plugins/lib-behavior/Compiler/   # Compilation (schema-first via YAML)
-├── BehaviorCompiler.cs          # Orchestrates compilation pipeline
-├── Actions/                     # Action-specific compilers (generated patterns)
-└── Codegen/                     # Bytecode emission
-
-plugins/lib-behavior/Runtime/    # Execution (handwritten interpreter)
-├── BehaviorModelInterpreter.cs  # Stack-based VM (NOT generated)
-└── CinematicInterpreter.cs      # Streaming composition (NOT generated)
-```
-
-**Key Principle**: Interpreters are analogous to the JVM or .NET CLR - they execute compiled output but are not themselves generated from schemas. The bytecode format spec serves as the interface contract.
+> **Note**: Schema-related rules (formerly T1, T2) are now consolidated in [SCHEMA-RULES.md](../SCHEMA-RULES.md) and referenced by Tenet 1 in [TENETS.md](../TENETS.md).
 
 ---
 
@@ -636,12 +405,24 @@ x-permissions:
 
 **Rule**: Some endpoints are accessed directly by browsers through NGINX rather than through the WebSocket binary protocol. These are EXCEPTIONAL cases, not the norm.
 
+### Why POST-Only is the Default
+
+Bannou uses POST-only APIs (not RESTful GET/PUT/DELETE with path parameters) because of the WebSocket binary protocol architecture:
+
+1. **Static endpoint signatures** - Each endpoint maps to a fixed 16-byte GUID
+2. **Zero-copy routing** - Connect service extracts the GUID from the binary header and routes without parsing the JSON payload
+3. **Path parameters break this** - `/account/{id}` cannot map to a single GUID because `{id}` varies
+
+By moving all parameters to request bodies, every endpoint has a static path that maps to exactly one GUID, enabling zero-copy message routing.
+
+**See also**: [BANNOU_DESIGN.md](../BANNOU_DESIGN.md) for the full POST-Only API Pattern explanation.
+
 ### How Browser-Facing Endpoints Work
 
-Browser-facing endpoints are:
-- Routed through NGINX reverse proxy
+Browser-facing endpoints are the **exception** to POST-only:
+- Routed through NGINX reverse proxy (not WebSocket)
 - NOT included in WebSocket API (no x-permissions)
-- Using GET methods and path parameters (not POST-only pattern)
+- Using GET methods and path parameters for browser compatibility
 
 **Important**: Do NOT design new endpoints as browser-facing unless they have a specific requirement that cannot be met through the WebSocket protocol. The POST-only pattern with WebSocket routing is the default.
 
@@ -695,11 +476,6 @@ When a package changes license, pin to the last permissive version with XML comm
 
 | Violation | Tenet | Fix |
 |-----------|-------|-----|
-| Editing Generated/ files | T1, T2 | Edit schema, regenerate |
-| Wrong env var format (`JWTSECRET`) | T2 | Use `{SERVICE}_{PROPERTY}` pattern |
-| Missing `env:` key in config schema | T2 | Add explicit `env:` with proper naming |
-| Missing service prefix (`REDIS_CONNECTION_STRING`) | T2 | Add prefix (e.g., `STATE_REDIS_CONNECTION_STRING`) |
-| Hyphen in env var prefix (`GAME-SESSION_`) | T2 | Use underscore (`GAME_SESSION_`) |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use IMeshInvocationClient or generated clients via lib-mesh |
@@ -710,6 +486,8 @@ When a package changes license, pin to the last permissive version with XML comm
 | Designing browser-facing without justification | T15 | Use POST-only WebSocket pattern |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 
+> **Schema-related violations** (editing Generated/ files, wrong env var format, missing description, etc.) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
+
 ---
 
-*This document covers tenets T1, T2, T4, T5, T6, T13, T15, T18. See [TENETS.md](../TENETS.md) for the complete index.*
+*This document covers tenets T4, T5, T6, T13, T15, T18. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*

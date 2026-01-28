@@ -89,6 +89,31 @@ make generate                        # Full generation pipeline
 scripts/generate-all-services.sh     # Alternative direct invocation
 ```
 
+### Allowed Exceptions (Shared Specifications & SDKs)
+
+Schema-first applies to **HTTP APIs and service contracts**. Some components are exempt because they represent **shared specifications** or **standalone SDKs** that plugins consume rather than define:
+
+| Exception | What It Is | Why Exempt |
+|-----------|-----------|------------|
+| **WebSocket Binary Protocol** | 31-byte header format for client↔server routing | Binary wire protocol shared with game clients; defined in protocol spec, not OpenAPI |
+| **ABML Bytecode Format** | Stack-based bytecode for behavior models | Compiler output consumed by interpreters; format spec is the contract |
+| **Asset Bundle Format** | `.bannou` archive format with LZ4 compression | Binary format shared with game dev tools; clients create bundles independently |
+| **Music SDKs** | `MusicTheory` and `MusicStoryteller` libraries | Standalone computation libraries; plugins use them, they don't define plugin APIs |
+| **Runtime Interpreters** | `BehaviorModelInterpreter`, `CinematicInterpreter` | Execute compiled artifacts; analogous to JVM/CLR - not generated from schemas |
+
+**Key Principle**: These are like the JVM or .NET CLR - they execute or consume artifacts but aren't themselves generated from schemas. The specification document (protocol spec, format spec, SDK documentation) serves as the contract.
+
+**When to use an exception**:
+- You're defining a **binary format** shared with clients (not an HTTP API)
+- You're building a **runtime/interpreter** that executes compiled output
+- You're creating a **standalone SDK** that plugins consume (inverted dependency)
+
+**When NOT to use an exception**:
+- HTTP endpoints → use OpenAPI schemas
+- Service-to-service events → use event schemas
+- Configuration → use configuration schemas
+- Request/response models → use API schemas
+
 ---
 
 ## Tenet Categories
