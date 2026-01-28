@@ -206,6 +206,9 @@ public static class Program
             // Add client event publisher (for pushing events to WebSocket clients via Bannou pub/sub)
             webAppBuilder.Services.AddClientEventPublisher();
 
+            // Add control plane service provider for orchestrator to query local services
+            webAppBuilder.Services.AddSingleton<IControlPlaneServiceProvider, ControlPlaneServiceProvider>();
+
             // Configure plugin services (includes centralized client, service, and configuration registration)
             PluginLoader?.ConfigureServices(webAppBuilder.Services);
 

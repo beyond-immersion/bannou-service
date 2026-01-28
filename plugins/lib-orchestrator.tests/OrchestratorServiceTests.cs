@@ -218,6 +218,8 @@ public class OrchestratorServiceTests
         var expectedReport = new ServiceHealthReport
         {
             Timestamp = DateTimeOffset.UtcNow,
+            Source = ServiceHealthSource.All,
+            ControlPlaneAppId = "bannou",
             TotalServices = 3,
             HealthPercentage = 100.0f,
             HealthyServices = new List<ServiceHealthStatus>
@@ -230,7 +232,7 @@ public class OrchestratorServiceTests
         };
 
         _mockHealthMonitor
-            .Setup(x => x.GetServiceHealthReportAsync())
+            .Setup(x => x.GetServiceHealthReportAsync(It.IsAny<ServiceHealthSource>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedReport);
 
         var service = CreateService();
@@ -241,6 +243,8 @@ public class OrchestratorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
+        Assert.Equal(ServiceHealthSource.All, response.Source);
+        Assert.Equal("bannou", response.ControlPlaneAppId);
         Assert.Equal(3, response.TotalServices);
         Assert.Equal(100.0f, response.HealthPercentage);
         Assert.Equal(3, response.HealthyServices.Count);
@@ -664,6 +668,7 @@ public class ServiceHealthMonitorTests
     private readonly Mock<ILogger<ServiceHealthMonitor>> _mockLogger;
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
@@ -672,12 +677,18 @@ public class ServiceHealthMonitorTests
         _mockLogger = new Mock<ILogger<ServiceHealthMonitor>>();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
         _appConfiguration = new AppConfiguration();
+
+        // Default setup for control plane provider
+        _mockControlPlaneProvider.Setup(x => x.ControlPlaneAppId).Returns("bannou");
+        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthStatus>());
+        _mockControlPlaneProvider.Setup(x => x.GetEnabledServiceNames()).Returns(new List<string>());
     }
 
     private ServiceHealthMonitor CreateMonitor()
@@ -687,7 +698,8 @@ public class ServiceHealthMonitorTests
             _configuration,
             _appConfiguration,
             _mockStateManager.Object,
-            _mockEventManager.Object);
+            _mockEventManager.Object,
+            _mockControlPlaneProvider.Object);
     }
 
     [Fact]
@@ -833,6 +845,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
     private readonly Mock<ILogger<ServiceHealthMonitor>> _mockLogger;
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
@@ -844,12 +857,18 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _mockLogger = new Mock<ILogger<ServiceHealthMonitor>>();
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
         _appConfiguration = new AppConfiguration();
+
+        // Default setup for control plane provider
+        _mockControlPlaneProvider.Setup(x => x.ControlPlaneAppId).Returns("bannou");
+        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthStatus>());
+        _mockControlPlaneProvider.Setup(x => x.GetEnabledServiceNames()).Returns(new List<string>());
     }
 
     private ServiceHealthMonitor CreateMonitorWithEventCapture()
@@ -869,7 +888,8 @@ public class ServiceHealthMonitorRoutingProtectionTests
             _configuration,
             _appConfiguration,
             _mockStateManager.Object,
-            _mockEventManager.Object);
+            _mockEventManager.Object,
+            _mockControlPlaneProvider.Object);
     }
 
     [Fact]

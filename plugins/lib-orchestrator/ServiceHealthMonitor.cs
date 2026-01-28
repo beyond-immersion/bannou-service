@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -20,6 +21,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private readonly AppConfiguration _appConfiguration;
     private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
+    private readonly IControlPlaneServiceProvider _controlPlaneProvider;
 
     // Cache of current service routings to detect changes
     private readonly ConcurrentDictionary<string, ServiceRouting> _currentRoutings = new();
@@ -44,13 +46,15 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         OrchestratorServiceConfiguration configuration,
         AppConfiguration appConfiguration,
         IOrchestratorStateManager stateManager,
-        IOrchestratorEventManager eventManager)
+        IOrchestratorEventManager eventManager,
+        IControlPlaneServiceProvider controlPlaneProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _stateManager = stateManager;
         _eventManager = eventManager;
+        _controlPlaneProvider = controlPlaneProvider;
 
         // Subscribe to real-time heartbeat events from RabbitMQ
         _eventManager.HeartbeatReceived += OnHeartbeatReceived;
@@ -420,31 +424,87 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     }
 
     /// <summary>
-    /// Get comprehensive health report for all services.
-    /// Reads heartbeat data from Redis and evaluates health status.
+    /// Get comprehensive health report for all services (default: all sources).
+    /// Reads heartbeat data from Redis and control plane info, evaluates health status.
     /// </summary>
-    public async Task<ServiceHealthReport> GetServiceHealthReportAsync()
+    public Task<ServiceHealthReport> GetServiceHealthReportAsync()
     {
-        var heartbeats = await _stateManager.GetServiceHeartbeatsAsync();
+        return GetServiceHealthReportAsync(ServiceHealthSource.All, null);
+    }
+
+    /// <summary>
+    /// Get comprehensive health report for services based on the specified source filter.
+    /// </summary>
+    /// <param name="source">Which services to include: all, control_plane_only, or deployed_only</param>
+    /// <param name="serviceFilter">Optional filter by service name (applied after source filter)</param>
+    /// <returns>Health report with services filtered by the specified source</returns>
+    public async Task<ServiceHealthReport> GetServiceHealthReportAsync(ServiceHealthSource source, string? serviceFilter = null)
+    {
         var now = DateTimeOffset.UtcNow;
         var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
+        var controlPlaneAppId = _controlPlaneProvider.ControlPlaneAppId;
 
         var healthyServices = new List<ServiceHealthStatus>();
         var unhealthyServices = new List<ServiceHealthStatus>();
 
-        foreach (var heartbeat in heartbeats)
+        // Get deployed services from Redis heartbeats (if requested)
+        if (source == ServiceHealthSource.All || source == ServiceHealthSource.DeployedOnly)
         {
-            var timeSinceLastHeartbeat = now - heartbeat.LastSeen;
-            var isExpired = timeSinceLastHeartbeat > heartbeatTimeout;
+            var deployedHeartbeats = await _stateManager.GetServiceHeartbeatsAsync();
 
-            if (isExpired || heartbeat.Status == "unavailable" || heartbeat.Status == "shutting_down")
+            foreach (var heartbeat in deployedHeartbeats)
             {
-                unhealthyServices.Add(heartbeat);
+                // Apply service name filter if specified
+                if (!string.IsNullOrEmpty(serviceFilter) &&
+                    !heartbeat.ServiceId.Contains(serviceFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var timeSinceLastHeartbeat = now - heartbeat.LastSeen;
+                var isExpired = timeSinceLastHeartbeat > heartbeatTimeout;
+
+                if (isExpired || heartbeat.Status == "unavailable" || heartbeat.Status == "shutting_down")
+                {
+                    unhealthyServices.Add(heartbeat);
+                }
+                else
+                {
+                    healthyServices.Add(heartbeat);
+                }
             }
-            else
+
+            _logger.LogDebug(
+                "Retrieved {Count} deployed service health entries",
+                deployedHeartbeats.Count);
+        }
+
+        // Get control plane services (if requested)
+        if (source == ServiceHealthSource.All || source == ServiceHealthSource.ControlPlaneOnly)
+        {
+            var controlPlaneServices = _controlPlaneProvider.GetControlPlaneServiceHealth();
+
+            foreach (var service in controlPlaneServices)
             {
-                healthyServices.Add(heartbeat);
+                // Apply service name filter if specified
+                if (!string.IsNullOrEmpty(serviceFilter) &&
+                    !service.ServiceId.Contains(serviceFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // When source=all, check if this service is overridden by a deployed service
+                // If a deployed service with a different app-id exists for this service name,
+                // the control plane version is still shown (they're separate instances)
+                // The consumer can distinguish by comparing appId to controlPlaneAppId
+
+                // Control plane services are always healthy (if enabled, they're running)
+                healthyServices.Add(service);
             }
+
+            _logger.LogDebug(
+                "Retrieved {Count} control plane service health entries for app-id {AppId}",
+                controlPlaneServices.Count, controlPlaneAppId);
         }
 
         var totalServices = healthyServices.Count + unhealthyServices.Count;
@@ -452,9 +512,15 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             ? (float)healthyServices.Count / totalServices * 100
             : 0.0f;
 
+        _logger.LogDebug(
+            "Generated service health report: source={Source}, total={Total}, healthy={Healthy}, unhealthy={Unhealthy}",
+            source, totalServices, healthyServices.Count, unhealthyServices.Count);
+
         return new ServiceHealthReport
         {
             Timestamp = now,
+            Source = source,
+            ControlPlaneAppId = controlPlaneAppId,
             TotalServices = totalServices,
             HealthPercentage = healthPercentage,
             HealthyServices = healthyServices,

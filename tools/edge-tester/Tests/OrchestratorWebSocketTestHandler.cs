@@ -61,38 +61,40 @@ public class OrchestratorWebSocketTestHandler : BaseWebSocketTestHandler
 
         RunWebSocketTest("Orchestrator services health test", async adminClient =>
         {
-            // Services health depends on heartbeat ingestion which may not be
-            // complete when this test runs. Retry with delay to allow heartbeats
-            // to propagate.
-            var maxAttempts = 5;
-            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            // Request health for all sources (control plane + deployed)
+            // With source=All, we should see control plane services immediately
+            // without waiting for deployed service heartbeats
+            Console.WriteLine("   Checking services health via typed proxy (source: all)...");
+            var response = await adminClient.Orchestrator.GetServicesHealthAsync(
+                new ServiceHealthRequest { Source = ServiceHealthSource.All },
+                timeout: TimeSpan.FromSeconds(10));
+
+            if (!response.IsSuccess || response.Result == null)
             {
-                Console.WriteLine($"   Checking services health via typed proxy (attempt {attempt}/{maxAttempts})...");
-                var response = await adminClient.Orchestrator.GetServicesHealthAsync(
-                    new ServiceHealthRequest(),
-                    timeout: TimeSpan.FromSeconds(10));
-
-                if (!response.IsSuccess || response.Result == null)
-                {
-                    Console.WriteLine($"   Failed to get services health: {FormatError(response.Error)}");
-                    return false;
-                }
-
-                var result = response.Result;
-                Console.WriteLine($"   Total services: {result.TotalServices}");
-                Console.WriteLine($"   Health percentage: {result.HealthPercentage:F1}%");
-
-                if (result.TotalServices > 0)
-                    return true;
-
-                if (attempt < maxAttempts)
-                {
-                    Console.WriteLine("   No services reported yet, waiting for heartbeats...");
-                    await Task.Delay(3000);
-                }
+                Console.WriteLine($"   Failed to get services health: {FormatError(response.Error)}");
+                return false;
             }
 
-            Console.WriteLine("   Services health never reported any services after retries");
+            var result = response.Result;
+            Console.WriteLine($"   Source: {result.Source}");
+            Console.WriteLine($"   Control plane app-id: {result.ControlPlaneAppId}");
+            Console.WriteLine($"   Total services: {result.TotalServices}");
+            Console.WriteLine($"   Healthy: {result.HealthyServices?.Count ?? 0}");
+            Console.WriteLine($"   Unhealthy: {result.UnhealthyServices?.Count ?? 0}");
+            Console.WriteLine($"   Health percentage: {result.HealthPercentage:F1}%");
+
+            if (result.TotalServices > 0)
+            {
+                // Log a few service names for visibility
+                var sampleServices = result.HealthyServices?.Take(5).Select(s => $"{s.ServiceId}@{s.AppId}");
+                if (sampleServices != null && sampleServices.Any())
+                {
+                    Console.WriteLine($"   Sample services: {string.Join(", ", sampleServices)}");
+                }
+                return true;
+            }
+
+            Console.WriteLine("   No services reported (this should not happen with source=all)");
             return false;
         });
     }

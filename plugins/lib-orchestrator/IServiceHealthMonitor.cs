@@ -11,7 +11,15 @@ namespace LibOrchestrator;
 public interface IServiceHealthMonitor
 {
     /// <summary>
-    /// Get comprehensive health report for all services.
+    /// Get comprehensive health report for services based on the specified source filter.
+    /// </summary>
+    /// <param name="source">Which services to include: all, control_plane_only, or deployed_only</param>
+    /// <param name="serviceFilter">Optional filter by service name (applied after source filter)</param>
+    /// <returns>Health report with services filtered by the specified source</returns>
+    Task<ServiceHealthReport> GetServiceHealthReportAsync(ServiceHealthSource source, string? serviceFilter = null);
+
+    /// <summary>
+    /// Get comprehensive health report for all services (default: all sources).
     /// Reads heartbeat data from Redis and evaluates health status.
     /// </summary>
     Task<ServiceHealthReport> GetServiceHealthReportAsync();

@@ -319,15 +319,18 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Implementation of GetServicesHealth operation.
-    /// Retrieves health information from all services via Redis heartbeat monitoring.
+    /// Retrieves health information from services via Redis heartbeat monitoring and control plane introspection.
+    /// Supports filtering by source (all, control_plane_only, deployed_only) and service name.
     /// </summary>
     public async Task<(StatusCodes, ServiceHealthReport?)> GetServicesHealthAsync(ServiceHealthRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Executing GetServicesHealth operation");
+        _logger.LogDebug(
+            "Executing GetServicesHealth operation (source: {Source}, filter: {Filter})",
+            body.Source, body.ServiceFilter ?? "(none)");
 
         try
         {
-            var report = await _healthMonitor.GetServiceHealthReportAsync();
+            var report = await _healthMonitor.GetServiceHealthReportAsync(body.Source, body.ServiceFilter);
             return (StatusCodes.OK, report);
         }
         catch (Exception ex)

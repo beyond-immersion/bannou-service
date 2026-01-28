@@ -180,14 +180,27 @@ public partial class OrchestratorController
         "ServiceHealthRequest": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Request to get service health status (empty body allowed)",
+            "description": "Request to get service health status.\nUse 'source' to filter which services are included in the report.\nNote: A service may appear multiple times if it runs on both control plane\nand deployed nodes - use appId to distinguish between instances.\n",
             "properties": {
+                "source": {
+                    "$ref": "#/$defs/ServiceHealthSource",
+                    "description": "Which services to include. Defaults to 'all' which includes both\ncontrol plane services and deployed services.\n"
+                },
                 "serviceFilter": {
                     "type": "string",
-                    "description": "Optional filter by service name",
+                    "description": "Optional filter by service name (applied after source filter)",
                     "nullable": true
                 }
             }
+        },
+        "ServiceHealthSource": {
+            "type": "string",
+            "description": "Filter for which services to include in health reports.\ n- all: Include both control plane services and deployed services (default)\n- control_plane_only: Only services running on the control plane (main bannou instance)\n- deployed_only: Only services running on explicitly deployed nodes (split topology)\n",
+            "enum": [
+                "all",
+                "control_plane_only",
+                "deployed_only"
+            ]
         }
     }
 }
@@ -199,7 +212,7 @@ public partial class OrchestratorController
     "$ref": "#/$defs/ServiceHealthReport",
     "$defs": {
         "ServiceHealthReport": {
-            "description": "Aggregated health report for all services based on heartbeat monitoring",
+            "description": "Aggregated health report for services based on heartbeat monitoring.\nServices are categorized as healthy or unhealthy based on heartbeat recency.\ nUse controlPlaneAppId to distinguish control plane services from deployed services.\n",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -207,7 +220,9 @@ public partial class OrchestratorController
                 "totalServices",
                 "healthPercentage",
                 "healthyServices",
-                "unhealthyServices"
+                "unhealthyServices",
+                "controlPlaneAppId",
+                "source"
             ],
             "properties": {
                 "timestamp": {
@@ -215,9 +230,17 @@ public partial class OrchestratorController
                     "format": "date-time",
                     "description": "When report was generated"
                 },
+                "source": {
+                    "$ref": "#/$defs/ServiceHealthSource",
+                    "description": "Which source filter was applied to generate this report"
+                },
+                "controlPlaneAppId": {
+                    "type": "string",
+                    "description": "App-id of the control plane (main bannou instance).\nServices with this appId are running on the control plane.\nServices with different appIds are running on deployed nodes.\n"
+                },
                 "totalServices": {
                     "type": "integer",
-                    "description": "Total number of services"
+                    "description": "Total number of services (may include duplicates if same service runs on multiple nodes)"
                 },
                 "healthPercentage": {
                     "type": "number",
@@ -229,16 +252,25 @@ public partial class OrchestratorController
                     "items": {
                         "$ref": "#/$defs/ServiceHealthStatus"
                     },
-                    "description": "Services with recent heartbeats"
+                    "description": "Services with recent heartbeats (status healthy/degraded)"
                 },
                 "unhealthyServices": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ServiceHealthStatus"
                     },
-                    "description": "Services with expired heartbeats"
+                    "description": "Services with expired heartbeats or unhealthy status"
                 }
             }
+        },
+        "ServiceHealthSource": {
+            "type": "string",
+            "description": "Filter for which services to include in health reports.\n- all: Include both control plane services and deployed services (default)\n- control_plane_only: Only services running on the control plane (main bannou instance)\n- deployed_only: Only services running on explicitly deployed nodes (split topology)\n",
+            "enum": [
+                "all",
+                "control_plane_only",
+                "deployed_only"
+            ]
         },
         "ServiceHealthStatus": {
             "type": "object",

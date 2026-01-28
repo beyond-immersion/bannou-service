@@ -25,7 +25,8 @@ Central intelligence for Bannou environment management and service orchestration
 | `IBackendDetector` (internal) | Detects available container backends (Docker socket, Portainer, Kubernetes) |
 | `IOrchestratorStateManager` (internal) | Encapsulates all Redis state operations with index-based patterns |
 | `IOrchestratorEventManager` (internal) | Encapsulates event publishing logic (deployment events, health pings) |
-| `IServiceHealthMonitor` (internal) | Manages service routing tables and heartbeat-based health status |
+| `IServiceHealthMonitor` (internal) | Manages service routing tables and heartbeat-based health status; supports source filtering (all/control_plane_only/deployed_only) |
+| `IControlPlaneServiceProvider` (bannou-service) | Exposes control plane service information (enabled plugins, effective app-id) for health reporting |
 | `ISmartRestartManager` (internal) | Evaluates whether services need restart based on configuration changes |
 | `PresetLoader` (internal) | Loads deployment preset YAML files from filesystem |
 
@@ -136,7 +137,8 @@ Central intelligence for Bannou environment management and service orchestration
 | `IServiceNavigator` | Scoped | Cross-service communication |
 | `IOrchestratorStateManager` | Singleton | State operations: heartbeats, routings, config versions, pool data |
 | `IOrchestratorEventManager` | Singleton | Deployment/health event publishing |
-| `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation |
+| `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation, source-filtered health reports |
+| `IControlPlaneServiceProvider` | Singleton | Control plane app-id and enabled service list (from PluginLoader) |
 | `ISmartRestartManager` | Singleton | Configuration-based restart determination |
 | `IContainerOrchestrator` | (resolved at runtime) | Backend-specific container operations |
 | `IBackendDetector` | Singleton | Backend availability detection |
@@ -172,7 +174,12 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 - **GetInfrastructureHealth** (`/orchestrator/health/infrastructure`): Checks health of infrastructure components. Uses state manager `CheckHealthAsync` for Redis connectivity (measures operation time). Publishes `OrchestratorHealthPingEvent` to verify pub/sub path. Returns health status for each component (redis, rabbitmq, docker).
 
-- **GetServiceHealth** (`/orchestrator/health/services`): Retrieves all service heartbeats from state manager. Evaluates each heartbeat against `HeartbeatTimeoutSeconds` and `DegradationThresholdMinutes` thresholds. Returns list of `DeployedService` with status (Running/Degraded/Stopped/Unhealthy), last seen time, and capacity info.
+- **GetServiceHealth** (`/orchestrator/health/services`): Returns service health report with source filtering via `ServiceHealthSource` enum:
+  - `all` (default): Combines control plane services (from `IControlPlaneServiceProvider`) and deployed services (from heartbeats). Control plane services are immediately healthy; deployed services are evaluated against `HeartbeatTimeoutSeconds` and `DegradationThresholdMinutes` thresholds.
+  - `control_plane_only`: Returns only services running on the control plane (this Bannou instance). Useful for introspection.
+  - `deployed_only`: Returns only services with heartbeats from deployed containers. Excludes the control plane. Useful for monitoring distributed deployments.
+  - Optional `serviceFilter` parameter filters results by service name substring.
+  - Response includes `source` (the filter used), `controlPlaneAppId` (e.g., "bannou"), healthy/unhealthy service lists, counts, and health percentage.
 
 ### Configuration Versioning (2 endpoints)
 
@@ -341,41 +348,57 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 ### Health Monitoring
 
 ```
-    +------------------+         +------------------+
-    | Service Instance |         | Service Instance |
-    | (bannou-auth)    |         | (bannou-actor-1) |
-    +--------+---------+         +--------+---------+
-             |                            |
-             | ServiceHeartbeatEvent      |
-             v                            v
-    +--------+----------------------------+--------+
-    |          bannou.service-heartbeats            |
-    +--------+-------------------------------------+
-             |
-    +--------v---------+
-    | HandleServiceHB  |
-    | (Events partial) |
-    +--------+---------+
-             |
-    +--------v--------------------+
-    | OrchestratorStateManager    |
-    | - Write heartbeat (TTL 90s)|
-    | - Update index (ETag CAS)  |
-    +-----------------------------+
-             |
-    +--------v---------+
-    | Health Endpoints: |
-    | - GetServiceHealth|
-    |   reads index,    |
-    |   bulk-gets HBs,  |
-    |   evaluates status|
-    +------------------+
+    DEPLOYED SERVICES (via heartbeats)        CONTROL PLANE SERVICES (via PluginLoader)
+    +------------------+  +------------------+       +---------------------------+
+    | Service Instance |  | Service Instance |       | IControlPlaneServiceProvider |
+    | (bannou-auth)    |  | (bannou-actor-1) |       | - PluginLoader.EnabledPlugins |
+    +--------+---------+  +--------+---------+       | - EffectiveAppId: "bannou"    |
+             |                     |                 +-------------+---------------+
+             | ServiceHeartbeatEvent                               |
+             v                     v                               |
+    +--------+---------------------+--------+                      |
+    |      bannou.service-heartbeats        |                      |
+    +--------+------------------------------+                      |
+             |                                                     |
+    +--------v---------+                                           |
+    | HandleServiceHB  |                                           |
+    | (Events partial) |                                           |
+    +--------+---------+                                           |
+             |                                                     |
+    +--------v--------------------+                                |
+    | OrchestratorStateManager    |                                |
+    | - Write heartbeat (TTL 90s) |                                |
+    | - Update index (ETag CAS)   |                                |
+    +-------------+---------------+                                |
+                  |                                                |
+                  v                                                v
+    +-------------+------------------------------------------------+---------+
+    |                  ServiceHealthMonitor.GetServiceHealthReportAsync      |
+    |  +------------------------------------------------------------------+  |
+    |  | ServiceHealthSource Filter:                                      |  |
+    |  |   all              -> Control plane services + Deployed services |  |
+    |  |   control_plane_only -> Control plane services only              |  |
+    |  |   deployed_only    -> Deployed services only (from heartbeats)   |  |
+    |  +------------------------------------------------------------------+  |
+    +------------------------------------------------------------------------+
+                                       |
+                                       v
+                            +-------------------+
+                            | ServiceHealthReport |
+                            | - source           |
+                            | - controlPlaneAppId|
+                            | - healthyServices  |
+                            | - unhealthyServices|
+                            | - healthPercentage |
+                            +-------------------+
 
-    Status Logic:
+    Status Logic (deployed services):
     - LastSeen < HeartbeatTimeoutSeconds:  Healthy
     - LastSeen < DegradationThresholdMin:  Degraded
     - LastSeen > DegradationThresholdMin:  Stopped
     - Issues non-empty:                    Unhealthy
+
+    Control plane services: Always Healthy (running in this process)
 ```
 
 ---

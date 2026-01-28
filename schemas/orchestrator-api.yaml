@@ -730,14 +730,35 @@ components:
           description: Optional filter for specific components (redis, rabbitmq, placement)
           nullable: true
 
+    ServiceHealthSource:
+      type: string
+      description: |
+        Filter for which services to include in health reports.
+        - all: Include both control plane services and deployed services (default)
+        - control_plane_only: Only services running on the control plane (main bannou instance)
+        - deployed_only: Only services running on explicitly deployed nodes (split topology)
+      enum:
+        - all
+        - control_plane_only
+        - deployed_only
+
     ServiceHealthRequest:
       type: object
       additionalProperties: false
-      description: Request to get service health status (empty body allowed)
+      description: |
+        Request to get service health status.
+        Use 'source' to filter which services are included in the report.
+        Note: A service may appear multiple times if it runs on both control plane
+        and deployed nodes - use appId to distinguish between instances.
       properties:
+        source:
+          $ref: '#/components/schemas/ServiceHealthSource'
+          description: |
+            Which services to include. Defaults to 'all' which includes both
+            control plane services and deployed services.
         serviceFilter:
           type: string
-          description: Optional filter by service name
+          description: Optional filter by service name (applied after source filter)
           nullable: true
 
     GetServiceRoutingRequest:
@@ -976,7 +997,10 @@ components:
           description: Number of consecutive health check failures
 
     ServiceHealthReport:
-      description: Aggregated health report for all services based on heartbeat monitoring
+      description: |
+        Aggregated health report for services based on heartbeat monitoring.
+        Services are categorized as healthy or unhealthy based on heartbeat recency.
+        Use controlPlaneAppId to distinguish control plane services from deployed services.
       type: object
       additionalProperties: false
       required:
@@ -985,14 +1009,25 @@ components:
       - healthPercentage
       - healthyServices
       - unhealthyServices
+      - controlPlaneAppId
+      - source
       properties:
         timestamp:
           type: string
           format: date-time
           description: When report was generated
+        source:
+          $ref: '#/components/schemas/ServiceHealthSource'
+          description: Which source filter was applied to generate this report
+        controlPlaneAppId:
+          type: string
+          description: |
+            App-id of the control plane (main bannou instance).
+            Services with this appId are running on the control plane.
+            Services with different appIds are running on deployed nodes.
         totalServices:
           type: integer
-          description: Total number of services
+          description: Total number of services (may include duplicates if same service runs on multiple nodes)
         healthPercentage:
           type: number
           format: float
@@ -1001,12 +1036,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ServiceHealthStatus'
-          description: Services with recent heartbeats
+          description: Services with recent heartbeats (status healthy/degraded)
         unhealthyServices:
           type: array
           items:
             $ref: '#/components/schemas/ServiceHealthStatus'
-          description: Services with expired heartbeats
+          description: Services with expired heartbeats or unhealthy status
 
     ServiceHealthStatus:
       type: object

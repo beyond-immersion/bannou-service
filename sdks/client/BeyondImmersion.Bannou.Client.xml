@@ -37489,14 +37489,34 @@
             Optional filter for specific components (redis, rabbitmq, placement)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceHealthSource">
+            <summary>
+            Filter for which services to include in health reports.
+            <br/>- all: Include both control plane services and deployed services (default)
+            <br/>- control_plane_only: Only services running on the control plane (main bannou instance)
+            <br/>- deployed_only: Only services running on explicitly deployed nodes (split topology)
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceHealthRequest">
             <summary>
-            Request to get service health status (empty body allowed)
+            Request to get service health status.
+            <br/>Use 'source' to filter which services are included in the report.
+            <br/>Note: A service may appear multiple times if it runs on both control plane
+            <br/>and deployed nodes - use appId to distinguish between instances.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthRequest.Source">
+            <summary>
+            Which services to include. Defaults to 'all' which includes both
+            <br/>control plane services and deployed services.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthRequest.ServiceFilter">
             <summary>
-            Optional filter by service name
+            Optional filter by service name (applied after source filter)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.GetServiceRoutingRequest">
@@ -37748,7 +37768,10 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport">
             <summary>
-            Aggregated health report for all services based on heartbeat monitoring
+            Aggregated health report for services based on heartbeat monitoring.
+            <br/>Services are categorized as healthy or unhealthy based on heartbeat recency.
+            <br/>Use controlPlaneAppId to distinguish control plane services from deployed services.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.Timestamp">
@@ -37756,9 +37779,22 @@
             When report was generated
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.Source">
+            <summary>
+            Which source filter was applied to generate this report
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.ControlPlaneAppId">
+            <summary>
+            App-id of the control plane (main bannou instance).
+            <br/>Services with this appId are running on the control plane.
+            <br/>Services with different appIds are running on deployed nodes.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.TotalServices">
             <summary>
-            Total number of services
+            Total number of services (may include duplicates if same service runs on multiple nodes)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.HealthPercentage">
@@ -37768,12 +37804,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.HealthyServices">
             <summary>
-            Services with recent heartbeats
+            Services with recent heartbeats (status healthy/degraded)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.UnhealthyServices">
             <summary>
-            Services with expired heartbeats
+            Services with expired heartbeats or unhealthy status
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus">
