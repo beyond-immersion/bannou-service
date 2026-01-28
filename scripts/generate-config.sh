@@ -119,6 +119,9 @@ try:
             prop_min_length = prop_info.get('minLength', None)
             prop_max_length = prop_info.get('maxLength', None)
 
+            # OpenAPI 3.0 pattern validation keyword
+            prop_pattern = prop_info.get('pattern', None)
+
             # Check if this is a $ref to an external enum type
             if prop_ref:
                 # Extract type name from $ref path (e.g., 'contract-api.yaml#/components/schemas/EnforcementMode' -> 'EnforcementMode')
@@ -208,7 +211,8 @@ try:
                 'exclusive_min': prop_exclusive_min,
                 'exclusive_max': prop_exclusive_max,
                 'min_length': prop_min_length,
-                'max_length': prop_max_length
+                'max_length': prop_max_length,
+                'pattern': prop_pattern
             })
 
     # Generate the configuration class
@@ -322,11 +326,20 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
                 length_parts.append('MaxLength = ' + str(prop['max_length']))
             string_length_attr = '    [ConfigStringLength(' + ', '.join(length_parts) + ')]\\n'
 
+        # Generate ConfigPattern attribute if pattern is specified
+        pattern_attr = ''
+        prop_pattern = prop.get('pattern')
+        if prop_pattern:
+            # Escape the pattern for C# verbatim string (@"...")
+            # Double any quotes in the pattern
+            escaped_pattern = prop_pattern.replace('"', '""')
+            pattern_attr = '    [ConfigPattern(@\"' + escaped_pattern + '\")]\\n'
+
         print(f'''    /// <summary>
     /// {prop['description']}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-{required_attr}{range_attr}{string_length_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+{required_attr}{range_attr}{string_length_attr}{pattern_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
 
     print('}')

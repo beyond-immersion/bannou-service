@@ -146,8 +146,10 @@ x-service-configuration:
       description: GZIP compression level (1-9, higher = better compression, slower)
 
     DefaultCompressionByCategory:
-      type: object
-      description: Default compression per category. Overrides DefaultCompressionType. QUICK_SAVE uses NONE, AUTO_SAVE and MANUAL_SAVE use GZIP, CHECKPOINT uses GZIP, STATE_SNAPSHOT uses BROTLI.
+      type: string
+      nullable: true
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY
+      description: Default compression per category as comma-separated KEY=VALUE pairs (e.g., "QUICK_SAVE=NONE,AUTO_SAVE=GZIP"). Overrides DefaultCompressionType when specified. If empty/null, uses DefaultCompressionType for all categories.
 
     # ═══════════════════════════════════════════════════════════════════════════
     # THUMBNAIL SETTINGS

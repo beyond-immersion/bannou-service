@@ -57,7 +57,7 @@ public interface IServiceConfiguration
 
     /// <summary>
     /// Performs all configuration validation checks.
-    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, and <see cref="ValidateStringLengths"/>.
+    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, <see cref="ValidateStringLengths"/>, and <see cref="ValidatePatterns"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when any validation check fails.</exception>
     public void Validate()
@@ -65,6 +65,7 @@ public interface IServiceConfiguration
         ValidateNonNullableStrings();
         ValidateNumericRanges();
         ValidateStringLengths();
+        ValidatePatterns();
     }
 
     /// <summary>
@@ -212,6 +213,68 @@ public interface IServiceConfiguration
                 $"The following properties have invalid lengths: {string.Join("; ", invalidProperties)}. " +
                 $"Check environment variable values or remove overrides to use schema defaults.");
         }
+    }
+
+    /// <summary>
+    /// Validates that all string properties with <see cref="ConfigPatternAttribute"/> match their required patterns.
+    /// IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined pattern constraints.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any string property does not match its required pattern.</exception>
+    public void ValidatePatterns()
+    {
+        var nullabilityContext = new NullabilityInfoContext();
+        var invalidProperties = new List<string>();
+
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var patternAttr = property.GetCustomAttribute<ConfigPatternAttribute>();
+            if (patternAttr == null)
+                continue;
+
+            // Only validate string properties
+            if (property.PropertyType != typeof(string))
+                continue;
+
+            var value = property.GetValue(this) as string;
+
+            // Skip validation for null values on nullable properties
+            if (value == null)
+            {
+                var nullabilityInfo = nullabilityContext.Create(property);
+                if (nullabilityInfo.WriteState == NullabilityState.Nullable)
+                    continue;
+            }
+
+            if (!patternAttr.IsValid(value))
+            {
+                var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+                invalidProperties.Add(
+                    $"{property.Name} (value=\"{TruncateForDisplay(value)}\", {patternAttr.GetPatternDescription()}, " +
+                    $"env: {envPrefix}{ToUpperSnakeCase(property.Name)})");
+            }
+        }
+
+        if (invalidProperties.Count > 0)
+        {
+            var configTypeName = GetType().Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"String properties do not match required patterns. " +
+                $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Truncates a string for display in error messages.
+    /// </summary>
+    private static string TruncateForDisplay(string? value, int maxLength = 50)
+    {
+        if (value == null)
+            return "<null>";
+        if (value.Length <= maxLength)
+            return value;
+        return value.Substring(0, maxLength - 3) + "...";
     }
 
     /// <summary>

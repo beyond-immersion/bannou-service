@@ -182,11 +182,10 @@ public class SaveLoadServiceConfiguration : IServiceConfiguration
     public int GzipCompressionLevel { get; set; } = 6;
 
     /// <summary>
-    /// Default compression per category. Overrides DefaultCompressionType. QUICK_SAVE uses NONE, AUTO_SAVE and MANUAL_SAVE use GZIP, CHECKPOINT uses GZIP, STATE_SNAPSHOT uses BROTLI.
-    /// Environment variable: DEFAULTCOMPRESSIONBYCATEGORY
+    /// Default compression per category as comma-separated KEY=VALUE pairs (e.g., "QUICK_SAVE=NONE,AUTO_SAVE=GZIP"). Overrides DefaultCompressionType when specified. If empty/null, uses DefaultCompressionType for all categories.
+    /// Environment variable: SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string DefaultCompressionByCategory { get; set; } = string.Empty;
+    public string? DefaultCompressionByCategory { get; set; }
 
     /// <summary>
     /// Maximum thumbnail size in bytes (default 256KB)

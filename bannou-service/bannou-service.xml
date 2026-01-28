@@ -3652,6 +3652,84 @@
             Easy base type for custom attributes.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute">
+            <summary>
+            Specifies a regex pattern constraint for a configuration property.
+            Matches OpenAPI 3.0 validation keyword: pattern.
+            </summary>
+            <remarks>
+            <para>
+            This attribute is generated from OpenAPI schema validation keywords and validated
+            at startup by <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidatePatterns"/>.
+            </para>
+            <para>
+            Use this for ensuring configuration strings match required formats, such as:
+            - URL formats (^https?://)
+            - Domain names
+            - Email-like patterns
+            - Environment-specific naming conventions
+            </para>
+            <para>
+            The pattern uses .NET regular expression syntax. The entire string must match
+            the pattern (implicit anchoring is NOT applied - use ^ and $ if needed).
+            </para>
+            </remarks>
+            <example>
+            Schema:
+            <code>
+            ServiceDomain:
+              type: string
+              pattern: "^https?://"
+              default: "https://api.example.com"
+            </code>
+            Generated:
+            <code>
+            [ConfigPattern(@"^https?://", Description = "Must start with http:// or https://")]
+            public string ServiceDomain { get; set; } = "https://api.example.com";
+            </code>
+            </example>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute.Pattern">
+            <summary>
+            The regular expression pattern that the value must match.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute.Description">
+            <summary>
+            Optional human-readable description of what the pattern validates.
+            Used in error messages to help users understand the expected format.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute.MatchTimeout">
+            <summary>
+            Timeout for regex matching to prevent ReDoS attacks from malicious patterns.
+            Defaults to 1 second.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute.#ctor(System.String)">
+            <summary>
+            Creates a pattern constraint with the specified regex pattern.
+            </summary>
+            <param name="pattern">The regular expression pattern to match against.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute.CompiledRegex">
+            <summary>
+            Gets a compiled regex for efficient repeated matching.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute.IsValid(System.String)">
+            <summary>
+            Validates whether the given string matches this pattern constraint.
+            </summary>
+            <param name="value">The string value to validate. Null values are considered valid (use other validation for null checks).</param>
+            <returns>True if the value matches the pattern or is null; otherwise, false.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute.GetPatternDescription">
+            <summary>
+            Gets a human-readable description of this pattern constraint.
+            </summary>
+            <returns>The description if provided, otherwise the raw pattern.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.ConfigRangeAttribute">
             <summary>
             Specifies numeric range constraints for a configuration property.
@@ -9385,7 +9463,7 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.Validate">
             <summary>
             Performs all configuration validation checks.
-            Calls <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>, and <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateStringLengths"/>.
+            Calls <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNonNullableStrings"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateNumericRanges"/>, <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidateStringLengths"/>, and <see cref="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidatePatterns"/>.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when any validation check fails.</exception>
         </member>
@@ -9411,6 +9489,18 @@
             IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined length constraints.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when any string property is outside its allowed length range.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ValidatePatterns">
+            <summary>
+            Validates that all string properties with <see cref="T:BeyondImmersion.BannouService.Attributes.ConfigPatternAttribute"/> match their required patterns.
+            IMPLEMENTATION TENETS: String configuration values must satisfy schema-defined pattern constraints.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown when any string property does not match its required pattern.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.TruncateForDisplay(System.String,System.Int32)">
+            <summary>
+            Truncates a string for display in error messages.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ToUpperSnakeCase(System.String)">
             <summary>

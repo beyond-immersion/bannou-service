@@ -653,7 +653,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SAVE-LOAD_DEFAULTCOMPRESSIONBYCATEGORY` | object | **REQUIRED** | Default compression per category. Overrides DefaultCompressi... |
 | `SAVE_LOAD_ASSET_BUCKET` | string | `game-saves` | MinIO bucket for save assets |
 | `SAVE_LOAD_ASYNC_UPLOAD_ENABLED` | bool | `true` | Queue uploads to MinIO/S3 instead of synchronous write. Save... |
 | `SAVE_LOAD_AUTO_COLLAPSE_ENABLED` | bool | `true` | Automatically collapse delta chains during cleanup |
@@ -664,6 +663,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SAVE_LOAD_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before cleanup service starts processing |
 | `SAVE_LOAD_CONFLICT_DETECTION_ENABLED` | bool | `true` | Enable device-based conflict detection for cloud saves. Requ... |
 | `SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES` | int | `5` | Time window for considering saves as potentially conflicting... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_BY_CATEGORY` | string | **REQUIRED** | Default compression per category as comma-separated KEY=VALU... |
 | `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `GZIP` | Default compression algorithm |
 | `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JSON_PATCH` | Default algorithm for delta computation |
 | `SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE` | int | `5` | Default max versions for AUTO_SAVE category |
